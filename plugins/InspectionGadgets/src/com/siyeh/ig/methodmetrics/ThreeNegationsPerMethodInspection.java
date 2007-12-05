@@ -23,7 +23,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ThreeNegationsPerMethodInspection extends BaseInspection {
 
@@ -61,7 +61,7 @@ public class ThreeNegationsPerMethodInspection extends BaseInspection {
 
     private class ThreeNegationsPerMethodVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             if (method.getNameIdentifier() == null) {
                 return;

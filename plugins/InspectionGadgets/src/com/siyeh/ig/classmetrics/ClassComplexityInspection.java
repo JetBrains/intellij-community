@@ -60,7 +60,7 @@ public class ClassComplexityInspection
 
     private class ClassComplexityVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalComplexity = calculateTotalComplexity(aClass);
             if (totalComplexity <= getLimit()) {

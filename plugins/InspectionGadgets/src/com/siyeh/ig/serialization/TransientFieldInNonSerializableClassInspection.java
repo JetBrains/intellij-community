@@ -74,7 +74,7 @@ public class TransientFieldInNonSerializableClassInspection
     private static class TransientFieldInNonSerializableClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
                 return;
             }

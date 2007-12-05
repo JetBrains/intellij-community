@@ -27,7 +27,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class RawUseOfParameterizedTypeInspection extends BaseInspection {
 
@@ -72,7 +72,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     private class RawUseOfParameterizedTypeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(
+        @Override public void visitNewExpression(
                 @NotNull PsiNewExpression expression) {
             if (!hasNeededLanguageLevel(expression)) {
                 return;
@@ -91,7 +91,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
             checkReferenceElement(classReference);
         }
 
-        public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
+        @Override public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
             if (!hasNeededLanguageLevel(typeElement)) {
                 return;
             }
@@ -113,7 +113,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
             checkReferenceElement(referenceElement);
         }
 
-        public void visitReferenceElement(
+        @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             if (!hasNeededLanguageLevel(reference)) {
                 return;

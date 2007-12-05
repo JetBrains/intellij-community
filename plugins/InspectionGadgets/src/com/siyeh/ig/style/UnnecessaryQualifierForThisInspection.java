@@ -70,7 +70,7 @@ public class UnnecessaryQualifierForThisInspection
     private static class UnnecessaryQualifierForThisVisitor
             extends BaseInspectionVisitor {
 
-        public void visitThisExpression(
+        @Override public void visitThisExpression(
                 @NotNull PsiThisExpression thisExpression) {
             super.visitThisExpression(thisExpression);
             final PsiJavaCodeReferenceElement qualifier =

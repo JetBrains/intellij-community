@@ -141,7 +141,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
             s_basicTypes.add("java.lang.Short");
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

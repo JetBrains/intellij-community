@@ -26,7 +26,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
 
@@ -73,7 +73,7 @@ public class UnnecessaryFinalOnParameterInspection extends BaseInspection {
     private class UnnecessaryFinalOnParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final PsiParameterList parameterList = method.getParameterList();
             final PsiParameter[] parameters = parameterList.getParameters();

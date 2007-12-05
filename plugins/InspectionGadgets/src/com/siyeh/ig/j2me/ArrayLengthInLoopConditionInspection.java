@@ -43,7 +43,7 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
     private static class ArrayLengthInLoopConditionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition== null)
@@ -53,7 +53,7 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
             checkForMethodCalls(condition);
         }
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition == null){
@@ -62,7 +62,7 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
             checkForMethodCalls(condition);
         }
 
-        public void visitDoWhileStatement(
+        @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
@@ -76,7 +76,7 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
             final PsiRecursiveElementVisitor visitor =
                     new PsiRecursiveElementVisitor(){
 
-                public void visitReferenceExpression(
+                @Override public void visitReferenceExpression(
                         @NotNull PsiReferenceExpression expression){
                     super.visitReferenceExpression(expression);
                     final String name = expression.getReferenceName();

@@ -295,7 +295,7 @@ public class ManualArrayToCollectionCopyInspection
     private static class ManualArrayToCollectionCopyVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement initialization =
                     statement.getInitialization();
@@ -332,7 +332,7 @@ public class ManualArrayToCollectionCopyInspection
             registerStatementError(statement);
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        @Override public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiExpression iteratedValue = statement.getIteratedValue();
             if (iteratedValue == null) {

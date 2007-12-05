@@ -219,7 +219,7 @@ public class IncrementDecrementUsedAsExpressionInspection
     private static class IncrementDecrementUsedAsExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitPostfixExpression(
+        @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiElement parent = expression.getParent();
@@ -237,7 +237,7 @@ public class IncrementDecrementUsedAsExpressionInspection
             registerError(expression, Boolean.TRUE, tokenType);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final PsiElement parent = expression.getParent();

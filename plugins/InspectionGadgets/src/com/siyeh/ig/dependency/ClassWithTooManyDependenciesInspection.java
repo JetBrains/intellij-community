@@ -17,23 +17,22 @@ package com.siyeh.ig.dependency;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ClassWithTooManyDependenciesInspection
         extends BaseGlobalInspection {
@@ -54,7 +53,7 @@ public class ClassWithTooManyDependenciesInspection
         final RefManager refManager = globalInspectionContext.getRefManager();
         refManager.iterate(new RefVisitor(){
 
-            public void visitClass(RefClass refClass) {
+            @Override public void visitClass(RefClass refClass) {
                 super.visitClass(refClass);
                 final PsiClass aClass = refClass.getElement();
                 if (ClassUtils.isInnerClass(aClass)) {

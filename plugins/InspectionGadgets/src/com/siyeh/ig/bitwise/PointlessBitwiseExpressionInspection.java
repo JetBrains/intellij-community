@@ -29,7 +29,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -143,7 +143,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
 
     private class PointlessBitwiseVisitor extends BaseInspectionVisitor{
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();

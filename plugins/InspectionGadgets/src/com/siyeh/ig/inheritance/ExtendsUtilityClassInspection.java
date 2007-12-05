@@ -47,7 +47,7 @@ public class ExtendsUtilityClassInspection extends BaseInspection {
     private static class ClassExtendsUtilityClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(PsiClass aClass) {
+        @Override public void visitClass(PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }

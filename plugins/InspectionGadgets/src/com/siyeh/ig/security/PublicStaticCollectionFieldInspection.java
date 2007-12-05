@@ -45,7 +45,7 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
     private static class PublicStaticCollectionFieldVisitor
             extends BaseInspectionVisitor {
         
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;

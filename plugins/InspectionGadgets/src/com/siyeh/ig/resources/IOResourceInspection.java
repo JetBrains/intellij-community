@@ -56,7 +56,7 @@ public class IOResourceInspection extends BaseInspection {
     }
 
     private static class IOResourceVisitor extends BaseInspectionVisitor{
-      public void visitNewExpression(@NotNull PsiNewExpression expression){
+      @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
           super.visitNewExpression(expression);
           if(!isIOResource(expression)){
               return;
@@ -111,9 +111,9 @@ public class IOResourceInspection extends BaseInspection {
         final boolean[] escaped = new boolean[1];
         PsiElementVisitor visitor =
         new PsiRecursiveElementVisitor(){
-          public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
           }
-          public void visitReturnStatement(PsiReturnStatement statement) {
+          @Override public void visitReturnStatement(PsiReturnStatement statement) {
             PsiExpression value = statement.getReturnValue();
             value = PsiUtil.deparenthesizeExpression(value);
             if (value instanceof PsiReferenceExpression && ((PsiReferenceExpression)value).resolve() == boundVariable) {
@@ -204,13 +204,13 @@ public class IOResourceInspection extends BaseInspection {
             this.streamToClose = streamToClose;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!containsStreamClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             if(containsStreamClose){
                 return;
@@ -253,7 +253,7 @@ public class IOResourceInspection extends BaseInspection {
             this.ioResource = ioResource;
         }
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             if(usedAsArgToResourceCreation){
                 return;
             }

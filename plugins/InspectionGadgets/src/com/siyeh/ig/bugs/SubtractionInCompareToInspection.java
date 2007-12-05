@@ -45,7 +45,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
     private static class SubtractionInCompareToVisitor
             extends BaseInspectionVisitor{
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
+        @Override public void visitBinaryExpression(@NotNull PsiBinaryExpression exp){
             super.visitBinaryExpression(exp);
             if(!(exp.getROperand() != null)){
                 return;

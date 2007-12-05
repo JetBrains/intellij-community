@@ -45,7 +45,7 @@ public class WaitCalledOnConditionInspection extends BaseInspection {
     private static class WaitCalledOnConditionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

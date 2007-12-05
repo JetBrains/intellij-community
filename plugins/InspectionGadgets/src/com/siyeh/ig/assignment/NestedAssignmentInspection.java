@@ -44,7 +44,7 @@ public class NestedAssignmentInspection extends BaseInspection {
 
     private static class NestedAssignmentVisitor extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiElement parent = expression.getParent();

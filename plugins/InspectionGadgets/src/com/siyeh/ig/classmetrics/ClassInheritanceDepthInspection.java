@@ -62,7 +62,7 @@ public class ClassInheritanceDepthInspection
 
     private class ClassNestingLevel extends BaseInspectionVisitor{
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             // note: no call to super
             if(aClass.isEnum()){
                 return;

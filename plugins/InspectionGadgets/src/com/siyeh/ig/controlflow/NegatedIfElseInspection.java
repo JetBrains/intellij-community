@@ -30,7 +30,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class NegatedIfElseInspection extends BaseInspection {
 
@@ -112,7 +112,7 @@ public class NegatedIfElseInspection extends BaseInspection {
 
     private class NegatedIfElseVisitor extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {

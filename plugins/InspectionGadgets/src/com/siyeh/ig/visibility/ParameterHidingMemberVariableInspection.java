@@ -27,7 +27,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ParameterHidingMemberVariableInspection extends BaseInspection {
 
@@ -95,7 +95,7 @@ public class ParameterHidingMemberVariableInspection extends BaseInspection {
     private class ParameterHidingMemberVariableVisitor
             extends BaseInspectionVisitor{
 
-        public void visitParameter(@NotNull PsiParameter variable){
+        @Override public void visitParameter(@NotNull PsiParameter variable){
             super.visitParameter(variable);
             if(variable.getDeclarationScope() instanceof PsiCatchSection){
                 return;

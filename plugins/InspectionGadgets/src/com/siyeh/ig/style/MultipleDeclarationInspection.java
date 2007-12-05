@@ -53,7 +53,7 @@ public class MultipleDeclarationInspection extends BaseInspection {
     private static class MultipleDeclarationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitDeclarationStatement(
+        @Override public void visitDeclarationStatement(
                 PsiDeclarationStatement statement) {
             super.visitDeclarationStatement(statement);
             if (statement.getDeclaredElements().length <= 1) {
@@ -76,7 +76,7 @@ public class MultipleDeclarationInspection extends BaseInspection {
             }
         }
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (childrenContainTypeElement(field)) {
                 return;

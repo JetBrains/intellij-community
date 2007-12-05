@@ -44,7 +44,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
     private static class CloneCallsConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             final String methodName = method.getName();
             final PsiParameterList parameterList = method.getParameterList();
             final boolean isClone =
@@ -53,7 +53,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
             if (isClone) {
                 method.accept(new PsiRecursiveElementVisitor() {
 
-                    public void visitNewExpression(
+                    @Override public void visitNewExpression(
                             @NotNull PsiNewExpression newExpression) {
                         super.visitNewExpression(newExpression);
                         final PsiExpression[] arrayDimensions =

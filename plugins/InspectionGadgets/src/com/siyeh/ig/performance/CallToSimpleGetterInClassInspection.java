@@ -31,7 +31,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class CallToSimpleGetterInClassInspection extends BaseInspection {
 
@@ -138,7 +138,7 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
     private class CallToSimpleGetterInClassVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiClass containingClass =

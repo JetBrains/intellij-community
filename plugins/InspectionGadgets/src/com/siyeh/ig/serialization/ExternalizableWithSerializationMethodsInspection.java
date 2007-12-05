@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -60,7 +59,7 @@ public class ExternalizableWithSerializationMethodsInspection
     private static class ExternalizableDefinesSerializationMethodsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;

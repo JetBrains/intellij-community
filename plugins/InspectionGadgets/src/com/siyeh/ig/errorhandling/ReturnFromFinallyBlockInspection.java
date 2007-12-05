@@ -52,7 +52,7 @@ public class ReturnFromFinallyBlockInspection extends BaseInspection {
     private static class ReturnFromFinallyBlockVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
+        @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
                 return;

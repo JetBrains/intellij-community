@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -81,7 +80,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     private static class FallthroughInSwitchStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiCodeBlock body = statement.getBody();

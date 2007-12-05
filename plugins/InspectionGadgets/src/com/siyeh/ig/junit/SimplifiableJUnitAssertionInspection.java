@@ -397,7 +397,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
     private static class SimplifiableJUnitAssertionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (isAssertThatCouldBeAssertNull(expression)) {

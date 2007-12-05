@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.UninitializedReadCollector;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class StaticVariableUninitializedUseInspection extends BaseInspection {
 
@@ -62,7 +62,7 @@ public class StaticVariableUninitializedUseInspection extends BaseInspection {
     private class StaticVariableInitializationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

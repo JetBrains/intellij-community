@@ -69,7 +69,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
             s_typePrecisions.put(PsiType.DOUBLE, 6);
         }
 
-        public void visitTypeCastExpression(
+        @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression) {
             final PsiType castType = expression.getType();
             if (!ClassUtils.isPrimitiveNumericType(castType)) {

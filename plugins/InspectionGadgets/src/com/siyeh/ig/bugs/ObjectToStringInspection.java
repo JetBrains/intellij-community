@@ -49,7 +49,7 @@ public class ObjectToStringInspection extends BaseInspection {
     private static class ObjectToStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiType type = expression.getType();
@@ -65,7 +65,7 @@ public class ObjectToStringInspection extends BaseInspection {
             checkExpression(rhs);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)) {
@@ -88,7 +88,7 @@ public class ObjectToStringInspection extends BaseInspection {
             checkExpression(rhs);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

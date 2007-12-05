@@ -99,7 +99,7 @@ public class NonReproducibleMathCallInspection extends BaseInspection {
 
     private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

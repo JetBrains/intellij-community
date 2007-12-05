@@ -27,7 +27,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ForLoopReplaceableByWhileInspection extends BaseInspection {
 
@@ -102,7 +102,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
     private class ForLoopReplaceableByWhileVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement initialization = statement.getInitialization();
             if (initialization != null &&

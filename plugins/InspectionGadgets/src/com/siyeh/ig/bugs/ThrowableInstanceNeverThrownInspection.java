@@ -19,10 +19,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Query;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,7 +63,7 @@ public class ThrowableInstanceNeverThrownInspection extends BaseInspection {
     private static class ExceptionInstanceNeverThrownVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
                     "java.lang.Throwable")) {

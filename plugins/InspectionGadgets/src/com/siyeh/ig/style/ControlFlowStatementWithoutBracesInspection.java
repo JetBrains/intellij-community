@@ -108,7 +108,7 @@ public class ControlFlowStatementWithoutBracesInspection
     private static class ControlFlowStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiStatement body = statement.getBody();
 	        if (body == null || body instanceof PsiBlockStatement) {
@@ -117,7 +117,7 @@ public class ControlFlowStatementWithoutBracesInspection
 	        registerStatementError(statement);
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        @Override public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiStatement body = statement.getBody();
 	        if (body == null || body instanceof PsiBlockStatement) {
@@ -126,7 +126,7 @@ public class ControlFlowStatementWithoutBracesInspection
 	        registerStatementError(statement);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        @Override public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement body = statement.getBody();
 	        if (body == null || body instanceof PsiBlockStatement) {
@@ -135,7 +135,7 @@ public class ControlFlowStatementWithoutBracesInspection
 	        registerStatementError(statement);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        @Override public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {
@@ -158,7 +158,7 @@ public class ControlFlowStatementWithoutBracesInspection
             }
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
 	        if (body == null || body instanceof PsiBlockStatement) {

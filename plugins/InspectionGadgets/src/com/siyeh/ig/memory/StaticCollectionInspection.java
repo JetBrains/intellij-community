@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class StaticCollectionInspection extends BaseInspection {
 
@@ -56,7 +56,7 @@ public class StaticCollectionInspection extends BaseInspection {
 
     private class StaticCollectionVisitor extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

@@ -44,27 +44,27 @@ public class SuspiciousIndentAfterControlStatementInspection
     private static class SuspiciousIndentAfterControlStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             checkLoopStatement(statement);
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             checkLoopStatement(statement);
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        @Override public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             checkLoopStatement(statement);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        @Override public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
             checkLoopStatement(statement);
         }
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        @Override public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement elseStatement = statement.getElseBranch();
             if (elseStatement instanceof PsiBlockStatement) {

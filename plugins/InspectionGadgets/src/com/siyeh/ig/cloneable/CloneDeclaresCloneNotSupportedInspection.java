@@ -80,7 +80,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     private static class CloneDeclaresCloneNotSupportedExceptionVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             if(!CloneUtils.isClone(method)){
                 return;

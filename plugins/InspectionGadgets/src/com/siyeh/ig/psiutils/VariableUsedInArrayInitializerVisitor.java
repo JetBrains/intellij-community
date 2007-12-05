@@ -30,13 +30,13 @@ public class VariableUsedInArrayInitializerVisitor
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!passed){
             super.visitElement(element);
         }
     }
 
-    public void visitArrayInitializerExpression(
+    @Override public void visitArrayInitializerExpression(
             PsiArrayInitializerExpression expression){
         if(passed){
             return;

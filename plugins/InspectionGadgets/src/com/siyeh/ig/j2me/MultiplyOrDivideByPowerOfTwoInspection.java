@@ -31,7 +31,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MultiplyOrDivideByPowerOfTwoInspection
         extends BaseInspection {
@@ -150,7 +150,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
     private class ConstantShiftVisitor extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
@@ -178,7 +178,7 @@ public class MultiplyOrDivideByPowerOfTwoInspection
             registerError(expression, expression);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if (!WellFormednessUtils.isWellFormed(expression)) {

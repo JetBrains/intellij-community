@@ -77,7 +77,7 @@ public class EnumeratedConstantNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitEnumConstant(PsiEnumConstant constant) {
+        @Override public void visitEnumConstant(PsiEnumConstant constant) {
             super.visitEnumConstant(constant);
             final String name = constant.getName();
             if (name == null) {

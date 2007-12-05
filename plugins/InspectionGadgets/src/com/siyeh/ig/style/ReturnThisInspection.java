@@ -45,7 +45,7 @@ public class ReturnThisInspection extends BaseInspection {
 
     private static class ReturnThisVisitor extends BaseInspectionVisitor {
 
-        public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
+        @Override public void visitThisExpression(@NotNull PsiThisExpression thisValue) {
             super.visitThisExpression(thisValue);
             if (thisValue.getQualifier() != null) {
                 return;

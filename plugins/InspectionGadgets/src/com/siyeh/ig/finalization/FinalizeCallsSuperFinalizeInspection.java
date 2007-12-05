@@ -26,7 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
 
@@ -66,7 +66,7 @@ public class FinalizeCallsSuperFinalizeInspection extends BaseInspection {
 
     private class NoExplicitFinalizeCallsVisitor extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
             if(!HardcodedMethodConstants.FINALIZE.equals(methodName)){

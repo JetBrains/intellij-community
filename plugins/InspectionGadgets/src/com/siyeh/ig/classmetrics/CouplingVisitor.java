@@ -20,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -41,19 +41,19 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         m_includeLibraryClasses = includeLibraryClasses;
     }
 
-    public void visitField(@NotNull PsiField field) {
+    @Override public void visitField(@NotNull PsiField field) {
         super.visitField(field);
         final PsiType type = field.getType();
         addDependency(type);
     }
 
-    public void visitLocalVariable(@NotNull PsiLocalVariable var) {
+    @Override public void visitLocalVariable(@NotNull PsiLocalVariable var) {
         super.visitLocalVariable(var);
         final PsiType type = var.getType();
         addDependency(type);
     }
 
-    public void visitMethod(@NotNull PsiMethod method) {
+    @Override public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
         final PsiType returnType = method.getReturnType();
         addDependency(returnType);
@@ -78,20 +78,20 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitNewExpression(@NotNull PsiNewExpression exp) {
+    @Override public void visitNewExpression(@NotNull PsiNewExpression exp) {
         super.visitNewExpression(exp);
         final PsiType classType = exp.getType();
         addDependency(classType);
     }
 
-    public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp) {
+    @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression exp) {
         super.visitClassObjectAccessExpression(exp);
         final PsiTypeElement operand = exp.getOperand();
         final PsiType classType = operand.getType();
         addDependency(classType);
     }
 
-    public void visitClass(@NotNull PsiClass aClass) {
+    @Override public void visitClass(@NotNull PsiClass aClass) {
         final boolean wasInClass = m_inClass;
         if (!m_inClass) {
 
@@ -105,7 +105,7 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitTryStatement(@NotNull PsiTryStatement statement) {
+    @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiParameter[] catchBlockParameters = statement.getCatchBlockParameters();
         for(PsiParameter catchBlockParameter : catchBlockParameters){
@@ -114,7 +114,7 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
+    @Override public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression exp) {
         super.visitInstanceOfExpression(exp);
         final PsiTypeElement checkType = exp.getCheckType();
         if (checkType == null) {
@@ -124,7 +124,7 @@ class CouplingVisitor extends PsiRecursiveElementVisitor {
         addDependency(classType);
     }
 
-    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
+    @Override public void visitTypeCastExpression(@NotNull PsiTypeCastExpression exp) {
         super.visitTypeCastExpression(exp);
         final PsiTypeElement castType = exp.getCastType();
         if (castType == null) {

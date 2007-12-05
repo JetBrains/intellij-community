@@ -32,14 +32,14 @@ class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
         Collections.reverse(this.importStatements);
     }
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
         if (importStatements.isEmpty()) {
             return;
         }
         super.visitElement(element);
     }
 
-    public void visitReferenceElement(
+    @Override public void visitReferenceElement(
             @NotNull PsiJavaCodeReferenceElement reference) {
         followReferenceToImport(reference);
         super.visitReferenceElement(reference);

@@ -43,7 +43,7 @@ public class CustomSecurityManagerInspection extends BaseInspection {
     private static class CustomSecurityManagerVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!ClassUtils.isSubclass(aClass, "java.lang.SecurityManager")) {
                 return;
             }

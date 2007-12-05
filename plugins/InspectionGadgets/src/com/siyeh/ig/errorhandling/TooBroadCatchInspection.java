@@ -191,7 +191,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     private static class TooBroadCatchVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCodeBlock tryBlock = statement.getTryBlock();
             if (tryBlock == null) {

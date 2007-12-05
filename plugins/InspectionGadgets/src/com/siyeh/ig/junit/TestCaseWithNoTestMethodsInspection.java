@@ -22,13 +22,13 @@ import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
@@ -64,7 +64,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
     private class TestCaseWithNoTestMethodsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface()
                     || aClass.isEnum()
                     || aClass.isAnnotationType()

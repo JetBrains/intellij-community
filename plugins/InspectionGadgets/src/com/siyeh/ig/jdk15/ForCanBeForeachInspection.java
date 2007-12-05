@@ -844,7 +844,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
     private class ForCanBeForeachVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement forStatement){
+        @Override public void visitForStatement(@NotNull PsiForStatement forStatement){
             super.visitForStatement(forStatement);
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(forStatement);
@@ -1299,7 +1299,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression callExpression){
             super.visitMethodCallExpression(callExpression);
             final PsiReferenceExpression methodExpression =
@@ -1334,13 +1334,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!removeCalled){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             if(removeCalled){
                 return;
@@ -1377,13 +1377,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
             this.iteratorName = iteratorName;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!hasNextCalled){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             if(hasNextCalled){
                 return;
@@ -1423,13 +1423,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
             this.indexVariable = indexVariable;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(indexVariableUsedOnlyAsIndex){
                 super.visitElement(element);
             }
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression reference){
             if(!indexVariableUsedOnlyAsIndex){
                 return;
@@ -1497,13 +1497,13 @@ public class ForCanBeForeachInspection extends BaseInspection{
             this.indexVariable = indexVariable;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(indexVariableUsedOnlyAsIndex){
                 super.visitElement(element);
             }
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression reference){
             if(!indexVariableUsedOnlyAsIndex){
                 return;

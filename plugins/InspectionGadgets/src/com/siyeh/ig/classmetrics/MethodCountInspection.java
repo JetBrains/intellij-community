@@ -55,7 +55,7 @@ public class MethodCountInspection extends ClassMetricInspection {
 
     private class MethodCountVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int methodCount = calculateTotalMethodCount(aClass);
             if (methodCount <= getLimit()) {

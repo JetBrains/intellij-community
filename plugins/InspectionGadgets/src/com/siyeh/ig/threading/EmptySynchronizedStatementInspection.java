@@ -45,7 +45,7 @@ public class EmptySynchronizedStatementInspection extends BaseInspection {
     private static class EmptySynchronizedStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {

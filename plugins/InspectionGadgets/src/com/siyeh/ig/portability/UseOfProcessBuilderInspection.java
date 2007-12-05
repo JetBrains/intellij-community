@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.portability;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiVariable;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -42,7 +45,7 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
 
     private static class ProcessBuilderVisitor extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             final String typeString = type.getCanonicalText();
@@ -56,7 +59,7 @@ public class UseOfProcessBuilderInspection extends BaseInspection {
             registerError(typeElement);
         }
 
-        public void visitNewExpression(
+        @Override public void visitNewExpression(
                 @NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();

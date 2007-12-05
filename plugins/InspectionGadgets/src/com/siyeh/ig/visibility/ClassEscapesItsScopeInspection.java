@@ -47,7 +47,7 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
     private static class ClassEscapesItsScopeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             //no call to super, so we don't drill into anonymous classes
             if(method.isConstructor()){
                 return;
@@ -86,7 +86,7 @@ public class ClassEscapesItsScopeInspection extends BaseInspection {
             registerError(baseTypeElement);
         }
 
-        public void visitField(@NotNull PsiField field){
+        @Override public void visitField(@NotNull PsiField field){
             //no call to super, so we don't drill into anonymous classes
             if(field.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;

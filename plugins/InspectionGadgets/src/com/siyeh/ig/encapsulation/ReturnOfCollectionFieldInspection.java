@@ -30,7 +30,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ReturnOfCollectionFieldInspection extends BaseInspection{
 
@@ -145,7 +145,7 @@ public class ReturnOfCollectionFieldInspection extends BaseInspection{
     private class ReturnOfCollectionFieldVisitor
             extends BaseInspectionVisitor {
 
-    public void visitReturnStatement(@NotNull PsiReturnStatement statement){
+    @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(returnValue == null){

@@ -30,7 +30,7 @@ class LocalVariableUsageVisitor extends PsiRecursiveElementVisitor{
         m_var = name;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression){
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression){
         final PsiElement reference = expression.resolve();
         if(m_var.equals(reference)){
             m_used = true;

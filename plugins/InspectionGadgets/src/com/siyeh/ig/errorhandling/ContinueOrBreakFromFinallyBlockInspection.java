@@ -50,7 +50,7 @@ public class ContinueOrBreakFromFinallyBlockInspection
     private static class ContinueOrBreakFromFinallyBlockVisitor
             extends BaseInspectionVisitor {
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
@@ -67,7 +67,7 @@ public class ContinueOrBreakFromFinallyBlockInspection
             registerStatementError(statement);
         }
 
-        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
                 return;

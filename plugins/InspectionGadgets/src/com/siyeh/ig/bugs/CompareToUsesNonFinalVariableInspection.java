@@ -52,16 +52,16 @@ public class CompareToUsesNonFinalVariableInspection
     private static class CompareToUsesNonFinalVariableVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             final boolean isCompareTo = MethodUtils.isCompareTo(method);
             if (isCompareTo) {
                 method.accept(new PsiRecursiveElementVisitor() {
 
-                    public void visitClass(PsiClass aClass) {
+                    @Override public void visitClass(PsiClass aClass) {
                         // Do not recurse into.
                     }
 
-                    public void visitReferenceExpression(
+                    @Override public void visitReferenceExpression(
                             @NotNull PsiReferenceExpression expression) {
                         super.visitReferenceExpression(expression);
                         final PsiElement element = expression.resolve();

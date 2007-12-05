@@ -34,9 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,7 +94,7 @@ public class NonBooleanMethodNameMayNotStartWithQuestionInspection
     private class NonBooleanMethodNameMayNotStartWithQuestionVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final PsiType returnType = method.getReturnType();
             if(returnType == null || returnType.equals(PsiType.BOOLEAN)){

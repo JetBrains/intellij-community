@@ -266,7 +266,7 @@ public class SimplifiableIfStatementInspection extends BaseInspection {
     private static class SimplifiableIfStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        @Override public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
             if (statement.getCondition() == null) {
                 return;

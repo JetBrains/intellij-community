@@ -45,7 +45,7 @@ public class NestedTryStatementInspection extends BaseInspection {
     private static class NestedTryStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiTryStatement parentTry =
                     PsiTreeUtil.getParentOfType(statement,

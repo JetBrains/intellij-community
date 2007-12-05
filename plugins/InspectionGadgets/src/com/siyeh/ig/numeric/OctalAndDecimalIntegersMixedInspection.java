@@ -52,7 +52,7 @@ public class OctalAndDecimalIntegersMixedInspection
     private static class OctalAndDecimalIntegersMixedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitArrayInitializerExpression(
+        @Override public void visitArrayInitializerExpression(
                 PsiArrayInitializerExpression expression) {
             super.visitArrayInitializerExpression(expression);
             final PsiExpression[] initializers = expression.getInitializers();

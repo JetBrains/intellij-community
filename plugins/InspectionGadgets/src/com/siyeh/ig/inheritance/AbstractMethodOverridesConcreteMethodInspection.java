@@ -45,7 +45,7 @@ public class AbstractMethodOverridesConcreteMethodInspection
     private static class AbstractMethodOverridesConcreteMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (method.isConstructor()) {
                 return;

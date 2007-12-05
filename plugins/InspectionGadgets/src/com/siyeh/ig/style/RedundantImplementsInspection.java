@@ -73,7 +73,7 @@ public class RedundantImplementsInspection extends BaseInspection {
     private static class RedundantImplementsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isAnnotationType()) {
                 return;
             }

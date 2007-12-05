@@ -218,7 +218,7 @@ public class AssignmentToMethodParameterInspection
     private class AssignmentToMethodParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiExpression lhs = expression.getLExpression();
@@ -235,7 +235,7 @@ public class AssignmentToMethodParameterInspection
             registerError(lhs);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
             if (ignoreTransformationOfOriginalParameter) {
                 return;
@@ -257,7 +257,7 @@ public class AssignmentToMethodParameterInspection
             registerError(operand);
         }
 
-        public void visitPostfixExpression(
+        @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression) {
             if (ignoreTransformationOfOriginalParameter) {
                 return;

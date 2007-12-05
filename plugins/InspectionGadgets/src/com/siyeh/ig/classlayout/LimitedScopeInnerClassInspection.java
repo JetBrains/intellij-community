@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDeclarationStatement;
 import com.intellij.psi.PsiElement;
@@ -55,7 +54,7 @@ public class LimitedScopeInnerClassInspection extends BaseInspection {
     private static class LimitedScopeInnerClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.getParent() instanceof PsiDeclarationStatement) {
                 registerClassError(aClass);
             }

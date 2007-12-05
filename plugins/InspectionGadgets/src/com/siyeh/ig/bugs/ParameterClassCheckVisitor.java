@@ -31,13 +31,13 @@ class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
         this.parameter = parameter;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!checked){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression expression){
         if(checked){
             return;
@@ -61,7 +61,7 @@ class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitInstanceOfExpression(
+    @Override public void visitInstanceOfExpression(
             @NotNull PsiInstanceOfExpression expression){
         if(checked){
             return;
@@ -73,7 +73,7 @@ class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
         if(checked){
             return;
         }

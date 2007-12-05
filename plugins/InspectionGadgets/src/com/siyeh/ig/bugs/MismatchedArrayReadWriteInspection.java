@@ -60,7 +60,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
     private static class MismatchedArrayReadWriteVisitor
             extends BaseInspectionVisitor{
 
-        public void visitField(@NotNull PsiField field){
+        @Override public void visitField(@NotNull PsiField field){
             super.visitField(field);
             if(!field.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
@@ -82,7 +82,7 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
             registerFieldError(field, Boolean.valueOf(written));
         }
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable){
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable){
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);

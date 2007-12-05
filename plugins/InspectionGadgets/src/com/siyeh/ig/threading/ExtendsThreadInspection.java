@@ -52,7 +52,7 @@ public class ExtendsThreadInspection extends BaseInspection {
 
     private static class ExtendsThreadVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                     aClass.isEnum()) {
                 return;

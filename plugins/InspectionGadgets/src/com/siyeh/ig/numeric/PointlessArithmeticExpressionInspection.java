@@ -31,7 +31,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -150,7 +150,7 @@ public class PointlessArithmeticExpressionInspection
 
     private class PointlessArithmeticVisitor extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if (!(expression.getROperand() != null)) {

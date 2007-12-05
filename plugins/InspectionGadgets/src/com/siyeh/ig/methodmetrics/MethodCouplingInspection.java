@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 
 public class MethodCouplingInspection extends MethodMetricInspection {
 
@@ -124,7 +123,7 @@ public class MethodCouplingInspection extends MethodMetricInspection {
 
     private class MethodCouplingVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             if (method.getNameIdentifier() == null) {
                 return;

@@ -14,7 +14,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 
 class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspectionVisitor {
 
-    public void visitReferenceExpression(PsiReferenceExpression expression){
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression){
         super.visitReferenceExpression(expression);
         if(!isInClassInitialization(expression)){
             return;

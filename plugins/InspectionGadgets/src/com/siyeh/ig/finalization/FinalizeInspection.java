@@ -48,7 +48,7 @@ public class FinalizeInspection extends BaseInspection {
 
     private static class FinalizeDeclaredVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             final String methodName = method.getName();
             if (!HardcodedMethodConstants.FINALIZE.equals(methodName)) {

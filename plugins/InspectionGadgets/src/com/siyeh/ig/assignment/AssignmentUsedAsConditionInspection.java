@@ -74,7 +74,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     private static class AssignmentUsedAsConditionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){

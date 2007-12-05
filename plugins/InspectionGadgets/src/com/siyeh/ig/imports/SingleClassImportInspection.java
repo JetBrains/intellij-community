@@ -45,7 +45,7 @@ public class SingleClassImportInspection extends BaseInspection {
 
     private static class PackageImportVisitor extends BaseInspectionVisitor{
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;

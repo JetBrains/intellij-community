@@ -68,7 +68,7 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
             s_assertMethods.add("fail");
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isJUnitAssertion(expression)) {

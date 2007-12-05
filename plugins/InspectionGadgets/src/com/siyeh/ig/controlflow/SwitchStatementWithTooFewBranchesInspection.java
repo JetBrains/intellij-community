@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class SwitchStatementWithTooFewBranchesInspection
         extends BaseInspection {
@@ -64,7 +64,7 @@ public class SwitchStatementWithTooFewBranchesInspection
     private class SwitchStatementWithTooFewBranchesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {

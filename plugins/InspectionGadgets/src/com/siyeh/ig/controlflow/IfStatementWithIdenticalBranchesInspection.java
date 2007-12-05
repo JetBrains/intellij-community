@@ -101,7 +101,7 @@ public class IfStatementWithIdenticalBranchesInspection
     private static class IfStatementWithIdenticalBranchesVisitor
             extends BaseInspectionVisitor{
 
-        public void visitIfStatement(@NotNull PsiIfStatement ifStatement){
+        @Override public void visitIfStatement(@NotNull PsiIfStatement ifStatement){
             super.visitIfStatement(ifStatement);
             final PsiStatement thenBranch = ifStatement.getThenBranch();
             final PsiStatement elseBranch = ifStatement.getElseBranch();

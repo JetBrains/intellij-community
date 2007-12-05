@@ -44,7 +44,7 @@ public class UnconditionalWaitInspection extends BaseInspection {
     private static class UnconditionalWaitVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                 return;
@@ -55,7 +55,7 @@ public class UnconditionalWaitInspection extends BaseInspection {
             }
         }
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiCodeBlock body = statement.getBody();

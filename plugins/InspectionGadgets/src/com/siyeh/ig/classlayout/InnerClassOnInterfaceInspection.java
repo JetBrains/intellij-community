@@ -27,7 +27,7 @@ import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class InnerClassOnInterfaceInspection extends BaseInspection {
 
@@ -73,7 +73,7 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
 
     private class InnerClassOnInterfaceVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (!aClass.isInterface() || aClass.isAnnotationType()) {
                 return;

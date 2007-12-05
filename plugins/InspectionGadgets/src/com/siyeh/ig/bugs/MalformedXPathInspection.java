@@ -64,7 +64,7 @@ public class MalformedXPathInspection extends BaseInspection {
 
     private static class MalformedXPathVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argumentList = expression.getArgumentList();

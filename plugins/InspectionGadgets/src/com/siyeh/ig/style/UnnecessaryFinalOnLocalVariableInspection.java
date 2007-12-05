@@ -54,7 +54,7 @@ public class UnnecessaryFinalOnLocalVariableInspection
     private static class UnnecessaryFinalOnLocalVariableVisitor
             extends BaseInspectionVisitor {
 
-        public void visitDeclarationStatement(
+        @Override public void visitDeclarationStatement(
                 PsiDeclarationStatement statement) {
             super.visitDeclarationStatement(statement);
             final PsiElement[] declaredElements =
@@ -90,7 +90,7 @@ public class UnnecessaryFinalOnLocalVariableInspection
             registerModifierError(PsiModifier.FINAL, variable1, variable1);
         }
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();
@@ -111,7 +111,7 @@ public class UnnecessaryFinalOnLocalVariableInspection
             }
         }
 
-        public void visitForeachStatement(PsiForeachStatement statement) {
+        @Override public void visitForeachStatement(PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiParameter parameter = statement.getIterationParameter();
             if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {

@@ -72,7 +72,7 @@ public class UnnecessaryThisInspection extends BaseInspection {
 
     private static class UnnecessaryThisVisitor extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiReferenceParameterList parameterList =

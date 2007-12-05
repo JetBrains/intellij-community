@@ -90,7 +90,7 @@ public class TeardownCallsSuperTeardownInspection extends BaseInspection {
     private static class TeardownCallsSuperTeardownVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             @NonNls final String methodName = method.getName();
             if (!"tearDown".equals(methodName)) {

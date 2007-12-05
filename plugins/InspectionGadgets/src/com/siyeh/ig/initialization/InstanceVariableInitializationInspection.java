@@ -74,7 +74,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection{
     private class InstanceVariableInitializationVisitor
             extends BaseInspectionVisitor{
 
-        public void visitField(@NotNull PsiField field){
+        @Override public void visitField(@NotNull PsiField field){
             if(field.hasModifierProperty(PsiModifier.STATIC) ||
                     field.hasModifierProperty(PsiModifier.FINAL)){
                 return;

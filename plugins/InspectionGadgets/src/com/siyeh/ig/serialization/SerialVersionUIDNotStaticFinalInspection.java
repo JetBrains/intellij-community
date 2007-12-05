@@ -52,7 +52,7 @@ public class SerialVersionUIDNotStaticFinalInspection extends BaseInspection {
     private static class SerialVersionUIDNotStaticFinalVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;

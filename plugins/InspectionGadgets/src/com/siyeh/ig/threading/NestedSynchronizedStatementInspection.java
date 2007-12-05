@@ -45,7 +45,7 @@ public class NestedSynchronizedStatementInspection extends BaseInspection {
     private static class NestedSynchronizedStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiElement containingSynchronizedStatement =

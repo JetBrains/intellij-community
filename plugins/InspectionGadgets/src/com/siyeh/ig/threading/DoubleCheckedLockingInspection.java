@@ -26,7 +26,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class DoubleCheckedLockingInspection extends BaseInspection {
 
@@ -60,7 +60,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     private class DoubleCheckedLockingVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiExpression outerCondition = statement.getCondition();
             if (outerCondition == null) {

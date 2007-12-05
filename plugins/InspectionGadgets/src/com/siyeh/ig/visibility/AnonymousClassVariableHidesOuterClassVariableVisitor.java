@@ -1,18 +1,18 @@
 package com.siyeh.ig.visibility;
 
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.BaseInspectionVisitor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
 
 class AnonymousClassVariableHidesOuterClassVariableVisitor
         extends BaseInspectionVisitor {
 
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         final PsiCodeBlock codeBlock =
                 PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
@@ -71,7 +71,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
 
         private Map<String, List<PsiVariable>> variableMap = new HashMap();
 
-        public void visitVariable(PsiVariable variable) {
+        @Override public void visitVariable(PsiVariable variable) {
             super.visitVariable(variable);
             final String name = variable.getName();
             final List<PsiVariable> variableList = variableMap.get(name);
@@ -84,7 +84,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
             }
         }
 
-        public void visitClass(PsiClass aClass) {
+        @Override public void visitClass(PsiClass aClass) {
             // don't drill down in classes
         }
 

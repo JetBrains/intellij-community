@@ -77,7 +77,7 @@ public class ConstantStringInternInspection extends BaseInspection {
     private static class ConstantStringInternVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

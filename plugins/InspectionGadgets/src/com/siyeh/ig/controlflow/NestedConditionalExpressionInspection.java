@@ -44,7 +44,7 @@ public class NestedConditionalExpressionInspection
     private static class NestedConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
             if (PsiTreeUtil.getParentOfType(expression,

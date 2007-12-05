@@ -61,7 +61,7 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
 
     private static class MethodOverloadsParentMethodVisitor
             extends BaseInspectionVisitor{
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             final PsiClass aClass = method.getContainingClass();
             if(aClass == null){
                 return;

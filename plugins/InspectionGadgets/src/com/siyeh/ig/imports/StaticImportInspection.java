@@ -163,7 +163,7 @@ public class StaticImportInspection extends BaseInspection {
                 this.onDemand = onDemand;
             }
 
-            public void visitReferenceElement(
+            @Override public void visitReferenceElement(
                     PsiJavaCodeReferenceElement reference) {
                 super.visitReferenceElement(reference);
                 if (isFullyQualifiedReference(reference)) {
@@ -268,7 +268,7 @@ public class StaticImportInspection extends BaseInspection {
 
     private static class StaticImportVisitor extends BaseInspectionVisitor{
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(!(aClass.getParent() instanceof PsiJavaFile)){
                 return;

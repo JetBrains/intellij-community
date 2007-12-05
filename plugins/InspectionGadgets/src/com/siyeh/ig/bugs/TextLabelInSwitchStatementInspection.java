@@ -42,7 +42,7 @@ public class TextLabelInSwitchStatementInspection extends BaseInspection {
     private static class TextLabelInSwitchStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiCodeBlock body = statement.getBody();

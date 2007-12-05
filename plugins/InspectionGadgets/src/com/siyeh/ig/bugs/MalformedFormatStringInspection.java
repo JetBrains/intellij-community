@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -90,7 +89,7 @@ public class MalformedFormatStringInspection extends BaseInspection{
             formatClassNames.add("java.lang.String");
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argList = expression.getArgumentList();

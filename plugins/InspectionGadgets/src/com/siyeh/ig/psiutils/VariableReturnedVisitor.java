@@ -31,7 +31,7 @@ public class VariableReturnedVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitReturnStatement(
+    @Override public void visitReturnStatement(
             @NotNull PsiReturnStatement returnStatement) {
         if(returned){
             return;

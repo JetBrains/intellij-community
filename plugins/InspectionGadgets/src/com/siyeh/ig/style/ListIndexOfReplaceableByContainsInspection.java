@@ -137,7 +137,7 @@ public class ListIndexOfReplaceableByContainsInspection
     private static class IndexOfReplaceableByContainsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {

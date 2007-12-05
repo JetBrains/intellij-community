@@ -54,7 +54,7 @@ public class UnsecureRandomNumberGenerationInspection
     private static class InsecureRandomNumberGenerationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiJavaCodeReferenceElement reference =
                     expression.getClassReference();
@@ -76,7 +76,7 @@ public class UnsecureRandomNumberGenerationInspection
             registerError(reference, reference);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

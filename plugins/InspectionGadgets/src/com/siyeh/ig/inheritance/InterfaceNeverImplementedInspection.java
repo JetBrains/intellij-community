@@ -24,7 +24,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class InterfaceNeverImplementedInspection extends BaseInspection {
 
@@ -58,7 +58,7 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
     private class InterfaceNeverImplementedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }

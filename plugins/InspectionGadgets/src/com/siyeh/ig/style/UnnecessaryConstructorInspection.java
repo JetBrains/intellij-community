@@ -73,7 +73,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
     private static class UnnecessaryConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             final PsiMethod[] constructors = aClass.getConstructors();
             if (constructors.length != 1) {
                 return;

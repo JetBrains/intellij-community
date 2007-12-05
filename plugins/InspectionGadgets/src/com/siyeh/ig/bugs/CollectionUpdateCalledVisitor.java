@@ -70,13 +70,13 @@ class CollectionUpdateCalledVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!updated){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression call){
         super.visitMethodCallExpression(call);
         if(updated){

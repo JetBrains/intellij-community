@@ -28,7 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnqualifiedStaticUsageInspection extends BaseInspection {
 
@@ -120,7 +120,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
 
     private class UnqualifiedStaticCallVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (m_ignoreStaticMethodCalls) {
@@ -134,7 +134,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection {
             registerError(methodExpression, expression);
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (m_ignoreStaticFieldAccesses) {

@@ -76,7 +76,7 @@ public class EmptyInitializerInspection extends BaseInspection{
 
     private static class EmptyInitializerVisitor extends BaseInspectionVisitor{
 
-        public void visitClassInitializer(
+        @Override public void visitClassInitializer(
                 @NotNull PsiClassInitializer initializer){
             super.visitClassInitializer(initializer);
             final PsiCodeBlock body = initializer.getBody();

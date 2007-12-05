@@ -43,7 +43,7 @@ public class BreakStatementWithLabelInspection extends BaseInspection {
     private static class BreakStatementWithLabelVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
             final PsiIdentifier labelIdentifier =
                     statement.getLabelIdentifier();

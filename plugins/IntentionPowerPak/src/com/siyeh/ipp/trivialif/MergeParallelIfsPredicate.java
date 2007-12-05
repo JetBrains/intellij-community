@@ -140,7 +140,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
             this.declarations = new HashSet<String>(declarations);
         }
 
-        public void visitVariable(PsiVariable variable){
+        @Override public void visitVariable(PsiVariable variable){
             super.visitVariable(variable);
             final String name = variable.getName();
             for(Object declaration : declarations){

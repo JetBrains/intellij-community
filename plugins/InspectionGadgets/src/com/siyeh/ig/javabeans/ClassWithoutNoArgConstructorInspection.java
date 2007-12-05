@@ -15,14 +15,17 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiTypeParameter;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
 
@@ -55,7 +58,7 @@ public class ClassWithoutNoArgConstructorInspection extends BaseInspection {
     private class ClassWithoutNoArgConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface() || aClass.isEnum() ||
                     aClass.isAnnotationType()) {

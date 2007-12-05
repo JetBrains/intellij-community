@@ -44,7 +44,7 @@ public class AbstractClassNeverImplementedInspection extends BaseInspection {
     private static class AbstractClassNeverImplementedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType()) {
                 return;
             }

@@ -24,14 +24,14 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class OverlyStrongTypeCastInspection extends BaseInspection {
 
@@ -104,7 +104,7 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
     private class OverlyStrongTypeCastVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTypeCastExpression(
+        @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiExpression operand = expression.getOperand();

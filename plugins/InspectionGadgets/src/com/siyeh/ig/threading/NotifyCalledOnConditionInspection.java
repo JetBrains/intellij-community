@@ -45,7 +45,7 @@ public class NotifyCalledOnConditionInspection extends BaseInspection {
     private static class NotifyCalledOnConditionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!MethodCallUtils.isCallToMethod(expression,

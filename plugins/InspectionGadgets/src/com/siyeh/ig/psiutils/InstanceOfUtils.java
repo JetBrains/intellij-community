@@ -16,11 +16,11 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InstanceOfUtils {
 
@@ -93,12 +93,12 @@ public class InstanceOfUtils {
             this.strict = strict;
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             visitExpression(expression);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             final PsiJavaToken sign =
                     expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -115,7 +115,7 @@ public class InstanceOfUtils {
             }
         }
 
-        public void visitIfStatement(PsiIfStatement ifStatement) {
+        @Override public void visitIfStatement(PsiIfStatement ifStatement) {
             final PsiStatement branch = ifStatement.getElseBranch();
             inElse = branch != null &&
                     PsiTreeUtil.isAncestor(branch, referenceExpression,
@@ -149,7 +149,7 @@ public class InstanceOfUtils {
             }
         }
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             final PsiExpression elseExpression =
                     expression.getElseExpression();

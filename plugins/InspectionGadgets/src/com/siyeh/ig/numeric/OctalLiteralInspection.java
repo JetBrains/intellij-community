@@ -51,7 +51,7 @@ public class OctalLiteralInspection extends BaseInspection {
 
     private static class OctalLiteralVisitor extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression literal) {
             super.visitLiteralExpression(literal);
             final PsiType type = literal.getType();

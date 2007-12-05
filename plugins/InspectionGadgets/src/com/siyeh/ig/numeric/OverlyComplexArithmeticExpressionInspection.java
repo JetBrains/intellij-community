@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -82,19 +82,19 @@ public class OverlyComplexArithmeticExpressionInspection
     private class SwitchStatementWithTooManyBranchesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitParenthesizedExpression(
+        @Override public void visitParenthesizedExpression(
                 PsiParenthesizedExpression expression) {
             super.visitParenthesizedExpression(expression);
             checkExpression(expression);

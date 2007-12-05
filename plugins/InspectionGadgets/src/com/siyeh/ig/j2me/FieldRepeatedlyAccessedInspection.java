@@ -24,7 +24,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Set;
 
 public class FieldRepeatedlyAccessedInspection extends BaseInspection {
@@ -63,7 +63,7 @@ public class FieldRepeatedlyAccessedInspection extends BaseInspection {
 
     private class FieldRepeatedlyAccessedVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             final PsiIdentifier nameIdentifier = method.getNameIdentifier();
             if (nameIdentifier == null) {
                 return;

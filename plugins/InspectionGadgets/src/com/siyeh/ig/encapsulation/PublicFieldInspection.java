@@ -26,7 +26,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class PublicFieldInspection extends BaseInspection {
 
@@ -65,7 +65,7 @@ public class PublicFieldInspection extends BaseInspection {
 
     private class PublicFieldVisitor extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
                 return;
             }

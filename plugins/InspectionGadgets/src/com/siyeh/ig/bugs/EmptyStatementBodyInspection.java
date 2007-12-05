@@ -23,7 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class EmptyStatementBodyInspection extends BaseInspection {
 
@@ -64,7 +64,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
 
     private class EmptyStatementVisitor extends BaseInspectionVisitor {
 
-        public void visitDoWhileStatement(
+        @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
@@ -77,7 +77,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
@@ -89,7 +89,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;
@@ -101,7 +101,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitForeachStatement(
+        @Override public void visitForeachStatement(
                 @NotNull PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
@@ -114,7 +114,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;

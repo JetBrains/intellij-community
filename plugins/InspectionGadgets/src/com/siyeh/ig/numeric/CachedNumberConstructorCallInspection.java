@@ -98,7 +98,7 @@ public class CachedNumberConstructorCallInspection
     private static class LongConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;

@@ -43,7 +43,7 @@ public class InstanceofInterfacesInspection extends BaseInspection {
     private static class InstanceofInterfacesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitInstanceOfExpression(
+        @Override public void visitInstanceOfExpression(
                 @NotNull PsiInstanceOfExpression expression) {
             super.visitInstanceOfExpression(expression);
             final PsiTypeElement typeElement = expression.getCheckType();

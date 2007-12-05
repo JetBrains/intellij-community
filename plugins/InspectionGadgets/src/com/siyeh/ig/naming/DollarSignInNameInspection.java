@@ -54,7 +54,7 @@ public class DollarSignInNameInspection extends BaseInspection {
 
     private static class DollarSignInNameVisitor extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final String name = variable.getName();
             if (name == null) {
@@ -66,7 +66,7 @@ public class DollarSignInNameInspection extends BaseInspection {
             registerVariableError(variable);
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final String name = method.getName();
             if (name.indexOf((int)'$') < 0) {
@@ -75,7 +75,7 @@ public class DollarSignInNameInspection extends BaseInspection {
             registerMethodError(method);
         }
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //note: no call to super, to avoid drill-down
             final String name = aClass.getName();
             if (name == null) {

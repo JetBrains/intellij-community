@@ -35,13 +35,13 @@ public class SideEffectChecker{
         
         private boolean mayHaveSideEffects = false;
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!mayHaveSideEffects){
                 super.visitElement(element);
             }
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression){
             if(mayHaveSideEffects){
                 return;
@@ -50,7 +50,7 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             if(mayHaveSideEffects){
                 return;
@@ -59,7 +59,7 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             if(mayHaveSideEffects){
                 return;
             }
@@ -67,7 +67,7 @@ public class SideEffectChecker{
             mayHaveSideEffects = true;
         }
 
-        public void visitPostfixExpression(
+        @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression){
             if(mayHaveSideEffects){
                 return;
@@ -81,7 +81,7 @@ public class SideEffectChecker{
             }
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
             if(mayHaveSideEffects){
                 return;

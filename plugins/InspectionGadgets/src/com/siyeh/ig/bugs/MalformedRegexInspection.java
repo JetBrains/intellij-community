@@ -61,7 +61,7 @@ public class MalformedRegexInspection extends BaseInspection {
 
     private static class MalformedRegexVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argList = expression.getArgumentList();

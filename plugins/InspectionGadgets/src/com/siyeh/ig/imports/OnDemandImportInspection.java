@@ -40,7 +40,7 @@ public class OnDemandImportInspection extends BaseInspection {
 
     private static class PackageImportVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             final PsiElement parent = aClass.getParent();
             if (!(parent instanceof PsiJavaFile)) {

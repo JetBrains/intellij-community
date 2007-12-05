@@ -30,7 +30,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class NestedMethodCallInspection extends BaseInspection {
 
@@ -97,7 +97,7 @@ public class NestedMethodCallInspection extends BaseInspection {
 
     private class NestedMethodCallVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             PsiExpression outerExpression = expression;

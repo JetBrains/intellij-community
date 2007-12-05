@@ -46,7 +46,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
 
     private static class SuppressionAnnotationVisitor
             extends BaseInspectionVisitor{
-        public void visitComment(PsiComment comment){
+        @Override public void visitComment(PsiComment comment){
             super.visitComment(comment);
             final String commentText = comment.getText();
             final IElementType tokenType = comment.getTokenType();
@@ -61,7 +61,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
             }
         }
 
-        public void visitAnnotation(PsiAnnotation annotation){
+        @Override public void visitAnnotation(PsiAnnotation annotation){
             super.visitAnnotation(annotation);
             final PsiJavaCodeReferenceElement reference =
                     annotation.getNameReferenceElement();

@@ -41,7 +41,7 @@ public class AnnotationClassInspection extends BaseInspection {
 
     private static class AnnotationClassVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isAnnotationType()) {
                 return;
             }

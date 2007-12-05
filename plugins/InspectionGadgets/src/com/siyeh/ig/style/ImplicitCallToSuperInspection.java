@@ -27,7 +27,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ImplicitCallToSuperInspection extends BaseInspection {
 
@@ -93,7 +93,7 @@ public class ImplicitCallToSuperInspection extends BaseInspection {
 
     private class ImplicitCallToSuperVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.isConstructor()) {
                 return;

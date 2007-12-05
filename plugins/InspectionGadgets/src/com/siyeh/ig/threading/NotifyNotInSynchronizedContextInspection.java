@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -45,7 +48,7 @@ public class NotifyNotInSynchronizedContextInspection
     private static class NotifyNotInSynchronizedContextVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

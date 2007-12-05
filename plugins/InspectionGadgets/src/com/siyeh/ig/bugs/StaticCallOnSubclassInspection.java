@@ -100,7 +100,7 @@ public class StaticCallOnSubclassInspection extends BaseInspection {
     private static class StaticCallOnSubclassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =

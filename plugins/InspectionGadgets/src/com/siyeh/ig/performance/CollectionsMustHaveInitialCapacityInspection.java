@@ -52,7 +52,7 @@ public class CollectionsMustHaveInitialCapacityInspection
     private static class CollectionInitialCapacityVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
 

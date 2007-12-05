@@ -49,7 +49,7 @@ public class PublicFieldAccessedInSynchronizedContextInspection
     private static class PublicFieldAccessedInSynchronizedContextVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             final PsiElement element = expression.resolve();
             if (!(element instanceof PsiField)) {

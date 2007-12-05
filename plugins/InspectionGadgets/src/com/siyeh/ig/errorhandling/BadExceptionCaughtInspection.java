@@ -31,9 +31,7 @@ import com.siyeh.ig.ui.RemoveAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -92,7 +90,7 @@ public class BadExceptionCaughtInspection extends BaseInspection {
 
         private final Set<String> exceptionSet = new HashSet(exceptionList);
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiParameter[] catchBlockParameters =
                     statement.getCatchBlockParameters();

@@ -25,8 +25,6 @@ import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import com.siyeh.ig.performance.InnerClassReferenceVisitor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
-
 public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
 
     @NotNull
@@ -54,7 +52,7 @@ public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
     private static class AnonymousInnerClassMayBeStaticVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             if (!(aClass instanceof PsiAnonymousClass)) {
                 return;
             }

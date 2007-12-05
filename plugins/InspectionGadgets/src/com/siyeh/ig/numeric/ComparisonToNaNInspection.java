@@ -103,7 +103,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
 
     private static class ComparisonToNaNVisitor extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if (!(expression.getROperand() != null)) {

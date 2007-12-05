@@ -45,7 +45,7 @@ public class NonThreadSafeLazyInitializationInspection
     private static class UnsafeSafeLazyInitializationVisitor
             extends BaseInspectionVisitor{
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             final PsiExpression lhs = expression.getLExpression();

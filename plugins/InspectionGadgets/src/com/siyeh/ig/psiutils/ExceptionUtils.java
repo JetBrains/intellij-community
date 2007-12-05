@@ -189,7 +189,7 @@ public class ExceptionUtils{
 
         private final Set<PsiType> m_exceptionsThrown = new HashSet<PsiType>(4);
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiMethod method = expression.resolveMethod();
@@ -212,7 +212,7 @@ public class ExceptionUtils{
             }
         }
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiMethod method = expression.resolveMethod();
             if(method == null){
@@ -234,7 +234,7 @@ public class ExceptionUtils{
             }
         }
 
-        public void visitThrowStatement(PsiThrowStatement statement){
+        @Override public void visitThrowStatement(PsiThrowStatement statement){
             super.visitThrowStatement(statement);
             final PsiExpression exception = statement.getException();
             if(exception == null){
@@ -247,7 +247,7 @@ public class ExceptionUtils{
             m_exceptionsThrown.add(type);
         }
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement){
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement){
             final PsiCodeBlock tryBlock = statement.getTryBlock();
             final Set<PsiType> exceptionsThrown = m_exceptionsThrown;
             if(tryBlock != null){

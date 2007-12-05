@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
@@ -124,7 +123,7 @@ public class FieldCountInspection extends ClassMetricInspection {
 
     private class FieldCountVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalFields = countFields(aClass);
             if (totalFields <= getLimit()) {

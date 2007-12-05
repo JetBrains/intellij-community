@@ -23,10 +23,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.RegExInputVerifier;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -62,7 +59,7 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
 
     private class ClassWithoutLoggerVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown
             if (aClass.isInterface() || aClass.isEnum()||
                     aClass.isAnnotationType()){

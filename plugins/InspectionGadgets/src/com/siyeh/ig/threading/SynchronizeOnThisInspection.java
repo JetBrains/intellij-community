@@ -43,7 +43,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
     private static class SynchronizeOnThisVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiExpression lockExpression = statement.getLockExpression();
@@ -53,7 +53,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
             registerError(lockExpression);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

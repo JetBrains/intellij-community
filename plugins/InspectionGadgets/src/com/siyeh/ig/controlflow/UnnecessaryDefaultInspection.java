@@ -42,7 +42,7 @@ public class UnnecessaryDefaultInspection extends BaseInspection {
     private static class UnnecessaryDefaultVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (!switchStatementContainsUnnecessaryDefault(statement)) {

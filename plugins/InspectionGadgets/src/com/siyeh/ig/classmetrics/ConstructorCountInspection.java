@@ -58,7 +58,7 @@ public class ConstructorCountInspection extends ClassMetricInspection {
 
     private class ConstructorCountVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int constructorCount = calculateTotalConstructorCount(aClass);
             if (constructorCount <= getLimit()) {

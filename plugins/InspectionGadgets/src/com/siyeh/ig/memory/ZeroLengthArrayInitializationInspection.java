@@ -21,8 +21,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ZeroLengthArrayInitializationInspection extends BaseInspection {
@@ -59,7 +59,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
     private static class ZeroLengthArrayInitializationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!ExpressionUtils.isZeroLengthArrayConstruction(expression)) {
                 return;
@@ -70,7 +70,7 @@ public class ZeroLengthArrayInitializationInspection extends BaseInspection {
             registerError(expression);
         }
 
-        public void visitArrayInitializerExpression(
+        @Override public void visitArrayInitializerExpression(
                 PsiArrayInitializerExpression expression) {
             super.visitArrayInitializerExpression(expression);
             final PsiExpression[] initializers = expression.getInitializers();

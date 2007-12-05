@@ -29,9 +29,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 
 public class ClassWithMultipleLoggersInspection extends BaseInspection {
 
@@ -106,7 +104,7 @@ public class ClassWithMultipleLoggersInspection extends BaseInspection {
     private class ClassWithMultipleLoggersVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //no recursion to avoid drilldown
             if (aClass.isInterface() || aClass.isEnum() ||
                     aClass.isAnnotationType()) {

@@ -136,7 +136,7 @@ public class OverridableMethodCallDuringObjectConstructionInspection
     private static class OverridableMethodCallInConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiMember member =

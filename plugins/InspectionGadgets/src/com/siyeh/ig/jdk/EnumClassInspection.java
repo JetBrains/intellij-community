@@ -40,7 +40,7 @@ public class EnumClassInspection extends BaseInspection {
 
     private static class EnumClassVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isEnum()) {
                 return;
             }

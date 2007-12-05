@@ -44,7 +44,7 @@ public class ClassWithoutToStringInspection extends BaseInspection {
     private static class ClassWithoutToStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
             if (aClass.getNameIdentifier() == null &&
                     !(aClass instanceof PsiAnonymousClass)) {

@@ -27,7 +27,7 @@ import com.siyeh.ig.fixes.MakeProtectedFix;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class NonProtectedConstructorInAbstractClassInspection
         extends BaseInspection {
@@ -72,7 +72,7 @@ public class NonProtectedConstructorInAbstractClassInspection
     private class NonProtectedConstructorInAbstractClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (!method.isConstructor()) {
                 return;

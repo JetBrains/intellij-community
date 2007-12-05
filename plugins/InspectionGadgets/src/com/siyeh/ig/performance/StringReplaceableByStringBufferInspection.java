@@ -50,7 +50,7 @@ public class StringReplaceableByStringBufferInspection
     private static class StringReplaceableByStringBufferVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);

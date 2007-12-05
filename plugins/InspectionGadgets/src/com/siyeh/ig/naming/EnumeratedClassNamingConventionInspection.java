@@ -77,7 +77,7 @@ public class EnumeratedClassNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isEnum()) {
                 return;
             }

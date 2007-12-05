@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
@@ -75,7 +75,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     private class DeclareCollectionAsInterfaceVisitor
             extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
                 return;
             }
@@ -123,7 +123,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
             registerError(nameElement, nameElement);
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (ignorePrivateMethodsAndFields &&
                     method.hasModifierProperty(PsiModifier.PRIVATE)) {

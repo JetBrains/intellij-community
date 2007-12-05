@@ -80,7 +80,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
     private static class UnnecessaryLabelOnContinueStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
             final PsiIdentifier labelIdentifier =
                     statement.getLabelIdentifier();

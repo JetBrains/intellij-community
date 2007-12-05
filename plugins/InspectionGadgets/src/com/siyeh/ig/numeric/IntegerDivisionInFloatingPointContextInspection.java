@@ -66,7 +66,7 @@ public class IntegerDivisionInFloatingPointContextInspection
     private static class IntegerDivisionInFloatingPointContextVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();

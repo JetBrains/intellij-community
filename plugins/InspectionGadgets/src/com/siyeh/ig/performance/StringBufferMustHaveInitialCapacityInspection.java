@@ -52,7 +52,7 @@ public class StringBufferMustHaveInitialCapacityInspection
     private static class StringBufferInitialCapacityVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
 

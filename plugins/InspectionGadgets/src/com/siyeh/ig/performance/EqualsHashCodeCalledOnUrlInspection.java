@@ -47,7 +47,7 @@ public class EqualsHashCodeCalledOnUrlInspection extends BaseInspection {
     private static class EqualsHashCodeCalledOnUrlVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             final PsiReferenceExpression methodExpression =
                     expression.getMethodExpression();

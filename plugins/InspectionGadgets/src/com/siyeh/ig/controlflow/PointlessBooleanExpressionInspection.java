@@ -31,7 +31,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -213,11 +213,11 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     private  class PointlessBooleanExpressionVisitor
             extends BaseInspectionVisitor{
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             //to avoid drilldown
         }
 
-        public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
+        @Override public void visitBinaryExpression(@NotNull PsiBinaryExpression expression){
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){
                 return;
@@ -270,7 +270,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
             registerError(expression, expression);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();

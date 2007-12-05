@@ -57,7 +57,7 @@ public class ExtendsConcreteCollectionInspection extends BaseInspection {
     private static class ExtendsConcreteCollectionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                     aClass.isEnum()) {
                 return;

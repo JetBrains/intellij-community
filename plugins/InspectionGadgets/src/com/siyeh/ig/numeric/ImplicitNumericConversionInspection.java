@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -248,56 +248,56 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     private class ImplicitNumericConversionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPostfixExpression(PsiPostfixExpression expression) {
+        @Override public void visitPostfixExpression(PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+        @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitParenthesizedExpression(
+        @Override public void visitParenthesizedExpression(
                 PsiParenthesizedExpression expression) {
             super.visitParenthesizedExpression(expression);
             checkExpression(expression);

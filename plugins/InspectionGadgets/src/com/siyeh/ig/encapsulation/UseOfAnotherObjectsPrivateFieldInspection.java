@@ -47,7 +47,7 @@ public class UseOfAnotherObjectsPrivateFieldInspection
 
     private static class UseOfAnotherObjectsPrivateFieldVisitor
             extends BaseInspectionVisitor{
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             final PsiExpression qualifier = expression.getQualifierExpression();

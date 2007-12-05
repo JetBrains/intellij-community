@@ -52,7 +52,7 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
     private static class LoopStatementsThatDontLoopVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement body = statement.getBody();
             if (body == null) {
@@ -67,7 +67,7 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitForeachStatement(
+        @Override public void visitForeachStatement(
                 @NotNull PsiForeachStatement statement) {
             super.visitForeachStatement(statement);
             final PsiStatement body = statement.getBody();
@@ -83,7 +83,7 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
             if (body == null) {
@@ -98,7 +98,7 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
             registerStatementError(statement);
         }
 
-        public void visitDoWhileStatement(
+        @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiStatement body = statement.getBody();

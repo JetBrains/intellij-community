@@ -54,7 +54,7 @@ public class NonFinalFieldOfExceptionInspection extends BaseInspection {
     private static class NonFinalFieldOfExceptionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(PsiField field) {
+        @Override public void visitField(PsiField field) {
             super.visitField(field);
             if (field.hasModifierProperty(PsiModifier.FINAL)) {
                 return;

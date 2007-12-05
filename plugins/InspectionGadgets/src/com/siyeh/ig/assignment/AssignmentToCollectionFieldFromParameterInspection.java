@@ -26,7 +26,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class AssignmentToCollectionFieldFromParameterInspection
         extends BaseInspection {
@@ -76,7 +76,7 @@ public class AssignmentToCollectionFieldFromParameterInspection
     private class AssignmentToCollectionFieldFromParameterVisitor
             extends BaseInspectionVisitor{
 
-        public void visitAssignmentExpression(@NotNull
+        @Override public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             final PsiExpression rhs = expression.getRExpression();

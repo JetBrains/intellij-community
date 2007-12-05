@@ -16,12 +16,12 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
 
@@ -47,13 +47,13 @@ class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!modified){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression call){
         if(modified){
             return;

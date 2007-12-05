@@ -78,7 +78,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor processor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
-      public void visitMethod(final RefMethod refMethod) {
+      @Override public void visitMethod(final RefMethod refMethod) {
         if (processor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
           final GlobalInspectionContext.UsagesProcessor usagesProcessor = new GlobalInspectionContext.UsagesProcessor() {
             public boolean process(PsiReference psiReference) {
@@ -113,7 +113,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
     final PsiMethod psiMethod = (PsiMethod)psiElement;
     if (!(psiMethod.getReturnType() == PsiType.BOOLEAN)) return;
     element.accept(new PsiRecursiveElementVisitor() {
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      @Override public void visitMethodCallExpression(PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression = call.getMethodExpression();
         if (methodExpression.isReferenceTo(psiMethod)) {

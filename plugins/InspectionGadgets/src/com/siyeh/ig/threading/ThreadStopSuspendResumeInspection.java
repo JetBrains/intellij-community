@@ -51,7 +51,7 @@ public class ThreadStopSuspendResumeInspection extends BaseInspection {
     private static class ThreadStopSuspendVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isStopSuspendOrResume(expression)) {

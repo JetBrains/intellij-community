@@ -46,7 +46,7 @@ public class PublicMethodNotExposedInInterfaceInspection
     private static class PublicMethodNotExposedInInterface
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.isConstructor()) {
                 return;

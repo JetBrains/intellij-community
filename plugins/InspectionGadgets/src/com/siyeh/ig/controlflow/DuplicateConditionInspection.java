@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,7 +62,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     private class DuplicateConditionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
             if (parent instanceof PsiIfStatement) {

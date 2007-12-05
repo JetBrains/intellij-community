@@ -75,7 +75,7 @@ public class UnusedLabelInspection extends BaseInspection {
 
     private static class UnusedLabelVisitor extends BaseInspectionVisitor {
 
-        public void visitLabeledStatement(PsiLabeledStatement statement) {
+        @Override public void visitLabeledStatement(PsiLabeledStatement statement) {
             if (containsBreakOrContinueForLabel(statement)) {
                 return;
             }
@@ -103,14 +103,14 @@ public class UnusedLabelInspection extends BaseInspection {
             label = labelIdentifier.getText();
         }
 
-        public void visitElement(@NotNull PsiElement element) {
+        @Override public void visitElement(@NotNull PsiElement element) {
             if (found) {
                 return;
             }
             super.visitElement(element);
         }
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement continueStatement) {
             if (found) {
                 return;
@@ -123,7 +123,7 @@ public class UnusedLabelInspection extends BaseInspection {
             }
         }
 
-        public void visitBreakStatement(
+        @Override public void visitBreakStatement(
                 @NotNull PsiBreakStatement breakStatement) {
             if (found) {
                 return;

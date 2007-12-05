@@ -29,13 +29,13 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!passed){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
+    @Override public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call){
         if(passed){
             return;
         }
@@ -49,7 +49,7 @@ public class VariablePassedAsArgumentVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitNewExpression(@NotNull PsiNewExpression newExpression){
+    @Override public void visitNewExpression(@NotNull PsiNewExpression newExpression){
         if(passed){
             return;
         }

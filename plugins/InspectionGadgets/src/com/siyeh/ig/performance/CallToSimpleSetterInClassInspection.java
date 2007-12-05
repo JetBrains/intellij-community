@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class CallToSimpleSetterInClassInspection extends BaseInspection {
 
@@ -146,7 +146,7 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
     private class CallToSimpleSetterInClassVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiClass containingClass =

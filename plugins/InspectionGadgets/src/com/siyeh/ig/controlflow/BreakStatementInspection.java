@@ -42,7 +42,7 @@ public class BreakStatementInspection extends BaseInspection {
     private static class BreakStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             super.visitBreakStatement(statement);
             final PsiSwitchStatement switchStatement =
                     PsiTreeUtil.getParentOfType(statement,

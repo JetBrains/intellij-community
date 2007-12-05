@@ -29,7 +29,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class InnerClassVariableHidesOuterClassVariableInspection
         extends BaseInspection {
@@ -75,7 +75,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection
     private class InnerClassVariableHidesOuterClassVariableVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();
             if (aClass == null) {
                 return;

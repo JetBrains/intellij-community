@@ -348,7 +348,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitAssertStatement(PsiAssertStatement statement){
+    @Override public void visitAssertStatement(PsiAssertStatement statement){
         super.visitAssertStatement(statement);
         if(assertStatement){
             return;
@@ -368,7 +368,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         assertStatement = true;
     }
 
-    public void visitClassObjectAccessExpression(
+    @Override public void visitClassObjectAccessExpression(
             PsiClassObjectAccessExpression expression){
         final PsiTypeElement operand = expression.getOperand();
         final PsiType type = operand.getType();
@@ -378,7 +378,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         super.visitClassObjectAccessExpression(expression);
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression methodCallExpression){
         // for navigating the psi tree in the order javac navigates its AST
         final PsiExpressionList argumentList =
@@ -392,7 +392,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         methodExpression.accept(this);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
         super.visitReferenceElement(reference);
         final PsiElement parentClass = ClassUtils.getContainingClass(reference);
         if(reference.getParent() instanceof PsiTypeElement){
@@ -419,7 +419,7 @@ public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitReferenceExpression(
+    @Override public void visitReferenceExpression(
             @NotNull PsiReferenceExpression expression){
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();

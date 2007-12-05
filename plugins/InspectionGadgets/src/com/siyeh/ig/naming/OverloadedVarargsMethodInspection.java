@@ -49,7 +49,7 @@ public class OverloadedVarargsMethodInspection extends BaseInspection {
     private static class OverloadedVarargMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             if (!method.isVarArgs()) {
                 return;
             }

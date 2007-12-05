@@ -29,7 +29,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ReturnNullInspection extends BaseInspection {
 
@@ -85,7 +85,7 @@ public class ReturnNullInspection extends BaseInspection {
 
     private class ReturnNullVisitor extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();

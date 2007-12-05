@@ -62,7 +62,7 @@ public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         return true;
     }
 
-    public void visitThisExpression(@NotNull PsiThisExpression expression){
+    @Override public void visitThisExpression(@NotNull PsiThisExpression expression){
         if(!referencesStaticallyAccessible) {
             return;
         }
@@ -73,7 +73,7 @@ public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
         if (!referencesStaticallyAccessible) {
             return;
         }
@@ -97,7 +97,7 @@ public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
         return !aClass.equals(innerClass);
     }
 
-    public void visitReferenceElement(
+    @Override public void visitReferenceElement(
             @NotNull PsiJavaCodeReferenceElement reference) {
         if(!referencesStaticallyAccessible){
             return;
@@ -121,7 +121,7 @@ public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
                 aClass.hasModifierProperty(PsiModifier.STATIC);
     }
 
-    public void visitReferenceExpression(
+    @Override public void visitReferenceExpression(
             @NotNull PsiReferenceExpression expression) {
         if(!referencesStaticallyAccessible){
             return;

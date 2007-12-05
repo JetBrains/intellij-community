@@ -58,7 +58,7 @@ public class ExtendsAnnotationInspection extends BaseInspection {
     private static class ExtendsAnnotationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(aClass);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {

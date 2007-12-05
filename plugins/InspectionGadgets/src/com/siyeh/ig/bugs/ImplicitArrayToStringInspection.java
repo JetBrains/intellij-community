@@ -109,7 +109,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     private static class ImplicitArrayToStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             if (!isImplicitArrayToStringCall(expression)) {
@@ -118,7 +118,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             registerError(expression, expression);
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!isImplicitArrayToStringCall(expression)) {
                 return;
@@ -126,7 +126,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             registerError(expression, expression);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isImplicitArrayToStringCall(expression)) {

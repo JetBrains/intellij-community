@@ -134,7 +134,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
     private static class UnnecessaryInterfaceModifierVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface()) {
                 final PsiModifierList modifiers = aClass.getModifierList();
                 checkForRedundantModifiers(modifiers,
@@ -148,7 +148,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             }
         }
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             // don't call super, to keep this from drilling in
             final PsiClass containingClass = field.getContainingClass();
             if (containingClass == null) {
@@ -161,7 +161,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection {
             checkForRedundantModifiers(modifiers, FIELD_REDUNDANT_MODIFIERS);
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // don't call super, to keep this from drilling in
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {

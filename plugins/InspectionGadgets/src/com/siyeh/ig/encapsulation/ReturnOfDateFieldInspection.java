@@ -53,7 +53,7 @@ public class ReturnOfDateFieldInspection extends BaseInspection{
     private static class ReturnOfDateFieldVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReturnStatement(@NotNull PsiReturnStatement statement){
+        @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement){
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();
             if(!(returnValue instanceof PsiReferenceExpression)){

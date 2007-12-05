@@ -43,7 +43,7 @@ public class WaitNotInLoopInspection extends BaseInspection {
 
     private static class WaitNotInLoopVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

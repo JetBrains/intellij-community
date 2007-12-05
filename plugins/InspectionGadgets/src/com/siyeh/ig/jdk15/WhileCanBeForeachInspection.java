@@ -398,7 +398,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
     private static class WhileCanBeForeachVisitor
             extends BaseInspectionVisitor {
 
-        public void visitWhileStatement(
+        @Override public void visitWhileStatement(
                 @NotNull PsiWhileStatement whileStatement) {
             super.visitWhileStatement(whileStatement);
             final LanguageLevel languageLevel =
@@ -585,7 +585,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             this.iterator = iterator;
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression callExpression) {
             super.visitMethodCallExpression(callExpression);
             final PsiReferenceExpression methodExpression =
@@ -625,13 +625,13 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             this.iterator = iterator;
         }
 
-        public void visitElement(@NotNull PsiElement element) {
+        @Override public void visitElement(@NotNull PsiElement element) {
             if (!removeCalled) {
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
@@ -669,13 +669,13 @@ public class WhileCanBeForeachInspection extends BaseInspection {
             this.iterator = iterator;
         }
 
-        public void visitElement(@NotNull PsiElement element) {
+        @Override public void visitElement(@NotNull PsiElement element) {
             if (!hasNextCalled) {
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

@@ -24,7 +24,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class RefusedBequestInspection extends BaseInspection {
 
@@ -56,7 +56,7 @@ public class RefusedBequestInspection extends BaseInspection {
 
     private class RefusedBequestVisitor extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             final PsiCodeBlock body = method.getBody();
             if(body == null){
@@ -123,13 +123,13 @@ public class RefusedBequestInspection extends BaseInspection {
             this.methodToSearchFor = methodToSearchFor;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!hasSuperCall){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             if(hasSuperCall){
                 return;

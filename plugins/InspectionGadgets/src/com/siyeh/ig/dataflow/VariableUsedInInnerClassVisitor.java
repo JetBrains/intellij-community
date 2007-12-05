@@ -30,7 +30,7 @@ class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element)
+    @Override public void visitElement(@NotNull PsiElement element)
     {
         if (usedInInnerClass)
         {
@@ -39,7 +39,7 @@ class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
         super.visitElement(element);
     }
 
-    public void visitAnonymousClass(
+    @Override public void visitAnonymousClass(
             @NotNull PsiAnonymousClass psiAnonymousClass)
     {
         if(usedInInnerClass)
@@ -52,7 +52,7 @@ class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
         inInnerClass = wasInInnerClass;
     }
 
-    public void visitReferenceExpression(
+    @Override public void visitReferenceExpression(
             @NotNull PsiReferenceExpression reference)
     {
         if(usedInInnerClass)

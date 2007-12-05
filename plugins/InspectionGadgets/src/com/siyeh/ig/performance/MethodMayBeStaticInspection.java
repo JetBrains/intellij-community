@@ -36,7 +36,7 @@ import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MethodMayBeStaticInspection extends BaseInspection {
 
@@ -99,7 +99,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
 
     private class MethodCanBeStaticVisitor extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if (method.hasModifierProperty(PsiModifier.STATIC) ||
                     method.hasModifierProperty(PsiModifier.ABSTRACT) ||

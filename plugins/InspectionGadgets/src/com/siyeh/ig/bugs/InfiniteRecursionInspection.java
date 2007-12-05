@@ -48,7 +48,7 @@ public class InfiniteRecursionInspection extends BaseInspection {
     private static class InfiniteRecursionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;

@@ -15,12 +15,12 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.HardcodedMethodConstants;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiField;
 import org.jetbrains.annotations.NotNull;
 
 class SerializableInnerClassHasSerialVersionUIDFieldVisitor
@@ -32,7 +32,7 @@ class SerializableInnerClassHasSerialVersionUIDFieldVisitor
         this.inspection = inspection;
     }
 
-    public void visitClass(@NotNull PsiClass aClass) {
+    @Override public void visitClass(@NotNull PsiClass aClass) {
         // no call to super, so it doesn't drill down
         if (aClass.isInterface() || aClass.isAnnotationType() ||
                 aClass.isEnum()) {

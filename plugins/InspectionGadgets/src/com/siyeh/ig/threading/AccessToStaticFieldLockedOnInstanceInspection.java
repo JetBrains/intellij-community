@@ -45,7 +45,7 @@ public class AccessToStaticFieldLockedOnInstanceInspection
     private static class AccessToStaticFieldLockedOnInstanceVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             boolean isLockedOnInstance = false;

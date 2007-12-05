@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class CloneableImplementsCloneInspection extends BaseInspection {
 
@@ -61,7 +61,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
     private class CloneableDefinesCloneVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down
             if (aClass.isInterface()  || aClass.isAnnotationType()
                     || aClass.isEnum()) {

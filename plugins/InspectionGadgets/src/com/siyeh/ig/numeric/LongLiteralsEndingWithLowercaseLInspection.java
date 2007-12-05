@@ -77,7 +77,7 @@ public class LongLiteralsEndingWithLowercaseLInspection
     private static class LongLiteralWithLowercaseLVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();

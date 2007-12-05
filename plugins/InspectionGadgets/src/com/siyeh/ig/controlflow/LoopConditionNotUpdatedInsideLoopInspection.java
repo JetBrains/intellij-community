@@ -29,7 +29,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.List;
 
 public class LoopConditionNotUpdatedInsideLoopInspection
@@ -64,19 +64,19 @@ public class LoopConditionNotUpdatedInsideLoopInspection
     private class LoopConditionNotUpdatedInsideLoopVisitor
             extends BaseInspectionVisitor {
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             check(condition, statement);
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             check(condition, statement);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        @Override public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
             check(condition, statement);

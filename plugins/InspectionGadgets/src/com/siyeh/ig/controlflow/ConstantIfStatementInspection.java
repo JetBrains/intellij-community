@@ -171,7 +171,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
     private static class ConstantIfStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(PsiIfStatement statement) {
+        @Override public void visitIfStatement(PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if (condition == null) {
@@ -201,13 +201,13 @@ public class ConstantIfStatementInspection extends BaseInspection {
             this.exceptBlock = exceptBlock;
         }
 
-        public void visitElement(@NotNull PsiElement element) {
+        @Override public void visitElement(@NotNull PsiElement element) {
             if (!hasConflictingDeclaration) {
                 super.visitElement(element);
             }
         }
 
-        public void visitCodeBlock(PsiCodeBlock block) {
+        @Override public void visitCodeBlock(PsiCodeBlock block) {
             if (hasConflictingDeclaration) {
                 return;
             }
@@ -217,7 +217,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
             super.visitCodeBlock(block);
         }
 
-        public void visitVariable(PsiVariable variable) {
+        @Override public void visitVariable(PsiVariable variable) {
             if (hasConflictingDeclaration) {
                 return;
             }

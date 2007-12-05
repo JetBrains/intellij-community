@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ObsoleteCollectionInspection extends BaseInspection {
 
@@ -67,7 +67,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
     private class ObsoleteCollectionVisitor
             extends BaseInspectionVisitor{
 
-        public void visitVariable(@NotNull PsiVariable variable){
+        @Override public void visitVariable(@NotNull PsiVariable variable){
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             if (!isObsoleteCollectionType(type)){
@@ -87,7 +87,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             registerError(typeElement);
         }
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             final PsiType returnType = method.getReturnType();
             if (!isObsoleteCollectionType(returnType)) {
@@ -107,7 +107,7 @@ public class ObsoleteCollectionInspection extends BaseInspection {
             registerError(typeElement);
         }
 
-        public void visitNewExpression(@NotNull PsiNewExpression newExpression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression newExpression){
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();
             if (!isObsoleteCollectionType(type)){

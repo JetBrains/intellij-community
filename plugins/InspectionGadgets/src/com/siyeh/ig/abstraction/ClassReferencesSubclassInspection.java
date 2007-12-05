@@ -53,29 +53,29 @@ public class ClassReferencesSubclassInspection extends BaseInspection {
     private static class ClassReferencesSubclassVisitor
             extends BaseInspectionVisitor{
 
-        public void visitVariable(@NotNull PsiVariable variable){
+        @Override public void visitVariable(@NotNull PsiVariable variable){
             final PsiTypeElement typeElement = variable.getTypeElement();
             checkTypeElement(typeElement);
         }
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             final PsiTypeElement typeElement = method.getReturnTypeElement();
             checkTypeElement(typeElement);
         }
 
-        public void visitInstanceOfExpression(
+        @Override public void visitInstanceOfExpression(
                 @NotNull PsiInstanceOfExpression expression){
             final PsiTypeElement typeElement = expression.getCheckType();
             checkTypeElement(typeElement);
         }
 
-        public void visitTypeCastExpression(
+        @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression){
             final PsiTypeElement typeElement = expression.getCastType();
             checkTypeElement(typeElement);
         }
 
-        public void visitClassObjectAccessExpression(
+        @Override public void visitClassObjectAccessExpression(
                 @NotNull PsiClassObjectAccessExpression expression){
             final PsiTypeElement typeElement = expression.getOperand();
             checkTypeElement(typeElement);

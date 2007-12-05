@@ -28,7 +28,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.*;
 
 public class MissortedModifiersInspection extends BaseInspection {
@@ -116,33 +116,33 @@ public class MissortedModifiersInspection extends BaseInspection {
         private final Comparator<String> modifierComparator =
                 new ModifierComparator();
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             super.visitClass(aClass);
             checkForMissortedModifiers(aClass);
         }
 
-        public void visitClassInitializer(
+        @Override public void visitClassInitializer(
                 @NotNull PsiClassInitializer initializer) {
             super.visitClassInitializer(initializer);
             checkForMissortedModifiers(initializer);
         }
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             checkForMissortedModifiers(variable);
         }
 
-        public void visitParameter(@NotNull PsiParameter parameter) {
+        @Override public void visitParameter(@NotNull PsiParameter parameter) {
             super.visitParameter(parameter);
             checkForMissortedModifiers(parameter);
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             checkForMissortedModifiers(method);
         }
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             checkForMissortedModifiers(field);
         }

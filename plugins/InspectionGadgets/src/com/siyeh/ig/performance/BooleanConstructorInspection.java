@@ -112,7 +112,7 @@ public class BooleanConstructorInspection extends BaseInspection {
     private static class BooleanConstructorVisitor
             extends BaseInspectionVisitor{
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if (type == null || !type.equalsToText("java.lang.Boolean")){

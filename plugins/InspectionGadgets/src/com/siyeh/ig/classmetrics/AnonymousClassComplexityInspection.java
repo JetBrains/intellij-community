@@ -69,11 +69,11 @@ public class AnonymousClassComplexityInspection
 
     private class ClassComplexityVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass psiClass) {
+        @Override public void visitClass(@NotNull PsiClass psiClass) {
             // no call to super, to prevent double counting
         }
 
-        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             final int totalComplexity = calculateTotalComplexity(aClass);
             if (totalComplexity <= getLimit()) {
                 return;

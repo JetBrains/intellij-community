@@ -142,7 +142,7 @@ public class ReuseOfLocalVariableInspection
     private static class ReuseOfLocalVariableVisitor
             extends BaseInspectionVisitor{
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
             if(!WellFormednessUtils.isWellFormed(assignment)){

@@ -99,7 +99,7 @@ public class DoubleNegationInspection extends BaseInspection {
 
     private static class DoubleNegationVisitor extends BaseInspectionVisitor {
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final IElementType tokenType = expression.getOperationTokenType();
             if (!JavaTokenType.EXCL.equals(tokenType)) {
@@ -108,7 +108,7 @@ public class DoubleNegationInspection extends BaseInspection {
             checkParent(expression);
         }
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final IElementType tokenType = expression.getOperationTokenType();
             if (!JavaTokenType.NE.equals(tokenType)) {

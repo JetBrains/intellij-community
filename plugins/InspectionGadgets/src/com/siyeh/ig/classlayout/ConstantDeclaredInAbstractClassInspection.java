@@ -44,7 +44,7 @@ public class ConstantDeclaredInAbstractClassInspection extends BaseInspection {
     private static class ConstantDeclaredInAbstractClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             //no call to super, so we don't drill into anonymous classes
             if (!field.hasModifierProperty(PsiModifier.STATIC) ||
                     !field.hasModifierProperty(PsiModifier.PUBLIC) ||

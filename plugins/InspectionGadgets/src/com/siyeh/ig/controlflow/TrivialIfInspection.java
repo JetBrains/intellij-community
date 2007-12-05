@@ -261,7 +261,7 @@ public class TrivialIfInspection extends BaseInspection {
 
     private static class TrivialIfVisitor extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement ifStatement) {
             super.visitIfStatement(ifStatement);
             final PsiExpression condition = ifStatement.getCondition();
             if (condition == null) {

@@ -28,7 +28,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -75,7 +75,7 @@ public class FieldHidesSuperclassFieldInspection extends BaseInspection {
     private class FieldHidesSuperclassFieldVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             final PsiClass aClass = field.getContainingClass();
             if (aClass == null) {
                 return;

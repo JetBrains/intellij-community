@@ -23,7 +23,7 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
     
     private int m_count = 0;
 
-    public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
+    @Override public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
         super.visitBinaryExpression(expression);
         final PsiJavaToken sign = expression.getOperationSign();
         final IElementType tokenType = sign.getTokenType();
@@ -32,11 +32,11 @@ class NegationCountVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // no call to super, to keep it from drilling into anonymous classes
     }
 
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+    @Override public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
         super.visitPrefixExpression(expression);
         final PsiJavaToken sign = expression.getOperationSign();
         if (sign.getTokenType().equals(JavaTokenType.EXCL)) {

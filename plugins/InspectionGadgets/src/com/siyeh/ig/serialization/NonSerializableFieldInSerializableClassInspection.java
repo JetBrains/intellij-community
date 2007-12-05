@@ -45,7 +45,7 @@ public class NonSerializableFieldInSerializableClassInspection
     private class NonSerializableFieldInSerializableClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.TRANSIENT)
                     || field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

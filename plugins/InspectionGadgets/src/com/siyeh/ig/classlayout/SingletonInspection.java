@@ -40,7 +40,7 @@ public class SingletonInspection extends BaseInspection {
 
     private static class SingletonVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (!SingletonUtil.isSingleton(aClass)) {
                 return;

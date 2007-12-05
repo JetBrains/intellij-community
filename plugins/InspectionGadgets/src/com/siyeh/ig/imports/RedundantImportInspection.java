@@ -53,7 +53,7 @@ public class RedundantImportInspection extends BaseInspection {
 
     private static class RedundantImportVisitor extends BaseInspectionVisitor {
 
-        public void visitFile(PsiFile file) {
+        @Override public void visitFile(PsiFile file) {
             super.visitFile(file);
             if (!(file instanceof PsiJavaFile)) {
                 return;

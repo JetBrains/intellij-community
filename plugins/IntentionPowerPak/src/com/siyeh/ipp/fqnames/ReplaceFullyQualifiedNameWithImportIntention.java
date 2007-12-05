@@ -140,7 +140,7 @@ public class ReplaceFullyQualifiedNameWithImportIntention extends Intention {
             return Collections.unmodifiableCollection(shortenedElements);
         }
 
-        public void visitReferenceElement(
+        @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             final PsiElement parent = reference.getParent();

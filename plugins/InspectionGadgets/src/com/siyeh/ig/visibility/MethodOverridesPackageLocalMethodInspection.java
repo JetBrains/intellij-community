@@ -62,7 +62,7 @@ public class MethodOverridesPackageLocalMethodInspection
     private static class MethodOverridesPrivateMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             final PsiClass aClass = method.getContainingClass();
             if (aClass == null) {
                 return;

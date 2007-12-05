@@ -49,7 +49,7 @@ public class ErrorRethrownInspection extends BaseInspection {
     private static class ErrorRethrownVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections =
                     statement.getCatchSections();

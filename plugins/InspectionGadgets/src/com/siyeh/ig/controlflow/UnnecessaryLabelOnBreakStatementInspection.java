@@ -79,7 +79,7 @@ public class UnnecessaryLabelOnBreakStatementInspection
     private static class UnnecessaryLabelOnBreakStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
+        @Override public void visitBreakStatement(@NotNull PsiBreakStatement statement) {
             final PsiIdentifier labelIdentifier =
                     statement.getLabelIdentifier();
             if (labelIdentifier == null) {

@@ -29,7 +29,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MissingOverrideAnnotationInspection extends BaseInspection {
     
@@ -103,7 +103,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
     private class MissingOverrideAnnotationVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             if (method.getNameIdentifier() == null) {
                 return;
             }

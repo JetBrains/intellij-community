@@ -51,7 +51,7 @@ public class DriverManagerGetConnectionInspection extends BaseInspection {
     private static class DriverManagerGetConnectionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isDriverManagerGetConnection(expression)) {

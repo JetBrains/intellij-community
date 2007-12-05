@@ -24,7 +24,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnusedCatchParameterInspection extends BaseInspection {
 
@@ -68,7 +68,7 @@ public class UnusedCatchParameterInspection extends BaseInspection {
 
     private class EmptyCatchBlockVisitor extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             if (m_ignoreTestCases && TestUtils.isPartOfJUnitTestMethod(
                     statement)) {

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class StringConstructorInspection extends BaseInspection {
 
@@ -115,7 +115,7 @@ public class StringConstructorInspection extends BaseInspection {
     private class StringConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if (!TypeUtils.isJavaLangString(type)) {

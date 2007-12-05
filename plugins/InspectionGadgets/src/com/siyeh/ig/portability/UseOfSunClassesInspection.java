@@ -42,7 +42,7 @@ public class UseOfSunClassesInspection extends BaseInspection {
     private static class UseOfSunClassesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             final PsiType deepComponentType = type.getDeepComponentType();
@@ -61,7 +61,7 @@ public class UseOfSunClassesInspection extends BaseInspection {
             registerError(typeElement);
         }
 
-        public void visitNewExpression(
+        @Override public void visitNewExpression(
                 @NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();

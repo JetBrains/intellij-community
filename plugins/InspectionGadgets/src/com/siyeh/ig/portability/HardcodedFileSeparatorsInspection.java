@@ -29,7 +29,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -139,7 +139,7 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     private class HardcodedFileSeparatorsVisitor
             extends BaseInspectionVisitor{
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression){
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();

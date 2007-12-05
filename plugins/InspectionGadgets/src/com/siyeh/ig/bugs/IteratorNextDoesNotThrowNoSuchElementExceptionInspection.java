@@ -54,7 +54,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     private static class IteratorNextDoesNotThrowNoSuchElementExceptionVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             // note: no call to super
             if (!MethodUtils.methodMatches(method, "java.util.Iterator", null,
                     HardcodedMethodConstants.NEXT)) {
@@ -85,7 +85,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
 
         private boolean noSuchElementExceptionThrown = false;
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             if (noSuchElementExceptionThrown) {
                 return;

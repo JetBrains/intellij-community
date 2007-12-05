@@ -84,7 +84,7 @@ public class StringCompareToInspection extends BaseInspection {
 
     private static class StringCompareToVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isStringCompareTo(expression)) {

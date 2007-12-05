@@ -31,13 +31,13 @@ class CatchParameterUsedVisitor extends PsiRecursiveElementVisitor{
         parameter = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!used){
             super.visitElement(element);
         }
     }
 
-    public void visitReferenceExpression(
+    @Override public void visitReferenceExpression(
             @NotNull PsiReferenceExpression reference){
         if(used){
             return;

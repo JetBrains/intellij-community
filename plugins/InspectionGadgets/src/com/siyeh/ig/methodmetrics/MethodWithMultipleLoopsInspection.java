@@ -43,7 +43,7 @@ public class MethodWithMultipleLoopsInspection extends BaseInspection {
     private static class MethodWithMultipleLoopsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             if (method.getNameIdentifier() == null) {
                 return;

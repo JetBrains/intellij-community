@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeCastExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -43,7 +45,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     private static class CastConflictsWithInstanceofVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTypeCastExpression(
+        @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiType castType = expression.getType();

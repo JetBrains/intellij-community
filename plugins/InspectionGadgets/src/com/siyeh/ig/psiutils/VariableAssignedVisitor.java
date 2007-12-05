@@ -29,13 +29,13 @@ public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!assigned){
             super.visitElement(element);
         }
     }
 
-    public void visitAssignmentExpression(
+    @Override public void visitAssignmentExpression(
             @NotNull PsiAssignmentExpression assignment){
         if(assigned){
             return;
@@ -47,7 +47,7 @@ public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitPrefixExpression(
+    @Override public void visitPrefixExpression(
             @NotNull PsiPrefixExpression prefixExpression){
         if(assigned){
             return;
@@ -65,7 +65,7 @@ public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitPostfixExpression(
+    @Override public void visitPostfixExpression(
             @NotNull PsiPostfixExpression postfixExpression){
         if(assigned){
             return;

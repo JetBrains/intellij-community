@@ -25,8 +25,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
 
@@ -71,7 +71,7 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
                                                final GlobalInspectionContext globalContext,
                                                final ProblemDescriptionsProcessor processor) {
         globalContext.getRefManager().iterate(new RefVisitor() {
-            public void visitField(final RefField refField) {
+            @Override public void visitField(final RefField refField) {
                 if (processor.getDescriptions(refField) != null) { //suspicious field -> need to check external usages
                     globalContext.enqueueFieldUsagesProcessor(refField, new GlobalInspectionContext.UsagesProcessor() {
                         public boolean process(PsiReference psiReference) {
@@ -123,7 +123,7 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
             }
             element.accept(new PsiRecursiveElementVisitor() {
 
-                public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+                @Override public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
                     super.visitReferenceExpression(referenceExpression);
                     if (referenceExpression.isReferenceTo(field)) {
                         if (isInvertedFieldRead(referenceExpression)) {

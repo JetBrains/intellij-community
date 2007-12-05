@@ -33,14 +33,14 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         return m_referencesStaticallyAccessible;
     }
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
         if(!m_referencesStaticallyAccessible){
             return;
         }
         super.visitElement(element);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference){
         super.visitReferenceElement(reference);
         final PsiElement resolvedElement = reference.resolve();
         if(!(resolvedElement instanceof PsiClass)){
@@ -57,7 +57,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         m_referencesStaticallyAccessible = false;
     }
 
-    public void visitReferenceExpression(
+    @Override public void visitReferenceExpression(
             @NotNull PsiReferenceExpression expression){
         super.visitReferenceExpression(expression);
         final PsiElement qualifier = expression.getQualifierExpression();
@@ -77,7 +77,7 @@ class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
         m_referencesStaticallyAccessible = false;
     }
 
-    public void visitThisExpression(@NotNull PsiThisExpression expression){
+    @Override public void visitThisExpression(@NotNull PsiThisExpression expression){
         super.visitThisExpression(expression);
         m_referencesStaticallyAccessible = false;
     }

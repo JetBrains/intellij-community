@@ -43,7 +43,7 @@ public class ContinueStatementWithLabelInspection extends BaseInspection {
     private static class ContinueStatementWithLabelVisitor
             extends BaseInspectionVisitor {
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             final PsiIdentifier label = statement.getLabelIdentifier();

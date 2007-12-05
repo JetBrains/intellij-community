@@ -131,7 +131,7 @@ public class ConfusingFloatingPointLiteralInspection
     private static class ConfusingFloatingPointLiteralVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression literal) {
             super.visitLiteralExpression(literal);
             final PsiType type = literal.getType();

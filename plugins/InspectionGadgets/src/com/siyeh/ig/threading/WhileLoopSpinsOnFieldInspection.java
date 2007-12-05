@@ -24,7 +24,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
@@ -57,7 +57,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     private class WhileLoopSpinsOnFieldVisitor
             extends BaseInspectionVisitor {
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiStatement body = statement.getBody();
             if (ignoreNonEmtpyLoops && !statementIsEmpty(body)) {

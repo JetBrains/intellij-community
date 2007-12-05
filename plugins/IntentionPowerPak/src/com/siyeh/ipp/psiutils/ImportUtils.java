@@ -249,7 +249,7 @@ public class ImportUtils{
             this.fullyQualifiedName = fullyQualifiedName;
         }
 
-        public void visitReferenceElement(
+        @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             if (m_referenceFound) {

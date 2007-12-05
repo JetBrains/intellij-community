@@ -51,7 +51,7 @@ public class ResultSetIndexZeroInspection extends BaseInspection {
     private static class ResultSetIndexZeroVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

@@ -125,7 +125,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     private static class UnnecessaryUnboxingVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expression);

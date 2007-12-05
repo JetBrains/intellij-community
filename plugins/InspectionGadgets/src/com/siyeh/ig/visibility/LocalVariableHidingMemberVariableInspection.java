@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class LocalVariableHidingMemberVariableInspection
         extends BaseInspection {
@@ -80,7 +80,7 @@ public class LocalVariableHidingMemberVariableInspection
     private class LocalVariableHidingMemberVariableVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreStaticMethods) {
                 final PsiMethod aMethod =
@@ -107,7 +107,7 @@ public class LocalVariableHidingMemberVariableInspection
             }
         }
 
-        public void visitParameter(@NotNull PsiParameter variable) {
+        @Override public void visitParameter(@NotNull PsiParameter variable) {
             super.visitParameter(variable);
             if (!(variable.getDeclarationScope() instanceof PsiCatchSection)) {
                 return;

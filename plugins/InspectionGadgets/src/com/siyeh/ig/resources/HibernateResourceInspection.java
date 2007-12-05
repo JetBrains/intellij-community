@@ -51,7 +51,7 @@ public class HibernateResourceInspection extends BaseInspection {
 
     private static class HibernateResourceVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isHibernateFactoryMethod(expression)){
@@ -151,13 +151,13 @@ public class HibernateResourceInspection extends BaseInspection {
             this.elementToClose = elementToClose;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!containsClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;

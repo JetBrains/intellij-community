@@ -47,7 +47,7 @@ public class TimeToStringInspection extends BaseInspection {
 
     private static class TimeToStringVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

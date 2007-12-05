@@ -66,7 +66,7 @@ public class MagicNumberInspection extends BaseInspection {
 
     private class MagicNumberVisitor extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();

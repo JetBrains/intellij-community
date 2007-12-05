@@ -24,7 +24,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ExceptionFromCatchWhichDoesntWrapInspection
         extends BaseInspection {
@@ -63,7 +63,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection
     private class ExceptionFromCatchWhichDoesntWrapVisitor
             extends BaseInspectionVisitor {
 
-        public void visitThrowStatement(PsiThrowStatement statement) {
+        @Override public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);
             if (!ControlFlowUtils.isInCatchBlock(statement)) {
                 return;

@@ -30,13 +30,13 @@ public class RecursionVisitor extends PsiRecursiveElementVisitor{
         methodName = method.getName();
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!recursive){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression call){
         if(recursive){
             return;

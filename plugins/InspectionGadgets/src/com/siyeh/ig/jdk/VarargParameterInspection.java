@@ -148,7 +148,7 @@ public class VarargParameterInspection extends BaseInspection {
 
     private static class VarargParameterVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList.getParametersCount() < 1) {
                 return;

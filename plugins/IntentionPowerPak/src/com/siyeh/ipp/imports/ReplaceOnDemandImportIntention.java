@@ -74,7 +74,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
             this.importedPackageName = importedPackageName;
         }
 
-        public void visitReferenceElement(
+        @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             if (reference.isQualified()) {

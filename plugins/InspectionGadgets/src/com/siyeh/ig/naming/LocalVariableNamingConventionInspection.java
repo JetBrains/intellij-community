@@ -97,7 +97,7 @@ public class LocalVariableNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             if (m_ignoreForLoopParameters) {
                 final PsiElement declStatement = variable.getParent();
@@ -123,7 +123,7 @@ public class LocalVariableNamingConventionInspection
             registerVariableError(variable, name);
         }
 
-        public void visitParameter(@NotNull PsiParameter variable) {
+        @Override public void visitParameter(@NotNull PsiParameter variable) {
             final PsiElement scope = variable.getDeclarationScope();
             final boolean isCatchParameter =
                     scope instanceof PsiCatchSection;

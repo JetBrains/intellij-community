@@ -49,7 +49,7 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
     private static class ThisExposedInConstructorInspectionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitThisExpression(PsiThisExpression expression ) {
+        @Override public void visitThisExpression(PsiThisExpression expression ) {
             super.visitThisExpression(expression);
             if (!isInInitializer(expression)) {
                 return;

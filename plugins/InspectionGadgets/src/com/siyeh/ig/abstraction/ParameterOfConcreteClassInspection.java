@@ -50,7 +50,7 @@ public class ParameterOfConcreteClassInspection extends BaseInspection {
     private static class ParameterOfConcreteClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitParameter(@NotNull PsiParameter parameter) {
+        @Override public void visitParameter(@NotNull PsiParameter parameter) {
             super.visitParameter(parameter);
 
             if (parameter.getDeclarationScope() instanceof PsiCatchSection) {

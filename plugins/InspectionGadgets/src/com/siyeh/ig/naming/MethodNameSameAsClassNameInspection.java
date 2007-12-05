@@ -85,7 +85,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
     private static class MethodNameSameAsClassNameVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down into inner classes
             if (method.isConstructor()) {
                 return;

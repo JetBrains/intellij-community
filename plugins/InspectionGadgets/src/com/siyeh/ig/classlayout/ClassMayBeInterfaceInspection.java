@@ -161,7 +161,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     private static class ClassMayBeInterfaceVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                     aClass.isEnum()) {

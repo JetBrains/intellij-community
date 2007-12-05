@@ -43,7 +43,7 @@ public class InstanceofCatchParameterInspection extends BaseInspection {
     private static class InstanceofCatchParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitInstanceOfExpression(
+        @Override public void visitInstanceOfExpression(
                 @NotNull PsiInstanceOfExpression exp) {
             super.visitInstanceOfExpression(exp);
             if (!ControlFlowUtils.isInCatchBlock(exp)) {

@@ -27,7 +27,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Set;
 
 public class FeatureEnvyInspection extends BaseInspection {
@@ -61,7 +61,7 @@ public class FeatureEnvyInspection extends BaseInspection {
 
     private class FeatureEnvyVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             if (ignoreTestCases &&
                     TestUtils.isJUnitTestMethod(method)) {
                 return;

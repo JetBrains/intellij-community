@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ForLoopWithMissingComponentInspection extends BaseInspection {
 
@@ -85,7 +85,7 @@ public class ForLoopWithMissingComponentInspection extends BaseInspection {
     private class ForLoopWithMissingComponentVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final boolean hasCondition = hasCondition(statement);
             final boolean hasInitializer = hasInitializer(statement);

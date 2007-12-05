@@ -257,7 +257,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     private static class ManualArrayCopyVisitor extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiStatement initialization =
                     statement.getInitialization();

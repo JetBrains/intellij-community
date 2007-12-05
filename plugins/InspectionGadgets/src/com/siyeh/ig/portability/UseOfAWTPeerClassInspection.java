@@ -43,7 +43,7 @@ public class UseOfAWTPeerClassInspection extends BaseInspection {
     private static class UseOfAWTPeerClassVisitor extends BaseInspectionVisitor {
 
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             if (!(type instanceof PsiClassType)) {
@@ -76,7 +76,7 @@ public class UseOfAWTPeerClassInspection extends BaseInspection {
             registerError(typeElement);
         }
 
-        public void visitNewExpression(
+        @Override public void visitNewExpression(
                 @NotNull PsiNewExpression newExpression) {
             super.visitNewExpression(newExpression);
             final PsiType type = newExpression.getType();

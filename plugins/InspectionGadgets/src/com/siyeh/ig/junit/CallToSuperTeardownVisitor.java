@@ -16,20 +16,20 @@
 package com.siyeh.ig.junit;
 
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 class CallToSuperTeardownVisitor extends PsiRecursiveElementVisitor{
 
     private boolean callToSuperTearDownFound = false;
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!callToSuperTearDownFound){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression expression){
         if(callToSuperTearDownFound){
             return;

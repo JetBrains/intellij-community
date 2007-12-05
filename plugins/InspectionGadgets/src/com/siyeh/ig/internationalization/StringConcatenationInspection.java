@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -134,7 +134,7 @@ public class StringConcatenationInspection extends BaseInspection {
     private class StringConcatenationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();

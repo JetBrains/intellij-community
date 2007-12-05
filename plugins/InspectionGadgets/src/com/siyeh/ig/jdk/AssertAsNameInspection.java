@@ -51,7 +51,7 @@ public class AssertAsNameInspection extends BaseInspection {
 
     private static class AssertAsNameVisitor extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final String variableName = variable.getName();
             if (!PsiKeyword.ASSERT.equals(variableName)) {
@@ -60,7 +60,7 @@ public class AssertAsNameInspection extends BaseInspection {
             registerVariableError(variable);
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final String name = method.getName();
             if (!PsiKeyword.ASSERT.equals(name)) {
@@ -69,7 +69,7 @@ public class AssertAsNameInspection extends BaseInspection {
             registerMethodError(method);
         }
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //note: no call to super, to avoid drill-down
             final String name = aClass.getName();
             if (!PsiKeyword.ASSERT.equals(name)) {
@@ -82,7 +82,7 @@ public class AssertAsNameInspection extends BaseInspection {
             registerClassError(aClass);
         }
 
-        public void visitTypeParameter(PsiTypeParameter parameter) {
+        @Override public void visitTypeParameter(PsiTypeParameter parameter) {
             super.visitTypeParameter(parameter);
             final String name = parameter.getName();
             if (!PsiKeyword.ASSERT.equals(name)) {

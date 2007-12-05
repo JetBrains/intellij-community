@@ -50,7 +50,7 @@ public class SystemOutErrInspection extends BaseInspection {
 
     private static class SystemOutErrVisitor extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final String name = expression.getReferenceName();

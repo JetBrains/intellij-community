@@ -25,8 +25,8 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.MethodInheritanceUtils;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -107,7 +107,7 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
                                                final ProblemDescriptionsProcessor processor) {
         final RefManager refManager = globalContext.getRefManager();
         refManager.iterate(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(final RefMethod refMethod) {
                 if (methodReturnUsed(refMethod)) {
                     return;
                 }
@@ -178,7 +178,7 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
 
             final PsiElement element = refFrom.getElement();
             element.accept(new PsiRecursiveElementVisitor() {
-                public void visitMethodCallExpression(PsiMethodCallExpression call) {
+                @Override public void visitMethodCallExpression(PsiMethodCallExpression call) {
                     if (methodReturnUsed(refMethod)) {
                         return;
                     }
@@ -193,7 +193,7 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
                     }
                 }
 
-                public void visitNewExpression(PsiNewExpression call) {
+                @Override public void visitNewExpression(PsiNewExpression call) {
                     if (methodReturnUsed(refMethod)) {
                         return;
                     }

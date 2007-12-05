@@ -61,7 +61,7 @@ public class ExceptionNameDoesntEndWithExceptionInspection
     private static class ExceptionNameDoesntEndWithExceptionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so it doesn't drill down into inner classes
             final String className = aClass.getName();
             if (className == null) {

@@ -43,7 +43,7 @@ public class CastToConcreteClassInspection extends BaseInspection {
     private static class CastToConcreteClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTypeCastExpression(
+        @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
             final PsiTypeElement typeElement = expression.getCastType();

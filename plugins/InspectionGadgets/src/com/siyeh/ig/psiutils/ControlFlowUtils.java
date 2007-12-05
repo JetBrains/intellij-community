@@ -17,9 +17,9 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class ControlFlowUtils{
 
@@ -505,11 +505,11 @@ public class ControlFlowUtils{
             return m_found;
         }
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // do nothing to keep from drilling into inner classes
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             if(m_found){
                 return;
@@ -541,11 +541,11 @@ public class ControlFlowUtils{
             return m_found;
         }
 
-        public void visitClass(@NotNull PsiClass psiClass){
+        @Override public void visitClass(@NotNull PsiClass psiClass){
             // do nothing, to keep drilling into inner classes
         }
 
-        public void visitReturnStatement(
+        @Override public void visitReturnStatement(
                 @NotNull PsiReturnStatement returnStatement){
             if(m_found){
                 return;
@@ -569,7 +569,7 @@ public class ControlFlowUtils{
             return m_found;
         }
 
-        public void visitBreakStatement(
+        @Override public void visitBreakStatement(
                 @NotNull PsiBreakStatement breakStatement){
             if(m_found){
                 return;
@@ -607,7 +607,7 @@ public class ControlFlowUtils{
             return m_found;
         }
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement){
             if(m_found){
                 return;
@@ -630,7 +630,7 @@ public class ControlFlowUtils{
             return labelText.equals(m_label);
         }
 
-        public void visitDoWhileStatement(
+        @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement){
             if(m_found){
                 return;
@@ -640,7 +640,7 @@ public class ControlFlowUtils{
             m_nestingDepth--;
         }
 
-        public void visitForStatement(@NotNull PsiForStatement statement){
+        @Override public void visitForStatement(@NotNull PsiForStatement statement){
             if(m_found){
                 return;
             }
@@ -649,7 +649,7 @@ public class ControlFlowUtils{
             m_nestingDepth--;
         }
 
-        public void visitForeachStatement(
+        @Override public void visitForeachStatement(
                 @NotNull PsiForeachStatement statement){
             if(m_found){
                 return;
@@ -659,7 +659,7 @@ public class ControlFlowUtils{
             m_nestingDepth--;
         }
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement){
+        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement){
             if(m_found){
                 return;
             }
@@ -692,7 +692,7 @@ public class ControlFlowUtils{
             return containsCallToMethod;
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             if (containsCallToMethod) {
                 return;

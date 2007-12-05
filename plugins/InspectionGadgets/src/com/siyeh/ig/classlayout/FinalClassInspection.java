@@ -49,7 +49,7 @@ public class FinalClassInspection extends BaseInspection {
     private static class FinalStaticMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //no call to super, so we don't drill into inner classes
             if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
                 return;

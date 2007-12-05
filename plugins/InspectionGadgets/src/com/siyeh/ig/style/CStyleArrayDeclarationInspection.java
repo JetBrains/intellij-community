@@ -71,7 +71,7 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
     private static class CStyleArrayDeclarationVisitor
             extends BaseInspectionVisitor{
 
-        public void visitVariable(@NotNull PsiVariable var) {
+        @Override public void visitVariable(@NotNull PsiVariable var) {
             super.visitVariable(var);
             final PsiType declaredType = var.getType();
             if (declaredType.getArrayDimensions() == 0) {

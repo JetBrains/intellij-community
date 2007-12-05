@@ -238,7 +238,7 @@ public class AutoUnboxingInspection extends BaseInspection {
 
     private static class AutoUnboxingVisitor extends BaseInspectionVisitor{
 
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
             if (element.getLanguage() != StdLanguages.JAVA) {
                 return;
             }
@@ -250,46 +250,46 @@ public class AutoUnboxingInspection extends BaseInspection {
             super.visitElement(element);
         }
 
-        public void visitArrayAccessExpression(
+        @Override public void visitArrayAccessExpression(
                 PsiArrayAccessExpression expression){
             super.visitArrayAccessExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression){
             super.visitConditionalExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitNewExpression(PsiNewExpression expression){
+        @Override public void visitNewExpression(PsiNewExpression expression){
             super.visitNewExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitTypeCastExpression(PsiTypeCastExpression expression){
+        @Override public void visitTypeCastExpression(PsiTypeCastExpression expression){
             super.visitTypeCastExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 PsiAssignmentExpression expression){
             super.visitAssignmentExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitParenthesizedExpression(
+        @Override public void visitParenthesizedExpression(
                 PsiParenthesizedExpression expression){
             super.visitParenthesizedExpression(expression);
             checkExpression(expression);

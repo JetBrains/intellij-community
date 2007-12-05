@@ -82,7 +82,7 @@ public class InstanceMethodNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (method.isConstructor()) {
                 return;

@@ -28,7 +28,7 @@ public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
     private final Set<PsiField> m_overAccessedFields =
             new HashSet<PsiField>(2);
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
 

@@ -50,7 +50,7 @@ public class TestMethodInProductCodeInspection extends BaseInspection {
     private static class TestCaseInProductCodeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             final PsiClass containingClass = method.getContainingClass();
             if (TestUtils.isTest(containingClass)) {
                 return;

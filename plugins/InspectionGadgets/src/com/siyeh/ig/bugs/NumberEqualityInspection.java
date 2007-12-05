@@ -53,7 +53,7 @@ public class NumberEqualityInspection extends BaseInspection {
 
     private static class ObjectEqualityVisitor extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)){

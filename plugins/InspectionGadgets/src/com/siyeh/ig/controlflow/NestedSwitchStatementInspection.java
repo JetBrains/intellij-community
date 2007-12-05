@@ -45,7 +45,7 @@ public class NestedSwitchStatementInspection extends BaseInspection {
     private static class NestedSwitchStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiElement containingSwitchStatement =

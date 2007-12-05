@@ -49,10 +49,10 @@ public class ConvertOldAnnotationInspection extends BaseJavaLocalInspectionTool 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
       }
 
-      public void visitAnnotation(final PsiAnnotation annotation) {
+      @Override public void visitAnnotation(final PsiAnnotation annotation) {
         final String qualifiedName = annotation.getQualifiedName();
         if (Comparing.strEqual(qualifiedName, "org.testng.annotations.Configuration")) {
           holder.registerProblem(annotation, DISPLAY_NAME, new ConvertOldAnnotationsQuickfix());

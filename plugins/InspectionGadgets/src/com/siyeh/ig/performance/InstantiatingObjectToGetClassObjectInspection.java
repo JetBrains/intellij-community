@@ -86,7 +86,7 @@ public class InstantiatingObjectToGetClassObjectInspection
     private static class InstantiatingObjectToGetClassObjectVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

@@ -49,7 +49,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     private static class CollectionContainsUrlVisitor
             extends BaseInspectionVisitor {
 
-        public void visitVariable(PsiVariable variable) {
+        @Override public void visitVariable(PsiVariable variable) {
             super.visitVariable(variable);
             final PsiTypeElement typeElement = variable.getTypeElement();
             if (typeElement == null) {
@@ -145,7 +145,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
             this.collectionType = collectionType;
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             if (urlAdded) {
                 return;

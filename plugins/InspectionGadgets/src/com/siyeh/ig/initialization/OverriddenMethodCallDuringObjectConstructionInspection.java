@@ -22,8 +22,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class OverriddenMethodCallDuringObjectConstructionInspection
@@ -48,7 +48,7 @@ public class OverriddenMethodCallDuringObjectConstructionInspection
     private static class OverriddenMethodCallInConstructorVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiMember member =

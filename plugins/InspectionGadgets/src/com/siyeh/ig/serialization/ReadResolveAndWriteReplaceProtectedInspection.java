@@ -54,7 +54,7 @@ public class ReadResolveAndWriteReplaceProtectedInspection
     private static class ReadResolveWriteReplaceProtectedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // no call to super, so it doesn't drill down
             final PsiClass aClass = method.getContainingClass();
             if(aClass == null) {

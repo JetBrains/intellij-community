@@ -54,7 +54,7 @@ public class AssertEqualsBetweenInconvertibleTypesInspection
     private static class AssertEqualsBetweenInconvertibleTypesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiExpressionList argumentList = expression.getArgumentList();

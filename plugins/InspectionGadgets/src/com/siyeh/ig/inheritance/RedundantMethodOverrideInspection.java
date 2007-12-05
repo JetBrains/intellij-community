@@ -74,7 +74,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     private static class RedundantMethodOverrideVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             final PsiCodeBlock body = method.getBody();
             if (body == null) {

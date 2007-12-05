@@ -47,7 +47,7 @@ public class ThreadPriorityInspection extends BaseInspection {
     private static class ThreadSetPriorityVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression methodCallExpression) {
             super.visitMethodCallExpression(methodCallExpression);
             if (!isThreadSetPriority(methodCallExpression)) {

@@ -34,10 +34,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import java.util.*;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class QuestionableNameInspection extends BaseInspection {
 
@@ -97,21 +98,21 @@ public class QuestionableNameInspection extends BaseInspection {
 
         private final Set<String> nameSet = new HashSet(nameList);
 
-        public void visitVariable(@NotNull PsiVariable variable){
+        @Override public void visitVariable(@NotNull PsiVariable variable){
             final String name = variable.getName();
             if(nameSet.contains(name)){
                 registerVariableError(variable);
             }
         }
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             final String name = method.getName();
             if(nameSet.contains(name)){
                 registerMethodError(method);
             }
         }
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             final String name = aClass.getName();
             if(nameSet.contains(name)){
                 registerClassError(aClass);

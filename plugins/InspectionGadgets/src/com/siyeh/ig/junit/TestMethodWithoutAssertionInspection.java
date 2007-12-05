@@ -49,7 +49,7 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
     private static class TestMethodWithoutAssertionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!TestUtils.isJUnitTestMethod(method)) {
                 return;

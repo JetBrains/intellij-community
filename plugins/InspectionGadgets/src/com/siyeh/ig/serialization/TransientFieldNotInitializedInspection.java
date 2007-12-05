@@ -44,7 +44,7 @@ public class TransientFieldNotInitializedInspection extends BaseInspection {
     private static class ReadObjectInitializationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(PsiField field) {
+        @Override public void visitField(PsiField field) {
             super.visitField(field);
             if (!field.hasModifierProperty(PsiModifier.TRANSIENT)) {
                 return;

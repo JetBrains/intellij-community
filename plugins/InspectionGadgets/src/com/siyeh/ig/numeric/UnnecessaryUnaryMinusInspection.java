@@ -15,18 +15,18 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 public class UnnecessaryUnaryMinusInspection extends BaseInspection {
 
@@ -104,7 +104,7 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
     private static class UnnecessaryUnaryMinusVisitor
             extends BaseInspectionVisitor {
 
-        public void visitPrefixExpression(PsiPrefixExpression expression) {
+        @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final IElementType operationTokenType =
                     expression.getOperationTokenType();

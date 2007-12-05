@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.SerializationUtils;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 class SerializableInnerClassWithNonSerializableOuterClassVisitor
@@ -31,7 +31,7 @@ class SerializableInnerClassWithNonSerializableOuterClassVisitor
         this.inspection = inspection;
     }
 
-    public void visitClass(@NotNull PsiClass aClass) {
+    @Override public void visitClass(@NotNull PsiClass aClass) {
         if (aClass.isInterface() || aClass.isAnnotationType() ||
                 aClass.isEnum()) {
             return;

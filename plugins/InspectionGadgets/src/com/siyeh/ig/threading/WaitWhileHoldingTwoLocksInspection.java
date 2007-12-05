@@ -44,11 +44,11 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
     private static class WaitWhileHoldingTwoLocksVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             checkErrorsIn(method);
         }
 
-        public void visitClassInitializer(PsiClassInitializer initializer) {
+        @Override public void visitClassInitializer(PsiClassInitializer initializer) {
             checkErrorsIn(initializer);
         }
 
@@ -56,11 +56,11 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
             context.accept(new PsiRecursiveElementVisitor() {
                 private int m_numLocksHeld = 0;
 
-                public void visitClass(PsiClass aClass) {
+                @Override public void visitClass(PsiClass aClass) {
                     // Do not recurse into
                 }
 
-                public void visitMethodCallExpression(
+                @Override public void visitMethodCallExpression(
                         @NotNull PsiMethodCallExpression expression) {
                     super.visitMethodCallExpression(expression);
                     if (m_numLocksHeld < 2) {
@@ -99,7 +99,7 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
                     registerMethodCallError(expression);
                 }
 
-                public void visitMethod(@NotNull PsiMethod method) {
+                @Override public void visitMethod(@NotNull PsiMethod method) {
                     if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                         m_numLocksHeld++;
                     }
@@ -109,7 +109,7 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
                     }
                 }
 
-                public void visitSynchronizedStatement(
+                @Override public void visitSynchronizedStatement(
                         @NotNull PsiSynchronizedStatement synchronizedStatement) {
                     m_numLocksHeld++;
                     super.visitSynchronizedStatement(synchronizedStatement);

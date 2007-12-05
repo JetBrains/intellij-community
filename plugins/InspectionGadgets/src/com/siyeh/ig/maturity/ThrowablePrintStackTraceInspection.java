@@ -50,7 +50,7 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
     private static class ThrowablePrintStackTraceVisitor
             extends BaseInspectionVisitor {
        
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);

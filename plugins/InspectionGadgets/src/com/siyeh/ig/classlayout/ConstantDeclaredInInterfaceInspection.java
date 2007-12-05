@@ -43,7 +43,7 @@ public class ConstantDeclaredInInterfaceInspection extends BaseInspection {
     private static class ConstantDeclaredInInterfaceVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             //no call to super, so we don't drill into anonymous classes
             final PsiClass containingClass = field.getContainingClass();
             if (containingClass == null) {

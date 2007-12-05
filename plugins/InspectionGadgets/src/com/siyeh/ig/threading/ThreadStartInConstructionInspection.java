@@ -49,13 +49,13 @@ public class ThreadStartInConstructionInspection extends BaseInspection {
     private static class ThreadStartInConstructionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             if (method.isConstructor()) {
                 method.accept(new ThreadStartVisitor());
             }
         }
 
-        public void visitClassInitializer(
+        @Override public void visitClassInitializer(
                 @NotNull PsiClassInitializer initializer) {
             if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
                 initializer.accept(new ThreadStartVisitor());
@@ -64,11 +64,11 @@ public class ThreadStartInConstructionInspection extends BaseInspection {
 
         private class ThreadStartVisitor extends PsiRecursiveElementVisitor {
 
-            public void visitClass(PsiClass aClass) {
+            @Override public void visitClass(PsiClass aClass) {
                 // Do not recurse into.
             }
 
-            public void visitMethodCallExpression(
+            @Override public void visitMethodCallExpression(
                     @NotNull PsiMethodCallExpression expression) {
                 super.visitMethodCallExpression(expression);
 

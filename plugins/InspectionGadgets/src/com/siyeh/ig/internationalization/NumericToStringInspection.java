@@ -48,7 +48,7 @@ public class NumericToStringInspection extends BaseInspection {
 
     private static class NumericToStringVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

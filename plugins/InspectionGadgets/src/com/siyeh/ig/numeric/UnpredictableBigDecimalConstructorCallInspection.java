@@ -16,9 +16,9 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class UnpredictableBigDecimalConstructorCallInspection
@@ -43,7 +43,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
     private static class UnpredictableBigDecimalConstructorCallVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiJavaCodeReferenceElement classReference =
                     expression.getClassReference();

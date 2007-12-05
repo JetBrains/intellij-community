@@ -28,7 +28,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
@@ -74,7 +74,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     private class MethodOnlyUsedFromNestedClassVisitor
         extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.PRIVATE) ||
                 method.isConstructor()) {

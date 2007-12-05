@@ -31,13 +31,13 @@ public class VariableUsedVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!used){
             super.visitElement(element);
         }
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         if(used){
             return;
         }

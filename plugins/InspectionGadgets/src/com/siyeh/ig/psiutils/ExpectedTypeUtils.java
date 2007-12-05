@@ -121,18 +121,18 @@ public class ExpectedTypeUtils{
             return expectedType;
         }
 
-        public void visitField(@NotNull PsiField field){
+        @Override public void visitField(@NotNull PsiField field){
             final PsiExpression initializer = field.getInitializer();
             if(wrappedExpression.equals(initializer)){
                 expectedType = field.getType();
             }
         }
 
-        public void visitVariable(@NotNull PsiVariable variable){
+        @Override public void visitVariable(@NotNull PsiVariable variable){
             expectedType = variable.getType();
         }
 
-        public void visitArrayInitializerExpression(
+        @Override public void visitArrayInitializerExpression(
                 PsiArrayInitializerExpression initializer){
             final PsiType type = initializer.getType();
             if(!(type instanceof PsiArrayType)){
@@ -143,7 +143,7 @@ public class ExpectedTypeUtils{
             expectedType = arrayType.getComponentType();
         }
 
-        public void visitArrayAccessExpression(
+        @Override public void visitArrayAccessExpression(
                 PsiArrayAccessExpression accessExpression){
             final PsiExpression indexExpression =
                     accessExpression.getIndexExpression();
@@ -152,7 +152,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression binaryExpression){
             final PsiJavaToken sign = binaryExpression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -186,7 +186,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
             final PsiType type = expression.getType();
             if (type instanceof PsiPrimitiveType) {
@@ -196,7 +196,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitPostfixExpression(
+        @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression){
             final PsiType type = expression.getType();
             if (type instanceof PsiPrimitiveType) {
@@ -206,25 +206,25 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitWhileStatement(
+        @Override public void visitWhileStatement(
                 @NotNull PsiWhileStatement whileStatement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitForStatement(@NotNull PsiForStatement statement){
+        @Override public void visitForStatement(@NotNull PsiForStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement){
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitDoWhileStatement(
+        @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement){
             expectedType = PsiType.BOOLEAN;
         }
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement){
             final PsiManager manager = statement.getManager();
             final Project project = manager.getProject();
@@ -232,7 +232,7 @@ public class ExpectedTypeUtils{
             expectedType = PsiType.getJavaLangObject(manager, scope);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             final PsiExpression rExpression = assignment.getRExpression();
             final PsiJavaToken operationSign =
@@ -272,7 +272,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression conditional){
             final PsiExpression condition = conditional.getCondition();
             if(condition.equals(wrappedExpression)){
@@ -282,7 +282,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitReturnStatement(
+        @Override public void visitReturnStatement(
                 @NotNull PsiReturnStatement returnStatement){
             final PsiMethod method =
                     PsiTreeUtil.getParentOfType(returnStatement,
@@ -294,7 +294,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitDeclarationStatement(
+        @Override public void visitDeclarationStatement(
                 PsiDeclarationStatement declaration){
             final PsiElement[] declaredElements =
                     declaration.getDeclaredElements();
@@ -312,7 +312,7 @@ public class ExpectedTypeUtils{
             }
         }
 
-        public void visitExpressionList(PsiExpressionList expressionList){
+        @Override public void visitExpressionList(PsiExpressionList expressionList){
             final JavaResolveResult result = findCalledMethod(expressionList);
             final PsiMethod method = (PsiMethod) result.getElement();
             if(method == null){
@@ -342,7 +342,7 @@ public class ExpectedTypeUtils{
             return JavaResolveResult.EMPTY;
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression referenceExpression){
             //Dave, do we need this at all? -> I think we do -- Bas
             if(calculateTypeForComplexReferences){

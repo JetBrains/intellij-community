@@ -44,7 +44,7 @@ public class InstanceofIncompatibleInterfaceInspection
     private static class InstanceofIncompatibleInterfaceVisitor
             extends BaseInspectionVisitor{
 
-        public void visitInstanceOfExpression(
+        @Override public void visitInstanceOfExpression(
                 @NotNull PsiInstanceOfExpression expression){
             super.visitInstanceOfExpression(expression);
             final PsiTypeElement castTypeElement = expression.getCheckType();

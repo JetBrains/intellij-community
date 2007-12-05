@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiNewExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -43,7 +46,7 @@ public class InstantiationOfUtilityClassInspection extends BaseInspection {
     private static class InstantiationOfUtilityClassVisitor
             extends BaseInspectionVisitor{
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             final PsiType type = expression.getType();
             if(!(type instanceof PsiClassType)){
                 return;

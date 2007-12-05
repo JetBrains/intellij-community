@@ -101,7 +101,7 @@ public class MethodMayBeSynchronizedInspection extends BaseInspection {
     private static class MethodMayBeSynchronizedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiElement parent = statement.getParent();

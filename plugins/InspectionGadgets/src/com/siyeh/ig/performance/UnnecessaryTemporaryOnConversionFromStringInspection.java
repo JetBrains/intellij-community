@@ -173,7 +173,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
             s_basicTypeMap.put("java.lang.Short", "shortValue");
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

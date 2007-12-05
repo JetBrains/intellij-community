@@ -54,7 +54,7 @@ public class UnnecessaryContinueInspection extends BaseInspection {
     private static class UnnecessaryContinueVisitor
             extends BaseInspectionVisitor {
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
           if (PsiUtil.isInJspFile(statement.getContainingFile())) {
             return;

@@ -44,7 +44,7 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     private static class ObjectAllocationInLoopsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!ControlFlowUtils.isInLoop(expression)) {
                 return;

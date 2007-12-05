@@ -147,7 +147,7 @@ public class ForeachStatementInspection extends BaseInspection{
     private static class ForeachStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForeachStatement(
+        @Override public void visitForeachStatement(
                 @NotNull PsiForeachStatement statement){
             super.visitForeachStatement(statement);
             registerStatementError(statement);

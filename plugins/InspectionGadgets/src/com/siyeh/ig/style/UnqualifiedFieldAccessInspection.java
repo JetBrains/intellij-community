@@ -83,7 +83,7 @@ public class UnqualifiedFieldAccessInspection extends BaseInspection {
     private static class UnqualifiedFieldAccessVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement parent = 

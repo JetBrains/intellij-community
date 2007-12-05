@@ -48,7 +48,7 @@ public class CovariantCompareToInspection extends BaseInspection {
     private static class CovariantCompareToVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final String name = method.getName();
             if (!HardcodedMethodConstants.COMPARE_TO.equals(name)) {

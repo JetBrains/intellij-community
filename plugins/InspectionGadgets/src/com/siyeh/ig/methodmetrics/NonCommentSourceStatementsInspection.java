@@ -60,7 +60,7 @@ public class NonCommentSourceStatementsInspection
     private class NonCommentSourceStatementsMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             if (method.getNameIdentifier() == null) {
                 return;

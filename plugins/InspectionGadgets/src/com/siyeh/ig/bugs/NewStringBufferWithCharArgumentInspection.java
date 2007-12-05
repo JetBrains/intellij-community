@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,7 +101,7 @@ public class NewStringBufferWithCharArgumentInspection extends BaseInspection {
     private static class StringBufferWithCharArgumentVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiExpressionList argumentList = expression.getArgumentList();
             if (argumentList == null) {

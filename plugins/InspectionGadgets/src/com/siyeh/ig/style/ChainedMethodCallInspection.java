@@ -31,7 +31,7 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ChainedMethodCallInspection extends BaseInspection {
 
@@ -97,7 +97,7 @@ public class ChainedMethodCallInspection extends BaseInspection {
 
     private class ChainedMethodCallVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression reference =

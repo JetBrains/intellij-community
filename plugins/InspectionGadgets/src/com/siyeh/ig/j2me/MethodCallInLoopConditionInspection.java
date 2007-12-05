@@ -42,7 +42,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     private static class MethodCallInLoopConditionVisitor
             extends BaseInspectionVisitor {
         
-        public void visitForStatement(@NotNull PsiForStatement statement) {
+        @Override public void visitForStatement(@NotNull PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition== null)
@@ -52,7 +52,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
             checkForMethodCalls(condition);
         }
 
-        public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(@NotNull PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if(condition == null){
@@ -61,7 +61,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
             checkForMethodCalls(condition);
         }
 
-        public void visitDoWhileStatement(
+        @Override public void visitDoWhileStatement(
                 @NotNull PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
@@ -75,7 +75,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
             final PsiRecursiveElementVisitor visitor =
                     new PsiRecursiveElementVisitor(){
 
-                public void visitMethodCallExpression(
+                @Override public void visitMethodCallExpression(
                         @NotNull PsiMethodCallExpression expression){
                     super.visitMethodCallExpression(expression);
                     registerMethodCallError(expression);

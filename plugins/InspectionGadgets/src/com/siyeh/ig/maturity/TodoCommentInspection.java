@@ -40,7 +40,7 @@ public class TodoCommentInspection extends BaseInspection {
     private static class ClassWithoutToStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitComment(PsiComment comment) {
+        @Override public void visitComment(PsiComment comment) {
             super.visitComment(comment);
             if (TodoUtil.isTodoComment(comment)) {
                 registerError(comment);

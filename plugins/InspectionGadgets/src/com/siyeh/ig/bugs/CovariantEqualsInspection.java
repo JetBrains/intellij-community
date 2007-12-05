@@ -43,7 +43,7 @@ public class CovariantEqualsInspection extends BaseInspection {
 
     private static class CovariantEqualsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             final String name = method.getName();
             if (!HardcodedMethodConstants.EQUALS.equals(name)) {

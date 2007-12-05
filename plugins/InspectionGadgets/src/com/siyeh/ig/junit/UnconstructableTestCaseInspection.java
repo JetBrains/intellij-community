@@ -49,7 +49,7 @@ public class UnconstructableTestCaseInspection extends BaseInspection {
     private static class UnconstructableTestCaseVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isEnum() ||
                     aClass.isAnnotationType() ||
                     aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

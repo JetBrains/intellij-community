@@ -49,7 +49,7 @@ public class ThreadYieldInspection extends BaseInspection {
 
     private static class ThreadYieldVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isThreadYield(expression)) {

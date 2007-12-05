@@ -184,7 +184,7 @@ public abstract class BaseInspectionVisitor extends PsiElementVisitor{
         return new InspectionGadgetsFix[]{fix};
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitExpression(expression);
     }
 

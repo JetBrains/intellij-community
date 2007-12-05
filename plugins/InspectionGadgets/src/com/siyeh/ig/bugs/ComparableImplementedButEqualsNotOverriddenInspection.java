@@ -48,7 +48,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection
     private static class CompareToAndEqualsNotPairedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(PsiClass aClass) {
+        @Override public void visitClass(PsiClass aClass) {
             super.visitClass(aClass);
             final PsiMethod[] methods = aClass.findMethodsByName(
                     HardcodedMethodConstants.COMPARE_TO, false);

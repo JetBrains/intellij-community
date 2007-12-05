@@ -139,7 +139,7 @@ public class IndexOfReplaceableByContainsInspection
     private static class IndexOfReplaceableByContainsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(expression);
             if(languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0){

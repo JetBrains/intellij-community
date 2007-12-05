@@ -23,11 +23,11 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
@@ -84,7 +84,7 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
     private static class ConstantOnRHSOfComparisonVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if(!(expression.getROperand() != null)) {

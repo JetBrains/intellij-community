@@ -66,7 +66,7 @@ public class NonSerializableWithSerializationMethodsInspection
     private static class NonserializableDefinesSerializationMethodsVisitor
             extends BaseInspectionVisitor{
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             // no call to super, so it doesn't drill down
             if(aClass.isInterface() || aClass.isAnnotationType()){
                 return;

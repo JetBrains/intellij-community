@@ -197,7 +197,7 @@ public class StringConcatenationInsideStringBufferAppendInspection
     private static class StringConcatenationInsideStringBufferAppendVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

@@ -205,14 +205,14 @@ public class VariableSearchUtils {
             this.exceptBlock = exceptBlock;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if (hasConflictingDeclaration) {
                 return;
             }
             super.visitElement(element);
         }
 
-        public void visitCodeBlock(PsiCodeBlock block){
+        @Override public void visitCodeBlock(PsiCodeBlock block){
             if(hasConflictingDeclaration){
                 return;
             }
@@ -222,7 +222,7 @@ public class VariableSearchUtils {
             super.visitCodeBlock(block);
         }
 
-        public void visitVariable(@NotNull PsiVariable variable){
+        @Override public void visitVariable(@NotNull PsiVariable variable){
             if(hasConflictingDeclaration){
                 return;
             }

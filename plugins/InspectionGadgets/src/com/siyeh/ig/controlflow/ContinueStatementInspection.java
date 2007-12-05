@@ -42,7 +42,7 @@ public class ContinueStatementInspection extends BaseInspection {
     private static class ContinueStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitContinueStatement(
+        @Override public void visitContinueStatement(
                 @NotNull PsiContinueStatement statement) {
             super.visitContinueStatement(statement);
             registerStatementError(statement);

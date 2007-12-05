@@ -51,12 +51,12 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         this.countGettersAndSetters = countGettersAndSetters;
     }
 
-    public void visitClass(PsiClass classToVisit){
+    @Override public void visitClass(PsiClass classToVisit){
         calculatePrivateMethodUsagesIfNecessary();
         super.visitClass(classToVisit);
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
         if(qualifier != null && !(qualifier instanceof PsiThisExpression)){
@@ -78,7 +78,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression){
+    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression){
         super.visitMethodCallExpression(expression);
         if(!countGettersAndSetters){
             return;
@@ -106,7 +106,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         }
     }
 
-    public void visitCodeBlock(PsiCodeBlock block){
+    @Override public void visitCodeBlock(PsiCodeBlock block){
         final boolean wasInSync = m_inSynchronizedContext;
         if(block.getParent() instanceof PsiSynchronizedStatement){
             m_inSynchronizedContext = true;
@@ -115,7 +115,7 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         m_inSynchronizedContext = wasInSync;
     }
 
-    public void visitMethod(@NotNull PsiMethod method){
+    @Override public void visitMethod(@NotNull PsiMethod method){
         if(method.hasModifierProperty(PsiModifier.PRIVATE)){
             if(unusedMethods.contains(method)){
                 return;
@@ -307,13 +307,13 @@ class VariableAccessVisitor extends PsiRecursiveElementVisitor{
         return methodsNotAlwaysSynchronized.contains(method);
     }
 
-    public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
+    @Override public void visitClassInitializer(@NotNull PsiClassInitializer initializer){
         m_inInitializer = true;
         super.visitClassInitializer(initializer);
         m_inInitializer = false;
     }
 
-    public void visitField(@NotNull PsiField field){
+    @Override public void visitField(@NotNull PsiField field){
         m_inInitializer = true;
         super.visitField(field);
         m_inInitializer = false;

@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.psi.*;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.InspectionGadgetsBundle;
-import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +51,7 @@ public class ComparatorMethodParameterNotUsedInspection
     private static class CompareMethodDoesNotUseParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (!MethodUtils.methodMatches(method, "java.util.Comparator",
                     PsiType.INT, "compare", PsiType.NULL, PsiType.NULL)) {
@@ -82,7 +82,7 @@ public class ComparatorMethodParameterNotUsedInspection
                 this.parameters = new HashSet(Arrays.asList(parameters));
             }
 
-            public void visitReferenceExpression(
+            @Override public void visitReferenceExpression(
                     PsiReferenceExpression expression) {
                 super.visitReferenceExpression(expression);
                 if (parameters.isEmpty()) {

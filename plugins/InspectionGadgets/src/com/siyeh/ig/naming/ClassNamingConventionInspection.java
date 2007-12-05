@@ -77,7 +77,7 @@ public class ClassNamingConventionInspection extends ConventionInspection {
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (aClass.isInterface() || aClass.isAnnotationType() ||
                     aClass.isEnum()) {
                 return;

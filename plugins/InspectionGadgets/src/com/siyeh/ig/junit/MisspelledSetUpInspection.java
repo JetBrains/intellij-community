@@ -55,7 +55,7 @@ public class MisspelledSetUpInspection extends BaseInspection {
 
     private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super
             final PsiClass aClass = method.getContainingClass();
             @NonNls final String methodName = method.getName();

@@ -47,7 +47,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     private static class ThrowFromFinallyBlockVisitor
             extends BaseInspectionVisitor {
 
-        public void visitThrowStatement(PsiThrowStatement statement) {
+        @Override public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);
             if (!ControlFlowUtils.isInFinallyBlock(statement)) {
                 return;

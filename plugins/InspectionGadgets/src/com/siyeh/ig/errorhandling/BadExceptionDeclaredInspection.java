@@ -26,10 +26,7 @@ import com.siyeh.ig.ui.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,7 +92,7 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
 
         private final Set<String> exceptionSet = new HashSet(exceptionList);
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             super.visitMethod(method);
             if(ignoreTestCases){
                 final PsiClass containingClass = method.getContainingClass();

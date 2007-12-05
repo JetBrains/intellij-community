@@ -83,7 +83,7 @@ public class ParameterNamingConventionInspection extends ConventionInspection {
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitParameter(@NotNull PsiParameter variable) {
+        @Override public void visitParameter(@NotNull PsiParameter variable) {
             final PsiElement scope = variable.getDeclarationScope();
             if (scope instanceof PsiCatchSection ||
                     scope instanceof PsiForeachStatement) {

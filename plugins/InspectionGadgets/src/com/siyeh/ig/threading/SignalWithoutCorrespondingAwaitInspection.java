@@ -43,7 +43,7 @@ public class SignalWithoutCorrespondingAwaitInspection extends BaseInspection {
     private static class SignalWithoutCorrespondingAwaitVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isSignalOrSignalAllCall(expression)) {
@@ -94,14 +94,14 @@ public class SignalWithoutCorrespondingAwaitInspection extends BaseInspection {
             this.target = target;
         }
 
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
             if (containsAwait) {
                 return;
             }
             super.visitElement(element);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isAwaitCall(expression)) {

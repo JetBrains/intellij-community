@@ -113,7 +113,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     private static class UnnecessaryBoxingVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(expression);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -153,7 +153,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
             registerError(expression);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             final LanguageLevel languageLevel =
                     PsiUtil.getLanguageLevel(expression);

@@ -94,7 +94,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
     private static class UnnecessaryInterfaceModifierVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isEnum()) {
                 return;
             }
@@ -117,7 +117,7 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection {
             }
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // don't call super, to keep this from drilling in
             if (!method.isConstructor()) {
                 return;

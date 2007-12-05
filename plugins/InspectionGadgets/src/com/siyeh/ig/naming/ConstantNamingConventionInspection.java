@@ -79,7 +79,7 @@ public class ConstantNamingConventionInspection extends ConventionInspection {
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (!field.hasModifierProperty(PsiModifier.STATIC) ||
                     !field.hasModifierProperty(PsiModifier.FINAL)) {

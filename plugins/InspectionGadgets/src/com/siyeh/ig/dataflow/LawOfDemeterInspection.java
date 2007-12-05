@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class LawOfDemeterInspection extends BaseInspection {
 
@@ -61,7 +61,7 @@ public class LawOfDemeterInspection extends BaseInspection {
 
         private static final int threshold = 2;
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (ignoreLibraryCalls &&
@@ -113,7 +113,7 @@ public class LawOfDemeterInspection extends BaseInspection {
             }
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement parent = expression.getParent();

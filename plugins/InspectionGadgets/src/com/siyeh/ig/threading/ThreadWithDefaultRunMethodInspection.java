@@ -49,7 +49,7 @@ public class ThreadWithDefaultRunMethodInspection extends BaseInspection {
     private static class ThreadWithDefaultRunMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             final PsiAnonymousClass anonymousClass =
                     expression.getAnonymousClass();

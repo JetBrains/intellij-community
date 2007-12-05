@@ -23,14 +23,14 @@ class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
 
     private boolean callToSuperCloneFound = false;
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if (callToSuperCloneFound) {
             return;
         }
         super.visitElement(element);
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression expression){
         if(callToSuperCloneFound){
             return;

@@ -45,7 +45,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection {
     private static class DefaultNotLastCaseInSwitchVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             final PsiCodeBlock body = statement.getBody();

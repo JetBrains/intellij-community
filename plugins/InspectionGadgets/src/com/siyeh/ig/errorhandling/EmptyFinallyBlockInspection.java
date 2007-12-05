@@ -50,7 +50,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
     private static class EmptyFinallyBlockVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;

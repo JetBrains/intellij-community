@@ -60,7 +60,7 @@ public class TestCaseInProductCodeInspection extends BaseInspection {
     private static class TestCaseInProductCodeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (TestUtils.isTest(aClass)) {
                 return;
             }

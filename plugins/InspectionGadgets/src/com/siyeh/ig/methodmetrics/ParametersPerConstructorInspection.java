@@ -19,7 +19,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameterList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ParametersPerConstructorInspection extends MethodMetricInspection {
@@ -56,7 +55,7 @@ public class ParametersPerConstructorInspection extends MethodMetricInspection {
 
     private class ParametersPerMethodVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             if (method.getNameIdentifier() == null) {
                 return;

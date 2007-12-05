@@ -53,7 +53,7 @@ public class JNDIResourceInspection extends BaseInspection {
         @NonNls private static final String LIST = "list";
         @NonNls private static final String LIST_BINDING = "listBindings";
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isJNDIFactoryMethod(expression)){
@@ -106,7 +106,7 @@ public class JNDIResourceInspection extends BaseInspection {
         }
 
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             if(!isJNDIResource(expression)){
                 return;
@@ -218,13 +218,13 @@ public class JNDIResourceInspection extends BaseInspection {
             this.socketToClose = socketToClose;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!containsClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;

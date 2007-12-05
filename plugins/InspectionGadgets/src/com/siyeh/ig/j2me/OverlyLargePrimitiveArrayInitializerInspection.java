@@ -25,7 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class OverlyLargePrimitiveArrayInitializerInspection
         extends BaseInspection {
@@ -64,7 +64,7 @@ public class OverlyLargePrimitiveArrayInitializerInspection
             extends BaseInspectionVisitor{
 
 
-        public void visitArrayInitializerExpression(
+        @Override public void visitArrayInitializerExpression(
                 PsiArrayInitializerExpression expression){
             super.visitArrayInitializerExpression(expression);
             final PsiType type = expression.getType();

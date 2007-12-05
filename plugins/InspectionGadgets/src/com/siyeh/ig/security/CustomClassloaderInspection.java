@@ -42,7 +42,7 @@ public class CustomClassloaderInspection extends BaseInspection {
 
     private static class CustomClassloaderVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!ClassUtils.isSubclass(aClass, "java.lang.ClassLoader")) {
                 return;
             }

@@ -30,7 +30,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class NegatedConditionalInspection extends BaseInspection {
 
@@ -99,7 +99,7 @@ public class NegatedConditionalInspection extends BaseInspection {
 
     private class NegatedConditionalVisitor extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
             final PsiExpression thenBranch = expression.getThenExpression();

@@ -28,13 +28,11 @@ import com.siyeh.ig.ui.ListWrappingTableModel;
 import com.siyeh.ig.ui.RemoveAction;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +91,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection
     private class AccessToNonThreadSafeStaticFieldFromInstanceVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiModifierListOwner parent =

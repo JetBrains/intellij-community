@@ -30,10 +30,10 @@ class LabelSearchVisitor extends PsiRecursiveElementVisitor{
         m_labelName = name;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression){
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression){
     }
 
-    public void visitLabeledStatement(PsiLabeledStatement statement){
+    @Override public void visitLabeledStatement(PsiLabeledStatement statement){
         final PsiIdentifier labelIdentifier = statement.getLabelIdentifier();
         final String labelText = labelIdentifier.getText();
         if(labelText.equals(m_labelName)){

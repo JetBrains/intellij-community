@@ -70,7 +70,7 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
     private static class FinalizeDeclaredProtectedVisitor
             extends BaseInspectionVisitor{
         
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             //note: no call to super;
             final String methodName = method.getName();
             if(!HardcodedMethodConstants.FINALIZE.equals(methodName)) {

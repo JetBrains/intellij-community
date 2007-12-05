@@ -186,11 +186,11 @@ public class ControlFlowUtils{
             return m_found;
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression){
         }
 
-        public void visitBreakStatement(PsiBreakStatement statement){
+        @Override public void visitBreakStatement(PsiBreakStatement statement){
             super.visitBreakStatement(statement);
             final PsiStatement exitedStatement =
                     statement.findExitedStatement();
@@ -212,29 +212,29 @@ public class ControlFlowUtils{
             return m_found;
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression){
         }
 
-        public void visitBreakStatement(PsiBreakStatement statement){
+        @Override public void visitBreakStatement(PsiBreakStatement statement){
             if(statement.getLabelIdentifier() != null){
                 return;
             }
             m_found = true;
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement){
+        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement){
             // don't drill down
         }
 
-        public void visitForStatement(PsiForStatement statement){
+        @Override public void visitForStatement(PsiForStatement statement){
             // don't drill down
         }
 
-        public void visitWhileStatement(PsiWhileStatement statement){
+        @Override public void visitWhileStatement(PsiWhileStatement statement){
             // don't drill down
         }
 
-        public void visitSwitchStatement(PsiSwitchStatement statement){
+        @Override public void visitSwitchStatement(PsiSwitchStatement statement){
             // don't drill down
         }
     }

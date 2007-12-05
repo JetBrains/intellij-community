@@ -59,7 +59,7 @@ public class UpperCaseFieldNameNotConstantInspection extends BaseInspection {
     private static class ExceptionNameDoesntEndWithExceptionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (field.hasModifierProperty(PsiModifier.STATIC) &&
                     field.hasModifierProperty(PsiModifier.FINAL)) {

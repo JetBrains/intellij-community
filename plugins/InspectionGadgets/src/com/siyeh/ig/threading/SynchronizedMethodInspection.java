@@ -28,7 +28,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class SynchronizedMethodInspection extends BaseInspection {
 
@@ -118,7 +118,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
 
     private class SynchronizedMethodVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
                 return;

@@ -51,7 +51,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
     private static class ProtectedMemberInFinalClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //no call to super, so we don't drill into anonymous classes
             if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;
@@ -71,7 +71,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
             registerModifierError(PsiModifier.PROTECTED, method);
         }
 
-	    public void visitField(@NotNull PsiField field) {
+	    @Override public void visitField(@NotNull PsiField field) {
 	        //no call to super, so we don't drill into anonymous classes
 	        if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
 	            return;

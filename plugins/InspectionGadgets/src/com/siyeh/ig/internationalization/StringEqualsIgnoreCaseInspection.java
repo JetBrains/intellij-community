@@ -84,7 +84,7 @@ public class StringEqualsIgnoreCaseInspection extends BaseInspection {
     private static class StringEqualsIgnoreCaseVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

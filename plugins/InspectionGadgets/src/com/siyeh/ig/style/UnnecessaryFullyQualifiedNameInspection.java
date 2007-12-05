@@ -38,7 +38,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -168,7 +168,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
                 return Collections.unmodifiableCollection(shortenedElements);
             }
 
-            public void visitReferenceElement(
+            @Override public void visitReferenceElement(
                     PsiJavaCodeReferenceElement reference) {
                 super.visitReferenceElement(reference);
                 final PsiElement parent = PsiTreeUtil.getParentOfType(reference,
@@ -204,13 +204,13 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
     private class UnnecessaryFullyQualifiedNameVisitor
             extends BaseInspectionVisitor{
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             checkReference(expression);
         }
 
-        public void visitReferenceElement(
+        @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             checkReference(reference);

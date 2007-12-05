@@ -87,7 +87,7 @@ public class StringBufferReplaceableByStringBuilderInspection
     private static class StringBufferReplaceableByStringBuilderVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(variable);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {

@@ -88,7 +88,7 @@ public class LengthOneStringsInConcatenationInspection
     private static class LengthOneStringsInConcatenationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();

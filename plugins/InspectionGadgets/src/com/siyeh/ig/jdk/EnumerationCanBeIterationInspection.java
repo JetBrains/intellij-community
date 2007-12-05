@@ -322,7 +322,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
     private static class EnumerationCanBeIterationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =
@@ -414,7 +414,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 this.variable = variable;
             }
 
-            public void visitMethodCallExpression(
+            @Override public void visitMethodCallExpression(
                     PsiMethodCallExpression expression) {
                 if (enumerationMethodCalled) {
                     return;

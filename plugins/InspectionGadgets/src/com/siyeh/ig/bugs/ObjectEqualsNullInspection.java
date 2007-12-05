@@ -49,7 +49,7 @@ public class ObjectEqualsNullInspection extends BaseInspection {
 
     private static class ObjectEqualsNullVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             if(!MethodCallUtils.isEqualsCall(call)){

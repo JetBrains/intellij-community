@@ -22,27 +22,27 @@ class LoopCountVisitor extends PsiRecursiveElementVisitor {
     private int m_count = 0;
 
 
-    public void visitForStatement(@NotNull PsiForStatement psiForStatement) {
+    @Override public void visitForStatement(@NotNull PsiForStatement psiForStatement) {
         super.visitForStatement(psiForStatement);
         m_count++;
     }
 
-    public void visitForeachStatement(@NotNull PsiForeachStatement psiForStatement) {
+    @Override public void visitForeachStatement(@NotNull PsiForeachStatement psiForStatement) {
         super.visitForeachStatement(psiForStatement);
         m_count++;
     }
 
-    public void visitWhileStatement(@NotNull PsiWhileStatement psiWhileStatement) {
+    @Override public void visitWhileStatement(@NotNull PsiWhileStatement psiWhileStatement) {
         super.visitWhileStatement(psiWhileStatement);
         m_count++;
     }
 
-    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement psiDoWhileStatement) {
+    @Override public void visitDoWhileStatement(@NotNull PsiDoWhileStatement psiDoWhileStatement) {
         super.visitDoWhileStatement(psiDoWhileStatement);
         m_count++;
     }
 
-    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // no call to super, to keep it from drilling into anonymous classes
     }
 

@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class EmptyCatchBlockInspection extends BaseInspection {
 
@@ -71,7 +71,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
 
     private class EmptyCatchBlockVisitor extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             if (PsiUtil.isInJspFile(statement.getContainingFile())) {
                 return;

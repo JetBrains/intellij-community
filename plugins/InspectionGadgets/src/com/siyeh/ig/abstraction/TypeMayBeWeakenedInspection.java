@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.*;
 
 public class TypeMayBeWeakenedInspection extends BaseInspection {
@@ -586,7 +586,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
 
     private class TypeMayBeWeakenedVisitor extends BaseInspectionVisitor {
 
-        public void visitVariable(PsiVariable variable) {
+        @Override public void visitVariable(PsiVariable variable) {
             super.visitVariable(variable);
             if (variable instanceof PsiParameter) {
                 final PsiParameter parameter = (PsiParameter)variable;
@@ -640,7 +640,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             registerVariableError(variable, variable, weakestClasses);
         }
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (isOnTheFly() &&
                     !method.hasModifierProperty(PsiModifier.PRIVATE)) {

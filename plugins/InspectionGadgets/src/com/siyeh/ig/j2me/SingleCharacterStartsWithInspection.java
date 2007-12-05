@@ -99,7 +99,7 @@ public class SingleCharacterStartsWithInspection extends BaseInspection {
     private static class SingleCharacterStartsWithVisitor
             extends BaseInspectionVisitor {
 
-      public void visitMethodCallExpression(
+      @Override public void visitMethodCallExpression(
               @NotNull PsiMethodCallExpression call) {
           super.visitMethodCallExpression(call);
           final PsiReferenceExpression methodExpression =

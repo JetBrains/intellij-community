@@ -74,7 +74,7 @@ public class ConditionalExpressionWithIdenticalBranchesInspection
     private static class ConditionalExpressionWithIdenticalBranchesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
             final PsiExpression thenExpression = expression.getThenExpression();

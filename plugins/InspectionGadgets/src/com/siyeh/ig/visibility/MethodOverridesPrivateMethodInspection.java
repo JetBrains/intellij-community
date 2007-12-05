@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -60,7 +63,7 @@ public class MethodOverridesPrivateMethodInspection extends BaseInspection {
     private static class MethodOverridesPrivateMethodVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             final PsiClass aClass = method.getContainingClass();
             if(aClass == null){
                 return;

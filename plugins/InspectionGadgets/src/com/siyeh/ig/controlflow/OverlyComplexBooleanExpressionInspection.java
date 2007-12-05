@@ -130,19 +130,19 @@ public class OverlyComplexBooleanExpressionInspection
     private class SwitchStatementWithTooManyBranchesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             checkExpression(expression);
         }
 
-        public void visitParenthesizedExpression(
+        @Override public void visitParenthesizedExpression(
                 @NotNull PsiParenthesizedExpression expression) {
             super.visitParenthesizedExpression(expression);
             checkExpression(expression);

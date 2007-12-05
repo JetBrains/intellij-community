@@ -48,7 +48,7 @@ public class NonSerializableObjectPassedToObjectStreamInspection
     private static class NonSerializableObjectPassedToObjectStreamVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression methodCallExpression) {
             super.visitMethodCallExpression(methodCallExpression);
 

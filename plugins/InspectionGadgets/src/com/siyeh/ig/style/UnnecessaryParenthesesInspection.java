@@ -81,7 +81,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     private static class UnnecessaryParenthesesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitParenthesizedExpression(
+        @Override public void visitParenthesizedExpression(
                 PsiParenthesizedExpression expression) {
             final PsiElement parent = expression.getParent();
             final PsiExpression child = expression.getExpression();

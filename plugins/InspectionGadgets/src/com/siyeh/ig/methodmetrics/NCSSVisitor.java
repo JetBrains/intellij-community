@@ -21,11 +21,11 @@ import org.jetbrains.annotations.NotNull;
 class NCSSVisitor extends PsiRecursiveElementVisitor {
     private int m_statementCount = 0;
 
-    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // to call to super, to keep this from drilling down
     }
 
-    public void visitStatement(@NotNull PsiStatement statement) {
+    @Override public void visitStatement(@NotNull PsiStatement statement) {
         super.visitStatement(statement);
         if (statement instanceof PsiEmptyStatement ||
                 statement instanceof PsiBlockStatement) {

@@ -47,7 +47,7 @@ public class CallToNativeMethodWhileLockedInspection
     private static class CallToNativeMethodWhileLockedVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             final PsiMethod method = expression.resolveMethod();
             if (method == null) {

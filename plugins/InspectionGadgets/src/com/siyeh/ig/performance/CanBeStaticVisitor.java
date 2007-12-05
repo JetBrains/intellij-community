@@ -21,13 +21,13 @@ import org.jetbrains.annotations.NotNull;
 class CanBeStaticVisitor extends PsiRecursiveElementVisitor{
     private boolean canBeStatic = true;
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(canBeStatic){
             super.visitElement(element);
         }
     }
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref){
         if(!canBeStatic){
             return;
         }

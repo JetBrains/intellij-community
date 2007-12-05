@@ -76,7 +76,7 @@ public class AnnotationNamingConventionInspection extends ConventionInspection {
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.isAnnotationType()) {
                 return;
             }

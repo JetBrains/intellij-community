@@ -42,7 +42,7 @@ public class CheckedExceptionClassInspection extends BaseInspection {
 
     private static class CheckedExceptionClassVisitor
             extends BaseInspectionVisitor {
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!ClassUtils.isSubclass(aClass, "java.lang.Throwable")) {
                 return;
             }

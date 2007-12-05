@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ThrowCaughtLocallyInspection extends BaseInspection {
 
@@ -58,7 +58,7 @@ public class ThrowCaughtLocallyInspection extends BaseInspection {
     private class ThrowCaughtLocallyVisitor
             extends BaseInspectionVisitor {
 
-        public void visitThrowStatement(PsiThrowStatement statement) {
+        @Override public void visitThrowStatement(PsiThrowStatement statement) {
             super.visitThrowStatement(statement);
             final PsiExpression exception = statement.getException();
             if (exception == null) {

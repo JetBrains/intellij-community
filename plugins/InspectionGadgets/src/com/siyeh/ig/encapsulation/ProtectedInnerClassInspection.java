@@ -55,7 +55,7 @@ public class ProtectedInnerClassInspection extends BaseInspection {
     private static class PackageVisibleInnerClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             if (!aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
                 return;
             }

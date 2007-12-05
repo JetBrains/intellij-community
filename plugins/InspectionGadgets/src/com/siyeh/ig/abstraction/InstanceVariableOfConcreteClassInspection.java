@@ -45,7 +45,7 @@ public class InstanceVariableOfConcreteClassInspection extends BaseInspection {
     private static class InstanceVariableOfConcreteClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             super.visitField(field);
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

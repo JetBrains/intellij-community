@@ -45,7 +45,7 @@ public class ResultOfObjectAllocationIgnoredInspection
     private static class IgnoreResultOfCallVisitor
             extends BaseInspectionVisitor {
 
-        public void visitExpressionStatement(
+        @Override public void visitExpressionStatement(
                 @NotNull PsiExpressionStatement statement) {
             super.visitExpressionStatement(statement);
             final PsiExpression expression = statement.getExpression();

@@ -26,7 +26,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class AssignmentToDateFieldFromParameterInspection
         extends BaseInspection {
@@ -65,7 +65,7 @@ public class AssignmentToDateFieldFromParameterInspection
     private class AssignmentToDateFieldFromParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();

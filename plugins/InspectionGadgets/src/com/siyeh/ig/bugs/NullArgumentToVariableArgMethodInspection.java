@@ -50,7 +50,7 @@ public class NullArgumentToVariableArgMethodInspection
     private static class NullArgumentToVariableArgVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
 

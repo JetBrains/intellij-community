@@ -48,7 +48,7 @@ public class ThreadDeathRethrownInspection extends BaseInspection {
     private static class ThreadDeathRethrownVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCatchSection[] catchSections = statement.getCatchSections();
             for (PsiCatchSection catchSection : catchSections) {

@@ -74,7 +74,7 @@ public class UnnecessarySuperConstructorInspection
     private static class UnnecessarySuperConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =

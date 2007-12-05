@@ -30,7 +30,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ParameterNameDiffersFromOverriddenParameterInspection
         extends BaseInspection {
@@ -104,7 +104,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection
     private class ParameterNameDiffersFromOverriddenParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             final PsiParameterList parameterList = method.getParameterList();
             if (parameterList.getParametersCount() == 0) {
                 return;

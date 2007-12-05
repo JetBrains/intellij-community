@@ -23,7 +23,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class EnumSwitchStatementWhichMissesCasesInspection
         extends BaseInspection {
@@ -70,7 +70,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection
     private class EnumSwitchStatementWhichMissesCasesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (!switchStatementMissingCases(statement)) {

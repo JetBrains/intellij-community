@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -44,7 +43,7 @@ public class ClassLoaderInstantiationInspection extends BaseInspection {
     private static class ClassLoaderInstantiationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if (!TypeUtils.expressionHasTypeOrSubtype(expression,
 		            "java.lang.ClassLoader")) {

@@ -42,7 +42,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
     private static class ConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(PsiConditionalExpression exp) {
+        @Override public void visitConditionalExpression(PsiConditionalExpression exp) {
             super.visitConditionalExpression(exp);
             registerError(exp);
         }

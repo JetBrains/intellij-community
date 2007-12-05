@@ -48,7 +48,7 @@ public class BeforeOrAfterIsPublicVoidNoArgInspection extends BaseInspection {
     private static class BeforeOrAfterIsPublicVoidNoArgVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             //note: no call to super;
             if (!AnnotationUtil.isAnnotated(method, "org.junit.Before", true) &&
                     !AnnotationUtil.isAnnotated(method,

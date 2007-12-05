@@ -26,10 +26,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.ui.ToggleAction;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 public class MultipleReturnPointsPerMethodInspection
         extends MethodMetricInspection {
@@ -79,7 +76,7 @@ public class MultipleReturnPointsPerMethodInspection
     private class MultipleReturnPointsPerMethodVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             // note: no call to super
             if (method.getNameIdentifier() == null) {
                 return;

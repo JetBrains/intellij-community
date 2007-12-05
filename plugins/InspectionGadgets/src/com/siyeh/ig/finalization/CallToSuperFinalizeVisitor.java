@@ -23,13 +23,13 @@ class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor{
     
     private boolean callToSuperFinalizeFound = false;
 
-    public void visitElement(@NotNull PsiElement element){
+    @Override public void visitElement(@NotNull PsiElement element){
         if(!callToSuperFinalizeFound){
             super.visitElement(element);
         }
     }
 
-    public void visitMethodCallExpression(
+    @Override public void visitMethodCallExpression(
             @NotNull PsiMethodCallExpression expression){
         if(callToSuperFinalizeFound){
             return;

@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
         extends BaseInspection {
@@ -58,7 +58,7 @@ public class CheckForOutOfMemoryOnLargeArrayAllocationInspection
     private class CheckForOutOfMemoryOnLargeArrayAllocationVisitor
             extends BaseInspectionVisitor{
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression){
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression){
             super.visitNewExpression(expression);
             final PsiType type = expression.getType();
             if(!(type instanceof PsiArrayType)){

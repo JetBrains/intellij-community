@@ -54,7 +54,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
     private static class TypeParameterHidesVisibleTypeVisitor
             extends BaseInspectionVisitor{
 
-        public void visitTypeParameter(PsiTypeParameter parameter){
+        @Override public void visitTypeParameter(PsiTypeParameter parameter){
             super.visitTypeParameter(parameter);
             final String unqualifiedClassName = parameter.getName();
 

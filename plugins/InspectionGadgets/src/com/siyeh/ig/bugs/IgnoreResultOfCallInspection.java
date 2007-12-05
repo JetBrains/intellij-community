@@ -28,10 +28,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,7 +102,7 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
     private class IgnoreResultOfCallVisitor extends BaseInspectionVisitor{
 
-        public void visitExpressionStatement(
+        @Override public void visitExpressionStatement(
                 @NotNull PsiExpressionStatement statement){
             super.visitExpressionStatement(statement);
             final PsiExpression expression = statement.getExpression();

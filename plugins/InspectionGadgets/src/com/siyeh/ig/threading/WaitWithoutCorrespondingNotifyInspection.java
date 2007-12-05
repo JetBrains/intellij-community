@@ -43,7 +43,7 @@ public class WaitWithoutCorrespondingNotifyInspection extends BaseInspection {
     private static class WaitWithoutCorrespondingNotifyVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isWaitCall(expression)) {
@@ -95,14 +95,14 @@ public class WaitWithoutCorrespondingNotifyInspection extends BaseInspection {
             this.target = target;
         }
 
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
             if (containsNotify) {
                 return;
             }
             super.visitElement(element);
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression)) {

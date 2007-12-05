@@ -53,7 +53,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
     private static class ForLoopThatDoesntUseLoopVariableVisitor
             extends BaseInspectionVisitor {
 
-        public void visitForStatement(@NotNull PsiForStatement statement){
+        @Override public void visitForStatement(@NotNull PsiForStatement statement){
             super.visitForStatement(statement);
             if(conditionUsesInitializer(statement)){
                 if (!updateUsesInitializer(statement)) {
@@ -155,13 +155,13 @@ public class ForLoopThatDoesntUseLoopVariableInspection
             variable = var;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!used){
                 super.visitElement(element);
             }
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression ref){
             if(used){
                 return;

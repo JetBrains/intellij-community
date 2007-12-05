@@ -99,7 +99,7 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
     private static class CallToStringConcatCanBeReplacedByOperatorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiManager manager = expression.getManager();

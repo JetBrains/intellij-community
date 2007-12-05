@@ -44,7 +44,7 @@ public class FieldHasSetterButNoGetterInspection extends BaseInspection {
     private static class FieldHasSetterButNoGetterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             final PsiManager psiManager = field.getManager();
             final Project project = psiManager.getProject();
             final String propertyName =

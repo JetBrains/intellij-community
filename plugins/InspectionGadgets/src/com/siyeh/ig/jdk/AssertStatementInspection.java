@@ -42,7 +42,7 @@ public class AssertStatementInspection extends BaseInspection {
     private static class AssertStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitAssertStatement(PsiAssertStatement statement) {
+        @Override public void visitAssertStatement(PsiAssertStatement statement) {
             super.visitAssertStatement(statement);
             registerStatementError(statement);
         }

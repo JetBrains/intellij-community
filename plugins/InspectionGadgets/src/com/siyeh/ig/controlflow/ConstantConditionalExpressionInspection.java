@@ -93,7 +93,7 @@ public class ConstantConditionalExpressionInspection
     private static class ConstantConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
             final PsiExpression condition = expression.getCondition();

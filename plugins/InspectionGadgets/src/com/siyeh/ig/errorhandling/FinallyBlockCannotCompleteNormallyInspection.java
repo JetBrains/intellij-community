@@ -56,7 +56,7 @@ public class FinallyBlockCannotCompleteNormallyInspection
     private static class FinallyBlockCannotCompleteNormallyVisitor
             extends BaseInspectionVisitor {
 
-        public void visitTryStatement(@NotNull PsiTryStatement statement) {
+        @Override public void visitTryStatement(@NotNull PsiTryStatement statement) {
             super.visitTryStatement(statement);
             final PsiCodeBlock finallyBlock = statement.getFinallyBlock();
             if (finallyBlock == null) {

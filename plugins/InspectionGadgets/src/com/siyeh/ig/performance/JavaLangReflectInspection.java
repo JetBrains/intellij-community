@@ -45,7 +45,7 @@ public class JavaLangReflectInspection extends BaseInspection {
 
     private static class JavaLangReflectVisitor extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final PsiType type = variable.getType();
             final PsiType componentType = type.getDeepComponentType();

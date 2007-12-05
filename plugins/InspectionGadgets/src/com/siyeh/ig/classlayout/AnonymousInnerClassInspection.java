@@ -55,11 +55,11 @@ public class AnonymousInnerClassInspection extends BaseInspection {
     private static class AnonymousInnerClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //no call to super here, to avoid double counting
         }
 
-        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             super.visitAnonymousClass(aClass);
             if (aClass instanceof PsiEnumConstantInitializer) {
                 return;

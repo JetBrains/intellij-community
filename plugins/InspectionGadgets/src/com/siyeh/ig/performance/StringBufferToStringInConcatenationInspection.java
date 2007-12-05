@@ -78,7 +78,7 @@ public class StringBufferToStringInConcatenationInspection
     private static class StringBufferToStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiElement parent = expression.getParent();

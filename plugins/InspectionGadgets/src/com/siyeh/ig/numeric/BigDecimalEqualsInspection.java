@@ -81,7 +81,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
 
     private static class BigDecimalEqualsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!MethodCallUtils.isEqualsCall(expression)) {

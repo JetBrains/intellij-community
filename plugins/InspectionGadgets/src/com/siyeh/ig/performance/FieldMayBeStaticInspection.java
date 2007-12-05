@@ -50,7 +50,7 @@ public class FieldMayBeStaticInspection extends BaseInspection {
 
     private static class FieldMayBeStaticVisitor extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

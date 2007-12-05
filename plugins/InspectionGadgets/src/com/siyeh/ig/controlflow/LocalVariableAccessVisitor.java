@@ -27,7 +27,7 @@ public class LocalVariableAccessVisitor extends PsiRecursiveElementVisitor {
     private final Set<PsiElement> m_accesssedVariables =
             new HashSet<PsiElement>(2);
 
-    public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
+    @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression ref) {
         super.visitReferenceExpression(ref);
         final PsiExpression qualifier = ref.getQualifierExpression();
         if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {

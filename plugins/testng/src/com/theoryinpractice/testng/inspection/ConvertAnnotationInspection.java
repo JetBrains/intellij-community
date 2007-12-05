@@ -24,10 +24,10 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
       }
 
-      public void visitAnnotation(final PsiAnnotation annotation) {
+      @Override public void visitAnnotation(final PsiAnnotation annotation) {
         final @NonNls String qualifiedName = annotation.getQualifiedName();
         if (qualifiedName != null && qualifiedName.startsWith("org.testng.annotations")) {
           holder.registerProblem(annotation, DISPLAY_NAME, new ConvertAnnotationQuickFix());

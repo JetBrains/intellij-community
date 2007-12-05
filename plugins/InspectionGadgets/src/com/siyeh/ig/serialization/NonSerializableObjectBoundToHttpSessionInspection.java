@@ -48,7 +48,7 @@ public class NonSerializableObjectBoundToHttpSessionInspection
     private static class NonSerializableObjectBoundToHttpSessionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression methodCallExpression) {
             super.visitMethodCallExpression(methodCallExpression);
             if (!MethodCallUtils.isSimpleCallToMethod(methodCallExpression,

@@ -28,11 +28,11 @@ class ReturnPointCountVisitor extends PsiRecursiveElementVisitor {
         this.ignoreGuardClauses = ignoreGuardClauses;
     }
 
-    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // no call to super, to keep it from drilling into anonymous classes
     }
 
-    public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
+    @Override public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         if (ignoreGuardClauses && previousWasGuardClause) {
             return;

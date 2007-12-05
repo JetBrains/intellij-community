@@ -27,9 +27,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 
 public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
@@ -109,7 +107,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
     private class PublicMethodWithoutLoggingVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             //no drilldown
             if (method.getNameIdentifier() == null) {
                 return;
@@ -145,13 +143,13 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
 
         private boolean containsLoggingCall = false;
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(containsLoggingCall){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             if(containsLoggingCall){
                 return;

@@ -81,7 +81,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
     private class UnnecessaryLocalVariableVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
 
             if (m_ignoreAnnotatedVariables) {

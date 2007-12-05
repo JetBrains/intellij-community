@@ -111,7 +111,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
         @NonNls private String isEmptyCall = "";
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();
             if (rhs == null) {

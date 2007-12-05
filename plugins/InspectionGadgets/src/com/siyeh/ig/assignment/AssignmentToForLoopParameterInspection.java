@@ -26,7 +26,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class AssignmentToForLoopParameterInspection
         extends BaseInspection {
@@ -61,7 +61,7 @@ public class AssignmentToForLoopParameterInspection
     private class AssignmentToForLoopParameterVisitor
             extends BaseInspectionVisitor {
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if(!WellFormednessUtils.isWellFormed(expression)){
@@ -72,7 +72,7 @@ public class AssignmentToForLoopParameterInspection
             checkForForeachLoopParam(lhs);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression) {
             super.visitPrefixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();
@@ -89,7 +89,7 @@ public class AssignmentToForLoopParameterInspection
             checkForForeachLoopParam(operand);  //sensible due to autoboxing/unboxing
         }
 
-        public void visitPostfixExpression(
+        @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression) {
             super.visitPostfixExpression(expression);
             final PsiJavaToken sign = expression.getOperationSign();

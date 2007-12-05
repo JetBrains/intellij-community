@@ -31,7 +31,7 @@ import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class ReplaceAssignmentWithOperatorAssignmentInspection
         extends BaseInspection {
@@ -151,7 +151,7 @@ public class ReplaceAssignmentWithOperatorAssignmentInspection
     private class ReplaceAssignmentWithOperatorAssignmentVisitor
             extends BaseInspectionVisitor{
 
-        public void visitAssignmentExpression(@NotNull
+        @Override public void visitAssignmentExpression(@NotNull
                 PsiAssignmentExpression assignment){
             super.visitAssignmentExpression(assignment);
             final PsiJavaToken sign = assignment.getOperationSign();

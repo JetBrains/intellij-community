@@ -109,7 +109,7 @@ public class StaticMethodOnlyUsedInOneClassInspection
     private static class StaticmethodOnlyUsedInOneClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

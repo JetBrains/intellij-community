@@ -90,7 +90,7 @@ public class MismatchedCollectionQueryUpdateInspection
     private static class MismatchedCollectionQueryUpdateVisitor
             extends BaseInspectionVisitor{
 
-        public void visitField(@NotNull PsiField field){
+        @Override public void visitField(@NotNull PsiField field){
             super.visitField(field);
             if(!field.hasModifierProperty(PsiModifier.PRIVATE)){
                 return;
@@ -113,7 +113,7 @@ public class MismatchedCollectionQueryUpdateInspection
             registerFieldError(field, Boolean.valueOf(written));
         }
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable){
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable){
             super.visitLocalVariable(variable);
             final PsiCodeBlock codeBlock =
                     PsiTreeUtil.getParentOfType(variable,
@@ -235,14 +235,14 @@ public class MismatchedCollectionQueryUpdateInspection
             this.variable = variable;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if (mayBeQueried) {
                 return;
             }
             super.visitElement(element);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression assignment){
             if(mayBeQueried){
                 return;

@@ -80,7 +80,7 @@ public class StaticVariableNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (!field.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

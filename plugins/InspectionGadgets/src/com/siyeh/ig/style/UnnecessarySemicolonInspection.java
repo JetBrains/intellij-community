@@ -85,7 +85,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
         /**
          * Finds semicolons between the top level classes in a java file.
          */
-        public void visitFile(PsiFile file){
+        @Override public void visitFile(PsiFile file){
             final PsiElement firstChild = file.getFirstChild();
             PsiElement sibling = skipForwardWhiteSpacesAndComments(firstChild);
             while(sibling != null){
@@ -101,7 +101,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
             super.visitFile(file);
         }
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             super.visitClass(aClass);
 
             findUnnecessarySemicolonsAfterEnumConstants(aClass);
@@ -175,7 +175,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection {
                     PsiWhiteSpace.class, PsiComment.class);
         }
 
-        public void visitEmptyStatement(PsiEmptyStatement statement){
+        @Override public void visitEmptyStatement(PsiEmptyStatement statement){
             super.visitEmptyStatement(statement);
             final PsiElement parent = statement.getParent();
             if(parent instanceof PsiCodeBlock){

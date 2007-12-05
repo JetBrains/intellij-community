@@ -43,7 +43,7 @@ public class DesignForExtensionInspection extends BaseInspection {
     private static class DesignForExtensionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if(method.isConstructor()) {
                 return;

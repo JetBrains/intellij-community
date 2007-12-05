@@ -34,7 +34,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UtilityClassWithoutPrivateConstructorInspection
         extends BaseInspection {
@@ -136,7 +136,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
     private class UtilityClassWithoutPrivateConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // no call to super, so that it doesn't drill down to inner classes
             if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
                 return;

@@ -26,7 +26,7 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class StringConcatenationInLoopsInspection extends BaseInspection {
 
@@ -64,7 +64,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     private class StringConcatenationInLoopsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if (expression.getROperand() == null) {
@@ -100,7 +100,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             registerError(sign);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if (expression.getRExpression() == null) {

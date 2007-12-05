@@ -41,7 +41,7 @@ public class AssignmentToNullInspection extends BaseInspection {
 
     private static class AssignmentToNullVisitor extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression value) {
             super.visitLiteralExpression(value);
             final String text = value.getText();

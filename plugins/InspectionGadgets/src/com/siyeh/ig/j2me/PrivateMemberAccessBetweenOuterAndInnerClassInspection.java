@@ -104,7 +104,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection
     private static class PrivateMemberAccessFromInnerClassVisior
             extends BaseInspectionVisitor{
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 @NotNull PsiReferenceExpression expression){
             if (PsiUtil.isInJspFile(expression)) {
                 // disable for jsp files IDEADEV-12957

@@ -17,7 +17,6 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiNewExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -47,7 +46,7 @@ public class SimpleDateFormatWithoutLocaleInspection
     private static class SimpleDateFormatWithoutLocaleVisitor
             extends BaseInspectionVisitor {
 
-        public void visitNewExpression(@NotNull PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
             super.visitNewExpression(expression);
             if(!TypeUtils.expressionHasType("java.text.SimpleDateFormat",
                     expression)) {

@@ -110,7 +110,7 @@ public class RandomDoubleForRandomIntegerInspection
     private static class StringEqualsEmptyStringVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call) {
             super.visitMethodCallExpression(call);
             final PsiReferenceExpression methodExpression =

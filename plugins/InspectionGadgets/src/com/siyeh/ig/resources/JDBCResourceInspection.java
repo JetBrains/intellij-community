@@ -90,7 +90,7 @@ public class JDBCResourceInspection extends BaseInspection {
 
     private static class JDBCResourceVisitor extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isJDBCResourceCreation(expression)){
@@ -200,13 +200,13 @@ public class JDBCResourceInspection extends BaseInspection {
             this.streamToClose = streamToClose;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!containsResourceClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             if(containsResourceClose){
                 return;

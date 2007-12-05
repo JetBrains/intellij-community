@@ -52,7 +52,7 @@ public class MagicCharacterInspection extends BaseInspection {
     private static class CharacterLiteralsShouldBeExplicitlyDeclaredVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();

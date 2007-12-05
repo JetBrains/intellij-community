@@ -43,7 +43,7 @@ public class UnaryPlusInspection extends BaseInspection {
 
     private static class UnaryPlusVisitor extends BaseInspectionVisitor {
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 PsiPrefixExpression prefixExpression) {
             super.visitPrefixExpression(prefixExpression);
             final PsiJavaToken token = prefixExpression.getOperationSign();

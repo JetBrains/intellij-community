@@ -52,7 +52,7 @@ public class ConnectionResourceInspection extends BaseInspection {
     private static class RecordStoreResourceVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression){
             super.visitMethodCallExpression(expression);
             if(!isConnectionFactoryMethod(expression)) {
@@ -159,13 +159,13 @@ public class ConnectionResourceInspection extends BaseInspection {
             this.objectToClose = objectToClose;
         }
 
-        public void visitElement(@NotNull PsiElement element){
+        @Override public void visitElement(@NotNull PsiElement element){
             if(!containsClose){
                 super.visitElement(element);
             }
         }
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             if(containsClose){
                 return;

@@ -72,11 +72,11 @@ public class AnonymousClassMethodCountInspection
     private class AnonymousClassMethodCountVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass psiClass) {
+        @Override public void visitClass(@NotNull PsiClass psiClass) {
             // no call to super, to prevent double counting
         }
 
-        public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             final int totalMethodCount = calculateTotalMethodCount(aClass);
             if (totalMethodCount <= getLimit()) {
                 return;

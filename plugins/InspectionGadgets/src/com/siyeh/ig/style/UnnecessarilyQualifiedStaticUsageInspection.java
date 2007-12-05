@@ -28,7 +28,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class UnnecessarilyQualifiedStaticUsageInspection
         extends BaseInspection {
@@ -112,7 +112,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
     private class UnnecessarilyQualifiedStaticUsageVisitor
             extends BaseInspectionVisitor {
 
-        public void visitReferenceElement(
+        @Override public void visitReferenceElement(
                 PsiJavaCodeReferenceElement reference) {
             super.visitReferenceElement(reference);
             if (!isUnnecessarilyQualifiedAccess(reference)) {
@@ -121,7 +121,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
             registerError(reference, reference);
         }
 
-        public void visitReferenceExpression(
+        @Override public void visitReferenceExpression(
                 PsiReferenceExpression expression) {
             visitReferenceElement(expression);
         }

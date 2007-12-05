@@ -53,7 +53,7 @@ public class PackageVisibleFieldInspection extends BaseInspection {
 
     private static class ProtectedFieldVisitor extends BaseInspectionVisitor {
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             if (field.hasModifierProperty(PsiModifier.PROTECTED) ||
                     field.hasModifierProperty(PsiModifier.PUBLIC) ||
                     field.hasModifierProperty(PsiModifier.PRIVATE)) {

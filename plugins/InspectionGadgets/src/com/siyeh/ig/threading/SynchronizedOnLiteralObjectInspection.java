@@ -46,7 +46,7 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
     private static class SynchronizeOnLockVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSynchronizedStatement(
+        @Override public void visitSynchronizedStatement(
                 @NotNull PsiSynchronizedStatement statement) {
             super.visitSynchronizedStatement(statement);
             final PsiExpression lockExpression = statement.getLockExpression();

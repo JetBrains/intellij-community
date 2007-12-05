@@ -47,7 +47,7 @@ public class NativeMethodsInspection extends BaseInspection {
     private static class NativeMethodVisitor extends BaseInspectionVisitor{
 
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             if(!method.hasModifierProperty(PsiModifier.NATIVE)){
                 return;
             }

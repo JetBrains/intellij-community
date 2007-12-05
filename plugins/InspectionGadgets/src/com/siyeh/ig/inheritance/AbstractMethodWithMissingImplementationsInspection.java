@@ -55,7 +55,7 @@ public class AbstractMethodWithMissingImplementationsInspection
     private static class AbstactMethodWithMissingImplementationsVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(PsiMethod method) {
+        @Override public void visitMethod(PsiMethod method) {
             super.visitMethod(method);
             if (method.getNameIdentifier() == null) {
                 return;

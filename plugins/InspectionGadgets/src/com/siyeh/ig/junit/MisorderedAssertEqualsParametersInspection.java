@@ -102,7 +102,7 @@ public class MisorderedAssertEqualsParametersInspection
     private static class MisorderedAssertEqualsParametersVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!isAssertEquals(expression)) {

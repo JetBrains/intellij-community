@@ -22,7 +22,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class SwitchStatementsWithoutDefaultInspection
         extends BaseInspection {
@@ -60,7 +60,7 @@ public class SwitchStatementsWithoutDefaultInspection
     private class SwitchStatementsWithoutDefaultVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             if (switchStatementHasDefault(statement)) {

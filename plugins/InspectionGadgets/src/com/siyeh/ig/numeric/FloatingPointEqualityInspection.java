@@ -46,7 +46,7 @@ public class FloatingPointEqualityInspection extends BaseInspection {
     private static class FloatingPointEqualityComparisonVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final PsiExpression rhs = expression.getROperand();

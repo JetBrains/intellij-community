@@ -24,7 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.ui.SingleIntegerFieldOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 
 public class IfStatementWithTooManyBranchesInspection
         extends BaseInspection {
@@ -65,7 +65,7 @@ public class IfStatementWithTooManyBranchesInspection
     private class IfStatementWithTooManyBranchesVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
             if (parent instanceof PsiIfStatement) {

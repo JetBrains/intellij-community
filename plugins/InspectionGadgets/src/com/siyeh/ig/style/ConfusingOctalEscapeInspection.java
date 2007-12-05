@@ -48,7 +48,7 @@ public class ConfusingOctalEscapeInspection extends BaseInspection {
     private static class ConfusingOctalEscapeVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLiteralExpression(@NotNull PsiLiteralExpression exp) {
+        @Override public void visitLiteralExpression(@NotNull PsiLiteralExpression exp) {
             super.visitLiteralExpression(exp);
             if (!TypeUtils.expressionHasType("java.lang.String", exp)) {
                 return;

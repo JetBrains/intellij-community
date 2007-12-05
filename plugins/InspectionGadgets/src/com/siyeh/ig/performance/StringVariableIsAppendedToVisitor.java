@@ -28,7 +28,7 @@ class StringVariableIsAppendedToVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
+    @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
         if(appendedTo){
             return;
         }

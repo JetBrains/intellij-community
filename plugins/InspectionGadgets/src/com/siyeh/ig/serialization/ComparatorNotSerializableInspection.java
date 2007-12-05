@@ -54,7 +54,7 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
     private static class ComparatorNotSerializableVisitor
             extends BaseInspectionVisitor{
 
-        public void visitClass(PsiClass aClass) {
+        @Override public void visitClass(PsiClass aClass) {
             //note, no call to super, avoiding drilldown
             if (aClass instanceof PsiAnonymousClass) {
                 return;

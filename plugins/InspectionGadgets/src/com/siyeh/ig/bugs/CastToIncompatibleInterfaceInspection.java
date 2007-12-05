@@ -22,9 +22,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CastToIncompatibleInterfaceInspection extends BaseInspection {
 
     @NotNull
@@ -46,7 +43,7 @@ public class CastToIncompatibleInterfaceInspection extends BaseInspection {
     private static class CastToIncompatibleInterfaceVisitor
             extends BaseInspectionVisitor{
 
-        public void visitTypeCastExpression(
+        @Override public void visitTypeCastExpression(
                 @NotNull PsiTypeCastExpression expression){
             super.visitTypeCastExpression(expression);
             final PsiTypeElement castTypeElement = expression.getCastType();

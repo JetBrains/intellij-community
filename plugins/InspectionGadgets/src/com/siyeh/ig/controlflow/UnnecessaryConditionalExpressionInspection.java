@@ -100,7 +100,7 @@ public class UnnecessaryConditionalExpressionInspection
     private static class UnnecessaryConditionalExpressionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitConditionalExpression(
+        @Override public void visitConditionalExpression(
                 PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
             final PsiExpression thenExpression = expression.getThenExpression();

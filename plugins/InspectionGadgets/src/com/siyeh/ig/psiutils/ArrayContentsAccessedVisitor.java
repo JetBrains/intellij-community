@@ -27,7 +27,7 @@ public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor{
         this.variable = variable;
     }
 
-    public void visitForeachStatement(@NotNull PsiForeachStatement statement){
+    @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement){
         if(accessed){
             return;
         }
@@ -46,7 +46,7 @@ public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor{
         accessed = true;
     }
 
-    public void visitArrayAccessExpression(PsiArrayAccessExpression arg){
+    @Override public void visitArrayAccessExpression(PsiArrayAccessExpression arg){
         if(accessed){
             return;
         }

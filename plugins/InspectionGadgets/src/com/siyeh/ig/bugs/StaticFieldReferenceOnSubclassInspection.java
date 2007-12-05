@@ -81,7 +81,7 @@ public class StaticFieldReferenceOnSubclassInspection
     private static class StaticCallOnSubclassVisitor
             extends BaseInspectionVisitor{
 
-        public void visitReferenceExpression(PsiReferenceExpression expression){
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression){
             super.visitReferenceExpression(expression);
             final PsiElement referent = expression.resolve();
             if(!(referent instanceof PsiField)){

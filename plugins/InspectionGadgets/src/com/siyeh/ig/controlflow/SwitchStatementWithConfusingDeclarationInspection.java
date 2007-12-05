@@ -51,7 +51,7 @@ public class SwitchStatementWithConfusingDeclarationInspection
     private static class SwitchStatementWithConfusingDeclarationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             final PsiCodeBlock body = statement.getBody();
             if (body == null) {

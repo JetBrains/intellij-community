@@ -47,7 +47,7 @@ public class InstanceofChainInspection extends BaseInspection {
     private static class InstanceofChainVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiElement parent = statement.getParent();
             if (parent instanceof PsiIfStatement) {

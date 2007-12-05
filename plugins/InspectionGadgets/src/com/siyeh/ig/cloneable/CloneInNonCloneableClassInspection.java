@@ -51,7 +51,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
     private static class CloneInNonCloneableClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method){
+        @Override public void visitMethod(@NotNull PsiMethod method){
             if (!CloneUtils.isClone(method)) {
                 return;
             }

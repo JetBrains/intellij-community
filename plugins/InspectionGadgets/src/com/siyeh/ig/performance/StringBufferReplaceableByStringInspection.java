@@ -46,7 +46,7 @@ public class StringBufferReplaceableByStringInspection
     private static class StringBufferReplaceableByStringBuilderVisitor
             extends BaseInspectionVisitor{
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable){
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable){
             super.visitLocalVariable(variable);
 
             final PsiCodeBlock codeBlock =

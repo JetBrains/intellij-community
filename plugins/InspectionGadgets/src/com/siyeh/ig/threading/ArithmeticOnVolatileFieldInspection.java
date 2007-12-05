@@ -44,7 +44,7 @@ public class ArithmeticOnVolatileFieldInspection extends BaseInspection {
     private static class AritmeticOnVolatileFieldInspection
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(
+        @Override public void visitBinaryExpression(
                 @NotNull PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             if (expression.getROperand() == null) {
@@ -65,7 +65,7 @@ public class ArithmeticOnVolatileFieldInspection extends BaseInspection {
             checkForVolatile(rhs);
         }
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
             if (!WellFormednessUtils.isWellFormed(expression)) {

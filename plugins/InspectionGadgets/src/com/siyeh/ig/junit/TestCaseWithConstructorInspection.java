@@ -54,7 +54,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
     private static class TestCaseWithConstructorVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             if (!method.isConstructor()) {
                 return;
             }
@@ -69,7 +69,7 @@ public class TestCaseWithConstructorInspection extends BaseInspection {
             registerMethodError(method, Boolean.FALSE);
         }
 
-        public void visitClassInitializer(PsiClassInitializer initializer) {
+        @Override public void visitClassInitializer(PsiClassInitializer initializer) {
             if (initializer.hasModifierProperty(PsiModifier.STATIC)) {
                 return;
             }

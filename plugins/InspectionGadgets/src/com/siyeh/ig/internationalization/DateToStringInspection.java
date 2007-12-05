@@ -51,7 +51,7 @@ public class DateToStringInspection extends BaseInspection {
 
     private static class DateToStringVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final String methodName = MethodCallUtils.getMethodName(expression);

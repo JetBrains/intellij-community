@@ -77,7 +77,7 @@ public class TypeParameterNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitTypeParameter(PsiTypeParameter parameter) {
+        @Override public void visitTypeParameter(PsiTypeParameter parameter) {
             super.visitTypeParameter(parameter);
             final String name = parameter.getName();
             if (name == null) {

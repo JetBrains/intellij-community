@@ -45,7 +45,7 @@ public class SleepWhileHoldingLockInspection extends BaseInspection {
     private static class SleepWhileHoldingLockVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

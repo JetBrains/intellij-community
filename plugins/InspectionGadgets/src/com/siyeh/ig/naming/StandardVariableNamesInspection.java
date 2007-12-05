@@ -102,7 +102,7 @@ public class StandardVariableNamesInspection extends BaseInspection {
     private static class ExceptionNameDoesntEndWithExceptionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitVariable(@NotNull PsiVariable variable) {
+        @Override public void visitVariable(@NotNull PsiVariable variable) {
             super.visitVariable(variable);
             final String variableName = variable.getName();
             final String expectedType = s_expectedTypes.get(variableName);

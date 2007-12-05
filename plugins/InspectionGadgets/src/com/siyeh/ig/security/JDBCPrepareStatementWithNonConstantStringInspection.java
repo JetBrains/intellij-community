@@ -17,12 +17,12 @@ package com.siyeh.ig.security;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -60,7 +60,7 @@ public class JDBCPrepareStatementWithNonConstantStringInspection
 
     private static class RuntimeExecVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

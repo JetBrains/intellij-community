@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.security;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameterList;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,7 +44,7 @@ public class NonFinalCloneInspection extends BaseInspection {
 
     private static class NonFinalCloneVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             final String name = method.getName();
             if (!HardcodedMethodConstants.CLONE.equals(name)) {

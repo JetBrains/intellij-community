@@ -45,7 +45,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection
     private static class OverloadedMethodsWithSameNumberOfParametersVisitor
             extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             if (method.isConstructor()) {
                 return;
             }

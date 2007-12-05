@@ -19,11 +19,11 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,7 +169,7 @@ public class LoopWithImplicitTerminationConditionInspection
     private static class LoopWithImplicitTerminationConditionVisitor
             extends BaseInspectionVisitor {
 
-        public void visitWhileStatement(PsiWhileStatement statement) {
+        @Override public void visitWhileStatement(PsiWhileStatement statement) {
             super.visitWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if (!BoolUtils.isTrue(condition)) {
@@ -181,7 +181,7 @@ public class LoopWithImplicitTerminationConditionInspection
             registerStatementError(statement, Boolean.FALSE);
         }
 
-        public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
             super.visitDoWhileStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if (!BoolUtils.isTrue(condition)) {
@@ -193,7 +193,7 @@ public class LoopWithImplicitTerminationConditionInspection
             registerStatementError(statement, Boolean.TRUE);
         }
 
-        public void visitForStatement(PsiForStatement statement) {
+        @Override public void visitForStatement(PsiForStatement statement) {
             super.visitForStatement(statement);
             final PsiExpression condition = statement.getCondition();
             if (!BoolUtils.isTrue(condition)) {

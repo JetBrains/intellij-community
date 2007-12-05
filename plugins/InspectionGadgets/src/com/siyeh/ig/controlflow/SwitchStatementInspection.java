@@ -41,7 +41,7 @@ public class SwitchStatementInspection extends BaseInspection {
     private static class SwitchStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitSwitchStatement(
+        @Override public void visitSwitchStatement(
                 @NotNull PsiSwitchStatement statement) {
             super.visitSwitchStatement(statement);
             registerStatementError(statement);

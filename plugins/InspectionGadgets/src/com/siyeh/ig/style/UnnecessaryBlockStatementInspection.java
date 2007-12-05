@@ -87,7 +87,7 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection{
     private static class UnnecessaryBlockStatementVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBlockStatement(PsiBlockStatement blockStatement){
+        @Override public void visitBlockStatement(PsiBlockStatement blockStatement){
             super.visitBlockStatement(blockStatement);
             final PsiElement parent = blockStatement.getParent();
             if(!(parent instanceof PsiCodeBlock)){

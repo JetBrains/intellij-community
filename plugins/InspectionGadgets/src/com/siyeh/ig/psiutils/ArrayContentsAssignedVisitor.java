@@ -28,7 +28,7 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
         this.variable = variable;
     }
 
-    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
+    @Override public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment){
         if(assigned)
         {
             return;
@@ -57,7 +57,7 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
+    @Override public void visitPrefixExpression(@NotNull PsiPrefixExpression expression){
         super.visitPrefixExpression(expression);
         final PsiJavaToken operationSign = expression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();
@@ -82,7 +82,7 @@ public class ArrayContentsAssignedVisitor extends PsiRecursiveElementVisitor {
             assigned = true;
         }
     }
-    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
+    @Override public void visitPostfixExpression(@NotNull PsiPostfixExpression expression){
         super.visitPostfixExpression(expression);
         final PsiJavaToken operationSign = expression.getOperationSign();
         final IElementType tokenType = operationSign.getTokenType();

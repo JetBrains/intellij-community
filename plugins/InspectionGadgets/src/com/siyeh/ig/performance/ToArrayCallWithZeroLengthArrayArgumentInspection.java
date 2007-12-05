@@ -151,7 +151,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection
     private static class ToArrayCallWithZeroLengthArrayArgument
             extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiReferenceExpression methodExpression =

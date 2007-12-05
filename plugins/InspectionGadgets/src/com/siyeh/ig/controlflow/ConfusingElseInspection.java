@@ -111,7 +111,7 @@ public class ConfusingElseInspection extends BaseInspection {
     private static class ConfusingElseVisitor
             extends BaseInspectionVisitor {
 
-        public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        @Override public void visitIfStatement(@NotNull PsiIfStatement statement) {
             super.visitIfStatement(statement);
             final PsiStatement thenBranch = statement.getThenBranch();
             if (thenBranch == null) {

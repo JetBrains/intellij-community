@@ -46,7 +46,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
     private static class AssignmentToStaticFieldFromInstanceMethod
             extends BaseInspectionVisitor{
 
-        public void visitAssignmentExpression(
+        @Override public void visitAssignmentExpression(
                 @NotNull PsiAssignmentExpression expression){
             if(!WellFormednessUtils.isWellFormed(expression)){
                 return;
@@ -55,7 +55,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             checkForStaticFieldAccess(lhs);
         }
 
-        public void visitPrefixExpression(
+        @Override public void visitPrefixExpression(
                 @NotNull PsiPrefixExpression expression){
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();
@@ -70,7 +70,7 @@ public class AssignmentToStaticFieldFromInstanceMethodInspection
             checkForStaticFieldAccess(operand);
         }
 
-        public void visitPostfixExpression(
+        @Override public void visitPostfixExpression(
                 @NotNull PsiPostfixExpression expression){
             final PsiJavaToken sign = expression.getOperationSign();
             final IElementType tokenType = sign.getTokenType();

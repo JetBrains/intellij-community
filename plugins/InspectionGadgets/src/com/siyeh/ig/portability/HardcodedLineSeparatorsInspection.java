@@ -52,7 +52,7 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
         private static final char NEW_LINE_CHAR = '\n';
         private static final char RETURN_CHAR = '\r';
 
-        public void visitLiteralExpression(
+        @Override public void visitLiteralExpression(
                 @NotNull PsiLiteralExpression expression) {
             super.visitLiteralExpression(expression);
             final PsiType type = expression.getType();

@@ -47,7 +47,7 @@ public class LocalVariableOfConcreteClassInspection
     private static class LocalVariableOfConcreteClassVisitor
             extends BaseInspectionVisitor {
 
-        public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        @Override public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
             super.visitLocalVariable(variable);
             final PsiTypeElement typeElement = variable.getTypeElement();
             if (!ConcreteClassUtil.typeIsConcreteClass(typeElement)) {

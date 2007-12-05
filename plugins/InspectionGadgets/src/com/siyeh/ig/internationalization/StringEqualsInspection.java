@@ -83,7 +83,7 @@ public class StringEqualsInspection extends BaseInspection {
 
     private static class StringEqualsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             if (!MethodCallUtils.isEqualsCall(expression)) {

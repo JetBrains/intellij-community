@@ -43,7 +43,7 @@ public class AbstractMethodCallInConstructorInspection extends BaseInspection {
     private static class AbstractMethodCallInConstructorVisitor
             extends BaseInspectionVisitor{
 
-        public void visitMethodCallExpression(
+        @Override public void visitMethodCallExpression(
                 @NotNull PsiMethodCallExpression call){
             super.visitMethodCallExpression(call);
             final PsiMethod method =

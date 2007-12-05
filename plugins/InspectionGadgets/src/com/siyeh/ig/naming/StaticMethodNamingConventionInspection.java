@@ -78,7 +78,7 @@ public class StaticMethodNamingConventionInspection
 
     private class NamingConventionsVisitor extends BaseInspectionVisitor {
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             super.visitMethod(method);
             if (!method.hasModifierProperty(PsiModifier.STATIC)) {
                 return;

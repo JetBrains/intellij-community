@@ -83,7 +83,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
     private static class MissingDeprecatedAnnotationVisitor
             extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             super.visitClass(aClass);
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(aClass);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -98,7 +98,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
             registerClassError(aClass);
         }
 
-        public void visitMethod(@NotNull PsiMethod method) {
+        @Override public void visitMethod(@NotNull PsiMethod method) {
             if (method.getNameIdentifier() == null) {
                 return;
             }
@@ -115,7 +115,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
             registerMethodError(method);
         }
 
-        public void visitField(@NotNull PsiField field) {
+        @Override public void visitField(@NotNull PsiField field) {
             final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(field);
             if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) {
                 return;

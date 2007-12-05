@@ -48,7 +48,7 @@ public class DuplicateBooleanBranchInspection extends BaseInspection {
     private static class DuplicateBooleanBranchVisitor
             extends BaseInspectionVisitor {
 
-        public void visitBinaryExpression(PsiBinaryExpression expression) {
+        @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
             super.visitBinaryExpression(expression);
             final IElementType tokenType = expression.getOperationTokenType();
             if (!tokenType.equals(JavaTokenType.ANDAND) &&

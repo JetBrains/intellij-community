@@ -47,7 +47,7 @@ public class UnusedImportInspection extends BaseInspection {
 
     private static class UnusedImportVisitor extends BaseInspectionVisitor {
 
-        public void visitJavaFile(PsiJavaFile file) {
+        @Override public void visitJavaFile(PsiJavaFile file) {
             final PsiImportList importList = file.getImportList();
             if (importList == null) {
                 return;

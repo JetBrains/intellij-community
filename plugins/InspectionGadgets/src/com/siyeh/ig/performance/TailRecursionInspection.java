@@ -274,7 +274,7 @@ public class TailRecursionInspection extends BaseInspection {
 
     private static class TailRecursionVisitor extends BaseInspectionVisitor {
 
-        public void visitReturnStatement(
+        @Override public void visitReturnStatement(
                 @NotNull PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
             final PsiExpression returnValue = statement.getReturnValue();

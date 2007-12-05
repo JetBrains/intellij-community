@@ -25,7 +25,7 @@ import com.siyeh.ig.ui.SingleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.util.Set;
 
 public class FieldAccessedSynchronizedAndUnsynchronizedInspection
@@ -61,7 +61,7 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection
     private class FieldAccessedSynchronizedAndUnsynchronizedVisitor
             extends BaseInspectionVisitor{
 
-        public void visitClass(@NotNull PsiClass aClass){
+        @Override public void visitClass(@NotNull PsiClass aClass){
             if(!containsSynchronization(aClass)){
                 return;
             }

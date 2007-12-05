@@ -23,8 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import java.awt.*;
 
 public class ClassCouplingInspection
         extends ClassMetricInspection {
@@ -122,7 +121,7 @@ public class ClassCouplingInspection
 
     private class ClassCouplingVisitor extends BaseInspectionVisitor {
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             // note: no call to super
             final int totalDependencies = calculateTotalDependencies(aClass);
             if (totalDependencies <= getLimit()) {

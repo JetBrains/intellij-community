@@ -51,7 +51,7 @@ public class EmptyClassInspection extends BaseInspection {
 
     private static class EmptyClassVisitor extends BaseInspectionVisitor {
 
-        public void visitFile(final PsiFile file) {
+        @Override public void visitFile(final PsiFile file) {
             if (!(file instanceof PsiJavaFile)) {
                 return;
             }
@@ -62,7 +62,7 @@ public class EmptyClassInspection extends BaseInspection {
             registerError(file, file);
         }
 
-        public void visitClass(@NotNull PsiClass aClass) {
+        @Override public void visitClass(@NotNull PsiClass aClass) {
             //don't call super, to prevent drilldown
 
             if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
