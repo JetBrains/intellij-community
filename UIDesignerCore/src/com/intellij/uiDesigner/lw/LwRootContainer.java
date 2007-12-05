@@ -21,7 +21,6 @@ import com.intellij.uiDesigner.compiler.UnexpectedFormElementException;
 import com.intellij.uiDesigner.compiler.Utils;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -37,7 +36,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   private ArrayList myInspectionSuppressions = new ArrayList();
 
   public LwRootContainer() throws Exception{
-    super(JPanel.class.getName());
+    super("javax.swing.JPanel");
     myLayoutSerializer = XYLayoutSerializer.INSTANCE;
   }
 

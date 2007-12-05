@@ -137,22 +137,22 @@ public final class CompiledClassPropertiesProvider implements PropertiesProvider
     else if (String.class.getName().equals(propertyClassName)) { // java.lang.String
       property = new LwRbIntroStringProperty(name);
     }
-    else if (Insets.class.getName().equals(propertyClassName)) { // java.awt.Insets
+    else if ("java.awt.Insets".equals(propertyClassName)) { // java.awt.Insets
       property = new LwIntroInsetsProperty(name);
     }
-    else if (Dimension.class.getName().equals(propertyClassName)) { // java.awt.Dimension
+    else if ("java.awt.Dimension".equals(propertyClassName)) { // java.awt.Dimension
       property = new LwIntroDimensionProperty(name);
     }
-    else if (Rectangle.class.getName().equals(propertyClassName)) { // java.awt.Rectangle
+    else if ("java.awt.Rectangle".equals(propertyClassName)) { // java.awt.Rectangle
       property = new LwIntroRectangleProperty(name);
     }
-    else if (Color.class.getName().equals(propertyClassName)) {
+    else if ("java.awt.Color".equals(propertyClassName)) {
       property = new LwIntroColorProperty(name);
     }
-    else if (Font.class.getName().equals(propertyClassName)) {
+    else if ("java.awt.Font".equals(propertyClassName)) {
       property = new LwIntroFontProperty(name);
     }
-    else if (Icon.class.getName().equals(propertyClassName)) {
+    else if ("javax.swing.Icon".equals(propertyClassName)) {
       property = new LwIntroIconProperty(name);
     }
     else {

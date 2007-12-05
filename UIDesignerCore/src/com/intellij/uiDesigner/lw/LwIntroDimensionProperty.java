@@ -24,7 +24,7 @@ import java.awt.*;
  */
 public final class LwIntroDimensionProperty extends LwIntrospectedProperty {
   public LwIntroDimensionProperty(final String name){
-    super(name, Dimension.class.getName());
+    super(name, "java.awt.Dimension");
   }
 
   public Object read(final Element element) throws Exception{

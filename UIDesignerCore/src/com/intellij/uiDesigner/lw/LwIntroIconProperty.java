@@ -18,14 +18,12 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-import javax.swing.*;
-
 /**
  * @author yole
  */
 public class LwIntroIconProperty extends LwIntrospectedProperty {
   public LwIntroIconProperty(final String name) {
-    super(name, Icon.class.getName());
+    super(name, "javax.swing.Icon");
   }
 
   public Object read(Element element) throws Exception {

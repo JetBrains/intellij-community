@@ -17,14 +17,12 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.Font;
-
 /**
  * @author yole
  */
 public class LwIntroFontProperty extends LwIntrospectedProperty {
   public LwIntroFontProperty(final String name) {
-    super(name, Font.class.getName());
+    super(name, "java.awt.Font");
   }
 
   public Object read(Element element) throws Exception {

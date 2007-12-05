@@ -24,7 +24,7 @@ import java.awt.*;
  */
 public final class LwIntroRectangleProperty extends LwIntrospectedProperty{
   public LwIntroRectangleProperty(final String name){
-    super(name, Rectangle.class.getName());
+    super(name, "java.awt.Rectangle");
   }
 
   public Object read(final Element element) throws Exception{

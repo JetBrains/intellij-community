@@ -17,14 +17,12 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.Insets;
-
 /**
  * @author Vladimir Kondratyev
  */
 public final class LwIntroInsetsProperty extends LwIntrospectedProperty{
   public LwIntroInsetsProperty(final String name){
-    super(name, Insets.class.getName());
+    super(name, "java.awt.Insets");
   }
 
   public Object read(final Element element) throws Exception{

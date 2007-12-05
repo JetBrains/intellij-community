@@ -22,7 +22,6 @@ import com.intellij.uiDesigner.shared.BorderType;
 import com.intellij.uiDesigner.shared.XYLayoutManager;
 import org.jdom.Element;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -280,23 +279,23 @@ public class LwContainer extends LwComponent implements IContainer{
       component = new LwHSpacer();
     }
     else if("xy".equals(name) || "grid".equals(name)){
-      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JPanel.class.getName());
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, "javax.swing.JPanel");
       component = new LwContainer(className);
     }
     else if(UIFormXmlConstants.ELEMENT_SCROLLPANE.equals(name)) {
-      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JScrollPane.class.getName());
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, "javax.swing.JScrollPane");
       component = new LwScrollPane(className);
     }
     else if(UIFormXmlConstants.ELEMENT_TABBEDPANE.equals(name)){
-      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JTabbedPane.class.getName());
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, "javax.swing.JTabbedPane");
       component = new LwTabbedPane(className);
     }
     else if(UIFormXmlConstants.ELEMENT_SPLITPANE.equals(name)){
-      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JSplitPane.class.getName());
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, "javax.swing.JSplitPane");
       component = new LwSplitPane(className);
     }
     else if (UIFormXmlConstants.ELEMENT_TOOLBAR.equals(name)) {
-      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, JToolBar.class.getName());
+      String className = LwXmlReader.getOptionalString(child, UIFormXmlConstants.ATTRIBUTE_CLASS, "javax.swing.JToolBar");
       component = new LwToolBar(className);
     }
     else{

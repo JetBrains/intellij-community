@@ -17,14 +17,12 @@ package com.intellij.uiDesigner.lw;
 
 import org.jdom.Element;
 
-import java.awt.Color;
-
 /**
  * @author yole
  */
 public class LwIntroColorProperty extends LwIntrospectedProperty {
   public LwIntroColorProperty(final String name) {
-    super(name, Color.class.getName());
+    super(name, "java.awt.Color");
   }
 
   public Object read(Element element) throws Exception {
