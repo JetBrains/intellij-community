@@ -38,7 +38,7 @@ public class PluginDownloader {
 
   private String myPluginId;
   private String myPluginUrl;
-  private final String myPluginVersion;
+  private String myPluginVersion;
 
   private String myFileName;
   private String myPluginName;
@@ -97,10 +97,10 @@ public class PluginDownloader {
       return false;
     }
 
-    if (ideaPluginDescriptor != null) {
-      final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
-      if (descriptor == null) return false;
-      if (IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) return false; //was not updated
+    final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
+    if (descriptor != null) {
+      myPluginVersion = descriptor.getVersion();
+      if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(myPluginVersion, descriptor.getVersion()) >= 0) return false; //was not updated
     }
     return true;
   }
@@ -237,6 +237,10 @@ public class PluginDownloader {
       myPluginName = FileUtil.getNameWithoutExtension(getFileName());
     }
     return myPluginName;
+  }
+
+  public String getPluginVersion() {
+    return myPluginVersion;
   }
 
   /**

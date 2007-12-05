@@ -4,25 +4,32 @@
  */
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.OrderPanel;
+import com.intellij.ui.SimpleTextAttributes;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
 import java.util.ArrayList;
 
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
-  private ArrayList<Listener> myListeners = new ArrayList<Listener>();
+  private final ArrayList<Listener> myListeners = new ArrayList<Listener>();
+  private static final String AVAILABLE_VERSION = "available version: ";
+  private static final String INSTALLED_VERSION = "installed version: ";
 
   protected DetectedPluginsPanel() {
     super(PluginDownloader.class);
-    getEntryTable().setDefaultRenderer(PluginDownloader.class, new DefaultTableCellRenderer(){
-      // implements javax.swing.table.TableCellRenderer
-      public Component getTableCellRendererComponent(final JTable table, final Object value,
-                                                     final boolean isSelected, final boolean hasFocus, final int row, final int column) {
-        final Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(((PluginDownloader)value).getPluginName());
-        return rendererComponent;
+    getEntryTable().setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer(){
+      protected void customizeCellRenderer(final JTable table, final Object value, final boolean selected, final boolean hasFocus, final int row, final int column) {
+        final PluginDownloader downloader = (PluginDownloader)value;
+        append(downloader.getPluginName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
+        final String loadedVersion = downloader.getPluginVersion();
+        if (loadedVersion != null || (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null)) {
+          append(" (" + (ideaPluginDescriptor != null && ideaPluginDescriptor.getVersion() != null ? INSTALLED_VERSION + ideaPluginDescriptor.getVersion() + (loadedVersion != null ? ", " : "") :"") + (loadedVersion != null ? AVAILABLE_VERSION + loadedVersion : "") + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        }
       }
     });
     setCheckboxColumnName("");
