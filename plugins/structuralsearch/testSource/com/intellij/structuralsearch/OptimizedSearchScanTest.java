@@ -8,8 +8,8 @@ import java.util.Calendar;
 /**
  * @author Maxim.Mossienko
  */
+@Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
 public class OptimizedSearchScanTest extends StructuralSearchTestCase {
-  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
   public void testClassByQName() throws Exception {
     String plan = findWordsToBeUsedWhenSearchingFor("A.f");
     assertEquals("[in code:f]", plan);
