@@ -69,7 +69,7 @@ public class ImporterPreferencesForm {
   }
 
   public void getData(final MavenImporterPreferences data) {
-    data.setAutoImportNew(myTemporaryModulesButton.isSelected());
+    data.setUseTemporaryModules(myTemporaryModulesButton.isSelected());
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
     data.setLookForNested(myLookForNestedCheckBox.isSelected());
@@ -78,8 +78,8 @@ public class ImporterPreferencesForm {
   }
 
   public void setData(final MavenImporterPreferences data) {
-    myTemporaryModulesButton.setSelected(data.isAutoImportNew());
-    myRegularModulesButton.setSelected(!data.isAutoImportNew());
+    myRegularModulesButton.setSelected(!data.isUseTemporaryModules());
+    myTemporaryModulesButton.setSelected(data.isUseTemporaryModules());
 
     myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     myModuleDirControl.setText(data.getDedicatedModuleDir());

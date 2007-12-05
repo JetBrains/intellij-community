@@ -64,10 +64,10 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public void commit(final Project project) {
-    myImportProcessor.commit(project, myProfiles, getImporterPreferences().isAutoImportNew());
+    myImportProcessor.commit(project, myProfiles, getImporterPreferences().isUseTemporaryModules());
 
     final MavenImporterState importerState = project.getComponent(MavenImporter.class).getState();
-    if (getImporterPreferences().isAutoImportNew()) {
+    if (getImporterPreferences().isUseTemporaryModules()) {
       // visit topmost non-linked projects
       myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorRoot() {
         public void visit(MavenProjectModel.Node node) {

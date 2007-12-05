@@ -472,9 +472,7 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                          "</build>");
 
     importProject();
-
-    // will fail when bug in embedder is fixed
-    assertModules();
+    assertModules("project", "m");
   }
 
   public void testProjectWithProfilesXmlFile() throws Exception {
