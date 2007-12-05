@@ -117,10 +117,11 @@ public class Declaration implements GroovyElementTypes {
       //if definition starts with lower case letter than it can be just call expression
 
       String text = builder.getTokenText();
+      char firstChar = text.charAt(0);
       if (!builder.eof()
           && !TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())
           && text != null
-          && Character.isLowerCase(text.charAt(0)) &&
+          && (Character.isLowerCase((firstChar)) || !Character.isLetter(firstChar)) &&
           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
         //call expression
         declMarker.rollbackTo();

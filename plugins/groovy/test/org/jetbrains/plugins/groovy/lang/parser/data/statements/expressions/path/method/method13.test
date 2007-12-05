@@ -1,0 +1,30 @@
+def r() {
+   _(settingsMap)
+}
+-----
+Groovy script
+  Method
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('r')
+    PsiElement(()('(')
+    Parameter list
+      <empty list>
+    PsiElement())(')')
+    PsiWhiteSpace(' ')
+    Throw clause
+      <empty list>
+    Open block
+      PsiElement({)('{')
+      PsiWhiteSpace('\n   ')
+      Method call
+        Reference expression
+          PsiElement(identifier)('_')
+        Arguments
+          PsiElement(()('(')
+          Reference expression
+            PsiElement(identifier)('settingsMap')
+          PsiElement())(')')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
