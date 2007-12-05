@@ -2,7 +2,6 @@ package com.intellij.structuralsearch.impl.matcher.strategies;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 
@@ -12,10 +11,6 @@ import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 public class XmlMatchingStrategy extends NodeFilter implements MatchingStrategy {
   @Override public void visitReferenceExpression(final PsiReferenceExpression psiReferenceExpression) {
     visitExpression(psiReferenceExpression);
-  }
-
-  @Override public void visitXmlFile(final XmlFile element) {
-    result = true;
   }
 
   @Override public void visitXmlTag(final XmlTag element) {
