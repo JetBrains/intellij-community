@@ -86,7 +86,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return lastParent == null || PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
   }
 
-  public Icon getIcon(int flags) {
+  public Icon getElementIcon(int flags) {
     return createLayeredIcon(Icons.CLASS_INITIALIZER, getFlags(this, false));
   }
 }

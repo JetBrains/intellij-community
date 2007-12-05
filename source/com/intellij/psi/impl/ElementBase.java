@@ -3,7 +3,6 @@ package com.intellij.psi.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestUtil;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.*;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
@@ -44,6 +42,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return addVisibilityIcon(element, flags, rowIcon);
     }
 
+    return getElementIcon(flags);
+  }
+
+  protected Icon getElementIcon(final int flags) {
+    final PsiElement element = (PsiElement)this;
     boolean visibilityAdded = false;
     RowIcon baseIcon;
     final boolean isLocked = (flags & ICON_FLAG_READ_STATUS) != 0 && !element.isWritable();
@@ -99,27 +102,13 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     else if (element instanceof PsiParameter) {
       baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     }
-    else if (element instanceof PsiVariable) {
-      baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags((PsiVariable)element, false));
-    }
-    else if (element instanceof XmlTag) {
-      return Icons.XML_TAG_ICON;
-    }
-    else if (element instanceof PsiAntElement) {
-      final PsiAntElement psiAntElement = (PsiAntElement)element;
-      return getAntElementIcon(psiAntElement);
-    }
     else {
       return null;
     }
     return visibilityAdded ? baseIcon : addVisibilityIcon(element, flags, baseIcon);
   }
 
-  private static Icon getAntElementIcon(final PsiAntElement psiAntElement) {
-    return psiAntElement.getRole().getIcon();
-  }
-
-  private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
+  protected static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {
     if ((flags & ICON_FLAG_VISIBILITY) != 0) {
       PsiModifierList modifierList = element instanceof PsiModifierListOwner ? ((PsiModifierListOwner)element).getModifierList() : null;
       VisibilityIcons.setVisibilityIcon(modifierList, baseIcon);

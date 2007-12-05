@@ -75,7 +75,7 @@ public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement impl
     return "PsiClassObjectAccessExpression:" + getText();
   }
 
-  public Icon getIcon(final int flags) {
+  public Icon getElementIcon(final int flags) {
     final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
     rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
     return rowIcon;

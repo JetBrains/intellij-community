@@ -7,9 +7,13 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, ClsModifierListOwner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.compiled.ClsParameterImpl");
@@ -192,5 +196,10 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
     return ((ClsMethodImpl)myParent.getParent()).getParameterAnnotations(myIdx);
+  }
+
+  public Icon getElementIcon(final int flags) {
+    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    return addVisibilityIcon(this, flags, baseIcon);
   }
 }

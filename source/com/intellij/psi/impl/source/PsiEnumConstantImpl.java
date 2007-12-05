@@ -16,7 +16,11 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Icons;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author dsl
@@ -226,6 +230,11 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public PomField getPom() {
     //TODO:
     return null;
+  }
+
+  public Icon getElementIcon(final int flags) {
+    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    return addVisibilityIcon(this, flags, baseIcon);
   }
 
   private class MyReference implements PsiJavaReference {

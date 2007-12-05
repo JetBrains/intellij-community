@@ -29,6 +29,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Icons;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DefinesXml;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -937,6 +939,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     final PsiElement prevSibling = getPrevSibling();
     if(prevSibling instanceof XmlTagChild) return (XmlTagChild)prevSibling;
     return null;
+  }
+
+  public Icon getElementIcon(int flags) {
+    return Icons.XML_TAG_ICON;
   }
 
   protected class BodyInsertTransaction extends InsertTransaction{

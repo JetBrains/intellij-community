@@ -10,7 +10,11 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
+import com.intellij.util.Icons;
+import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class PsiParameterImpl extends IndexedRepositoryPsiElement implements PsiParameter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiParameterImpl");
@@ -202,5 +206,10 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
 
   public ItemPresentation getPresentation() {
     return SymbolPresentationUtil.getVariablePresentation(this);
+  }
+
+  public Icon getElementIcon(final int flags) {
+    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    return addVisibilityIcon(this, flags, baseIcon);
   }
 }
