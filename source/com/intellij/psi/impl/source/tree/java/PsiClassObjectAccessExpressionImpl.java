@@ -1,18 +1,21 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement implements PsiClassObjectAccessExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiClassObjectAccessExpressionImpl");
@@ -70,6 +73,12 @@ public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement impl
 
   public String toString() {
     return "PsiClassObjectAccessExpression:" + getText();
+  }
+
+  public Icon getIcon(final int flags) {
+    final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
+    rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
+    return rowIcon;
   }
 }
 

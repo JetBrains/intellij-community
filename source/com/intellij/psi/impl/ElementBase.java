@@ -106,20 +106,17 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       return Icons.XML_TAG_ICON;
     }
     else if (element instanceof PsiAntElement) {
-      return ((PsiAntElement)element).getRole().getIcon();
-    }
-    else if (element instanceof PsiClassObjectAccessExpression) {
-      final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
-      rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
-      return rowIcon;
-    }
-    else if (element instanceof PsiClassInitializer) {
-      return createLayeredIcon(Icons.CLASS_INITIALIZER, getFlags((PsiClassInitializer)element, false));
+      final PsiAntElement psiAntElement = (PsiAntElement)element;
+      return getAntElementIcon(psiAntElement);
     }
     else {
       return null;
     }
     return visibilityAdded ? baseIcon : addVisibilityIcon(element, flags, baseIcon);
+  }
+
+  private static Icon getAntElementIcon(final PsiAntElement psiAntElement) {
+    return psiAntElement.getRole().getIcon();
   }
 
   private static Icon addVisibilityIcon(final PsiElement element, final int flags, final RowIcon baseIcon) {

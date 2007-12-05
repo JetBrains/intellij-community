@@ -5,8 +5,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author ven
@@ -62,5 +66,11 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
     StringBuffer buffer = new StringBuffer();
     appendMirrorText(0, buffer);
     return buffer.toString();
+  }
+
+  public Icon getIcon(final int flags) {
+    final RowIcon rowIcon = createLayeredIcon(Icons.FIELD_ICON, 0);
+    rowIcon.setIcon(Icons.PUBLIC_ICON, 1);
+    return rowIcon;
   }
 }

@@ -8,7 +8,10 @@ import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implements PsiClassInitializer {
   private PsiModifierListImpl myRepositoryModifierList = null;
@@ -81,6 +84,10 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     return lastParent == null || PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+  }
+
+  public Icon getIcon(int flags) {
+    return createLayeredIcon(Icons.CLASS_INITIALIZER, getFlags(this, false));
   }
 }
 
