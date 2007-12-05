@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -126,7 +127,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
         ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         PsiDirectory[] dirs = view.getDirectories();
         for (PsiDirectory dir : dirs) {
-          if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && dir.getPackage() != null) {
+          if (projectFileIndex.isInSourceContent(dir.getVirtualFile()) && JavaDirectoryService.getInstance().getPackage(dir) != null) {
             return;
           }
         }
@@ -165,7 +166,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
       return CANCELED;
     }
 
-    final PsiClass klass = directory.createClass(newName, getClassTemplateName());
+    final PsiClass klass = JavaDirectoryService.getInstance().createClass(directory, newName, getClassTemplateName());
 
     DescriptorUtil.patchPluginXml(this, klass, myFilesToPatch.toArray(new XmlFile[myFilesToPatch.size()]));
 

@@ -17,15 +17,15 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.idea.devkit.util.ComponentType;
 
 import javax.swing.*;
-
-import org.jetbrains.idea.devkit.util.ComponentType;
 
 /**
  * @author max
@@ -45,7 +45,7 @@ public abstract class GenerateClassAndPatchPluginXmlActionBase extends GenerateP
   }
 
   protected void checkBeforeCreate(String newName, PsiDirectory directory) throws IncorrectOperationException {
-    directory.checkCreateClass(newName);
+    JavaDirectoryService.getInstance().checkCreateClass(directory, newName);
     super.checkBeforeCreate(newName, directory);
   }
 

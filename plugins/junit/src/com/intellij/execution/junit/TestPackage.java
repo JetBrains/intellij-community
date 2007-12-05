@@ -125,7 +125,7 @@ public class TestPackage extends TestObject {
       aPackage = (PsiPackage)element;
     }
     else if (element instanceof PsiDirectory) {
-      aPackage = ((PsiDirectory)element).getPackage();
+      aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     }
     else {
       return false;

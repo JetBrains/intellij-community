@@ -226,7 +226,7 @@ public class TestData implements Cloneable
       if (element instanceof PsiPackage) {
         return Comparing.strEqual(PACKAGE_NAME, ((PsiPackage) element).getQualifiedName());
       } else if (element instanceof PsiDirectory) {
-        final PsiPackage psiPackage = ((PsiDirectory) element).getPackage();
+        final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
         return psiPackage != null && Comparing.strEqual(PACKAGE_NAME, psiPackage.getQualifiedName());
       }
     }

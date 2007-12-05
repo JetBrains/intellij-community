@@ -3,9 +3,13 @@ package com.theoryinpractice.testng.ui.actions;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -48,7 +52,7 @@ public class CreatePackageTestAction extends AnAction
         }
 
         if (element instanceof PsiDirectory) {
-            return ((PsiDirectory) element).getPackage();
+          return JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
         }
         return null;
     }
