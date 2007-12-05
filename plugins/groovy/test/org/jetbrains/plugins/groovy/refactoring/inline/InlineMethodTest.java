@@ -27,6 +27,10 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -49,7 +53,7 @@ import java.io.IOException;
  */
 public class InlineMethodTest extends CommonRefactoringTestCase {
 
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method/";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method/actual";
 
   public InlineMethodTest() {
     super(System.getProperty("path") != null ?
@@ -139,10 +143,8 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
   }
 
 
-
   public static Test suite() {
     return new InlineMethodTest();
   }
-
 
 }

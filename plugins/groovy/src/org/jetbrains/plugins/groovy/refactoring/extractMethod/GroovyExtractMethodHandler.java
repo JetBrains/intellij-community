@@ -163,7 +163,6 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
                               final GrVariableDeclarationOwner declarationOwner,
                               final Editor editor) {
 
-    // todo remove me!
     final GrMethod method = ExtractMethodUtil.createMethodByHelper(methodName, helper);
     final Runnable runnable = new Runnable() {
       public void run() {

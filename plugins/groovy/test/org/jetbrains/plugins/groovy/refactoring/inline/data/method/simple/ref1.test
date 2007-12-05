@@ -1,0 +1,36 @@
+protected static def getGeneratedFileNames() {
+    def foo = 0
+    while (true) {
+        foo = <begin>asd<end>()
+    }
+
+    int t = foo
+}
+
+static Serializable asd() {
+    Serializable foo = 42;
+    println(foo)
+    foo = ""
+    return foo
+}
+-----
+protected static def getGeneratedFileNames() {
+    def foo = 0
+    while (true) {
+        Serializable result
+        Serializable foo1 = 42
+        println(foo1)
+        foo1 = ""
+        result = foo1
+        foo = result
+    }
+
+    int t = foo
+}
+
+static Serializable asd() {
+    Serializable foo = 42;
+    println(foo)
+    foo = ""
+    return foo
+}

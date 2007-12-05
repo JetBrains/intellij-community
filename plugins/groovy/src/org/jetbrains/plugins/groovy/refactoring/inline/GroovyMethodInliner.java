@@ -23,6 +23,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -34,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -59,6 +62,9 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   @Nullable
   public Collection<String> getConflicts(PsiReference reference, PsiElement referenced) {
+    PsiElement element = reference.getElement();
+    assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
+    GrCallExpression call = (GrCallExpression) element.getParent();
     return new ArrayList<String>();
   }
 
@@ -83,35 +89,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     }
   }
 
-  /*
-  Method call is used as expression in some enclosing expression or
-  is method return result
-  */
-  private static boolean isOnExpressionOrReturnPlace(GrCallExpression call) {
-    PsiElement parent = call.getParent();
-    if (!(parent instanceof GrVariableDeclarationOwner)) {
-      return true;
-    }
-
-    // tail calls in methods and closures
-    GrVariableDeclarationOwner owner = (GrVariableDeclarationOwner) parent;
-    if (owner instanceof GrClosableBlock ||
-        owner instanceof GrOpenBlock && owner.getParent() instanceof GrMethod) {
-      GrStatement[] statements = ((GrCodeBlock) owner).getStatements();
-      assert statements.length > 0;
-      GrStatement last = statements[statements.length - 1];
-      if (last == call) return true;
-      if (last instanceof GrReturnStatement && call == ((GrReturnStatement) last).getReturnValue()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-
   static SmartPsiElementPointer<GrExpression> inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
     try {
-
       GrMethod newMethod = prepareNewMethod(call, method);
       GrExpression result = getAloneResultExpression(newMethod);
       if (result != null) {
@@ -271,16 +250,28 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   Parepare temporary method sith non-conflicting local names
   */
   private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
+
+    // todo add qualifiers to references
+    GroovyInlineMethodUtil.collectReferenceInfo(call, method);
     GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
     ArrayList<GrVariable> innerVariables = new ArrayList<GrVariable>();
     collectInnerVariables(newMethod.getBlock(), innerVariables);
+
     // there are only local variables and parameters (possible of inner closures)
     for (GrVariable variable : innerVariables) {
       String name = variable.getName();
       if (name != null) {
         String newName = InlineMethodConflictSolver.suggestNewName(name, method, call);
         if (!newName.equals(variable.getName())) {
+          final Collection<PsiReference> refs = ReferencesSearch.search(variable, GlobalSearchScope.projectScope(variable.getProject()), false).findAll();
+          for (PsiReference ref : refs) {
+            PsiElement element = ref.getElement();
+            if (element instanceof GrReferenceExpression) {
+              GrExpression newExpr = factory.createExpressionFromText(newName);
+              ((GrReferenceExpression) element).replaceWithExpression(newExpr, false);
+            }
+          }
           variable.setName(newName);
         }
       }
@@ -322,6 +313,32 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       }
     }
     return null;
+  }
+
+
+  /*
+  Method call is used as expression in some enclosing expression or
+  is method return result
+  */
+  private static boolean isOnExpressionOrReturnPlace(GrCallExpression call) {
+    PsiElement parent = call.getParent();
+    if (!(parent instanceof GrVariableDeclarationOwner)) {
+      return true;
+    }
+
+    // tail calls in methods and closures
+    GrVariableDeclarationOwner owner = (GrVariableDeclarationOwner) parent;
+    if (owner instanceof GrClosableBlock ||
+        owner instanceof GrOpenBlock && owner.getParent() instanceof GrMethod) {
+      GrStatement[] statements = ((GrCodeBlock) owner).getStatements();
+      assert statements.length > 0;
+      GrStatement last = statements[statements.length - 1];
+      if (last == call) return true;
+      if (last instanceof GrReturnStatement && call == ((GrReturnStatement) last).getReturnValue()) {
+        return true;
+      }
+    }
+    return false;
   }
 
 

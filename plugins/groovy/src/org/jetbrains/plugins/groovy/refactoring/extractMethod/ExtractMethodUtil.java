@@ -191,7 +191,7 @@ public class ExtractMethodUtil {
     boolean outputIsParameter = false;
     if (outputName != null) {
       for (ParameterInfo info : infos) {
-        if (info.passAsParameter() && outputName.equals(info.getOldName())) {
+        if (outputName.equals(info.getOldName())) {
           outputIsParameter = true;
         }
       }

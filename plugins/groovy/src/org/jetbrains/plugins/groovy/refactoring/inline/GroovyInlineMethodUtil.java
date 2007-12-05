@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -43,6 +44,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -264,6 +267,25 @@ public abstract class GroovyInlineMethodUtil {
       return mParent instanceof GroovyFile && mParent == parent;
     }
     return false;
+  }
+
+  public static Collection<ReferenceExpressionInfo> collectReferenceInfo(GrCallExpression call, GrMethod method) {
+    return null;
+  }
+
+  static class ReferenceExpressionInfo {
+    public final PsiElement declaration;
+    public final GrReferenceExpression expression;
+    public final int offsetInMethod;
+    public final PsiClass containingClass;
+
+
+    public ReferenceExpressionInfo(GrReferenceExpression expression, int offsetInMethod, PsiElement declaration, PsiClass containingClass) {
+      this.expression = expression;
+      this.offsetInMethod = offsetInMethod;
+      this.declaration = declaration;
+      this.containingClass = containingClass;
+    }
   }
 
 
