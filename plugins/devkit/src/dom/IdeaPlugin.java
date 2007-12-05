@@ -46,7 +46,7 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
-  List<GenericDomValue<String>> getChangeNoteses();
+  List<GenericDomValue<String>> getChangeNotess();
   GenericDomValue<String> addChangeNotes();
 
 
