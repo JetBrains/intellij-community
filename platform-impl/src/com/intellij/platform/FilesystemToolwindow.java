@@ -17,6 +17,8 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentFactoryImpl;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +44,8 @@ public class FilesystemToolwindow {
 
     myFsTree = new FileSystemTreeImpl(project, descriptor);
     myContent.add(new JScrollPane(myFsTree.getTree()), BorderLayout.CENTER);
+    EditSourceOnDoubleClickHandler.install(myFsTree.getTree());
+    EditSourceOnEnterKeyHandler.install(myFsTree.getTree());
 
     final ContentFactory contentFactory = new ContentFactoryImpl();
     final Content content = contentFactory.createContent(myContent, null, false);
