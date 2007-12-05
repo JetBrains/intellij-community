@@ -159,8 +159,8 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
     }
   }
 
-  public void removeContainerElement(final ContainerElement containerElement) {
-    myContents.remove(containerElement);
+  public boolean removeContainerElement(final ContainerElement containerElement) {
+    return myContents.remove(containerElement);
   }
 
   public Module[] getContainingIdeaModules() {
@@ -175,7 +175,7 @@ public class PackagingConfigurationImpl implements PackagingConfiguration {
     return result.toArray(new Module[result.size()]);
   }
 
-  private void clearContainer() {
+  protected void clearContainer() {
     myContents.clear();
   }
 
