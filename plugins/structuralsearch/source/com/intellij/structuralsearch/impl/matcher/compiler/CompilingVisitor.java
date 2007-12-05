@@ -47,7 +47,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitDocTag(PsiDocTag psiDocTag) {
+  @Override public void visitDocTag(PsiDocTag psiDocTag) {
     super.visitDocTag(psiDocTag);
 
     NodeIterator sons = new DocValuesIterator(psiDocTag.getFirstChild());
@@ -87,7 +87,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   static Pattern pattern2 = Pattern.compile("/\\*"+COMMENT+"\\*/", Pattern.DOTALL);
   static Pattern pattern3 = Pattern.compile("/\\*\\*"+COMMENT+"\\*/", Pattern.DOTALL);
 
-  public void visitComment(PsiComment comment) {
+  @Override public void visitComment(PsiComment comment) {
     super.visitComment(comment);
 
     final String text = comment.getText();
@@ -280,7 +280,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return null;
   }
 
-  public void visitLiteralExpression(PsiLiteralExpression expression) {
+  @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
     String value = expression.getText();
 
     if (value.length() > 2 && value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') {
@@ -310,7 +310,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return predicate==null || handler.getMinOccurs() == 0 || !predicate.couldBeOptimized();
   }
 
-  public void visitClassInitializer(final PsiClassInitializer initializer) {
+  @Override public void visitClassInitializer(final PsiClassInitializer initializer) {
     super.visitClassInitializer(initializer);
     PsiStatement[] psiStatements = initializer.getBody().getStatements();
     if (psiStatements.length == 1 && psiStatements[0] instanceof PsiExpressionStatement) {
@@ -322,7 +322,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitField(PsiField psiField) {
+  @Override public void visitField(PsiField psiField) {
     super.visitField(psiField);
     final Handler handler = context.pattern.getHandler(psiField);
 
@@ -331,7 +331,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitMethod(PsiMethod psiMethod) {
+  @Override public void visitMethod(PsiMethod psiMethod) {
     super.visitMethod(psiMethod);
     final Handler handler = context.pattern.getHandler(psiMethod);
 
@@ -343,7 +343,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     handleReferenceText(psiMethod.getName());
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression reference) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
     visitElement(reference);
 
     boolean typedVarProcessed = false;
@@ -398,7 +398,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+  @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     handleReference(expression.getMethodExpression());
     super.visitMethodCallExpression(expression);
   }
@@ -471,18 +471,18 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
       handler.setFilter( filter );
     }
   }
-  public void visitBlockStatement(PsiBlockStatement psiBlockStatement) {
+  @Override public void visitBlockStatement(PsiBlockStatement psiBlockStatement) {
     super.visitBlockStatement(psiBlockStatement);
     context.pattern.getHandler(psiBlockStatement).setFilter( BlockFilter.getInstance() );
   }
 
-  public void visitVariable(PsiVariable psiVariable) {
+  @Override public void visitVariable(PsiVariable psiVariable) {
     super.visitVariable(psiVariable);
     context.pattern.getHandler(psiVariable).setFilter( VariableFilter.getInstance() );
     handleReferenceText(psiVariable.getName());
   }
 
-  public void visitDeclarationStatement(PsiDeclarationStatement psiDeclarationStatement) {
+  @Override public void visitDeclarationStatement(PsiDeclarationStatement psiDeclarationStatement) {
     super.visitDeclarationStatement(psiDeclarationStatement);
 
     if (psiDeclarationStatement.getFirstChild() instanceof PsiTypeElement) {
@@ -536,7 +536,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     handler.setFilter( DeclarationFilter.getInstance() );
   }
 
-  public void visitDocComment(PsiDocComment psiDocComment) {
+  @Override public void visitDocComment(PsiDocComment psiDocComment) {
     super.visitDocComment(psiDocComment);
     context.pattern.getHandler(psiDocComment).setFilter( JavaDocFilter.getInstance() );
   }
@@ -552,7 +552,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return false;
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
 
     if (reference.getParent() != null &&
@@ -563,7 +563,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     handleReference(reference);
   }
 
-  public void visitClass(PsiClass psiClass) {
+  @Override public void visitClass(PsiClass psiClass) {
     super.visitClass(psiClass);
     final Handler handler = context.pattern.getHandler(psiClass);
 
@@ -581,7 +581,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitExpressionStatement(PsiExpressionStatement expr) {
+  @Override public void visitExpressionStatement(PsiExpressionStatement expr) {
     handle(expr);
 
     super.visitExpressionStatement(expr);
@@ -631,14 +631,14 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return substitutionHandler;
   }
 
-  public void visitElement(PsiElement element) {
+  @Override public void visitElement(PsiElement element) {
     handle(element);
     super.visitElement(element);
   }
 
   private int codeBlockLevel;
 
-  public void visitXmlToken(XmlToken token) {
+  @Override public void visitXmlToken(XmlToken token) {
     super.visitXmlToken(token);
 
     if (token.getParent() instanceof XmlText && context.pattern.isRealTypedVar(token)) {
@@ -651,7 +651,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitXmlTag(XmlTag xmlTag) {
+  @Override public void visitXmlTag(XmlTag xmlTag) {
     super.visitXmlTag(xmlTag);
 
     if (codeBlockLevel==0) {
@@ -659,7 +659,7 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitCodeBlock(PsiCodeBlock block) {
+  @Override public void visitCodeBlock(PsiCodeBlock block) {
     ++codeBlockLevel;
     MatchingStrategy strategy = null;
 

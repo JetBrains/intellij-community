@@ -1,9 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,15 +12,15 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
  * To change this template use Options | File Templates.
  */
 public class TypeParameterFilter extends NodeFilter {
-  public void visitTypeElement(PsiTypeElement psiTypeElement) {
+  @Override public void visitTypeElement(PsiTypeElement psiTypeElement) {
     result = true;
   }
 
-  public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
+  @Override public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
     result = true;
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
     result = true;
   }
 

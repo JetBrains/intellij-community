@@ -7,19 +7,19 @@ import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
  * Base filtering strategy to find statements
  */
 public class MatchingStrategyBase extends NodeFilter implements MatchingStrategy {
-  public void visitReferenceExpression(final PsiReferenceExpression psiReferenceExpression) {
+  @Override public void visitReferenceExpression(final PsiReferenceExpression psiReferenceExpression) {
     visitExpression(psiReferenceExpression);
   }
 
-  public void visitCodeBlock(final PsiCodeBlock block) {
+  @Override public void visitCodeBlock(final PsiCodeBlock block) {
     result = true;
   }
   
-  public void visitCatchSection(final PsiCatchSection section) {
+  @Override public void visitCatchSection(final PsiCatchSection section) {
     result = true;
   }
 
-  public void visitStatement(final PsiStatement statement) {
+  @Override public void visitStatement(final PsiStatement statement) {
     result = true;
   }
 

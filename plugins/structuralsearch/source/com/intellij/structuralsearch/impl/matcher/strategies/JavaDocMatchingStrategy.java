@@ -8,15 +8,15 @@ import com.intellij.psi.PsiMethod;
  * Java doc matching strategy
  */
 public final class JavaDocMatchingStrategy extends MatchingStrategyBase {
-  public void visitClass(final PsiClass clazz) {
+  @Override public void visitClass(final PsiClass clazz) {
     result = true;
   }
 
-  public void visitClassInitializer(final PsiClassInitializer clazzInit) {
+  @Override public void visitClassInitializer(final PsiClassInitializer clazzInit) {
     result = true;
   }
 
-  public void visitMethod(final PsiMethod method) {
+  @Override public void visitMethod(final PsiMethod method) {
     result = true;
   }
 

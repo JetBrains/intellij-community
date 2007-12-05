@@ -10,7 +10,7 @@ import com.intellij.psi.PsiLiteralExpression;
  * To change this template use File | Settings | File Templates.
  */
 public class ConstantFilter extends NodeFilter {
-  public void visitLiteralExpression(PsiLiteralExpression  psiLiteral) {
+  @Override public void visitLiteralExpression(PsiLiteralExpression  psiLiteral) {
     result = true;
   }
 

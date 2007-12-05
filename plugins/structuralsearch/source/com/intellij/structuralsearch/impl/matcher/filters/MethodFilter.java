@@ -1,13 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiMethod;
 
 /**
  * Filters method nodes
  */
 public class MethodFilter extends NodeFilter {
-  public void visitMethod(PsiMethod psiMethod) {
+  @Override public void visitMethod(PsiMethod psiMethod) {
     result = true;
   }
 

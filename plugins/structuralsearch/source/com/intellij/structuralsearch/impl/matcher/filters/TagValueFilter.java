@@ -1,7 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,11 +13,11 @@ import com.intellij.psi.xml.XmlTag;
 public class TagValueFilter extends NodeFilter {
   private static NodeFilter instance;
 
-  public void visitXmlText(XmlText text) {
+  @Override public void visitXmlText(XmlText text) {
     result = true;
   }
 
-  public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(XmlTag tag) {
     result = true;
   }
 

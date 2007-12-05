@@ -82,7 +82,7 @@ public class MatcherImpl {
     }
 
     class ValidatingVisitor extends PsiRecursiveElementVisitor {
-      public void visitAnnotation(PsiAnnotation annotation) {
+      @Override public void visitAnnotation(PsiAnnotation annotation) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 
         if (nameReferenceElement == null ||

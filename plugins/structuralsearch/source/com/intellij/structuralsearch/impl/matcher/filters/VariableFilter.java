@@ -1,6 +1,5 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 
 /**
@@ -11,7 +10,7 @@ import com.intellij.psi.PsiVariable;
  * To change this template use Options | File Templates.
  */
 public class VariableFilter extends NodeFilter {
-  public void visitVariable(PsiVariable psiVariable) {
+  @Override public void visitVariable(PsiVariable psiVariable) {
     result = true;
   }
 

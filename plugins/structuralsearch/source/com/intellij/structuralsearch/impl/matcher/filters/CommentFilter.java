@@ -1,6 +1,9 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,19 +13,19 @@ import com.intellij.psi.*;
  * To change this template use File | Settings | File Templates.
  */
 public class CommentFilter extends NodeFilter {
-  public void visitComment(PsiComment comment) {
+  @Override public void visitComment(PsiComment comment) {
     result = true;
   }
 
-  public void visitField(PsiField field) {
+  @Override public void visitField(PsiField field) {
     result = true;
   }
 
-  public void visitMethod(PsiMethod method) {
+  @Override public void visitMethod(PsiMethod method) {
     result = true;
   }
 
-  public void visitClass(PsiClass clazz) {
+  @Override public void visitClass(PsiClass clazz) {
     result = true;
   }
 

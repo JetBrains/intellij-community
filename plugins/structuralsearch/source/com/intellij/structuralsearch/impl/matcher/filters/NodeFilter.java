@@ -17,6 +17,6 @@ public abstract class NodeFilter extends PsiElementVisitor {
     return result;
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
   }
 }

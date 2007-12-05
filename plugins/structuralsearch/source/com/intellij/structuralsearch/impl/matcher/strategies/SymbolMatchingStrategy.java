@@ -6,39 +6,39 @@ import com.intellij.psi.*;
  * CommonStrategy to match symbols
  */
 public class SymbolMatchingStrategy extends ExprMatchingStrategy {
-  public void visitReferenceList(final PsiReferenceList list) {
+  @Override public void visitReferenceList(final PsiReferenceList list) {
     result = true;
   }
 
-  public void visitAnnotation(final PsiAnnotation annotation) {
+  @Override public void visitAnnotation(final PsiAnnotation annotation) {
     result = true;
   }
 
-  public void visitAnnotationParameterList(final PsiAnnotationParameterList list) {
+  @Override public void visitAnnotationParameterList(final PsiAnnotationParameterList list) {
     result = true;
   }
 
-  public void visitModifierList(final PsiModifierList list) {
+  @Override public void visitModifierList(final PsiModifierList list) {
     result = true;
   }
 
-  public void visitNameValuePair(final PsiNameValuePair pair) {
+  @Override public void visitNameValuePair(final PsiNameValuePair pair) {
     result = true;
   }
 
-  public void visitTypeParameterList(PsiTypeParameterList psiTypeParameterList) {
+  @Override public void visitTypeParameterList(PsiTypeParameterList psiTypeParameterList) {
     result = true;
   }
 
-  public void visitTypeElement(PsiTypeElement psiTypeElement) {
+  @Override public void visitTypeElement(PsiTypeElement psiTypeElement) {
     result = true;
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
     result = true;
   }
 
-  public void visitReferenceParameterList(PsiReferenceParameterList psiReferenceParameterList) {
+  @Override public void visitReferenceParameterList(PsiReferenceParameterList psiReferenceParameterList) {
     result = true;
   }
 

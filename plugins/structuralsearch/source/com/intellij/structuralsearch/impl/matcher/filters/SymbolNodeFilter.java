@@ -6,43 +6,43 @@ import com.intellij.psi.*;
  * Tree filter for searching symbols ('T)
  */
 public class SymbolNodeFilter extends NodeFilter {
-  public void visitLiteralExpression(PsiLiteralExpression psiLiteralExpression) {
+  @Override public void visitLiteralExpression(PsiLiteralExpression psiLiteralExpression) {
     result = true;
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
     result = true;
   }
 
-  public void visitAnnotation(final PsiAnnotation annotation) {
+  @Override public void visitAnnotation(final PsiAnnotation annotation) {
     result = true;
   }
 
-  public void visitAnnotationMethod(final PsiAnnotationMethod method) {
+  @Override public void visitAnnotationMethod(final PsiAnnotationMethod method) {
     result = true;
   }
 
-  public void visitNameValuePair(final PsiNameValuePair pair) {
+  @Override public void visitNameValuePair(final PsiNameValuePair pair) {
     result = true;
   }
 
-  public void visitMethod(PsiMethod psiMethod) {
+  @Override public void visitMethod(PsiMethod psiMethod) {
     result = true;
   }
 
-  public void visitClass(PsiClass psiClass) {
+  @Override public void visitClass(PsiClass psiClass) {
     result = true;
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
     result = true;
   }
 
-  public void visitVariable(PsiVariable psiVar) {
+  @Override public void visitVariable(PsiVariable psiVar) {
     result = true;
   }
 
-  public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
+  @Override public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
     result = true;
   }
 

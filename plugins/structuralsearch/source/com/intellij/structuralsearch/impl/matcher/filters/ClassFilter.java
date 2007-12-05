@@ -1,8 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,11 +11,11 @@ import com.intellij.psi.PsiAnonymousClass;
  * To change this template use Options | File Templates.
  */
 public class ClassFilter extends NodeFilter {
-  public void visitAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
+  @Override public void visitAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
     result = true;
   }
 
-  public void visitClass(PsiClass psiClass) {
+  @Override public void visitClass(PsiClass psiClass) {
     result = true;
   }
 

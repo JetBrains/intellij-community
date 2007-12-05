@@ -1,17 +1,17 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiReferenceExpression;
 
 /**
  * Filters expression nodes
  */
 public class ExpressionFilter extends NodeFilter {
-  public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
     result = true;
   }
 
-  public void visitExpression(PsiExpression psiExpression) {
+  @Override public void visitExpression(PsiExpression psiExpression) {
     result = true;
   }
 

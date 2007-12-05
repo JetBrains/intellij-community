@@ -6,36 +6,36 @@ import com.intellij.psi.*;
  * Expression matching strategy
  */
 public class ExprMatchingStrategy extends MatchingStrategyBase {
-  public void visitExpression(final PsiExpression expr) {
+  @Override public void visitExpression(final PsiExpression expr) {
     result = true;
   }
 
-  public void visitVariable(final PsiVariable field) {
+  @Override public void visitVariable(final PsiVariable field) {
     result = true;
   }
 
-  public void visitClass(final PsiClass clazz) {
+  @Override public void visitClass(final PsiClass clazz) {
     result = true;
   }
 
-  public void visitClassInitializer(final PsiClassInitializer clazzInit) {
+  @Override public void visitClassInitializer(final PsiClassInitializer clazzInit) {
     result = true;
   }
 
-  public void visitMethod(final PsiMethod method) {
+  @Override public void visitMethod(final PsiMethod method) {
     result = true;
   }
 
-  public void visitExpressionList(final PsiExpressionList list) {
+  @Override public void visitExpressionList(final PsiExpressionList list) {
     result = true;
   }
 
-  public void visitJavaFile(final PsiJavaFile file) {
+  @Override public void visitJavaFile(final PsiJavaFile file) {
     result = true;
   }
 
   // finding parameters
-  public void visitParameterList(final PsiParameterList list) {
+  @Override public void visitParameterList(final PsiParameterList list) {
     result = true;
   }
 

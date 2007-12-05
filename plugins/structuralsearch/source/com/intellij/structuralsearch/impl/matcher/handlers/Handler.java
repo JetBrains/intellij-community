@@ -1,18 +1,18 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
+import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
+import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
@@ -106,7 +106,7 @@ public abstract class Handler {
   static class ClearStateVisitor extends PsiRecursiveElementVisitor {
     private CompiledPattern pattern;
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       // We do not reset certain handlers because they are also bound to higher level nodes
       // e.g. Identifier handler in name is also bound to PsiMethod
       if (!(element instanceof PsiJavaToken) &&
@@ -121,7 +121,7 @@ public abstract class Handler {
       super.visitElement(element);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitElement(expression);
     }
 

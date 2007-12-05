@@ -2500,7 +2500,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("_.java", s1);
 
     file.acceptChildren(new PsiRecursiveElementVisitor() {
-      public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final PsiVariable variable) {
         super.visitVariable(variable);
         vars.add(variable);
       }

@@ -1,24 +1,27 @@
 package com.intellij.structuralsearch.impl.matcher.strategies;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiMethod;
 
 /**
  * Java doc matching strategy
  */
 public final class CommentMatchingStrategy extends MatchingStrategyBase {
-  public void visitClass(final PsiClass clazz) {
+  @Override public void visitClass(final PsiClass clazz) {
     result = true;
   }
 
-  public void visitClassInitializer(final PsiClassInitializer clazzInit) {
+  @Override public void visitClassInitializer(final PsiClassInitializer clazzInit) {
     result = true;
   }
 
-  public void visitMethod(final PsiMethod method) {
+  @Override public void visitMethod(final PsiMethod method) {
     result = true;
   }
 
-  public void visitComment(final PsiComment comment) {
+  @Override public void visitComment(final PsiComment comment) {
     result = true;
   }
 

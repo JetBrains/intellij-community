@@ -376,11 +376,11 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitElement(expression);
   }
 
-  public void visitVariable(PsiVariable field) {
+  @Override public void visitVariable(PsiVariable field) {
     super.visitVariable(field);
 
     final PsiExpression initializer = field.getInitializer();
@@ -398,7 +398,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitMethod(PsiMethod method) {
+  @Override public void visitMethod(PsiMethod method) {
     super.visitMethod(method);
 
     String name = method.getName();
@@ -411,7 +411,7 @@ final class ReplacementBuilder extends PsiRecursiveElementVisitor {
     }
   }
 
-  public void visitParameter(PsiParameter parameter) {
+  @Override public void visitParameter(PsiParameter parameter) {
     super.visitParameter(parameter);
 
     if (parameterizations!=null) {

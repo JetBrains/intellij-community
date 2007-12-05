@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.xml.XmlText;
 
 /**
  * Filter for lexical nodes
@@ -10,29 +10,29 @@ import com.intellij.psi.javadoc.PsiDocComment;
 final public class LexicalNodesFilter extends NodeFilter {
   private boolean careKeyWords;
 
-  public void visitJavaToken(final PsiJavaToken t) {
+  @Override public void visitJavaToken(final PsiJavaToken t) {
     result = true;
   }
 
-  public void visitComment(final PsiComment comment) {
+  @Override public void visitComment(final PsiComment comment) {
   }
 
-  public void visitDocComment(final PsiDocComment comment) {
+  @Override public void visitDocComment(final PsiDocComment comment) {
   }
 
-  public void visitKeyword(PsiKeyword keyword) {
+  @Override public void visitKeyword(PsiKeyword keyword) {
     result = !careKeyWords;
   }
 
-  public void visitWhiteSpace(final PsiWhiteSpace space) {
+  @Override public void visitWhiteSpace(final PsiWhiteSpace space) {
     result = true;
   }
 
-  public void visitErrorElement(final PsiErrorElement element) {
+  @Override public void visitErrorElement(final PsiErrorElement element) {
     result = true;
   }
 
-  public void visitXmlText(XmlText text) {
+  @Override public void visitXmlText(XmlText text) {
     result = true;
   }
 

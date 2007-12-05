@@ -1,24 +1,27 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameter;
 
 /**
  * Filter for typed symbols
  */
 public class TypedSymbolNodeFilter extends NodeFilter {
-  public void visitMethod(PsiMethod psiMethod) {
+  @Override public void visitMethod(PsiMethod psiMethod) {
     result = psiMethod.getTypeParameters().length > 0;
   }
 
-  public void visitClass(PsiClass psiClass) {
+  @Override public void visitClass(PsiClass psiClass) {
     result = psiClass.getTypeParameters().length > 0;
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement psiJavaCodeReferenceElement) {
     result = psiJavaCodeReferenceElement.getParameterList().getTypeParameterElements().length > 0;
   }
 
-  public void visitTypeParameter(PsiTypeParameter parameter) {
+  @Override public void visitTypeParameter(PsiTypeParameter parameter) {
     // we need this since TypeParameter instanceof PsiClass (?)
   }
 

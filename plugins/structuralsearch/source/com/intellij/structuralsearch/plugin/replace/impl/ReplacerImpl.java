@@ -561,7 +561,7 @@ public class ReplacerImpl {
   static class ModifierListOwnerCollector extends PsiRecursiveElementVisitor {
     HashMap<String,PsiNamedElement> namedElements = new HashMap<String,PsiNamedElement>(1);
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
       if (aClass instanceof PsiAnonymousClass) return;
       handleNamedElement(aClass);
     }
@@ -577,11 +577,11 @@ public class ReplacerImpl {
       named.acceptChildren(this);
     }
 
-    public void visitVariable(PsiVariable var) {
+    @Override public void visitVariable(PsiVariable var) {
       handleNamedElement(var);
     }
 
-    public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(PsiMethod method) {
       handleNamedElement(method);
     }
   }
