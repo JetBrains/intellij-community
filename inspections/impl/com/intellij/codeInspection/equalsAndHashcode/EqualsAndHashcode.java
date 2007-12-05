@@ -4,11 +4,14 @@ import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -20,7 +23,14 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
 
   public void projectOpened(Project project) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiClass psiObjectClass = psiManager.findClass("java.lang.Object");
+    final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiClass>() {
+          @Nullable
+          public PsiClass compute() {
+            return psiManager.findClass("java.lang.Object");
+          }
+        }
+    );
     if (psiObjectClass != null) {
       PsiMethod[] methods = psiObjectClass.getMethods();
       for (PsiMethod method : methods) {
