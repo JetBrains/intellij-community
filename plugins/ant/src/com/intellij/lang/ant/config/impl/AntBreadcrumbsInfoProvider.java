@@ -29,7 +29,7 @@ public class AntBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   }
 
   public boolean acceptElement(@NotNull final PsiElement e) {
-    return e instanceof AntStructuredElement;
+    return e instanceof AntStructuredElement && e.isValid();
   }
 
   @NotNull

@@ -22,7 +22,7 @@ class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   @NonNls private static final String ID_ATTRIBUTE_NAME = "id";
 
   public boolean acceptElement(@NotNull final PsiElement e) {
-    return e instanceof XmlTag;
+    return e instanceof XmlTag && e.isValid();
   }
 
   public Language[] getLanguages() {
