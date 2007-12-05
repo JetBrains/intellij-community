@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,7 +88,7 @@ public class ModuleVcsDetector implements ProjectComponent {
     for(Module module: ModuleManager.getInstance(myProject).getModules()) {
       final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
       for(VirtualFile file: files) {
-        AbstractVcs contentRootVcs = findVersioningVcs(file);
+        AbstractVcs contentRootVcs = myVcsManager.findVersioningVcs(file);
         if (contentRootVcs != null) {
           vcsMap.put(file, contentRootVcs);
         }
@@ -113,7 +112,7 @@ public class ModuleVcsDetector implements ProjectComponent {
   private void autoDetectModuleVcsMapping(final Module module) {
     final VirtualFile[] files = ModuleRootManager.getInstance(module).getContentRoots();
     for(VirtualFile file: files) {
-      AbstractVcs vcs = findVersioningVcs(file);
+      AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
       if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
         myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());
       }
@@ -146,13 +145,4 @@ public class ModuleVcsDetector implements ProjectComponent {
   }
 
 
-  @Nullable
-  private AbstractVcs findVersioningVcs(VirtualFile file) {
-    for(AbstractVcs vcs: myVcsManager.getAllVcss()) {
-      if (vcs.isVersionedDirectory(file)) {
-        return vcs;
-      }
-    }
-    return null;
-  }
 }

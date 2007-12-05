@@ -844,4 +844,14 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public boolean needAutodetectMappings() {
     return !myHaveLegacyVcsConfiguration && !myMappingsLoaded;
   }
+
+  @Nullable
+  public AbstractVcs findVersioningVcs(VirtualFile file) {
+    for(AbstractVcs vcs: getAllVcss()) {
+      if (vcs.isVersionedDirectory(file)) {
+        return vcs;
+      }
+    }
+    return null;
+  }
 }

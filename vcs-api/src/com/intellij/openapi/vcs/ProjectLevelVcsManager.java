@@ -230,4 +230,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 
   public abstract void iterateVcsRoot(final VirtualFile root, final Processor<FilePath> iterator);
+
+  @Nullable
+  public abstract AbstractVcs findVersioningVcs(VirtualFile file);
 }
