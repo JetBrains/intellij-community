@@ -4,11 +4,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.impl.ExcludedFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -38,13 +38,13 @@ public class SvnChangeProvider implements ChangeProvider {
   private final SvnVcs myVcs;
   private final VcsContextFactory myFactory;
   private final SvnBranchConfigurationManager myBranchConfigurationManager;
-  private final ProjectRootManager myProjectRootManager;
+  private final ExcludedFileIndex myExcludedFileIndex;
 
   public SvnChangeProvider(final SvnVcs vcs) {
     myVcs = vcs;
     myFactory = VcsContextFactory.SERVICE.getInstance();
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
-    myProjectRootManager = ProjectRootManager.getInstance(myVcs.getProject());
+    myExcludedFileIndex = ExcludedFileIndex.getInstance(myVcs.getProject());
   }
 
   public void getChanges(final VcsDirtyScope dirtyScope, final ChangelistBuilder builder, ProgressIndicator progress) throws VcsException {
@@ -208,7 +208,7 @@ public class SvnChangeProvider implements ChangeProvider {
           public void handleStatus(SVNStatus status) throws SVNException {
             FilePath path = VcsUtil.getFilePath(status.getFile(), status.getKind().equals(SVNNodeKind.DIR));
             final VirtualFile vFile = path.getVirtualFile();
-            if (vFile != null && myProjectRootManager.getFileIndex().isIgnored(vFile)) {
+            if (vFile != null && myExcludedFileIndex.isExcludedFile(vFile)) {
               return;
             }
             processStatusFirstPass(path, status, context, parentStatus);
@@ -232,7 +232,7 @@ public class SvnChangeProvider implements ChangeProvider {
       if (e.getErrorMessage().getErrorCode() == SVNErrorCode.WC_NOT_DIRECTORY) {
         final VirtualFile virtualFile = path.getVirtualFile();
         if (virtualFile != null) {
-          if (myProjectRootManager.getFileIndex().isIgnored(virtualFile)) return;
+          if (myExcludedFileIndex.isExcludedFile(virtualFile)) return;
           if (parentStatus != FileStatus.IGNORED) {
             context.getBuilder().processUnversionedFile(virtualFile);
           }

@@ -35,12 +35,9 @@ package org.jetbrains.idea.svn.actions;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
@@ -116,10 +113,11 @@ public class ResolveAction extends BasicAction {
         public void run() {
           for (VirtualFile file: files) {
             if (file.isDirectory()) {
-              ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
-                public boolean processFile(final VirtualFile fileOrDir) {
+              ProjectLevelVcsManager.getInstance(project).iterateVcsRoot(file, new Processor<FilePath>() {
+                public boolean process(final FilePath filePath) {
                   ProgressManager.getInstance().checkCanceled();
-                  if (!fileOrDir.isDirectory() && isEnabled(project, activeVcs, fileOrDir) && !fileList.contains(fileOrDir)) {
+                  VirtualFile fileOrDir = filePath.getVirtualFile();
+                  if (fileOrDir != null && !fileOrDir.isDirectory() && isEnabled(project, activeVcs, fileOrDir) && !fileList.contains(fileOrDir)) {
                     fileList.add(fileOrDir);
                   }
                   return true;
