@@ -17,6 +17,11 @@
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
       serviceImplementation="com.intellij.openapi.project.impl.DefaultProjectLocator"/>
 
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.BasicDefaultVcsRootPolicy"/>
+
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>
 </idea-plugin>

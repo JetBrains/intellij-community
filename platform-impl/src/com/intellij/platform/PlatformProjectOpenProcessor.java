@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
+  public static VirtualFile BASE_DIR = null;
+
   public boolean canOpenProject(final VirtualFile file) {
     return file.isDirectory() || !file.getFileType().isBinary();
   }
@@ -25,6 +27,10 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
+
+    if (virtualFile.isDirectory()) {
+      BASE_DIR = virtualFile;
+    }
 
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
@@ -57,5 +63,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   public String getName() {
     return "text editor";
+  }
+
+  public static VirtualFile getBaseDir(final VirtualFile baseDir) {
+    if (BASE_DIR != null) {
+      return BASE_DIR;
+    }
+    return baseDir;
   }
 }
