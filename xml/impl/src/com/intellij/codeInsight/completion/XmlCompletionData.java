@@ -24,14 +24,14 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.xml.TagNameReference;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.getters.AllWordsGetter;
 import com.intellij.psi.filters.getters.XmlAttributeValueGetter;
 import com.intellij.psi.filters.position.LeftNeighbour;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.html.HtmlTag;
+import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
+import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -187,22 +187,6 @@ public class XmlCompletionData extends CompletionData {
       editor.getCaretModel().moveToOffset(caretOffset + 2);
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
-
-      //if (completionChar == '/' ||
-      //    completionChar == '>'
-      //   ) {
-      //  final XmlTag tag = PsiTreeUtil.getContextOfType(context.file.findElementAt(caretOffset), XmlTag.class, false);
-      //
-      //  if (tag == null) return;
-      //
-      //  if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) == null &&
-      //      XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) == null) {
-      //    document.insertString(
-      //      tag.getTextRange().getEndOffset() - 1,
-      //      completionChar == '/' ?  "/>": "></" + tag.getName() + ">"
-      //    );
-      //  }
-      //}
     }
   }
 
@@ -365,14 +349,21 @@ public class XmlCompletionData extends CompletionData {
         template.addTextSegment("/>");
       } else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
         template.addTextSegment(" ");
-        final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
-        template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
-        template.addTextSegment("=\"");
-        template.addEndVariable();
-        template.addTextSegment("\"");
+        if (!isTagFromHtml(tag) || !HtmlUtil.isTagWithoutAttributes(tag.getName())) {
+          final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
+          template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
+          template.addTextSegment("=\"");
+          template.addEndVariable();
+          template.addTextSegment("\"");
+        }
       }
 
       templateManager.startTemplate(editor, template);
+    }
+
+    private static boolean isTagFromHtml(final XmlTag tag) {
+      final String ns = tag.getNamespace();
+      return XmlUtil.XHTML_URI.equals(ns) || XmlUtil.HTML_URI.equals(ns);
     }
 
     private Class getTagClass() {

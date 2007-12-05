@@ -369,4 +369,7 @@ public class HtmlUtil {
     return CharsetToolkit.forName(name);
   }
 
+  public static boolean isTagWithoutAttributes(@NonNls String tagName) {
+    return tagName != null && "br".equalsIgnoreCase(tagName);
+  }
 }
