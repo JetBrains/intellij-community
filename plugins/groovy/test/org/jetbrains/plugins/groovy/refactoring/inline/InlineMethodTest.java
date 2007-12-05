@@ -53,7 +53,7 @@ import java.io.IOException;
  */
 public class InlineMethodTest extends CommonRefactoringTestCase {
 
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method/actual";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/inline/data/method/";
 
   public InlineMethodTest() {
     super(System.getProperty("path") != null ?
