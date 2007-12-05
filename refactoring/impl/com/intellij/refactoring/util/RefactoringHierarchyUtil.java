@@ -195,13 +195,18 @@ public class RefactoringHierarchyUtil {
   public static PsiClass[] findImplementingClasses(PsiClass anInterface) {
     List<PsiClass> result = new ArrayList<PsiClass>();
     _findImplementingClasses(anInterface, new HashSet<PsiClass>(), result);
-    loop1:
-    for (Iterator<PsiClass> iterator = result.iterator(); iterator.hasNext();) {
-      final PsiClass psiClass = iterator.next();
-      for (final PsiClass aClass : result) {
-        if (psiClass.isInheritor(aClass, true)) {
-          iterator.remove();
-          break loop1;
+    boolean classesRemoved = true;
+    while(classesRemoved) {
+      classesRemoved = false;
+      loop1:
+      for (Iterator<PsiClass> iterator = result.iterator(); iterator.hasNext();) {
+        final PsiClass psiClass = iterator.next();
+        for (final PsiClass aClass : result) {
+          if (psiClass.isInheritor(aClass, true)) {
+            iterator.remove();
+            classesRemoved = true;
+            break loop1;
+          }
         }
       }
     }
