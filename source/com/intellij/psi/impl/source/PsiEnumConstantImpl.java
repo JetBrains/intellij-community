@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.cache.FieldView;
@@ -14,10 +15,10 @@ import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Icons;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -233,7 +234,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
     return addVisibilityIcon(this, flags, baseIcon);
   }
 

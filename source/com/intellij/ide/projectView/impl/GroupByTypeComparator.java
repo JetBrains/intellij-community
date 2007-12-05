@@ -8,7 +8,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.ElementPresentationUtil;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -105,9 +105,9 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
     if (aClass == null || !aClass.isValid()) {
       return 0;
     }
-    int pos = ElementBase.getClassKind(aClass);
+    int pos = ElementPresentationUtil.getClassKind(aClass);
     //abstract class before concrete
-    if (pos == ElementBase.CLASS_KIND_CLASS || pos == ElementBase.CLASS_KIND_EXCEPTION) {
+    if (pos == ElementPresentationUtil.CLASS_KIND_CLASS || pos == ElementPresentationUtil.CLASS_KIND_EXCEPTION) {
       boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();
       if (isAbstract) {
         pos --;

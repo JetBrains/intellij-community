@@ -4,10 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
-import com.intellij.psi.impl.PsiVariableEx;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -23,10 +20,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Icons;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.CharTable;
+import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -288,7 +285,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
     return addVisibilityIcon(this, flags, baseIcon);
   }
 }

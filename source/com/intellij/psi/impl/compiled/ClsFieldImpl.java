@@ -5,23 +5,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiVariableEx;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.cls.ClsUtil;
 import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.ui.RowIcon;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -559,7 +556,7 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
     return addVisibilityIcon(this, flags, baseIcon);
   }
 }

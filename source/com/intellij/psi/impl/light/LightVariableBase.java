@@ -1,10 +1,11 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -94,7 +95,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, getFlags(this, false));
+    final RowIcon baseIcon = createLayeredIcon(Icons.VARIABLE_ICON, ElementPresentationUtil.getFlags(this, false));
     return addVisibilityIcon(this, flags, baseIcon);
   }
 }

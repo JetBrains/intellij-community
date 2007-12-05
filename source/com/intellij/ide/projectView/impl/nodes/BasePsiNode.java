@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementBase;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -138,7 +138,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   private String calcTooltip() {
     T t = getValue();
     if (t instanceof PsiModifierListOwner && t.isValid()) {
-      return ElementBase.getDescription((PsiModifierListOwner)t);
+      return ElementPresentationUtil.getDescription((PsiModifierListOwner)t);
     }
     return null;
   }

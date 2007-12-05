@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -87,7 +88,7 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
   }
 
   public Icon getElementIcon(int flags) {
-    return createLayeredIcon(Icons.CLASS_INITIALIZER, getFlags(this, false));
+    return createLayeredIcon(Icons.CLASS_INITIALIZER, ElementPresentationUtil.getFlags(this, false));
   }
 }
 

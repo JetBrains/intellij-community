@@ -4,10 +4,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiSuperMethodImplUtil;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.MethodView;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
@@ -386,7 +383,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
 
   public Icon getElementIcon(final int flags) {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
-    RowIcon baseIcon = createLayeredIcon(methodIcon, getFlags(this, false));
+    RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
     return addVisibilityIcon(this, flags, baseIcon);
   }
 }

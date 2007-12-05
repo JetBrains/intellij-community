@@ -35,8 +35,10 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -558,6 +560,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   public FileStatus getFileStatus() {
     return myFile != null ? FileStatusManager.getInstance(getProject()).getStatus(myFile) : FileStatus.NOT_CHANGED;
+  }
+
+  protected Icon getElementIcon(final int flags) {
+    return Icons.DIRECTORY_CLOSED_ICON;
   }
 }
 
