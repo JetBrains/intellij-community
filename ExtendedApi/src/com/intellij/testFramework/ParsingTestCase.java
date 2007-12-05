@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.jsp.JspFile;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -33,8 +33,8 @@ public abstract class ParsingTestCase extends LightIdeaTestCase {
     String text = loadFile(name + "." + myFileExt);
     myFile = createFile(name + "." + myFileExt, text);
     myFile.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {super.visitElement(element);}
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      @Override public void visitElement(PsiElement element) {super.visitElement(element);}
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
     });
     assertEquals(text, myFile.getText());
     if (checkResult){

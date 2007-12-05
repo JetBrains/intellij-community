@@ -250,7 +250,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       for (PsiStatement statement : myExitStatements) {
         statement.accept(new PsiRecursiveElementVisitor() {
 
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
             final PsiElement resolved = expression.resolve();
             if (resolved instanceof PsiVariable) {
@@ -399,11 +399,11 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
     final List<PsiClass> localClasses = new ArrayList<PsiClass>();
     container.accept(new PsiRecursiveElementVisitor() {
-      public void visitClass(final PsiClass aClass) {
+      @Override public void visitClass(final PsiClass aClass) {
         localClasses.add(aClass);
       }
 
-      public void visitAnonymousClass(final PsiAnonymousClass aClass) {
+      @Override public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         visitElement(aClass);
       }
     });
@@ -744,7 +744,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS) {
         method.accept(new PsiRecursiveElementVisitor() {
 
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             if (resolved != null) {
               final int index = ArrayUtil.find(parameters, resolved);
@@ -766,7 +766,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
       else {
         method.accept(new PsiRecursiveElementVisitor() {
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             final int index = ArrayUtil.find(parameters, resolved);
             if (index >= 0) {

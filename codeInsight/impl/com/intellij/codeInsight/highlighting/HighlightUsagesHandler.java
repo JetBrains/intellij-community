@@ -484,11 +484,11 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                                final PsiElement block, final TypeFilter typeFilter) {
     if (type instanceof PsiClassType) {
       block.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }
 
-        public void visitThrowStatement(PsiThrowStatement statement) {
+        @Override public void visitThrowStatement(PsiThrowStatement statement) {
           super.visitThrowStatement(statement);
           PsiClassType[] exceptionTypes = ExceptionUtil.getUnhandledExceptions(statement, block);
           for (final PsiClassType actualType : exceptionTypes) {
@@ -509,7 +509,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           }
         }
 
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           PsiReference reference = expression.getMethodExpression().getReference();
           if (reference == null || refs.contains(reference)) return;
@@ -522,7 +522,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
           }
         }
 
-        public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(PsiNewExpression expression) {
           super.visitNewExpression(expression);
           PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
           if (classReference == null || refs.contains(classReference)) return;

@@ -28,7 +28,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
     class SyntaxError extends RuntimeException {}
     try {
       accept(new PsiRecursiveElementVisitor() {
-        public void visitErrorElement(PsiErrorElement element) {
+        @Override public void visitErrorElement(PsiErrorElement element) {
           throw new SyntaxError();
         }
       });

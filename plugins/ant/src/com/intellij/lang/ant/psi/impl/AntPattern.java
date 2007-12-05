@@ -64,7 +64,7 @@ public class AntPattern extends AntElementVisitor {
     return myIncludePatterns.size() > 0;
   }
   
-  public void visitAntStructuredElement(final AntStructuredElement element) {
+  @Override public void visitAntStructuredElement(final AntStructuredElement element) {
     final AntTypeDefinition typeDef = element.getTypeDefinition();
     if (typeDef != null) {
       final AntTypeId antTypeId = typeDef.getTypeId();

@@ -2,7 +2,6 @@ package com.intellij.refactoring.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelector;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -277,7 +276,7 @@ public abstract class ParameterTablePanel extends JPanel {
     final ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
     for (final PsiElement element : scopeElements) {
       element.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (!expression.isQualified() && expression.isReferenceTo(variable)) {
             result.add(expression);

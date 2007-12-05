@@ -466,7 +466,7 @@ public class BindingFactory {
           class Verifier extends PsiExtendedTypeVisitor<Void> {
             boolean myFlag = false;
 
-            public Void visitTypeVariable(final PsiTypeVariable var) {
+            @Override public Void visitTypeVariable(final PsiTypeVariable var) {
               if (var.getIndex() == index) {
                 myFlag = true;
               }

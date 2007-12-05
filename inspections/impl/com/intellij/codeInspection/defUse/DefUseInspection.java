@@ -44,13 +44,13 @@ public class DefUseInspection extends BaseLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         checkCodeBlock(method.getBody(), holder, isOnTheFly);
       }
 
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
         checkCodeBlock(initializer.getBody(), holder, isOnTheFly);
       }
     };
@@ -116,10 +116,10 @@ public class DefUseInspection extends BaseLocalInspectionTool {
     }
 
     body.accept(new PsiRecursiveElementVisitor() {
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
       }
 
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      @Override public void visitLocalVariable(PsiLocalVariable variable) {
         if (!usedVariables.contains(variable) && variable.getInitializer() == null && !isOnTheFly) {
           holder.registerProblem(variable.getNameIdentifier(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor5", "<code>#ref</code> #loc"),
@@ -127,7 +127,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
         }
       }
 
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         PsiExpression lExpression = expression.getLExpression();
         PsiExpression rExpression = expression.getRExpression();
 

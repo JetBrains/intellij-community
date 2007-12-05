@@ -109,10 +109,10 @@ public class RedundantThrows extends GlobalInspectionTool {
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(final RefMethod refMethod) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   problemDescriptionsProcessor.ignoreElement(refMethod);

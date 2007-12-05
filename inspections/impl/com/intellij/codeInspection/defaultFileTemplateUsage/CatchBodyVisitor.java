@@ -10,13 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Properties;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
@@ -32,12 +31,12 @@ class CatchBodyVisitor extends PsiRecursiveElementVisitor {
     myProblemDescriptors = descriptors;
   }
 
-  public void visitCatchSection(PsiCatchSection section) {
+  @Override public void visitCatchSection(PsiCatchSection section) {
     checkSection(section);
     super.visitCatchSection(section);
   }
 
-  public void visitClass(PsiClass aClass) {
+  @Override public void visitClass(PsiClass aClass) {
     // ignore anonymous
   }
 

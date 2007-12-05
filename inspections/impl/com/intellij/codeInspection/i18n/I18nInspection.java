@@ -373,20 +373,20 @@ public class I18nInspection extends BaseLocalInspectionTool {
       myManager = manager;
     }
 
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
       final PsiExpressionList argumentList = aClass.getArgumentList();
       if (argumentList != null) {
         argumentList.accept(this);
       }
     }
 
-    public void visitClass(PsiClass aClass) {}
+    @Override public void visitClass(PsiClass aClass) {}
 
-    public void visitField(PsiField field) {}
+    @Override public void visitField(PsiField field) {}
 
-    public void visitMethod(PsiMethod method) {}
+    @Override public void visitMethod(PsiMethod method) {}
 
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
       String stringValue = (String)value;
@@ -435,7 +435,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
 
 
-    public void visitAnnotation(PsiAnnotation annotation) {
+    @Override public void visitAnnotation(PsiAnnotation annotation) {
       //prevent from @SuppressWarnings
       if (!"java.lang.SuppressWarnings".equals(annotation.getQualifiedName())){
         super.visitAnnotation(annotation);

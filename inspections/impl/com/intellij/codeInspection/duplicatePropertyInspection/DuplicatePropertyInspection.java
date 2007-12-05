@@ -65,7 +65,7 @@ public class DuplicatePropertyInspection extends DescriptorProviderInspection {
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitFile(PsiFile file) {
+      @Override public void visitFile(PsiFile file) {
         checkFile(file, manager);
       }
     });

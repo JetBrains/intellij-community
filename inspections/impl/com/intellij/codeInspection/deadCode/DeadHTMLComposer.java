@@ -43,7 +43,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         appendResolution(buf, myTool, refElement);
 
         refElement.accept(new RefVisitor() {
-          public void visitClass(RefClass aClass) {
+          @Override public void visitClass(RefClass aClass) {
             appendClassInstantiations(buf, aClass);
             appendDerivedClasses(buf, aClass);
             appendClassExtendsImplements(buf, aClass);
@@ -51,14 +51,14 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             appendTypeReferences(buf, aClass);
           }
 
-          public void visitMethod(RefMethod method) {
+          @Override public void visitMethod(RefMethod method) {
             appendElementInReferences(buf, method);
             appendElementOutReferences(buf, method);
             appendDerivedMethods(buf, method);
             appendSuperMethods(buf, method);
           }
 
-          public void visitField(RefField field) {
+          @Override public void visitField(RefField field) {
             appendElementInReferences(buf, field);
             appendElementOutReferences(buf, field);
           }
@@ -72,7 +72,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
   public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
     refElement.accept(new RefVisitor() {
-      public void visitField(RefField field) {
+      @Override public void visitField(RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis"));
           return;
@@ -98,7 +98,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         }
       }
 
-      public void visitClass(RefClass refClass) {
+      @Override public void visitClass(RefClass refClass) {
         if (refClass.isAnonymous()) {
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis10"));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
@@ -135,7 +135,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         }
       }
 
-      public void visitMethod(RefMethod method) {
+      @Override public void visitMethod(RefMethod method) {
         RefClass refClass = method.getOwnerClass();
         if (method.isExternalOverride()) {
           String classOrInterface = getClassOrInterface(refClass, false);

@@ -18,8 +18,8 @@ import com.intellij.psi.*;
 import com.intellij.ui.AddDeleteListPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
@@ -109,7 +109,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
       myProblemsHolder = problemsHolder;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     }
 
     @Override public void visitVariable(PsiVariable variable) {

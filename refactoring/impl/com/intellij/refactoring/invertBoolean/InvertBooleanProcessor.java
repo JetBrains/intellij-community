@@ -76,7 +76,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
       for (PsiMethod method : allMethods) {
         method.accept(new PsiRecursiveElementVisitor() {
-          public void visitReturnStatement(PsiReturnStatement statement) {
+          @Override public void visitReturnStatement(PsiReturnStatement statement) {
             final PsiExpression returnValue = statement.getReturnValue();
             if (returnValue != null && PsiType.BOOLEAN.equals(returnValue.getType())) {
               toInvert.add(mySmartPointerManager.createSmartPsiElementPointer(returnValue));

@@ -36,8 +36,8 @@ public class CheckDtdReferencesInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
-      public void visitXmlElement(final XmlElement element) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      @Override public void visitXmlElement(final XmlElement element) {
         if (element instanceof XmlElementContentSpec ||
             element instanceof XmlEntityRef
            ) {

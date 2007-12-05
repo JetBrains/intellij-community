@@ -66,23 +66,23 @@ public class RedundantCastUtil {
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
     private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       element.acceptChildren(this);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       expression.acceptChildren(this);
     }
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
       // avoid multiple visit
     }
 
-    public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(PsiMethod method) {
       // avoid multiple visit
     }
 
-    public void visitField(PsiField field) {
+    @Override public void visitField(PsiField field) {
       // avoid multiple visit
     }
 
@@ -101,17 +101,17 @@ public class RedundantCastUtil {
       }
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+    @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       processPossibleTypeCast(expression.getRExpression(), expression.getLExpression().getType());
       super.visitAssignmentExpression(expression);
     }
 
-    public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(PsiVariable variable) {
       processPossibleTypeCast(variable.getInitializer(), variable.getType());
       super.visitVariable(variable);
     }
 
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    @Override public void visitReturnStatement(PsiReturnStatement statement) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
       if (method != null) {
         final PsiType returnType = method.getReturnType();
@@ -123,7 +123,7 @@ public class RedundantCastUtil {
       super.visitReturnStatement(statement);
     }
 
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
       PsiExpression rExpr = deparenthesizeExpression(expression.getLOperand());
       PsiExpression lExpr = deparenthesizeExpression(expression.getROperand());
 
@@ -162,7 +162,7 @@ public class RedundantCastUtil {
       }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       processCall(expression);
 
       checkForVirtual(expression);
@@ -235,12 +235,12 @@ public class RedundantCastUtil {
       return false;
     }
 
-    public void visitNewExpression(PsiNewExpression expression) {
+    @Override public void visitNewExpression(PsiNewExpression expression) {
       processCall(expression);
       super.visitNewExpression(expression);
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       //expression.acceptChildren(this);
     }
 
@@ -292,7 +292,7 @@ public class RedundantCastUtil {
       }
     }
 
-    public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
+    @Override public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
       PsiExpression operand = typeCast.getOperand();
       if (operand == null) return;
 

@@ -486,22 +486,22 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected PsiFile createFileCopy(PsiFile file) {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);
         super.visitClass(aClass);
       }
 
-      public void visitVariable(PsiVariable variable) {
+      @Override public void visitVariable(PsiVariable variable) {
         variable.putCopyableUserData(PsiUtil.ORIGINAL_KEY, variable);
         super.visitVariable(variable);
       }
 
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         method.putCopyableUserData(PsiUtil.ORIGINAL_KEY, method);
         super.visitMethod(method);
       }
 
-      public void visitXmlTag(XmlTag tag) {
+      @Override public void visitXmlTag(XmlTag tag) {
         tag.putCopyableUserData(PsiUtil.ORIGINAL_KEY, tag);
         super.visitXmlTag(tag);
       }
@@ -511,11 +511,11 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiFile fileCopy = (PsiFile)file.copy();
 
     final PsiElementVisitor copyVisitor = new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         final PsiElement originalElement = aClass.getCopyableUserData(PsiUtil.ORIGINAL_KEY);
         if (originalElement != null) {
           originalElement.putCopyableUserData(PsiUtil.ORIGINAL_KEY, null);

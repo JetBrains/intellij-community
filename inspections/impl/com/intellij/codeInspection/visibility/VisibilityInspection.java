@@ -329,11 +329,11 @@ public class VisibilityInspection extends GlobalInspectionTool {
       ((VisibilityExtension)addin).fillIgnoreList(globalContext.getRefManager(), problemDescriptionsProcessor);
     }
     globalContext.getRefManager().iterate(new RefVisitor() {
-      public void visitElement(final RefEntity refEntity) {
+      @Override public void visitElement(final RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (problemDescriptionsProcessor.getDescriptions(refEntity) == null) return;
         refEntity.accept(new RefVisitor() {
-          public void visitField(final RefField refField) {
+          @Override public void visitField(final RefField refField) {
             if (refField.getAccessModifier() != PsiModifier.PRIVATE) {
               globalContext.enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
@@ -344,7 +344,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
             }
           }
 
-          public void visitMethod(final RefMethod refMethod) {
+          @Override public void visitMethod(final RefMethod refMethod) {
             if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                 !(refMethod instanceof RefImplicitConstructor)) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
@@ -381,7 +381,7 @@ public class VisibilityInspection extends GlobalInspectionTool {
             }
           }
 
-          public void visitClass(final RefClass refClass) {
+          @Override public void visitClass(final RefClass refClass) {
             if (!refClass.isAnonymous()) {
               globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
                 public boolean process(PsiClass inheritor) {

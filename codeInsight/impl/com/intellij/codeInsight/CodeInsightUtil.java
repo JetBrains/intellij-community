@@ -185,11 +185,11 @@ public class CodeInsightUtil {
     final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
       int offset = currentOffset;
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         PsiElement child = element.getFirstChild();
         if (child != null) {
           // composite element
@@ -208,7 +208,7 @@ public class CodeInsightUtil {
       }
 
 
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         if (method instanceof JspHolderMethod && root != method) {
           list.addAll(getElementsInRange(method, startOffset, endOffset, false));
         }
@@ -218,11 +218,11 @@ public class CodeInsightUtil {
       }
 
 
-      public void visitImportList(PsiImportList list) {
+      @Override public void visitImportList(PsiImportList list) {
         if (!(list instanceof JspxImportList)) super.visitImportList(list);
       }
 
-      public void visitJspFile(final JspFile file) {
+      @Override public void visitJspFile(final JspFile file) {
         visitFile(file);
       }
     };

@@ -451,7 +451,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private void substituteMethodTypeParams(PsiElement scope, final PsiSubstitutor substitutor) {
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitTypeElement(PsiTypeElement typeElement) {
+      @Override public void visitTypeElement(PsiTypeElement typeElement) {
         PsiType type = typeElement.getType();
 
         if (type instanceof PsiClassType) {
@@ -755,7 +755,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       class CanAllLocalsBeDeclaredFinal extends PsiRecursiveElementVisitor {
         boolean success = true;
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           final PsiElement psiElement = expression.resolve();
           if (psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter) {
             if (!RefactoringUtil.canBeDeclaredFinal((PsiVariable)psiElement)) {
@@ -764,7 +764,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
 
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
           if (success) {
             super.visitElement(element);
           }
@@ -1041,7 +1041,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static void addMarkedElements(final List<PsiReferenceExpression> array, PsiElement scope) {
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         if (element.getCopyableUserData(MARK_KEY) != null) {
           array.add((PsiReferenceExpression)element);
           element.putCopyableUserData(MARK_KEY, null);

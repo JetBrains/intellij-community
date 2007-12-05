@@ -307,7 +307,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       additionalReplacements = null;
     }
     newMethod.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         PsiTypeParameter typeParameterToBind = reference.getCopyableUserData(BIND_TO_TYPE_PARAMETER);
         if (typeParameterToBind != null) {
           reference.putCopyableUserData(BIND_TO_TYPE_PARAMETER, null);

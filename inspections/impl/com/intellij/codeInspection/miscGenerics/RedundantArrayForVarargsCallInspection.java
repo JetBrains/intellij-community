@@ -45,17 +45,17 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     if (PsiUtil.getLanguageLevel(place).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     place.accept(new PsiRecursiveElementVisitor() {
-      public void visitCallExpression(PsiCallExpression expression) {
+      @Override public void visitCallExpression(PsiCallExpression expression) {
         super.visitCallExpression(expression);
         checkCall(expression);
       }
 
-      public void visitEnumConstant(PsiEnumConstant enumConstant) {
+      @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
         super.visitEnumConstant(enumConstant);
         checkCall(enumConstant);
       }
 
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         //do not go inside to prevent multiple signals of the same problem
       }
 

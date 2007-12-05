@@ -6,16 +6,16 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
@@ -64,7 +64,7 @@ public class IdRefReference extends BasicAttributeValueReference {
           final List<XmlTag> result = new LinkedList<XmlTag>();
 
           xmlFile.accept(new PsiRecursiveElementVisitor() {
-            public void visitXmlTag(XmlTag tag) {
+            @Override public void visitXmlTag(XmlTag tag) {
               if (isAcceptableTagType(tag)) result.add(tag);
               super.visitXmlTag(tag);
             }

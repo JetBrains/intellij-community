@@ -17,7 +17,7 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
     myClassSuperClasses.add(aClass);
   }
 
-  public void visitThisExpression(PsiThisExpression expression) {
+  @Override public void visitThisExpression(PsiThisExpression expression) {
     PsiJavaCodeReferenceElement ref = expression.getQualifier();
     if(ref != null) {
       PsiElement element = ref.resolve();
@@ -43,7 +43,7 @@ public abstract class ClassThisReferencesVisitor extends ClassMemberReferencesVi
     }
   }
 
-  public void visitSuperExpression(PsiSuperExpression expression) {
+  @Override public void visitSuperExpression(PsiSuperExpression expression) {
     PsiJavaCodeReferenceElement ref = expression.getQualifier();
     if (ref != null) {
       PsiElement element = ref.resolve();

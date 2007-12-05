@@ -100,7 +100,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     bindMessageToTag(tag, type,  0, -1, localizedMessage, key, quickFixActions);
   }
 
-  public void visitXmlToken(XmlToken token) {
+  @Override public void visitXmlToken(XmlToken token) {
     if (token.getTokenType() == XmlTokenType.XML_NAME) {
       PsiElement element = token.getPrevSibling();
       while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
@@ -485,7 +485,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     return tag instanceof HtmlTag && XmlUtil.HTML_URI.equals(tag.getNamespace()) ? HighlightInfoType.WARNING : HighlightInfoType.WRONG_REF;
   }
 
-  public void visitXmlAttribute(XmlAttribute attribute) {
+  @Override public void visitXmlAttribute(XmlAttribute attribute) {
     XmlTag tag = attribute.getParent();
 
     if (attribute.isNamespaceDeclaration()) {
@@ -606,7 +606,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  public void visitXmlDocument(final XmlDocument document) {
+  @Override public void visitXmlDocument(final XmlDocument document) {
     if (document.getLanguage() == StdLanguages.DTD) {
       final PsiMetaData psiMetaData = document.getMetaData();
       if (psiMetaData instanceof Validator) {
@@ -615,10 +615,10 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     }
   }
 
-  public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(XmlTag tag) {
   }
 
-  public void visitXmlAttributeValue(XmlAttributeValue value) {
+  @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
     final PsiElement parent = value.getParent();
     if (!(parent instanceof XmlAttribute)) {
       checkReferences(value, QuickFixProvider.NULL);
@@ -788,7 +788,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     return reference.resolve() == null;
   }
 
-  public void visitXmlDoctype(XmlDoctype xmlDoctype) {
+  @Override public void visitXmlDoctype(XmlDoctype xmlDoctype) {
     if (xmlDoctype.getUserData(DO_NOT_VALIDATE_KEY) != null) return;
     checkReferences(xmlDoctype, QuickFixProvider.NULL);
   }
@@ -798,7 +798,7 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
     myResult.add(info);
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitExpression(expression);
   }
 

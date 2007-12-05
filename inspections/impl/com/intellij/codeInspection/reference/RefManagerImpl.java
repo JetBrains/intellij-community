@@ -299,7 +299,7 @@ public class RefManagerImpl extends RefManager {
 
   private class ProjectIterator extends PsiElementVisitor {
     private final RefUtilImpl REF_UTIL = (RefUtilImpl)RefUtil.getInstance();
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       for (PsiElement aChildren : element.getChildren()) {
         aChildren.accept(this);
       }
@@ -318,14 +318,14 @@ public class RefManagerImpl extends RefManager {
       }
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitElement(expression);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     }
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
       if (!(aClass instanceof PsiTypeParameter)) {
         super.visitClass(aClass);
         RefElement refClass = getReference(aClass);
@@ -343,7 +343,7 @@ public class RefManagerImpl extends RefManager {
     }
 
 
-    public void visitDocComment(PsiDocComment comment) {
+    @Override public void visitDocComment(PsiDocComment comment) {
       super.visitDocComment(comment);
       final PsiDocTag[] tags = comment.getTags();
       for (PsiDocTag tag : tags) {
@@ -366,7 +366,7 @@ public class RefManagerImpl extends RefManager {
       }
     }
 
-    public void visitAnnotation(PsiAnnotation annotation) {
+    @Override public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (Comparing.strEqual(annotation.getQualifiedName(), "java.lang.SuppressWarnings")){
         final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
@@ -386,12 +386,12 @@ public class RefManagerImpl extends RefManager {
       }
     }
 
-    public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(PsiVariable variable) {
       super.visitVariable(variable);
       REF_UTIL.addTypeReference(variable, variable.getType(), RefManagerImpl.this);
     }
 
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
       super.visitInstanceOfExpression(expression);
       final PsiTypeElement typeElement = expression.getCheckType();
       if (typeElement != null) {
@@ -399,7 +399,7 @@ public class RefManagerImpl extends RefManager {
       }
     }
 
-    public void visitThisExpression(PsiThisExpression expression) {
+    @Override public void visitThisExpression(PsiThisExpression expression) {
       super.visitThisExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null) {

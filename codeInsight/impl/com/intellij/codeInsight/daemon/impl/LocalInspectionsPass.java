@@ -437,7 +437,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       final PsiElementVisitor visitor = tool.buildVisitor(problemsHolder, true);
       assert !(visitor instanceof PsiRecursiveElementVisitor) : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
       injectedPsi.accept(new PsiRecursiveElementVisitor() {
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
           element.accept(visitor);
           super.visitElement(element);
         }

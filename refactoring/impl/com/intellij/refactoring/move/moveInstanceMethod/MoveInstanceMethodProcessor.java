@@ -144,14 +144,14 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     final PsiCodeBlock body = myMethod.getBody();
     if (body != null) {
       body.accept(new PsiRecursiveElementVisitor() {
-        public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(PsiNewExpression expression) {
           if (MoveInstanceMembersUtil.getClassReferencedByThis(expression) != null) {
             usages.add(new InternalUsageInfo(expression));
           }
           super.visitNewExpression(expression);
         }
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           if (MoveInstanceMembersUtil.getClassReferencedByThis(expression) != null) {
             usages.add(new InternalUsageInfo(expression));
           } else if (!expression.isQualified()) {
@@ -309,7 +309,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
     expression.accept(new PsiRecursiveElementVisitor() {
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (expression.isReferenceTo(myTargetVariable)) {
           try {
@@ -358,7 +358,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       final PsiCodeBlock body = myMethod.getBody();
       if (body != null) {
         body.accept(new PsiRecursiveElementVisitor() {
-          public void visitThisExpression(PsiThisExpression expression) {
+          @Override public void visitThisExpression(PsiThisExpression expression) {
             final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
             if (classReferencedByThis != null) {
               final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
@@ -373,7 +373,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             }
           }
 
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             try {
               final PsiExpression qualifier = expression.getQualifierExpression();
               if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
@@ -404,7 +404,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             }
           }
 
-          public void visitNewExpression(PsiNewExpression expression) {
+          @Override public void visitNewExpression(PsiNewExpression expression) {
             try {
               final PsiExpression qualifier = expression.getQualifier();
               if (qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).isReferenceTo(myTargetVariable)) {
@@ -426,7 +426,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             }
           }
 
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             correctMethodCall(expression, true);
           }

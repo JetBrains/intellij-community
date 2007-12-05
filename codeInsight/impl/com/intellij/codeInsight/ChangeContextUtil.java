@@ -329,7 +329,7 @@ public class ChangeContextUtil {
 
   public static void encodeFileReferences(PsiElement element) {
     element.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         final PsiReference[] refs = element.getReferences();
         if (refs.length > 0) {
           final PsiReference ref = refs[refs.length - 1];
@@ -357,7 +357,7 @@ public class ChangeContextUtil {
     final PsiFile file = element.getContainingFile();
 
     element.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         final PsiFileSystemItem item = element.getCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY);
         element.putCopyableUserData(REF_FILE_SYSTEM_ITEM_KEY, null);
         if (item != null && item.isValid()) {

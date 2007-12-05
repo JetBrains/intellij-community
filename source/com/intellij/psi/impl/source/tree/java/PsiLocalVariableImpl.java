@@ -269,10 +269,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         final JspFile rootContext = contextManager.getRootContextFile(jspFile);
         allIncluded.add(rootContext);
         JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new PsiElementVisitor() {
-          public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
           }
 
-          public void visitFile(final PsiFile file) {
+          @Override public void visitFile(final PsiFile file) {
             allIncluded.add(file);
           }
         });

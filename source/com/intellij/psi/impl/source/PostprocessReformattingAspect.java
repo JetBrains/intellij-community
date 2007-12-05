@@ -373,13 +373,13 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
           return true;
         }
 
-        public void visitComposite(CompositeElement composite) {
+        @Override public void visitComposite(CompositeElement composite) {
           boolean oldGeneratedContext = inGeneratedContext;
           super.visitComposite(composite);
           inGeneratedContext = oldGeneratedContext;
         }
 
-        public void visitLeaf(LeafElement leaf) {
+        @Override public void visitLeaf(LeafElement leaf) {
           boolean oldGeneratedContext = inGeneratedContext;
           super.visitLeaf(leaf);
           inGeneratedContext = oldGeneratedContext;

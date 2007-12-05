@@ -48,12 +48,12 @@ public class RecordUtil {
 
     if (psiElement != null && mayContainClassesInside(psiElement, fileBuffer)) {
       psiElement.accept(new PsiRecursiveElementVisitor() {
-        public void visitClass(PsiClass aClass) {
+        @Override public void visitClass(PsiClass aClass) {
           if (ourList.isNull()) ourList.set(new ArrayList<PsiClass>());
           ourList.get().add(aClass);
         }
 
-        public void visitTypeParameter(PsiTypeParameter classParameter) {
+        @Override public void visitTypeParameter(PsiTypeParameter classParameter) {
           // just skip (because type parameter is class - bad!)
         }
       });

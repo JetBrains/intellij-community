@@ -65,9 +65,9 @@ public class XmlAspectImpl implements XmlAspect {
       psiElement.accept(new PsiElementVisitor() {
         TreeChange myChange = finalChangedElement;
 
-        public void visitReferenceExpression(PsiReferenceExpression expression) { }
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
           final ASTNode child = element.getNode();
           final ASTNode treeParent = child.getTreeParent();
           if (treeParent == null) return;
@@ -81,7 +81,7 @@ public class XmlAspectImpl implements XmlAspect {
           parent.accept(this);
         }
 
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        @Override public void visitXmlAttribute(XmlAttribute attribute) {
           final ASTNode[] affectedChildren = myChange.getAffectedChildren();
           String oldName = null;
           String oldValue = null;
@@ -118,7 +118,7 @@ public class XmlAspectImpl implements XmlAspect {
           }
         }
 
-        public void visitXmlTag(XmlTag tag) {
+        @Override public void visitXmlTag(XmlTag tag) {
           ASTNode[] affectedChildren = shortenChange(myChange.getAffectedChildren(), changeSet);
 
           for (final ASTNode treeElement : affectedChildren) {
@@ -176,12 +176,12 @@ public class XmlAspectImpl implements XmlAspect {
           }
         }
 
-        public void visitXmlDocument(XmlDocument document) {
+        @Override public void visitXmlDocument(XmlDocument document) {
           xmlChangeSet.clear();
           xmlChangeSet.add(new XmlDocumentChangedImpl(document));
         }
 
-        public void visitFile(PsiFile file) {
+        @Override public void visitFile(PsiFile file) {
           final XmlDocument document = ((XmlFile)file).getDocument();
 
           if (document != null) {

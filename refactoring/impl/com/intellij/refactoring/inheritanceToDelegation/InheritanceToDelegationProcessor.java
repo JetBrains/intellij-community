@@ -931,11 +931,11 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       myInstanceVisitor = instanceScanner;
     }
 
-    public void visitTypeElement(PsiTypeElement type) {
+    @Override public void visitTypeElement(PsiTypeElement type) {
       super.visitTypeElement (type);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement element) {
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement element) {
       super.visitReferenceElement (element);
     }
 
@@ -968,7 +968,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    public void visitThisExpression(PsiThisExpression expression) {
+    @Override public void visitThisExpression(PsiThisExpression expression) {
       ClassInstanceScanner.processNonArrayExpression(myInstanceVisitor, expression, null);
     }
   }
@@ -979,7 +979,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       super(InheritanceToDelegationProcessor.this.myClass, usageInfoStorage, instanceScanner);
     }
 
-    public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(PsiMethod method) {
       if (!myOverriddenMethods.contains(method)) {
         super.visitMethod(method);
       }
@@ -1087,7 +1087,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    public void visitThisExpression(final PsiThisExpression expression) {
+    @Override public void visitThisExpression(final PsiThisExpression expression) {
       class Visitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
         public void visitQualifier(PsiReferenceExpression qualified, PsiExpression instanceRef, PsiElement referencedInstance) {
           LOG.assertTrue(false);

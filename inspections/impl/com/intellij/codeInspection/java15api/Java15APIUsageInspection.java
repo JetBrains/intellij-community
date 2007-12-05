@@ -144,19 +144,19 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       myHolder = holder;
     }
 
-    public void visitDocComment(PsiDocComment comment) {
+    @Override public void visitDocComment(PsiDocComment comment) {
       // No references inside doc comment are of interest.
     }
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
       // Don't go into classes (anonymous, locals).
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement resolved = reference.resolve();
 
@@ -169,7 +169,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    public void visitNewExpression(final PsiNewExpression expression) {
+    @Override public void visitNewExpression(final PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
       if (constructor instanceof PsiCompiledElement) {

@@ -155,11 +155,11 @@ public abstract class DependenciesBuilder {
       myProcessor = processor;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       super.visitElement(element);
       PsiReference[] refs = element.getReferences();
       for (PsiReference ref : refs) {
@@ -177,17 +177,17 @@ public abstract class DependenciesBuilder {
       // TODO: rule syntax does not allow this.
     }
 
-    public void visitDocComment(PsiDocComment comment) {
+    @Override public void visitDocComment(PsiDocComment comment) {
       //empty
     }
 
-    public void visitImportStatement(PsiImportStatement statement) {
+    @Override public void visitImportStatement(PsiImportStatement statement) {
       if (!DependencyValidationManager.getInstance(statement.getProject()).skipImportStatements()) {
         visitElement(statement);
       }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       PsiMethod psiMethod = expression.resolveMethod();
       if (psiMethod != null) {

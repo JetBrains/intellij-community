@@ -11,11 +11,11 @@ import java.util.HashSet;
 class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
   final HashSet<PsiMember> myReferencedMembers = new HashSet<PsiMember>();
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitReferenceElement(expression);
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     final PsiElement psiElement = reference.resolve();
     if (psiElement instanceof PsiMember) {
       checkAddMember((PsiMember)psiElement);

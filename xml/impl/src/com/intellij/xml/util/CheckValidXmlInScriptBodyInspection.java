@@ -56,9 +56,9 @@ public class CheckValidXmlInScriptBodyInspection extends BaseJavaLocalInspection
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
-      public void visitXmlTag(final XmlTag tag) {
+      @Override public void visitXmlTag(final XmlTag tag) {
         if (SCRIPT_TAG_NAME.equals(tag.getName()) ||
             (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))
            ) {

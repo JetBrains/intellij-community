@@ -244,7 +244,7 @@ public class InjectedLanguageUtil {
         return true;
       }
 
-      public void visitLeaf(LeafElement leaf) {
+      @Override public void visitLeaf(LeafElement leaf) {
         TextRange range = leaf.getTextRange();
         int prefixLength = shredHostRange.getStartOffset();
         if (prefixLength > range.getStartOffset() && prefixLength < range.getEndOffset()) {

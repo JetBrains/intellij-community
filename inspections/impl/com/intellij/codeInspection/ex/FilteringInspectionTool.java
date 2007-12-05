@@ -28,7 +28,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefEntity>>();
     getContext().getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;//dead code doesn't work with refModule | refPackage
         RefElement refElement = (RefElement) refEntity;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && myIgnoreElements.contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {

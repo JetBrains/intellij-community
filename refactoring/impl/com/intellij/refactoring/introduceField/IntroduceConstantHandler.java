@@ -7,8 +7,8 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
@@ -139,7 +139,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
       myInitializer = initializer;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       final PsiElement psiElement = expression.resolve();
       if ((psiElement instanceof PsiLocalVariable || psiElement instanceof PsiParameter)
           && !PsiTreeUtil.isAncestor(myInitializer, psiElement, false)) {
@@ -155,7 +155,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler {
      myIsStaticFinalInitializer = classMember.hasModifierProperty(PsiModifier.STATIC);
     }
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       if (!myIsStaticFinalInitializer) return;
       super.visitElement(element);
     }

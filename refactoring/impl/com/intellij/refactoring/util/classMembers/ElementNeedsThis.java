@@ -37,7 +37,7 @@ public class ElementNeedsThis extends ClassThisReferencesVisitor {
     myResult = true;
   }
 
-  public void visitElement(PsiElement element) {
+  @Override public void visitElement(PsiElement element) {
     if (myResult) return;
     super.visitElement(element);
   }

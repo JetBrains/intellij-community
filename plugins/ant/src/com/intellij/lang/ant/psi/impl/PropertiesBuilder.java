@@ -30,14 +30,14 @@ public class PropertiesBuilder extends AntElementVisitor {
     myPropertyHolder = propertyHolder;
   }
 
-  public void visitAntTypedef(final AntTypeDef def) {
+  @Override public void visitAntTypedef(final AntTypeDef def) {
     // at this point all properties used in classpath for this typedef must be defined
     // so to make sure the class set is complete, need to reload classes here
     def.clearClassesCache();
     def.getDefinitions();
   }
 
-  public void visitAntFile(final AntFile antFile) {
+  @Override public void visitAntFile(final AntFile antFile) {
     if (!myVisitedFiles.contains(antFile)) {
       myVisitedFiles.add(antFile);
       final AntProject project = antFile.getAntProject();
@@ -47,7 +47,7 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
   }
 
-  public void visitAntTask(final AntTask task) {
+  @Override public void visitAntTask(final AntTask task) {
     if (task instanceof AntProperty) {
       visitAntProperty((AntProperty)task);
     }
@@ -56,7 +56,7 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
   }
 
-  public void visitAntProject(final AntProject antProject) {
+  @Override public void visitAntProject(final AntProject antProject) {
     final Set<AntTarget> projectTargets = new LinkedHashSet<AntTarget>();
     for (PsiElement child : antProject.getChildren()) {
       if (child instanceof AntElement) {
@@ -93,7 +93,7 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
   }
 
-  public void visitAntProperty(final AntProperty antProperty) {
+  @Override public void visitAntProperty(final AntProperty antProperty) {
     final PropertiesFile propertiesFile = antProperty.getPropertiesFile();
     if (propertiesFile != null) {
       myDependentFiles.add(propertiesFile);
@@ -112,7 +112,7 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
   }
 
-  public void visitAntTarget(final AntTarget target) {
+  @Override public void visitAntTarget(final AntTarget target) {
     if (myVisitedTargets.contains(target)) {
       return;
     }
@@ -160,7 +160,7 @@ public class PropertiesBuilder extends AntElementVisitor {
     }
   }
 
-  public void visitAntImport(final AntImport antImport) {
+  @Override public void visitAntImport(final AntImport antImport) {
     final AntFile antFile = antImport.getImportedFile();
     if (antFile != null) {
       myDependentFiles.add(antFile);

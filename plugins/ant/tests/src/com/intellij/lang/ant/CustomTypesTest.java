@@ -45,10 +45,10 @@ public class CustomTypesTest extends ParsingTestCase {
     PsiFile file = createFile(name + "." + myFileExt, text);
     final AntFile antFile = AntSupport.getAntFile(file);
     antFile.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         super.visitElement(element);
       }
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
     });
     final AntTypeDefinition result = antFile.getBaseTypeDefinition(myCustomTaskClass);

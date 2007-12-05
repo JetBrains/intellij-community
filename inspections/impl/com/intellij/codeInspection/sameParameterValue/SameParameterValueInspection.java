@@ -63,10 +63,10 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
                                              final GlobalInspectionContext globalContext,
                                              final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefVisitor() {
-            public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(final RefMethod refMethod) {
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   problemDescriptionsProcessor.ignoreElement(refMethod);

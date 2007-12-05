@@ -71,7 +71,7 @@ public class CyclicDependenciesBuilder{
   public void analyze() {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
     getScope().accept(new PsiRecursiveElementVisitor() {
-      public void visitFile(PsiFile file) {
+      @Override public void visitFile(PsiFile file) {
         if (file instanceof PsiJavaFile) {
           PsiJavaFile psiJavaFile = (PsiJavaFile)file;
           if (getScope().contains(psiJavaFile)) {
@@ -210,7 +210,7 @@ public class CyclicDependenciesBuilder{
     if (myPackages.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(getProject());
       getScope().accept(new PsiRecursiveElementVisitor() {
-        public void visitFile(PsiFile file) {
+        @Override public void visitFile(PsiFile file) {
           if (file instanceof PsiJavaFile) {
             PsiJavaFile psiJavaFile = (PsiJavaFile)file;
             final PsiPackage aPackage = psiManager.findPackage(psiJavaFile.getPackageName());

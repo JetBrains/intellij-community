@@ -49,7 +49,7 @@ public abstract class HtmlLocalInspectionTool extends BaseJavaLocalInspectionToo
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitXmlToken(final XmlToken token) {
+      @Override public void visitXmlToken(final XmlToken token) {
         if (token.getTokenType() == XmlTokenType.XML_NAME) {
           PsiElement element = token.getPrevSibling();
           while(element instanceof PsiWhiteSpace) element = element.getPrevSibling();
@@ -65,11 +65,11 @@ public abstract class HtmlLocalInspectionTool extends BaseJavaLocalInspectionToo
         }
       }
 
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      @Override public void visitXmlAttribute(final XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
       }
 
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         visitExpression(expression);
       }
     };

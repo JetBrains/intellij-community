@@ -90,10 +90,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
   public static void invokeOnScope(final Project project, final PsiMethod method, final AnalysisScope scope) {
     final int [] dupCount = new int[]{0};
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
       }
 
-      public void visitFile(final PsiFile file) {
+      @Override public void visitFile(final PsiFile file) {
         if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
         final VirtualFile virtualFile = file.getVirtualFile();
         LOG.assertTrue(virtualFile != null);

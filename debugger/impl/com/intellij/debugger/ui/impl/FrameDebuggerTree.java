@@ -257,7 +257,7 @@ public class FrameDebuggerTree extends DebuggerTree {
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
     final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
     element.accept(new PsiRecursiveElementVisitor() {
-      public void visitExpressionStatement(final PsiExpressionStatement statement) {
+      @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
           final TextRange currentRange = rangeRef.get();
@@ -398,13 +398,13 @@ public class FrameDebuggerTree extends DebuggerTree {
       myVars = vars;
     }
 
-    public void visitElement(final PsiElement element) {
+    @Override public void visitElement(final PsiElement element) {
       if (myLineRange.intersects(element.getTextRange())) {
         super.visitElement(element);
       }
     }
 
-    public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
+    @Override public void visitMethodCallExpression(final PsiMethodCallExpression expression) {
       final PsiMethod psiMethod = expression.resolveMethod();
       if (psiMethod != null && !hasSideEffects(expression)) {
         myExpressions.add(new TextWithImportsImpl(expression));
@@ -412,7 +412,7 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.visitMethodCallExpression(expression);
     }
 
-    public void visitReferenceExpression(final PsiReferenceExpression reference) {
+    @Override public void visitReferenceExpression(final PsiReferenceExpression reference) {
       if (myLineRange.intersects(reference.getTextRange())) {
         final PsiElement psiElement = reference.resolve();
         if (psiElement instanceof PsiVariable) {
@@ -432,19 +432,19 @@ public class FrameDebuggerTree extends DebuggerTree {
       super.visitReferenceExpression(reference);
     }
 
-    public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
+    @Override public void visitArrayAccessExpression(final PsiArrayAccessExpression expression) {
       if (!hasSideEffects(expression)) {
         myExpressions.add(new TextWithImportsImpl(expression));
       }
       super.visitArrayAccessExpression(expression);
     }
 
-    public void visitParameter(final PsiParameter parameter) {
+    @Override public void visitParameter(final PsiParameter parameter) {
       processVariable(parameter);
       super.visitParameter(parameter);
     }
 
-    public void visitLocalVariable(final PsiLocalVariable variable) {
+    @Override public void visitLocalVariable(final PsiLocalVariable variable) {
       processVariable(variable);
       super.visitLocalVariable(variable);
     }
@@ -455,18 +455,18 @@ public class FrameDebuggerTree extends DebuggerTree {
       }
     }
 
-    public void visitClass(final PsiClass aClass) {
+    @Override public void visitClass(final PsiClass aClass) {
       // Do not step in to local and anonymous classes...
     }
     
     private boolean hasSideEffects(PsiElement element) {
       final AtomicBoolean rv = new AtomicBoolean(false);
       element.accept(new PsiRecursiveElementVisitor() {
-        public void visitPostfixExpression(final PsiPostfixExpression expression) {
+        @Override public void visitPostfixExpression(final PsiPostfixExpression expression) {
           rv.set(true);
         }
 
-        public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
           final PsiElement psiElement = expression.resolve();
           if (psiElement instanceof PsiLocalVariable) {
             if (!myVisibleLocals.contains(((PsiLocalVariable)psiElement).getName())) {
@@ -484,7 +484,7 @@ public class FrameDebuggerTree extends DebuggerTree {
           }
         }
 
-        public void visitPrefixExpression(final PsiPrefixExpression expression) {
+        @Override public void visitPrefixExpression(final PsiPrefixExpression expression) {
           final IElementType op = expression.getOperationTokenType();
           if (JavaTokenType.PLUSPLUS.equals(op) || JavaTokenType.MINUSMINUS.equals(op)) {
             rv.set(true);
@@ -494,11 +494,11 @@ public class FrameDebuggerTree extends DebuggerTree {
           }
         }
 
-        public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+        @Override public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
           rv.set(true);
         }
 
-        public void visitCallExpression(final PsiCallExpression callExpression) {
+        @Override public void visitCallExpression(final PsiCallExpression callExpression) {
           final PsiMethod method = callExpression.resolveMethod();
           if (method == null || !DebuggerUtils.isSimpleGetter(method)) {
             rv.set(true);

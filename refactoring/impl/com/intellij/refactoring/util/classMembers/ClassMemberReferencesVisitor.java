@@ -9,7 +9,7 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
 
 public abstract class ClassMemberReferencesVisitor extends PsiRecursiveElementVisitor {
   private final PsiClass myClass;
@@ -18,7 +18,7 @@ public abstract class ClassMemberReferencesVisitor extends PsiRecursiveElementVi
     myClass = aClass;
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiExpression qualifier = expression.getQualifierExpression();
     if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
       qualifier.accept(this);
@@ -54,7 +54,7 @@ public abstract class ClassMemberReferencesVisitor extends PsiRecursiveElementVi
 
   protected abstract void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference);
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     PsiElement referencedElement = reference.resolve();
     if (referencedElement instanceof PsiClass) {
       final PsiClass referencedClass = (PsiClass) referencedElement;

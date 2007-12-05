@@ -195,7 +195,7 @@ public class ExpectedTypesProvider {
       return myResult;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       String referenceName = expression.getReferenceName();
       if (referenceName != null) {
         final PsiElement parent = expression.getParent();
@@ -214,19 +214,19 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       myExpr = (PsiExpression)myExpr.getParent();
       expression.getParent().accept(this);
     }
 
-    public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
+    @Override public void visitAnnotationArrayInitializer(PsiArrayInitializerMemberValue initializer) {
       final PsiType type = getAnnotationMethodType((PsiNameValuePair)initializer.getParent());
       if (type instanceof PsiArrayType) {
         myResult = new ExpectedTypeInfo[]{createInfoImpl(((PsiArrayType)type).getComponentType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN)};
       }
     }
 
-    public void visitNameValuePair(PsiNameValuePair pair) {
+    @Override public void visitNameValuePair(PsiNameValuePair pair) {
       final PsiType type = getAnnotationMethodType(pair);
       if (type == null) return;
       final ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.UNKNOWN);
@@ -249,7 +249,7 @@ public class ExpectedTypesProvider {
       return null;
     }
 
-    public void visitReturnStatement(PsiReturnStatement statement) {
+    @Override public void visitReturnStatement(PsiReturnStatement statement) {
       PsiMethod scopeMethod = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
       if (scopeMethod != null) {
         PsiType type = scopeMethod.getReturnType();
@@ -268,25 +268,25 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitIfStatement(PsiIfStatement statement) {
+    @Override public void visitIfStatement(PsiIfStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
                                                  PsiType.BOOLEAN, TailTypes.IF_RPARENTH);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
-    public void visitWhileStatement(PsiWhileStatement statement) {
+    @Override public void visitWhileStatement(PsiWhileStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
                                                  PsiType.BOOLEAN, TailTypes.WHILE_RPARENTH);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
-    public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+    @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
                                                  PsiType.BOOLEAN, TailTypes.WHILE_RPARENTH);
       myResult = new ExpectedTypeInfo[]{info};
     }
 
-    public void visitForStatement(PsiForStatement statement) {
+    @Override public void visitForStatement(PsiForStatement statement) {
       if (myExpr.equals(statement.getCondition())) {
         ExpectedTypeInfoImpl info = createInfoImpl(PsiType.BOOLEAN, ExpectedTypeInfo.TYPE_STRICTLY,
                                                    PsiType.BOOLEAN, TailType.SEMICOLON);
@@ -301,7 +301,7 @@ public class ExpectedTypesProvider {
       myResult = new ExpectedTypeInfo[]{info};
     }
 
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    @Override public void visitForeachStatement(PsiForeachStatement statement) {
       if (myExpr.equals(statement.getIteratedValue())) {
         PsiType type = statement.getIterationParameter().getType();
 
@@ -327,7 +327,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    @Override public void visitSwitchStatement(PsiSwitchStatement statement) {
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiType.INT,
                                                  TailType.NONE);
       if (PsiUtil.getLanguageLevel(statement).compareTo(LanguageLevel.JDK_1_5) < 0) {
@@ -341,13 +341,13 @@ public class ExpectedTypesProvider {
     }
 
 
-    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+    @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       PsiElementFactory factory = statement.getManager().getElementFactory();
       PsiType objectType = factory.createTypeByFQClassName("java.lang.Object", myExpr.getResolveScope());
       myResult = new ExpectedTypeInfo[]{createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailType.NONE)};
     }
 
-    public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(PsiVariable variable) {
       PsiType type = variable.getType();
       ExpectedTypeInfoImpl info = createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
                                                  TailType.SEMICOLON);
@@ -355,7 +355,7 @@ public class ExpectedTypesProvider {
       myResult = new ExpectedTypeInfo[]{info};
     }
 
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+    @Override public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
       if (myExpr.equals(assignment.getRExpression())) {
         PsiExpression lExpr = assignment.getLExpression();
         PsiType type = lExpr.getType();
@@ -408,7 +408,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitExpressionList(PsiExpressionList list) {
+    @Override public void visitExpressionList(PsiExpressionList list) {
       PsiResolveHelper helper = list.getManager().getResolveHelper();
       if (list.getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
@@ -473,7 +473,7 @@ public class ExpectedTypesProvider {
       myResult = getExpectedArgumentTypesForMethodCall(candidates, argumentList, myExpr, myForCompletion);
     }
 
-    public void visitBinaryExpression(PsiBinaryExpression expr) {
+    @Override public void visitBinaryExpression(PsiBinaryExpression expr) {
 
       PsiExpression op1 = expr.getLOperand();
       PsiExpression op2 = expr.getROperand();
@@ -589,7 +589,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitPrefixExpression(PsiPrefixExpression expr) {
+    @Override public void visitPrefixExpression(PsiPrefixExpression expr) {
       PsiJavaToken sign = expr.getOperationSign();
       IElementType i = sign.getTokenType();
       if (i == JavaTokenType.PLUSPLUS || i == JavaTokenType.MINUSMINUS || i == JavaTokenType.TILDE) {
@@ -609,7 +609,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitPostfixExpression(PsiPostfixExpression expr) {
+    @Override public void visitPostfixExpression(PsiPostfixExpression expr) {
       if (myForCompletion) return;
 
       ExpectedTypeInfoImpl info = createInfoImpl(PsiType.LONG, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
@@ -617,7 +617,7 @@ public class ExpectedTypesProvider {
       myResult = new ExpectedTypeInfo[]{info};
     }
 
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expr) {
+    @Override public void visitArrayInitializerExpression(PsiArrayInitializerExpression expr) {
       PsiElement pparent = expr.getParent();
       PsiType arrayType = null;
       if (pparent instanceof PsiVariable) {
@@ -643,7 +643,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitNewExpression(PsiNewExpression expression) {
+    @Override public void visitNewExpression(PsiNewExpression expression) {
       PsiExpression[] arrayDimensions = expression.getArrayDimensions();
       for (PsiExpression dimension : arrayDimensions) {
         if (myExpr.equals(dimension)) {
@@ -655,7 +655,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitArrayAccessExpression(PsiArrayAccessExpression expr) {
+    @Override public void visitArrayAccessExpression(PsiArrayAccessExpression expr) {
       if (myExpr.equals(expr.getIndexExpression())) {
         ExpectedTypeInfoImpl info = createInfoImpl(PsiType.INT, ExpectedTypeInfo.TYPE_OR_SUBTYPE,
                                                    PsiType.INT, TailType.NONE); //todo: special tail type
@@ -681,7 +681,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitConditionalExpression(PsiConditionalExpression expr) {
+    @Override public void visitConditionalExpression(PsiConditionalExpression expr) {
       if (myExpr.equals(expr.getCondition())) {
         if (myForCompletion) return;
 
@@ -712,7 +712,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitThrowStatement(PsiThrowStatement statement) {
+    @Override public void visitThrowStatement(PsiThrowStatement statement) {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
         PsiType throwableType = manager.getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
@@ -742,7 +742,7 @@ public class ExpectedTypesProvider {
       }
     }
 
-    public void visitCodeFragment(PsiCodeFragment codeFragment) {
+    @Override public void visitCodeFragment(PsiCodeFragment codeFragment) {
       if (codeFragment instanceof PsiExpressionCodeFragment) {
         final PsiType type = ((PsiExpressionCodeFragment)codeFragment).getExpectedType();
         if (type != null) {

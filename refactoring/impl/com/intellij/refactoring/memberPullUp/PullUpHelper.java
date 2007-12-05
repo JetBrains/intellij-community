@@ -448,7 +448,7 @@ public class PullUpHelper {
       return myUsedFields;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       final PsiExpression qualifierExpression = expression.getQualifierExpression();
       if (qualifierExpression != null
               && !(qualifierExpression instanceof PsiThisExpression)) {
@@ -470,11 +470,11 @@ public class PullUpHelper {
       return myIsMovable;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
       if (!myIsMovable) return;
       final PsiExpression qualifier;
       if (referenceElement instanceof PsiReferenceExpression) {
@@ -499,7 +499,7 @@ public class PullUpHelper {
       }
     }
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       if (myIsMovable) {
         super.visitElement(element);
       }
@@ -607,7 +607,7 @@ public class PullUpHelper {
   }
 
   private class QualifiedThisSuperAdjuster extends PsiRecursiveElementVisitor {
-    public void visitThisExpression(PsiThisExpression expression) {
+    @Override public void visitThisExpression(PsiThisExpression expression) {
       super.visitThisExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
@@ -620,7 +620,7 @@ public class PullUpHelper {
       }
     }
 
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(PsiSuperExpression expression) {
       super.visitSuperExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
@@ -638,7 +638,7 @@ public class PullUpHelper {
     private ArrayList<PsiExpression> mySupersToDelete = new ArrayList<PsiExpression>();
     private ArrayList<PsiSuperExpression> mySupersToChangeToThis = new ArrayList<PsiSuperExpression>();
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       if(expression.getQualifierExpression() instanceof PsiSuperExpression) {
         PsiElement resolved = expression.resolve();
         if (resolved == null || (resolved instanceof PsiMethod && shouldFixSuper((PsiMethod) resolved))) {
@@ -647,11 +647,11 @@ public class PullUpHelper {
       }
     }
 
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(PsiSuperExpression expression) {
       mySupersToChangeToThis.add(expression);
     }
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
       // do nothing
     }
 

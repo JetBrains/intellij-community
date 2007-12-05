@@ -128,7 +128,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   private void appendShortName(final StringBuffer buf, RefElement refElement) {
     refElement.accept(new RefVisitor() {
-      public void visitClass(RefClass refClass) {
+      @Override public void visitClass(RefClass refClass) {
         if (refClass.isStatic()) {
           buf.append(InspectionsBundle.message("inspection.export.results.static"));
           buf.append(NBSP);
@@ -141,7 +141,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         buf.append(CODE_CLOSING).append(B_CLOSING);
       }
 
-      public void visitField(RefField field) {
+      @Override public void visitField(RefField field) {
         PsiField psiField = field.getElement();
         if (psiField != null) {
           if (field.isStatic()) {
@@ -159,7 +159,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         }
       }
 
-      public void visitMethod(RefMethod method) {
+      @Override public void visitMethod(RefMethod method) {
         PsiMethod psiMethod = (PsiMethod)method.getElement();
         if (psiMethod != null) {
           PsiType returnType = psiMethod.getReturnType();
@@ -188,7 +188,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
         }
       }
 
-      public void visitFile(RefFile file) {
+      @Override public void visitFile(RefFile file) {
         final PsiFile psiFile = file.getElement();
         buf.append(B_OPENING);
         buf.append(psiFile.getName());

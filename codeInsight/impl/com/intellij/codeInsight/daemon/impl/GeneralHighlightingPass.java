@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
@@ -46,9 +47,8 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.SmartList;
 import com.intellij.util.Processor;
-import com.intellij.concurrency.JobUtil;
+import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -289,7 +289,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     };
     PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         super.visitElement(element);
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < annotators.size(); i++) {
@@ -307,7 +307,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
       }
 
-      public void visitErrorElement(PsiErrorElement element) {
+      @Override public void visitErrorElement(PsiErrorElement element) {
         HighlightInfo info = HighlightVisitorImpl.createErrorElementInfo(element);
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable==null) return; //do not highlight generated header/footer

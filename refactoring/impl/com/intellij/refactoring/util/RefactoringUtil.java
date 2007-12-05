@@ -145,11 +145,11 @@ public class RefactoringUtil {
 
       try {
         place.accept(new PsiRecursiveElementVisitor() {
-          public void visitClass(PsiClass aClass) {
+          @Override public void visitClass(PsiClass aClass) {
 
           }
 
-          public void visitVariable(PsiVariable variable) {
+          @Override public void visitVariable(PsiVariable variable) {
             if (name.equals(variable.getName())) {
               throw new CancelException();
             }
@@ -1139,7 +1139,7 @@ public class RefactoringUtil {
   public static List<PsiVariable> collectReferencedVariables(PsiElement scope) {
     final List<PsiVariable> result = new ArrayList<PsiVariable>();
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiElement element = expression.resolve();
         if (element instanceof PsiVariable) {
           result.add((PsiVariable)element);
@@ -1376,7 +1376,7 @@ public class RefactoringUtil {
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();
     for (final PsiElement scope : scopes) {
       scope.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           final PsiElement resolved = reference.resolve();
           if (resolved != null && !reported.contains(resolved) && !isAncestor(resolved, scopes) &&
@@ -1461,7 +1461,7 @@ public class RefactoringUtil {
     for (final PsiElement element : elements) {
       element.accept(new PsiRecursiveElementVisitor() {
 
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           if (!reference.isQualified()) {
             final PsiElement resolved = reference.resolve();

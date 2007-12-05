@@ -35,7 +35,7 @@ public class DebuggerTreeNodeExpression {
 //    utility.getExpression().replace(expression);
 //
 //    PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-//      public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+//      @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
 //        try {
 //          super.visitTypeCastExpression(expression);
 //
@@ -76,7 +76,7 @@ public class DebuggerTreeNodeExpression {
 //        }
 //      }
 //
-//      public void visitReferenceExpression(PsiReferenceExpression expression) {
+//      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
 //        expression.acceptChildren(this);
 //
 //        try {

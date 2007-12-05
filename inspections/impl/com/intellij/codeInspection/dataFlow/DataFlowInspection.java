@@ -46,20 +46,20 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
 
-      public void visitField(PsiField field) {
+      @Override public void visitField(PsiField field) {
         if (isNullLiteralExpression(field.getInitializer()) && AnnotationUtil.isNotNull(field)) {
           holder.registerProblem(field.getInitializer(), InspectionsBundle.message("dataflow.message.initializing.field.with.null"));
         }
       }
 
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         analyzeCodeBlock(method.getBody(), holder);
       }
 
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
         analyzeCodeBlock(initializer.getBody(), holder);
       }
     };

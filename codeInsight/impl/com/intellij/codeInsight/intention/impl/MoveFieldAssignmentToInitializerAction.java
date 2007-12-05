@@ -53,7 +53,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     if (initializer == null) return false;
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     initializer.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement resolved = expression.resolve();
         if (resolved == null) return;
         if (PsiTreeUtil.isAncestor(ctrOrInitializer, resolved, false) && !PsiTreeUtil.isAncestor(initializer, resolved, false)) {
@@ -84,7 +84,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     containingClass.accept(new PsiRecursiveElementVisitor(){
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
 
-      public void visitCodeBlock(PsiCodeBlock block) {
+      @Override public void visitCodeBlock(PsiCodeBlock block) {
         PsiElement parent = block.getParent();
         if (parent instanceof PsiClassInitializer || parent instanceof PsiMethod && ((PsiMethod)parent).isConstructor()) {
           currentInitializingBlock = block;
@@ -96,7 +96,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
         }
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression reference) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
         if (!result.get().booleanValue()) return;
         super.visitReferenceExpression(reference);
         if (!PsiUtil.isOnAssignmentLeftHand(reference)) return;

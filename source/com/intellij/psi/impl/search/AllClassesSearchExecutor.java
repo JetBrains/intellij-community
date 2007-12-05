@@ -72,13 +72,13 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     final boolean[] stopped = new boolean[]{false};
 
     scopeRoot.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (!stopped[0]) {
           visitElement(expression);
         }
       }
 
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         stopped[0] = !processor.process(aClass);
         super.visitClass(aClass);
       }

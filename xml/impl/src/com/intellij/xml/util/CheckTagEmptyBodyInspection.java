@@ -38,9 +38,9 @@ public class CheckTagEmptyBodyInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {}
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
-      public void visitXmlTag(final XmlTag tag) {
+      @Override public void visitXmlTag(final XmlTag tag) {
         if (!CheckEmptyScriptTagInspection.isScriptTag(tag)) {
           final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
 

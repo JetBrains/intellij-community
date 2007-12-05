@@ -285,11 +285,11 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
       @NonNls private static final String TOKENS_KEY = "Tokens";
       @NonNls private static final String ELEMENTS_KEY = "Elements";
 
-      public void visitXmlToken(XmlToken token) {
+      @Override public void visitXmlToken(XmlToken token) {
         inc(TOKENS_KEY);
       }
 
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         inc(ELEMENTS_KEY);
         super.visitElement(element);
       }

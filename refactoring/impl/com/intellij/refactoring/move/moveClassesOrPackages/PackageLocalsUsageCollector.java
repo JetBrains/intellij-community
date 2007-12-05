@@ -23,12 +23,12 @@ class PackageLocalsUsageCollector extends PsiRecursiveElementVisitor {
     myTargetPackage = targetPackage;
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     visitReferenceElement(expression);
   }
 
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
     PsiElement resolved = reference.resolve();
     visitResolvedReference(resolved, reference);

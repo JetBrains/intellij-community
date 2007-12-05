@@ -281,7 +281,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefVisitor() {
-      public void visitElement(final RefEntity refEntity) {
+      @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
@@ -289,7 +289,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
           if (!refElement.isSuspicious()) return;
           refElement.accept(new RefVisitor() {
-            public void visitElement(final RefEntity elem) {
+            @Override public void visitElement(final RefEntity elem) {
               if (elem instanceof RefElement) {
                 final RefElement element = (RefElement)elem;
                 if (isEntryPoint(element)) {
@@ -298,7 +298,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               }
             }
 
-            public void visitMethod(RefMethod method) {
+            @Override public void visitMethod(RefMethod method) {
               if (isAddMainsEnabled() && method.isAppMain()) {
                 getEntryPointsManager().addEntryPoint(method, false);
               } else {
@@ -306,7 +306,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               }
             }
 
-            public void visitClass(RefClass aClass) {
+            @Override public void visitClass(RefClass aClass) {
               final PsiClass psiClass = aClass.getElement();
               if (
                 isAddAppletEnabled() && aClass.isApplet() ||
@@ -336,7 +336,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           final RefFilter filter = new StrictUnreferencedFilter(DeadCodeInspection.this);
           final PsiSearchHelper helper = PsiManager.getInstance(getRefManager().getProject()).getSearchHelper();
           getRefManager().iterate(new RefVisitor() {
-            public void visitElement(final RefEntity refEntity) {
+            @Override public void visitElement(final RefEntity refEntity) {
               if (refEntity instanceof RefClass && filter.accepts((RefClass)refEntity)) {
                 findExternalClassReferences((RefClass)refEntity);
               }
@@ -417,13 +417,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     final boolean[] requestAdded = new boolean[]{false};
 
     getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
         RefElement refElement=(RefElement)refEntity;
         if (filter.accepts(refElement) && !myProcessedSuspicious.contains(refElement)) {
           refEntity.accept(new RefVisitor() {
-            public void visitField(final RefField refField) {
+            @Override public void visitField(final RefField refField) {
               myProcessedSuspicious.add(refField);
               PsiField psiField = refField.getElement();
               if (isSerializationImplicitlyUsedField(psiField)) {
@@ -440,7 +440,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               }
             }
 
-            public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(final RefMethod refMethod) {
               myProcessedSuspicious.add(refMethod);
               if (refMethod instanceof RefImplicitConstructor) {
                 visitClass(refMethod.getOwnerClass());
@@ -461,7 +461,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
               }
             }
 
-            public void visitClass(final RefClass refClass) {
+            @Override public void visitClass(final RefClass refClass) {
               myProcessedSuspicious.add(refClass);
               if (!refClass.isAnonymous()) {
                 getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
@@ -536,7 +536,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public void exportResults(final Element parentNode) {
     final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
     getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefElement)refEntity)) {
           if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
@@ -787,7 +787,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
     // Cleanup previous reachability information.
     getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
@@ -825,7 +825,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       myInstantiatedClassesCount = 0;
     }
 
-    public void visitMethod(RefMethod method) {
+    @Override public void visitMethod(RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static intitializers
         if (method.isStatic() || method.isConstructor()) {
@@ -855,7 +855,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       }
     }
 
-    public void visitClass(RefClass refClass) {
+    @Override public void visitClass(RefClass refClass) {
       boolean alreadyActive = refClass.isReachable();
       ((RefClassImpl)refClass).setReachable(true);
 
@@ -867,7 +867,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       addInstantiatedClass(refClass);
     }
 
-    public void visitField(RefField field) {
+    @Override public void visitField(RefField field) {
       // Process class's static intitializers.
       if (!field.isReachable()) {
         makeContentReachable((RefElementImpl)field);

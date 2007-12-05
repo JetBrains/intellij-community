@@ -172,7 +172,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   private void retargetNonCodeUsages(final PsiClass newClass) {
     newClass.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(final PsiElement element) {
+      @Override public void visitElement(final PsiElement element) {
         super.visitElement(element);
         List<NonCodeUsageInfo> list = element.getCopyableUserData(ourNonCodeUsageKey);
         if (list != null) {
@@ -204,7 +204,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   private static void retargetClassRefs(final PsiClass classToMove, final PsiClass newClass) {
     newClass.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
         PsiElement element = reference.resolve();
         if (element instanceof PsiClass && PsiTreeUtil.isAncestor(classToMove, element, false)) {
           PsiClass newInnerClass = findMatchingClass(classToMove, newClass, (PsiClass) element);

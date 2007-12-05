@@ -7,14 +7,14 @@ import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.RemovePropertyLocalFix;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.util.containers.BidirectionalMap;
-import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +89,7 @@ public class InconsistentResourceBundleInspection extends DescriptorProviderInsp
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     final Set<ResourceBundle> visitedBundles = new THashSet<ResourceBundle>();
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitFile(PsiFile file) {
+      @Override public void visitFile(PsiFile file) {
         checkFile(file, manager, visitedBundles);
       }
     });

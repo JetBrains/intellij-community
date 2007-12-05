@@ -62,15 +62,15 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     }
 
     topLevelClass.accept(new PsiRecursiveElementVisitor() {
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         //do not go inside method
       }
 
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
         //do not go inside class initializer
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiExpression qualifier = expression.getQualifierExpression();
         if (qualifier == null || (qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null)) {
           final PsiElement resolved = expression.resolve();
@@ -89,11 +89,11 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     final Set<PsiField> usedFields = new HashSet<PsiField>();
     topLevelClass.accept(new PsiRecursiveElementVisitor() {
 
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         if (!candidates.isEmpty()) super.visitElement(element);
       }
 
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         super.visitMethod(method);
 
         final PsiCodeBlock body = method.getBody();
@@ -102,7 +102,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
         }
       }
 
-      public void visitClassInitializer(PsiClassInitializer initializer) {
+      @Override public void visitClassInitializer(PsiClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
         checkCodeBlock(initializer.getBody(), candidates);

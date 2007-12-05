@@ -688,7 +688,7 @@ public class SystemBuilder {
       final PsiType reType = getType(element);
 
       element.accept(new PsiRecursiveElementVisitor() {
-        public void visitReturnStatement(final PsiReturnStatement statement) {
+        @Override public void visitReturnStatement(final PsiReturnStatement statement) {
           super.visitReturnStatement(statement);
 
           final PsiExpression retExpr = statement.getReturnValue();
@@ -709,14 +709,14 @@ public class SystemBuilder {
 
       if (!myVisitedConstructions.contains(anchor)) {
         root.accept(new PsiRecursiveElementVisitor() {
-          public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
+          @Override public void visitAssignmentExpression(final PsiAssignmentExpression expression) {
             super.visitAssignmentExpression(expression);
 
             system
               .addSubtypeConstraint(evaluateType(expression.getRExpression(), system), evaluateType(expression.getLExpression(), system));
           }
 
-          public void visitConditionalExpression(final PsiConditionalExpression expression) {
+          @Override public void visitConditionalExpression(final PsiConditionalExpression expression) {
             super.visitConditionalExpression(expression);
 
             system.addSubtypeConstraint(evaluateType(expression.getThenExpression(), system),
@@ -725,12 +725,12 @@ public class SystemBuilder {
                                         evaluateType(expression.getThenExpression(), system));
           }
 
-          public void visitCallExpression(final PsiCallExpression expression) {
+          @Override public void visitCallExpression(final PsiCallExpression expression) {
             super.visitCallExpression(expression);
             evaluateType(expression, system);
           }
 
-          public void visitReturnStatement(final PsiReturnStatement statement) {
+          @Override public void visitReturnStatement(final PsiReturnStatement statement) {
             super.visitReturnStatement(statement);
 
             final PsiMethod method = PsiTreeUtil.getParentOfType(statement, PsiMethod.class);
@@ -740,7 +740,7 @@ public class SystemBuilder {
             }
           }
 
-          public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
+          @Override public void visitTypeCastExpression(final PsiTypeCastExpression expression) {
             super.visitTypeCastExpression(expression);
 
             final PsiType operandType = evaluateType(expression.getOperand(), system);
@@ -770,7 +770,7 @@ public class SystemBuilder {
             }
           }
 
-          public void visitVariable(final PsiVariable variable) {
+          @Override public void visitVariable(final PsiVariable variable) {
             super.visitVariable(variable);
 
             final PsiExpression init = variable.getInitializer();
@@ -780,7 +780,7 @@ public class SystemBuilder {
             }
           }
 
-          public void visitNewExpression(final PsiNewExpression expression) {
+          @Override public void visitNewExpression(final PsiNewExpression expression) {
             super.visitNewExpression(expression);
 
             final PsiArrayInitializerExpression init = expression.getArrayInitializer();
@@ -795,7 +795,7 @@ public class SystemBuilder {
             }
           }
 
-          public void visitReferenceExpression(final PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
             final PsiExpression qualifierExpression = expression.getQualifierExpression();
 
             if (qualifierExpression != null) {

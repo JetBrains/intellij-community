@@ -122,20 +122,20 @@ public class SmartEnterAction extends EditorAction {
         new PsiRecursiveElementVisitor() {
           boolean myIsStopped = false;
 
-          public void visitElement(PsiElement element) {
+          @Override public void visitElement(PsiElement element) {
             if (myIsStopped) return;
             super.visitElement(element);
           }
 
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             visitElement(expression);
           }
 
-          public void visitErrorElement(PsiErrorElement element) {
+          @Override public void visitErrorElement(PsiErrorElement element) {
             myIsStopped = !processor.process(element);
           }
 
-          public void visitLiteralExpression(PsiLiteralExpression expression) {
+          @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
             String parsingError = expression.getParsingError();
             if (parsingError != null && parsingError.indexOf(JavaErrorMessages.message("illegal.line.end.in.string.literal")) >= 0) {
               myIsStopped = !processor.process(expression);

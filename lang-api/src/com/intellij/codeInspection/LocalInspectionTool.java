@@ -50,10 +50,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
 
-      public void visitFile(PsiFile file) {
+      @Override public void visitFile(PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
 

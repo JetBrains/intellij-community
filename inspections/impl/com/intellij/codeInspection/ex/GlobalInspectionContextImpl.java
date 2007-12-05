@@ -917,10 +917,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
       scope.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 
-        public void visitJspFile(final JspFile file) {
+        @Override public void visitJspFile(final JspFile file) {
           visitFile(file);
         }
 

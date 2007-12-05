@@ -17,11 +17,11 @@ public class BraceEnforcer extends AbstractPostFormatProcessor {
     super(settings);
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     visitElement(expression);
   }
 
-  public void visitIfStatement(PsiIfStatement statement) {
+  @Override public void visitIfStatement(PsiIfStatement statement) {
     if (checkElementContainsRange(statement)) {
       final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
       super.visitIfStatement(statement);
@@ -34,35 +34,35 @@ public class BraceEnforcer extends AbstractPostFormatProcessor {
     }
   }
 
-  public void visitForStatement(PsiForStatement statement) {
+  @Override public void visitForStatement(PsiForStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForStatement(statement);
       processStatement(statement, statement.getBody(), mySettings.FOR_BRACE_FORCE);
     }
   }
 
-  public void visitForeachStatement(PsiForeachStatement statement) {
+  @Override public void visitForeachStatement(PsiForeachStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitForeachStatement(statement);
       processStatement(statement, statement.getBody(), mySettings.FOR_BRACE_FORCE);
     }
   }
 
-  public void visitWhileStatement(PsiWhileStatement statement) {
+  @Override public void visitWhileStatement(PsiWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitWhileStatement(statement);
       processStatement(statement, statement.getBody(), mySettings.WHILE_BRACE_FORCE);
     }
   }
 
-  public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+  @Override public void visitDoWhileStatement(PsiDoWhileStatement statement) {
     if (checkElementContainsRange(statement)) {
       super.visitDoWhileStatement(statement);
       processStatement(statement, statement.getBody(), mySettings.DOWHILE_BRACE_FORCE);
     }
   }
 
-  public void visitJspFile(JspFile file) {
+  @Override public void visitJspFile(JspFile file) {
     final PsiClass javaRoot = file.getJavaClass();
     if (javaRoot != null) {
       javaRoot.accept(this);

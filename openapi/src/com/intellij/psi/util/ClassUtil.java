@@ -85,13 +85,13 @@ public class ClassUtil {
       containingClass.accept(new PsiRecursiveElementVisitor() {
         private int myCurrentIdx = 0;
 
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
           if (result[0] == -1) {
             super.visitElement(element);
           }
         }
 
-        public void visitClass(PsiClass aClass) {
+        @Override public void visitClass(PsiClass aClass) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
             myCurrentIdx++;
@@ -118,13 +118,13 @@ public class ClassUtil {
     containingClass.accept(new PsiRecursiveElementVisitor() {
       private int myCurrentIdx = 0;
 
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         if (result[0] == null) {
           super.visitElement(element);
         }
       }
 
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         if (!jvmCompatible) {
           super.visitClass(aClass);
           if (aClass.getQualifiedName() == null) {
@@ -147,7 +147,7 @@ public class ClassUtil {
         }
       }
 
-      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      @Override public void visitTypeParameter(final PsiTypeParameter classParameter) {
         if (!jvmCompatible) {
           super.visitTypeParameter(classParameter);
         }

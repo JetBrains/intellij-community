@@ -1,16 +1,15 @@
 package com.intellij.refactoring.rename.inplace;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Map;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -32,7 +31,7 @@ public class ResolveSnapshot {
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
     final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<PsiElement, SmartPsiElementPointer>();
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression refExpr) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression refExpr) {
         if (!refExpr.isQualified()) {
           PsiElement resolved = refExpr.resolve();
           if (resolved instanceof PsiField) {

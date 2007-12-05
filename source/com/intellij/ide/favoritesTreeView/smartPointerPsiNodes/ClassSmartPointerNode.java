@@ -31,19 +31,19 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
         psiElement.accept(new PsiElementVisitor() {
-          public void visitClass(PsiClass aClass) {
+          @Override public void visitClass(PsiClass aClass) {
             treeNodes.add(new ClassSmartPointerNode(getProject(), aClass, getSettings()));
           }
 
-          public void visitMethod(PsiMethod method) {
+          @Override public void visitMethod(PsiMethod method) {
             treeNodes.add(new MethodSmartPointerNode(getProject(), method, getSettings()));
           }
 
-          public void visitField(PsiField field) {
+          @Override public void visitField(PsiField field) {
             treeNodes.add(new FieldSmartPointerNode(getProject(), field, getSettings()));
           }
 
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             visitExpression(expression);
           }
         });

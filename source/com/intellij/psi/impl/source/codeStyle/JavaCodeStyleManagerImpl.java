@@ -115,7 +115,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       final PsiElement[] roots = file.getPsiRoots();
       for (PsiElement root : roots) {
         root.accept(new PsiRecursiveElementVisitor() {
-          public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
             if (!reference.isQualified()) {
               final JavaResolveResult resolveResult = reference.advancedResolve(false);
               final PsiElement resolveScope = resolveResult.getCurrentFileResolveScope();
@@ -853,7 +853,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             }
             try {
               run.accept(new PsiRecursiveElementVisitor() {
-                public void visitVariable(PsiVariable variable) {
+                @Override public void visitVariable(PsiVariable variable) {
                   if (name1.equals(variable.getName())) {
                     throw new CancelException();
                   }

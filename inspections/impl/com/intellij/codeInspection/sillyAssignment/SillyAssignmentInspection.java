@@ -55,15 +55,15 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
 
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         checkSillyAssignment(expression, holder);
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
-      public void visitVariable(final PsiVariable variable) {
+      @Override public void visitVariable(final PsiVariable variable) {
         final PsiExpression initializer = variable.getInitializer();
         if (initializer instanceof PsiAssignmentExpression) {
           final PsiExpression lExpr = ((PsiAssignmentExpression)initializer).getLExpression();

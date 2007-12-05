@@ -1,27 +1,27 @@
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.HelpID;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
 
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * @author yole
@@ -96,7 +96,7 @@ public class InlineParameterExpressionProcessor {
 
   private void processParameterInitializer() {
     myInitializer.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         if (element instanceof PsiLocalVariable) {
@@ -183,7 +183,7 @@ public class InlineParameterExpressionProcessor {
                                 final Map<PsiElement, PsiElement> elementsToReplace) {
     final Ref<Boolean> refCannotEvaluate = new Ref<Boolean>();
     expression.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         if (!canEvaluate(expression, element, elementsToReplace)) {

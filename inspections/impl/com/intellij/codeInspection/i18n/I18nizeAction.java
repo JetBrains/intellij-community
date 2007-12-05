@@ -7,10 +7,10 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -101,7 +101,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     PsiFile root = jspFile.getBaseLanguageRoot();
     root.accept(new PsiRecursiveElementVisitor(){
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         if (!result.get().booleanValue()) return;
         TextRange elementRange = element.getTextRange();
         if (elementRange.intersectsStrict(selectedRange)) {

@@ -55,7 +55,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
                             final GlobalInspectionContext globalContext,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
-      public void visitClass(RefClass refClass) {
+      @Override public void visitClass(RefClass refClass) {
         if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
         if (descriptors != null) {
@@ -81,7 +81,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     final PsiElement psiElement = refEntity.getElement();
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<PsiElement, Collection<String>>();
     psiElement.accept(new PsiRecursiveElementVisitor() {
-      public void visitModifierList(PsiModifierList list) {
+      @Override public void visitModifierList(PsiModifierList list) {
         super.visitModifierList(list);
         final PsiElement parent = list.getParent();
         if (parent instanceof PsiModifierListOwner && !(parent instanceof PsiClass)) {
@@ -89,11 +89,11 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
         }
       }
 
-      public void visitComment(PsiComment comment) {
+      @Override public void visitComment(PsiComment comment) {
         checkElement(comment);
       }
 
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         if (aClass == psiElement) {
           super.visitClass(aClass);
           checkElement(aClass);

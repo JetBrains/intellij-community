@@ -36,15 +36,15 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
     myVisitor = visitor;
   }
 
-  public void visitLocalVariableDeclaration(PsiLocalVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitLocalVariableDeclaration(PsiLocalVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
     visitVariable(variable, occurence);
   }
 
-  public void visitFieldDeclaration(PsiField field, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitFieldDeclaration(PsiField field, ClassReferenceVisitor.TypeOccurence occurence) {
     visitVariable(field, occurence);
   }
 
-  public void visitParameterDeclaration(PsiParameter parameter, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitParameterDeclaration(PsiParameter parameter, ClassReferenceVisitor.TypeOccurence occurence) {
     visitVariable(parameter, occurence);
   }
 
@@ -64,7 +64,7 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
     }
   }
 
-  public void visitMethodReturnType(PsiMethod method, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitMethodReturnType(PsiMethod method, ClassReferenceVisitor.TypeOccurence occurence) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
     PsiReference[] refs = ReferencesSearch.search(method, projectScope, false).toArray(new PsiReference[0]);
 
@@ -79,11 +79,11 @@ public class ClassInstanceScanner extends DelegatingClassReferenceVisitor {
     }
   }
 
-  public void visitTypeCastExpression(PsiTypeCastExpression typeCastExpression, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitTypeCastExpression(PsiTypeCastExpression typeCastExpression, ClassReferenceVisitor.TypeOccurence occurence) {
     processExpression(typeCastExpression, occurence, null);
   }
 
-  public void visitNewExpression(PsiNewExpression newExpression, ClassReferenceVisitor.TypeOccurence occurence) {
+  @Override public void visitNewExpression(PsiNewExpression newExpression, ClassReferenceVisitor.TypeOccurence occurence) {
     processExpression(newExpression, occurence, null);
   }
 

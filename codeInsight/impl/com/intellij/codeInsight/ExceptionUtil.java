@@ -257,12 +257,12 @@ public class ExceptionUtil {
   public static PsiClassType[] getUnhandledExceptions(PsiElement[] elements) {
     final List<PsiClassType> array = new ArrayList<PsiClassType>();
     PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      public void visitCallExpression(PsiCallExpression expression) {
+      @Override public void visitCallExpression(PsiCallExpression expression) {
         addExceptions(array, getUnhandledExceptions(expression, null));
         visitElement(expression);
       }
 
-      public void visitThrowStatement(PsiThrowStatement statement) {
+      @Override public void visitThrowStatement(PsiThrowStatement statement) {
         addExceptions(array, getUnhandledExceptions(statement, null));
         visitElement(statement);
       }

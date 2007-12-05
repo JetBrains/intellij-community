@@ -63,7 +63,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
 
   private static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
     context.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
         super.visitReferenceExpression(expression);
       }

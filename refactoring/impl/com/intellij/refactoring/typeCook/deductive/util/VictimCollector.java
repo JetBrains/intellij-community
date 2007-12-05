@@ -33,25 +33,25 @@ public class VictimCollector extends Visitor {
     }
   }
 
-  public void visitLocalVariable(final PsiLocalVariable variable) {
+  @Override public void visitLocalVariable(final PsiLocalVariable variable) {
     testNAdd(variable, variable.getType());
 
     super.visitLocalVariable(variable);
   }
 
-  public void visitForeachStatement(final PsiForeachStatement statement) {
+  @Override public void visitForeachStatement(final PsiForeachStatement statement) {
     super.visitForeachStatement(statement);
     final PsiParameter parameter = statement.getIterationParameter();
     testNAdd(parameter, parameter.getType());
   }
 
-  public void visitField(final PsiField field) {
+  @Override public void visitField(final PsiField field) {
     testNAdd(field, field.getType());
 
     super.visitField(field);
   }
 
-  public void visitMethod(final PsiMethod method) {
+  @Override public void visitMethod(final PsiMethod method) {
     final PsiParameter[] parms = method.getParameterList().getParameters();
 
     for (PsiParameter parm : parms) {
@@ -69,7 +69,7 @@ public class VictimCollector extends Visitor {
     }
   }
 
-  public void visitNewExpression(final PsiNewExpression expression) {
+  @Override public void visitNewExpression(final PsiNewExpression expression) {
     if (expression.getClassReference() != null) {
       testNAdd(expression, expression.getType());
     }
@@ -77,7 +77,7 @@ public class VictimCollector extends Visitor {
     super.visitNewExpression(expression);
   }
 
-  public void visitTypeCastExpression (final PsiTypeCastExpression cast){
+  @Override public void visitTypeCastExpression (final PsiTypeCastExpression cast){
     final PsiTypeElement typeElement = cast.getCastType();
     if (typeElement != null) {
       testNAdd(cast, typeElement.getType());
@@ -86,10 +86,10 @@ public class VictimCollector extends Visitor {
     super.visitTypeCastExpression(cast);
   }
 
-  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
   }
 
-  public void visitFile(PsiFile file) {
+  @Override public void visitFile(PsiFile file) {
     if (file instanceof PsiJavaFile) {
       super.visitFile(file);
     }

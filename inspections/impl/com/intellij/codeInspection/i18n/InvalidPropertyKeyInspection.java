@@ -117,18 +117,18 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       myManager = manager;
     }
 
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {
+    @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
       final PsiExpressionList argList = aClass.getArgumentList();
       if (argList != null) {
         argList.accept(this);
       }
     }
 
-    public void visitClass(PsiClass aClass) {}
+    @Override public void visitClass(PsiClass aClass) {}
 
-    public void visitField(PsiField field) {}
+    @Override public void visitField(PsiField field) {}
 
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
       String key = (String)value;

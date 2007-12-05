@@ -97,7 +97,7 @@ public class Util {
 
     final TIntHashSet suspects = new TIntHashSet();
     expr.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiParameter) {

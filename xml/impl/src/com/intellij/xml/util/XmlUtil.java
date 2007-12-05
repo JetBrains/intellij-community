@@ -1047,7 +1047,7 @@ public class XmlUtil {
         retTag = xmlTag.getManager().getElementFactory().createTagFromText("<" + tagStart + ">" + bodyText + "</" + qname + ">");
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new PsiRecursiveElementVisitor() {
-            public void visitXmlTag(XmlTag tag) {
+            @Override public void visitXmlTag(XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
               if (namespacePrefix.length() == 0) {
                 String qname;

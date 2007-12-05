@@ -183,11 +183,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private static class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
     private Set<PsiElement> myResult = new HashSet<PsiElement>();
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement element = reference.resolve();
       if (element != null) {
@@ -257,7 +257,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   public static class AnySupers extends PsiRecursiveElementVisitor {
     private boolean myResult = false;
-    public void visitSuperExpression(PsiSuperExpression expression) {
+    @Override public void visitSuperExpression(PsiSuperExpression expression) {
       myResult = true;
     }
 
@@ -265,7 +265,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       return myResult;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitElement(expression);
     }
   }
@@ -277,7 +277,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       return conflict;
     }
 
-    public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(PsiVariable variable) {
       if (variable == myLocalVariable) return;
       if (myParameterName.equals(variable.getName())) {
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
@@ -287,10 +287,10 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     }
 
-    public void visitElement(PsiElement element) {
+    @Override public void visitElement(PsiElement element) {
       if(conflict != null) return;
       super.visitElement(element);
     }

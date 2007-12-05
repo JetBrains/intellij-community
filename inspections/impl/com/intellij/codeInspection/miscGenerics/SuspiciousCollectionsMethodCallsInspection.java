@@ -1,7 +1,8 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
@@ -12,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
 /**
  * @author ven
@@ -93,11 +94,11 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
     final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
     final IntArrayList indices = new IntArrayList();
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
+      @Override public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
         super.visitMethodCallExpression(methodCall);
         final PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
         final PsiExpression qualifier = methodExpression.getQualifierExpression();

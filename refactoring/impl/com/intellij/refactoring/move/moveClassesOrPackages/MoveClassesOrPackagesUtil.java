@@ -263,7 +263,7 @@ public class MoveClassesOrPackagesUtil {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
     if (aPackage != null) {
       aClass.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (reference.isQualified() && reference.isReferenceTo(aClass)) {
             final PsiElement qualifier = reference.getQualifier();
             if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(aPackage)) {

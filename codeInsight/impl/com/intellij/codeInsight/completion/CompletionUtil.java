@@ -375,7 +375,7 @@ public class CompletionUtil {
 
     if (parentOfType != null) {
       parentOfType.accept(new PsiRecursiveElementVisitor() {
-        public void visitReferenceExpression(PsiReferenceExpression reference) {
+        @Override public void visitReferenceExpression(PsiReferenceExpression reference) {
           final PsiElement parent = reference.getParent();
           if (parent instanceof PsiReference) return;
           if (referenceOnMethod && parent instanceof PsiMethodCallExpression &&

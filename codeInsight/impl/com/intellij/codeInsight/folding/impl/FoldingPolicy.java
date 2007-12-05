@@ -97,7 +97,7 @@ class FoldingPolicy {
 
   private static void findClasses(PsiElement scope, final Map<PsiElement, TextRange> foldElements, final Document document) {
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitClass(PsiClass aClass) {
+      @Override public void visitClass(PsiClass aClass) {
         addToFold(foldElements, aClass, document, true);
         addElementsToFold(foldElements, aClass, document, false);
       }

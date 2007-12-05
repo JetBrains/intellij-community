@@ -300,7 +300,7 @@ public class PositionManagerImpl implements PositionManager {
       myMethodSignature = methodSignature;
     }
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
       final List<ReferenceType> allClasses = myDebugProcess.getPositionManager().getAllClasses(SourcePosition.createFromElement(aClass));
       for (ReferenceType referenceType : allClasses) {
         if (referenceType.name().equals(myClassName)) {
@@ -311,7 +311,7 @@ public class PositionManagerImpl implements PositionManager {
       aClass.acceptChildren(this);
     }
 
-    public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(PsiMethod method) {
       try {
         //noinspection HardCodedStringLiteral
         String methodName = method.isConstructor() ? "<init>" : method.getName();

@@ -28,7 +28,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   // and visitExpression.
   private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
 
-  public void visitElement(PsiElement element) {
+  @Override public void visitElement(PsiElement element) {
     if (myRefExprsInVisit.size() > 0 && myRefExprsInVisit.peek() == element) {
       myRefExprsInVisit.pop();
       myRefExprsInVisit.push(null);
@@ -38,7 +38,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
     }
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     myRefExprsInVisit.push(expression);
     try {
       visitExpression(expression);
@@ -50,7 +50,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   }
 
   //override in order to visit each root directly in visitor 
-  public void visitJspFile(JspFile file) {
+  @Override public void visitJspFile(JspFile file) {
     super.visitJspFile(file);
     visitClass(file.getJavaClass());
     visitFile(file.getBaseLanguageRoot());

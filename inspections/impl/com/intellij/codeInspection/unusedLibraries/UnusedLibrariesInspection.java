@@ -57,7 +57,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
     } else {
       final Set<Module> modules = new HashSet<Module>();
       scope.accept(new PsiRecursiveElementVisitor() {
-        public void visitFile(PsiFile file) {
+        @Override public void visitFile(PsiFile file) {
           if (!(file instanceof PsiCompiledElement)) {
             final VirtualFile virtualFile = file.getVirtualFile();
             if (virtualFile != null) {

@@ -321,7 +321,7 @@ class InlineToAnonymousConstructorProcessor {
     final List<Pair<PsiReferenceExpression, PsiParameter>> parameterReferences = new ArrayList<Pair<PsiReferenceExpression, PsiParameter>>();
     final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
     argument.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement psiElement = expression.resolve();
         if (psiElement instanceof PsiParameter) {
@@ -383,7 +383,7 @@ class InlineToAnonymousConstructorProcessor {
                                  final PsiType[] substitutedParameters, final PsiVariable outerClassLocal) throws IncorrectOperationException {
     final Map<PsiElement, PsiElement> elementsToReplace = new HashMap<PsiElement, PsiElement>();
     method.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement element = expression.resolve();
         if (element instanceof PsiField) {
@@ -403,7 +403,7 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
 
-      public void visitTypeParameter(final PsiTypeParameter classParameter) {
+      @Override public void visitTypeParameter(final PsiTypeParameter classParameter) {
         super.visitTypeParameter(classParameter);
         PsiReferenceList list = classParameter.getExtendsList();
         PsiJavaCodeReferenceElement[] referenceElements = list.getReferenceElements();
@@ -415,7 +415,7 @@ class InlineToAnonymousConstructorProcessor {
         }
       }
 
-      public void visitTypeElement(final PsiTypeElement typeElement) {
+      @Override public void visitTypeElement(final PsiTypeElement typeElement) {
         super.visitTypeElement(typeElement);
         if (typeElement.getType() instanceof PsiClassType) {
           PsiClassType classType = (PsiClassType) typeElement.getType();

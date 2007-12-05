@@ -47,7 +47,7 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
     myIndentOptions = settings.getIndentOptions(file.getFileType());
   }
 
-  public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(XmlTag tag) {
     if (checkElementContainsRange(tag)) {
       super.visitXmlTag(tag);
     }
@@ -57,11 +57,11 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
     return PAGE_DIRECTIVE.equals(tag.getName());
   }
 
-  public void visitXmlText(XmlText text) {
+  @Override public void visitXmlText(XmlText text) {
 
   }
 
-  public void visitXmlAttribute(XmlAttribute attribute) {
+  @Override public void visitXmlAttribute(XmlAttribute attribute) {
     if (isPageDirectiveTag(attribute.getParent())) {
       final XmlAttributeValue valueElement = attribute.getValueElement();
       if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && isMultiline(valueElement)) {

@@ -10,8 +10,8 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -99,7 +99,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     
     final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
     body.accept(new PsiRecursiveElementVisitor() {
-      public void visitCodeBlock(PsiCodeBlock block) {
+      @Override public void visitCodeBlock(PsiCodeBlock block) {
         super.visitCodeBlock(block);
         PsiElement anchor = block;
         if (block.getParent() instanceof PsiSwitchStatement) {
@@ -116,7 +116,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         }
       }
 
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      @Override public void visitForeachStatement(PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         final PsiParameter param = statement.getIterationParameter();
         final PsiStatement body = statement.getBody();
@@ -133,11 +133,11 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
           child.accept(new PsiElementVisitor() {
-            public void visitReferenceExpression(PsiReferenceExpression expression) {
+            @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
               visitReferenceElement(expression);
             }
 
-            public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+            @Override public void visitDeclarationStatement(PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) result.add(declaredElement);
@@ -149,7 +149,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         return result;
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
     });
 

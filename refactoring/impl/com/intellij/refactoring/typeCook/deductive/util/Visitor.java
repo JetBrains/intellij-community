@@ -10,7 +10,7 @@ import com.intellij.psi.*;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class Visitor extends PsiRecursiveElementVisitor {
-  public void visitPackage(final PsiPackage aPackage) {
+  @Override public void visitPackage(final PsiPackage aPackage) {
     final PsiDirectory[] dirs = aPackage.getDirectories();
 
     for (int i = 0; i < dirs.length; i++) {

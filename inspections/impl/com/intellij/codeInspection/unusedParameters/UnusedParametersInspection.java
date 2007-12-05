@@ -85,7 +85,7 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
     final PsiSearchHelper helper = PsiManager.getInstance(globalContext.getProject()).getSearchHelper();
     final AnalysisScope scope = globalContext.getRefManager().getScope();
     globalContext.getRefManager().iterate(new RefVisitor() {
-      public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           final PsiModifierListOwner element = refMethod.getElement();

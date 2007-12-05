@@ -1,16 +1,16 @@
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.Processor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Collection;
 import java.util.Map;
@@ -70,7 +70,7 @@ public class ExtractMethodUtil {
     assert body != null;
     final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
 
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         final PsiMethod target = expression.getCopyableUserData(RESOLVE_TARGET_KEY);
         if (target != null) {

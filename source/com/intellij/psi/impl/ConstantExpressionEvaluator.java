@@ -32,12 +32,12 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myProject = project;
   }
 
-  public void visitLiteralExpression(PsiLiteralExpression expression) {
+  @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
     final Object value = expression.getValue();
     myValue = value instanceof String? myInterner.intern((String)value) : value;
   }
 
-  public void visitBinaryExpression(PsiBinaryExpression expression) {
+  @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
     Object lOperandValue = accept(expression.getLOperand());
     if (lOperandValue == null) {
       myValue = null;
@@ -392,7 +392,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     return value;
   }
 
-  public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+  @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
     final PsiTypeElement castTypeElement = expression.getCastType();
     if(castTypeElement == null || expression.getOperand() == null) {
       myValue = null;
@@ -405,7 +405,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myValue = ConstantExpressionUtil.computeCastTo(operand, castType);
   }
 
-  public void visitConditionalExpression(PsiConditionalExpression expression) {
+  @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
     if (expression.getThenExpression() == null || expression.getElseExpression() == null) {
       myValue = null;
       return;
@@ -423,7 +423,7 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myValue = value;
   }
 
-  public void visitPrefixExpression(PsiPrefixExpression expression) {
+  @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
     if (expression.getOperand() == null) {
       myValue = null;
       return;
@@ -490,11 +490,11 @@ public class ConstantExpressionEvaluator extends PsiElementVisitor {
     myValue = value;
   }
 
-  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
     myValue = accept(expression.getExpression());
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     while (qualifierExpression != null) {
       if (!(qualifierExpression instanceof PsiReferenceExpression)) {

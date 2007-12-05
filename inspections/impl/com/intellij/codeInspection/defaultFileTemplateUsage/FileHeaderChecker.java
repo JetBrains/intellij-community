@@ -48,13 +48,13 @@ public class FileHeaderChecker {
       final int endOffset = matcher.end(1);
       final Ref<PsiDocComment> docComment = new Ref<PsiDocComment>();
       file.accept(new PsiRecursiveElementVisitor(){
-        public void visitElement(PsiElement element) {
+        @Override public void visitElement(PsiElement element) {
           if (docComment.get() != null) return;
           TextRange range = element.getTextRange();
           if (!range.contains(startOffset) && !range.contains(endOffset)) return;
           super.visitElement(element);
         }
-        public void visitDocComment(PsiDocComment comment) {
+        @Override public void visitDocComment(PsiDocComment comment) {
           docComment.set(comment);
         }
       });

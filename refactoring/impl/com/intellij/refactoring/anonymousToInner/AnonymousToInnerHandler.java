@@ -198,7 +198,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private void collectUsedVariables(final Map<PsiVariable, VariableInfo> variableInfoMap,
                                     PsiElement scope) {
     scope.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.getQualifierExpression() == null) {
           PsiElement refElement = expression.resolve();
           if (refElement instanceof PsiVariable && !(refElement instanceof PsiField)) {
@@ -223,10 +223,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       myAnonClass.accept(memberNeedsThis);
       class HasExplicitThis extends PsiRecursiveElementVisitor {
         boolean hasExplicitThis = false;
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 
-        public void visitThisExpression(PsiThisExpression expression) {
+        @Override public void visitThisExpression(PsiThisExpression expression) {
           hasExplicitThis = true;
         }
       }
@@ -510,7 +510,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     }
 
     class SupersConvertor extends PsiRecursiveElementVisitor {
-      public void visitThisExpression(PsiThisExpression expression) {
+      @Override public void visitThisExpression(PsiThisExpression expression) {
         try {
           final PsiThisExpression qualifiedThis =
                   (PsiThisExpression) factory.createExpressionFromText("A.this", null);
@@ -524,7 +524,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         }
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
     }
 
@@ -534,7 +534,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private void calculateTypeParametersToCreate () {
     myAnonClass.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         final PsiElement resolved = reference.resolve();
         if (resolved instanceof PsiTypeParameter) {

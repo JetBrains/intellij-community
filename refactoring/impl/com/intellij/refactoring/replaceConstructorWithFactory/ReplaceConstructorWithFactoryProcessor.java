@@ -106,11 +106,11 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
     //if (myConstructor != null && myConstructor.getParameterList().getParametersCount() == 0) {
     //  RefactoringUtil.visitImplicitConstructorUsages(getConstructorContainingClass(), new RefactoringUtil.ImplicitConstructorUsageVisitor() {
-    //    public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
+    //    @Override public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
     //      myNonNewConstructorUsages.add(constructor);
     //    }
     //
-    //    public void visitClassWithoutConstructors(PsiClass aClass) {
+    //    @Override public void visitClassWithoutConstructors(PsiClass aClass) {
     //      myNonNewConstructorUsages.add(aClass);
     //    }
     //  });

@@ -14,8 +14,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class SimplifyBooleanExpressionFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -121,7 +121,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     final IncorrectOperationException[] exception = new IncorrectOperationException[]{null};
     result[0].accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         // read in all children in advance since due to Igorek's exercises element replace involves its siblings invalidation
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
@@ -129,7 +129,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
         }
       }
 
-      public void visitExpression(PsiExpression expression) {
+      @Override public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -161,13 +161,13 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
     final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
     expression.accept(new PsiRecursiveElementVisitor() {
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         if (!canBeSimplified.get().booleanValue()) {
           super.visitElement(element);
         }
       }
 
-      public void visitExpression(PsiExpression expression) {
+      @Override public void visitExpression(PsiExpression expression) {
         super.visitExpression(expression);
         expressionVisitor.clear();
         expression.accept(expressionVisitor);
@@ -207,7 +207,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       return isCreateResult;
     }
 
-    public void visitBinaryExpression(PsiBinaryExpression expression) {
+    @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
       PsiExpression lOperand = expression.getLOperand();
       PsiExpression rOperand = expression.getROperand();
       PsiJavaToken operationSign = expression.getOperationSign();
@@ -255,7 +255,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       }
     }
 
-    public void visitConditionalExpression(PsiConditionalExpression expression) {
+    @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
       Boolean condition = getConstBoolean(expression.getCondition());
       if (condition == null) return;
       if (!markAndCheckCreateResult()) {
@@ -275,7 +275,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       return expression;
     }
 
-    public void visitPrefixExpression(PsiPrefixExpression expression) {
+    @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
       PsiExpression operand = expression.getOperand();
       Boolean constBoolean = getConstBoolean(operand);
       if (constBoolean == null) return;
@@ -290,7 +290,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
 
 
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
       PsiExpression subexpr = expression.getExpression();
       Boolean constBoolean = getConstBoolean(subexpr);
       if (constBoolean == null) return;
@@ -300,7 +300,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       resultExpression = constBoolean.booleanValue() ? trueExpression : falseExpression;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 

@@ -80,11 +80,11 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
 
     final ArrayList[] problemList = new ArrayList[]{null};
     where.accept(new PsiRecursiveElementVisitor() {
-      public void visitMethod(PsiMethod method) {}
+      @Override public void visitMethod(PsiMethod method) {}
 
-      public void visitClass(PsiClass aClass) {}
+      @Override public void visitClass(PsiClass aClass) {}
 
-      public void visitBinaryExpression(PsiBinaryExpression expression) {
+      @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
         super.visitBinaryExpression(expression);
         IElementType opSign = expression.getOperationSign().getTokenType();
         if (opSign == JavaTokenType.EQEQ || opSign == JavaTokenType.NE) {

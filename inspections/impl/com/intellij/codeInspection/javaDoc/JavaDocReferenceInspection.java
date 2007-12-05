@@ -76,11 +76,11 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
                                        final ArrayList<ProblemDescriptor> problems,
                                        final InspectionManager manager) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
       }
 
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         JavaResolveResult result = reference.advancedResolve(false);
         if (result.getElement() == null && !result.isPackagePrefixPackageReference()) {
@@ -88,7 +88,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         }
       }
 
-      public void visitDocTag(PsiDocTag tag) {
+      @Override public void visitDocTag(PsiDocTag tag) {
         super.visitDocTag(tag);
         final JavadocManager javadocManager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
         final JavadocTagInfo info = javadocManager.getTagInfo(tag.getName());
@@ -97,13 +97,13 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         }
       }
 
-      public void visitInlineDocTag(PsiInlineDocTag tag) {
+      @Override public void visitInlineDocTag(PsiInlineDocTag tag) {
         super.visitInlineDocTag(tag);
         final JavadocManager javadocManager = JavaPsiFacade.getInstance(tag.getProject()).getJavadocManager();
         visitRefInDocTag(tag, javadocManager, context, problems, manager);
       }
 
-      public void visitElement(PsiElement element) {
+      @Override public void visitElement(PsiElement element) {
         PsiElement[] children = element.getChildren();
         for (PsiElement child : children) {
           //do not visit method javadoc twice

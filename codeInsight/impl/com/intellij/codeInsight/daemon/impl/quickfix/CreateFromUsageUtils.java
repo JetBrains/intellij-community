@@ -393,7 +393,7 @@ public class CreateFromUsageUtils {
         return result;
       }
 
-      public void visitReferenceExpression(PsiReferenceExpression expr) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression) {
           if (expr.textMatches(expression)) {
             result.add(expr);
@@ -402,7 +402,7 @@ public class CreateFromUsageUtils {
         visitElement(expr);
       }
 
-      public void visitMethodCallExpression(PsiMethodCallExpression expr) {
+      @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
           if (methodExpression.textMatches(((PsiMethodCallExpression) expression).getMethodExpression())) {

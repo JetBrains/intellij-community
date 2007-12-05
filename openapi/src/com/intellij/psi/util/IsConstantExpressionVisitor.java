@@ -29,26 +29,26 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     return myIsConstant;
   }
 
-  public void visitExpression(PsiExpression expression) {
+  @Override public void visitExpression(PsiExpression expression) {
     myIsConstant = false;
   }
 
-  public void visitLiteralExpression(PsiLiteralExpression expression) {
+  @Override public void visitLiteralExpression(PsiLiteralExpression expression) {
     myIsConstant = !"null".equals(expression.getText());
   }
 
-  public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
+  @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     myIsConstant = true;
   }
 
-  public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+  @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
     PsiExpression expr = expression.getExpression();
     if (expr != null){
       expr.accept(this);
     }
   }
 
-  public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+  @Override public void visitTypeCastExpression(PsiTypeCastExpression expression) {
     PsiExpression operand = expression.getOperand();
     if (operand == null){
       myIsConstant = false;
@@ -67,7 +67,7 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     myIsConstant = false;
   }
 
-  public void visitPrefixExpression(PsiPrefixExpression expression) {
+  @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
     PsiExpression operand = expression.getOperand();
     if (operand == null){
       myIsConstant = false;
@@ -82,7 +82,7 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     myIsConstant = false;
   }
 
-  public void visitBinaryExpression(PsiBinaryExpression expression) {
+  @Override public void visitBinaryExpression(PsiBinaryExpression expression) {
     // check right operand first since it tends to be shorter
     PsiExpression rOperand = expression.getROperand();
     if (rOperand != null){
@@ -92,7 +92,7 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     }
   }
 
-  public void visitConditionalExpression(PsiConditionalExpression expression) {
+  @Override public void visitConditionalExpression(PsiConditionalExpression expression) {
     PsiExpression thenExpr = expression.getThenExpression();
     PsiExpression elseExpr = expression.getElseExpression();
     if (thenExpr == null || elseExpr == null) {
@@ -107,7 +107,7 @@ public class IsConstantExpressionVisitor extends PsiElementVisitor {
     elseExpr.accept(this);
   }
 
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
     PsiElement refElement = expression.resolve();
     if (!(refElement instanceof PsiVariable)) {
       myIsConstant = false;

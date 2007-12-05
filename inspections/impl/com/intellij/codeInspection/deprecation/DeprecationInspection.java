@@ -60,17 +60,17 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       myHolder = holder;
     }
 
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         JavaResolveResult result = reference.advancedResolve(true);
         PsiElement resolved = result.getElement();
         checkDeprecated(resolved, reference.getReferenceNameElement(), myHolder);
       }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
 
-    public void visitNewExpression(PsiNewExpression expression) {
+    @Override public void visitNewExpression(PsiNewExpression expression) {
       PsiType type = expression.getType();
       PsiExpressionList list = expression.getArgumentList();
       if (!(type instanceof PsiClassType)) return;
@@ -97,7 +97,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
       }
     }
 
-    public void visitMethod(PsiMethod method){
+    @Override public void visitMethod(PsiMethod method){
         MethodSignatureBackedByPsiMethod methodSignature = MethodSignatureBackedByPsiMethod.create(method, PsiSubstitutor.EMPTY);
         if (!method.isConstructor()) {
           List<MethodSignatureBackedByPsiMethod> superMethodSignatures = method.findSuperMethodSignaturesIncludingStatic(true);

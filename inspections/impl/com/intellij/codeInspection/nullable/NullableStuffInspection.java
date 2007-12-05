@@ -49,15 +49,15 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
 
-      public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(PsiMethod method) {
         if (PsiUtil.getLanguageLevel(method).compareTo(LanguageLevel.JDK_1_5) < 0) return;
         checkNullableStuffForMethod(method, holder);
       }
 
-      public void visitField(PsiField field) {
+      @Override public void visitField(PsiField field) {
         if (PsiUtil.getLanguageLevel(field).compareTo(LanguageLevel.JDK_1_5) < 0) return;
         Annotated annotated = check(field, holder, field.getType());
         if (annotated.isDeclaredNotNull || annotated.isDeclaredNullable) {
@@ -96,7 +96,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         }
       }
 
-      public void visitParameter(PsiParameter parameter) {
+      @Override public void visitParameter(PsiParameter parameter) {
         if (PsiUtil.getLanguageLevel(parameter).compareTo(LanguageLevel.JDK_1_5) < 0) return;
         check(parameter, holder, parameter.getType());
       }

@@ -266,14 +266,14 @@ public class RenameUtil {
       myCollidingNameVisitor = collidingNameVisitor;
     }
 
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitElement(expression);
     }
 
-    public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(PsiClass aClass) {
     }
 
-    public void visitVariable(PsiVariable variable) {
+    @Override public void visitVariable(PsiVariable variable) {
       if (myName.equals(variable.getName())) {
         myCollidingNameVisitor.visitCollidingElement(variable);
       }
@@ -394,7 +394,7 @@ public class RenameUtil {
 
     LOG.assertTrue(scopeElement != null);
     scopeElement.accept(new PsiRecursiveElementVisitor() {
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (!expression.isQualified()) {
           final PsiElement resolved = expression.resolve();
