@@ -117,9 +117,9 @@ public class MavenToIdeaConverter {
   }
 
   private void configureFacets(Module module, MavenProject mavenProject, Collection<String> profiles) {
-    for (FacetConverter converter : Extensions.getExtensions(FacetConverter.EXTENSION_POINT_NAME)) {
-      if (converter.isApplicable(mavenProject, profiles)) {
-        converter.convert(module, mavenProject, myProfiles, myMapping, myModuleModel);
+    for (FacetImporter importer : Extensions.getExtensions(FacetImporter.EXTENSION_POINT_NAME)) {
+      if (importer.isApplicable(mavenProject, profiles)) {
+        importer.process(module, mavenProject, myProfiles, myMapping, myModuleModel);
       }
     }
   }

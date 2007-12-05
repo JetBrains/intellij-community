@@ -263,7 +263,9 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
   }
 
   protected Module getModule(String name) {
-    return ModuleManager.getInstance(myProject).findModuleByName(name);
+    Module m = ModuleManager.getInstance(myProject).findModuleByName(name);
+    assertNotNull("Module " + name + " not found", m);
+    return m;
   }
 
   private ContentEntry getContentRoot(String moduleName) {
@@ -291,14 +293,26 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     projectPom = createPomFile(projectRoot, xml);
   }
 
+  protected void updateProjectPom(String xml) throws IOException {
+    setFileContent(projectPom, xml);
+  }
+
   protected void createModulePom(String relativePath, String xml) throws IOException {
     createPomFile(createProjectSubDir(relativePath), xml);
   }
 
+  protected void updateModulePom(String relativePath, String xml) throws IOException {
+    setFileContent(projectRoot.findFileByRelativePath(relativePath + "/pom.xml"), xml);
+  }
+
   private VirtualFile createPomFile(VirtualFile dir, String xml) throws IOException {
     VirtualFile f = dir.createChildData(null, "pom.xml");
-    f.setBinaryContent(createValidPom(xml).getBytes());
     poms.add(f);
+    return setFileContent(f, xml);
+  }
+
+  private VirtualFile setFileContent(VirtualFile f, String xml) throws IOException {
+    f.setBinaryContent(createValidPom(xml).getBytes());
     return f;
   }
 
