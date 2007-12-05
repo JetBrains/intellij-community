@@ -57,6 +57,17 @@ public class MatcherImpl {
   private int totalFilesToScan;
   private int scannedFilesCount;
 
+  public MatcherImpl(final Project project, final MatchOptions matchOptions) {
+    this.project = project;
+    matchContext = new MatchContext();
+    matchContext.setMatcher(visitor);
+    
+    if (matchOptions != null) {
+      matchContext.setOptions(matchOptions);
+      cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project,matchOptions));
+    }
+  }
+
   static class LastMatchData {
     CompiledPattern lastPattern;
     MatchOptions lastOptions;
@@ -65,9 +76,7 @@ public class MatcherImpl {
   private static SoftReference<LastMatchData> lastMatchData;
 
   protected MatcherImpl(Project project) {
-    this.project = project;
-    matchContext = new MatchContext();
-    matchContext.setMatcher(visitor);
+    this(project, null);
   }
 
   public static void validate(Project project, MatchOptions options) {
@@ -322,6 +331,13 @@ public class MatcherImpl {
   }
 
   private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
+    CompiledPattern savedPattern = null;
+
+    if (matchContext.getOptions() == options && matchContext.getPattern() != null &&
+        matchContext.getOptions().hashCode() == matchContext.getPattern().getOptionsHashStamp()) {
+      savedPattern = matchContext.getPattern();
+    }
+
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     matchContext.clear();
@@ -337,22 +353,30 @@ public class MatcherImpl {
     matchContext.setMatcher(visitor);
     visitor.setMatchContext(matchContext);
 
-    CompiledPattern compiledPattern = null;
+    CompiledPattern compiledPattern = savedPattern;
 
-    synchronized(getClass()) {
-      final LastMatchData data = lastMatchData != null ? lastMatchData.get():null;
-      if (data != null && options == data.lastOptions) {
-        compiledPattern = data.lastPattern;
+    if (compiledPattern == null) {
+
+      synchronized(getClass()) {
+        final LastMatchData data = lastMatchData != null ? lastMatchData.get():null;
+        if (data != null && options == data.lastOptions) {
+          compiledPattern = data.lastPattern;
+        }
+        lastMatchData = null;
       }
-      lastMatchData = null;
+
+      if (compiledPattern==null) {
+        compiledPattern =  PatternCompiler.compilePattern(project,options);
+      }
     }
 
-    if (compiledPattern==null) {
-      compiledPattern =  PatternCompiler.compilePattern(project,options);
-    }
-
-    matchContext.setPattern(compiledPattern);
+    cacheCompiledPattern(options, compiledPattern);
     return compiledPattern;
+  }
+
+  private void cacheCompiledPattern(final MatchOptions options, final CompiledPattern compiledPattern) {
+    matchContext.setPattern(compiledPattern);
+    compiledPattern.setOptionsHashStamp(options.hashCode());
   }
 
   /**
@@ -562,27 +586,44 @@ public class MatcherImpl {
     }
 
     PsiElement targetNode = compiledPattern.getTargetNode();
+    PsiElement elementToStartMatching = null;
+
+    if (targetNode == null) {
+      targetNode = compiledPattern.getNodes().current();
+      if (targetNode != null) {
+        compiledPattern.getNodes().advance();
+        assert !compiledPattern.getNodes().hasNext();
+        compiledPattern.getNodes().rewind();
+
+        while (element.getClass() != targetNode.getClass()) {
+          element = element.getParent();
+          if (element == null)  return null;
+        }
+
+        elementToStartMatching = element;
+      }
+    } else {
+      if (targetNode instanceof PsiIdentifier) {
+        targetNode = targetNode.getParent();
+        final PsiElement parent = targetNode.getParent();
+        if (parent instanceof PsiTypeElement) targetNode = parent;
+      }
+
+      while (element.getClass() == targetNode.getClass() ||
+             (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
+            ) {
+        Handler handler = compiledPattern.getHandler(targetNode);
+        handler.setPinnedElement(element);
+        elementToStartMatching = element;
+        element = element.getParent();
+        targetNode = targetNode.getParent();
+      }
+    }
+     
     assert targetNode != null : "Could not match down up when no target node";
-    if (targetNode instanceof PsiIdentifier) {
-      targetNode = targetNode.getParent();
-      final PsiElement parent = targetNode.getParent();
-      if (parent instanceof PsiTypeElement) targetNode = parent;
-    }
-    
-    PsiElement lastElement = null;
 
-    while (element.getClass() == targetNode.getClass() ||
-           (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
-          ) {
-      Handler handler = compiledPattern.getHandler(targetNode);
-      handler.setPinnedElement(element);
-      lastElement = element;
-      element = element.getParent();
-      targetNode = targetNode.getParent();
-    }
-
-    if (!(targetNode instanceof PsiBlockStatement) || !(targetNode.getParent() instanceof PsiFile)) return null;
-    match(lastElement);
+    //if (!(targetNode instanceof PsiBlockStatement) || !(targetNode.getParent() instanceof PsiFile)) return null;
+    match(elementToStartMatching);
     matchContext.getSink().matchingFinished();
     final int matchCount = sink.getMatches().size();
     assert matchCount <= 1;

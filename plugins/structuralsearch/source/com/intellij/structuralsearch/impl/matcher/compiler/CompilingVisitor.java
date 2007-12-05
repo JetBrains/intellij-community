@@ -33,9 +33,6 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
   private CompileContext context;
   private ArrayList<PsiElement> lexicalNodes = new ArrayList<PsiElement>();
 
-  private CompilingVisitor() {
-  }
-
   private void setHandler(PsiElement element, Handler handler) {
     Handler realHandler = context.pattern.getHandlerSimple(element);
 
@@ -393,7 +390,24 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
           }
           currentReference = (PsiReferenceExpression)qualifier;
         }
-        if (!hasNoNestedSubstitutionHandlers) createAndSetSubstitutionHandlerFromReference(reference, reference.getText());
+        if (!hasNoNestedSubstitutionHandlers) {
+          createAndSetSubstitutionHandlerFromReference(
+            reference,
+            resolve != null ? ((PsiClass)resolve).getQualifiedName():reference.getText()
+          );
+        }
+      } else if (referenceQualifier != null && reference.getParent() instanceof PsiExpressionStatement) {
+        //Handler qualifierHandler = context.pattern.getHandler(referenceQualifier);
+        //if (qualifierHandler instanceof SubstitutionHandler &&
+        //    !context.pattern.isRealTypedVar(reference)
+        //   ) {
+        //  createAndSetSubstitutionHandlerFromReference(reference, referencedName);
+        //
+        //  SubstitutionHandler substitutionHandler = (SubstitutionHandler)qualifierHandler;
+        //  RegExpPredicate expPredicate = Handler.getSimpleRegExpPredicate(substitutionHandler);
+        //  //if (expPredicate != null)
+        //  //  substitutionHandler.setPredicate(new ExprTypePredicate(expPredicate.getRegExp(), null, true, true, false));
+        //}
       }
     }
   }
@@ -725,17 +739,9 @@ class CompilingVisitor extends PsiRecursiveElementVisitor {
     return lexicalNodes;
   }
 
-  static CompilingVisitor getInstance() {
-    if (instance==null) instance = new CompilingVisitor();
-
-    return instance;
-  }
-
-  synchronized void compile(PsiElement element, CompileContext context) {
+  void compile(PsiElement element, CompileContext context) {
     codeBlockLevel = 0;
     this.context = context;
     element.accept(this);
   }
-
-  private static CompilingVisitor instance;
 }

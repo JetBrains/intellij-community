@@ -3,9 +3,11 @@ package com.intellij.structuralsearch;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
+import com.intellij.idea.Bombed;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Calendar;
 
 /**
  * @author Maxim.Mossienko
@@ -917,36 +919,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       4
     );
 
-    //final String s131 = "class a { void run() {} int b; class c {} }\n" +
-    //                    "public class a2 { public void run() {} private class c {} private int c; }\n" +
-    //                    "class a3 { private void run() {} protected class c {} }\n" +
-    //                    "new A() {}";
-    //final String s132 = "/** @--strictly */ class 'a { void run() {} }";
-    //final String s132_2 = "class 'a { /** @--strictly */ void run() {} }";
-    //final String s132_3 = "class 'a { /** @--strictly */ int 'c; }";
-    //final String s132_4 = "class 'a { /** @--strictly */ class 'c {} ; }";
-    //
-    //assertEquals(
-    //  "strictly matching",
-    //  findMatchesCount(s131,s132),
-    //  2
-    //);
-    //assertEquals(
-    //  "strictly matching",
-    //  findMatchesCount(s131,s132_2),
-    //  2
-    //);
-    //assertEquals(
-    //  "strictly matching",
-    //  findMatchesCount(s131,s132_3),
-    //  2
-    //);
-    //assertEquals(
-    //  "strictly matching",
-    //  findMatchesCount(s129,s132_4),
-    //  2
-    //);
-
     final String s133 = "class S {\n" +
                         "void cc() {\n" +
                         "        new Runnable() {\n" +
@@ -986,7 +958,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       1,
       findMatchesCount(s133,s134)
     );
-    //final String s133 = "class A extends java.util.List {}"
 
     final String s135 = "abstract class My {\n" +
                         "    abstract void f();\n" +
@@ -1052,17 +1023,20 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       findMatchesCount(s141,s142),
       1
     );
+  }
 
+  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
+  public void testParameterlessContructorSearch() {
     final String s143 = "class A { A() {} };\n" +
                         "class B { B(int a) {} };\n" +
                         "class C { C() {} C(int a) {} };\n" +
                         "class D {}\n" +
                         "class E {}";
-    final String s144 = "class 'a { 'd{0,0}:[ script( a == d ) ]('_b+ '_c+); }";
+    final String s144 = "class 'a { 'd{0,0}:[ script( \"a == d\" ) ]('_b+ '_c+); }";
     assertEquals(
       "parameterless contructor search",
-      3, //findMatchesCount(s143,s144), // TODO fix this!
-      3
+      3,
+      findMatchesCount(s143,s144)
     );
   }
 
@@ -2552,5 +2526,65 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     result = results.get(0);
     assertEquals("Type2", result.getMatchImage());
+  }
+
+  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
+  public void testContainsPredicate() {
+    String s1 = "{{\n" +
+                "  int a;\n" +
+                "  a = 1;\n" +
+                "}\n" +
+                "{\n" +
+                "  int b = 1;\n" +
+                "  b = 1;\n" +
+                "}\n" +
+                "{\n" +
+                "  int c = 2;\n" +
+                "  c = 2;\n" +
+                "}}";
+    String s2 = "{\n" +
+                "  '_a*:[contains( \"'type $a$ = $b$;\" )];\n" +
+                "}";
+
+    String s2_2 = "{\n" +
+                "  '_a*:[!contains( \"$type$ $a$ = $b$;\" )];\n" +
+                "}";
+
+    assertEquals(2, findMatchesCount(s1, s2));
+    assertEquals(1, findMatchesCount(s1, s2_2));
+  }
+
+  public void testWithinPredicate() {
+    String s1 = "if (true) {\n" +
+                "  int a = 1;\n" +
+                "}\n" +
+                "if (true) {\n" +
+                "  int b = 1;\n" +
+                "}\n" +
+                "while(true) {\n" +
+                "  int c = 2;\n" +
+                "}";
+    String s2 = "'_type 'a:[within( \"if ('_a) { '_st*; }\" )] = '_b;";
+    String s2_2 = "'_type 'a:[!within( \"if ('_a) { '_st*; }\" )] = '_b;";
+
+    assertEquals(2,findMatchesCount(s1, s2));
+    assertEquals(1,findMatchesCount(s1, s2_2));
+
+    String s3 = "class C {\n" +
+                "  void aaa() {\n" +
+                "        LOG.debug(true);\n" +
+                "        LOG.debug(true);\n" +
+                "        LOG.debug(true);\n" +
+                "        LOG.debug(true);\n" +
+                "        LOG.debug(true);\n" +
+                "        if (true) {\n" +
+                "            LOG.debug(true);\n" +
+                "        }\n" +
+                "        if (true) LOG.debug(true);\n" +
+                "    }" +
+                "}";
+    String s4 = "LOG.debug('_params*:[!within( \"if('_a) { 'st*; }\" )]);";
+
+    //assertEquals(5,findMatchesCount(s3, s4));
   }
 }

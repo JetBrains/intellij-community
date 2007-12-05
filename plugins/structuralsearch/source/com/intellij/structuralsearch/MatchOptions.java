@@ -264,8 +264,8 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
                                                                                                       null) {
       return false;
     }
-
-    return true;
+      
+    return myFileType == matchOptions.myFileType;
   }
 
   public int hashCode() {
@@ -279,6 +279,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
     // @TODO support scope
     result = 29 * result + (searchCriteria != null ? searchCriteria.hashCode() : 0);
     result = 29 * result + (variableConstraints != null ? variableConstraints.hashCode() : 0);
+    if (myFileType != null) result = 29 * result + myFileType.hashCode();
     return result;
   }
 

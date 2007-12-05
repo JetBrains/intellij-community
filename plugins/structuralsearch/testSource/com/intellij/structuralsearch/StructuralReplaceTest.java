@@ -1,11 +1,13 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.LocalSearchScope;
 
 import java.io.IOException;
+import java.util.Calendar;
 
 /**
  * @by Maxim.Mossienko
@@ -1473,31 +1475,32 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-//  public void testClassReplacement10() throws IOException {
-//    String s1 = TestUtils.loadFile("before2.java");
-//    String s2 = "class '_Class {\n" +
-//                "  '_remainingclass*\n" +
-//                "  '_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*, '_removeParmType:[regex( String )] '_removeParm){\n" +
-//                "    '_content*;\n" +
-//                "  }\n" +
-//                "}";
-//    String s3 = "class $Class$ {\n" +
-//                "  $remainingclass$\n" +
-//                "  $ReturnType$ $MethodName$($ParameterType$ $Parameter$){\n" +
-//                "    $content$;\n" +
-//                "  }\n" +
-//                "}";
-//    String expectedResult = TestUtils.loadFile("after2.java");
-//
-//    options.setToReformatAccordingToStyle(true);
-//    actualResult = replacer.testReplace(s1,s2,s3,options,true);
-//
-//    assertEquals(
-//      "Class replacement 10",
-//      expectedResult,
-//      actualResult
-//    );
-//  }
+  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
+  public void testClassReplacement10() throws IOException {
+    String s1 = TestUtils.loadFile("before2.java");
+    String s2 = "class '_Class {\n" +
+                "  '_ReturnType+ '_MethodName+('_ParameterType* '_Parameter*){\n" +
+                "    '_content*;\n" +
+                "  }\n" +
+                "  '_remainingclass*" +
+                "}";
+    String s3 = "class $Class$ {\n" +
+                "  $remainingclass$\n" +
+                "  @Override $ReturnType$ $MethodName$($ParameterType$ $Parameter$){\n" +
+                "    $content$;\n" +
+                "  }\n" +
+                "}";
+    String expectedResult = TestUtils.loadFile("after2.java");
+
+    options.setToReformatAccordingToStyle(true);
+    actualResult = replacer.testReplace(s1,s2,s3,options,true);
+
+    assertEquals(
+      "Class replacement 10",
+      expectedResult,
+      actualResult
+    );
+  }
 
   public void testCatchReplacement() throws Exception {
     String s1 = "try {\n" +

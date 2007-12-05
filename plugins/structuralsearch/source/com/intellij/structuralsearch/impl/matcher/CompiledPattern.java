@@ -22,6 +22,7 @@ public abstract class CompiledPattern {
   private NodeIterator nodes;
   private MatchingStrategy strategy;
   private PsiElement targetNode;
+  private int optionsHashStamp;
 
   // @todo support this property during matching (how many nodes should be advanced)
   // when match is not successfull (or successful partially)
@@ -36,6 +37,14 @@ public abstract class CompiledPattern {
 
   public PsiElement getTargetNode() {
     return targetNode;
+  }
+
+  public int getOptionsHashStamp() {
+    return optionsHashStamp;
+  }
+
+  public void setOptionsHashStamp(final int optionsHashStamp) {
+    this.optionsHashStamp = optionsHashStamp;
   }
 
   public static class JavaCompiledPattern extends CompiledPattern {

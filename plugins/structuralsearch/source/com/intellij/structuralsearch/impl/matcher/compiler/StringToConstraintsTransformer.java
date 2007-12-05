@@ -21,7 +21,7 @@ class StringToConstraintsTransformer {
   private static Pattern p = Pattern.compile(P_STR);
   @NonNls private static final String P2_STR = "(\\w+)";
   private static Pattern p2 = Pattern.compile(P2_STR);
-  @NonNls private static final String P3_STR = "(\\w+)\\(( ?[\\\"\\*<>\\.\\?\\:\\\\\\(\\)\\[\\]\\w\\|\\+]+ ?)\\)";
+  @NonNls private static final String P3_STR = "(\\w+)\\(( ?(?:[\\\"\\*<>\\.\\?\\:\\$\\\\\\(\\)\\[\\]\\w\\|\\+]+|(?:\\\"[^\\\"]*\\\")) ?)\\)";
   private static Pattern p3 = Pattern.compile(P3_STR);
   @NonNls private static final String REF = "ref";
   @NonNls private static final String READ = "read";
@@ -31,6 +31,8 @@ class StringToConstraintsTransformer {
   @NonNls private static final String EXPRTYPE = "exprtype";
   @NonNls private static final String FORMAL = "formal";
   @NonNls private static final String SCRIPT = "script";
+  @NonNls private static final String CONTAINS = "contains";
+  @NonNls private static final String WITHIN = "within";
 
   static void transformOldPattern(MatchOptions options) {
       final String pattern = options.getSearchPattern();
@@ -347,6 +349,18 @@ class StringToConstraintsTransformer {
                 String script = getSingleParameter(m, SSRBundle.message("script.should.be.delimited.with.spaces.error.message"));
 
                 constraint.setScriptCodeConstraint( script );
+                consumed = true;
+              } else if (option.equalsIgnoreCase(CONTAINS)) {
+                if (hasNot) constraint.setInvertContainsConstraint(true);
+                String script = getSingleParameter(m, SSRBundle.message("script.should.be.delimited.with.spaces.error.message"));
+
+                constraint.setContainsConstraint(script );
+                consumed = true;
+              } else if (option.equalsIgnoreCase(WITHIN)) {
+                if (hasNot) constraint.setInvertWithinConstraint(true);
+                String script = getSingleParameter(m, SSRBundle.message("script.should.be.delimited.with.spaces.error.message"));
+
+                constraint.setWithinConstraint(script);
                 consumed = true;
               }
             }

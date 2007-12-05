@@ -40,6 +40,10 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
   private boolean formalArgTypeWithinHierarchy;
 
   private String scriptCodeConstraint = "";
+  private String withinConstraint = "";
+  private String containsConstraint = "";
+  private boolean invertContainsConstraint;
+  private boolean invertWithinConstraint;
 
   @NonNls private static final String NAME = "name";
   @NonNls private static final String NAME_OF_REFEENCE_VAR = "nameOfReferenceVar";
@@ -58,6 +62,10 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
   @NonNls private static final String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
   @NonNls private static final String NEGATE_READ_CONDITION = "negateRead";
   @NonNls private static final String NEGATE_WRITE_CONDITION = "negateWrite";
+  @NonNls private static final String NEGATE_CONTAINS_CONDITION = "negateContains";
+  @NonNls private static final String NEGATE_WITHIN_CONDITION = "negateWithin";
+  @NonNls private static final String WITHIN_CONDITION = "within";
+  @NonNls private static final String CONTAINS_CONDITION = "contains";
   @NonNls private static final String READ = "readAccess";
   @NonNls private static final String WRITE = "writeAccess";
   @NonNls private static final String TARGET = "target";
@@ -287,6 +295,10 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     if (!nameOfReferenceVar.equals(matchVariableConstraint.nameOfReferenceVar)) return false;
     if (!regExp.equals(matchVariableConstraint.regExp)) return false;
     if (!scriptCodeConstraint.equals(matchVariableConstraint.scriptCodeConstraint)) return false;
+    if (!withinConstraint.equals(matchVariableConstraint.withinConstraint)) return false;
+    if (!containsConstraint.equals(matchVariableConstraint.containsConstraint)) return false;
+    if (invertWithinConstraint != matchVariableConstraint.invertWithinConstraint) return false;
+    if (invertContainsConstraint != matchVariableConstraint.invertContainsConstraint) return false;
 
     return true;
   }
@@ -317,6 +329,11 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     result = 29 * result + (invertFormalType ? 1 : 0);
     result = 29 * result + (formalArgTypeWithinHierarchy ? 1 : 0);
     result = 29 * result + scriptCodeConstraint.hashCode();
+    result = 29 * result + withinConstraint.hashCode();
+    result = 29 * result + containsConstraint.hashCode();
+    
+    if (invertContainsConstraint) result = 29 * result + 1;
+    if (invertWithinConstraint) result = 29 * result + 1;
     return result;
   }
 
@@ -476,6 +493,26 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
       catch (DataConversionException ex) {
       }
     }
+
+    attribute = element.getAttribute(NEGATE_WITHIN_CONDITION);
+    if (attribute != null) {
+      try {
+        invertWithinConstraint = attribute.getBooleanValue();
+      } catch (DataConversionException ex) {}
+    }
+
+    attribute = element.getAttribute(NEGATE_CONTAINS_CONDITION);
+    if (attribute != null) {
+      try {
+        invertContainsConstraint = attribute.getBooleanValue();
+      } catch (DataConversionException ex) {}
+    }
+
+    attribute = element.getAttribute(CONTAINS_CONDITION);
+    if(attribute != null) containsConstraint = attribute.getValue();
+
+    attribute = element.getAttribute(WITHIN_CONDITION);
+    if(attribute != null) withinConstraint = attribute.getValue();
   }
 
   public void writeExternal(Element element) {
@@ -504,6 +541,10 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     if (invertWriteAccess) element.setAttribute(NEGATE_WRITE_CONDITION,TRUE);
 
     if (wholeWordsOnly) element.setAttribute(WHOLE_WORDS_ONLY,TRUE);
+    if (invertContainsConstraint) element.setAttribute(NEGATE_CONTAINS_CONDITION,TRUE);
+    if (invertWithinConstraint) element.setAttribute(NEGATE_WITHIN_CONDITION,TRUE);
+    element.setAttribute(WITHIN_CONDITION, withinConstraint);
+    element.setAttribute(CONTAINS_CONDITION, containsConstraint);
   }
 
   public Object clone() {
@@ -512,5 +553,37 @@ public class MatchVariableConstraint implements JDOMExternalizable,Cloneable {
     } catch(CloneNotSupportedException ex) {
       return null;
     }
+  }
+
+  public String getWithinConstraint() {
+    return withinConstraint;
+  }
+
+  public void setWithinConstraint(final String withinConstraint) {
+    this.withinConstraint = withinConstraint;
+  }
+
+  public String getContainsConstraint() {
+    return containsConstraint;
+  }
+
+  public void setContainsConstraint(final String containsConstraint) {
+    this.containsConstraint = containsConstraint;
+  }
+
+  public boolean isInvertContainsConstraint() {
+    return invertContainsConstraint;
+  }
+
+  public void setInvertContainsConstraint(final boolean invertContainsConstraint) {
+    this.invertContainsConstraint = invertContainsConstraint;
+  }
+
+  public boolean isInvertWithinConstraint() {
+    return invertWithinConstraint;
+  }
+
+  public void setInvertWithinConstraint(final boolean invertWithinConstraint) {
+    this.invertWithinConstraint = invertWithinConstraint;
   }
 }

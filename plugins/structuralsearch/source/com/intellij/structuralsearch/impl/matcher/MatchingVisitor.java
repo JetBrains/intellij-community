@@ -985,12 +985,6 @@ public class MatchingVisitor extends PsiElementVisitor {
       el1.accept(this);
     } catch(ClassCastException ex) {
       result = false;
-    } catch(RuntimeException ex) {
-      if(lastPatternElement==null) {
-        lastPatternElement = el1;
-        lastMatchedElement = el2;
-      }
-      throw ex;
     } finally {
       element = prevElement;
     }
@@ -1052,17 +1046,6 @@ public class MatchingVisitor extends PsiElementVisitor {
     return matchSequentially( new FilteringNodeIterator(el1), new FilteringNodeIterator(el2) );
   }
 
-  private PsiElement lastPatternElement;
-  private PsiElement lastMatchedElement;
-
-  String getLastPatternElementText() {
-    return (lastPatternElement!=null)?lastPatternElement.getText():null;
-  }
-
-  String getLastMatchedElementText() {
-    return (lastMatchedElement!=null)?lastMatchedElement.getText():null;
-  }
-
   /**
    * Descents the tree in depth finding matches
    * @param elements the element for which the sons are looked for match
@@ -1076,6 +1059,7 @@ public class MatchingVisitor extends PsiElementVisitor {
     List<PsiElement> matchedNodes = null;
     PsiElement patternElement;
     final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult():null;
+    final PsiElement saveCurrentContextNode = matchContext.getCurrentContextNode();
     matchContext.setResult(null);
 
     Loop:
@@ -1085,6 +1069,8 @@ public class MatchingVisitor extends PsiElementVisitor {
       patternElement = patternNodes.current();
 
       final Handler handler = matchContext.getPattern().getHandler(patternElement);
+      matchContext.setCurrentContextNode(element);
+
       if (!handler.match(patternElement,element,matchContext) &&
           !allowsAbsenceOfMatch(patternElement)) {
         if (matchContext.hasResult())
@@ -1150,7 +1136,9 @@ public class MatchingVisitor extends PsiElementVisitor {
         );
       }
     }
+
     matchContext.setResult(saveResult);
+    matchContext.setCurrentContextNode(saveCurrentContextNode);
   }
 
   private void dispathMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {

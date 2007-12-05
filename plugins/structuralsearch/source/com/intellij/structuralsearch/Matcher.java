@@ -16,6 +16,10 @@ public class Matcher extends MatcherImpl {
     super(project);
   }
 
+  public Matcher(final Project project, final MatchOptions matchOptions) {
+    super(project, matchOptions);
+  }
+
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @throws MalformedPatternException

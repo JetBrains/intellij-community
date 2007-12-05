@@ -17,6 +17,15 @@ public class MatchContext {
   private CompiledPattern pattern;
   private MatchOptions options;
   private MatchingVisitor matcher;
+  private PsiElement currentContextNode;
+
+  public void setCurrentContextNode(final PsiElement psiElement) {
+    currentContextNode = psiElement;
+  }
+
+  public PsiElement getCurrentContextNode() {
+    return currentContextNode;
+  }
 
   public interface UnmatchedElementsListener {
     void matchedElements(List<PsiElement> elementList);

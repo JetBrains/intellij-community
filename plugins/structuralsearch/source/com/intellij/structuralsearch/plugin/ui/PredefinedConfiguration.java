@@ -86,6 +86,7 @@ public class PredefinedConfiguration extends Configuration {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.trys"),"try {\n  '_TryStatement+;\n} catch('_ExceptionType '_ExceptionDcl) {\n  '_CatchStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.ifs"),"if ('_Condition) {\n  '_ThenStatement*;\n} else {\n  '_ElseStatement*;\n}",OPERATOR_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.switches"),"switch('_Condition) {\n  '_Statement*;\n}",OPERATOR_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"),"LOG.debug('_params*:[!within( \"if('_a) { '_st*; }\" )]);",OPERATOR_TYPE),
 
       // Class based
       createSearchTemplateInfo(

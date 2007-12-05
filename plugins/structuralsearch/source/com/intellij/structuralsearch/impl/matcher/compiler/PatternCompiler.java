@@ -17,7 +17,6 @@ import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
-import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
@@ -36,8 +35,7 @@ import java.util.Set;
  * Compiles the handlers for usability
  */
 public class PatternCompiler {
-  private static StringBuffer buf = new StringBuffer();
-  private static CompileContext context = new CompileContext();
+  private static CompileContext lastTestingContext;
 
   public static void transformOldPattern(MatchOptions options) {
     StringToConstraintsTransformer.transformOldPattern(options);
@@ -70,10 +68,13 @@ public class PatternCompiler {
   }
 
   public static String getLastFindPlan() {
-    return ((TestModeOptimizingSearchHelper)context.searchHelper).getSearchPlan();
+    return ((TestModeOptimizingSearchHelper)lastTestingContext.searchHelper).getSearchPlan();
   }
 
   private static CompiledPattern compilePatternImpl(Project project,MatchOptions options) {
+    final StringBuffer buf = new StringBuffer();
+    final CompileContext context = new CompileContext();
+    if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
     CompiledPattern result = options.getFileType() == StdFileTypes.JAVA ?
                              new CompiledPattern.JavaCompiledPattern() :
@@ -196,7 +197,23 @@ public class PatternCompiler {
         }
 
         if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 0) {
-          predicate = compileScript(name, constraint.getScriptCodeConstraint());
+          predicate = new ScriptPredicate(name, constraint.getScriptCodeConstraint());
+          addPredicate(handler,predicate);
+        }
+
+        if (constraint.getContainsConstraint() != null && constraint.getContainsConstraint().length() > 0) {
+          predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
+          if (constraint.isInvertContainsConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler,predicate);
+        }
+
+        if (constraint.getWithinConstraint() != null && constraint.getWithinConstraint().length() > 0) {
+          predicate = new WithinPredicate(name, constraint.getWithinConstraint(), project);
+          if (constraint.isInvertWithinConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
           addPredicate(handler,predicate);
         }
 
@@ -218,7 +235,7 @@ public class PatternCompiler {
 
       NodeFilter filter = LexicalNodesFilter.getInstance();
 
-      CompilingVisitor compilingVisitor = CompilingVisitor.getInstance();
+      CompilingVisitor compilingVisitor = new CompilingVisitor();
       compilingVisitor.compile(patternNode,context);
       List<PsiElement> elements = new LinkedList<PsiElement>();
 
@@ -264,14 +281,6 @@ public class PatternCompiler {
     }
 
     return result;
-  }
-
-  private static Handler compileScript(String name, String scriptCodeConstraint) {
-    return new Handler() {
-      public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-        return false;
-      }
-    };
   }
 
   static void addPredicate(SubstitutionHandler handler, Handler predicate) {
