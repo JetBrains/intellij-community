@@ -184,6 +184,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
             return ((GlobalInspectionToolWrapper)inspectionProfilePair.first).getTool() == tool;
           }
         }
+        return false;
       }
     }
     return true;
@@ -585,12 +586,10 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       final Set<Pair<InspectionTool, InspectionProfile>> tools = myTools.get(tool.getShortName());
       for (Pair<InspectionTool, InspectionProfile> inspectionProfilePair : tools) {
         if (Comparing.strEqual(inspectionProfilePair.second.getName(), inspectionProfile.getName())) {
-          if (inspectionProfilePair.first != tool) {
-            return false;
-          }
-          break;
+          return inspectionProfilePair.first == tool;
         }
       }
+      return false;
     }
     return true;
   }
