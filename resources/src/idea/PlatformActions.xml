@@ -1,0 +1,344 @@
+<component>
+  <actions>
+    <action id="CaptureMemorySnapShot" class="com.intellij.util.CaptureMemorySnapshotAction" icon="/actions/profileMemory.png"/>
+    <action id="CaptureCPUUsageData" class="com.intellij.util.CaptureCPUUsageDataAction" icon="/actions/profuleCPU.png"/>
+    <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
+    <action id="ToggleReadOnlyAttribute" class="com.intellij.ide.actions.ToggleReadOnlyAttributeAction"/>
+    <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
+    <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
+    <action id="CloseWindow" class="com.intellij.ide.actions.CloseWindowAction"/>
+
+    <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
+
+    <group id="EditorActions">
+      <action id="EditorPageUp" class="com.intellij.openapi.editor.actions.PageUpAction"/>
+      <action id="EditorPageDown" class="com.intellij.openapi.editor.actions.PageDownAction"/>
+      <action id="EditorPageUpWithSelection" class="com.intellij.openapi.editor.actions.PageUpWithSelectionAction"/>
+      <action id="EditorPageDownWithSelection" class="com.intellij.openapi.editor.actions.PageDownWithSelectionAction"/>
+      <action id="EditorCopy" class="com.intellij.openapi.editor.actions.CopyAction"/>
+      <action id="EditorCut" class="com.intellij.openapi.editor.actions.CutAction"/>
+      <action id="EditorPaste" class="com.intellij.openapi.editor.actions.PasteAction"/>
+      <action id="EditorPasteSimple" class="com.intellij.openapi.editor.actions.SimplePasteAction"/>
+      <action id="EditorPasteFromX11" class="com.intellij.openapi.editor.actions.PasteFromX11Action"/>
+      <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction"/>
+      <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
+      <action id="EditorMoveToPageTop" class="com.intellij.openapi.editor.actions.PageTopAction"/>
+      <action id="EditorMoveToPageBottom" class="com.intellij.openapi.editor.actions.PageBottomAction"/>
+      <action id="EditorMoveToPageTopWithSelection" class="com.intellij.openapi.editor.actions.PageTopWithSelectionAction"/>
+      <action id="EditorMoveToPageBottomWithSelection" class="com.intellij.openapi.editor.actions.PageBottomWithSelectionAction"/>
+      <action id="EditorEnter" class="com.intellij.openapi.editor.actions.EnterAction"/>
+      <action id="EditorEscape" class="com.intellij.openapi.editor.actions.EscapeAction"/>
+      <action id="EditorUp" class="com.intellij.openapi.editor.actions.MoveCaretUpAction"/>
+      <action id="EditorDown" class="com.intellij.openapi.editor.actions.MoveCaretDownAction"/>
+      <action id="EditorLeft" class="com.intellij.openapi.editor.actions.MoveCaretLeftAction"/>
+      <action id="EditorRight" class="com.intellij.openapi.editor.actions.MoveCaretRightAction"/>
+      <action id="EditorUpWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretUpWithSelectionAction"/>
+      <action id="EditorDownWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretDownWithSelectionAction"/>
+      <action id="EditorLeftWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretLeftWithSelectionAction"/>
+      <action id="EditorRightWithSelection" class="com.intellij.openapi.editor.actions.MoveCaretRightWithSelectionAction"/>
+      <action id="EditorIndentSelection" class="com.intellij.openapi.editor.actions.IndentSelectionAction"/>
+      <action id="EditorUnindentSelection" class="com.intellij.openapi.editor.actions.UnindentSelectionAction"/>
+      <action id="EditorTab" class="com.intellij.openapi.editor.actions.TabAction"/>
+      <action id="EditorScrollUp" class="com.intellij.openapi.editor.actions.ScrollUpAction"/>
+      <action id="EditorScrollDown" class="com.intellij.openapi.editor.actions.ScrollDownAction"/>
+      <action id="EditorMoveUpAndScroll" class="com.intellij.openapi.editor.actions.MoveUpAndScrollAction"/>
+      <action id="EditorMoveDownAndScroll" class="com.intellij.openapi.editor.actions.MoveDownAndScrollAction"/>
+      <action id="EditorMoveUpAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction"/>
+      <action id="EditorMoveDownAndScrollWithSelection" class="com.intellij.openapi.editor.actions.MoveDownWithSelectionAndScrollAction"/>
+      <action id="EditorLineStart" class="com.intellij.openapi.editor.actions.LineStartAction"/>
+      <action id="EditorLineEnd" class="com.intellij.openapi.editor.actions.LineEndAction"/>
+      <action id="EditorCutLineEnd" class="com.intellij.openapi.editor.actions.CutLineEndAction"/>
+      <action id="EditorTextStart" class="com.intellij.openapi.editor.actions.TextStartAction"/>
+      <action id="EditorTextEnd" class="com.intellij.openapi.editor.actions.TextEndAction"/>
+      <action id="EditorLineStartWithSelection" class="com.intellij.openapi.editor.actions.LineStartWithSelectionAction"/>
+      <action id="EditorLineEndWithSelection" class="com.intellij.openapi.editor.actions.LineEndWithSelectionAction"/>
+      <action id="EditorTextStartWithSelection" class="com.intellij.openapi.editor.actions.TextStartWithSelectionAction"/>
+      <action id="EditorTextEndWithSelection" class="com.intellij.openapi.editor.actions.TextEndWithSelectionAction"/>
+      <action id="EditorNextWord" class="com.intellij.openapi.editor.actions.NextWordAction"/>
+      <action id="EditorPreviousWord" class="com.intellij.openapi.editor.actions.PreviousWordAction"/>
+      <action id="EditorNextWordWithSelection" class="com.intellij.openapi.editor.actions.NextWordWithSelectionAction"/>
+      <action id="EditorPreviousWordWithSelection" class="com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction"/>
+      <action id="EditorDeleteToWordStart" class="com.intellij.openapi.editor.actions.DeleteToWordStartAction"/>
+      <action id="EditorDeleteToWordEnd" class="com.intellij.openapi.editor.actions.DeleteToWordEndAction"/>
+      <action id="EditorDeleteLine" class="com.intellij.openapi.editor.actions.DeleteLineAtCaretAction"/>
+      <action id="EditorDuplicate" class="com.intellij.openapi.editor.actions.DuplicateAction"/>
+      <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
+      <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
+      <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
+      <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
+      <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
+      <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
+      <action id="EditorJoinLines" class="com.intellij.openapi.editor.actions.JoinLinesAction"/>
+      <action id="EditorSelectLine" class="com.intellij.openapi.editor.actions.SelectLineAction"/>
+      <action id="EditorSplitLine" class="com.intellij.openapi.editor.actions.SplitLineAction"/>
+      <action id="EditorStartNewLine" class="com.intellij.openapi.editor.actions.StartNewLineAction"/>
+    </group>
+
+    <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="/actions/expandall.png"/>
+    <action id="CollapseAll" class="com.intellij.ide.actions.CollapseAllAction" icon="/actions/collapseall.png"/>
+    <action id="ExportToTextFile" class="com.intellij.ide.actions.ExportToTextFileAction" icon="/actions/export.png"/>
+    <action id="ExpandTreeNode" class="com.intellij.ide.actions.tree.ExpandTreeNodeAction"/>
+    <action id="CollapseTreeNode" class="com.intellij.ide.actions.tree.CollapseTreeNodeAction"/>
+    <action id="FullyExpandTreeNode" class="com.intellij.ide.actions.tree.FullyExpandTreeNodeAction"/>
+
+    <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="/actions/moveDown.png"/>
+    <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="/actions/moveUp.png"/>
+
+    <action id="Refresh" class="com.intellij.ide.actions.RefreshAction"/>
+
+    <action id="CompareTwoFiles" class="com.intellij.openapi.diff.actions.CompareFiles"/>
+    <action id="CompareFileWithEditor" class="com.intellij.openapi.diff.actions.CompareFileWithEditor"/>
+
+    <group id="MainMenu">
+      <group id="FileMenu" popup="true">
+        <group id="FileOpenGroup">
+          <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" text="New Dummy Project"/>
+          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="/actions/menu-open.png"/>
+        </group>
+        <separator/>
+        <group id="FileSettingsGroup">
+          <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction" icon="/general/ideOptions.png"/>
+        </group>
+        <separator/>
+        <group id="FileSaveGroup">
+          <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="/actions/menu-saveall.png"/>
+        </group>
+        <separator/>
+        <group id="SynchronizeGroup">
+          <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="/actions/sync.png"/>
+        </group>
+        <separator/>
+        <action id="Exit" class="com.intellij.ide.actions.ExitAction"/>
+      </group>
+
+      <!-- Edit -->
+      <group id="EditMenu" popup="true">
+        <action id="$Undo" class="com.intellij.ide.actions.UndoAction" icon="/actions/undo.png"/>
+        <action id="$Redo" class="com.intellij.ide.actions.RedoAction" icon="/actions/redo.png"/>
+        <separator/>
+        <group id="CutCopyPasteGroup">
+          <action id="$Cut" class="com.intellij.ide.actions.CutAction" icon="/actions/menu-cut.png"/>
+          <action id="$Copy" class="com.intellij.ide.actions.CopyAction" icon="/actions/menu-copy.png"/>
+          <action id="CopyPaths" class="com.intellij.ide.actions.CopyPathsAction"/>
+          <action id="$Paste" class="com.intellij.ide.actions.PasteAction" icon="/actions/menu-paste.png"/>
+          <action id="PasteMultiple" class="com.intellij.openapi.editor.actions.MultiplePasteAction"/>
+          <reference ref="EditorPasteSimple"/>
+          <reference ref="EditorToggleColumnMode"/>
+        </group>
+        <separator/>
+        <group id="EditSelectGroup">
+          <action id="$SelectAll" class="com.intellij.ide.actions.SelectAllAction"/>
+        </group>
+        <separator/>
+        <group id="EditCreateDeleteGroup">
+          <action id="$Delete" class="com.intellij.ide.actions.DeleteAction"/>
+        </group>
+        <separator/>
+        <group id="EditSmartGroup">
+          <reference ref="EditorJoinLines"/>
+          <reference ref="EditorDuplicate"/>
+          <reference ref="EditorIndentSelection"/>
+          <reference ref="EditorUnindentSelection"/>
+          <reference ref="EditorToggleCase"/>
+        </group>
+      </group>
+
+      <!-- View -->
+      <group id="ViewMenu" popup="true">
+        <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
+        <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+        <reference ref="EditorToggleShowWhitespaces"/>
+        <reference ref="EditorToggleShowLineNumbers"/>
+        <separator/>
+        <group id="ViewModeActions">
+          <action id="ToggleFullScreenMode" class="com.intellij.ide.actions.ToggleFullScreenModeAction"/>
+        </group>
+        <separator/>
+        <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction"/>
+        <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
+        <separator/>
+        <group id="ViewRecentActions">
+          <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
+        </group>
+      </group>
+
+      <!-- Go to -->
+      <group id="GoToMenu" popup="true">
+        <group id="GoToTarget">
+          <action id="GotoLine" class="com.intellij.ide.actions.GotoLineAction"/>
+        </group>
+        <separator/>
+        <action id="Back" class="com.intellij.ide.actions.BackAction" icon="/actions/back.png"/>
+        <action id="Forward" class="com.intellij.ide.actions.ForwardAction" icon="/actions/forward.png"/>
+        <action id="JumpToLastChange" class="com.intellij.ide.actions.JumpToLastEditAction"/>
+        <separator/>
+        <action id="PreviousOccurence" class="com.intellij.ide.actions.PreviousOccurenceAction" icon="/actions/previousOccurence.png"/>
+        <action id="NextOccurence" class="com.intellij.ide.actions.NextOccurenceAction" icon="/actions/nextOccurence.png"/>
+        <separator/>
+      </group>
+
+      <!-- Tools -->
+      <group id="ToolsMenu" configurable="true" popup="true">
+        <group id="Macros" popup="false">
+          <group id="StanardMacroActions">
+            <action id="PlaybackLastMacro" class="com.intellij.ide.actionMacro.actions.PlaybackLastMacroAction"/>
+            <action id="StartStopMacroRecording" class="com.intellij.ide.actionMacro.actions.StartStopMacroRecordingAction"/>
+            <action id="EditMacros" class="com.intellij.ide.actionMacro.actions.EditMacrosAction"/>
+          </group>
+          <separator/>
+          <group id="PlaySavedMacroActions" class="com.intellij.ide.actionMacro.actions.MacrosGroup"/>
+        </group>
+      </group>
+
+      <group id="WindowMenu" popup="true">
+        <group id="ToolWindowsGroup" class="com.intellij.ide.actions.ToolWindowsGroup" popup="true"/>
+        <action id="ShowProcessWindow" class="com.intellij.openapi.wm.impl.status.ShowProcessWindowAction"/>
+        <separator/>
+        <action id="StoreDefaultLayout" class="com.intellij.ide.actions.StoreDefaultLayoutAction"/>
+        <action id="RestoreDefaultLayout" class="com.intellij.ide.actions.RestoreDefaultLayoutAction"/>
+        <separator/>
+        <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
+        <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
+        <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
+        <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>
+        <separator/>
+        <action id="TogglePinnedMode" class="com.intellij.ide.actions.TogglePinnedModeAction"/>
+        <action id="ToggleDockMode" class="com.intellij.ide.actions.ToggleDockModeAction"/>
+        <action id="ToggleFloatingMode" class="com.intellij.ide.actions.ToggleFloatingModeAction"/>
+        <separator/>
+        <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
+        <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
+        <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
+        <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
+        <separator/>
+        <group id="CloseEditorsGroup">
+          <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
+          <action id="CloseAllEditors" class="com.intellij.ide.actions.CloseAllEditorsAction"/>
+          <action id="CloseAllEditorsButActive" class="com.intellij.ide.actions.CloseAllEditorsButActiveAction"/>
+        </group>
+        <separator/>
+        <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="/actions/splitVertically.png"/>
+        <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="/actions/splitHorizontally.png"/>
+        <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.ChangeSplitterOrientationAction"/>
+        <action id="Unsplit" class="com.intellij.ide.actions.UnsplitAction"/>
+        <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
+        <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
+        <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
+      </group>
+
+      <!-- Help -->
+      <group id="HelpMenu" popup="true">
+        <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="/actions/menu-help.png"/>
+        <action id="ShowTips" class="com.intellij.ide.actions.ShowTipsAction"/>
+        <action id="ProductivityGude" class="com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsAction"/>
+        <separator/>
+        <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
+        <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
+        <separator/>
+        <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
+        <action id="Help.KeymapReference" class="com.intellij.ide.actions.RefCardAction"
+                icon="/general/defaultKeymap.png"/>
+        <separator/>
+        <action id="Register" class="com.intellij.ide.actions.RegisterAction"/>
+        <action id="ObtainPermanentTicket" class="com.intellij.ide.actions.ObtainPermanentTicketAction"/>
+        <action id="ReleasePermanentTicket" class="com.intellij.ide.actions.ReleasePermanentTicketAction"/>
+        <action id="About" class="com.intellij.ide.actions.AboutAction"/>
+      </group>
+
+      <group id="OtherMenu" class="com.intellij.ide.actions.OtherGroup"/>
+    </group>
+
+    <group id="MainToolBar" configurable="true">
+      <reference ref="OpenFile"/>
+      <reference ref="SaveAll"/>
+      <reference ref="Synchronize"/>
+      <separator/>
+      <reference ref="$Undo"/>
+      <reference ref="$Redo"/>
+      <separator/>
+      <reference ref="$Cut"/>
+      <reference ref="$Copy"/>
+      <reference ref="$Paste"/>
+      <separator/>
+      <reference ref="Back"/>
+      <reference ref="Forward"/>
+      <separator/>
+      <reference ref="ShowSettings"/>
+      <separator/>
+      <reference ref="HelpTopics"/>
+      <separator/>
+      <reference ref="CaptureMemorySnapShot"/>
+      <reference ref="CaptureCPUUsageData"/>
+    </group>
+
+    <group id="EditorPopupMenu" configurable="true">
+      <reference ref="CutCopyPasteGroup"/>
+      <separator/>
+      <reference ref="CloseEditor"/>
+      <separator/>
+      <action id="CompareClipboardWithSelection" class="com.intellij.openapi.diff.actions.CompareClipboardWithSelection"/>
+    </group>
+
+    <group id="EditorTabPopupMenu">
+      <reference ref="CloseEditorsGroup"/>
+      <separator/>
+      <reference ref="SplitVertically"/>
+      <reference ref="SplitHorizontally"/>
+      <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
+      <reference ref="ChangeSplitOrientation"/>
+      <reference ref="PinActiveTab"/>
+      <separator/>
+      <reference ref="NextTab"/>
+      <reference ref="PreviousTab"/>
+      <separator/>
+      <reference ref="Unsplit"/>
+      <reference ref="UnsplitAll"/>
+    </group>
+
+    <group id="WelcomeScreen.QuickStart">
+    </group>
+
+    <group id="WelcomeScreen.Documentation">
+    </group>
+
+    <group id="FileChooser">
+      <action id="FileChooser.TogglePathShowing" class="com.intellij.openapi.fileChooser.actions.TooglePathShowingAction"/>
+    </group>
+
+    <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"
+      use-shortcut-of="NextSplitter"/>
+
+    <group id="EditorGutterPopupMenu">
+      <reference ref="EditorToggleShowLineNumbers"/>
+    </group>
+
+    <group id="FileChooserToolbar">
+      <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
+        icon="/nodes/homeFolder.png"/>
+      <action id="FileChooser.GotoProject" class="com.intellij.openapi.fileChooser.actions.GotoProjectDirectory"
+        icon="/nodes/ideaProject.png"/>
+      <separator/>
+      <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
+        icon="/actions/new.png"/>
+      <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
+        icon="/actions/newFolder.png"/>
+      <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
+        icon="/actions/delete.png"/>
+      <separator/>
+      <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
+        icon="/actions/sync.png"/>
+      <separator/>
+      <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
+        icon="/actions/showHiddens.png"/>
+    </group>
+
+    <group id="DiffPanel.Toolbar">
+      <reference ref="$Copy"/>
+      <reference ref="PreviousDiff"/>
+      <reference ref="NextDiff"/>
+      <separator/>
+      <action id="Diff.IgnoreWhitespace" class="com.intellij.openapi.diff.actions.IgnoreWhiteSpacesAction" text=""/>
+    </group>
+  </actions>
+</component>
+

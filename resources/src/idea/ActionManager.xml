@@ -14,8 +14,8 @@
     </group>
   </actions>
 
-  <xi:include href="PlatformActionManager.xml" xpointer="xpointer(/component/*)"/>
-  <xi:include href="VcsActionManager.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="PlatformActions.xml" xpointer="xpointer(/component/*)"/>
+  <xi:include href="VcsActions.xml" xpointer="xpointer(/component/*)"/>
 
   <actions>
 
