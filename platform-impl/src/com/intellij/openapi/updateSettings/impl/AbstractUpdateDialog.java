@@ -53,10 +53,12 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     if (myEnableLink) {
       updateLinkPane.addHyperlinkListener(new HyperlinkListener() {
         public void hyperlinkUpdate(final HyperlinkEvent e) {
-          UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
-          updatesSettings.setCheckNowEnabled(false);
-          ShowSettingsUtil.getInstance().editConfigurable(panel, updatesSettings);
-          updatesSettings.setCheckNowEnabled(true);
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            UpdateSettingsConfigurable updatesSettings = UpdateSettingsConfigurable.getInstance();
+            updatesSettings.setCheckNowEnabled(false);
+            ShowSettingsUtil.getInstance().editConfigurable(panel, updatesSettings);
+            updatesSettings.setCheckNowEnabled(true);
+          }
         }
       });
     }
