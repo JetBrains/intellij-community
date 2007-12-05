@@ -27,6 +27,7 @@
   <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>
