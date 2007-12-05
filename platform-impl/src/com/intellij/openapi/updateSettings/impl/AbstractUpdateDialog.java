@@ -30,7 +30,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     setCancelButtonText(myUploadedPlugins != null ? IdeBundle.message("update.plugins.update.later.action") : CommonBundle.getCloseButtonText());
   }
 
-  public void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, JEditorPane updateLinkPane) {
+  protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, JEditorPane updateLinkPane) {
     pluginsPanel.setVisible(myUploadedPlugins != null);
     if (myUploadedPlugins != null) {
       final DetectedPluginsPanel foundPluginsPanel = new DetectedPluginsPanel();
@@ -62,10 +62,12 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     }
   }
 
-  protected String getOkButtonText(String defaultOkText) {
+  private String getOkButtonText(String defaultOkText) {
     boolean found = false;
-    for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
-      if (!UpdateChecker.getDisabledToUpdatePlugins().contains(uploadedPlugin.getPluginId())) found = true;
+    if (myUploadedPlugins != null) {
+      for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
+        if (!UpdateChecker.getDisabledToUpdatePlugins().contains(uploadedPlugin.getPluginId())) found = true;
+      }
     }
     return found ? IdeBundle.message("update.plugins.shutdown.action") : defaultOkText;
   }
