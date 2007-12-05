@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -193,7 +192,7 @@ public class RefactoringHierarchyUtil {
   }
 
   public static PsiClass[] findImplementingClasses(PsiClass anInterface) {
-    List<PsiClass> result = new ArrayList<PsiClass>();
+    Set<PsiClass> result = new HashSet<PsiClass>();
     _findImplementingClasses(anInterface, new HashSet<PsiClass>(), result);
     boolean classesRemoved = true;
     while(classesRemoved) {
@@ -213,11 +212,9 @@ public class RefactoringHierarchyUtil {
     return result.toArray(new PsiClass[result.size()]);
   }
 
-  private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final List<PsiClass> result) {
+  private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {
     LOG.assertTrue(anInterface.isInterface());
-    PsiManager manager = anInterface.getManager();
     visited.add(anInterface);
-    PsiSearchHelper searchHelper = manager.getSearchHelper();
     ClassInheritorsSearch.search(anInterface, anInterface.getUseScope(), false).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass aClass) {
         if (!aClass.isInterface()) {
