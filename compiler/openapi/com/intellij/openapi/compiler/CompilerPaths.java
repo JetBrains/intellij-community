@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -34,6 +35,7 @@ import java.io.File;
  */
 public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
+  private static volatile String ourSystemPath;
   /**
    * Returns a directory
    * @param project
@@ -78,7 +80,8 @@ public class CompilerPaths {
     projectDirName = project.getName() + "." + project.getLocationHash();
 
     //noinspection HardCodedStringLiteral
-    final File compilerSystemDir = new File(PathManager.getSystemPath(), "/compiler/" + projectDirName);
+    final String systemPath = ourSystemPath != null? ourSystemPath : (ourSystemPath = PathUtil.getCanonicalPath(PathManager.getSystemPath()));
+    final File compilerSystemDir = new File(systemPath, "/compiler/" + projectDirName);
     compilerSystemDir.mkdirs();
     return compilerSystemDir;
   }

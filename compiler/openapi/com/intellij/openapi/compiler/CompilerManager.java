@@ -20,7 +20,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * A "root" class in compiler subsystem - allows one to register a custom compiler or a compilation task, register/unregister a compilation listener
@@ -46,6 +49,22 @@ public abstract class CompilerManager {
    */
   public abstract void addCompiler(Compiler compiler);
 
+  /**
+   * Registers a custom translating compiler. Input and output filetype sets allow compiler manager
+   * to sort translating compilers so that output of one compiler will be used as input for another one
+   * 
+   * @param compiler compiler implementation 
+   * @param inputTypes a set of filetypes that compiler accepts as input
+   * @param outputTypes a set of filetypes that compiler can generate
+   */
+  public abstract void addTranslatingCompiler(TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
+
+  @NotNull
+  public abstract Set<FileType> getRegisteredInputTypes(TranslatingCompiler compiler);
+  
+  @NotNull
+  public abstract Set<FileType> getRegisteredOutputTypes(TranslatingCompiler compiler);
+  
   /**
    * Unregisters a custom compiler.
    *

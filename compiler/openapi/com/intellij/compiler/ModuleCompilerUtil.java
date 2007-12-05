@@ -23,11 +23,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.util.Chunk;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.Chunk;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 
@@ -62,18 +62,7 @@ public final class ModuleCompilerUtil {
   }
 
   public static List<Chunk<Module>> getSortedModuleChunks(Module[] modules, Graph<Module> moduleGraph) {
-    final Graph<Chunk<Module>> graph = toChunkGraph(moduleGraph);
-    final List<Chunk<Module>> chunks = new ArrayList<Chunk<Module>>(moduleGraph.getNodes().size());
-    for (final Chunk<Module> chunk : graph.getNodes()) {
-      chunks.add(chunk);
-    }
-    DFSTBuilder<Chunk<Module>> builder = new DFSTBuilder<Chunk<Module>>(graph);
-    if (!builder.isAcyclic()) {
-      LOG.error("Acyclic graph expected");
-      return null;
-    }
-
-    Collections.sort(chunks, builder.comparator());
+    final List<Chunk<Module>> chunks = getSortedChunks(moduleGraph);
 
     final Set<Module> modulesSet = new HashSet<Module>(Arrays.asList(modules));
     // leave only those chunks that contain at least one module from modules
@@ -86,7 +75,7 @@ public final class ModuleCompilerUtil {
     return chunks;
   }
 
-  private static boolean intersects(Set set1, Set set2) {
+  public static boolean intersects(Set set1, Set set2) {
     for (final Object item : set1) {
       if (set2.contains(item)) {
         return true;
@@ -95,6 +84,22 @@ public final class ModuleCompilerUtil {
     return false;
   }
 
+  public static <Node> List<Chunk<Node>> getSortedChunks(final Graph<Node> _graph) {
+    final Graph<Chunk<Node>> chunkGraph = toChunkGraph(_graph);
+    final List<Chunk<Node>> chunks = new ArrayList<Chunk<Node>>(chunkGraph.getNodes().size());
+    for (final Chunk<Node> chunk : chunkGraph.getNodes()) {
+      chunks.add(chunk);
+    }
+    DFSTBuilder<Chunk<Node>> builder = new DFSTBuilder<Chunk<Node>>(chunkGraph);
+    if (!builder.isAcyclic()) {
+      LOG.error("Acyclic graph expected");
+      return null;
+    }
+
+    Collections.sort(chunks, builder.comparator());
+    return chunks;
+  }
+  
   public static <Node> Graph<Chunk<Node>> toChunkGraph(final Graph<Node> graph) {
     final DFSTBuilder<Node> builder = new DFSTBuilder<Node>(graph);
     final TIntArrayList sccs = builder.getSCCs();

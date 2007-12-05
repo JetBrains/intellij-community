@@ -14,31 +14,37 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.Chunk;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.graph.CachingSemiGraph;
+import com.intellij.util.graph.Graph;
+import com.intellij.util.graph.GraphGenerator;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
 public class CompilerManagerImpl extends CompilerManager {
   private final Project myProject;
 
   private List<Compiler> myCompilers = new ArrayList<Compiler>();
+  private List<TranslatingCompiler> myTranslators = new ArrayList<TranslatingCompiler>();
+  
   private List<CompileTask> myBeforeTasks = new ArrayList<CompileTask>();
   private List<CompileTask> myAfterTasks = new ArrayList<CompileTask>();
   private Set<FileType> myCompilableTypes = new HashSet<FileType>();
   private EventDispatcher<CompilationStatusListener> myEventDispatcher = EventDispatcher.create(CompilationStatusListener.class);
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
+  private final Map<Compiler, Set<FileType>> myCompilerToInputTypes = new HashMap<Compiler, Set<FileType>>();
+  private final Map<Compiler, Set<FileType>> myCompilerToOutputTypes = new HashMap<Compiler, Set<FileType>>();
 
-  public CompilerManagerImpl(Project project, CompilerConfigurationImpl compilerConfiguration) {
+  public CompilerManagerImpl(final Project project, CompilerConfigurationImpl compilerConfiguration) {
     myProject = project;
 
     // predefined compilers
-    addCompiler(new JavaCompiler(myProject));
+    addTranslatingCompiler(new JavaCompiler(myProject), new HashSet<FileType>(Arrays.asList(StdFileTypes.JAVA)), new HashSet<FileType>(Arrays.asList(StdFileTypes.CLASS)));
     addCompiler(new NotNullVerifyingCompiler(myProject));
     addCompiler(new ResourceCompiler(myProject, compilerConfiguration));
     addCompiler(new RmicCompiler(myProject));
@@ -48,6 +54,24 @@ public class CompilerManagerImpl extends CompilerManager {
     //
     //addCompiler(new DummyTransformingCompiler()); // this one is for testing purposes only
     //addCompiler(new DummySourceGeneratingCompiler(myProject)); // this one is for testing purposes only
+    /*
+    // for testing only
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            FileTypeManager.getInstance().registerFileType(DummyTranslatingCompiler.INPUT_FILE_TYPE, DummyTranslatingCompiler.FILETYPE_EXTENSION);
+            addTranslatingCompiler(
+              new DummyTranslatingCompiler(), 
+              new HashSet<FileType>(Arrays.asList(DummyTranslatingCompiler.INPUT_FILE_TYPE)), 
+              new HashSet<FileType>(Arrays.asList( StdFileTypes.JAVA))
+            );
+          }
+        });
+        
+      }
+    });
+    */
   }
 
   public Semaphore getCompilationSemaphore() {
@@ -58,12 +82,50 @@ public class CompilerManagerImpl extends CompilerManager {
     return myCompilationSemaphore.availablePermits() == 0;
   }
 
+  public void addTranslatingCompiler(final TranslatingCompiler compiler, final Set<FileType> inputTypes, final Set<FileType> outputTypes) {
+    myTranslators.add(compiler);
+    myCompilerToInputTypes.put(compiler, inputTypes);
+    myCompilerToOutputTypes.put(compiler, outputTypes);
+    
+    final List<Chunk<Compiler>> chunks = ModuleCompilerUtil.getSortedChunks(createCompilerGraph(myTranslators.toArray(new Compiler[myTranslators.size()])));
+    
+    myTranslators.clear();
+    for (Chunk<Compiler> chunk : chunks) {
+      for (Compiler chunkCompiler : chunk.getNodes()) {
+        myTranslators.add((TranslatingCompiler)chunkCompiler);
+      }
+    }
+  }
+
+  @NotNull
+  public Set<FileType> getRegisteredInputTypes(final TranslatingCompiler compiler) {
+    final Set<FileType> inputs = myCompilerToInputTypes.get(compiler);
+    return inputs != null? Collections.unmodifiableSet(inputs) : Collections.<FileType>emptySet();
+  }
+
+  @NotNull
+  public Set<FileType> getRegisteredOutputTypes(final TranslatingCompiler compiler) {
+    final Set<FileType> outs = myCompilerToOutputTypes.get(compiler);
+    return outs != null? Collections.unmodifiableSet(outs) : Collections.<FileType>emptySet();
+  }
+
   public final void addCompiler(Compiler compiler) {
-    myCompilers.add(compiler);
+    if (compiler instanceof TranslatingCompiler) {
+      myTranslators.add((TranslatingCompiler)compiler);
+      
+    }
+    else {
+      myCompilers.add(compiler);
+    }
   }
 
   public final void removeCompiler(Compiler compiler) {
-    myCompilers.remove(compiler);
+    if (compiler instanceof TranslatingCompiler) {
+      myTranslators.remove((TranslatingCompiler)compiler);
+    }
+    else {
+      myCompilers.remove(compiler);
+    }
   }
 
   public <T  extends Compiler> T[] getCompilers(Class<T> compilerClass) {
@@ -73,7 +135,12 @@ public class CompilerManagerImpl extends CompilerManager {
         compilers.add((T)item);
       }
     }
-    T[] array = (T[])Array.newInstance(compilerClass, compilers.size());
+    for (final Compiler item : myTranslators) {
+      if (compilerClass.isAssignableFrom(item.getClass())) {
+        compilers.add((T)item);
+      }
+    }
+    final T[] array = (T[])Array.newInstance(compilerClass, compilers.size());
     return compilers.toArray(array);
   }
 
@@ -237,6 +304,31 @@ public class CompilerManagerImpl extends CompilerManager {
     return new ProjectCompileScope(project);
   }
 
+  private Graph<Compiler> createCompilerGraph(final Compiler[] compilers) {
+    return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<Compiler>() {
+      public Collection<Compiler> getNodes() {
+        return Arrays.asList(compilers);
+      }
+
+      public Iterator<Compiler> getIn(Compiler compiler) {
+        final Set<FileType> compilerInput = myCompilerToInputTypes.get(compiler);
+        if (compilerInput == null || compilerInput.isEmpty()) {
+          return Collections.<Compiler>emptySet().iterator();
+        }
+        
+        final Set<Compiler> inCompilers = new HashSet<Compiler>();
+        
+        for (Compiler c : myCompilerToOutputTypes.keySet()) {
+          final Set<FileType> outputs = myCompilerToOutputTypes.get(c);
+          if (outputs != null && ModuleCompilerUtil.intersects(compilerInput, outputs)) {
+            inCompilers.add(c);
+          }
+        }
+        return inCompilers.iterator();
+      }
+    }));
+  }
+  
   private class ListenerNotificator implements CompileStatusNotification {
     private final CompileStatusNotification myDelegate;
 
