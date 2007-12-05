@@ -115,8 +115,10 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
       public void run() {
         if (myPluginXmlUrl != null) {
           setPluginXmlUrl(myPluginXmlUrl);
-          myPluginXmlUrl = null;
+        } else {
+          setPluginXmlUrl(getDefaultLocation());
         }
+        myPluginXmlUrl = null;
       }
     });
   }
@@ -165,10 +167,13 @@ public class PluginBuildConfiguration extends BuildConfiguration implements Modu
 
   public VirtualFilePointer getPluginXmlPointer() {
     if (myPluginXmlPointer == null) {
-      final String defaultPluginXMLLocation = new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
-      setPluginXmlPath(defaultPluginXMLLocation);
+      setPluginXmlPath(getDefaultLocation());
     }
     return myPluginXmlPointer;
+  }
+
+  private String getDefaultLocation() {
+    return new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
   }
 
   public String getPluginXmlPath() {
