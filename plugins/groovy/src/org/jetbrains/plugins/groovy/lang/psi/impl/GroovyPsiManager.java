@@ -15,19 +15,12 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.ProjectTopics;
-import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.FileContent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -36,12 +29,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -51,10 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ven
@@ -72,6 +59,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private GrTypeDefinition myArrayClass;
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
+  private boolean myRebuildGdkPending;
 
   public TypeInferenceHelper getTypeInferenceHelper() {
     return myTypeInferenceHelper;
@@ -116,19 +104,11 @@ public class GroovyPsiManager implements ProjectComponent {
 
     myTypeInferenceHelper = new  TypeInferenceHelper(myProject);
 
-    ProjectRootManagerEx.getInstanceEx(myProject).registerChangeUpdater(new CacheUpdater() {
-      public VirtualFile[] queryNeededFiles() {
-        buildGDK();
-        return VirtualFile.EMPTY_ARRAY;
-      }
+    ProjectRootManager.getInstance(myProject).addModuleRootListener(new ModuleRootListener() {
+      public void beforeRootsChange(ModuleRootEvent event) {}
 
-      public void processFile(FileContent fileContent) {
-      }
-
-      public void updatingDone() {
-      }
-
-      public void canceled() {
+      public void rootsChanged(ModuleRootEvent event) {
+        myRebuildGdkPending = true;
       }
     });
   }
@@ -327,6 +307,17 @@ public class GroovyPsiManager implements ProjectComponent {
 
 
   public List<PsiMethod> getDefaultMethods(String qName) {
+    if (myRebuildGdkPending) {
+      synchronized (this) {
+        if (myRebuildGdkPending) {
+          if (!checkUpToDate()) {
+            buildGDKImpl();
+          }
+          myRebuildGdkPending = false;
+        }
+      }
+    }
+
     if (myDefaultMethods == null) {
       return Collections.emptyList();
     }
