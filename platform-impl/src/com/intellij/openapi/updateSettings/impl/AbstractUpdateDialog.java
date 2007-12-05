@@ -26,8 +26,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     super(canBeParent);
     myEnableLink = enableLink;
     myUploadedPlugins = updatePlugins;
-    setOKButtonText(getOkButtonText(getOkButtonText()));
-    setCancelButtonText(myUploadedPlugins != null ? IdeBundle.message("update.plugins.update.later.action") : CommonBundle.getCloseButtonText());
+    setButtonsText();
   }
 
   protected void initPluginsPanel(final JPanel panel, JPanel pluginsPanel, JEditorPane updateLinkPane) {
@@ -37,7 +36,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
       foundPluginsPanel.addStateListener(new DetectedPluginsPanel.Listener() {
         public void stateChanged() {
-          setOKButtonText(getOkButtonText(getOkButtonText()));
+          setButtonsText();
         }
       });
       for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
@@ -64,14 +63,15 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     }
   }
 
-  private String getOkButtonText(String defaultOkText) {
+  private void setButtonsText() {
     boolean found = false;
     if (myUploadedPlugins != null) {
       for (PluginDownloader uploadedPlugin : myUploadedPlugins) {
         if (!UpdateChecker.getDisabledToUpdatePlugins().contains(uploadedPlugin.getPluginId())) found = true;
       }
     }
-    return found ? IdeBundle.message("update.plugins.shutdown.action") : defaultOkText;
+    setOKButtonText(found ? IdeBundle.message("update.plugins.shutdown.action") : getOkButtonText());
+    setCancelButtonText(found ? IdeBundle.message("update.plugins.update.later.action") : CommonBundle.getCloseButtonText());
   }
 
   protected String getOkButtonText() {
@@ -92,6 +92,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
 
   public void doCancelAction() {
     UpdateChecker.saveDisabledToUpdatePlugins();
+    if (myUploadedPlugins != null) UpdateChecker.install(myUploadedPlugins); //update on restart
     super.doCancelAction();
   }
 }
