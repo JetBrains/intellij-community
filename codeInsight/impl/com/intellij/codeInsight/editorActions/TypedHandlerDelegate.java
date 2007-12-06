@@ -47,6 +47,7 @@ public abstract class TypedHandlerDelegate {
    * @param editor
    * @param file
    */
-  public void charTyped(char c, final Project project, final Editor editor, final PsiFile file) {
+  public boolean charTyped(char c, final Project project, final Editor editor, final PsiFile file) {
+    return false;
   }
 }

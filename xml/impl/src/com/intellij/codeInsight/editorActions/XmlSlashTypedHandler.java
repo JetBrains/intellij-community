@@ -57,7 +57,7 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
     return false;
   }
 
-  public void charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
+  public boolean charTyped(final char c, final Project project, final Editor editor, final PsiFile editedFile) {
     if (editedFile instanceof XmlFile && c == '/') {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -65,13 +65,13 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
       FileViewProvider provider = file.getViewProvider();
       final int offset = editor.getCaretModel().getOffset();
       PsiElement element = provider.findElementAt(offset - 1, XMLLanguage.class);
-      if (element == null) return;
-      if (!(element.getLanguage() instanceof XMLLanguage)) return;
+      if (element == null) return false;
+      if (!(element.getLanguage() instanceof XMLLanguage)) return false;
 
       ASTNode prevLeaf = element.getNode();
       final String prevLeafText = prevLeaf != null ? prevLeaf.getText():null;
       if (prevLeaf != null && !"/".equals(prevLeafText)) {
-        if (!"/".equals(prevLeafText.trim())) return;
+        if (!"/".equals(prevLeafText.trim())) return false;
       }
       while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       if(prevLeaf instanceof OuterLanguageElement) {
@@ -79,21 +79,23 @@ public class XmlSlashTypedHandler extends TypedHandlerDelegate {
         prevLeaf = element.getNode();
         while((prevLeaf = TreeUtil.prevLeaf(prevLeaf)) != null && prevLeaf.getElementType() == XmlTokenType.XML_WHITE_SPACE);
       }
-      if(prevLeaf == null) return;
+      if(prevLeaf == null) return false;
 
       XmlTag tag = PsiTreeUtil.getParentOfType(prevLeaf.getPsi(), XmlTag.class);
       if(tag == null) { // prevLeaf maybe in one tree and element in another
         PsiElement element2 = provider.findElementAt(prevLeaf.getStartOffset(), XMLLanguage.class);
         tag = PsiTreeUtil.getParentOfType(element2, XmlTag.class);
-        if (tag == null) return;
+        if (tag == null) return false;
       }
 
-      if (tag instanceof JspXmlTagBase || tag instanceof JspXmlRootTag) return;
-      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return;
-      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return;
-      if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return;
+      if (tag instanceof JspXmlTagBase || tag instanceof JspXmlRootTag) return false;
+      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_TAG_END) != null) return false;
+      if (XmlUtil.getTokenOfType(tag, XmlTokenType.XML_EMPTY_ELEMENT_END) != null) return false;
+      if (PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class) != null) return false;
 
       EditorModificationUtil.insertStringAtCaret(editor, ">");
+      return true;
     }
+    return false;
   }
 }

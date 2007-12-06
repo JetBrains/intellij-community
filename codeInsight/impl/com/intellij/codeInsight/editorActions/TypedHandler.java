@@ -30,13 +30,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspSpiUtil;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -256,10 +252,9 @@ public class TypedHandler implements TypedActionHandler {
     }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, fileType, charTyped, dataContext)) return;
-    } else if ('}' == charTyped) {
-      if (originalFileType == StdFileTypes.JSPX || originalFileType == StdFileTypes.JSP) {
-        if (handleELClosingBrace(editor, file, project)) return;
-      } else if (originalFileType == StdFileTypes.JAVA) {
+    }
+    else if ('}' == charTyped) {
+      if (originalFileType == StdFileTypes.JAVA) {
         if (handleJavaArrayInitializerRBrace(editor)) return;
       }
     }
@@ -289,24 +284,18 @@ public class TypedHandler implements TypedActionHandler {
       indentClosingBrace(project, editor);
     }
     else if ('{' == charTyped){
-      if (originalFileType == StdFileTypes.JSPX ||
-          originalFileType == StdFileTypes.JSP
-        ) {
-        if(handleELOpeningBrace(editor, file, project)) return;
-      } else if (originalFileType == StdFileTypes.JAVA) {
+      if (originalFileType == StdFileTypes.JAVA) {
         if (handleJavaArrayInitializerLBrace(editor)) return;
-      }
-
-      indentOpenedBrace(project, editor);
-    }
-    else if ('=' == charTyped) {
-      if (originalFileType == StdFileTypes.JSP) {
-        handleJspEqual(project, editor);
       }
     }
 
     for(TypedHandlerDelegate delegate: delegates) {
-      delegate.charTyped(charTyped, project, editor, file);
+      if (delegate.charTyped(charTyped, project, editor, file)) {
+        return;
+      }
+    }
+    if ('{' == charTyped) {
+      indentOpenedBrace(project, editor);
     }
   }
 
@@ -427,68 +416,6 @@ public class TypedHandler implements TypedActionHandler {
 
     if (balance == 1) {
       editor.getDocument().insertString(offset, ">");
-    }
-  }
-
-  private static boolean handleELOpeningBrace(final Editor editor, final PsiFile file, final Project project) {
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    final int offset = editor.getCaretModel().getOffset();
-    final PsiElement elementAt = file.findElementAt(offset-1);
-
-    // TODO: handle it with insertAfterLParen(...)
-    if (!JspSpiUtil.isJavaContext(elementAt) &&
-        ( elementAt.getText().equals("${") ||
-          elementAt.getText().equals("#{")
-        )
-        ) {
-      editor.getDocument().insertString(offset, "}");
-      return true;
-    }
-
-    return false;
-  }
-
-  private static boolean handleELClosingBrace(final Editor editor, final PsiFile file, final Project project) {
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    final int offset = editor.getCaretModel().getOffset();
-    PsiElement elementAt = file.findElementAt(offset);
-    PsiElement parent = PsiTreeUtil.getParentOfType(elementAt,ELExpressionHolder.class);
-
-    // TODO: handle it with insertAfterRParen(...)
-    if (parent != null) {
-      if (elementAt != null && elementAt.getText().equals("}")) {
-        editor.getCaretModel().moveToOffset(offset + 1);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  private static void handleJspEqual(Project project, Editor editor) {
-    final CharSequence chars = editor.getDocument().getCharsSequence();
-    int current = editor.getCaretModel().getOffset();
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    JspFile file = PsiUtil.getJspFile(PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
-    PsiElement element = file.findElementAt(current);
-    if (element == null) {
-      element = file.findElementAt(editor.getDocument().getTextLength() - 1);
-      if (element == null) return;
-    }
-    if (current >= 3 && chars.charAt(current-3) == '<' && chars.charAt(current-2)=='%')  {
-      while (element instanceof PsiWhiteSpace) {
-        element = element.getNextSibling();
-      }
-
-      int ptr = current;
-      while(ptr < chars.length() && Character.isWhitespace(chars.charAt(ptr))) ++ptr;
-
-      if (ptr + 1 >= chars.length() || (chars.charAt(ptr) != '%' || chars.charAt(ptr+1) != '>') ) {
-        editor.getDocument().insertString(current,"%>");
-      }
     }
   }
 
@@ -684,7 +611,7 @@ public class TypedHandler implements TypedActionHandler {
     indentBrace(project, editor, '}');
   }
 
-  private static void indentOpenedBrace(final Project project, final Editor editor){
+  public static void indentOpenedBrace(final Project project, final Editor editor){
     indentBrace(project, editor, '{');
   }
 
