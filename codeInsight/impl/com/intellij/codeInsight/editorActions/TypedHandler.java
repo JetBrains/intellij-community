@@ -25,11 +25,9 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -200,10 +198,6 @@ public class TypedHandler implements TypedActionHandler {
       autoPopupController.autoPopupMemberLookup(editor);
     }
 
-    if (charTyped == '@' && file instanceof PsiJavaFile) {
-      autoPopupController.autoPopupJavadocLookup(editor);
-    }
-
     if (charTyped == '('){
       autoPopupController.autoPopupParameterInfo(editor, null);
     }
@@ -234,47 +228,19 @@ public class TypedHandler implements TypedActionHandler {
       }
     }
 
-    if ('>' == charTyped){
-      if (file instanceof PsiJavaFile && !(file instanceof JspFile) &&
-          CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-               ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0) {
-        if (handleJavaGT(editor)) return;
-      }
-    }
-    else if (')' == charTyped){
+    if (')' == charTyped){
       if (handleRParen(editor, fileType, ')', '(')) return;
     }
     else if (']' == charTyped){
       if (handleRParen(editor, fileType, ']', '[')) return;
     }
-    else if (';' == charTyped) {
-      if (handleSemicolon(editor, fileType)) return;
-    }
     else if ('"' == charTyped || '\'' == charTyped){
       if (handleQuote(editor, fileType, charTyped, dataContext)) return;
     }
-    else if ('}' == charTyped) {
-      if (originalFileType == StdFileTypes.JAVA) {
-        if (handleJavaArrayInitializerRBrace(editor)) return;
-      }
-    }
-
-    int offsetBefore = editor.getCaretModel().getOffset();
-
-    //important to calculate before inserting charTyped
-    boolean handleAfterJavaLT = '<' == charTyped &&
-                                file instanceof PsiJavaFile &&
-                                !(file instanceof JspFile) &&
-                                CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
-                                ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
-                                BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offsetBefore, editor);
 
     myOriginalHandler.execute(editor, charTyped, dataContext);
 
-    if (handleAfterJavaLT) {
-      handleAfterJavaLT(editor);
-    }
-    else if ('(' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
+    if ('(' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
       handleAfterLParen(editor, fileType, '(');
     }
     else if ('[' == charTyped && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET){
@@ -282,11 +248,6 @@ public class TypedHandler implements TypedActionHandler {
     }
     else if ('}' == charTyped){
       indentClosingBrace(project, editor);
-    }
-    else if ('{' == charTyped){
-      if (originalFileType == StdFileTypes.JAVA) {
-        if (handleJavaArrayInitializerLBrace(editor)) return;
-      }
     }
 
     for(TypedHandlerDelegate delegate: delegates) {
@@ -302,134 +263,6 @@ public class TypedHandler implements TypedActionHandler {
   static boolean charTypedWeWantToShowSmartnessInInjectedLanguageWithoutPerformanceLoss(final char charTyped) {
     return charTyped == '"' || charTyped == '\'' || charTyped == '[' || charTyped == '(' || charTyped == ']' || charTyped == ')' ||
       charTyped == '{' || charTyped == '}';
-  }
-
-  private boolean handleJavaArrayInitializerRBrace(final Editor editor) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
-
-    int offset = editor.getCaretModel().getOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    if (iterator.getStart() == 0 || iterator.getTokenType() != JavaTokenType.RBRACE) return false;
-    iterator.retreat();
-    if (!checkArrayInitializerLBrace(iterator)) return false;
-    editor.getCaretModel().moveToOffset(offset + 1);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return true;
-  }
-
-  private static boolean handleJavaArrayInitializerLBrace(final Editor editor) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
-
-    int offset = editor.getCaretModel().getOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset - 1);
-    if (!checkArrayInitializerLBrace(iterator)) return false;
-    editor.getDocument().insertString(offset, "}");
-    return true;
-  }
-
-  private static boolean checkArrayInitializerLBrace(final HighlighterIterator iterator) {
-    int lbraceCount = 0;
-    while(iterator.getTokenType() == JavaTokenType.LBRACE) {
-      lbraceCount++;
-      iterator.retreat();
-    }
-    if (lbraceCount == 0) return false;
-    if (iterator.getTokenType() == JavaTokenType.WHITE_SPACE) iterator.retreat();
-    for(int i=0; i<lbraceCount; i++) {
-      if (iterator.getTokenType() != JavaTokenType.RBRACKET) return false;
-      iterator.retreat();
-      if (iterator.getTokenType() != JavaTokenType.LBRACKET) return false;
-      iterator.retreat();
-    }
-    return true;
-  }
-
-  //need custom handler, since brace matcher cannot be used
-  private static boolean handleJavaGT(final Editor editor) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
-
-    int offset = editor.getCaretModel().getOffset();
-
-    if (offset == editor.getDocument().getTextLength()) return false;
-
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    if (iterator.getTokenType() != JavaTokenType.GT) return false;
-    while (!iterator.atEnd() && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
-      iterator.advance();
-    }
-
-    if (iterator.atEnd()) return false;
-    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.retreat();
-
-    int balance = 0;
-    while (!iterator.atEnd() && balance >= 0) {
-      final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LT) {
-        balance--;
-      }
-      else if (tokenType == JavaTokenType.GT) {
-        balance++;
-      }
-      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
-        break;
-      }
-
-      iterator.retreat();
-    }
-
-    if (balance == 0) {
-      editor.getCaretModel().moveToOffset(offset + 1);
-      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      return true;
-    }
-
-    return false;
-  }
-
-  //need custom handler, since brace matcher cannot be used
-  private static void handleAfterJavaLT(final Editor editor) {
-    if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return;
-
-    int offset = editor.getCaretModel().getOffset();
-    HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
-      iterator.retreat();
-    }
-
-    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
-
-    int balance = 0;
-    while (!iterator.atEnd() && balance >= 0) {
-      final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LT) {
-        balance++;
-      }
-      else if (tokenType == JavaTokenType.GT) {
-        balance--;
-      }
-      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
-        break;
-      }
-
-      iterator.advance();
-    }
-
-    if (balance == 1) {
-      editor.getDocument().insertString(offset, ">");
-    }
-  }
-
-  private static boolean handleSemicolon(Editor editor, FileType fileType) {
-    if (fileType != StdFileTypes.JAVA) return false;
-    int offset = editor.getCaretModel().getOffset();
-    if (offset == editor.getDocument().getTextLength()) return false;
-
-    char charAt = editor.getDocument().getCharsSequence().charAt(offset);
-    if (charAt != ';') return false;
-
-    editor.getCaretModel().moveToOffset(offset + 1);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    return true;
   }
 
   private static void handleAfterLParen(Editor editor, FileType fileType, char lparenChar){
