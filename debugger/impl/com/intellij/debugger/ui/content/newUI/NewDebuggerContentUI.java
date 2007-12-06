@@ -112,7 +112,7 @@ public class NewDebuggerContentUI
       if (grid.getContents().size() == 1) {
         TabInfo info = myTabs.findInfo(grid);
         if (myTabs.getSelectedInfo() != info) {
-          info.startAlerting();
+          info.fireAlert();
         }
       } else {
         grid.alert(content);

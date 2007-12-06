@@ -69,7 +69,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private boolean myHorizontalSide = true;
   private LineLayoutData myLastSingRowLayout;
 
-  private boolean myStealthTabMode = false; 
+  private boolean myStealthTabMode = false;
 
   private MoreIcon myMoreIcon = new MoreIcon() {
     protected boolean isActive() {
@@ -242,9 +242,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
 
-
   private JComponent getToFocus() {
-   final TabInfo info = getSelectedInfo();
+    final TabInfo info = getSelectedInfo();
 
     JComponent toFocus = null;
 
@@ -268,20 +267,22 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return toFocus;
   }
 
- public void requestFocus() {
+  public void requestFocus() {
     final JComponent toFocus = getToFocus();
     if (toFocus != null) {
       toFocus.requestFocus();
-    } else {
+    }
+    else {
       super.requestFocus();
     }
   }
 
   public boolean requestFocusInWindow() {
-  final JComponent toFocus = getToFocus();
+    final JComponent toFocus = getToFocus();
     if (toFocus != null) {
       return toFocus.requestFocusInWindow();
-    } else {
+    }
+    else {
       return super.requestFocusInWindow();
     }
   }
@@ -358,7 +359,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private boolean isMyChildIsFocusedNow() {
     final Component owner = getFocusOwner();
-    return  owner != null && SwingUtilities.isDescendingFrom(owner, this);
+    return owner != null && SwingUtilities.isDescendingFrom(owner, this);
   }
 
   @Nullable
@@ -405,7 +406,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
             return new ActionCallback.Done();
           }
         }, true);
-      } else {
+      }
+      else {
         requestFocus();
         return new ActionCallback.Done();
       }
@@ -425,10 +427,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
     else if (TabInfo.ICON.equals(evt.getPropertyName())) {
       updateIcon(tabInfo);
-    } else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
+    }
+    else if (TabInfo.ALERT_STATUS.equals(evt.getPropertyName())) {
       boolean start = ((Boolean)evt.getNewValue()).booleanValue();
       updateAttraction(tabInfo, start);
-    } else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
+    }
+    else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
       updateTabActions(tabInfo);
     }
 
@@ -442,15 +446,17 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private void updateAttraction(final TabInfo tabInfo, boolean start) {
     if (start) {
-      tabInfo.setBlinkCount(0);
       myAttractions.add(tabInfo);
-    } else {
+    }
+    else {
       myAttractions.remove(tabInfo);
+      tabInfo.setBlinkCount(0);
     }
 
     if (start && !myAnimator.isRunning()) {
       myAnimator.resume();
-    } else if (!start && myAttractions.size() == 0) {
+    }
+    else if (!start && myAttractions.size() == 0) {
       myAnimator.suspend();
       repaintAttractions();
     }
@@ -528,7 +534,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       if (side != null) {
         if (group != null) {
           add(side, BorderLayout.EAST);
-        } else {
+        }
+        else {
           add(side, BorderLayout.CENTER);
         }
       }
@@ -618,7 +625,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       int xAddin = 0;
       if (!myHorizontalSide && selectedToolbar != null) {
         xAddin = selectedToolbar.getPreferredSize().width + 1;
-        selectedToolbar.setBounds(insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, getHeight() - eachY - insets.bottom - 2);
+        selectedToolbar
+          .setBounds(insets.left + 1, eachY + 1, selectedToolbar.getPreferredSize().width, getHeight() - eachY - insets.bottom - 2);
       }
 
       layoutComp(xAddin, eachY, getSelectedInfo().getComponent());
@@ -659,7 +667,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         }
         if (eachX + size.width <= data.toFitRec.getMaxX()) {
           eachX += size.width;
-        } else {
+        }
+        else {
           eachTableRow = new TableRow();
           eachRow++;
           eachX = insets.left;
@@ -688,7 +697,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     LineLayoutData data = new LineLayoutData();
     boolean layoutLabels = true;
 
-    if (!myForcedRelayout && myLastSingRowLayout != null && myLastSingRowLayout.contentCount == getTabCount() && myLastSingRowLayout.laayoutSize.equals(getSize())) {
+    if (!myForcedRelayout &&
+        myLastSingRowLayout != null &&
+        myLastSingRowLayout.contentCount == getTabCount() &&
+        myLastSingRowLayout.laayoutSize.equals(getSize())) {
       for (TabInfo each : myInfos) {
         if (getSelectedInfo() == each) {
           final TabLabel eachLabel = myInfo2Label.get(each);
@@ -897,7 +909,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       path.lineTo(lastX - arc, topY);
       path.quadTo(lastX, topY, lastX, topY + arc);
       path.lineTo(lastX, bottomY);
-    } else {
+    }
+    else {
       path.lineTo(rightX - arc, topY);
       path.quadTo(rightX, topY, rightX, topY + arc);
       path.lineTo(rightX, bottomY - arc);
@@ -942,7 +955,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     if (myPaintBorder) {
       if (isHideTabs()) {
         g2d.drawRect(insets.left, insets.top, getWidth() - insets.left - insets.right - 1, getHeight() - insets.bottom - insets.top - 1);
-      } else {
+      }
+      else {
         g2d.drawRect(insets.left, bottomY, getWidth() - insets.left - insets.right - 1, getHeight() - bottomY - insets.bottom - 1);
       }
     }
@@ -972,7 +986,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
           drawSeparator(g, each);
         }
       }
-    } else if (!isSingleRow() && myLastTableLayout != null) {
+    }
+    else if (!isSingleRow() && myLastTableLayout != null) {
       final List<TableRow> table = myLastTableLayout.table;
       for (TableRow eachRow : table) {
         final List<TabInfo> infos = eachRow.myColumns;
@@ -1114,7 +1129,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         if (eachComponent.getParent() == null) {
           add(eachComponent);
         }
-      } else {
+      }
+      else {
         remove(eachComponent);
       }
     }
@@ -1217,7 +1233,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         toShow.addSeparator();
       }
 
-      Object tabs = DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()).getData(NAVIGATION_ACTIONS_KEY.getName());
+      Object tabs =
+        DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()).getData(NAVIGATION_ACTIONS_KEY.getName());
       if (tabs == JBTabs.this) {
         toShow.addAll(myNavigationActions);
       }
@@ -1231,7 +1248,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       myActivePopup.show(e.getComponent(), e.getX(), e.getY());
       onPopup(myPopupInfo);
     }
-
 
 
     public void setText(final String text) {
@@ -1250,6 +1266,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       getLayeredIcon().setLayerEnabled(1, enabled);
     }
 
+    public boolean isAttractionEnabled() {
+      return getLayeredIcon().isLayerEnabled(1);
+    }
+
     public TabInfo getInfo() {
       return myInfo;
     }
@@ -1263,13 +1283,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       if (insets != null) {
         Insets current = getInsets();
         if (current == null) {
-          current = new Insets(0, 0 ,0 ,0);
+          current = new Insets(0, 0, 0, 0);
         }
-        setBorder(new EmptyBorder(
-          getValue(current.top, insets.top),
-          getValue(current.left, insets.left),
-          getValue(current.bottom, insets.bottom),
-          getValue(current.right, insets.right)));
+        setBorder(new EmptyBorder(getValue(current.top, insets.top), getValue(current.left, insets.left),
+                                  getValue(current.bottom, insets.bottom), getValue(current.right, insets.right)));
       }
     }
 
@@ -1323,17 +1340,37 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         needsUpdate = true;
       }
 
-      int blinkCount = myInfo.getBlinkCount();
-      if (blinkCount < 6) {
+      int maxInitialBlinkCount = 5;
+      int maxRefireBlinkCount = maxInitialBlinkCount + 2;
+      if (myInfo.getBlinkCount() < maxInitialBlinkCount && myInfo.isAlertRequested()) {
         getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
-        if (blinkCount == 0) {
+        if (myInfo.getBlinkCount() == 0) {
           needsUpdate = true;
         }
-        myInfo.setBlinkCount(blinkCount + 1);
+        myInfo.setBlinkCount(myInfo.getBlinkCount() + 1);
+
+        if (myInfo.getBlinkCount() == maxInitialBlinkCount) {
+          myInfo.resetAlertRequest();
+        }
+
         repaint();
-      } else {
-        needsUpdate = !getLayeredIcon().isLayerEnabled(1);
-        getLayeredIcon().setLayerEnabled(1, true);
+      }
+      else {
+        if (myInfo.getBlinkCount() < maxRefireBlinkCount && myInfo.isAlertRequested()) {
+          getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
+          myInfo.setBlinkCount(myInfo.getBlinkCount() + 1);
+
+          if (myInfo.getBlinkCount() == maxRefireBlinkCount) {
+            myInfo.setBlinkCount(maxInitialBlinkCount);
+            myInfo.resetAlertRequest();
+          }
+
+          repaint();
+        }
+        else {
+          needsUpdate = !getLayeredIcon().isLayerEnabled(1);
+          getLayeredIcon().setLayerEnabled(1, true);
+        }
       }
 
       return needsUpdate;
@@ -1380,7 +1417,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private static abstract class BaseNavigationAction extends AnAction {
 
     private ShadowAction myShadow;
-    
+
     protected BaseNavigationAction(final String copyFromID, JComponent c) {
       myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(copyFromID), c);
     }
@@ -1633,10 +1670,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     private boolean areEqual(Presentation p1, Presentation p2) {
       if (p1 == null || p2 == null) return false;
 
-      return  ComparableObjectCheck.equals(p1.getText(), p2.getText())
-              && ComparableObjectCheck.equals(p1.getIcon(), p2.getIcon())
-              && p1.isEnabled() == p2.isEnabled()
-              && p1.isVisible() == p2.isVisible();
+      return ComparableObjectCheck.equals(p1.getText(), p2.getText()) &&
+             ComparableObjectCheck.equals(p1.getIcon(), p2.getIcon()) &&
+             p1.isEnabled() == p2.isEnabled() &&
+             p1.isVisible() == p2.isVisible();
 
     }
 
@@ -1738,7 +1775,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     tabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         System.out.println("TabsWithActions.selectionChanged old=" + oldSelection + " new=" + newSelection);
-      }                                              
+      }
     });
 
     tabs.addTab(new TabInfo(new JTree() {
@@ -1760,14 +1797,26 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     attract1.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         if (attract1.isSelected()) {
-          toAnimate1.startAlerting();
-        } else {
+          toAnimate1.fireAlert();
+        }
+        else {
           toAnimate1.stopAlerting();
         }
       }
     });
 
     south.add(attract1);
+
+
+    final JButton refire = new JButton("Re-fire attraction");
+    refire.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        toAnimate1.fireAlert();
+      }
+    });
+
+    south.add(refire);
+
 
     tabs.addTab(toAnimate1).setText("Tree2");
     //tabs.addTab(new TabInfo(new JTable())).setText("Table 1").setActions(new DefaultActionGroup(), null);
@@ -1793,7 +1842,6 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     frame.setBounds(200, 200, 600, 200);
     frame.show();
   }
-
 
 
 }

@@ -146,7 +146,7 @@ public class GridCell {
     TabInfo tab = getTabFor(content);
     if (tab == null) return;
     if (myTabs.getSelectedInfo() != tab) {
-      tab.startAlerting();
+      tab.fireAlert();
     }
   }
 

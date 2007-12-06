@@ -37,9 +37,9 @@ public final class TabInfo {
   private String myTabActionPlace;
 
   private Icon myAlertIcon;
-  private boolean myAlerting;
 
   private int myBlinkCount;
+  private boolean myAlertRequested;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -152,16 +152,14 @@ public final class TabInfo {
     return this;
   }
 
-  public void startAlerting() {
-    boolean old = myAlerting;
-    myAlerting = true;
-    myChangeSupport.firePropertyChange(ALERT_STATUS, old, myAlerting);
+  public void fireAlert() {
+    myAlertRequested = true;
+    myChangeSupport.firePropertyChange(ALERT_STATUS, null, true);
   }
 
   public void stopAlerting() {
-    boolean old = myAlerting;
-    myAlerting = false;
-    myChangeSupport.firePropertyChange(ALERT_STATUS, old, myAlerting);
+    myAlertRequested = false;
+    myChangeSupport.firePropertyChange(ALERT_STATUS, null, false);
   }
 
   int getBlinkCount() {
@@ -178,5 +176,13 @@ public final class TabInfo {
 
   public Icon getAlertIcon() {
     return myAlertIcon == null ? IconLoader.getIcon("/nodes/tabAlert.png") : myAlertIcon;
+  }
+
+  void resetAlertRequest() {
+    myAlertRequested = false;
+  }
+
+  boolean isAlertRequested() {
+    return myAlertRequested;
   }
 }
