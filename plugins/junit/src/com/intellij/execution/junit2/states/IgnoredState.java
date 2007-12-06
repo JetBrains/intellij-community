@@ -30,9 +30,8 @@ public class IgnoredState extends ReadableState {
   }
 
   public void printOn(final Printer printer) {
-    String message = ExecutionBundle.message("junit.runing.info.ignored.console.message",
-                                             myPeformedTest.getParent().toString(),
-                                             myPeformedTest.getInfo().getName());
+    String parentName = myPeformedTest.getParent() == null ? myPeformedTest.getInfo().getComment() : myPeformedTest.getParent().toString();
+    String message = ExecutionBundle.message("junit.runing.info.ignored.console.message", parentName, myPeformedTest.getInfo().getName());
     printer.print(message + TestProxy.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }
 }
