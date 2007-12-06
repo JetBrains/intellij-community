@@ -220,6 +220,8 @@ public class NewDebuggerContentUI
   }
 
   private void updateTabsUI() {
+    myTabs.updateTabActions();
+
     java.util.List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
       updateTabUI(each);
@@ -497,6 +499,7 @@ public class NewDebuggerContentUI
     getStateFor(content).setTab(getLayoutSettings().getDefaultTab());
     getStateFor(content).setPlaceInGrid(getLayoutSettings().getDefaultGridPlace(content));
     myManager.addContent(content);
+    select(content, true);
   }
 
   private DebuggerLayoutSettings getLayoutSettings() {
