@@ -49,6 +49,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DirectoryIconProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.Icons;
@@ -294,6 +295,7 @@ public class PackageUtil {
     data.setLocationString(packagePrefix);
 
     for (final IconProvider provider : ApplicationManager.getApplication().getComponents(IconProvider.class)) {
+      if (provider instanceof DirectoryIconProvider) continue;
       final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
       if (openIcon != null) {
         final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
