@@ -16,7 +16,7 @@ public class Base extends groovy.lang.GroovyObjectSupport {
 ---
 public class Derived extends Base {
   public Derived()  throws Exception{
-    super("", (int)0);
+    super((String)null, (int)0);
   }
 }
 ---

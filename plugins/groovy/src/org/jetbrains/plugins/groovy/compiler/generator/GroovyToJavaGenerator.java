@@ -487,41 +487,15 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           text.append("super");
           text.append("(");
 
-          GrArgumentList argumentList = constructorInvocation.getArgumentList();
-
-          if (argumentList != null) {
-            final GrExpression[] expressions = argumentList.getExpressionArguments();
-            final GrNamedArgument[] namedArguments = argumentList.getNamedArguments();
-            if (namedArguments.length > 0) {
-              text.append("(java.util.Map)null");
-              if (expressions.length > 0) text.append(", ");
-            }
-
-            for (int i = 0; i < expressions.length; i++) {
+          if (superConstructor != null) {
+            final PsiParameter[] superParams = superConstructor.getParameterList().getParameters();
+            for (int i = 0; i < superParams.length; i++) {
               if (i > 0) text.append(", ");
-              String argText = null;
-              if (superConstructor != null) {
-                final PsiParameter[] superParams = superConstructor.getParameterList().getParameters();
-                final int paramIndex = namedArguments.length == 0 ? i : i + 1;
-
-                PsiType type;
-                if (paramIndex < superParams.length) type = superParams[paramIndex].getType();
-                else {
-                  type = superParams[superParams.length - 1].getType();
-                  if (type instanceof PsiEllipsisType) {
-                    type = ((PsiEllipsisType) type).getComponentType();
-                  }
-                }
-                final String typeText = type.getCanonicalText();
-                if (typeText != null) {
-                  argText = "(" + typeText + ")" + getDefaultValueText(typeText);
-                }
-              }
-
-              if (argText == null) argText = expressions[i].getText();
-              text.append(argText);
+              String typeText = getTypeText(superParams[i].getType());
+              text.append("(" + typeText + ")" + getDefaultValueText(typeText));
             }
           }
+          
           text.append(")");
           text.append(";");
         }
