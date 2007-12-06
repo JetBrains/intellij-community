@@ -17,13 +17,18 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -64,6 +69,57 @@ public class EmptyCatchBlockInspection extends BaseInspection {
                 "m_ignoreIgnoreParameter");
         return optionsPanel;
     }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        final PsiElement parent = location.getParent();
+        if (!(parent instanceof PsiCatchSection)) {
+            return null;
+        }
+        final PsiCatchSection catchSection = (PsiCatchSection)parent;
+        final PsiParameter parameter = catchSection.getParameter();
+        if (parameter == null) {
+            return null;
+        }
+        final PsiIdentifier identifier = parameter.getNameIdentifier();
+        if (identifier == null) {
+            return null;
+        }
+        return new EmptyCatchBlockFix();
+    }
+
+    private static class EmptyCatchBlockFix extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "rename.catch.parameter.to.ignored");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            final PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiCatchSection)) {
+                return;
+            }
+            final PsiCatchSection catchSection = (PsiCatchSection)parent;
+            final PsiParameter parameter = catchSection.getParameter();
+            if (parameter == null) {
+                return;
+            }
+            final PsiIdentifier identifier = parameter.getNameIdentifier();
+            if (identifier == null) {
+                return;
+            }
+            final PsiManager manager = element.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiIdentifier newIdentifier =
+                    factory.createIdentifier("ignored");
+            identifier.replace(newIdentifier);
+        }
+    }
+
 
     public BaseInspectionVisitor buildVisitor() {
         return new EmptyCatchBlockVisitor();

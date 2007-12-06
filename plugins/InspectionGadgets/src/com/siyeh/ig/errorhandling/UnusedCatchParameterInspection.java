@@ -16,13 +16,18 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.ui.MultipleCheckboxOptionsPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -60,6 +65,34 @@ public class UnusedCatchParameterInspection extends BaseInspection {
     protected String buildErrorString(Object... infos) {
         return InspectionGadgetsBundle.message(
                 "unused.catch.parameter.problem.descriptor");
+    }
+
+    @Nullable
+    protected InspectionGadgetsFix buildFix(PsiElement location) {
+        return new UnusedCatchParameterFix();
+    }
+
+    private static class UnusedCatchParameterFix extends InspectionGadgetsFix {
+
+        @NotNull
+        public String getName() {
+            return InspectionGadgetsBundle.message(
+                    "rename.catch.parameter.to.ignored");
+        }
+
+        protected void doFix(Project project, ProblemDescriptor descriptor)
+                throws IncorrectOperationException {
+            final PsiElement element = descriptor.getPsiElement();
+            if (!(element instanceof PsiIdentifier)) {
+                return;
+            }
+            final PsiIdentifier identifier = (PsiIdentifier)element;
+            final PsiManager manager = element.getManager();
+            final PsiElementFactory factory = manager.getElementFactory();
+            final PsiIdentifier newIdentifier =
+                    factory.createIdentifier("ignored");
+            identifier.replace(newIdentifier);
+        }
     }
 
     public BaseInspectionVisitor buildVisitor() {
