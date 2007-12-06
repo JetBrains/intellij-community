@@ -3,13 +3,11 @@ package com.intellij.historyPerfTests;
 import com.intellij.history.core.storage.CompressingContentStorage;
 import com.intellij.history.core.storage.IContentStorage;
 import com.intellij.history.utils.RunnableAdapter;
-import com.intellij.idea.Bombed;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
-import java.util.Calendar;
 
 @Ignore
 public class CompressingContentStorageTest extends PerformanceTestCase {
@@ -22,7 +20,7 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
 
   @Test
   public void testCompression() throws IOException {
-    assertExecutionTime(1600, new RunnableAdapter() {
+    assertExecutionTime(845, new RunnableAdapter() {
       public void doRun() throws Exception {
         for (int i = 0; i < 10000; i++) {
           s.store(bytesToStore());
@@ -35,7 +33,7 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
   public void testDecompression() throws IOException {
     s.store(bytesToStore());
 
-    assertExecutionTime(650, new RunnableAdapter() {
+    assertExecutionTime(330, new RunnableAdapter() {
       public void doRun() throws Exception {
         for (int i = 0; i < 10000; i++) {
           s.load(0);

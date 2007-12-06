@@ -2,16 +2,14 @@ package com.intellij.historyPerfTests;
 
 import com.intellij.history.core.storage.ContentStorage;
 import com.intellij.history.utils.RunnableAdapter;
-import com.intellij.idea.Bombed;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 @Ignore
@@ -34,8 +32,8 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageWriting() throws Exception {
-    assertExecutionTime(250, new RunnableAdapter() {
+  public void testWriting() throws Exception {
+    assertExecutionTime(80, new RunnableAdapter() {
       public void doRun() throws Exception {
         createContentsOfDifferentSize();
       }
@@ -43,9 +41,9 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageReading() throws Exception {
+  public void testReading() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
-    assertExecutionTime(100, new RunnableAdapter() {
+    assertExecutionTime(50, new RunnableAdapter() {
       public void doRun() throws Exception {
         readContentsRandomly(cc);
       }
@@ -53,7 +51,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageDeletion() throws Exception {
+  public void testDeletion() throws Exception {
     final List<Integer> cc = createContentsOfDifferentSize();
     assertExecutionTime(15, new RunnableAdapter() {
       public void doRun() throws Exception {
@@ -63,11 +61,11 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageWritingAfterDeletion() throws Exception {
+  public void testWritingAfterDeletion() throws Exception {
     List<Integer> cc = createContentsOfDifferentSize();
     deleteHalfOfContentsRandomly(cc);
 
-    assertExecutionTime(200, new RunnableAdapter() {
+    assertExecutionTime(150, new RunnableAdapter() {
       public void doRun() throws Exception {
         createContentsOfDifferentSize();
       }
@@ -75,10 +73,10 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageReadingAfterManyModifications() throws IOException {
+  public void testReadingAfterManyModifications() throws IOException {
     final List<Integer> cc = modifyStorageManyTimes();
 
-    assertExecutionTime(100, new RunnableAdapter() {
+    assertExecutionTime(30, new RunnableAdapter() {
       public void doRun() throws Exception {
         readContentsRandomly(cc);
       }
@@ -86,7 +84,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testStorageSizeAfterManyModifications() throws IOException {
+  public void testSizeAfterManyModifications() throws IOException {
     modifyStorageManyTimes();
     s.close();
     long indexLength = new File(file.getPath() + ".rindex").length();

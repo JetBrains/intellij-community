@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 
 public class RecentChangeDialogTest extends IntegrationTestCase {
-  public void testHistoryDialogsWork() throws IOException {
+  public void testDialogWork() throws IOException {
     getVcs().beginChangeSet();
     root.createChildData(null, "f.java");
     getVcs().endChangeSet("change");

@@ -8,7 +8,7 @@ import org.junit.Test;
 public class MemoryTest extends LocalVcsPerformanceTestCase {
   @Test
   public void testMemoryAfterFirstBuild() {
-    assertMemoryUsage(52, new RunnableAdapter() {
+    assertMemoryUsage(44, new RunnableAdapter() {
       public void doRun() throws Exception {
         buildVcsTree();
       }
@@ -23,7 +23,7 @@ public class MemoryTest extends LocalVcsPerformanceTestCase {
     closeStorage();
     vcs = null;
 
-    assertMemoryUsage(41, new RunnableAdapter() {
+    assertMemoryUsage(43, new RunnableAdapter() {
       public void doRun() throws Exception {
         initVcs();
       }

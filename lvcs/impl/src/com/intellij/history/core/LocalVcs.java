@@ -24,6 +24,7 @@ public class LocalVcs implements ILocalVcs {
 
   private Change myLastChange;
   private boolean wasModifiedAfterLastSave;
+  private int myChangeSetDepth;
 
   public LocalVcs(Storage s) {
     myStorage = s;
@@ -75,10 +76,18 @@ public class LocalVcs implements ILocalVcs {
 
   public void beginChangeSet() {
     myChangeList.beginChangeSet();
+    myChangeSetDepth++;
   }
 
   public void endChangeSet(String name) {
     myChangeList.endChangeSet(name);
+
+    // we must call Storage.save to make it flush all the changes made during changesed.
+    // otherwise the ContentStorage may become corrupted if IDEA is forced to shutdown.
+    myChangeSetDepth--;
+    if (myChangeSetDepth == 0) {
+      myStorage.save();
+    }
   }
 
   public void createFile(String path, ContentFactory f, long timestamp, boolean isReadOnly) {
@@ -161,9 +170,9 @@ public class LocalVcs implements ILocalVcs {
     c.applyTo(myRoot);
 
     // todo get rid of wrapping changeset here
-    myChangeList.beginChangeSet();
+    beginChangeSet();
     addChangeToChangeList(c);
-    myChangeList.endChangeSet(null);
+    endChangeSet(null);
 
     myLastChange = c;
   }

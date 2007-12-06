@@ -27,7 +27,7 @@ public class SelectionCalculatorTest extends LocalVcsPerformanceTestCase {
 
   @Test
   public void testCalculationFromTheScratch() {
-    assertExecutionTime(16000, new RunnableAdapter() {
+    assertExecutionTime(7800, new RunnableAdapter() {
       public void doRun() throws Exception {
         c.getSelectionFor(rr.get(100), new NullProgress());
       }

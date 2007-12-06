@@ -19,11 +19,7 @@ import org.junit.Before;
 import java.util.ArrayList;
 import java.util.List;
 
-// todo review LocalVcsServiceTests...
 public class LocalHistoryServiceTestCase extends LocalVcsTestCase {
-  // todo 2 test broken storage
-  // todo 3 take a look at the old-lvcs tests
-
   protected LocalVcs vcs;
   protected LocalHistoryService service;
   protected TestIdeaGateway gateway;
