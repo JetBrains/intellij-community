@@ -85,7 +85,7 @@ public abstract class InlineMethodConflictSolver {
         child = child.getNextSibling();
         continue;
       }
-      if (child instanceof GrVariable && name.equals(((GrVariable) child).getNameIdentifierGroovy().getText())) {
+      if (child instanceof GrVariable && name.equals(((GrVariable) child).getName())) {
           return false;
       } else {
         boolean inner = isValidNameDown(name, child, call);

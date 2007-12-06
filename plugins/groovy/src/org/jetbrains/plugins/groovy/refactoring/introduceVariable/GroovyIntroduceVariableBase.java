@@ -324,7 +324,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
       // To replace branch body correctly
       boolean inThenIfBranch = realContainer instanceof GrIfStatement &&
           anchorElement.equals(((GrIfStatement) realContainer).getThenBranch());
-      String refId = varDecl.getVariables()[0].getNameIdentifierGroovy().getText();
+      String refId = varDecl.getVariables()[0].getName();
       GrBlockStatement newBody;
       if (tempStatement.equals(selectedExpr)) {
         newBody = factory.createBlockStatement(varDecl);

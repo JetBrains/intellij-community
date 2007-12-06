@@ -101,7 +101,7 @@ public class GroovyInlineVariableUtil {
    * Returns Settings object for referenced definition in case of local variable
    */
   static InlineHandler.Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor) {
-    final String localName = variable.getNameIdentifierGroovy().getText();
+    final String localName = variable.getName();
     final Project project = variable.getProject();
     final Collection<PsiReference> refs = ReferencesSearch.search(variable, GlobalSearchScope.projectScope(variable.getProject()), false).findAll();
     ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
@@ -116,7 +116,7 @@ public class GroovyInlineVariableUtil {
       return null;
     }
     if (refs.isEmpty()) {
-      String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable.getNameIdentifierGroovy().getText());
+      String message = GroovyRefactoringBundle.message("variable.is.never.used.0", variable.getName());
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INLINE_VARIABLE, variable.getProject());
       return null;
     }
