@@ -63,6 +63,8 @@
                       serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
   <applicationService serviceInterface="com.intellij.ide.dnd.DnDManager"
                       serviceImplementation="com.intellij.ide.dnd.DnDManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
+                      serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManager"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
