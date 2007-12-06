@@ -39,8 +39,10 @@ public class ClosureSyntheticParameter extends LightParameter implements Navigat
   }
 
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
-    GrParameter parameter = GroovyElementFactory.getInstance(getProject()).createParameter(newName, null, null);
-    myClosure.addParameter(parameter);
+    if (!newName.equals(getName())) {
+      GrParameter parameter = GroovyElementFactory.getInstance(getProject()).createParameter(newName, null, null);
+      myClosure.addParameter(parameter);
+    }
     return this;
   }
 
