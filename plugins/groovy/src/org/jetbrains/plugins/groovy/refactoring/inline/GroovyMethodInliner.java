@@ -23,9 +23,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -47,6 +48,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -255,16 +258,16 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     GroovyInlineMethodUtil.collectReferenceInfo(call, method);
     GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
-    ArrayList<GrVariable> innerVariables = new ArrayList<GrVariable>();
-    collectInnerVariables(newMethod.getBlock(), innerVariables);
+    ArrayList<PsiNamedElement> innerDefinitions = new ArrayList<PsiNamedElement>();
+    collectInnerDefinitions(newMethod.getBlock(), innerDefinitions);
 
     // there are only local variables and parameters (possible of inner closures)
-    for (GrVariable variable : innerVariables) {
-      String name = variable.getName();
+    for (PsiNamedElement namedElement : innerDefinitions) {
+      String name = namedElement.getName();
       if (name != null) {
         String newName = InlineMethodConflictSolver.suggestNewName(name, method, call);
-        if (!newName.equals(variable.getName())) {
-          final Collection<PsiReference> refs = ReferencesSearch.search(variable, GlobalSearchScope.projectScope(variable.getProject()), false).findAll();
+        if (!newName.equals(namedElement.getName())) {
+          final Collection<PsiReference> refs = ReferencesSearch.search(namedElement, GlobalSearchScope.projectScope(namedElement.getProject()), false).findAll();
           for (PsiReference ref : refs) {
             PsiElement element = ref.getElement();
             if (element instanceof GrReferenceExpression) {
@@ -272,7 +275,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
               ((GrReferenceExpression) element).replaceWithExpression(newExpr, false);
             }
           }
-          variable.setName(newName);
+          namedElement.setName(newName);
         }
       }
     }
@@ -280,15 +283,25 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     return newMethod;
   }
 
-
-  private static void collectInnerVariables(PsiElement element, ArrayList<GrVariable> variables) {
+  private static void collectInnerDefinitions(PsiElement element, ArrayList<PsiNamedElement> defintions) {
     if (element == null) return;
     for (PsiElement child : element.getChildren()) {
       if (child instanceof GrVariable && !(child instanceof GrParameter)) {
-        variables.add(((GrVariable) child));
+        defintions.add(((GrVariable) child));
+      } else if (child instanceof GrAssignmentExpression) {
+        GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
+        if (lValue instanceof GrReferenceExpression) {
+          GrReferenceExpression expr = (GrReferenceExpression) lValue;
+          PsiReference ref = expr.getReference();
+          if (ref == null ||
+              ref.resolve() == null &&
+                  expr.getQualifierExpression() == null) {
+            defintions.add(expr);
+          }
+        }
       }
       if (!(child instanceof GrClosableBlock)) {
-        collectInnerVariables(child, variables);
+        collectInnerDefinitions(child, defintions);
       }
     }
   }

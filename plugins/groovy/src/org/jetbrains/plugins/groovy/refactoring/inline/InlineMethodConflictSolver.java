@@ -22,6 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -85,6 +88,16 @@ public abstract class InlineMethodConflictSolver {
         child = child.getNextSibling();
         continue;
       }
+      if (child instanceof GrAssignmentExpression) {
+        GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
+        if (lValue instanceof GrReferenceExpression) {
+          GrReferenceExpression expr = (GrReferenceExpression) lValue;
+          if (expr.getQualifierExpression() == null && name.equals(expr.getName())) {
+            return false;
+          }
+        }
+      }
+
       if (child instanceof GrVariable && name.equals(((GrVariable) child).getName())) {
           return false;
       } else {
