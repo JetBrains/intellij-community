@@ -101,6 +101,10 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
     return false;
   }
 
+  public boolean isWritable() {
+    return true;
+  }
+
   public boolean isAnnotationType() {
     return false;
   }
