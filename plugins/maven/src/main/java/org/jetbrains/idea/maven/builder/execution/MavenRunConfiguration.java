@@ -17,6 +17,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.idea.maven.builder.BuilderBundle;
 import org.jetbrains.idea.maven.builder.MavenBuilder;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
 import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
@@ -98,6 +99,9 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
+    if (!myMavenSettings.buildParameters.getPomFile().isFile()) {
+      throw new RuntimeConfigurationError(BuilderBundle.message("maven.run.configuration.error.file.not.found"));
+    }
   }
 
   public Module[] getModules() {
