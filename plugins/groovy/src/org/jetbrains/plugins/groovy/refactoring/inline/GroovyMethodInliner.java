@@ -288,18 +288,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     for (PsiElement child : element.getChildren()) {
       if (child instanceof GrVariable && !(child instanceof GrParameter)) {
         defintions.add(((GrVariable) child));
-      } else if (child instanceof GrAssignmentExpression) {
-        GrExpression lValue = ((GrAssignmentExpression) child).getLValue();
-        if (lValue instanceof GrReferenceExpression) {
-          GrReferenceExpression expr = (GrReferenceExpression) lValue;
-          PsiReference ref = expr.getReference();
-          if (ref == null ||
-              ref.resolve() == null &&
-                  expr.getQualifierExpression() == null) {
-            defintions.add(expr);
-          }
-        }
-      }
+      } 
       if (!(child instanceof GrClosableBlock)) {
         collectInnerDefinitions(child, defintions);
       }
