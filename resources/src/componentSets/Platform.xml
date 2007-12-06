@@ -143,5 +143,9 @@
       <skipForDummyProject/>
     </component>
     
+    <component>
+      <implementation-class>com.intellij.openapi.vfs.encoding.EncodingProjectManager</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 </components>

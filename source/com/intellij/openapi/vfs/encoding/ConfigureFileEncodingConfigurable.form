@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.openapi.vfs.encoding.ConfigureFileEncodingConfigurable">
+  <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="20" y="20" width="622" height="400"/>
+    </constraints>
+    <properties/>
+    <border type="none" title=""/>
+    <children>
+      <component id="e9af6" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="&lt;html&gt;&#10;&lt;body&gt;&#10;Here you can configure default encoding, which IDEA would use when in doubt what encoding to load the file in. &lt;br&gt;Please note that some files specify encoding in their content, e.g. XML files in the XML prolog, or JSP files in the page directive. &lt;br&gt;This embedded encoding information will take precedence.&lt;br&gt;&#10;In the file tree below you can either specify default encoding for individual file, or for the directory or even the whole project. &lt;br&gt;In the latter cases file encoding would be determined from the innner-most directory for which encoding has been specified. &#10;&lt;/body&gt;&#10;&lt;/html&gt;"/>
+        </properties>
+      </component>
+      <scrollpane id="fe0c3" binding="myTreePanel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children/>
+      </scrollpane>
+    </children>
+  </grid>
+</form>

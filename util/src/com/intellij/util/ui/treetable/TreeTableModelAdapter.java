@@ -37,8 +37,8 @@ import javax.swing.tree.TreePath;
  * @author Scott Violet
  */
 public class TreeTableModelAdapter extends AbstractTableModel {
-  JTree tree;
-  TreeTableModel treeTableModel;
+  private final JTree tree;
+  private final TreeTableModel treeTableModel;
   private final Table table;
 
   public TreeTableModelAdapter(TreeTableModel treeTableModel, JTree tree, Table table) {
@@ -111,7 +111,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
   public boolean isCellEditable(int row, int column) {
     final Object o = nodeForRow(row);
-    return o == null? false : treeTableModel.isCellEditable(o, column);
+    return o != null && treeTableModel.isCellEditable(o, column);
   }
 
   public void setValueAt(Object value, int row, int column) {

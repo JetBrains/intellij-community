@@ -107,18 +107,9 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
                                                      boolean hasFocus,
                                                      int row,
                                                      int column) {
-        JComponent component = (JComponent)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
-                                                                               column);
-        if (isSelected) {
-          component.setBackground(table.getSelectionBackground());
-          component.setForeground(table.getSelectionForeground());
-        }
-        else {
-          component.setBackground(table.getBackground());
-          component.setForeground(table.getForeground());
-        }
+        JComponent component = (JComponent)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         component.setOpaque(isSelected);
-        return getTree();
+        return component;
       }
     };
   }

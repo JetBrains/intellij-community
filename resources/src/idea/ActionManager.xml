@@ -1274,5 +1274,9 @@
       <reference ref="Find"/>
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
+
+      <action id="ConfigureFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ConfigureFileEncodingAction" text="Configure Files Encoding" icon="/actions/lightning.png">
+        <add-to-group group-id="MainToolBar" anchor="after" relative-to-action="ChangeFileEncoding"/>
+      </action>
   </actions>
 </component>

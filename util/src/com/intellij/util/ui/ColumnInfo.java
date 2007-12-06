@@ -27,7 +27,7 @@ import java.util.List;
 
 public abstract class ColumnInfo <Item, Aspect> {
 
-  public final static class StringColumn extends ColumnInfo<String, String> {
+  public static final class StringColumn extends ColumnInfo<String, String> {
       public StringColumn(final String name) {
           super(name);
       }
@@ -39,7 +39,7 @@ public abstract class ColumnInfo <Item, Aspect> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.ColumnInfo");
   private String myName;
-  public static ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
+  public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
 
   public ColumnInfo(String name) {
     myName = name;

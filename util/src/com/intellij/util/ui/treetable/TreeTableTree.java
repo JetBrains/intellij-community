@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent;
 public class TreeTableTree extends Tree{
   private Border myBorder;
   private final TreeTable myTreeTable;
-  protected int myVisibleRow;
+  private int myVisibleRow;
   private boolean myCellFocused;
 
 
@@ -46,7 +46,7 @@ public class TreeTableTree extends Tree{
     super.updateUI();
     TreeCellRenderer tcr = super.getCellRenderer();
     if (tcr instanceof DefaultTreeCellRenderer) {
-      DefaultTreeCellRenderer dtcr = ((DefaultTreeCellRenderer)tcr);
+      DefaultTreeCellRenderer dtcr = (DefaultTreeCellRenderer)tcr;
       dtcr.setTextSelectionColor(UIUtil.getTableSelectionForeground());
       dtcr.setBackgroundSelectionColor(UIUtil.getTableSelectionBackground());
     }

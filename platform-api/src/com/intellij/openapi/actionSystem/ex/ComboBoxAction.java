@@ -54,7 +54,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
   protected class ComboBoxButton extends JButton {
-    private Presentation myPresentation;
+    private final Presentation myPresentation;
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
 

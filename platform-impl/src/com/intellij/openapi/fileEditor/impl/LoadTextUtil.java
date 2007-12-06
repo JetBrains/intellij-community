@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -86,9 +87,6 @@ public final class LoadTextUtil {
   }
 
   private static Charset dodetectCharset(final VirtualFile virtualFile, final byte[] content) {
-    //Charset saved = EncodingManager.getInstance().getEncoding(virtualFile, true);
-    //if (saved != null) return saved;
-
     CharsetSettings settings = CharsetSettings.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing();
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset()) : null;
@@ -102,6 +100,11 @@ public final class LoadTextUtil {
 
     FileType fileType = virtualFile.getFileType();
     String charsetName = fileType.getCharset(virtualFile);
+
+    if (charsetName == null) {
+      Charset saved = EncodingManager.getInstance().getEncoding(virtualFile, true);
+      if (saved != null) return saved;
+    }
     return CharsetToolkit.forName(charsetName);
   }
 

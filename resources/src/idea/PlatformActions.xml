@@ -269,6 +269,7 @@
       <separator/>
       <reference ref="CaptureMemorySnapShot"/>
       <reference ref="CaptureCPUUsageData"/>
+      <action id="ChangeFileEncoding" class="com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction" />
     </group>
 
     <group id="EditorPopupMenu" configurable="true">
