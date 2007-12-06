@@ -16,6 +16,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.psi.*;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 
 /**

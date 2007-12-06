@@ -33,8 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -153,7 +152,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
 
   private static final OurResolver RESOLVER = new OurResolver();
 
-  private static final MyTypesCalculator TYPES_CALCULATOR = new MyTypesCalculator();
+  private static final OurTypesCalculator TYPES_CALCULATOR = new OurTypesCalculator();
 
   public GrReferenceExpression getElementToCompare() {
     return this;
@@ -195,8 +194,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           result = manager.getElementFactory().createType(javaLangClass, substitutor);
         }
       }
-    } else if (resolved instanceof GrVariable) {
-      result = ((GrVariable) resolved).getTypeGroovy();
+    } else if (resolved instanceof GrVariableBase) {
+      result = ((GrVariableBase) resolved).getTypeGroovy();
     } else if (resolved instanceof PsiVariable) {
       result = ((PsiVariable) resolved).getType();
     } else
@@ -244,7 +243,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     }
   }
 
-  private static final class MyTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
+  private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
       final PsiType nominal = refExpr.getNominalTypeImpl();

@@ -22,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -56,5 +57,16 @@ public class GrParameterListImpl extends GroovyPsiElementImpl implements GrParam
 
   public int getParametersCount() {
     return getParameters().length;
+  }
+
+  public void addParameter(GrParameter parameter) {
+    GrParameter[] params = getParameters();
+    if (params.length == 0) {
+      getNode().addChild(parameter.getNode());
+    } else {
+      GrParameter last = params[params.length - 1];
+      getNode().addChild(parameter.getNode(), last.getNode());
+      getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", last.getNode());
+    }
   }
 }

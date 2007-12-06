@@ -30,19 +30,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 /**
  * @author ilyas
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrClosableBlockImpl");
-  private GrParameter mySyntheticItParameter;
+  private PsiParameter mySyntheticItParameter;
   private GrVariable myOwner;
   private static final String SYNTHETIC_PARAMETER_NAME = "it";
   private static final String OWNER_NAME = "owner";
@@ -60,7 +63,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     try {
       if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
 
-      for (final GrParameter parameter : getParameters()) {
+      for (final PsiParameter parameter : getAllParameters()) {
         if (!ResolveUtil.processElement(processor, parameter)) return false;
       }
 
@@ -86,14 +89,29 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         return parameterList.getParameters();
       }
 
-      return GrParameter.EMPTY_ARRAY;
     }
 
-    return new GrParameter[]{getSyntheticItParameter()};
+    return GrParameter.EMPTY_ARRAY;
+  }
+
+  private PsiParameter[] getAllParameters() {
+    if (hasParametersSection()) return getParameters();
+    return new PsiParameter[]{getSyntheticItParameter()};
   }
 
   public GrParameterListImpl getParameterList() {
     return findChildByClass(GrParameterListImpl.class);
+  }
+
+  public void addParameter(GrParameter parameter) {
+    GrParameterList parameterList = getParameterList();
+    if (findChildByType(GroovyTokenTypes.mCLOSABLE_BLOCK_OP) == null) {
+      ASTNode next = parameterList.getNode().getTreeNext();
+      getNode().addLeaf(GroovyTokenTypes.mCLOSABLE_BLOCK_OP, "->", next);
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next);
+    }
+
+    parameterList.addParameter(parameter);
   }
 
   public boolean hasParametersSection() {
@@ -114,13 +132,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     mySyntheticItParameter = null;
   }
 
-  public GrParameter getSyntheticItParameter() {
+  public PsiParameter getSyntheticItParameter() {
     if (mySyntheticItParameter == null) {
-      try {
-        mySyntheticItParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, null, this);
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      mySyntheticItParameter = new ClosureSyntheticParameter(getManager(), this);
     }
     return mySyntheticItParameter;
   }

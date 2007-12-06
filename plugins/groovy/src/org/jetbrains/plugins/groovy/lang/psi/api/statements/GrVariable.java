@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author: Dmitry.Krasilschikov
  * @date: 11.04.2007
  */
-public interface GrVariable extends PsiVariable, GroovyPsiElement {
+public interface GrVariable extends GrVariableBase {
   public static final GrVariable[] EMPTY_ARRAY = new GrVariable[0];
 
   @NotNull
@@ -37,9 +37,6 @@ public interface GrVariable extends PsiVariable, GroovyPsiElement {
 
   @Nullable
   GrExpression getInitializerGroovy();
-
-  @Nullable
-  PsiType getTypeGroovy();
 
   void setType(@Nullable PsiType type) throws IncorrectOperationException;
 

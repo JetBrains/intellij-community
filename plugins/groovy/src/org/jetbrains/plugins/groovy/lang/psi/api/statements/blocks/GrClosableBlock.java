@@ -29,10 +29,12 @@ import com.intellij.psi.PsiType;
  * @author ilyas
  */
 public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParametersOwner {
-  @NonNls
-  String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
+  @NonNls String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
+  @NonNls String IT_PARAMETER_NAME = "it";
 
   GrParameterList getParameterList();
+
+  void addParameter(GrParameter parameter);
 
   boolean hasParametersSection();
 
