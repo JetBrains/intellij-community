@@ -9,27 +9,23 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -125,18 +121,10 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       docManager.commitDocument(doc);
 
 
-      int rc = tryJoinStringLiteral(doc, psiFile, start);
-
-      if (rc == -1) {
-        PsiElement psiAtStartLineEnd = psiFile.findElementAt(start);
-        PsiElement psiAtNextLineStart = psiFile.findElementAt(end);
-        rc = tryJoinDeclaration(psiAtStartLineEnd, psiAtNextLineStart);
-        if (rc == -1) {
-          rc = tryUnwrapBlockStatement(psiAtStartLineEnd, psiAtNextLineStart);
-          if (rc == -1) {
-            rc = tryJoinProperties(doc, psiFile, start);
-          }
-        }
+      int rc = -1;
+      for(JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
+        rc = delegate.tryJoinLines(doc, psiFile, start, end);
+        if (rc != -1) break;
       }
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
 
@@ -208,218 +196,5 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
     }
-  }
-
-  private static int tryJoinProperties(final DocumentEx doc, final PsiFile psiFile, int start) {
-    if (!(psiFile instanceof PropertiesFile)) return -1;
-    // strip continuation char
-    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(doc.getText().substring(0, start + 1))) {
-      doc.deleteString(start, start + 1);
-      start--;
-    }
-    return start + 1;
-  }
-
-  private static int tryUnwrapBlockStatement(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
-    if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
-    if (!(elementAtStartLineEnd instanceof PsiJavaToken) || ((PsiJavaToken)elementAtStartLineEnd).getTokenType() != JavaTokenType.LBRACE) {
-      return -1;
-    }
-    final PsiElement codeBlock = elementAtStartLineEnd.getParent();
-    if (!(codeBlock instanceof PsiCodeBlock)) return -1;
-    if (!(codeBlock.getParent() instanceof PsiBlockStatement)) return -1;
-    final PsiElement parentStatement = codeBlock.getParent().getParent();
-
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(elementAtStartLineEnd.getProject());
-    if (!(parentStatement instanceof PsiIfStatement && codeStyleSettings.IF_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-          parentStatement instanceof PsiWhileStatement && codeStyleSettings.WHILE_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-          (parentStatement instanceof PsiForStatement || parentStatement instanceof PsiForeachStatement) &&
-          codeStyleSettings.FOR_BRACE_FORCE != CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-                                                                                     parentStatement instanceof PsiDoWhileStatement &&
-                                                                                     codeStyleSettings
-                                                                                       .DOWHILE_BRACE_FORCE !=
-                                                                                                            CodeStyleSettings
-                                                                                                              .FORCE_BRACES_ALWAYS)) {
-      return -1;
-    }
-    PsiElement foundStatement = null;
-    for (PsiElement element = elementAtStartLineEnd.getNextSibling(); element != null; element = element.getNextSibling()) {
-      if (element instanceof PsiWhiteSpace) continue;
-      if (element instanceof PsiJavaToken &&
-          ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE &&
-          element.getParent() == codeBlock) {
-        if (foundStatement == null) return -1;
-        break;
-      }
-      if (foundStatement != null) return -1;
-      foundStatement = element;
-    }
-    try {
-      final PsiElement newStatement = codeBlock.getParent().replace(foundStatement);
-
-      return newStatement.getTextRange().getStartOffset();
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    return -1;
-  }
-
-  private static int tryJoinDeclaration(PsiElement elementAtStartLineEnd, PsiElement elementAtNextLineStart) {
-    if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
-
-    // first line.
-    if (!(elementAtStartLineEnd instanceof PsiJavaToken)) return -1;
-    PsiJavaToken lastFirstLineToken = (PsiJavaToken)elementAtStartLineEnd;
-    if (lastFirstLineToken.getTokenType() != JavaTokenType.SEMICOLON) return -1;
-    if (!(lastFirstLineToken.getParent() instanceof PsiLocalVariable)) return -1;
-    PsiLocalVariable var = (PsiLocalVariable)lastFirstLineToken.getParent();
-
-    if (!(var.getParent() instanceof PsiDeclarationStatement)) return -1;
-    PsiDeclarationStatement decl = (PsiDeclarationStatement)var.getParent();
-    if (decl.getDeclaredElements().length > 1) return -1;
-
-    //second line.
-    if (!(elementAtNextLineStart instanceof PsiJavaToken)) return -1;
-    PsiJavaToken firstNextLineToken = (PsiJavaToken)elementAtNextLineStart;
-    if (firstNextLineToken.getTokenType() != JavaTokenType.IDENTIFIER) return -1;
-    if (!(firstNextLineToken.getParent() instanceof PsiReferenceExpression)) return -1;
-    PsiReferenceExpression ref = (PsiReferenceExpression)firstNextLineToken.getParent();
-    PsiElement refResolved = ref.resolve();
-
-    PsiManager psiManager = ref.getManager();
-    if (!psiManager.areElementsEquivalent(refResolved, var)) return -1;
-    if (!(ref.getParent() instanceof PsiAssignmentExpression)) return -1;
-    PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
-    if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
-
-    if (ReferencesSearch.search(var, new LocalSearchScope(assignment.getRExpression()), false).toArray(new PsiReference[0]).length > 0) {
-      return -1;
-    }
-
-    final PsiElementFactory factory = psiManager.getElementFactory();
-    PsiExpression initializerExpression;
-    final IElementType originalOpSign = assignment.getOperationSign().getTokenType();
-    if (originalOpSign == JavaTokenType.EQ) {
-      initializerExpression = assignment.getRExpression();
-    }
-    else {
-      if (var.getInitializer() == null) return -1;
-      String opSign = null;
-      if (originalOpSign == JavaTokenType.ANDEQ) {
-        opSign = "&";
-      }
-      else if (originalOpSign == JavaTokenType.ASTERISKEQ) {
-        opSign = "*";
-      }
-      else if (originalOpSign == JavaTokenType.DIVEQ) {
-        opSign = "/";
-      }
-      else if (originalOpSign == JavaTokenType.GTGTEQ) {
-        opSign = ">>";
-      }
-      else if (originalOpSign == JavaTokenType.GTGTGTEQ) {
-        opSign = ">>>";
-      }
-      else if (originalOpSign == JavaTokenType.LTLTEQ) {
-        opSign = "<<";
-      }
-      else if (originalOpSign == JavaTokenType.MINUSEQ) {
-        opSign = "-";
-      }
-      else if (originalOpSign == JavaTokenType.OREQ) {
-        opSign = "|";
-      }
-      else if (originalOpSign == JavaTokenType.PERCEQ) {
-        opSign = "%";
-      }
-      else if (originalOpSign == JavaTokenType.PLUSEQ) {
-        opSign = "+";
-      }
-      else if (originalOpSign == JavaTokenType.XOREQ) {
-        opSign = "^";
-      }
-
-      try {
-        initializerExpression =
-          factory.createExpressionFromText(var.getInitializer().getText() + opSign + assignment.getRExpression().getText(), var);
-        initializerExpression = (PsiExpression)CodeStyleManager.getInstance(psiManager).reformat(initializerExpression);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return -1;
-      }
-    }
-
-    PsiExpressionStatement statement = (PsiExpressionStatement)assignment.getParent();
-
-    int startOffset = decl.getTextRange().getStartOffset();
-    try {
-      PsiDeclarationStatement newDecl = factory.createVariableDeclarationStatement(var.getName(), var.getType(), initializerExpression);
-      PsiVariable newVar = (PsiVariable)newDecl.getDeclaredElements()[0];
-      if (var.getModifierList().getText().length() > 0) {
-        newVar.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-      }
-      newVar.getModifierList().replace(var.getModifierList());
-      PsiVariable variable = (PsiVariable)newDecl.getDeclaredElements()[0];
-      final int offsetBeforeEQ = variable.getNameIdentifier().getTextRange().getEndOffset();
-      final int offsetAfterEQ = variable.getInitializer().getTextRange().getStartOffset() + 1;
-      newDecl = (PsiDeclarationStatement)CodeStyleManager.getInstance(psiManager).reformatRange(newDecl, offsetBeforeEQ, offsetAfterEQ);
-
-
-      decl.replace(newDecl);
-      statement.delete();
-      return startOffset + newDecl.getTextRange().getEndOffset() - newDecl.getTextRange().getStartOffset();
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return -1;
-    }
-  }
-
-  private static int tryJoinStringLiteral(Document doc, PsiFile psiFile, int offsetNear) {
-    CharSequence text = doc.getCharsSequence();
-
-    int start = offsetNear;
-    while (text.charAt(start) == ' ' || text.charAt(start) == '\t' || text.charAt(start) == '+') start--;
-    if (text.charAt(start) == '\"') start--;
-    if (start < offsetNear) start++;
-
-    int state = 0;
-    int startQuoteOffset = -1;
-    state_loop:
-    for (int j = start; j < doc.getTextLength(); j++) {
-      switch (text.charAt(j)) {
-        case ' ':
-        case '\t':
-          break;
-
-        case '\"':
-          if (state == 0) {
-            state = 1;
-            startQuoteOffset = j;
-            PsiElement psiAtOffset = psiFile.findElementAt(j);
-            if (!(psiAtOffset instanceof PsiJavaToken)) return -1;
-            if (((PsiJavaToken)psiAtOffset).getTokenType() != JavaTokenType.STRING_LITERAL) return -1;
-            break;
-          }
-
-          if (state == 2) {
-            doc.deleteString(startQuoteOffset, j + 1);
-            return startQuoteOffset;
-          }
-          break state_loop;
-
-        case '+':
-          if (state != 1) break state_loop;
-          state = 2;
-          break;
-
-        default:
-          break state_loop;
-      }
-    }
-
-    return -1;
   }
 }
