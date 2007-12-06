@@ -9,8 +9,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.TestLookupManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import junit.framework.TestSuite;
-import junit.textui.TestRunner;
 
 import java.util.Arrays;
 
@@ -201,7 +199,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     super.tearDown();
   }
 
-  public static void main(String[] args) {
-    new TestRunner().doRun(new TestSuite(AntCompletionTest.class));
-  }
+  //public static void main(String[] args) {
+  //  new TestRunner().doRun(new TestSuite(AntCompletionTest.class));
+  //}
 }

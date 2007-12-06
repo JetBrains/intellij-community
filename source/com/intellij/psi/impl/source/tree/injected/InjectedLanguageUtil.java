@@ -123,6 +123,10 @@ public class InjectedLanguageUtil {
     return tokens;
   }
 
+  public static boolean isInjectedFragment(final PsiFile file) {
+    return file.getViewProvider() instanceof MyFileViewProvider;
+  }
+
   private static class Place {
     private final PsiFile myInjectedPsi;
     private final List<PsiLanguageInjectionHost.Shred> myShreds;
@@ -371,11 +375,16 @@ public class InjectedLanguageUtil {
 
   // consider injected elements
   public static PsiElement findElementAt(PsiFile file, int offset) {
-    PsiElement injected = findInjectedElementAt(file, offset);
-    if (injected != null) {
-      return injected;
+    if (!isInjectedFragment(file)) {
+      PsiElement injected = findInjectedElementAt(file, offset);
+      if (injected != null) {
+        return injected;
+      }
     }
-    return file.findElementAt(offset);
+    //PsiElement at = file.findElementAt(offset);
+    FileViewProvider viewProvider = file.getViewProvider();
+    PsiElement result = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
+    return result;
   }
 
   private static final InjectedPsiProvider INJECTED_PSI_PROVIDER = new InjectedPsiProvider();
@@ -415,7 +424,8 @@ public class InjectedLanguageUtil {
     return null;
   }
 
-  private static PsiElement findInjectedElementAt(PsiFile file, final int offset) {
+  public static PsiElement findInjectedElementAt(PsiFile file, final int offset) {
+    if (isInjectedFragment(file)) return null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     documentManager.commitAllDocuments();
 
@@ -423,7 +433,7 @@ public class InjectedLanguageUtil {
     PsiElement inj = element == null ? null : findInside(element, file, offset, documentManager);
     if (inj != null) return inj;
 
-    if (offset != 0) {
+    if (offset != 0) {                                                    
       PsiElement element1 = file.findElementAt(offset - 1);
       if (element1 != element && element1 != null) return findInside(element1, file, offset, documentManager);
     }
@@ -622,7 +632,7 @@ public class InjectedLanguageUtil {
           ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(myLanguage);
           assert parserDefinition != null;
           PsiFile psiFile = parserDefinition.createFile(viewProvider);
-          assert psiFile.getViewProvider() instanceof MyFileViewProvider : psiFile.getViewProvider();
+          assert isInjectedFragment(psiFile) : psiFile.getViewProvider();
 
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
           psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);

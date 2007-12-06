@@ -162,7 +162,8 @@ public class MyTestInjector {
               paramList += parameter.getName();
             }
             @NonNls String header = "function " + method.getName() + "("+paramList+") {";
-            placesToInject.addPlace(js, textRange, header, "}");
+            Language gwt = findLanguageByID("GWT JavaScript");
+            placesToInject.addPlace(gwt, textRange, header, "}");
             return;
           }
         }

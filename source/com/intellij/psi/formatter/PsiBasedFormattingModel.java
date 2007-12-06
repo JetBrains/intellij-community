@@ -146,7 +146,10 @@ public class PsiBasedFormattingModel implements FormattingModel {
   }
 
   private ASTNode findElementAt(final int offset) {
-    PsiElement psiElement = InjectedLanguageUtil.findElementAt(myASTNode.getPsi().getContainingFile(), offset);
+    PsiFile containingFile = myASTNode.getPsi().getContainingFile();
+
+    PsiElement psiElement = InjectedLanguageUtil.findInjectedElementAt(containingFile, offset);
+    if (psiElement == null) psiElement = containingFile.findElementAt(offset);
     if (psiElement == null) return null;
     if (psiElement instanceof PsiFile) {
       psiElement = myASTNode.getPsi().findElementAt(offset);

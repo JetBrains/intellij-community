@@ -11,18 +11,17 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.impl.PsiElementPattern;
 import static com.intellij.patterns.impl.StandardPatterns.psiElement;
@@ -45,7 +44,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Key.create("COMPLETION_HANDLER_CLASS_KEY");
 
   private LookupItemPreferencePolicy myPreferencePolicy = null;
-  private static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
+  private static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(
+    psiElement().whitespaceOrComment(),
+    psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
     final Document document = editor.getDocument();
@@ -390,43 +391,65 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
-    final PsiFile fileCopy = createFileCopy(context.file);
-    Document oldDoc = fileCopy.getViewProvider().getDocument();
-    oldDoc.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
-    PsiDocumentManager.getInstance(fileCopy.getProject()).commitDocument(oldDoc);
+    PsiFile oldFileCopy = createFileCopy(context.file);
+    PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
+    Project project = hostFile.getProject();
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
+    // is null in tests
+    int hostStartOffset = injectedLanguageManager == null ? context.startOffset : injectedLanguageManager.injectedToHost(oldFileCopy, TextRange.from(context.startOffset, 0)).getStartOffset();
+    Document document = oldFileCopy.getViewProvider().getDocument();
+
+    document.insertString(context.startOffset, CompletionUtil.DUMMY_IDENTIFIER);
+    PsiDocumentManager.getInstance(project).commitDocument(document);
+    PsiFile fileCopy = InjectedLanguageUtil.findInjectedPsiAt(hostFile, hostStartOffset);
+    if (fileCopy == null) {
+      PsiElement elementAfterCommit = findElementAt(hostFile, hostStartOffset);
+      fileCopy = elementAfterCommit == null ? oldFileCopy : elementAfterCommit.getContainingFile();
+    }
+
     context.offset = context.startOffset;
 
-    Editor oldEditor = context.editor;
-    Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(oldEditor, fileCopy, context.startOffset);
-    if (injectedEditor != oldEditor) {
+    if (oldFileCopy != fileCopy) {
       // newly inserted identifier can well end up in the injected language region
-      final EditorWindow editorDelegate = (EditorWindow)injectedEditor;
-      int newOffset1 = editorDelegate.logicalPositionToOffset(editorDelegate.hostToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
-      int newOffset2 = editorDelegate.logicalPositionToOffset(editorDelegate.hostToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
-      PsiFile injectedFile = editorDelegate.getInjectedFile();
-      CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
-      newContext.offset = newContext.startOffset;
-      PsiElement element = injectedFile.findElementAt(newContext.startOffset);
-      if (element == null) {
-        LOG.assertTrue(false, "offset " + newContext.startOffset + " at:\n" + injectedFile.getText());
+      Editor oldEditor = context.editor;
+      Editor editor = EditorFactory.getInstance().createEditor(document, project);
+      Editor newEditor = InjectedLanguageUtil.getEditorForInjectedLanguage(editor, hostFile, context.startOffset);
+      if (newEditor instanceof EditorWindow) {
+        EditorWindow injectedEditor = (EditorWindow)newEditor;
+        int newOffset1 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.startOffset)));
+        int newOffset2 = injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(oldEditor.offsetToLogicalPosition(context.selectionEndOffset)));
+        PsiFile injectedFile = injectedEditor.getInjectedFile();
+        CompletionContext newContext = new CompletionContext(context.project, injectedEditor, injectedFile, newOffset1, newOffset2);
+        newContext.offset = newContext.startOffset;
+        PsiElement element = findElementAt(injectedFile, newContext.startOffset);
+        if (element == null) {
+          LOG.assertTrue(false, "offset " + newContext.startOffset + " at:\n" + injectedFile.getText());
+        }
+        EditorFactory.getInstance().releaseEditor(editor);
+        return Pair.create(newContext, element);
       }
-      return Pair.create(newContext, element);
+      EditorFactory.getInstance().releaseEditor(editor);
     }
-    PsiElement element;
+    PsiElement element = findElementAt(fileCopy, context.startOffset);
+    if (element == null) {
+      LOG.assertTrue(false, "offset " + context.startOffset + " at:\n" + fileCopy.getText());
+    }
+    return Pair.create(context, element);
+  }
+
+  private static PsiElement findElementAt(final PsiFile fileCopy, int startOffset) {
+    final PsiElement element;
     if (CodeInsightUtil.isAntFile(fileCopy)) {
       //need xml element but ant reference
       //TODO: need a better way of handling this
       final ASTNode fileNode = fileCopy.getViewProvider().getPsi(StdLanguages.XML).getNode();
       assert fileNode != null;
-      element = fileNode.findLeafElementAt(context.startOffset).getPsi();
+      element = fileNode.findLeafElementAt(startOffset).getPsi();
     }
     else {
-      element = fileCopy.findElementAt(context.startOffset);
+      element = fileCopy.findElementAt(startOffset);
     }
-    if (element == null) {
-      LOG.assertTrue(false, "offset " + context.startOffset + " at:\n" + fileCopy.getText());
-    }
-    return Pair.create(context, element);
+    return element;
   }
 
 
