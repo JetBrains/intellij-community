@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.SortableConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
@@ -22,7 +23,7 @@ import java.util.Hashtable;
 /**
  * @author Eugene Belyaev
  */
-public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable, SortableConfigurable {
   private MyComponent myComponent;
 
   public String getDisplayName() {
@@ -270,6 +271,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
   public String getHelpTopic() {
     return "preferences.lookFeel";
+  }
+
+  public int getSortWeight() {
+    return 1;
   }
 
   private static final class MyLafComboBoxRenderer extends DefaultListCellRenderer {

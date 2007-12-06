@@ -45,7 +45,7 @@ import java.util.List;
       file = "$WORKSPACE_FILE$"
     )}
 )
-public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, PersistentStateComponent<ProjectStructureConfigurable.UIState>, Place.Navigator {
+public class ProjectStructureConfigurable extends BaseConfigurable implements SearchableConfigurable, PersistentStateComponent<ProjectStructureConfigurable.UIState>, Place.Navigator, SortableConfigurable {
 
   public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
 
@@ -488,5 +488,9 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
 
   public JComponent getPreferredFocusedComponent() {
     return myToFocus;
+  }
+
+  public int getSortWeight() {
+    return 0;
   }
 }

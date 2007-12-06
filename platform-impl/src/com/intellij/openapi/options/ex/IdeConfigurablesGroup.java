@@ -6,10 +6,8 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,9 +30,7 @@ public class IdeConfigurablesGroup implements ConfigurableGroup {
     final Configurable[] extensions = app.getExtensions(Configurable.APPLICATION_CONFIGURABLES);
     Configurable[] components = app.getComponents(Configurable.class);
 
-    List<Configurable> result = new ArrayList<Configurable>();
-    result.addAll(Arrays.asList(extensions));
-    result.addAll(Arrays.asList(components));
+    List<Configurable> result = ProjectConfigurablesGroup.buildConfigurablesList(extensions, components);
 
     removeAssistants(result);
 

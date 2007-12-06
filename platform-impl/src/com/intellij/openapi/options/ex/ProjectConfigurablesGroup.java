@@ -1,15 +1,9 @@
 package com.intellij.openapi.options.ex;
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.NonDefaultProjectConfigurable;
-import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author max
@@ -39,9 +33,7 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
     final Configurable[] extensions = myProject.getExtensions(Configurable.PROJECT_CONFIGURABLES);
     Configurable[] components = myProject.getComponents(Configurable.class);
 
-    List<Configurable> result = new ArrayList<Configurable>();
-    result.addAll(Arrays.asList(extensions));
-    result.addAll(Arrays.asList(components));
+    List<Configurable> result = buildConfigurablesList(extensions, components);
 
     if (isDefault()) {
       final Iterator<Configurable> iterator = result.iterator();
@@ -56,6 +48,31 @@ public class ProjectConfigurablesGroup implements ConfigurableGroup {
     IdeConfigurablesGroup.removeAssistants(result);
 
     return result.toArray(new Configurable[result.size()]);
+  }
+
+  static List<Configurable> buildConfigurablesList(final Configurable[] extensions, final Configurable[] components) {
+    List<Configurable> result = new ArrayList<Configurable>();
+    result.addAll(Arrays.asList(extensions));
+    result.addAll(Arrays.asList(components));
+
+    List<Configurable> sortedResult = new ArrayList<Configurable>();
+    for(Configurable c: result) {
+      if (c instanceof SortableConfigurable) {
+        sortedResult.add(c);
+      }
+    }
+    Collections.sort(sortedResult, new Comparator<Configurable>() {
+      public int compare(final Configurable o1, final Configurable o2) {
+        return ((SortableConfigurable) o1).getSortWeight() - ((SortableConfigurable) o2).getSortWeight();
+      }
+    });
+    for(Configurable c: result) {
+      if (!(c instanceof SortableConfigurable)) {
+        sortedResult.add(c);
+      }
+    }
+    result = sortedResult;
+    return result;
   }
 
   public int hashCode() {
