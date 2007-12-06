@@ -268,10 +268,7 @@ public class MockPsiManager extends PsiManagerEx {
 
   @NotNull
   public PsiNameHelper getNameHelper() {
-    if (true) {
-      throw new UnsupportedOperationException();
-    }
-    return new PsiNameHelperImpl(null);
+    return new PsiNameHelperImpl(new MockJavaPsiFacade());
   }
 
   //public PsiConstantEvaluationHelper getConstantEvaluationHelper() {

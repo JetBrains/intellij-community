@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class MockProject extends MockComponentManager implements ProjectEx {
   public MockProject() {
-    super(ApplicationManager.getApplication().getPicoContainer());
+    super(ApplicationManager.getApplication() != null ? ApplicationManager.getApplication().getPicoContainer() : null);
   }
 
   public boolean isSavePathsRelative() {
