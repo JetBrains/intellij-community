@@ -81,7 +81,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     return new DirectoriesSearch().search(scope).toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
-  public RowIcon getPackageIcon(final int elementFlags) {
+  public RowIcon getElementIcon(final int elementFlags) {
     return createLayeredIcon(Icons.PACKAGE_ICON, elementFlags);
   }
 
