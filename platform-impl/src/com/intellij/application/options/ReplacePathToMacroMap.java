@@ -37,7 +37,16 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   };
 
   public void addMacroReplacement(String path, String macroName) {
-    put(quotePath(path), "$" + macroName + "$");
+    final String p = quotePath(path);
+    final String m = "$" + macroName + "$";
+
+    put(p, m);
+    put("file:" + p, "file:" + m);
+    put("file:/" + p, "file:/" + m);
+    put("file://" + p, "file://" + m);
+    put("jar:" + p, "jar:" + m);
+    put("jar:/" + p, "jar:/" + m);
+    put("jar://" + p, "jar://" + m);
   }
 
   public String substitute(String text, boolean caseSensitive, final Set<String> usedMacros) {
