@@ -24,6 +24,7 @@ import javax.imageio.stream.ImageInputStream;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,41 +41,24 @@ public class ImagePreviewComponent extends JPanel {
   private static final Key<String> FORMAT_KEY = Key.create("Image.format");
 
   private static final List<String> supportedExtensions = Arrays.asList(ImageIO.getReaderFormatNames());
-  private BufferedImage myImage;
-  private Dimension myPreferredSize;
 
   private ImagePreviewComponent(@NotNull final BufferedImage image) {
-    myImage = image;
+    setLayout(new BorderLayout());
+
+    add(new ImageComp(image), BorderLayout.CENTER);
+    add(createLabel(image), BorderLayout.SOUTH);
 
     setBackground(UIUtil.getToolTipBackground());
     setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-
-    if (image.getWidth() > 300 || image.getHeight() > 300) {
-      // will make image smaller
-      final float factor = 300.0f / Math.max(image.getWidth(), image.getHeight());
-      myPreferredSize = new Dimension((int)(image.getWidth() * factor) + 12, (int)(image.getHeight() * factor) + 12);
-    }
-    else {
-      myPreferredSize = new Dimension(image.getWidth() + 12, image.getHeight() + 12);
-    }
   }
 
-  public Dimension getPreferredSize() {
-    return myPreferredSize;
-  }
-
-  public Dimension getMinimumSize() {
-    return getPreferredSize();
-  }
-
-  public Dimension getMaximumSize() {
-    return getPreferredSize();
-  }
-
-  public void paint(final Graphics g) {
-    super.paint(g);
-    Rectangle r = getBounds();
-    g.drawImage(myImage, 6, 6, r.width - 12, r.height - 12, this);
+  @NotNull
+  private static JLabel createLabel(@NotNull final BufferedImage image) {
+    final int width = image.getWidth();
+    final int height = image.getHeight();
+    final ColorModel colorModel = image.getColorModel();
+    final int i = colorModel.getPixelSize();
+    return new JLabel(width + "x" + height + ", " + i + "bpp");
   }
 
   @SuppressWarnings({"AutoUnboxing"})
@@ -185,5 +169,44 @@ public class ImagePreviewComponent extends JPanel {
     }
 
     return null;
+  }
+
+  private static class ImageComp extends JComponent {
+    private BufferedImage myImage;
+    private Dimension myPreferredSize;
+
+    private ImageComp(@NotNull final BufferedImage image) {
+      myImage = image;
+
+      if (image.getWidth() > 300 || image.getHeight() > 300) {
+        // will make image smaller
+        final float factor = 300.0f / Math.max(image.getWidth(), image.getHeight());
+        myPreferredSize = new Dimension((int)(image.getWidth() * factor), (int)(image.getHeight() * factor));
+      }
+      else {
+        myPreferredSize = new Dimension(image.getWidth(), image.getHeight());
+      }
+    }
+
+    public void paint(final Graphics g) {
+      super.paint(g);
+      Rectangle r = getBounds();
+      final int width = myImage.getWidth();
+      final int height = myImage.getHeight();
+
+      g.drawImage(myImage, 0, 0, r.width > width ? width : r.width, r.height > height ? height : r.height, this);
+    }
+
+    public Dimension getPreferredSize() {
+      return myPreferredSize;
+    }
+
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
+
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
+    }
   }
 }
