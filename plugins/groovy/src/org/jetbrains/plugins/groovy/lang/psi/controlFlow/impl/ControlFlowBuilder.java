@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
@@ -109,9 +110,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         if (refExpr.getQualifierExpression() == null && !PsiUtil.isLValue(refExpr)) {
           if (!(refExpr.getParent() instanceof GrCall)) {
             final String refName = refExpr.getReferenceName();
-            PropertyResolverProcessor processor = new PropertyResolverProcessor(refName, refExpr, false);
-            ResolveUtil.treeWalkUp(refExpr, processor, closure.getParent());
-            if (!processor.hasCandidates()) {
+            if (!hasDeclaredVariable(refName, closure, refExpr)) {
               names.add(refName);
             }
           }
@@ -607,5 +606,28 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
       return succ;
    }
+  }
+
+  private static boolean hasDeclaredVariable(String name, GrClosableBlock scope, PsiElement place) {
+    PsiElement prev = null;
+    while (place != scope) {
+      if (place instanceof GrCodeBlock) {
+        GrStatement[] statements = ((GrCodeBlock) place).getStatements();
+        for (GrStatement statement : statements) {
+          if (statement == prev) break;
+          if (statement instanceof GrVariableDeclaration) {
+            GrVariable[] variables = ((GrVariableDeclaration) statement).getVariables();
+            for (GrVariable variable : variables) {
+              if (name.equals(variable.getName())) return true;
+            }
+          }
+        }
+      }
+
+      prev = place;
+      place = place.getParent();
+    }
+
+    return false;
   }
 }

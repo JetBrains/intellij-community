@@ -45,13 +45,9 @@ import java.util.*;
  */
 public class ResolveUtil {
   public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor) {
-    return treeWalkUp(place, processor, null);
-  }
-
-  public static boolean treeWalkUp(PsiElement place, PsiScopeProcessor processor, PsiElement scopeToBreak) {
     PsiElement lastParent = null;
     PsiElement run = place;
-    while (run != scopeToBreak) {
+    while (run != null) {
       if (!run.processDeclarations(processor, PsiSubstitutor.EMPTY, lastParent, place)) return false;
       lastParent = run;
       run = run.getParent();
