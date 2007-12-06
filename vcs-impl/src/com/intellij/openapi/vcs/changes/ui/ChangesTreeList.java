@@ -213,7 +213,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     final List<T> sortedChanges = new ArrayList<T>(changes);
     Collections.sort(sortedChanges, new Comparator<T>() {
       public int compare(final T o1, final T o2) {
-        return TreeModelBuilder.getPathForObject(o1).getName().compareToIgnoreCase(TreeModelBuilder.getPathForObject(o1).getName());
+        return TreeModelBuilder.getPathForObject(o1).getName().compareToIgnoreCase(TreeModelBuilder.getPathForObject(o2).getName());
       }
     });
 
@@ -227,6 +227,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
 
         if (myIncludedChanges.size() > 0) {
