@@ -42,6 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -397,5 +398,15 @@ public class PsiUtil {
     } else {
       return true;
     }
+  }
+
+  public static boolean isAccessible(PsiElement place, PsiMember member) {
+
+    if (place instanceof GrReferenceExpression && ((GrReferenceExpression) place).getQualifierExpression() == null) {
+      if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script membbers from the same script file
+        return true;
+      }
+    }
+    return com.intellij.psi.util.PsiUtil.isAccessible(member, place, null);
   }
 }

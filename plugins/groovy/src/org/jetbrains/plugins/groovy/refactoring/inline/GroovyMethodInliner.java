@@ -30,12 +30,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
@@ -48,8 +48,6 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author ilyas
@@ -68,7 +66,20 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     PsiElement element = reference.getElement();
     assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
     GrCallExpression call = (GrCallExpression) element.getParent();
-    return new ArrayList<String>();
+    Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(myMethod);
+    return collectConflicts(call, infos);
+  }
+
+  private static Collection<String> collectConflicts(GrCallExpression call, Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos) {
+    ArrayList<String> conflicts = new ArrayList<String>();
+
+    for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
+      if (!(PsiUtil.isAccessible(call, info.declaration))) {
+        conflicts.add("Member "+info.getPresentation() + " of " + info.containingClass.getName() + " is not accessible");
+      }
+    }
+
+    return conflicts;
   }
 
   public void inlineReference(PsiReference reference, PsiElement referenced) {
@@ -255,9 +266,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
 
     // todo add qualifiers to references
-    GroovyInlineMethodUtil.collectReferenceInfo(call, method);
     GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
+    Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(method);
+
     ArrayList<PsiNamedElement> innerDefinitions = new ArrayList<PsiNamedElement>();
     collectInnerDefinitions(newMethod.getBlock(), innerDefinitions);
 

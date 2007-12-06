@@ -39,13 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author ilyas
@@ -107,7 +107,7 @@ public abstract class GroovyInlineMethodUtil {
       return null;
     }
 
-    if (hasBadReturns(method) && !isTailMethodCall(call)) { 
+    if (hasBadReturns(method) && !isTailMethodCall(call)) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow", REFACTORING_NAME);
       showErrorMessage(message, project);
       return null;
@@ -118,6 +118,7 @@ public abstract class GroovyInlineMethodUtil {
 
   /**
    * Checks wheter given method call is tail call of other method or closure
+   *
    * @param call [tail?] Method call
    * @return
    */
@@ -269,18 +270,56 @@ public abstract class GroovyInlineMethodUtil {
     return false;
   }
 
-  public static Collection<ReferenceExpressionInfo> collectReferenceInfo(GrCallExpression call, GrMethod method) {
-    return null;
+  public static Collection<ReferenceExpressionInfo> collectReferenceInfo(GrMethod method) {
+    ArrayList<ReferenceExpressionInfo> list = new ArrayList<ReferenceExpressionInfo>();
+    collectReferenceInfoImpl(list, method, method);
+    return list;
+  }
+
+  private static void collectReferenceInfoImpl(Collection<ReferenceExpressionInfo> infos, PsiElement elem, GrMethod method) {
+    PsiClass ourClass = method.getContainingClass();
+    if (elem instanceof GrReferenceExpression) {
+      GrReferenceExpression expr = (GrReferenceExpression) elem;
+      PsiReference ref = expr.getReference();
+      if (ref != null) {
+        PsiElement declaration = ref.resolve();
+        if (declaration instanceof GrMember) {
+          int offsetInMethod = expr.getTextOffset() - method.getTextOffset();
+          GrMember member = (GrMember) declaration;
+          infos.add(new ReferenceExpressionInfo(expr, offsetInMethod, member, member.getContainingClass()));
+        }
+      }
+    }
+    for (PsiElement element : elem.getChildren()) {
+      collectReferenceInfoImpl(infos, element, method);
+    }
+
   }
 
   static class ReferenceExpressionInfo {
-    public final PsiElement declaration;
+    public final PsiMember declaration;
     public final GrReferenceExpression expression;
     public final int offsetInMethod;
     public final PsiClass containingClass;
 
+    public String getPresentation() {
+      return declaration.getName();
+    }
 
-    public ReferenceExpressionInfo(GrReferenceExpression expression, int offsetInMethod, PsiElement declaration, PsiClass containingClass) {
+    public boolean isStatic() {
+      return declaration.hasModifierProperty(PsiModifier.STATIC);
+    }
+
+    public boolean isPrivate() {
+      return declaration.hasModifierProperty(PsiModifier.PRIVATE);
+    }
+
+    public boolean isProtected() {
+      return declaration.hasModifierProperty(PsiModifier.PROTECTED);
+    }
+
+
+    public ReferenceExpressionInfo(GrReferenceExpression expression, int offsetInMethod, PsiMember declaration, PsiClass containingClass) {
       this.expression = expression;
       this.offsetInMethod = offsetInMethod;
       this.declaration = declaration;

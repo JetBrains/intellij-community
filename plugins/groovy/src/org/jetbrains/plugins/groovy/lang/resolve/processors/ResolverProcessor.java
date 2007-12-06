@@ -17,15 +17,10 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -81,16 +76,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   protected boolean isAccessible(PsiNamedElement namedElement) {
-    if (!(namedElement instanceof PsiMember)) return true;
-
-    final PsiMember member = (PsiMember) namedElement;
-
-    if (myPlace instanceof GrReferenceExpression && ((GrReferenceExpression) myPlace).getQualifierExpression() == null) {
-      if (member.getContainingClass() instanceof GroovyScriptClass) { //calling toplevel script membbers from the same script file
-        return true;
-      }
-    }
-    return PsiUtil.isAccessible(member, myPlace, null);
+    return !(namedElement instanceof PsiMember) ||
+        org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isAccessible(myPlace, ((PsiMember) namedElement));
   }
 
   protected boolean isStaticsOK(PsiNamedElement element) {
