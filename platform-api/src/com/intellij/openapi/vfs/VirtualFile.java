@@ -131,6 +131,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the extension or null if file name doesn't contain '.'
    */
   @Nullable
+  @NonNls
   public String getExtension() {
     String name = getName();
     int index = name.lastIndexOf('.');
@@ -145,6 +146,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the name without extension
    *         if there is no '.' in it
    */
+  @NonNls
   @NotNull
   public String getNameWithoutExtension() {
     String name = getName();
