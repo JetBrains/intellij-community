@@ -31,6 +31,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -44,6 +45,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
     myProject = project;
   }
 
+  @Nullable
   public UsageGroup groupUsage(Usage usage) {
     if (usage instanceof UsageInFile) {
       UsageInFile usageInFile = (UsageInFile)usage;
@@ -52,8 +54,10 @@ public class PackageGroupingRule implements UsageGroupingRule {
         VirtualFile dir = file.getParent();
         if (dir == null) return null;
         PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-        if (aPackage != null) return new PackageGroup(aPackage);
+        if (psiDirectory != null) {
+          PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+          if (aPackage != null) return new PackageGroup(aPackage);
+        }
         return new DirectoryGroup(dir);
       }
     }

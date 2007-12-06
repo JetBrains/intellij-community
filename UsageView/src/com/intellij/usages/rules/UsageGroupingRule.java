@@ -17,8 +17,10 @@ package com.intellij.usages.rules;
 
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import org.jetbrains.annotations.Nullable;
 
 public interface UsageGroupingRule {
   UsageGroupingRule[] EMPTY_ARRAY = new UsageGroupingRule[0];
+  @Nullable
   UsageGroup groupUsage(Usage usage);
 }
