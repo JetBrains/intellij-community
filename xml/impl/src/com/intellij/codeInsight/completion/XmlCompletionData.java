@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.codeInspection.InspectionProfile;
@@ -278,7 +279,7 @@ public class XmlCompletionData extends CompletionData {
       return false;
     }
 
-    private void insertIncompleteTag(char completionChar, Editor editor, Project project, XmlElementDescriptor descriptor, XmlTag tag) {
+    private void insertIncompleteTag(char completionChar, final Editor editor, Project project, XmlElementDescriptor descriptor, XmlTag tag) {
       TemplateManager templateManager = TemplateManager.getInstance(project);
       Template template = templateManager.createTemplate("", "");
 
@@ -305,6 +306,7 @@ public class XmlCompletionData extends CompletionData {
       }
 
       boolean toReformat = true;
+      boolean weInsertedSomeCodeThatCouldBeInvalidated = false;
       if (htmlCode || jspCode) {
         toReformat = false;
       }
@@ -352,13 +354,30 @@ public class XmlCompletionData extends CompletionData {
         if (!isTagFromHtml(tag) || !HtmlUtil.isTagWithoutAttributes(tag.getName())) {
           final MacroCallNode completeAttrExpr = new MacroCallNode(MacroFactory.createMacro("complete"));
           template.addVariable("attrComplete", completeAttrExpr,completeAttrExpr,true);
+          weInsertedSomeCodeThatCouldBeInvalidated = true;
           template.addTextSegment("=\"");
           template.addEndVariable();
           template.addTextSegment("\"");
         }
       }
 
-      templateManager.startTemplate(editor, template);
+      final boolean weInsertedSomeCodeThatCouldBeInvalidated1 = weInsertedSomeCodeThatCouldBeInvalidated;
+      templateManager.startTemplate(editor, template, new TemplateEditingListener() {
+        public void templateFinished(final Template template) {
+          final int offset = editor.getCaretModel().getOffset();
+          
+          if (weInsertedSomeCodeThatCouldBeInvalidated1 &&
+              offset >= 3 &&
+              editor.getDocument().getCharsSequence().charAt(offset - 3) == '/') {
+            editor.getDocument().replaceString(offset - 2, offset + 1, ">");
+          }
+        }
+
+        public void templateCancelled(final Template template) {
+          //final int offset = editor.getCaretModel().getOffset();
+          //if (weInsertedSomeCodeThatCouldBeInvalidated1) {}
+        }
+      });
     }
 
     private static boolean isTagFromHtml(final XmlTag tag) {
