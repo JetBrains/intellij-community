@@ -396,10 +396,9 @@ public class PsiUtil {
           run = run.getContext();
         }
       }
-      return true;
-    } else {
-      return true;
     }
+
+    return true;
   }
 
   public static boolean isAccessible(PsiElement place, PsiMember member) {
