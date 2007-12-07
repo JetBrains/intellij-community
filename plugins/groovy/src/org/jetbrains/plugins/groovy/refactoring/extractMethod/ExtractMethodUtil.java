@@ -251,7 +251,7 @@ public class ExtractMethodUtil {
         PsiType paramType = info.getType();
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(paramType);
         if (unboxed != null) paramType = unboxed;
-        String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getPresentableText() + " ";
+        String paramTypeText = paramType == null || paramType.equalsToText("java.lang.Object") ? "" : paramType.getCanonicalText() + " ";
         params.add(paramTypeText + info.getName() + (i < number - 1 ? ", " : ""));
         i++;
       }
