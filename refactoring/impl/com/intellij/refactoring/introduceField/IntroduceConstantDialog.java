@@ -193,7 +193,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       myTargetClassNameLabel.setLabelFor(targetClassName);
       targetClassName.setHistory(possibleClassNames.toArray(new String[possibleClassNames.size()]));
       myTfTargetClassName = targetClassName;
-      targetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      targetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
           targetClassChanged();
         }
@@ -206,7 +206,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       myTargetClassNamePanel.add(targetClassName, BorderLayout.CENTER);
       myTargetClassNameLabel.setLabelFor(targetClassName);
       myTfTargetClassName = targetClassName;
-      targetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+      targetClassName.addDocumentListener(new DocumentAdapter() {
         public void documentChanged(DocumentEvent e) {
           targetClassChanged();
         }
