@@ -278,7 +278,9 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   public RangeMarker createRangeMarker(final TextRange textRange) {
-    return myDelegate.createRangeMarker(injectedToHost(textRange));
+    TextRange hostRange = injectedToHost(new ProperTextRange(textRange));
+    RangeMarker hostMarker = myDelegate.createRangeMarker(hostRange);
+    return new RangeMarkerWindow(this, (RangeMarkerEx)hostMarker);
   }
 
   public void stripTrailingSpaces(final boolean inChangedLinesOnly) {
