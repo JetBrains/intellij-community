@@ -107,7 +107,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     selectNodeInTree(node != null ? node : nodeByName).doWhenDone(new Runnable() {
       public void run() {
         updateSelection(config);
-        Place.goFurther(config, place, requestFocus).markDone(result);
+        Place.goFurther(config, place, requestFocus).notifyWhenDone(result);
       }
     });
 

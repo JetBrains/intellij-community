@@ -528,7 +528,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   private Content addLogComponent(final AdditionalTabComponent tabComponent) {
-    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), null, Key.create("Log-" + tabComponent.getTabTitle()),
+    Content logContent = createContent(tabComponent.getComponent(), tabComponent.getTabTitle(), IconLoader.getIcon("/fileTypes/text.png"), Key.create("Log-" + tabComponent.getTabTitle()),
                                        tabComponent.getPreferredFocusableComponent());
     logContent.setDescription(tabComponent.getTooltip());
     myAdditionalContent.put(tabComponent, logContent);

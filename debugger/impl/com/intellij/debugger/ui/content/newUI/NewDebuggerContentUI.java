@@ -545,7 +545,7 @@ public class NewDebuggerContentUI
     final ActionCallback result = new ActionCallback();
     myTabs.select(info, false).doWhenDone(new Runnable() {
       public void run() {
-        grid.select(content, requestFocus).markDone(result);
+        grid.select(content, requestFocus).notifyWhenDone(result);
       }
     });
 

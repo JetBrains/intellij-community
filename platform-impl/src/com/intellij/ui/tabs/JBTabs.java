@@ -113,16 +113,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     UIUtil.addAwtListener(new AWTEventListener() {
       public void eventDispatched(final AWTEvent event) {
         if (myMorePopup != null) return;
-
-        final FocusEvent fe = (FocusEvent)event;
-        final JBTabs tabs = findTabs(fe.getComponent());
-        if (tabs == null) return;
-        if (fe.getID() == FocusEvent.FOCUS_LOST) {
-          tabs.setFocused(false);
-        }
-        else if (fe.getID() == FocusEvent.FOCUS_GAINED) {
-          tabs.setFocused(true);
-        }
+        processFocusChange();
       }
     }, FocusEvent.FOCUS_EVENT_MASK, parent);
 
@@ -163,6 +154,20 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     Disposer.register(parent, myAnimator);
   }
 
+  private void processFocusChange() {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) {
+      setFocused(false);
+      return;
+    }
+
+    if (owner == JBTabs.this || SwingUtilities.isDescendingFrom(owner, JBTabs.this)) {
+      setFocused(true);
+    } else {
+      setFocused(false);
+    }
+  }
+
   private void repaintAttractions() {
     boolean needsUpdate = false;
     for (TabInfo each : myInfos) {
@@ -171,7 +176,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
     if (needsUpdate) {
-      update(true);
+      relayout(true);
     }
   }
 
@@ -346,7 +351,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void updateAll() {
-    update(false);
+    relayout(false);
     updateListeners();
     updateSelected();
 
@@ -387,7 +392,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
-    update(false);
+    final Component deferredRemove = update(false);
 
     if (oldInfo != newInfo) {
       for (TabsListener eachListener : myTabListeners) {
@@ -400,20 +405,42 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     if (requestFocus) {
       final JComponent toFocus = getToFocus();
       if (myProject != null && toFocus != null) {
-        return ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable() {
+        final ActionCallback result = new ActionCallback();
+        ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable() {
           public ActionCallback run() {
             toFocus.requestFocus();
             return new ActionCallback.Done();
           }
-        }, true);
+        }, true).doWhenProcessed(new Runnable() {
+          public void run() {
+            removeDeferred(deferredRemove).notifyWhenDone(result);
+          }
+        });
+        return result;
       }
       else {
         requestFocus();
-        return new ActionCallback.Done();
+        return removeDeferred(deferredRemove);
       }
+    } else {
+      return removeDeferred(deferredRemove);
+    }
+  }
+
+  private ActionCallback removeDeferred(final Component deferredRemove) {
+    final ActionCallback callback = new ActionCallback();
+    if (deferredRemove != null) {
+      SwingUtilities.invokeLater(new Runnable() {
+        public void run() {
+          remove(deferredRemove);
+          callback.setDone();
+        }
+      });
+    } else {
+      callback.setDone();
     }
 
-    return new ActionCallback.Done();
+    return callback;
   }
 
 
@@ -436,7 +463,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       updateTabActions(tabInfo);
     }
 
-    update(false);
+    relayout(false);
   }
 
   private void updateIcon(final TabInfo tabInfo) {
@@ -490,6 +517,20 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return mySelectedInfo != null ? mySelectedInfo : (myInfos.size() > 0 ? myInfos.get(0) : null);
   }
 
+  @Nullable
+  private TabInfo getToSelectOnRemoveOf(TabInfo info) {
+    if (!myInfos.contains(info)) return null;
+    if (mySelectedInfo != info) return null;
+
+    if (myInfos.size() == 1) return null;
+
+    int index = myInfos.indexOf(info);
+    if (index > 0) return myInfos.get(index - 1);
+    if (index < myInfos.size() - 1) return myInfos.get(index + 1);
+
+    return null;
+  }
+
   protected JComponent createToolbarComponent(final TabInfo tabInfo) {
     return new Toolbar(tabInfo);
   }
@@ -510,11 +551,19 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-    myPopupInfo = null;
+    resetPopup();
   }
 
   public void popupMenuCanceled(final PopupMenuEvent e) {
-    myPopupInfo = null;
+    resetPopup();
+  }
+
+  private void resetPopup() {
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        myPopupInfo = null;
+      }
+    });
   }
 
   private class Toolbar extends JPanel {
@@ -1044,8 +1093,27 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void removeTab(TabInfo info) {
+    removeTab(info, true);
+  }
+
+  public void removeTab(final TabInfo info, boolean transferFocus) {
     if (info == null) return;
 
+    TabInfo toSelect = transferFocus ? getToSelectOnRemoveOf(info) : null;
+
+
+    if (toSelect != null) {
+      _setSelected(toSelect, true).doWhenDone(new Runnable() {
+        public void run() {
+          processRemove(info);
+        }
+      });
+    } else {
+      processRemove(info);
+    }
+  }
+
+  private void processRemove(final TabInfo info) {
     remove(myInfo2Label.get(info));
     final JComponent tb = myInfo2Toolbar.get(info);
     if (tb != null) {
@@ -1117,7 +1185,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     Dimension myToolbar = new Dimension();
   }
 
-  private void update(boolean forced) {
+  private Component update(boolean forced) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
+    Component deferredRemove = null;
+
     for (TabInfo each : myInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
@@ -1131,11 +1203,22 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         }
       }
       else {
-        remove(eachComponent);
+        if (eachComponent.getParent() == null) continue;
+        if (focusOwner != null && (focusOwner == eachComponent || SwingUtilities.isDescendingFrom(focusOwner, eachComponent))) {
+          deferredRemove = eachComponent;
+        } else {
+          remove(eachComponent);
+        }
       }
     }
 
 
+    relayout(forced);
+
+    return deferredRemove;
+  }
+
+  private void relayout(boolean forced) {
     myForcedRelayout = forced;
     revalidate();
     repaint();
@@ -1394,7 +1477,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
     myHideTabs = hideTabs;
 
-    update(true);
+    relayout(true);
   }
 
   public boolean isPaintBorder() {
@@ -1488,7 +1571,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   public void setStealthTabMode(final boolean stealthTabMode) {
     myStealthTabMode = stealthTabMode;
 
-    update(true);
+    relayout(true);
   }
 
   public boolean isStealthTabMode() {
@@ -1503,13 +1586,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
 
-    update(true);
+    relayout(true);
   }
 
   public void setSingleRow(boolean singleRow) {
     mySingleRow = singleRow;
 
-    update(true);
+    relayout(true);
   }
 
   public boolean isSingleRow() {
@@ -1543,13 +1626,13 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
     }
 
-    update(true);
+    relayout(true);
   }
 
   public void sortTabs(Comparator<TabInfo> comparator) {
     Collections.sort(myInfos, comparator);
 
-    update(true);
+    relayout(true);
   }
 
   public static class UiDecoration {
@@ -1611,7 +1694,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
 
       if (changed) {
-        JBTabs.this.update(true);
+        JBTabs.this.relayout(true);
       }
     }
 

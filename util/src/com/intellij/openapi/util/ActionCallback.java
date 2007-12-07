@@ -18,47 +18,41 @@ package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ActionCallback {
 
-  private boolean myDone;
-  private List<java.lang.Runnable> myRunnables;
+  ExecutionCallback myDone = new ExecutionCallback();
+  ExecutionCallback myRejected = new ExecutionCallback();
 
   public void setDone() {
-    myDone = true;
-    callback();
+    myDone.setExecuted();
+  }
+
+  public void setRejected() {
+    myRejected.setExecuted();
   }
 
   public final ActionCallback doWhenDone(@NotNull final java.lang.Runnable runnable) {
-    if (myRunnables == null) {
-      myRunnables = new ArrayList<java.lang.Runnable>();
-    }
-
-    myRunnables.add(runnable);
-
-    callback();
-
+    myDone.doWhenExecuted(runnable);
     return this;
   }
 
-  public final void markDone(final ActionCallback child) {
+  public final ActionCallback doWhenRejected(@NotNull final java.lang.Runnable runnable) {
+    myRejected.doWhenExecuted(runnable);
+    return this;
+  }
+
+  public final ActionCallback doWhenProcessed(@NotNull final java.lang.Runnable runnable) {
+    doWhenDone(runnable);
+    doWhenRejected(runnable);
+    return this;
+  }
+
+  public final void notifyWhenDone(final ActionCallback child) {
     doWhenDone(new java.lang.Runnable() {
       public void run() {
         child.setDone();
       }
     });
-  }
-
-  private void callback() {
-    if (myDone && myRunnables != null) {
-      final java.lang.Runnable[] all = myRunnables.toArray(new java.lang.Runnable[myRunnables.size()]);
-      myRunnables.clear();
-      for (java.lang.Runnable each : all) {
-        each.run();
-      }
-    }
   }
 
   public static class Done extends ActionCallback {
@@ -67,6 +61,7 @@ public class ActionCallback {
     }
   }
 
+  
   public interface Runnable {
     ActionCallback run();
   }

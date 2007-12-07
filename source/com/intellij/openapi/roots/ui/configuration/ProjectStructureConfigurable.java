@@ -390,7 +390,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
 
     final ActionCallback result = new ActionCallback();
-    Place.goFurther(toSelect, place, requestFocus).markDone(result);
+    Place.goFurther(toSelect, place, requestFocus).notifyWhenDone(result);
 
     myDetails.revalidate();
     myDetails.repaint();

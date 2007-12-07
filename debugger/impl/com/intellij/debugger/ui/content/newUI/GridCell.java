@@ -73,35 +73,40 @@ public class GridCell {
     return myPlaceInGrid;
   }
 
-  void add(Content content) {
+  void add(final Content content) {
     if (myContents.containsKey(content)) return;
     myContents.put(content, null);
 
-    revalidateCell();
+    revalidateCell(new Runnable() {
+      public void run() {
+        myTabs.addTab(createTabInfoFor(content));
+      }
+    });
   }
 
   void remove(Content content) {
     if (!myContents.containsKey(content)) return;
+
+    final TabInfo info = getTabFor(content);
     myContents.remove(content);
 
-    revalidateCell();
+    revalidateCell(new Runnable() {
+      public void run() {
+        myTabs.removeTab(info, false);
+      }
+    });
   }
 
-  private void revalidateCell() {
-
-    myTabs.removeAllTabs();
-
+  private void revalidateCell(Runnable contentAction) {
     if (myContents.size() == 0) {
       myPlaceholder.removeAll();
+      myTabs.removeAllTabs();
     } else {
       if (myPlaceholder.isNull()) {
         myPlaceholder.setContent(myTabs);
       }
 
-      Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
-      for (Content each : contents) {
-        myTabs.addTab(createTabInfoFor(each));
-      }
+      contentAction.run();
     }
 
     restoreProportions();

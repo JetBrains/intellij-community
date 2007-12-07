@@ -18,7 +18,7 @@ public interface ViewContext extends Disposable {
   String TAB_TOOLBAR_PLACE = "debuggerTabToolbar";
 
   String CELL_POPUP_PLACE = "debuggerCellPopup";
-  String TAB_POPUP_PLACE = "debuggerCellPopup";
+  String TAB_POPUP_PLACE = "debuggerTabPopup";
 
   CellTransform.Facade getCellTransform();
 

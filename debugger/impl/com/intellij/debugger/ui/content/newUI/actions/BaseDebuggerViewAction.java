@@ -18,6 +18,8 @@ public abstract class BaseDebuggerViewAction extends AnAction {
       e.getPresentation().setEnabled(false);
     }
 
+    //e.getPresentation().setVisible(e.getPresentation().isEnabled());
+
   }
 
   protected void update(AnActionEvent e, ViewContext context, Content[] content) {

@@ -1405,12 +1405,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     LaterInvocator.invokeLater(new Runnable() {
       public void run() {
-        if (!forced && !myUnforcedFocusRequestsAllowed) return;
+        if (!forced && !myUnforcedFocusRequestsAllowed) {
+          result.setRejected();
+          return;
+        }
 
         if (myRequestFocusCmd == command) {
           myRequestFocusCmd = null;
 
-          command.run().markDone(result);
+          command.run().notifyWhenDone(result);
 
           if (forced) {
             myForcedFocusRequestsAlarm.addRequest(new Runnable() {
