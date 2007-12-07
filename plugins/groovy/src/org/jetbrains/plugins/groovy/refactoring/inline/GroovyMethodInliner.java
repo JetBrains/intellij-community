@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -38,13 +37,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,7 +78,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
     for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
       if (!(PsiUtil.isAccessible(call, info.declaration))) {
-        conflicts.add("Member "+info.getPresentation() + " of " + info.containingClass.getName() + " is not accessible");
+        conflicts.add("Member " + info.getPresentation() + " of " + info.containingClass.getName() + " is not accessible");
       }
     }
 
@@ -105,15 +108,37 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   static SmartPsiElementPointer<GrExpression> inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
     try {
-      GrMethod newMethod = prepareNewMethod(call, method);
+      GroovyElementFactory factory = GroovyElementFactory.getInstance(call.getProject());
+      final Project project = call.getProject();
+
+      // Variable declaration for qualifier expression
+      GrVariableDeclaration qualifierDeclaration = null;
+      GrReferenceExpression innerQualifier = null;
+      if (call instanceof GrMethodCallExpression && ((GrMethodCallExpression) call).getInvokedExpression() != null) {
+        GrExpression invoked = ((GrMethodCallExpression) call).getInvokedExpression();
+        if (invoked instanceof GrReferenceExpression && ((GrReferenceExpression) invoked).getQualifierExpression() != null) {
+          GrExpression qualifier = ((GrReferenceExpression) invoked).getQualifierExpression();
+          if (!GroovyInlineMethodUtil.hasNoSideEffects(qualifier)) {
+            String qualName = generateQualifierName(call, method, project, qualifier);
+            while (qualifier instanceof GrParenthesizedExpression) {
+              qualifier = ((GrParenthesizedExpression) qualifier).getOperand();
+            }
+            qualifierDeclaration = factory.createVariableDeclaration(new String[0], qualName, qualifier, null, false);
+            innerQualifier = ((GrReferenceExpression) factory.createExpressionFromText(qualName));
+          } else {
+            innerQualifier = ((GrReferenceExpression) qualifier);
+          }
+        }
+      }
+
+      GrMethod newMethod = prepareNewMethod(call, method, innerQualifier);
       GrExpression result = getAloneResultExpression(newMethod);
       if (result != null) {
-        GrExpression expression = call.replaceWithExpression(result, true);
+        GrExpression expression = call.replaceWithExpression(result, false);
         return SmartPointerManager.getInstance(result.getProject()).createSmartPsiElementPointer(expression);
       }
 
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
-      GroovyElementFactory factory = GroovyElementFactory.getInstance(call.getProject());
 
       // Add variable for method result
       Collection<GrReturnStatement> returnStatements = GroovyRefactoringUtil.findReturnStatements(newMethod);
@@ -136,7 +161,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         } else {
           resultExpr = factory.createExpressionFromText("null");
         }
-        replaced = call.replaceWithExpression(resultExpr, true);
+        replaced = call.replaceWithExpression(resultExpr, false);
       }
 
       // Calculate anchor to insert before
@@ -152,6 +177,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
       if (!replaceCall) {
         assert anchor == enclosingExpr;
+      }
+
+      // add qualifier reference declaration
+      if (qualifierDeclaration != null) {
+        owner.addVariableDeclarationBefore(qualifierDeclaration, anchor);
       }
 
       // Process method return statements
@@ -177,6 +207,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           returnStatement.removeStatement();
         }
       }
+
 
       // Add all method statements
       statements = body.getStatements();
@@ -205,6 +236,21 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       LOG.error(e);
     }
     return null;
+  }
+
+  private static String generateQualifierName(GrCallExpression call, GrMethod method, final Project project, GrExpression qualifier) {
+    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(qualifier, new NameValidator() {
+      public String validateName(String name, boolean increaseNumber) {
+        return name;
+      }
+
+      public Project getProject() {
+        return project;
+      }
+    });
+    String qualName = possibleNames[0];
+    qualName = InlineMethodConflictSolver.suggestNewName(qualName, method, call);
+    return qualName;
   }
 
   private static void reformatOwner(GrVariableDeclarationOwner owner) throws IncorrectOperationException {
@@ -263,12 +309,14 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   /*
   Parepare temporary method sith non-conflicting local names
   */
-  private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
+  private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method, GrReferenceExpression qualifier) throws IncorrectOperationException {
 
-    // todo add qualifiers to references
     GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
     Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(method);
+    if (qualifier != null) {
+      GroovyInlineMethodUtil.addQualifiersToInnerReferences(newMethod, infos, qualifier);
+    }
 
     ArrayList<PsiNamedElement> innerDefinitions = new ArrayList<PsiNamedElement>();
     collectInnerDefinitions(newMethod.getBlock(), innerDefinitions);
@@ -277,7 +325,9 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     for (PsiNamedElement namedElement : innerDefinitions) {
       String name = namedElement.getName();
       if (name != null) {
-        String newName = InlineMethodConflictSolver.suggestNewName(name, method, call);
+        String newName = qualifier != null ?
+            InlineMethodConflictSolver.suggestNewName(name, method, call, qualifier.getName()) :
+            InlineMethodConflictSolver.suggestNewName(name, method, call);
         if (!newName.equals(namedElement.getName())) {
           final Collection<PsiReference> refs = ReferencesSearch.search(namedElement, GlobalSearchScope.projectScope(namedElement.getProject()), false).findAll();
           for (PsiReference ref : refs) {
@@ -300,7 +350,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     for (PsiElement child : element.getChildren()) {
       if (child instanceof GrVariable && !(child instanceof GrParameter)) {
         defintions.add(((GrVariable) child));
-      } 
+      }
       if (!(child instanceof GrClosableBlock)) {
         collectInnerDefinitions(child, defintions);
       }

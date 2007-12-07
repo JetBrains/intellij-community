@@ -37,21 +37,31 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  */
 public abstract class InlineMethodConflictSolver {
 
-  static String suggestNewName(@NotNull String startName, GrMethod method, GrCallExpression call) {
+  static String suggestNewName(@NotNull String startName, GrMethod method, GrCallExpression call, String ... otherNames) {
     String newName = startName;
     int i = 1;
     PsiElement parent = call.getParent();
     while (!(parent instanceof GrVariableDeclarationOwner) && parent != null) {
       parent = parent.getParent();
     }
-    if (parent == null || isValidName(startName, parent, call)) {
+    if (parent == null ||
+        (isValidName(startName, parent, call) && isValid(startName, otherNames))) {
       return startName;
     }
     do {
       newName = startName + i;
       i++;
-    } while (!(isValidNameInMethod(newName, method) && isValidName(newName, parent, call)));
+    } while (!(isValidNameInMethod(newName, method) && isValidName(newName, parent, call) && isValid(newName, otherNames)));
     return newName;
+  }
+
+  static boolean isValid(String name, String ... otherNames) {
+    for (String otherName : otherNames) {
+      if (otherName.equals(name)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private static boolean isValidNameInMethod(@NotNull String name, GrMethod method) {

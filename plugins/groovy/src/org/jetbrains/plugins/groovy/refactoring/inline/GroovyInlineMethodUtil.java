@@ -27,8 +27,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -46,6 +48,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * @author ilyas
@@ -208,7 +212,7 @@ public abstract class GroovyInlineMethodUtil {
     }
     if (elseBranch instanceof GrReturnStatement) {
       eb = returnStatements.remove(elseBranch);
-    } else if (thenBranch instanceof GrBlockStatement) {
+    } else if (elseBranch instanceof GrBlockStatement) {
       eb = checkTailOpenBlock(((GrBlockStatement) elseBranch).getBlock(), returnStatements);
     }
 
@@ -284,7 +288,7 @@ public abstract class GroovyInlineMethodUtil {
       if (ref != null) {
         PsiElement declaration = ref.resolve();
         if (declaration instanceof GrMember) {
-          int offsetInMethod = expr.getTextOffset() - method.getTextOffset();
+          int offsetInMethod = expr.getTextRange().getStartOffset() - method.getTextRange().getStartOffset();
           GrMember member = (GrMember) declaration;
           infos.add(new ReferenceExpressionInfo(expr, offsetInMethod, member, member.getContainingClass()));
         }
@@ -294,6 +298,12 @@ public abstract class GroovyInlineMethodUtil {
       collectReferenceInfoImpl(infos, element, method);
     }
 
+  }
+
+  public static boolean hasNoSideEffects(GrExpression qualifier) {
+    if (!(qualifier instanceof GrReferenceExpression)) return false;
+    GrExpression qual = ((GrReferenceExpression) qualifier).getQualifierExpression();
+    return qual == null || hasNoSideEffects(qual);
   }
 
   static class ReferenceExpressionInfo {
@@ -327,5 +337,27 @@ public abstract class GroovyInlineMethodUtil {
     }
   }
 
+
+  static void addQualifiersToInnerReferences(GrMethod method, Collection<ReferenceExpressionInfo> infos, @NotNull GrExpression qualifier)
+      throws IncorrectOperationException {
+    Set<GrReferenceExpression> exprs = new HashSet<GrReferenceExpression>();
+    for (ReferenceExpressionInfo info : infos) {
+      PsiReference ref = method.findReferenceAt(info.offsetInMethod);
+      if (ref != null && ref.getElement() instanceof GrReferenceExpression) {
+        GrReferenceExpression refExpr = (GrReferenceExpression) ref.getElement();
+        if (refExpr.getQualifierExpression() == null) {
+          exprs.add(refExpr);
+        }
+      }
+    }
+
+    GroovyElementFactory factory = GroovyElementFactory.getInstance(qualifier.getProject());
+    for (GrReferenceExpression expr : exprs) {
+      GrExpression qual = factory.createExpressionFromText(qualifier.getText());
+      if (qual instanceof GrReferenceExpression) {
+        expr.setQualifierExpression(((GrReferenceExpression) qual));
+      }
+    }
+  }
 
 }

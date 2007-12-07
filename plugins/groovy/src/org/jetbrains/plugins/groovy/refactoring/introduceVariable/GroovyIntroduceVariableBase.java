@@ -44,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.ArrayList;
 
@@ -412,12 +413,8 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   protected abstract boolean reportConflicts(final ArrayList<String> conflicts, final Project project);
 
-  public interface Validator {
+  public interface Validator extends NameValidator {
     boolean isOK(GroovyIntroduceVariableDialog dialog);
-
-    String validateName(String name, boolean increaseNumber);
-
-    Project getProject();
   }
 
 
