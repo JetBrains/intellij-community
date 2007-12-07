@@ -16,16 +16,13 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -38,11 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -182,7 +178,7 @@ public class PsiImplUtil {
     if (variables.size() == 1 && owner != null) {
       GroovyVariableUtil.cleanAroundDeclarationBeforeRemove(varDecl);
       owner.removeChild(varDeclNode);
-      reformatCode(parent);
+      PsiUtil.reformatCode(parent);
       return;
     }
     GroovyVariableUtil.cleanAroundVariableBeforeRemove(variable);
@@ -190,7 +186,7 @@ public class PsiImplUtil {
     if (varNode != null) {
       varDeclNode.removeChild(varNode);
     }
-    reformatCode(varDecl);
+    PsiUtil.reformatCode(varDecl);
   }
 
   public static PsiElement realPrevious(PsiElement previousLeaf) {
@@ -211,20 +207,6 @@ public class PsiImplUtil {
       nextLeaf = nextLeaf.getNextSibling();
     }
     return nextLeaf;
-  }
-
-  public static void reformatCode(final PsiElement element) {
-    final TextRange textRange = element.getTextRange();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
-              textRange.getStartOffset(), textRange.getEndOffset());
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-    });
   }
 
   /**

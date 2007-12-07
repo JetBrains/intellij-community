@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
@@ -91,7 +93,7 @@ public class PsiUtil {
       //do not check first parameter, it is 'this' inside categorized block
       parameters = ArrayUtil.remove(parameters, 0);
     }
-    
+
     PsiType[] parameterTypes = skipOptionalParametersAndSubstitute(argumentTypes.length, parameters, substitutor);
     if (parameterTypes.length - 1 > argumentTypes.length) return false; //one Map type might represent named arguments
     if (parameterTypes.length == 0 && argumentTypes.length > 0) return false;
@@ -306,7 +308,7 @@ public class PsiUtil {
     if (!propertyName.equals(accessorNamePart)) return false;
     return true;
   }
-  
+
   public static boolean isSimplePropertySetter(PsiMethod method) {
     return isSimplePropertySetter(method, null);
   }
@@ -408,5 +410,15 @@ public class PsiUtil {
       }
     }
     return com.intellij.psi.util.PsiUtil.isAccessible(member, place, null);
+  }
+
+  public static void reformatCode(final PsiElement element) {
+    final TextRange textRange = element.getTextRange();
+    try {
+      CodeStyleManager.getInstance(element.getProject()).reformatText(element.getContainingFile(),
+        textRange.getStartOffset(), textRange.getEndOffset());
+    } catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 }
