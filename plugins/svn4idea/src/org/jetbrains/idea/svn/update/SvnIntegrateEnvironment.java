@@ -58,6 +58,10 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       public String getDisplayName() {
         return SvnBundle.message("integrate.display.name");
       }
+
+      public String getHelpTopic() {
+        return "reference.dialogs.versionControl.integrate.project.subversion";
+      }
     };
   }
 
