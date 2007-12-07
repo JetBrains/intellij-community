@@ -90,7 +90,7 @@ public class MatcherImpl {
       lastMatchData = new SoftReference<LastMatchData>(data);
     }
 
-    class ValidatingVisitor extends PsiRecursiveElementVisitor {
+    class ValidatingVisitor extends JavaRecursiveElementVisitor {
       @Override public void visitAnnotation(PsiAnnotation annotation) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
 

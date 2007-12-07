@@ -1,14 +1,16 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 
 /**
  * Filter for typed symbols
  */
-public class TypedSymbolNodeFilter extends NodeFilter {
+public class TypedSymbolNodeFilter extends JavaElementVisitor implements NodeFilter {
+  private boolean result;
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
   @Override public void visitMethod(PsiMethod psiMethod) {
     result = psiMethod.getTypeParameters().length > 0;
   }
@@ -33,5 +35,11 @@ public class TypedSymbolNodeFilter extends NodeFilter {
   }
 
   private TypedSymbolNodeFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

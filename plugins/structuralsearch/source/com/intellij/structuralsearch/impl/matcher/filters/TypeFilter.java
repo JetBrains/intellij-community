@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,7 +9,12 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
  * Time: 1:07:09
  * To change this template use File | Settings | File Templates.
  */
-public class TypeFilter extends NodeFilter {
+public class TypeFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
   @Override public void visitClass(PsiClass aClass) {
     result = true;
   }
@@ -26,4 +30,10 @@ public class TypeFilter extends NodeFilter {
     return instance;
   }
   private static NodeFilter instance;
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
+  }
 }

@@ -1,7 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -10,7 +9,12 @@ import com.intellij.psi.PsiClass;
  * Time: 19:37:13
  * To change this template use Options | File Templates.
  */
-public class ClassFilter extends NodeFilter {
+public class ClassFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
   @Override public void visitAnonymousClass(PsiAnonymousClass psiAnonymousClass) {
     result = true;
   }
@@ -27,5 +31,11 @@ public class ClassFilter extends NodeFilter {
   }
 
   private ClassFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

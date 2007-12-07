@@ -106,6 +106,10 @@ public abstract class Handler {
   static class ClearStateVisitor extends PsiRecursiveElementVisitor {
     private CompiledPattern pattern;
 
+    ClearStateVisitor() {
+      super(true);
+    }
+
     @Override public void visitElement(PsiElement element) {
       // We do not reset certain handlers because they are also bound to higher level nodes
       // e.g. Identifier handler in name is also bound to PsiMethod
@@ -119,10 +123,6 @@ public abstract class Handler {
         }
       }
       super.visitElement(element);
-    }
-
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitElement(expression);
     }
 
     synchronized void clearState(CompiledPattern _pattern, PsiElement el) {

@@ -1,5 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 
 /**
@@ -9,7 +12,12 @@ import com.intellij.psi.PsiVariable;
  * Time: 19:52:57
  * To change this template use Options | File Templates.
  */
-public class VariableFilter extends NodeFilter {
+public class VariableFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
   @Override public void visitVariable(PsiVariable psiVariable) {
     result = true;
   }
@@ -20,5 +28,12 @@ public class VariableFilter extends NodeFilter {
     if (instance==null) instance = new VariableFilter();
     return instance;
   }
+
   private static NodeFilter instance;
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
+  }
 }

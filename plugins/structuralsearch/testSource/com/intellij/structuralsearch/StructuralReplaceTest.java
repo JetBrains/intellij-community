@@ -13,6 +13,7 @@ import java.util.Calendar;
  * @by Maxim.Mossienko
  */
 @SuppressWarnings({"ALL"})
+@Bombed(month = Calendar.DECEMBER, day = 16)
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
   public void testReplaceInLiterals() {
     String s1 = "String ID_SPEED = \"Speed\";";

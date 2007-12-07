@@ -1,8 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiDocCommentOwner;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 
 /**
@@ -12,7 +11,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
  * Time: 19:08:26
  * To change this template use Options | File Templates.
  */
-public class JavaDocFilter extends NodeFilter {
+public class JavaDocFilter implements NodeFilter {
+  protected boolean result;
+
   public boolean accepts(PsiElement element) {
     return element instanceof PsiDocCommentOwner ||
       element instanceof PsiDocComment;

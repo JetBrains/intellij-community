@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 
@@ -10,8 +12,9 @@ import com.intellij.psi.xml.XmlText;
  * Time: 4:44:19 PM
  * To change this template use File | Settings | File Templates.
  */
-public class TagValueFilter extends NodeFilter {
+public class TagValueFilter extends XmlElementVisitor implements NodeFilter {
   private static NodeFilter instance;
+  private boolean result;
 
   @Override public void visitXmlText(XmlText text) {
     result = true;
@@ -27,5 +30,11 @@ public class TagValueFilter extends NodeFilter {
   }
 
   private TagValueFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

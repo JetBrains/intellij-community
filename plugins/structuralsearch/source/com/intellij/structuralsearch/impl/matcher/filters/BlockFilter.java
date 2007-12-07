@@ -1,17 +1,29 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiBlockStatement;
-import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.*;
 
 /**
  * Filters block related nodes
  */
-public class BlockFilter extends NodeFilter {
-  @Override public void visitBlockStatement(PsiBlockStatement psiBlockStatement) {
+public class BlockFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
+  }
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
+  @Override
+  public void visitBlockStatement(PsiBlockStatement psiBlockStatement) {
     result = true;
   }
 
-  @Override public void visitCodeBlock(PsiCodeBlock psiCodeBlock) {
+  @Override
+  public void visitCodeBlock(PsiCodeBlock psiCodeBlock) {
     result = true;
   }
 
@@ -19,8 +31,9 @@ public class BlockFilter extends NodeFilter {
   }
 
   public static NodeFilter getInstance() {
-    if (instance==null) instance = new BlockFilter();
+    if (instance == null) instance = new BlockFilter();
     return instance;
   }
+
   private static NodeFilter instance;
 }

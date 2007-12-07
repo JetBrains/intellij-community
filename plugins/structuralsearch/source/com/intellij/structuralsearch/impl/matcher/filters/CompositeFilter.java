@@ -1,8 +1,5 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -12,13 +9,14 @@ import com.intellij.psi.PsiElement;
  * Time: 0:13:19
  * To change this template use Options | File Templates.
  */
-public class CompositeFilter extends NodeFilter {
-  private NodeFilter first;
-  private NodeFilter second;
+public class CompositeFilter implements NodeFilter {
+  private final NodeFilter first;
+  private final NodeFilter second;
+  protected boolean result;
 
   public boolean accepts(PsiElement element) {
     return first.accepts(element) ||
-      second.accepts(element);
+           second.accepts(element);
   }
 
   public CompositeFilter(NodeFilter _first, NodeFilter _second) {

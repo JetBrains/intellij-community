@@ -1,6 +1,9 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiReferenceExpression;
 
 /**
  * Created by IntelliJ IDEA.
@@ -9,7 +12,12 @@ import com.intellij.psi.PsiLiteralExpression;
  * Time: 7:55:40 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ConstantFilter extends NodeFilter {
+public class ConstantFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
   @Override public void visitLiteralExpression(PsiLiteralExpression  psiLiteral) {
     result = true;
   }
@@ -22,5 +30,11 @@ public class ConstantFilter extends NodeFilter {
   }
 
   private ConstantFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

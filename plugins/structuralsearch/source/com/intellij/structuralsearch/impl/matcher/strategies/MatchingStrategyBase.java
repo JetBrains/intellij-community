@@ -6,7 +6,9 @@ import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
 /**
  * Base filtering strategy to find statements
  */
-public class MatchingStrategyBase extends NodeFilter implements MatchingStrategy {
+public class MatchingStrategyBase extends JavaElementVisitor implements MatchingStrategy, NodeFilter {
+  protected boolean result;
+
   @Override public void visitReferenceExpression(final PsiReferenceExpression psiReferenceExpression) {
     visitExpression(psiReferenceExpression);
   }
@@ -33,5 +35,11 @@ public class MatchingStrategyBase extends NodeFilter implements MatchingStrategy
   public static MatchingStrategy getInstance() {
     if (instance==null) instance = new MatchingStrategyBase();
     return instance;
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

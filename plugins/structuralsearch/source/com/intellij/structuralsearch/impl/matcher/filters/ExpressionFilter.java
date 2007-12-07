@@ -1,12 +1,16 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
 
 /**
  * Filters expression nodes
  */
-public class ExpressionFilter extends NodeFilter {
+public class ExpressionFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
   @Override public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
     result = true;
   }
@@ -23,5 +27,11 @@ public class ExpressionFilter extends NodeFilter {
   }
 
   private ExpressionFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

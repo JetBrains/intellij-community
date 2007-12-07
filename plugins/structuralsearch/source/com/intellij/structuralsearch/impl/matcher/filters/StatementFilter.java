@@ -1,8 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -11,7 +9,9 @@ import com.intellij.psi.PsiStatement;
  * Time: 17:46:10
  * To change this template use Options | File Templates.
  */
-public class StatementFilter extends NodeFilter {
+public class StatementFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
   @Override public void visitReferenceExpression(PsiReferenceExpression psiReferenceExpression) {
     result = false;
   }
@@ -22,5 +22,11 @@ public class StatementFilter extends NodeFilter {
 
   @Override public void visitComment(PsiComment comment) {
     result = true;
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

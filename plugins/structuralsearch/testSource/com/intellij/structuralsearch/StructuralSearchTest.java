@@ -1,18 +1,19 @@
 package com.intellij.structuralsearch;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
-import com.intellij.idea.Bombed;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
+@Bombed(month = Calendar.DECEMBER, day = 16)
 public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s1 =
     "debug(\"In action performed:\"+event);"+
@@ -2473,7 +2474,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final List<PsiVariable> vars = new ArrayList<PsiVariable>();
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("_.java", s1);
 
-    file.acceptChildren(new PsiRecursiveElementVisitor() {
+    file.acceptChildren(new JavaRecursiveElementVisitor() {
       @Override public void visitVariable(final PsiVariable variable) {
         super.visitVariable(variable);
         vars.add(variable);

@@ -5,7 +5,9 @@ import com.intellij.psi.*;
 /**
  * Tree filter for searching symbols ('T)
  */
-public class SymbolNodeFilter extends NodeFilter {
+public class SymbolNodeFilter extends JavaElementVisitor implements NodeFilter {
+  private boolean result;
+
   @Override public void visitLiteralExpression(PsiLiteralExpression psiLiteralExpression) {
     result = true;
   }
@@ -53,6 +55,12 @@ public class SymbolNodeFilter extends NodeFilter {
     return instance;
   }
 
-  protected SymbolNodeFilter() {
+  private SymbolNodeFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

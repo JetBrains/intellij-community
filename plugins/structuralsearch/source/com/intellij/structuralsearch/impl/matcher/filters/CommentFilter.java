@@ -1,9 +1,6 @@
 package com.intellij.structuralsearch.impl.matcher.filters;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -12,7 +9,12 @@ import com.intellij.psi.PsiMethod;
  * Time: 9:13:12 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CommentFilter extends NodeFilter {
+public class CommentFilter extends JavaElementVisitor implements NodeFilter {
+  protected boolean result;
+
+  public void visitReferenceExpression(final PsiReferenceExpression expression) {
+  }
+
   @Override public void visitComment(PsiComment comment) {
     result = true;
   }
@@ -37,5 +39,11 @@ public class CommentFilter extends NodeFilter {
   }
 
   private CommentFilter() {
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) element.accept(this);
+    return result;
   }
 }

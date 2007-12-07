@@ -7,34 +7,42 @@ import com.intellij.psi.xml.XmlText;
 /**
  * Filter for lexical nodes
  */
-final public class LexicalNodesFilter extends NodeFilter {
+final public class LexicalNodesFilter  implements NodeFilter {
   private boolean careKeyWords;
+  private boolean result;
 
-  @Override public void visitJavaToken(final PsiJavaToken t) {
-    result = true;
-  }
+  private final PsiElementVisitor myJavaVisitory = new JavaElementVisitor() {
+    public void visitReferenceExpression(final PsiReferenceExpression expression) {
+    }
 
-  @Override public void visitComment(final PsiComment comment) {
-  }
+    @Override public void visitJavaToken(final PsiJavaToken t) {
+      result = true;
+    }
 
-  @Override public void visitDocComment(final PsiDocComment comment) {
-  }
+    @Override public void visitComment(final PsiComment comment) {
+    }
 
-  @Override public void visitKeyword(PsiKeyword keyword) {
-    result = !careKeyWords;
-  }
+    @Override public void visitDocComment(final PsiDocComment comment) {
+    }
 
-  @Override public void visitWhiteSpace(final PsiWhiteSpace space) {
-    result = true;
-  }
+    @Override public void visitKeyword(PsiKeyword keyword) {
+      result = !careKeyWords;
+    }
 
-  @Override public void visitErrorElement(final PsiErrorElement element) {
-    result = true;
-  }
+    @Override public void visitWhiteSpace(final PsiWhiteSpace space) {
+      result = true;
+    }
 
-  @Override public void visitXmlText(XmlText text) {
-    result = true;
-  }
+    @Override public void visitErrorElement(final PsiErrorElement element) {
+      result = true;
+    }
+  };
+
+  private final PsiElementVisitor myXmlVistVisitor = new XmlElementVisitor() {
+    @Override public void visitXmlText(XmlText text) {
+      result = true;
+    }
+  };
 
   private LexicalNodesFilter() {}
 
@@ -50,5 +58,14 @@ final public class LexicalNodesFilter extends NodeFilter {
 
   public void setCareKeyWords(boolean careKeyWords) {
     this.careKeyWords = careKeyWords;
+  }
+
+  public boolean accepts(PsiElement element) {
+    result = false;
+    if (element!=null) {
+      element.accept(myJavaVisitory);
+      element.accept(myXmlVistVisitor);
+    }
+    return result;
   }
 }

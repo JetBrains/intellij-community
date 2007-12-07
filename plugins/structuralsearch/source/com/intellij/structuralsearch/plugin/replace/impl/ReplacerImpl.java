@@ -558,7 +558,7 @@ public class ReplacerImpl {
     }
   }
 
-  static class ModifierListOwnerCollector extends PsiRecursiveElementVisitor {
+  static class ModifierListOwnerCollector extends JavaRecursiveElementVisitor {
     HashMap<String,PsiNamedElement> namedElements = new HashMap<String,PsiNamedElement>(1);
 
     @Override public void visitClass(PsiClass aClass) {

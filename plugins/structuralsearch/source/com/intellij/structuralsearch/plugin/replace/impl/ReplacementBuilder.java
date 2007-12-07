@@ -20,7 +20,7 @@ import java.util.*;
  * Time: 15:34:57
  * To change this template use File | Settings | File Templates.
  */
-final class ReplacementBuilder extends PsiRecursiveElementVisitor {
+final class ReplacementBuilder extends JavaRecursiveElementVisitor {
   private String replacement;
   private List<ParameterInfo> parameterizations;
   private HashMap<String,MatchResult> map;
