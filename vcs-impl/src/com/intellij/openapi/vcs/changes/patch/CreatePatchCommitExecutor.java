@@ -128,8 +128,8 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     public void execute(Collection<Change> changes, String commitMessage) {
       int binaryCount = 0;
       for(Change change: changes) {
-        if (change.getBeforeRevision() instanceof BinaryContentRevision ||
-            change.getAfterRevision() instanceof BinaryContentRevision) {
+        if (ChangesUtil.isBinaryContentRevision(change.getBeforeRevision()) ||
+            ChangesUtil.isBinaryContentRevision(change.getAfterRevision())) {
           binaryCount++;
         }
       }
