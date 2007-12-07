@@ -2,7 +2,6 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
@@ -50,8 +50,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
@@ -230,13 +228,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myComments.setPreferredSize(new Dimension(150, 100));
     myComments.setEditable(false);
     myComments.setBackground(UIUtil.getComboBoxDisabledBackground());
-    myComments.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          BrowserUtil.launchBrowser(e.getDescription());
-        }
-      }
-    });
+    myComments.addHyperlinkListener(new BrowserHyperlinkListener());
 
     myUpdateAlarm = new Alarm(session.allowAsyncRefresh() ? Alarm.ThreadToUse.SHARED_THREAD : Alarm.ThreadToUse.SWING_THREAD);
 

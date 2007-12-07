@@ -11,12 +11,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ChangeListColumn;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SeparatorFactory;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.SortableColumnModel;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -30,16 +33,18 @@ import java.util.List;
  * @author max
  */
 public class CommittedChangesBrowser extends JPanel {
+  private Project myProject;
   private final TableView<CommittedChangeList> myChangeListsView;
   private final ChangesBrowser myChangesView;
   private CommittedChangesTableModel myTableModel;
-  private final JTextArea myCommitMessageArea;
+  private final JEditorPane myCommitMessageArea;
   private CommittedChangeList mySelectedChangeList;
   private JPanel myLeftPanel;
 
   public CommittedChangesBrowser(final Project project, final CommittedChangesTableModel tableModel) {
     super(new BorderLayout());
 
+    myProject = project;
     myTableModel = tableModel;
     myTableModel.sortByChangesColumn(ChangeListColumn.DATE, SortableColumnModel.SORT_DESCENDING);
     myChangeListsView = new TableView<CommittedChangeList>(myTableModel);
@@ -54,10 +59,10 @@ public class CommittedChangesBrowser extends JPanel {
       }
     });
 
-    myCommitMessageArea = new JTextArea();
-    myCommitMessageArea.setRows(3);
-    myCommitMessageArea.setWrapStyleWord(true);
-    myCommitMessageArea.setLineWrap(true);
+    myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
+    myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
+    myCommitMessageArea.addHyperlinkListener(new BrowserHyperlinkListener());
+    myCommitMessageArea.setPreferredSize(new Dimension(150, 100));
     myCommitMessageArea.setEditable(false);
 
     JPanel commitPanel = new JPanel(new BorderLayout());
@@ -113,9 +118,14 @@ public class CommittedChangesBrowser extends JPanel {
     if (list != mySelectedChangeList) {
       mySelectedChangeList = list;
       myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
-      myCommitMessageArea.setText(list != null ? list.getComment() : "");
+      myCommitMessageArea.setText(list != null ? formatText(list) : "");
       myCommitMessageArea.select(0, 0);
     }
+  }
+
+  private String formatText(final CommittedChangeList list) {
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + 
+           "</head><body>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, list.getComment()) + "</body></html>";
   }
 
   public CommittedChangeList getSelectedChangeList() {
