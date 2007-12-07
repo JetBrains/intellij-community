@@ -16,32 +16,38 @@
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.refactoring.HelpID;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author ilyas
@@ -109,6 +115,8 @@ public class GroovyInlineVariableUtil {
       exprs.add(ref.getElement());
     }
 
+    removeRedundantReferences(variable, exprs);
+
     GroovyRefactoringUtil.highlightOccurrences(project, editor, exprs.toArray(PsiElement.EMPTY_ARRAY));
     if (variable.getInitializerGroovy() == null) {
       String message = GroovyRefactoringBundle.message("cannot.find.a.single.definition.to.inline.local.var");
@@ -122,6 +130,21 @@ public class GroovyInlineVariableUtil {
     }
 
     return inlineDialogResult(localName, project, refs);
+  }
+
+  private static void removeRedundantReferences(GrVariable variable, Collection<PsiElement> exprs) {
+//    ControlFlowBuilder builder = new ControlFlowBuilder();
+//    GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(variable, GrVariableDeclarationOwner.class);
+//    if (owner == null) return;
+//
+//    Instruction[] instructions = builder.buildControlFlow(owner, null, null);
+//    for (PsiElement expr : exprs) {
+//      if (expr instanceof GrExpression) {
+//        GrExpression expression = (GrExpression) expr;
+//        FragmentVariableInfos infos = ReachingDefinitionsCollector.obtainVariableFlowInformation(expression, expression);
+//        System.out.println("preved!");
+//      }
+//    }
   }
 
   /**

@@ -11,6 +11,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
 /**
  * @author ven
@@ -29,7 +30,12 @@ public class SuggestedVariableNamesGetter implements ContextGetter {
             VariableKind kind = variable instanceof GrParameter ? VariableKind.PARAMETER :
                                 variable instanceof GrField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
             SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(kind, null, null, type);
-            return suggestedNameInfo.names;
+            String[] names = suggestedNameInfo.names;
+            if (names.length > 0) {
+              String newName = InlineMethodConflictSolver.suggestNewName(names[0], null, parent);
+              return new String[]{newName};
+            }
+            return names;
           }
         }
       }

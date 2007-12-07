@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
  */
 public abstract class InlineMethodConflictSolver {
 
-  static String suggestNewName(@NotNull String startName, GrMethod method, GrCallExpression call, String ... otherNames) {
+  public static String suggestNewName(@NotNull String startName, GrMethod method, PsiElement call, String... otherNames) {
     String newName = startName;
     int i = 1;
     PsiElement parent = call.getParent();
@@ -51,7 +51,8 @@ public abstract class InlineMethodConflictSolver {
     do {
       newName = startName + i;
       i++;
-    } while (!(isValidNameInMethod(newName, method) && isValidName(newName, parent, call) && isValid(newName, otherNames)));
+    } while (!((method == null || isValidNameInMethod(newName, method)) &&
+        isValidName(newName, parent, call) && isValid(newName, otherNames)));
     return newName;
   }
 
@@ -74,7 +75,7 @@ public abstract class InlineMethodConflictSolver {
     return true;
   }
 
-  static boolean isValidName(@NotNull String name, PsiElement scopeElement, GrCallExpression call) {
+  public static boolean isValidName(@NotNull String name, PsiElement scopeElement, PsiElement call) {
     if (isValidNameDown(name, scopeElement, call)) {
       if (!(scopeElement instanceof GroovyFileBase)) {
         return isValidNameUp(name, scopeElement, call);
@@ -86,7 +87,7 @@ public abstract class InlineMethodConflictSolver {
     }
   }
 
-  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, GrCallExpression call) {
+  private static boolean isValidNameDown(@NotNull String name, PsiElement startElement, PsiElement call) {
 
     PsiElement child = startElement.getFirstChild();
     while (child != null) {
@@ -119,7 +120,7 @@ public abstract class InlineMethodConflictSolver {
     return true;
   }
 
-  private static boolean isValidNameUp(@NotNull String name, PsiElement startElement, GrCallExpression call) {
+  private static boolean isValidNameUp(@NotNull String name, PsiElement startElement, PsiElement call) {
     if (startElement instanceof PsiFile) {
       return true;
     }
