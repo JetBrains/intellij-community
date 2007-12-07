@@ -63,7 +63,7 @@ public class IdRefReference extends BasicAttributeValueReference {
         public Result<List<XmlTag>> compute() {
           final List<XmlTag> result = new LinkedList<XmlTag>();
 
-          xmlFile.accept(new XmlRecursiveElementVisitor() {
+          xmlFile.accept(new XmlRecursiveElementVisitor(true) {
             @Override public void visitXmlTag(XmlTag tag) {
               if (isAcceptableTagType(tag)) result.add(tag);
               super.visitXmlTag(tag);
