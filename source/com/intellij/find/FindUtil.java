@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -432,12 +433,10 @@ public class FindUtil {
         int endOffset = result.getEndOffset();
         String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
         String toReplace = findManager.getStringToReplace(foundString, model);
-        if (model.isForward()) {
-          offset = doReplace(document, model, result, toReplace).getEndOffset();
-        }
-        else {
-          offset = doReplace(document, model, result, toReplace).getStartOffset();
-        }
+        TextRange textRange = doReplace(project, document, model, result, toReplace);
+        offset = model.isForward()
+                 ? textRange.getEndOffset()
+                 : textRange.getStartOffset();
         occurrences++;
 
         //[SCR 7258]
@@ -637,19 +636,21 @@ public class FindUtil {
                                0, false);
   }
 
-  private static TextRange doReplace(final Document document, final FindModel model, FindResult result, final String stringToReplace) {
+  private static TextRange doReplace(final Project project, final Document document, final FindModel model, FindResult result, final String stringToReplace) {
     final int startOffset = result.getStartOffset();
     final int endOffset = result.getEndOffset();
     if (stringToReplace == null) return new TextRange(Integer.MAX_VALUE, Integer.MIN_VALUE);
 
-    ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        public void run() {
-          //[ven] I doubt converting is a good solution to SCR 21224
-          document.replaceString(startOffset, endOffset,StringUtil.convertLineSeparators(stringToReplace));
-        }
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          public void run() {
+            //[ven] I doubt converting is a good solution to SCR 21224
+            document.replaceString(startOffset, endOffset, StringUtil.convertLineSeparators(stringToReplace));
+          }
+        });
       }
-    );
+    }, null, document);
 
     int newOffset = startOffset + stringToReplace.length();
 
