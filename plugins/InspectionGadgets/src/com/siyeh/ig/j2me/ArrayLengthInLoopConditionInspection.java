@@ -73,8 +73,8 @@ public class ArrayLengthInLoopConditionInspection extends BaseInspection {
         }
 
         private void checkForMethodCalls(PsiExpression condition){
-            final PsiRecursiveElementVisitor visitor =
-                    new PsiRecursiveElementVisitor(){
+            final PsiElementVisitor visitor =
+                    new JavaRecursiveElementVisitor(){
 
                 @Override public void visitReferenceExpression(
                         @NotNull PsiReferenceExpression expression){

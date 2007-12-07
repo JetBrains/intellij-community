@@ -59,7 +59,7 @@ public class HashCodeUsesNonFinalVariableInspection
         @Override public void visitMethod(@NotNull PsiMethod method) {
             final boolean isHashCode = MethodUtils.isHashCode(method);
             if (isHashCode) {
-                method.accept(new PsiRecursiveElementVisitor() {
+                method.accept(new JavaRecursiveElementVisitor() {
                     
                     @Override public void visitClass(PsiClass aClass) {
                         // Do not recurse into.

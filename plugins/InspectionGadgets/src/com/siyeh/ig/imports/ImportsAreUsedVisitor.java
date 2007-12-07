@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class ImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
+class ImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
 
     private final List<PsiImportStatement> importStatements;
 

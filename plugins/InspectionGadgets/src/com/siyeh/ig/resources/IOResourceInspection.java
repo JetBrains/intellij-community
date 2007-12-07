@@ -110,7 +110,7 @@ public class IOResourceInspection extends BaseInspection {
         if (body == null) return false;
         final boolean[] escaped = new boolean[1];
         PsiElementVisitor visitor =
-        new PsiRecursiveElementVisitor(){
+        new JavaRecursiveElementVisitor(){
           @Override public void visitAnonymousClass(PsiAnonymousClass aClass) {
           }
           @Override public void visitReturnStatement(PsiReturnStatement statement) {
@@ -194,7 +194,7 @@ public class IOResourceInspection extends BaseInspection {
         }
     }
 
-    private static class StreamCloseVisitor extends PsiRecursiveElementVisitor{
+    private static class StreamCloseVisitor extends JavaRecursiveElementVisitor{
 
         private boolean containsStreamClose = false;
         private PsiVariable streamToClose;
@@ -243,7 +243,7 @@ public class IOResourceInspection extends BaseInspection {
     }
 
     private static class UsedAsIOResourceArgVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean usedAsArgToResourceCreation = false;
         private PsiVariable ioResource;

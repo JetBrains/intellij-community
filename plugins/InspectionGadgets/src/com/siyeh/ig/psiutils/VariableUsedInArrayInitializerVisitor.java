@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class VariableUsedInArrayInitializerVisitor
-        extends PsiRecursiveElementVisitor{
+        extends JavaRecursiveElementVisitor{
 
     @NotNull
     private final PsiVariable variable;

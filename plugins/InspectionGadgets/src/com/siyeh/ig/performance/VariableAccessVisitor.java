@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class VariableAccessVisitor extends PsiRecursiveElementVisitor {
+public class VariableAccessVisitor extends JavaRecursiveElementVisitor {
 
     private final Map<PsiField,Integer> m_accessCounts =
             new HashMap<PsiField, Integer>(2);

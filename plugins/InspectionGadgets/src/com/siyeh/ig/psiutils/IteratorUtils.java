@@ -60,7 +60,7 @@ public class IteratorUtils {
     }
 
     private static class CallsIteratorNextVisitor
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private static final Pattern SCANNER_PATTERN = Pattern.compile("next.*");
 

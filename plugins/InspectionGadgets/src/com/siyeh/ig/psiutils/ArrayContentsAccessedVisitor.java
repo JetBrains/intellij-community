@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ArrayContentsAccessedVisitor extends PsiRecursiveElementVisitor{
+public class ArrayContentsAccessedVisitor extends JavaRecursiveElementVisitor{
     private boolean accessed = false;
     private final PsiVariable variable;
 

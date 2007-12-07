@@ -30,7 +30,7 @@ public class SideEffectChecker{
         return visitor.mayHaveSideEffects();
     }
 
-    private static class SideEffectsVisitor extends PsiRecursiveElementVisitor{
+    private static class SideEffectsVisitor extends JavaRecursiveElementVisitor{
 
         private boolean mayHaveSideEffects = false;
 

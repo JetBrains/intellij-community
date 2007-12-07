@@ -17,7 +17,7 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 
-class ContainsSynchronizationVisitor extends PsiRecursiveElementVisitor{
+class ContainsSynchronizationVisitor extends JavaRecursiveElementVisitor{
 
     private boolean containsSynchronization = false;
 

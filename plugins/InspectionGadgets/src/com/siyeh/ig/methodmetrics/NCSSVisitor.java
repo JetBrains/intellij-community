@@ -18,7 +18,7 @@ package com.siyeh.ig.methodmetrics;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class NCSSVisitor extends PsiRecursiveElementVisitor {
+class NCSSVisitor extends JavaRecursiveElementVisitor {
     private int m_statementCount = 0;
 
     @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {

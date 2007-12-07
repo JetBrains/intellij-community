@@ -18,7 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class CanBeStaticVisitor extends PsiRecursiveElementVisitor{
+class CanBeStaticVisitor extends JavaRecursiveElementVisitor{
     private boolean canBeStatic = true;
 
     @Override public void visitElement(@NotNull PsiElement element){

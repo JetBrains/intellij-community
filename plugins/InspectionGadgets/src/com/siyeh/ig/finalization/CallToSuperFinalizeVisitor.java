@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperFinalizeVisitor extends PsiRecursiveElementVisitor{
+class CallToSuperFinalizeVisitor extends JavaRecursiveElementVisitor{
     
     private boolean callToSuperFinalizeFound = false;
 

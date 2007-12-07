@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class ParameterClassCheckVisitor extends PsiRecursiveElementVisitor{
+class ParameterClassCheckVisitor extends JavaRecursiveElementVisitor{
 
     private final PsiParameter parameter;
 

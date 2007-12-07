@@ -27,7 +27,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-class VariableAccessVisitor extends PsiRecursiveElementVisitor{
+class VariableAccessVisitor extends JavaRecursiveElementVisitor{
 
     private final PsiClass aClass;
     private final Set<PsiField> m_synchronizedAccesses =

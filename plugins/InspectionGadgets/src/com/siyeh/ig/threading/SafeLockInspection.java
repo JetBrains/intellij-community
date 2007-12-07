@@ -134,7 +134,7 @@ public class SafeLockInspection extends BaseInspection {
         }
     }
 
-    private static class CloseVisitor extends PsiRecursiveElementVisitor {
+    private static class CloseVisitor extends JavaRecursiveElementVisitor {
 
         private boolean containsClose = false;
         private PsiVariable objectToClose;

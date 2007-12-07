@@ -18,7 +18,7 @@ package com.siyeh.ig.methodmetrics;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class CyclomaticComplexityVisitor extends PsiRecursiveElementVisitor {
+class CyclomaticComplexityVisitor extends JavaRecursiveElementVisitor {
     private int m_complexity = 1;
 
     @Override public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {

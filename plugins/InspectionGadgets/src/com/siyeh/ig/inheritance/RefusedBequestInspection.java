@@ -113,7 +113,7 @@ public class RefusedBequestInspection extends BaseInspection {
         }
     }
 
-    private static class SuperCallVisitor extends PsiRecursiveElementVisitor{
+    private static class SuperCallVisitor extends JavaRecursiveElementVisitor{
 
         private PsiMethod methodToSearchFor;
         private boolean hasSuperCall = false;

@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableAssignedVisitor extends PsiRecursiveElementVisitor{
+public class VariableAssignedVisitor extends JavaRecursiveElementVisitor{
 
     private boolean assigned = false;
     @NotNull private final PsiVariable variable;

@@ -188,7 +188,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
     }
 
     private static class ConflictingDeclarationVisitor
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private final String variableName;
         private final PsiCodeBlock exceptBlock;

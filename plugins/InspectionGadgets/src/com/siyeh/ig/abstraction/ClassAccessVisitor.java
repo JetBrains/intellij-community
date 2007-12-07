@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class ClassAccessVisitor extends PsiRecursiveElementVisitor {
+class ClassAccessVisitor extends JavaRecursiveElementVisitor {
 
     private final Map<PsiClass,Integer> m_accessCounts =
             new HashMap<PsiClass, Integer>(2);

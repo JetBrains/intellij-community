@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-class NegationCountVisitor extends PsiRecursiveElementVisitor {
+class NegationCountVisitor extends JavaRecursiveElementVisitor {
     
     private int m_count = 0;
 

@@ -133,7 +133,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     }
 
     private static class UrlAddedVisitor
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private boolean urlAdded = false;
         private final PsiVariable variable;

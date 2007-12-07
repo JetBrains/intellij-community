@@ -84,7 +84,7 @@ public class AwaitWithoutCorrespondingSignalInspection extends BaseInspection {
     }
 
     private static class ContainsSignalVisitor
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private PsiField target;
         private boolean containsSignal = false;

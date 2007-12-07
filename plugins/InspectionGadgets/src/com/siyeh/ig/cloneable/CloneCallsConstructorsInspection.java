@@ -51,7 +51,7 @@ public class CloneCallsConstructorsInspection extends BaseInspection {
                     HardcodedMethodConstants.CLONE.equals(methodName) &&
                             parameterList.getParametersCount() == 0;
             if (isClone) {
-                method.accept(new PsiRecursiveElementVisitor() {
+                method.accept(new JavaRecursiveElementVisitor() {
 
                     @Override public void visitNewExpression(
                             @NotNull PsiNewExpression newExpression) {

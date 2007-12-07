@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-class CouplingVisitor extends PsiRecursiveElementVisitor {
+class CouplingVisitor extends JavaRecursiveElementVisitor {
     private boolean m_inClass = false;
     private final PsiMethod m_method;
     private final boolean m_includeJavaClasses;

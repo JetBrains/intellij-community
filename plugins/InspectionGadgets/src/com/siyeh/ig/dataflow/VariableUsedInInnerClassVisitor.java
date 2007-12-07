@@ -18,7 +18,7 @@ package com.siyeh.ig.dataflow;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor
+class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor
 {
     private final PsiVariable variable;
     private boolean usedInInnerClass = false;

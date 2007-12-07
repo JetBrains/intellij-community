@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
@@ -92,7 +92,7 @@ public class SwitchStatementDensityInspection extends BaseInspection {
     }
 
     private static class StatementCountVisitor
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private int numStatements = 0;
 

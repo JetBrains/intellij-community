@@ -55,7 +55,7 @@ public class ExpectedTypeUtils{
         return visitor.getExpectedType();
     }
 
-    private static class ExpectedTypeVisitor extends PsiElementVisitor{
+    private static class ExpectedTypeVisitor extends JavaElementVisitor{
 
         /**
          * @noinspection StaticCollection

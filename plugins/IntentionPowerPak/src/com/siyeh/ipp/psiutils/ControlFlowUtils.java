@@ -172,7 +172,7 @@ public class ControlFlowUtils{
         return breakFinder.breakFound();
     }
 
-    private static class BreakTargetFinder extends PsiRecursiveElementVisitor{
+    private static class BreakTargetFinder extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
         private final PsiStatement m_target;
@@ -204,7 +204,7 @@ public class ControlFlowUtils{
     }
 
     private static class ExitingBreakFinder
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
 

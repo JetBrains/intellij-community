@@ -81,7 +81,7 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspection
     }
 
     private static class CalledMethodsVisitor
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private boolean noSuchElementExceptionThrown = false;
 

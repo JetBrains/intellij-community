@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableUsedInInnerClassVisitor extends PsiRecursiveElementVisitor{
+public class VariableUsedInInnerClassVisitor extends JavaRecursiveElementVisitor{
 
     @NotNull private final PsiVariable variable;
     private boolean usedInInnerClass = false;

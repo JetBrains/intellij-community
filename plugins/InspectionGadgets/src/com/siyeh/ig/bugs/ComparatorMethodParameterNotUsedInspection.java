@@ -74,7 +74,7 @@ public class ComparatorMethodParameterNotUsedInspection
         }
 
         private static class ParameterAccessVisitor
-                extends PsiRecursiveElementVisitor {
+                extends JavaRecursiveElementVisitor {
 
             private final Set<PsiParameter> parameters;
 

@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiVariable;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableUsedVisitor extends PsiRecursiveElementVisitor{
+public class VariableUsedVisitor extends JavaRecursiveElementVisitor {
 
     private boolean used = false;
     @NotNull private final PsiVariable variable;

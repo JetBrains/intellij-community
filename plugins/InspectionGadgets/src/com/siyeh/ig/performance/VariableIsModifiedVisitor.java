@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-class VariableIsModifiedVisitor extends PsiRecursiveElementVisitor{
+class VariableIsModifiedVisitor extends JavaRecursiveElementVisitor{
 
     @NonNls private static final Set<String> updateNames =
             new HashSet<String>(9);

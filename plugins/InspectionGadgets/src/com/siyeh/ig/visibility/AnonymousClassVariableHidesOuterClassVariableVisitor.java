@@ -65,7 +65,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor
         }
     }
 
-  private static class VariableCollector extends PsiRecursiveElementVisitor {
+  private static class VariableCollector extends JavaRecursiveElementVisitor {
 
         private static final PsiVariable[] EMPTY_VARIABLE_LIST = {};
 

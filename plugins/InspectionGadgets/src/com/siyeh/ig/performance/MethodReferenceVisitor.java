@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 
-class MethodReferenceVisitor extends PsiRecursiveElementVisitor{
+class MethodReferenceVisitor extends JavaRecursiveElementVisitor{
 
     private boolean m_referencesStaticallyAccessible = true;
     private PsiMethod m_method;

@@ -185,7 +185,7 @@ public class ExceptionUtils{
     }
 
     private static class ExceptionsThrownVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private final Set<PsiType> m_exceptionsThrown = new HashSet<PsiType>(4);
 

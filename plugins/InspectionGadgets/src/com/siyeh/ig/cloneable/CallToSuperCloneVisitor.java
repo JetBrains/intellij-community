@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperCloneVisitor extends PsiRecursiveElementVisitor{
+class CallToSuperCloneVisitor extends JavaRecursiveElementVisitor{
 
     private boolean callToSuperCloneFound = false;
 

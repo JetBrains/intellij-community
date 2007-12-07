@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-class StaticImportsAreUsedVisitor extends PsiRecursiveElementVisitor {
+class StaticImportsAreUsedVisitor extends JavaRecursiveElementVisitor {
 
     private List<PsiImportStaticStatement> importStatements;
 

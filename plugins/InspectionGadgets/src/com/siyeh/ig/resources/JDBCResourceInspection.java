@@ -191,7 +191,7 @@ public class JDBCResourceInspection extends BaseInspection {
     }
 
     private static class ResourceCloseVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
         private boolean containsResourceClose = false;
         private PsiVariable streamToClose;
 

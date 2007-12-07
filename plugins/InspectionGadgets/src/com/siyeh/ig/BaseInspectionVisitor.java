@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class BaseInspectionVisitor extends PsiElementVisitor{
+public abstract class BaseInspectionVisitor extends JavaElementVisitor{
 
     private BaseInspection inspection = null;
     private boolean onTheFly = false;

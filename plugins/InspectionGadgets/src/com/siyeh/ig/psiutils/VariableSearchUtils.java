@@ -193,7 +193,7 @@ public class VariableSearchUtils {
     }
 
     private static class ConflictingDeclarationVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private final Set<String> variableNames;
         private final PsiCodeBlock exceptBlock;

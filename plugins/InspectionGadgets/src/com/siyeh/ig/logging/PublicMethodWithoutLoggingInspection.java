@@ -139,7 +139,7 @@ public class PublicMethodWithoutLoggingInspection extends BaseInspection {
     }
 
     private class ContainsLoggingCallVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean containsLoggingCall = false;
 

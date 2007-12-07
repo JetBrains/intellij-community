@@ -130,7 +130,7 @@ class MergeParallelIfsPredicate implements PsiElementPredicate{
         }
     }
 
-    private static class DeclarationVisitor extends PsiRecursiveElementVisitor{
+    private static class DeclarationVisitor extends JavaRecursiveElementVisitor{
 
         private final Set<String> declarations;
         private boolean hasConflict = false;

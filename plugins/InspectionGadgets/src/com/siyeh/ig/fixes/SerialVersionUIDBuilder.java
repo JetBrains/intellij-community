@@ -33,7 +33,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-public class SerialVersionUIDBuilder extends PsiRecursiveElementVisitor{
+public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
 
     @NonNls private static final String ACCESS_METHOD_NAME_PREFIX = "access$";
 

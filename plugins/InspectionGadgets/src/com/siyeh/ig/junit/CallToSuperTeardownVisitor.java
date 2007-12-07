@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class CallToSuperTeardownVisitor extends PsiRecursiveElementVisitor{
+class CallToSuperTeardownVisitor extends JavaRecursiveElementVisitor{
 
     private boolean callToSuperTearDownFound = false;
 

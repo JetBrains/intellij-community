@@ -497,7 +497,7 @@ public class ControlFlowUtils{
         return !codeBlockMayCompleteNormally(body);
     }
 
-    private static class SystemExitFinder extends PsiRecursiveElementVisitor{
+    private static class SystemExitFinder extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
 
@@ -533,7 +533,7 @@ public class ControlFlowUtils{
         }
     }
 
-    private static class ReturnFinder extends PsiRecursiveElementVisitor{
+    private static class ReturnFinder extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
 
@@ -555,7 +555,7 @@ public class ControlFlowUtils{
         }
     }
 
-    private static class BreakFinder extends PsiRecursiveElementVisitor{
+    private static class BreakFinder extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
         private final PsiStatement m_target;
@@ -586,7 +586,7 @@ public class ControlFlowUtils{
         }
     }
 
-    private static class ContinueFinder extends PsiRecursiveElementVisitor{
+    private static class ContinueFinder extends JavaRecursiveElementVisitor{
 
         private boolean m_found = false;
         private int m_nestingDepth = 0;
@@ -670,7 +670,7 @@ public class ControlFlowUtils{
     }
 
     public static class MethodCallFinder
-            extends PsiRecursiveElementVisitor {
+            extends JavaRecursiveElementVisitor {
 
         private final String containingClassName;
         private final PsiType returnType;

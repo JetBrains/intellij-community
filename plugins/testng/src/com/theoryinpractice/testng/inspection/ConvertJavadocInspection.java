@@ -48,7 +48,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
       }
 

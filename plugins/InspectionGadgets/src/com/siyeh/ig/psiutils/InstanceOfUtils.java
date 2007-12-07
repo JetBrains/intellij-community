@@ -76,7 +76,7 @@ public class InstanceOfUtils {
         return false;
     }
 
-    public static class InstanceofChecker extends PsiElementVisitor {
+    public static class InstanceofChecker extends JavaElementVisitor {
 
         private final PsiReferenceExpression referenceExpression;
         private final PsiType castType;

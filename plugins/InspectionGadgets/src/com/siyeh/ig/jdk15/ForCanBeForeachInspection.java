@@ -1290,7 +1290,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
     }
 
     private static class NumCallsToIteratorNextVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private int numCallsToIteratorNext = 0;
         private final String iteratorName;
@@ -1326,7 +1326,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
     }
 
     private static class IteratorRemoveVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
         private boolean removeCalled = false;
         private final String iteratorName;
 
@@ -1368,7 +1368,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
     }
 
     private static class IteratorHasNextVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean hasNextCalled = false;
         private final String iteratorName;
@@ -1411,7 +1411,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
     }
 
     private static class VariableOnlyUsedAsIndexVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean indexVariableUsedOnlyAsIndex = true;
         private final PsiVariable arrayVariable;
@@ -1484,7 +1484,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
     }
 
     private static class VariableOnlyUsedAsListIndexVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean indexVariableUsedOnlyAsIndex = true;
         private final PsiLocalVariable indexVariable;

@@ -239,7 +239,7 @@ public class ImportUtils{
     }
 
     private static class ClassReferenceVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private final String m_name;
         private final String fullyQualifiedName;

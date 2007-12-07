@@ -154,7 +154,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
         }
 
         private static class QualificationRemover
-                extends PsiRecursiveElementVisitor {
+                extends JavaRecursiveElementVisitor {
 
             private final String fullyQualifiedText;
             private final List<PsiElement> shortenedElements =

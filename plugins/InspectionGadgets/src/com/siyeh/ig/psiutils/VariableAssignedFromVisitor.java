@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class VariableAssignedFromVisitor extends PsiRecursiveElementVisitor{
+public class VariableAssignedFromVisitor extends JavaRecursiveElementVisitor{
 
     private boolean assignedFrom = false;
 

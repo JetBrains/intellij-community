@@ -55,7 +55,7 @@ public class CompareToUsesNonFinalVariableInspection
         @Override public void visitMethod(@NotNull PsiMethod method) {
             final boolean isCompareTo = MethodUtils.isCompareTo(method);
             if (isCompareTo) {
-                method.accept(new PsiRecursiveElementVisitor() {
+                method.accept(new JavaRecursiveElementVisitor() {
 
                     @Override public void visitClass(PsiClass aClass) {
                         // Do not recurse into.

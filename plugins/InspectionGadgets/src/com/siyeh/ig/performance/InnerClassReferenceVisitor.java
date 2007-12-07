@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class InnerClassReferenceVisitor extends PsiRecursiveElementVisitor {
+public class InnerClassReferenceVisitor extends JavaRecursiveElementVisitor {
 
     private PsiClass innerClass;
     private boolean referencesStaticallyAccessible = true;

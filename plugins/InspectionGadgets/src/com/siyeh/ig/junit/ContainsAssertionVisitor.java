@@ -15,14 +15,14 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.psi.JavaRecursiveElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-class ContainsAssertionVisitor extends PsiRecursiveElementVisitor {
+class ContainsAssertionVisitor extends JavaRecursiveElementVisitor {
     private boolean containsAssertion = false;
 
     @Override public void visitElement(@NotNull PsiElement element) {

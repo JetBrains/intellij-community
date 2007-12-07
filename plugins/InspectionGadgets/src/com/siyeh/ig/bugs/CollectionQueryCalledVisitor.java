@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-class CollectionQueryCalledVisitor extends PsiRecursiveElementVisitor{
+class CollectionQueryCalledVisitor extends JavaRecursiveElementVisitor{
 
     /**
          * @noinspection StaticCollection

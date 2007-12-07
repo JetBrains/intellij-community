@@ -225,7 +225,7 @@ public class MismatchedCollectionQueryUpdateInspection
     }
 
     private static class CollectionQueriedByAssignmentVisitor
-            extends PsiRecursiveElementVisitor{
+            extends JavaRecursiveElementVisitor{
 
         private boolean mayBeQueried = false;
         @NotNull private final PsiVariable variable;

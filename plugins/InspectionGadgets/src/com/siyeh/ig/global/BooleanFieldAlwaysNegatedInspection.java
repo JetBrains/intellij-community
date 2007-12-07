@@ -121,7 +121,7 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
             if (!PsiType.BOOLEAN.equals(type)) {
                 return;
             }
-            element.accept(new PsiRecursiveElementVisitor() {
+            element.accept(new JavaRecursiveElementVisitor() {
 
                 @Override public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
                     super.visitReferenceExpression(referenceExpression);

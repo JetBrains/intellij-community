@@ -145,7 +145,7 @@ public class ForLoopThatDoesntUseLoopVariableInspection
         }
     }
 
-    private static class UseVisitor extends PsiRecursiveElementVisitor{
+    private static class UseVisitor extends JavaRecursiveElementVisitor{
 
         private final PsiLocalVariable variable;
         private boolean used = false;

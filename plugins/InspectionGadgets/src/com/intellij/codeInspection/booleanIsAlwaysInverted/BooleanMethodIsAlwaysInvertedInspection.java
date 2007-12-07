@@ -112,7 +112,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
     if (!(psiElement instanceof PsiMethod)) return;
     final PsiMethod psiMethod = (PsiMethod)psiElement;
     if (!(psiMethod.getReturnType() == PsiType.BOOLEAN)) return;
-    element.accept(new PsiRecursiveElementVisitor() {
+    element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         final PsiReferenceExpression methodExpression = call.getMethodExpression();

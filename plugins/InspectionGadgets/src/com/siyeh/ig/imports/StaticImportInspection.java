@@ -149,7 +149,7 @@ public class StaticImportInspection extends BaseInspection {
         }
 
         static class StaticImportReferenceCollector
-                extends PsiRecursiveElementVisitor {
+                extends JavaRecursiveElementVisitor {
 
             private final JavaResolveResult[] importTargets;
             private final boolean onDemand;

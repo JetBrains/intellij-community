@@ -58,7 +58,7 @@ public class EqualsUsesNonFinalVariableInspection extends BaseInspection {
 
         @Override public void visitMethod(@NotNull PsiMethod method){
             if(MethodUtils.isEquals(method)){
-                method.accept(new PsiRecursiveElementVisitor() {
+                method.accept(new JavaRecursiveElementVisitor() {
 
                     @Override public void visitClass(PsiClass aClass) {
                         // Do not recurse into.

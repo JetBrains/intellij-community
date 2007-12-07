@@ -177,7 +177,7 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
             LOG.info("onMarkReferenced:" + refMethod.getName());
 
             final PsiElement element = refFrom.getElement();
-            element.accept(new PsiRecursiveElementVisitor() {
+            element.accept(new JavaRecursiveElementVisitor() {
                 @Override public void visitMethodCallExpression(PsiMethodCallExpression call) {
                     if (methodReturnUsed(refMethod)) {
                         return;

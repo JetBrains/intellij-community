@@ -92,7 +92,7 @@ public class UnusedLabelInspection extends BaseInspection {
         }
     }
 
-    private static class LabelFinder extends PsiRecursiveElementVisitor {
+    private static class LabelFinder extends JavaRecursiveElementVisitor {
 
         private boolean found = false;
         private String label = null;

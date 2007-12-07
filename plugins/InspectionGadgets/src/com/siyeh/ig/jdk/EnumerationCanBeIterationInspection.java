@@ -405,7 +405,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
         }
 
         private static class EnumerationMethodCalledVisitor
-                extends PsiRecursiveElementVisitor {
+                extends JavaRecursiveElementVisitor {
 
             private final PsiVariable variable;
             private boolean enumerationMethodCalled = false;

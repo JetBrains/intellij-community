@@ -18,7 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class RecursionVisitor extends PsiRecursiveElementVisitor{
+public class RecursionVisitor extends JavaRecursiveElementVisitor{
 
     private boolean recursive = false;
     private final PsiMethod method;
