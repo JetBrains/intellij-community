@@ -81,12 +81,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myProject = project;
     myChangeLists = changeLists;
-    myChangesTree = new TreeWithEmptyText(buildTreeModel()) {
-      @Override
-      public boolean getScrollableTracksViewportWidth() {
-        return true;
-      }
-    };
+    myChangesTree = new ChangesBrowserTree();
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
     myChangesTree.setCellRenderer(new CommittedChangeListRenderer(project));
@@ -286,9 +281,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
-    else if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
-      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
-    }
     else if (key.equals(PlatformDataKeys.NAVIGATABLE_ARRAY)) {
       final CommittedChangeList list = getSelectedChangeList();
       if (list != null) {
@@ -296,9 +288,6 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
         sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
       }
-    }
-    else if (key.equals(PlatformDataKeys.TREE_EXPANDER)) {
-      sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, ourHelpId);
@@ -398,4 +387,23 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
   }
 
+  private class ChangesBrowserTree extends TreeWithEmptyText implements TypeSafeDataProvider {
+    public ChangesBrowserTree() {
+      super(buildTreeModel());
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+      return true;
+    }
+
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
+        sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      }
+      else if (key.equals(PlatformDataKeys.TREE_EXPANDER)) {
+        sink.put(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
+      }
+    }
+  }
 }
