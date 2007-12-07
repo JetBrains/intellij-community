@@ -242,6 +242,7 @@ public class ApplyPatchDialog extends DialogWrapper {
       queueUpdateStatus("Cannot find patch file");
       return;
     }
+    myChangeListChooser.setDefaultName(patchFile.getNameWithoutExtension().replace('_', ' ').trim());
     if (async) {
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
