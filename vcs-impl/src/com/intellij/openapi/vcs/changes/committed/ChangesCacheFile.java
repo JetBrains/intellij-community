@@ -588,7 +588,7 @@ public class ChangesCacheFile {
         boolean updated = false;
         for(Change change: data.changeList.getChanges()) {
           if (data.accountedChanges.contains(change)) continue;
-          final boolean changeFound = processIncomingChange(change, data.changeList, currentRevisions, incomingFiles, deletedFiles, createdFiles);
+          final boolean changeFound = processIncomingChange(change, data, currentRevisions, incomingFiles, deletedFiles, createdFiles);
           if (changeFound) {
             data.accountedChanges.add(change);
           }
@@ -610,11 +610,12 @@ public class ChangesCacheFile {
   }
 
   private boolean processIncomingChange(final Change change,
-                                        final CommittedChangeList changeList,
+                                        final IncomingChangeListData changeListData,
                                         final FactoryMap<VirtualFile, VcsRevisionNumber> currentRevisions,
                                         @Nullable final Collection<FilePath> incomingFiles,
                                         final Set<FilePath> deletedFiles,
                                         final Set<FilePath> createdFiles) {
+    CommittedChangeList changeList = changeListData.changeList;
     ContentRevision afterRevision = change.getAfterRevision();
     if (afterRevision != null) {
       if (afterRevision.getFile().isNonLocal()) {
@@ -656,6 +657,9 @@ public class ChangesCacheFile {
         if (myChangesProvider.isChangeLocallyAvailable(afterRevision.getFile(), null, afterRevision.getRevisionNumber(), changeList)) {
           return true;
         }
+        if (wasSubsequentlyDeleted(afterRevision.getFile(), changeListData.indexOffset)) {
+          return true;
+        }
         LOG.info("Could not find local file for change " + afterRevision.getFile().getPath());
       }
     }
@@ -680,6 +684,34 @@ public class ChangesCacheFile {
       else {
         LOG.info("File exists locally and no 'create' change found for it");
       }
+    }
+    return false;
+  }
+
+  // If we have an incoming add, we may have already processed the subsequent delete of the same file during
+  // a previous incoming changes refresh. So we try to search for the deletion of this file through all
+  // subsequent committed changelists, regardless of whether they are in "incoming" status.
+  private boolean wasSubsequentlyDeleted(final FilePath file, long indexOffset) {
+    try {
+      indexOffset += INDEX_ENTRY_SIZE;
+      while(indexOffset < myIndexStream.length()) {
+        myIndexStream.seek(indexOffset);
+        IndexEntry e = new IndexEntry();
+        readIndexEntry(e);
+
+        final CommittedChangeList changeList = loadChangeListAt(e.offset);
+        for(Change c: changeList.getChanges()) {
+          final ContentRevision beforeRevision = c.getBeforeRevision();
+          if (beforeRevision != null && beforeRevision.getFile().equals(file) && c.getAfterRevision() == null) {
+            LOG.info("Found subsequent deletion for file " + file);
+            return true;
+          }
+        }
+        indexOffset += INDEX_ENTRY_SIZE;
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
     return false;
   }
