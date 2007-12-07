@@ -2,8 +2,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersImpl.expressions.GroovyExpressionSurrounder;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -13,10 +12,10 @@ abstract class GroovyConditionSurrounder extends GroovyExpressionSurrounder {
   protected boolean isApplicable(PsiElement element) {
     if (! (element instanceof GrExpression)) return false;
 
-    GrExpression grExpression = (GrExpression) element;
-    PsiType type = grExpression.getType();
+    GrExpression expression = (GrExpression) element;
+    PsiType type = expression.getType();
 
     if (type == null) return false;
-    return  PsiType.BOOLEAN.getPresentableText().toLowerCase().equals(type.getPresentableText().toLowerCase());
+    return type.equals(PsiType.BOOLEAN) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 }
