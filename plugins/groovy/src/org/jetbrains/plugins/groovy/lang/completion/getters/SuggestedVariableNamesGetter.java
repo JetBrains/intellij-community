@@ -28,12 +28,15 @@ public class SuggestedVariableNamesGetter implements ContextGetter {
           if (type != null) {
             final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(context.getProject());
             VariableKind kind = variable instanceof GrParameter ? VariableKind.PARAMETER :
-                                variable instanceof GrField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
+                variable instanceof GrField ? VariableKind.FIELD : VariableKind.LOCAL_VARIABLE;
             SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(kind, null, null, type);
             String[] names = suggestedNameInfo.names;
             if (names.length > 0) {
-              String newName = InlineMethodConflictSolver.suggestNewName(names[0], null, parent);
-              return new String[]{newName};
+              String name = names[0];
+              String newName = InlineMethodConflictSolver.suggestNewName(name, null, parent);
+              if (!name.equals(newName)) {
+                return new String[]{newName};
+              }
             }
             return names;
           }
