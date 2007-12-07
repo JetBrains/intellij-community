@@ -522,7 +522,7 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void checkVariable(AnnotationHolder holder, GrVariable variable) {
-    final GroovyPsiElement duplicate = ResolveUtil.resolveVariable(variable, variable.getName());
+    final GroovyPsiElement duplicate = ResolveUtil.resolveProperty(variable, variable.getName());
     if (duplicate instanceof GrVariable) {
       if (duplicate instanceof GrField && !(variable instanceof GrField)) {
         holder.createWarningAnnotation(variable.getNameIdentifierGroovy(), GroovyBundle.message("field.already.defined", variable.getName()));

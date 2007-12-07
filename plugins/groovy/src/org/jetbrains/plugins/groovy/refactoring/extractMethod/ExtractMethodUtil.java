@@ -133,7 +133,7 @@ public class ExtractMethodUtil {
   To declare or not a variable to which method call result will be assigned.
    */
   private static boolean mustAddVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
-    return ResolveUtil.resolveVariable(statements[0], varName) == null;
+    return ResolveUtil.resolveProperty(statements[0], varName) == null;
   }
 
   static void renameParameterOccurrences(GrMethod method, ExtractMethodInfoHelper helper) throws IncorrectOperationException {

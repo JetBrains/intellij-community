@@ -17,9 +17,10 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import gnu.trove.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -28,8 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -171,10 +170,11 @@ public class ReachingDefinitionsCollector {
     List<VariableInfo> result = new ArrayList<VariableInfo>();
     for (Iterator<VariableInfo> iterator = infos.values().iterator(); iterator.hasNext();) {
       VariableInfo info = iterator.next();
-      final GroovyPsiElement resolved = ResolveUtil.resolveVariable(place, info.getName());
-      if (resolved instanceof PsiField) iterator.remove();
-      else if (resolved instanceof GrReferenceExpression) {
-        GrMember member = PsiTreeUtil.getParentOfType(resolved, GrMember.class);
+      String name = info.getName();
+      GroovyPsiElement property = ResolveUtil.resolveProperty(place, name);
+      if (property instanceof GrVariable) iterator.remove();
+      else if (property instanceof GrReferenceExpression) {
+        GrMember member = PsiTreeUtil.getParentOfType(property, GrMember.class);
         if (member == null) continue;
         else if (!member.hasModifierProperty(PsiModifier.STATIC)) {
           if (member.getContainingClass() instanceof GroovyScriptClass) {
@@ -183,7 +183,9 @@ public class ReachingDefinitionsCollector {
           }
         }
       }
-      result.add(info);
+      if (ResolveUtil.resolveClass(place, name) == null) {
+        result.add(info);
+      }
     }
     return result.toArray(new VariableInfo[result.size()]);
   }

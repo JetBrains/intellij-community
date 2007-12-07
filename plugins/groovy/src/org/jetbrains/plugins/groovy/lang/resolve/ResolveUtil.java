@@ -21,8 +21,8 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspClass;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.ResolveKind.*;
 
@@ -143,14 +142,25 @@ public class ResolveUtil {
     return manager.findClass("java.util.List", resolveScope);
   }
 
-  public static GroovyPsiElement resolveVariable(GroovyPsiElement place, String name) {
-    ResolverProcessor processor = new PropertyResolverProcessor(name, place,  false);
+  public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {
+    PropertyResolverProcessor processor = new PropertyResolverProcessor(name, place, false);
+    return (GroovyPsiElement) resolveExistingElement(place, processor, GrVariable.class, GrReferenceExpression.class);
+  }
+
+  public static PsiClass resolveClass(GroovyPsiElement place, String name) {
+    ClassResolverProcessor processor = new ClassResolverProcessor(name, place, false);
+    return resolveExistingElement(place, processor, PsiClass.class);
+  }
+
+  private static <T> T resolveExistingElement(GroovyPsiElement place, ResolverProcessor processor, Class<? extends T>... classes) {
     treeWalkUp(place, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
     for (GroovyResolveResult candidate : candidates) {
       final PsiElement element = candidate.getElement();
       if (element == place) continue;
-      if (element instanceof GrVariable || element instanceof GrReferenceExpression) return (GroovyPsiElement) element;
+      for (Class<? extends T> clazz : classes) {
+        if (clazz.isInstance(element)) return (T) element;
+      }
     }
 
     return null;
