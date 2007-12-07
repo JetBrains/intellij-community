@@ -13,7 +13,6 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-@Bombed(month = Calendar.DECEMBER, day = 16)
 public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s1 =
     "debug(\"In action performed:\"+event);"+
