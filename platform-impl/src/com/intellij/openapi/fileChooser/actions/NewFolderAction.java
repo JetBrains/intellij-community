@@ -8,7 +8,16 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 
+import javax.swing.*;
+
 public class NewFolderAction extends FileChooserAction {
+  public NewFolderAction() {
+  }
+
+  public NewFolderAction(final String text, final String description, final Icon icon) {
+    super(text, description, icon);
+  }
+
   protected void update(FileSystemTree fileSystemTree, AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     VirtualFile selectedFile = fileSystemTree.getSelectedFile();
