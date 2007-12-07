@@ -13,14 +13,11 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.CommitExecutor;
-import com.intellij.openapi.vcs.changes.CommitSession;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +83,15 @@ public class ShelveChangesCommitExecutor implements CommitExecutor {
       try {
         final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
+
+        Change[] changesArray = changes.toArray(new Change[changes.size()]);
+        ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
+        if (changeList instanceof LocalChangeList) {
+          LocalChangeList localChangeList = (LocalChangeList) changeList;
+          if (localChangeList.getChanges().size() == changes.size() && !localChangeList.isDefault()) {
+            ChangeListManager.getInstance(myProject).removeChangeList(localChangeList);
+          }
+        }
       }
       catch (final Exception ex) {
         LOG.info(ex);
