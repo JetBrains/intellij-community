@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
@@ -49,9 +50,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.text.DateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -64,7 +63,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   private final TreeWithEmptyText myChangesTree;
   private final ChangesBrowser myChangesView;
   private List<CommittedChangeList> myChangeLists;
-  private CommittedChangeList mySelectedChangeList;
+  private List<CommittedChangeList> mySelectedChangeLists;
   private ChangeListGroupingStrategy myGroupingStrategy = ChangeListGroupingStrategy.DATE;
   private ChangeListFilteringStrategy myFilteringStrategy = ChangeListFilteringStrategy.NONE;
   private final Splitter myFilterSplitter;
@@ -198,22 +197,51 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private void updateBySelectionChange() {
-    CommittedChangeList list = null;
-    final TreePath selectionPath = myChangesTree.getSelectionPath();
-    if (selectionPath != null) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode) selectionPath.getLastPathComponent();
-      if (node.getUserObject() instanceof CommittedChangeList) {
-        list = (CommittedChangeList) node.getUserObject();
+    List<CommittedChangeList> selection = new ArrayList<CommittedChangeList>();
+    final TreePath[] selectionPaths = myChangesTree.getSelectionPaths();
+    if (selectionPaths != null) {
+      for(TreePath path: selectionPaths) {
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
+        if (node.getUserObject() instanceof CommittedChangeList) {
+          selection.add((CommittedChangeList) node.getUserObject());
+        }
       }
     }
-    if (list != mySelectedChangeList) {
-      mySelectedChangeList = list;
-      myChangesView.setChangesToDisplay(list != null ? new ArrayList<Change>(list.getChanges()) : Collections.<Change>emptyList());
+
+    if (!selection.equals(mySelectedChangeLists)) {
+      mySelectedChangeLists = selection;
+      myChangesView.setChangesToDisplay(collectChanges(mySelectedChangeLists));
     }
   }
 
-  public CommittedChangeList getSelectedChangeList() {
-    return mySelectedChangeList;
+  private static List<Change> collectChanges(final List<CommittedChangeList> selectedChangeLists) {
+    List<Change> result = new ArrayList<Change>();
+    Collections.sort(selectedChangeLists, new Comparator<CommittedChangeList>() {
+      public int compare(final CommittedChangeList o1, final CommittedChangeList o2) {
+        return o1.getCommitDate().compareTo(o2.getCommitDate());
+      }
+    });
+    for(CommittedChangeList cl: selectedChangeLists) {
+      for(Change c: cl.getChanges()) {
+        addOrReplaceChange(result, c);
+      }
+    }
+    return result;
+  }
+
+  private static void addOrReplaceChange(final List<Change> changes, final Change c) {
+    final ContentRevision beforeRev = c.getBeforeRevision();
+    if (beforeRev != null) {
+      for(Change oldChange: changes) {
+        ContentRevision rev = oldChange.getAfterRevision();
+        if (rev != null && rev.getFile().equals(beforeRev.getFile())) {
+          changes.remove(oldChange);
+          changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
+          return;
+        }
+      }
+    }
+    changes.add(c);
   }
 
   private List<CommittedChangeList> getSelectedChangeLists() {
@@ -269,11 +297,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(VcsDataKeys.CHANGES)) {
-      final CommittedChangeList list = getSelectedChangeList();
-      if (list != null) {
-        final Collection<Change> changes = list.getChanges();
-        sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
-      }
+      final Collection<Change> changes = collectChanges(getSelectedChangeLists());
+      sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
     }
     else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final List<CommittedChangeList> lists = getSelectedChangeLists();
@@ -282,12 +307,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       }
     }
     else if (key.equals(PlatformDataKeys.NAVIGATABLE_ARRAY)) {
-      final CommittedChangeList list = getSelectedChangeList();
-      if (list != null) {
-        final Collection<Change> changes = list.getChanges();
-        Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
-        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
-      }
+      final Collection<Change> changes = collectChanges(getSelectedChangeLists());
+      Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
+      sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, ourHelpId);

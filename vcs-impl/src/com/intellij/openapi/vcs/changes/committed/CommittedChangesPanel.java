@@ -19,8 +19,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.FilterComponent;
@@ -31,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
@@ -188,18 +185,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(VcsDataKeys.CHANGES)) {
-      final CommittedChangeList list = myBrowser.getSelectedChangeList();
-      if (list != null) {
-        final Collection<Change> changes = list.getChanges();
-        sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
-      }
-    }
-    else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
-      final CommittedChangeList list = myBrowser.getSelectedChangeList();
-      if (list != null) {
-        sink.put(VcsDataKeys.CHANGE_LISTS, new ChangeList[] { list });
-      }
+    if (key.equals(VcsDataKeys.CHANGES) || key.equals(VcsDataKeys.CHANGE_LISTS)) {
+      myBrowser.calcData(key, sink);
     }
   }
 
