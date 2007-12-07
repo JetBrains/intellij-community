@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.util.ui.OptionsDialog;
 
 import javax.swing.*;
@@ -75,7 +76,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     init();
   }
 
-  private Map<AbstractVcs, Configurable> revertMap(final Map<Configurable, AbstractVcs> confs) {
+  private static Map<AbstractVcs, Configurable> revertMap(final Map<Configurable, AbstractVcs> confs) {
     final HashMap<AbstractVcs, Configurable> result = new HashMap<AbstractVcs, Configurable>();
     for (Configurable configurable : confs.keySet()) {
       result.put(confs.get(configurable), configurable);
@@ -111,5 +112,35 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   protected JComponent createCenterPanel() {
 
     return myMainPanel;
+  }
+
+  protected Action[] createActions() {
+    for(Configurable conf: myEnvToConfMap.values()) {
+      if (conf.getHelpTopic() != null) {
+        return new Action[] { getOKAction(), getCancelAction(), getHelpAction() };
+      }
+    }
+    return super.createActions();
+  }
+
+  protected void doHelpAction() {
+    String helpTopic = null;
+    final Collection<Configurable> v = myEnvToConfMap.values();
+    final Configurable[] configurables = v.toArray(new Configurable[v.size()]);
+    if (myMainPanel instanceof JTabbedPane) {
+      final int tabIndex = ((JTabbedPane)myMainPanel).getSelectedIndex();
+      if (tabIndex >= 0 && tabIndex < configurables.length) {
+        helpTopic = configurables [tabIndex].getHelpTopic();
+      }
+    }
+    else {
+      helpTopic = configurables [0].getHelpTopic();
+    }
+    if (helpTopic != null) {
+      HelpManager.getInstance().invokeHelp(helpTopic);
+    }
+    else {
+      super.doHelpAction();
+    }
   }
 }
