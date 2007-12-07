@@ -8,8 +8,8 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
@@ -44,77 +44,6 @@ public class MatchingVisitor {
     PsiModifier.VOLATILE, PsiModifier.STRICTFP
   };
   static { Arrays.sort(MODIFIERS); }
-
-  public final void visitModifierList(final PsiModifierList list) {
-    final PsiModifierList list2 = (PsiModifierList) element;
-
-    for (String aMODIFIERS : MODIFIERS) {
-      if (list.hasModifierProperty(aMODIFIERS) && !list2.hasModifierProperty(aMODIFIERS)) {
-        result = false;
-        return;
-      }
-    }
-
-    final PsiAnnotation[] annotations = list.getAnnotations();
-    if (annotations.length > 0) {
-      HashSet<PsiAnnotation> set = new HashSet<PsiAnnotation>( Arrays.asList(annotations));
-      
-      for(PsiAnnotation annotation:annotations) {
-        final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
-        
-        if (nameReferenceElement != null && MatchOptions.MODIFIER_ANNOTATION_NAME.equals(nameReferenceElement.getText())) {
-          final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-          final PsiNameValuePair[] attributes = parameterList.getAttributes();
-          
-          for(PsiNameValuePair pair:attributes) {
-            final PsiAnnotationMemberValue value = pair.getValue();
-            if (value == null) continue;
-            
-            if (value instanceof PsiArrayInitializerMemberValue) {
-              boolean matchedOne = false;
-              
-              for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
-                final String name = StringUtil.stripQuotesAroundValue(v.getText());
-                if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
-                  if (isNotInstanceModifier(list2)) {
-                    result = false;
-                    return;
-                  } else {
-                    matchedOne = true;
-                  }
-                } else if (list2.hasModifierProperty(name)) {
-                  matchedOne = true;
-                  break;
-                }
-              }
-              
-              if (!matchedOne) {
-                result = false;
-                return;
-              }
-            } else {
-              final String name = StringUtil.stripQuotesAroundValue(value.getText());
-              if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
-                if (isNotInstanceModifier(list2)) {
-                  result = false;
-                  return;
-                }
-              } else if (!list2.hasModifierProperty(name)) {
-                result = false;
-                return;
-              }
-            }
-          }
-          
-          set.remove(annotation);
-        }
-      }
-      
-      result = set.size() == 0 || matchInAnyOrder(set.toArray(new PsiAnnotation[set.size()]),list2.getAnnotations());
-    } else {
-      result = true;
-    }
-  }
 
   private static boolean isNotInstanceModifier(final PsiModifierList list2) {
     return list2.hasModifierProperty("static") ||
@@ -858,6 +787,77 @@ public class MatchingVisitor {
         result = handleTypedElement(value,value2);
       } else {
         result = value.textMatches(value2);
+      }
+    }
+
+    @Override public final void visitModifierList(final PsiModifierList list) {
+      final PsiModifierList list2 = (PsiModifierList) element;
+
+      for (String aMODIFIERS : MODIFIERS) {
+        if (list.hasModifierProperty(aMODIFIERS) && !list2.hasModifierProperty(aMODIFIERS)) {
+          result = false;
+          return;
+        }
+      }
+
+      final PsiAnnotation[] annotations = list.getAnnotations();
+      if (annotations.length > 0) {
+        HashSet<PsiAnnotation> set = new HashSet<PsiAnnotation>( Arrays.asList(annotations));
+
+        for(PsiAnnotation annotation:annotations) {
+          final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
+
+          if (nameReferenceElement != null && MatchOptions.MODIFIER_ANNOTATION_NAME.equals(nameReferenceElement.getText())) {
+            final PsiAnnotationParameterList parameterList = annotation.getParameterList();
+            final PsiNameValuePair[] attributes = parameterList.getAttributes();
+
+            for(PsiNameValuePair pair:attributes) {
+              final PsiAnnotationMemberValue value = pair.getValue();
+              if (value == null) continue;
+
+              if (value instanceof PsiArrayInitializerMemberValue) {
+                boolean matchedOne = false;
+
+                for(PsiAnnotationMemberValue v:((PsiArrayInitializerMemberValue)value).getInitializers()) {
+                  final String name = StringUtil.stripQuotesAroundValue(v.getText());
+                  if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
+                    if (isNotInstanceModifier(list2)) {
+                      result = false;
+                      return;
+                    } else {
+                      matchedOne = true;
+                    }
+                  } else if (list2.hasModifierProperty(name)) {
+                    matchedOne = true;
+                    break;
+                  }
+                }
+
+                if (!matchedOne) {
+                  result = false;
+                  return;
+                }
+              } else {
+                final String name = StringUtil.stripQuotesAroundValue(value.getText());
+                if (MatchOptions.INSTANCE_MODIFIER_NAME.equals(name)) {
+                  if (isNotInstanceModifier(list2)) {
+                    result = false;
+                    return;
+                  }
+                } else if (!list2.hasModifierProperty(name)) {
+                  result = false;
+                  return;
+                }
+              }
+            }
+
+            set.remove(annotation);
+          }
+        }
+
+        result = set.size() == 0 || matchInAnyOrder(set.toArray(new PsiAnnotation[set.size()]),list2.getAnnotations());
+      } else {
+        result = true;
       }
     }
 
