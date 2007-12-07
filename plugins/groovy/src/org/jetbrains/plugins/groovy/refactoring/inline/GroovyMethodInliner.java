@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -78,7 +79,16 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
     for (GroovyInlineMethodUtil.ReferenceExpressionInfo info : infos) {
       if (!(PsiUtil.isAccessible(call, info.declaration))) {
-        conflicts.add("Member " + info.getPresentation() + " of " + info.containingClass.getName() + " is not accessible");
+        if (info.declaration instanceof PsiMethod) {
+          String className = info.containingClass.getName();
+          String signature = GroovyRefactoringUtil.getMethodSignature(((PsiMethod) info.declaration));
+          String name = CommonRefactoringUtil.htmlEmphasize(className + "." + signature);
+          conflicts.add(GroovyRefactoringBundle.message("method.is.not.accessible.form.context.0", name));
+        } else if (info.declaration instanceof PsiField) {
+          String className = info.containingClass.getName();
+          String name = CommonRefactoringUtil.htmlEmphasize(className + "." + info.getPresentation());
+          conflicts.add(GroovyRefactoringBundle.message("field.is.not.accessible.form.context.0", name));
+        }
       }
     }
 
