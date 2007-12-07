@@ -1,55 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.internal.psiView.PsiViewerDialog">
-  <grid id="80cff" binding="myPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="80cff" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
       <xy x="44" y="67" width="454" height="304"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="d3cec" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="d3cec" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="454" height="51"/>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="etched" title="Show PSI structure for"/>
         <children>
-          <component id="d623c" class="javax.swing.JRadioButton" binding="myRbMethod">
-            <constraints>
-              <xy x="6" y="21" width="61" height="22"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Method"/>
-            </properties>
-          </component>
-          <component id="4c6b6" class="javax.swing.JRadioButton" binding="myRbCodeBlock">
-            <constraints>
-              <xy x="104" y="21" width="77" height="22"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Code block"/>
-            </properties>
-          </component>
-          <component id="93cea" class="javax.swing.JRadioButton" binding="myRbExpression">
-            <constraints>
-              <xy x="218" y="21" width="77" height="22"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
-            </constraints>
-            <properties>
-              <text value="Expression"/>
-            </properties>
-          </component>
-          <xy id="a615a" binding="myChoicesPanel" hgap="-1" vgap="-1">
+          <xy id="a615a" binding="myChoicesPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <xy x="332" y="20" width="116" height="25"/>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -59,18 +29,16 @@
       </grid>
       <component id="85961" class="javax.swing.JCheckBox" binding="myShowWhiteSpacesBox">
         <constraints>
-          <xy x="0" y="56" width="124" height="22"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Show PsiWhiteSpace"/>
           <selected value="true"/>
+          <text value="Show PsiWhiteSpace"/>
         </properties>
       </component>
       <splitpane id="5944f">
         <constraints>
-          <xy x="0" y="83" width="454" height="221"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3">
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
             <preferred-size width="200" height="200"/>
           </grid>
         </constraints>
@@ -79,7 +47,7 @@
         </properties>
         <border type="none"/>
         <children>
-          <xy id="c65eb" binding="myStructureTreePanel" hgap="-1" vgap="-1">
+          <xy id="c65eb" binding="myStructureTreePanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <splitpane position="right"/>
@@ -88,7 +56,7 @@
             <border type="none" title="PSI Structure"/>
             <children/>
           </xy>
-          <grid id="1e8e6" binding="myTextPanel" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="1e8e6" binding="myTextPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <splitpane position="left"/>

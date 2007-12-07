@@ -55,9 +55,10 @@ public class PsiViewerDialog extends DialogWrapper {
   private Editor myEditor;
   private String myLastParsedText = null;
 
-  private JRadioButton myRbMethod;
-  private JRadioButton myRbCodeBlock;
-  private JRadioButton myRbExpression;
+  private JRadioButton myRbMethod = new JRadioButton("Method");
+  private JRadioButton myRbCodeBlock = new JRadioButton("Code Block");
+  private JRadioButton myRbExpression = new JRadioButton("Expression");
+
   private JRadioButton[] myFileTypeButtons;
   private FileType[] myFileTypes;
 
@@ -134,7 +135,12 @@ public class PsiViewerDialog extends DialogWrapper {
     bg.add(myRbCodeBlock);
     bg.add(myRbExpression);
 
-    Box choicesBox = Box.createHorizontalBox();
+    final int rows = 1 + myFileTypes.length / 7;
+    JPanel choicesBox = new JPanel(new GridLayout(rows, 7));
+
+    choicesBox.add(myRbMethod);
+    choicesBox.add(myRbCodeBlock);
+    choicesBox.add(myRbExpression);
 
     for (int i = 0; i < myFileTypes.length; i++) {
       FileType fileType = myFileTypes[i];
