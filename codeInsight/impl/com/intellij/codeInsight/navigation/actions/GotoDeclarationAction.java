@@ -155,7 +155,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       for(ResolveResult r:results) {
         PsiElement element = r.getElement();
-        if (element != reference.getElement() && (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource())) {
+        if (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource()) {
           navigatableResults.add(element);
         }
       }

@@ -38,7 +38,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.search.searches.DefinitionsSearch;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Processor;
@@ -373,13 +372,6 @@ public class CtrlMouseHandler implements ProjectComponent {
     if (ref instanceof PsiPolyVariantReference) {
       final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
       resolvedElement = psiElements.length > 0 ? psiElements[0].getElement() : null;
-
-      if (resolvedElement instanceof XmlAttributeValue &&
-          ref.getElement() == resolvedElement &&     // guard for id references
-          psiElements.length > 1
-         ) {
-        resolvedElement = psiElements[1].getElement();
-      }
     }
     else {
       resolvedElement = ref.resolve();

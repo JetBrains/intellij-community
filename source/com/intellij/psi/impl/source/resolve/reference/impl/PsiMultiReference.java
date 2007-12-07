@@ -133,6 +133,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     final PsiReference[] refs = getReferences();
     List<ResolveResult> result = new ArrayList<ResolveResult>();
+    PsiElementResolveResult selfReference = null;
     for (PsiReference reference : refs) {
       if (reference instanceof PsiPolyVariantReference) {
         result.addAll(Arrays.asList(((PsiPolyVariantReference)reference).multiResolve(incompleteCode)));
@@ -140,9 +141,18 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       else {
         final PsiElement resolved = reference.resolve();
         if (resolved != null) {
-          result.add(new PsiElementResolveResult(resolved));
+          final PsiElementResolveResult rresult = new PsiElementResolveResult(resolved);
+          if (getElement() == resolved) {
+            selfReference = rresult;
+          } else {
+            result.add(rresult);
+          }
         }
       }
+    }
+
+    if (result.size() == 0) {
+      result.add(selfReference); // if i the only one starring at the sun
     }
 
     return result.toArray(new ResolveResult[result.size()]);
