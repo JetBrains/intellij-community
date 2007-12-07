@@ -4,14 +4,17 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.impl.ExtensionNsConverter;
 
 public interface Extensions extends DomElement {
   @NotNull
   @Attribute("defaultExtensionNs")
-  GenericAttributeValue<String> getDefaultExtensionNs();
+  @Convert(ExtensionNsConverter.class)
+  GenericAttributeValue<IdeaPlugin> getDefaultExtensionNs();
   @Attribute("defaultExtensionNs")
   void setDefaultExtensionNs(String ns);
 }

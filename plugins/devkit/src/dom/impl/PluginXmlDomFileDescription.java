@@ -15,6 +15,11 @@ public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> 
     super(IdeaPlugin.class, "idea-plugin");
   }
 
+  protected void initializeFileDescription() {
+    super.initializeFileDescription();
+    registerImplementation(IdeaPlugin.class, IdeaPluginImpl.class);
+  }
+
   public boolean isMyFile(@NotNull final XmlFile file, @Nullable final Module module) {
     return super.isMyFile(file, module);
   }

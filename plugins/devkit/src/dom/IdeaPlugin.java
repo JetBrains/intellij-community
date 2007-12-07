@@ -5,6 +5,7 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -13,6 +14,9 @@ import java.util.List;
  */
 @DefinesXml
 public interface IdeaPlugin extends DomElement {
+  @Nullable
+  String getPluginId();
+
   @NotNull
   @NameValue
   GenericDomValue<String> getId();
@@ -73,7 +77,9 @@ public interface IdeaPlugin extends DomElement {
 
 
   @NotNull
-  Extensions getExtensions();
+  @SubTagList("extensions")
+  List<Extensions> getExtensions();
+  Extensions addExtensions();
 
   @NotNull
   @SubTag("extensionPoints")

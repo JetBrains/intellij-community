@@ -7,15 +7,14 @@ import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.*;
 
@@ -37,31 +36,17 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
 
     if (ideaPlugin == null) return new Object[0];
 
-    final Collection<String> dependencies = getDependencies(ideaPlugin);
-
-    final Collection<IdeaPlugin> allVisiblePlugins = IdeaPluginConverter.collectAllVisiblePlugins(xmlFile);
-
-    List<IdeaPlugin> depPlugins = new ArrayList<IdeaPlugin>();
-
-    for (IdeaPlugin plugin : allVisiblePlugins) {
-      final GenericDomValue<String> value = plugin.getId();
-      final String id = value.getStringValue();
-      if (id != null && dependencies.contains(id)) {
-        depPlugins.add(plugin);
-      }
-    }
-
     registerExtensions(extensions, ideaPlugin, registrar, psiManager);
-    for (IdeaPlugin plugin : depPlugins) {
-      registerExtensions(extensions, plugin, registrar, psiManager);
-    }
 
     List<Object> deps = new ArrayList<Object>();
-    deps.addAll(ContainerUtil.map(allVisiblePlugins, new Function<IdeaPlugin, Object>() {
-      public Object fun(final IdeaPlugin ideaPlugin) {
-        return ideaPlugin.getRoot();
-      }
-    }));
+
+    final GenericAttributeValue<IdeaPlugin> extensionNs = extensions.getDefaultExtensionNs();
+    final IdeaPlugin plugin = extensionNs.getValue();
+    if (plugin != null) {
+      registerExtensions(extensions, plugin, registrar, psiManager);
+      deps.add(plugin.<DomElement>getRoot());
+    }
+
     deps.add(ProjectRootManager.getInstance(xmlFile.getProject()));
     deps.add(ideaPlugin.getRoot());
 
@@ -88,6 +73,11 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           final String interfaceName = extensionPoint.getInterface().getStringValue();
           if (interfaceName != null) {
             registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class);
+
+            final PsiClass implClass = manager.findClass(interfaceName, GlobalSearchScope.allScope(manager.getProject()));
+            if (implClass != null) {
+              registerXmlb(registrar, implClass);
+            }
           }
           else {
             final String beanClassName = extensionPoint.getBeanClass().getStringValue();
@@ -120,21 +110,33 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       final PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
     for (PsiAnnotation annotation : annotations) {
       final String qName = annotation.getQualifiedName();
-      if (qName != null && qName.equals(Attribute.class.getName())) {
-        final PsiAnnotationMemberValue attributeName = annotation.findAttributeValue("value");
-        if (attributeName != null && attributeName instanceof PsiExpression) {
-          final Class<String> type = String.class;
-          PsiExpression expression = (PsiExpression)attributeName;
-          final Object evaluatedExpression = ConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
-          if (evaluatedExpression != null) {
-            registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
+      if (qName != null) {
+        if (qName.equals(Attribute.class.getName())) {
+          final PsiAnnotationMemberValue attributeName = annotation.findAttributeValue("value");
+          if (attributeName != null && attributeName instanceof PsiExpression) {
+            final Class<String> type = String.class;
+            PsiExpression expression = (PsiExpression)attributeName;
+            final Object evaluatedExpression = ConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+            if (evaluatedExpression != null) {
+              registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
+            }
+          }
+        } else if (qName.equals(Tag.class.getName())) {
+          final PsiAnnotationMemberValue attributeName = annotation.findAttributeValue("value");
+          if (attributeName != null && attributeName instanceof PsiExpression) {
+            PsiExpression expression = (PsiExpression)attributeName;
+            final Object evaluatedExpression = ConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+            if (evaluatedExpression != null) {
+              // I guess this actually needs something like registrar.registerGenericTagValueChildExtension...
+              registrar.registerFixedNumberChildExtension(new XmlName(evaluatedExpression.toString()), SimpleTagValue.class);
+            }
           }
         }
       }
     }
   }
 
-  private static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
+  public static Collection<String> getDependencies(IdeaPlugin ideaPlugin) {
     Set<String> result = new HashSet<String>();
 
     result.add(PluginManager.CORE_PLUGIN_ID);
@@ -144,5 +146,10 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
 
     return result;
+  }
+
+  interface SimpleTagValue extends DomElement {
+    @com.intellij.util.xml.TagValue
+    String getValue();
   }
 }

@@ -9,7 +9,7 @@
   <idea-version since-build="3000"/>
   <resource-bundle xmlns="">org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
 
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>

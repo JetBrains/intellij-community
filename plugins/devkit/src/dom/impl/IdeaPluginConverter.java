@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 
 import java.util.ArrayList;
@@ -55,6 +56,24 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
     final Module module = ModuleUtil.findModuleForPsiElement(xmlFile);
     if (module != null) {
+      // a plugin.xml doesn't need to be in a source folder. 
+      final Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
+      for (Module dep : dependencies) {
+        if (PluginModuleType.isOfType(dep)) {
+          final XmlFile file = PluginModuleType.getPluginXml(dep);
+          if (file == null) continue;
+          final VirtualFile pluginXml = file.getVirtualFile();
+          if (pluginXml != null) {
+            final IdeaPlugin ideaPlugin = getIdeaPlugin(project, psiManager, pluginXml);
+            if (ideaPlugin != null) {
+              if (!ideaPlugins.contains(ideaPlugin)) {
+                ideaPlugins.add(ideaPlugin);
+              }
+            }
+          }
+        }
+      }
+      
       final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
       if (jdk != null && jdk.getSdkType() instanceof IdeaJdk) {
         final VirtualFile pluginsHome = jdk.getHomeDirectory().findChild("plugins");
@@ -114,7 +133,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
 
   public IdeaPlugin fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     for (IdeaPlugin ideaPlugin : getVariants(context)) {
-      final String otherId = ideaPlugin.getId().getStringValue();
+      final String otherId = ideaPlugin.getPluginId();
       if (otherId == null) continue;
       if (otherId.equals(s)) return ideaPlugin;
     }
@@ -122,6 +141,6 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
   }
 
   public String toString(@Nullable final IdeaPlugin ideaPlugin, final ConvertContext context) {
-    return ideaPlugin != null ? ideaPlugin.getId().getStringValue() : null;
+    return ideaPlugin != null ? ideaPlugin.getPluginId() : null;
   }
 }

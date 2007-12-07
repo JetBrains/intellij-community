@@ -3,6 +3,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
@@ -50,7 +51,7 @@ public interface Action extends DomElement {
 	@NotNull
 	@com.intellij.util.xml.Attribute ("class")
 	@Required
-	GenericAttributeValue<String> getClazz();
+	GenericAttributeValue<PsiClass> getClazz();
 
 
 	/**
