@@ -93,7 +93,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
     final IntArrayList indices = new IntArrayList();
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         visitExpression(expression);
       }

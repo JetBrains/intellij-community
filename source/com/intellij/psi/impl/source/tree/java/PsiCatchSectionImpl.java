@@ -41,7 +41,12 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitCatchSection(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitCatchSection(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

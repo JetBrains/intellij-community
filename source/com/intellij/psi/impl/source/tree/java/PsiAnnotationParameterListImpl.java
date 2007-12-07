@@ -2,10 +2,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -77,7 +74,12 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnnotationParameterList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotationParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {

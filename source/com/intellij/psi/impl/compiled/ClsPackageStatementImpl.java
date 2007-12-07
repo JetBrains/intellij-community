@@ -74,7 +74,12 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitPackageStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPackageStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

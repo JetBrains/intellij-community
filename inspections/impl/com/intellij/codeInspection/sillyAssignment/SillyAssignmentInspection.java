@@ -53,7 +53,7 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
 
       @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         checkSillyAssignment(expression, holder);

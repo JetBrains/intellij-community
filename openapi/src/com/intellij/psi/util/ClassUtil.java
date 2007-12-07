@@ -82,7 +82,7 @@ public class ClassUtil {
     final int[] result = new int[]{-1};
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
     if (containingClass != null) {
-      containingClass.accept(new PsiRecursiveElementVisitor() {
+      containingClass.accept(new JavaRecursiveElementVisitor() {
         private int myCurrentIdx = 0;
 
         @Override public void visitElement(PsiElement element) {
@@ -115,7 +115,7 @@ public class ClassUtil {
     final int idx = prefix.length() > 0 ? Integer.parseInt(prefix) : -1;
     final String name = prefix.length() < indexName.length() ? indexName.substring(prefix.length()) : null;
     final PsiClass[] result = new PsiClass[1];
-    containingClass.accept(new PsiRecursiveElementVisitor() {
+    containingClass.accept(new JavaRecursiveElementVisitor() {
       private int myCurrentIdx = 0;
 
       @Override public void visitElement(PsiElement element) {

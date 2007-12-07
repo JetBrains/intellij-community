@@ -11,7 +11,7 @@ package com.intellij.refactoring.util.classMembers;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 
-public abstract class ClassMemberReferencesVisitor extends PsiRecursiveElementVisitor {
+public abstract class ClassMemberReferencesVisitor extends JavaRecursiveElementVisitor {
   private final PsiClass myClass;
 
   public ClassMemberReferencesVisitor(PsiClass aClass) {

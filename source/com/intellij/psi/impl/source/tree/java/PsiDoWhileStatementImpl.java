@@ -1,12 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiDoWhileStatement {
@@ -97,7 +97,12 @@ public class PsiDoWhileStatementImpl extends CompositePsiElement implements PsiD
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitDoWhileStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDoWhileStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

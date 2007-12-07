@@ -256,7 +256,12 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitNewExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitNewExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

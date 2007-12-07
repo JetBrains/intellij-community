@@ -54,7 +54,7 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         checkAccessStaticMemberViaInstanceReference(expression, expression.advancedResolve(false), holder);
       }

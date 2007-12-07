@@ -257,7 +257,7 @@ public class RenameUtil {
     }
   }
 
-  public static class ConflictingLocalVariablesVisitor extends PsiRecursiveElementVisitor {
+  public static class ConflictingLocalVariablesVisitor extends JavaRecursiveElementVisitor {
     protected final String myName;
     protected RenameUtil.CollidingVariableVisitor myCollidingNameVisitor;
 
@@ -393,7 +393,7 @@ public class RenameUtil {
     }
 
     LOG.assertTrue(scopeElement != null);
-    scopeElement.accept(new PsiRecursiveElementVisitor() {
+    scopeElement.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (!expression.isQualified()) {

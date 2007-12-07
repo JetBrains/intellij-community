@@ -53,7 +53,12 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitNameValuePair(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitNameValuePair(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiIdentifier getNameIdentifier() {

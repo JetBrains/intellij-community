@@ -2,10 +2,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiClassObjectAccessExpression;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -68,7 +65,12 @@ public class PsiClassObjectAccessExpressionImpl extends CompositePsiElement impl
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitClassObjectAccessExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClassObjectAccessExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

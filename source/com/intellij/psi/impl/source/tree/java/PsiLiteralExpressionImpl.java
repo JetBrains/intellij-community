@@ -7,7 +7,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChangeUtil;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.StringLiteralEscaper;
 import com.intellij.psi.tree.IElementType;
@@ -407,7 +410,12 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitLiteralExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitLiteralExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

@@ -15,13 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 7:53:12 PM
  * To change this template use File | Settings | File Templates.
  */
-public class AbstractPostFormatProcessor extends PsiRecursiveElementVisitor {
+public class AbstractPostFormatProcessor {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.BraceEnforcer");
   protected final CodeStyleSettings mySettings;
   private TextRange myResultTextRange;
@@ -73,15 +70,11 @@ public class AbstractPostFormatProcessor extends PsiRecursiveElementVisitor {
     }
   }
 
-  public PsiElement process(PsiElement formatted) {
-    LOG.assertTrue(formatted.isValid());
-    formatted.accept(this);
-    return formatted;
+  public void setResultTextRange(final TextRange resultTextRange) {
+    myResultTextRange = resultTextRange;
   }
 
-  public TextRange processText(final PsiFile source, final TextRange rangeToReformat) {
-    myResultTextRange = rangeToReformat;
-    source.accept(this);
+  public TextRange getResultTextRange() {
     return myResultTextRange;
   }
 }

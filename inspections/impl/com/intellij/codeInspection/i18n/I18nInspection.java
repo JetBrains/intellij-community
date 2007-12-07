@@ -335,7 +335,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-  public static LocalQuickFix createIntroduceConstantFix(final PsiExpression... expressions) {
+  private static LocalQuickFix createIntroduceConstantFix(final PsiExpression... expressions) {
     //noinspection unchecked
     final SmartPsiElementPointer<PsiExpression>[] pointers = new SmartPsiElementPointer[expressions.length];
     for(int i=0; i<expressions.length; i++) {
@@ -365,8 +365,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
     };
   }
 
-  private class StringI18nVisitor extends PsiRecursiveElementVisitor {
-    private List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
+  private class StringI18nVisitor extends JavaRecursiveElementVisitor {
+    private final List<ProblemDescriptor> myProblems = new ArrayList<ProblemDescriptor>();
     private InspectionManager myManager;
 
     public StringI18nVisitor(final InspectionManager manager) {

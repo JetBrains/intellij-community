@@ -136,7 +136,12 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitCodeFragment(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitCodeFragment(this);
+    }
+    else {
+      visitor.visitFile(this);
+    }
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,

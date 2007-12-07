@@ -248,7 +248,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
       final Set<PsiVariable> outputVariables = new HashSet<PsiVariable>(Arrays.asList(myOutputVariables));
       for (PsiStatement statement : myExitStatements) {
-        statement.accept(new PsiRecursiveElementVisitor() {
+        statement.accept(new JavaRecursiveElementVisitor() {
 
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);
@@ -398,7 +398,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private void checkLocalClasses(final PsiMethod container) throws PrepareFailedException {
     final List<PsiClass> localClasses = new ArrayList<PsiClass>();
-    container.accept(new PsiRecursiveElementVisitor() {
+    container.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitClass(final PsiClass aClass) {
         localClasses.add(aClass);
       }
@@ -742,7 +742,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length > 0) {
       if (CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS) {
-        method.accept(new PsiRecursiveElementVisitor() {
+        method.accept(new JavaRecursiveElementVisitor() {
 
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
@@ -765,7 +765,7 @@ public class ExtractMethodProcessor implements MatchProvider {
         });
       }
       else {
-        method.accept(new PsiRecursiveElementVisitor() {
+        method.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
             final PsiElement resolved = expression.resolve();
             final int index = ArrayUtil.find(parameters, resolved);

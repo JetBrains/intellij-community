@@ -40,7 +40,7 @@ public class XmlIncludeHandler implements PsiIncludeManager.PsiIncludeHandler {
 
     final List<PsiIncludeManager.IncludeInfo> result = new ArrayList<PsiIncludeManager.IncludeInfo>();
 
-    psiFile.accept(new PsiRecursiveElementVisitor() {
+    psiFile.accept(new XmlRecursiveElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
 
         if (isXInclude(tag)) {

@@ -483,7 +483,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   private static void addExceptionThrownPlaces(final List<PsiReference> refs, final List<PsiElement> otherOccurrences, final PsiType type,
                                                final PsiElement block, final TypeFilter typeFilter) {
     if (type instanceof PsiClassType) {
-      block.accept(new PsiRecursiveElementVisitor() {
+      block.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }

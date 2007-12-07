@@ -11,8 +11,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -48,7 +48,7 @@ public abstract class HtmlLocalInspectionTool extends BaseJavaLocalInspectionToo
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    return new PsiElementVisitor() {
+    return new XmlElementVisitor() {
       @Override public void visitXmlToken(final XmlToken token) {
         if (token.getTokenType() == XmlTokenType.XML_NAME) {
           PsiElement element = token.getPrevSibling();
@@ -67,10 +67,6 @@ public abstract class HtmlLocalInspectionTool extends BaseJavaLocalInspectionToo
 
       @Override public void visitXmlAttribute(final XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
-      }
-
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
-        visitExpression(expression);
       }
     };
   }

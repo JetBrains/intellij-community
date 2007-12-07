@@ -248,7 +248,12 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitImportList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitImportList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

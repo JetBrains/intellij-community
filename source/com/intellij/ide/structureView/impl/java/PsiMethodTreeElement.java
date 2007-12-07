@@ -35,7 +35,7 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
     
     if (!fileText.substring(range.getStartOffset(), range.getEndOffset()).contains(PsiKeyword.CLASS)) return result;
 
-    element.accept(new PsiRecursiveElementVisitor(){
+    element.accept(new JavaRecursiveElementVisitor(){
       @Override public void visitClass(PsiClass aClass) {
         if (!(aClass instanceof PsiAnonymousClass) && !(aClass instanceof PsiTypeParameter)) {
           result.add(new JavaClassTreeElement(aClass, isInherited()));

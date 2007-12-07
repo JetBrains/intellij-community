@@ -651,7 +651,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitClass(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

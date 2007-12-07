@@ -21,7 +21,7 @@ import gnu.trove.THashMap;
 
 import java.util.Map;
 
-public class IsConstantExpressionVisitor extends PsiElementVisitor {
+public class IsConstantExpressionVisitor extends JavaElementVisitor {
   protected boolean myIsConstant;
   private final Map<PsiVariable, Boolean> varIsConst = new THashMap<PsiVariable, Boolean>();
 

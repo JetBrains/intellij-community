@@ -204,7 +204,12 @@ methods:
   }
 
   public final void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitNameValuePair(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitNameValuePair(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {

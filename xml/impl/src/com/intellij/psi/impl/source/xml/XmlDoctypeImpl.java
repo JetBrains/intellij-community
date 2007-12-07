@@ -145,7 +145,12 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlDoctype(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlDoctype(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public XmlMarkupDecl getMarkupDecl() {

@@ -109,7 +109,7 @@ public class DuplicatesFinder {
 
   private void annotatePattern() {
     for (final PsiElement patternComponent : myPattern) {
-      patternComponent.accept(new PsiRecursiveElementVisitor() {
+      patternComponent.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           final PsiElement element = reference.resolve();
           if (element instanceof PsiVariable && myParameters.contains(element)) {
@@ -151,7 +151,7 @@ public class DuplicatesFinder {
 
   private void deannotatePattern() {
     for (final PsiElement patternComponent : myPattern) {
-      patternComponent.accept(new PsiRecursiveElementVisitor() {
+      patternComponent.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (reference.getUserData(PARAMETER) != null) {
             reference.putUserData(PARAMETER, null);

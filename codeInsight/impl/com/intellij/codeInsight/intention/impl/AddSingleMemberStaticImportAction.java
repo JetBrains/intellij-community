@@ -63,7 +63,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiElement resolved = refExpr.resolve();
 
-    file.accept(new PsiRecursiveElementVisitor() {
+    file.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (refExpr.getReferenceName().equals(expression.getReferenceName())) {
@@ -79,7 +79,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
                                                                                                                        ((PsiNamedElement)resolved).getName());
     ((PsiJavaFile)file).getImportList().add(importStaticStatement);
 
-    file.accept(new PsiRecursiveElementVisitor() {
+    file.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.getParameterList() != null &&
             expression.getParameterList().getFirstChild() != null) return;

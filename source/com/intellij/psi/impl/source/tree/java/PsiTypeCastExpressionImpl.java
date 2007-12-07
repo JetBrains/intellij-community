@@ -1,12 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiTypeCastExpressionImpl extends CompositePsiElement implements PsiTypeCastExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeCastExpressionImpl");
@@ -70,7 +72,12 @@ public class PsiTypeCastExpressionImpl extends CompositePsiElement implements Ps
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitTypeCastExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeCastExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

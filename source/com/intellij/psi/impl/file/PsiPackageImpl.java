@@ -33,9 +33,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -342,7 +342,12 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitPackage(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPackage(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

@@ -916,7 +916,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     if (RUN_WITH_EDITOR_PROFILE || currentProfileLocalTools != null && !currentProfileLocalTools.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
-      scope.accept(new PsiRecursiveElementVisitor() {
+      scope.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         }
 

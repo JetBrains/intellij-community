@@ -4,10 +4,11 @@
  */
 package com.intellij.psi.templateLanguages;
 
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,11 @@ public class OuterLanguageElementImpl extends LeafPsiElement implements OuterLan
   }
 
   public void accept(@NotNull final PsiElementVisitor visitor) {
-    visitor.visitOuterLanguageElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitOuterLanguageElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

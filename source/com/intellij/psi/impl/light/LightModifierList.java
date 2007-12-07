@@ -39,7 +39,12 @@ public class LightModifierList extends LightElement implements PsiModifierList{
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitModifierList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitModifierList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiElement copy(){

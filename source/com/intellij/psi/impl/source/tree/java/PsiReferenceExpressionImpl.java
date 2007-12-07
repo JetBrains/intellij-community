@@ -506,7 +506,12 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

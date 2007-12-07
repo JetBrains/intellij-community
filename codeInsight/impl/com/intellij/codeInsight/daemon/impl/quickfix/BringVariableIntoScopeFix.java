@@ -47,7 +47,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
 
     myOutOfScopeVariable = null;
     while(container.getParent() instanceof PsiStatement || container.getParent() instanceof PsiCatchSection) container = container.getParent();
-    container.accept(new PsiRecursiveElementVisitor() {
+    container.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
 
       @Override public void visitExpression(PsiExpression expression) {

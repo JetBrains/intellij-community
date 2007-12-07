@@ -57,7 +57,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     return new Builder().buildElement(element);
   }
 
-  private static class Builder extends PsiElementVisitor {
+  private static class Builder extends JavaElementVisitor {
     private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl");
     private Evaluator myResult = null;
     private PsiClass myContextPsiClass;

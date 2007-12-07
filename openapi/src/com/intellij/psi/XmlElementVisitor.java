@@ -17,7 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.psi.xml.*;
 
-public abstract class XmlElementVisitor extends JspElementVisitor {
+public abstract class XmlElementVisitor extends PsiElementVisitor {
   public void visitXmlElement(XmlElement element) {
     visitElement(element);
   }

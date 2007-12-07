@@ -1,12 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -62,6 +64,11 @@ public class PsiArrayInitializerMemberValueImpl extends PsiCommaSeparatedListImp
   }
 
   public final void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnnotationArrayInitializer(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotationArrayInitializer(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

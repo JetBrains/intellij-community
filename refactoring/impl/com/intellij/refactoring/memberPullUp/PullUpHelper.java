@@ -429,7 +429,7 @@ public class PullUpHelper {
     return commonInitializerCandidate;
   }
 
-  private static class ParametersAndMovedFieldsUsedCollector extends PsiRecursiveElementVisitor {
+  private static class ParametersAndMovedFieldsUsedCollector extends JavaRecursiveElementVisitor {
     private final Set<PsiField> myMovedFields;
     private final Set<PsiField> myUsedFields;
 
@@ -463,7 +463,7 @@ public class PullUpHelper {
     }
   }
 
-  private class IsMovableInitializerVisitor extends PsiRecursiveElementVisitor {
+  private class IsMovableInitializerVisitor extends JavaRecursiveElementVisitor {
     private boolean myIsMovable = true;
 
     public boolean isMovable() {
@@ -606,7 +606,7 @@ public class PullUpHelper {
       }
   }
 
-  private class QualifiedThisSuperAdjuster extends PsiRecursiveElementVisitor {
+  private class QualifiedThisSuperAdjuster extends JavaRecursiveElementVisitor {
     @Override public void visitThisExpression(PsiThisExpression expression) {
       super.visitThisExpression(expression);
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
@@ -634,9 +634,9 @@ public class PullUpHelper {
     }
   }
 
-  private class ExplicitSuperDeleter extends PsiRecursiveElementVisitor {
-    private ArrayList<PsiExpression> mySupersToDelete = new ArrayList<PsiExpression>();
-    private ArrayList<PsiSuperExpression> mySupersToChangeToThis = new ArrayList<PsiSuperExpression>();
+  private class ExplicitSuperDeleter extends JavaRecursiveElementVisitor {
+    private final ArrayList<PsiExpression> mySupersToDelete = new ArrayList<PsiExpression>();
+    private final ArrayList<PsiSuperExpression> mySupersToChangeToThis = new ArrayList<PsiSuperExpression>();
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       if(expression.getQualifierExpression() instanceof PsiSuperExpression) {

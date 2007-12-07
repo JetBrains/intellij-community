@@ -57,7 +57,12 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlFile(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlFile(this);
+    }
+    else {
+      visitor.visitFile(this);
+    }
   }
 
   public String toString() {

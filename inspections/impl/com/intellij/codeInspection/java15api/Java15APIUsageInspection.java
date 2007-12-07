@@ -24,8 +24,8 @@ import java.io.*;
 public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "Since15";
 
-  private static THashSet<String> ourForbidden15API = new THashSet<String>(1500);
-  private static THashSet<String> ourForbidden16API = new THashSet<String>(200);
+  private static final THashSet<String> ourForbidden15API = new THashSet<String>(1500);
+  private static final THashSet<String> ourForbidden16API = new THashSet<String>(200);
 
   public boolean FORBID_15_API = true;
 
@@ -137,8 +137,8 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return null;
   }
 
-  private class MyVisitor extends PsiElementVisitor {
-    private ProblemsHolder myHolder;
+  private class MyVisitor extends JavaElementVisitor {
+    private final ProblemsHolder myHolder;
 
     public MyVisitor(final ProblemsHolder holder) {
       myHolder = holder;

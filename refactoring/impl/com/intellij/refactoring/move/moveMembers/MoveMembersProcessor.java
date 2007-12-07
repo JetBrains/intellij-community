@@ -238,7 +238,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       final List<PsiField> referencedFields = new ArrayList<PsiField>();
       final PsiExpression psiExpression = ((PsiField)member).getInitializer();
       if (psiExpression != null) {
-        psiExpression.accept(new PsiRecursiveElementVisitor() {
+        psiExpression.accept(new JavaRecursiveElementVisitor() {
           @Override
           public void visitReferenceExpression(final PsiReferenceExpression expression) {
             super.visitReferenceExpression(expression);

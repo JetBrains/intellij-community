@@ -24,7 +24,7 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
       ArrayList<PsiElement> result = new ArrayList<PsiElement>();
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
-        psiElement.accept(new PsiElementVisitor() {
+        psiElement.accept(new JavaElementVisitor() {
           @Override public void visitClass(PsiClass aClass) {
             treeNodes.add(new ClassTreeNode(getProject(), aClass, getSettings()));
           }

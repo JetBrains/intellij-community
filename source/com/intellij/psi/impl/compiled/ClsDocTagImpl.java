@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -86,7 +87,12 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDocTag(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDocTag(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   private class NameElement extends ClsElementImpl {

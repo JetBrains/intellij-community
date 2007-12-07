@@ -14,9 +14,8 @@ import com.intellij.pom.tree.events.impl.TreeChangeImpl;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -62,10 +61,8 @@ public class XmlAspectImpl implements XmlAspect {
       }
       if(changedElement == null) continue;
       final TreeChange finalChangedElement = changesByElement;
-      psiElement.accept(new PsiElementVisitor() {
+      psiElement.accept(new XmlElementVisitor() {
         TreeChange myChange = finalChangedElement;
-
-        @Override public void visitReferenceExpression(PsiReferenceExpression expression) { }
 
         @Override public void visitElement(PsiElement element) {
           final ASTNode child = element.getNode();

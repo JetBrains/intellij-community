@@ -182,7 +182,7 @@ public class CodeInsightUtil {
     final List<PsiElement> list = new ArrayList<PsiElement>();
 
     final int currentOffset = commonParent.getTextRange().getStartOffset();
-    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
+    final PsiElementVisitor visitor = new JavaRecursiveElementVisitor() {
       int offset = currentOffset;
 
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

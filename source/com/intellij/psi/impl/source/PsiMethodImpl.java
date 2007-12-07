@@ -15,12 +15,12 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
-import com.intellij.util.Icons;
-import com.intellij.ui.RowIcon;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -340,7 +340,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitMethod(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethod(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

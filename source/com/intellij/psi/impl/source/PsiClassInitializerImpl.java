@@ -75,7 +75,12 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitClassInitializer(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClassInitializer(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

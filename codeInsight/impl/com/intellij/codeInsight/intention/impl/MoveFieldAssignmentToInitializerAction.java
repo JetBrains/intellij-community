@@ -52,7 +52,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
   private static boolean isValidAsFieldInitializer(final PsiExpression initializer, final PsiModifierListOwner ctrOrInitializer) {
     if (initializer == null) return false;
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
-    initializer.accept(new PsiRecursiveElementVisitor() {
+    initializer.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         PsiElement resolved = expression.resolve();
         if (resolved == null) return;
@@ -81,7 +81,7 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.TRUE);
     final List<PsiAssignmentExpression> totalUsages = new ArrayList<PsiAssignmentExpression>();
     PsiClass containingClass = field.getContainingClass();
-    containingClass.accept(new PsiRecursiveElementVisitor(){
+    containingClass.accept(new JavaRecursiveElementVisitor(){
       private PsiCodeBlock currentInitializingBlock; //ctr or class initializer
 
       @Override public void visitCodeBlock(PsiCodeBlock block) {

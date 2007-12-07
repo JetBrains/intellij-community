@@ -93,7 +93,7 @@ public class RedundantCastUtil {
     }
   }
 
-  private static class MyIsRedundantVisitor extends PsiElementVisitor {
+  private static class MyIsRedundantVisitor extends JavaElementVisitor {
     private boolean isRedundant = false;
     protected void addToResults(PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {

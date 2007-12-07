@@ -75,7 +75,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
                                        final PsiElement context,
                                        final ArrayList<ProblemDescriptor> problems,
                                        final InspectionManager manager) {
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitElement(expression);
       }

@@ -46,7 +46,12 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitIdentifier(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitIdentifier(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

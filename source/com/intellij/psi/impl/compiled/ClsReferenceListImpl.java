@@ -87,7 +87,12 @@ public class ClsReferenceListImpl extends ClsElementImpl implements PsiReference
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

@@ -16,7 +16,10 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -25,6 +28,7 @@ import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,14 +66,14 @@ public abstract class JspSpiUtil {
 
   protected abstract int _escapeCharsInJspContext(JspFile file, int offset, String toEscape) throws IncorrectOperationException;
 
-  public static void visitAllIncludedFilesRecursively(JspFile jspFile, PsiElementVisitor visitor) {
+  public static void visitAllIncludedFilesRecursively(JspFile jspFile, Processor<JspFile> visitor) {
     final JspSpiUtil util = getJspSpiUtil();
     if (util != null) {
       util._visitAllIncludedFilesRecursively(jspFile, visitor);
     }
   }
 
-  protected abstract void _visitAllIncludedFilesRecursively(JspFile jspFile, PsiElementVisitor visitor);
+  protected abstract void _visitAllIncludedFilesRecursively(JspFile jspFile, Processor<JspFile> visitor);
 
   @Nullable
   public static JspDirectiveKind getDirectiveKindByTag(XmlTag tag) {

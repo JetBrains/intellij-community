@@ -28,6 +28,7 @@ import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -508,32 +509,39 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   }
 
   protected PsiFile createFileCopy(PsiFile file) {
-    final PsiElementVisitor visitor = new PsiRecursiveElementVisitor() {
-      @Override public void visitClass(PsiClass aClass) {
-        aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);
-        super.visitClass(aClass);
-      }
+    if (file instanceof PsiJavaFile) {
+      final JavaElementVisitor visitor = new JavaRecursiveElementVisitor() {
+        @Override public void visitClass(PsiClass aClass) {
+          aClass.putCopyableUserData(PsiUtil.ORIGINAL_KEY, aClass);
+          super.visitClass(aClass);
+        }
 
-      @Override public void visitVariable(PsiVariable variable) {
-        variable.putCopyableUserData(PsiUtil.ORIGINAL_KEY, variable);
-        super.visitVariable(variable);
-      }
+        @Override public void visitVariable(PsiVariable variable) {
+          variable.putCopyableUserData(PsiUtil.ORIGINAL_KEY, variable);
+          super.visitVariable(variable);
+        }
 
-      @Override public void visitMethod(PsiMethod method) {
-        method.putCopyableUserData(PsiUtil.ORIGINAL_KEY, method);
-        super.visitMethod(method);
-      }
+        @Override public void visitMethod(PsiMethod method) {
+          method.putCopyableUserData(PsiUtil.ORIGINAL_KEY, method);
+          super.visitMethod(method);
+        }
+      };
+      visitor.visitFile(file);
+    }
 
-      @Override public void visitXmlTag(XmlTag tag) {
-        tag.putCopyableUserData(PsiUtil.ORIGINAL_KEY, tag);
-        super.visitXmlTag(tag);
-      }
-    };
+    if (file instanceof XmlFile) {
+      final XmlElementVisitor xmlVisitor = new XmlRecursiveElementVisitor() {
+        @Override public void visitXmlTag(XmlTag tag) {
+          tag.putCopyableUserData(PsiUtil.ORIGINAL_KEY, tag);
+          super.visitXmlTag(tag);
+        }
+      };
+      xmlVisitor.visitFile(file);
+    }
 
-    visitor.visitFile(file);
     final PsiFile fileCopy = (PsiFile)file.copy();
 
-    final PsiElementVisitor copyVisitor = new PsiRecursiveElementVisitor() {
+    final PsiElementVisitor copyVisitor = new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         visitExpression(expression);
       }

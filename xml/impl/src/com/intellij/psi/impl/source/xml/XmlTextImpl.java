@@ -5,8 +5,8 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -321,7 +321,12 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlText(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlText(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public void clearCaches() {

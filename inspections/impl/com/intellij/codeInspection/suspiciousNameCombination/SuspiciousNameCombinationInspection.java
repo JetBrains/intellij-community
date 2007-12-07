@@ -102,7 +102,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     }
   }
 
-  private class MyVisitor extends PsiElementVisitor {
+  private class MyVisitor extends JavaElementVisitor {
     private ProblemsHolder myProblemsHolder;
 
     public MyVisitor(final ProblemsHolder problemsHolder) {

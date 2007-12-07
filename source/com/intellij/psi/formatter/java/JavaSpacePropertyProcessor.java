@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 
-public class JavaSpacePropertyProcessor extends PsiElementVisitor {
+public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private PsiElement myParent;
   private int myRole1;
   private int myRole2;

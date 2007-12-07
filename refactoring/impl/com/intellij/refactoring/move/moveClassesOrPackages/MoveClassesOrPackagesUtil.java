@@ -262,7 +262,7 @@ public class MoveClassesOrPackagesUtil {
   private static void correctSelfReferences(final PsiClass aClass, final PsiPackage newContainingPackage) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
     if (aPackage != null) {
-      aClass.accept(new PsiRecursiveElementVisitor() {
+      aClass.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
           if (reference.isQualified() && reference.isReferenceTo(aClass)) {
             final PsiElement qualifier = reference.getQualifier();

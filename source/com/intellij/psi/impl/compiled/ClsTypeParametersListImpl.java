@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -68,7 +65,12 @@ public class ClsTypeParametersListImpl extends ClsElementImpl implements PsiType
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitTypeParameterList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiTypeParameter[] getTypeParameters() {

@@ -285,7 +285,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

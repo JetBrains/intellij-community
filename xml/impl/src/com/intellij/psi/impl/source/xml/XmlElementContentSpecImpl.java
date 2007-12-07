@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
@@ -60,6 +61,11 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   }
 
   public void accept(@NotNull final PsiElementVisitor visitor) {
-    visitor.visitXmlElement(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

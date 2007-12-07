@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiAnnotationMethod;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -39,6 +36,11 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
   }
 
   public final void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnnotationMethod(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotationMethod(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

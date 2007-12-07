@@ -5,7 +5,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReferenceExpression;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +49,6 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new PsiElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
-
       @Override public void visitFile(PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }

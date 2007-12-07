@@ -1,12 +1,15 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBreakStatement {
@@ -84,7 +87,12 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitBreakStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitBreakStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiReference getReference() {

@@ -15,14 +15,13 @@
  */
 package com.intellij.psi;
 
+import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspImplicitVariable;
 
 @SuppressWarnings({"JavaDoc"})
-public abstract class JavaElementVisitor {
-  public void visitElement(PsiElement element) {
-  }
+public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
     visitClass(aClass);
@@ -48,10 +47,6 @@ public abstract class JavaElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitBinaryFile(PsiBinaryFile file){
-    visitFile(file);
-  }
-
   public void visitBlockStatement(PsiBlockStatement statement) {
     visitStatement(statement);
   }
@@ -74,10 +69,6 @@ public abstract class JavaElementVisitor {
 
   public void visitCodeBlock(PsiCodeBlock block) {
     visitElement(block);
-  }
-
-  public void visitComment(PsiComment comment) {
-    visitElement(comment);
   }
 
   public void visitConditionalExpression(PsiConditionalExpression expression) {
@@ -112,10 +103,6 @@ public abstract class JavaElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitErrorElement(PsiErrorElement element) {
-    visitElement(element);
-  }
-
   public void visitExpression(PsiExpression expression) {
     visitElement(expression);
   }
@@ -134,10 +121,6 @@ public abstract class JavaElementVisitor {
 
   public void visitField(PsiField field) {
     visitVariable(field);
-  }
-
-  public void visitFile(PsiFile file) {
-    visitElement(file);
   }
 
   public void visitForStatement(PsiForStatement statement) {
@@ -214,14 +197,6 @@ public abstract class JavaElementVisitor {
 
   public void visitNewExpression(PsiNewExpression expression) {
     visitCallExpression(expression);
-  }
-
-  public void visitPlainText(PsiPlainText content) {
-    visitElement(content);
-  }
-
-  public void visitDirectory(PsiDirectory dir) {
-    visitElement(dir);
   }
 
   public void visitPackage(PsiPackage aPackage) {
@@ -340,20 +315,16 @@ public abstract class JavaElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitWhiteSpace(PsiWhiteSpace space) {
-    visitElement(space);
-  }
-
   public void visitJavaFile(PsiJavaFile file){
-    visitFile(file);
-  }
-
-  public void visitPlainTextFile(PsiPlainTextFile file){
     visitFile(file);
   }
 
   public void visitJspFile(JspFile file){
     visitFile(file);
+  }
+
+  public void visitOuterLanguageElement(OuterLanguageElement element) {
+    visitElement(element);
   }
 
   public void visitImplicitVariable(ImplicitVariable variable) {
@@ -398,5 +369,9 @@ public abstract class JavaElementVisitor {
 
   public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
     visitAnonymousClass(enumConstantInitializer);
+  }
+
+  public void visitCodeFragment(PsiCodeFragment codeFragment) {
+    visitFile(codeFragment);
   }
 }

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Stack;
 
-class ControlFlowAnalyzer extends PsiElementVisitor {
+class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   private static final int NOT_FOUND = -10;
   private ControlFlow myPass1Flow;
@@ -370,7 +370,7 @@ class ControlFlowAnalyzer extends PsiElementVisitor {
     PsiStatement initialization = statement.getInitialization();
     if (initialization != null) {
       initialization.accept(this);
-      initialization.accept(new PsiRecursiveElementVisitor() {
+      initialization.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
         }

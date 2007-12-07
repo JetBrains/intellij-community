@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -17,7 +18,12 @@ public class PsiJavaTokenImpl extends LeafPsiElement implements PsiJavaToken{
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitJavaToken(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitJavaToken(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

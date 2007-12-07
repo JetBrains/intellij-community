@@ -1,17 +1,18 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.meta.MetaRegistry;
+import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaDataBase;
-import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.lang.StdLanguages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlComment(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlComment(this);
+    }
+    else {
+      visitor.visitComment(this);
+    }
   }
 
   public XmlTag getParentTag() {

@@ -28,8 +28,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.BidirectionalMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DefinesXml;
@@ -791,7 +791,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlTag(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlTag(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

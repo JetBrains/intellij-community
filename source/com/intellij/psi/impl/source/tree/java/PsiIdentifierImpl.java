@@ -1,9 +1,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -19,7 +16,12 @@ public class PsiIdentifierImpl extends LeafPsiElement implements PsiIdentifier, 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitIdentifier(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitIdentifier(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

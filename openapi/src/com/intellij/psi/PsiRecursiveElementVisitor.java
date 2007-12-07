@@ -15,44 +15,42 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.util.containers.Stack;
-
+import java.util.List;
 
 /**
  * Represents a PSI element visitor which recursively visits the children of the element
  * on which the visit was started. 
  */
 public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
-  // This stack thing is intended to prevent exponential child traversing due to visitReferenceExpression calls both visitRefElement
-  // and visitExpression.
-  private final Stack<PsiReferenceExpression> myRefExprsInVisit = new Stack<PsiReferenceExpression>();
+  private final boolean myVisitAllFileRoots;
 
-  @Override public void visitElement(PsiElement element) {
-    if (myRefExprsInVisit.size() > 0 && myRefExprsInVisit.peek() == element) {
-      myRefExprsInVisit.pop();
-      myRefExprsInVisit.push(null);
-    }
-    else {
-      element.acceptChildren(this);
-    }
+  protected PsiRecursiveElementVisitor() {
+    myVisitAllFileRoots = false;
   }
 
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-    myRefExprsInVisit.push(expression);
-    try {
-      visitExpression(expression);
-      visitReferenceElement(expression);
-    }
-    finally {
-      myRefExprsInVisit.pop();
-    }
+  protected PsiRecursiveElementVisitor(boolean visitAllFileRoots) {
+    myVisitAllFileRoots = visitAllFileRoots;
   }
 
-  //override in order to visit each root directly in visitor 
-  @Override public void visitJspFile(JspFile file) {
-    super.visitJspFile(file);
-    visitClass(file.getJavaClass());
-    visitFile(file.getBaseLanguageRoot());
+  public void visitElement(final PsiElement element) {
+    element.acceptChildren(this);
+  }
+
+  @Override
+  public void visitFile(final PsiFile file) {
+    if (myVisitAllFileRoots) {
+      final FileViewProvider viewProvider = file.getViewProvider();
+      final List<PsiFile> allFiles = viewProvider.getAllFiles();
+      if (allFiles.size() > 1) {
+        if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
+          for (PsiFile lFile : allFiles) {
+            lFile.acceptChildren(this);
+          }
+          return;
+        }
+      }
+    }
+
+    super.visitFile(file);
   }
 }

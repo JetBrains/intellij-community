@@ -165,7 +165,7 @@ public class InlineToAnonymousClassHandler {
 
   private static PsiReturnStatement findReturnStatement(final PsiMethod method) {
     final Ref<PsiReturnStatement> stmt = Ref.create(null);
-    method.accept(new PsiRecursiveElementVisitor() {
+    method.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReturnStatement(final PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         stmt.set(statement);

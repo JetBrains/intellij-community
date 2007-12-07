@@ -134,7 +134,12 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitForStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitForStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

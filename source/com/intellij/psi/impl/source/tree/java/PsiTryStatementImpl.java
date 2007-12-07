@@ -126,7 +126,12 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitTryStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTryStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

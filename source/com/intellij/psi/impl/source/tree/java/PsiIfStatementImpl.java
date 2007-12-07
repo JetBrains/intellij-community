@@ -155,7 +155,12 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitIfStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitIfStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

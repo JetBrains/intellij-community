@@ -55,7 +55,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
 
     PsiFile[] roots = file.getPsiRoots();
     for (PsiFile root : roots) {
-      root.accept(new PsiRecursiveElementVisitor() {
+      root.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           if (isParameterizedReference(expression)) return;
           PsiExpression qualifierExpression = expression.getQualifierExpression();

@@ -357,7 +357,12 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitTypeParameter(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeParameter(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NonNls

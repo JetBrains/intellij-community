@@ -135,7 +135,12 @@ public class PsiBinaryExpressionImpl extends CompositePsiElement implements PsiB
     TokenSet.create(OROR, ANDAND, OR, XOR, AND, EQEQ, NE, LT, GT, LE, GE, LTLT, GTGT, GTGTGT, PLUS, MINUS, ASTERISK, DIV, PERC);
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitBinaryExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitBinaryExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

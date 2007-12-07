@@ -17,10 +17,10 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.RowIcon;
+import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
-import com.intellij.util.Icons;
-import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -382,7 +382,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitField(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitField(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place){

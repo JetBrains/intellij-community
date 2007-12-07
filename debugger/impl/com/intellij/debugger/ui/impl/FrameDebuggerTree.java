@@ -232,7 +232,7 @@ public class FrameDebuggerTree extends DebuggerTree {
         //noinspection unchecked
         final Set<String> vars = new HashSet<String>();
         final Set<TextWithImports> expressions = new HashSet<TextWithImports>();
-        final PsiRecursiveElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
+        final PsiElementVisitor variablesCollector = new VariablesCollector(visibleVars, adjustRange(element, lineRange), expressions, vars);
         element.accept(variablesCollector);
 
         return new Pair<Set<String>, Set<TextWithImports>>(vars, expressions);
@@ -256,7 +256,7 @@ public class FrameDebuggerTree extends DebuggerTree {
 
   private static TextRange adjustRange(final PsiElement element, final TextRange originalRange) {
     final Ref<TextRange> rangeRef = new Ref<TextRange>(originalRange);
-    element.accept(new PsiRecursiveElementVisitor() {
+    element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitExpressionStatement(final PsiExpressionStatement statement) {
         final TextRange stRange = statement.getTextRange();
         if (originalRange.intersects(stRange)) {
@@ -385,7 +385,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     }
   }
 
-  private static class VariablesCollector extends PsiRecursiveElementVisitor {
+  private static class VariablesCollector extends JavaRecursiveElementVisitor {
     private final Set<String> myVisibleLocals;
     private final TextRange myLineRange;
     private final Set<TextWithImports> myExpressions;
@@ -461,7 +461,7 @@ public class FrameDebuggerTree extends DebuggerTree {
     
     private boolean hasSideEffects(PsiElement element) {
       final AtomicBoolean rv = new AtomicBoolean(false);
-      element.accept(new PsiRecursiveElementVisitor() {
+      element.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitPostfixExpression(final PsiPostfixExpression expression) {
           rv.set(true);
         }

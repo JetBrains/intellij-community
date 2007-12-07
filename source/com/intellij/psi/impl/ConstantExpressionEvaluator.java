@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class ConstantExpressionEvaluator extends PsiElementVisitor {
+public class ConstantExpressionEvaluator extends JavaElementVisitor {
   private final StringInterner myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;

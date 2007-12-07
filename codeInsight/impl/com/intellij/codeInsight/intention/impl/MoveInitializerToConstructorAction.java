@@ -123,7 +123,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
 
   private static boolean containsReference(final PsiElement element, final PsiField field) {
     final Ref<Boolean> result = new Ref<Boolean>(Boolean.FALSE);
-    element.accept(new PsiRecursiveElementVisitor() {
+    element.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == field) {
            result.set(Boolean.TRUE);

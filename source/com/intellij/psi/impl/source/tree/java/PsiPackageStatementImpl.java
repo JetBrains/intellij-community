@@ -1,14 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiPackageStatement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.SourceUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPackageStatementImpl extends CompositePsiElement implements PsiPackageStatement {
@@ -72,7 +72,12 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitPackageStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPackageStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

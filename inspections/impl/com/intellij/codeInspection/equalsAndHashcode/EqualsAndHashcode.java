@@ -48,11 +48,9 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     //jdk wasn't configured for the project
-    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
-      }
-    };
-    return new PsiElementVisitor() {
+    if (myEquals == null || myHashCode == null || !myEquals.isValid() || !myHashCode.isValid()) return new PsiElementVisitor() {};
+
+    return new JavaElementVisitor() {
       @Override public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
         boolean [] hasEquals = new boolean[] {false};

@@ -10,6 +10,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
@@ -22,7 +23,12 @@ public class XmlProcessingInstructionImpl extends XmlElementImpl implements XmlP
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlElement(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public XmlTag getParentTag() {

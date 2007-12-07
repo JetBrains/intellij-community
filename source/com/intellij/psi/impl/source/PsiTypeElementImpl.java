@@ -1,16 +1,16 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
              
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
@@ -29,7 +29,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitTypeElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

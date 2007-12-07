@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -15,7 +16,6 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -277,7 +277,12 @@ public class PsiDocCommentImpl extends CompositePsiElement implements PsiDocComm
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDocComment(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDocComment(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

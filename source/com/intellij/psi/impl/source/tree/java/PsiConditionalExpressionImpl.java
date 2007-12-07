@@ -1,14 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiConditionalExpressionImpl extends CompositePsiElement implements PsiConditionalExpression {
@@ -132,7 +132,12 @@ public class PsiConditionalExpressionImpl extends CompositePsiElement implements
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitConditionalExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitConditionalExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

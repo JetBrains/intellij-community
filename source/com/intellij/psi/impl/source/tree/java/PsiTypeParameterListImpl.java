@@ -115,7 +115,12 @@ public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implemen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitTypeParameterList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

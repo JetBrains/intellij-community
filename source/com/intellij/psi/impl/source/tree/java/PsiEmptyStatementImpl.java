@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.psi.*;
+import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiEmptyStatement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +12,12 @@ public class PsiEmptyStatementImpl extends CompositePsiElement implements PsiEmp
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitEmptyStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitEmptyStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

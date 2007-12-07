@@ -14,7 +14,12 @@ public abstract class ImplicitVariableImpl extends LightVariableBase implements 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitImplicitVariable(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitImplicitVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

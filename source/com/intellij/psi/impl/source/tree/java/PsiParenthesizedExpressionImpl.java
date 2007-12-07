@@ -1,15 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiParenthesizedExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiParenthesizedExpressionImpl extends CompositePsiElement implements PsiParenthesizedExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiParenthesizedExpressionImpl");
@@ -65,7 +64,12 @@ public class PsiParenthesizedExpressionImpl extends CompositePsiElement implemen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitParenthesizedExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitParenthesizedExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

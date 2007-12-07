@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +65,11 @@ public class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiter
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitLiteralExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitLiteralExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

@@ -26,7 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
@@ -55,9 +55,7 @@ public class CheckValidXmlInScriptBodyInspection extends BaseJavaLocalInspection
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
-
+    return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
         if (SCRIPT_TAG_NAME.equals(tag.getName()) ||
             (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getLocalName()))

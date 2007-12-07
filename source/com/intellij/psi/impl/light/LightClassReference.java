@@ -191,7 +191,12 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

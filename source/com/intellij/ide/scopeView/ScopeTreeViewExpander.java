@@ -69,7 +69,7 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
                   final List<PsiElement> result = new ArrayList<PsiElement>();
                   PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(psiClass, result);
                   for (PsiElement psiElement : result) {
-                    psiElement.accept(new PsiElementVisitor() {
+                    psiElement.accept(new JavaElementVisitor() {
                       @Override public void visitClass(PsiClass aClass) {
                         classNode.add(new ClassNode(aClass));
                       }

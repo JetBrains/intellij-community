@@ -121,7 +121,12 @@ public class PsiEnumConstantInitializerImpl extends PsiClassImpl implements PsiE
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitEnumConstantInitializer(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitEnumConstantInitializer(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

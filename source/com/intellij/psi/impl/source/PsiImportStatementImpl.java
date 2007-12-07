@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -29,7 +30,12 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitImportStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitImportStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

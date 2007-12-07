@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
@@ -41,9 +41,7 @@ public class CheckEmptyScriptTagInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {}
-
+    return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
         if (isScriptTag(tag)) {
           final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());

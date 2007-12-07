@@ -48,10 +48,6 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
         element.accept(customVisitor);
         super.visitElement(element);
       }
-
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
     });
 
     addProblemDescriptors(holder.getResults(), filterSuppressed);
@@ -100,9 +96,6 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
     scope.accept(new PsiRecursiveElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      }
-
       @Override public void visitFile(PsiFile file) {
         processFile(file, true, manager);
       }

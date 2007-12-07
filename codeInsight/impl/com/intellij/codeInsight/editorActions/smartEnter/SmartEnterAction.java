@@ -119,7 +119,7 @@ public class SmartEnterAction extends EditorAction {
 
   private static void traverseErrorElements(PsiElement psiWhere, final ErrorElementProcessor processor) {
     psiWhere.accept(
-        new PsiRecursiveElementVisitor() {
+        new JavaRecursiveElementVisitor() {
           boolean myIsStopped = false;
 
           @Override public void visitElement(PsiElement element) {

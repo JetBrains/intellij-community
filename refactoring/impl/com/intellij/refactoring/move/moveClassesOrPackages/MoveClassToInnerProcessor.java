@@ -203,7 +203,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   }
 
   private static void retargetClassRefs(final PsiClass classToMove, final PsiClass newClass) {
-    newClass.accept(new PsiRecursiveElementVisitor() {
+    newClass.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceElement(final PsiJavaCodeReferenceElement reference) {
         PsiElement element = reference.resolve();
         if (element instanceof PsiClass && PsiTreeUtil.isAncestor(classToMove, element, false)) {

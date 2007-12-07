@@ -4,13 +4,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ui.RowIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -177,7 +177,12 @@ public class ClsParameterImpl extends ClsElementImpl implements PsiParameter, Cl
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitParameter(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitParameter(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

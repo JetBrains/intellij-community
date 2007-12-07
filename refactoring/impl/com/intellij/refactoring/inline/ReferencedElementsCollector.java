@@ -8,7 +8,7 @@ import java.util.HashSet;
 /**
  * @author ven
  */
-class ReferencedElementsCollector extends PsiRecursiveElementVisitor {
+class ReferencedElementsCollector extends JavaRecursiveElementVisitor {
   final HashSet<PsiMember> myReferencedMembers = new HashSet<PsiMember>();
 
   @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

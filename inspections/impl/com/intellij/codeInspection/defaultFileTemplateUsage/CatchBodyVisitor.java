@@ -20,7 +20,7 @@ import java.util.Properties;
 /**
  * @author cdr
  */
-class CatchBodyVisitor extends PsiRecursiveElementVisitor {
+class CatchBodyVisitor extends JavaRecursiveElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.CatchBodyVisitor");
 
   Collection<ProblemDescriptor> myProblemDescriptors;

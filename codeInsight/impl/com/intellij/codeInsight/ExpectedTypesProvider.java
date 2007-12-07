@@ -178,7 +178,7 @@ public class ExpectedTypesProvider {
     }
   }
 
-  private class MyParentVisitor extends PsiElementVisitor {
+  private class MyParentVisitor extends JavaElementVisitor {
     private PsiExpression myExpr;
     private boolean myForCompletion;
     private final ExpectedClassProvider myClassProvider;

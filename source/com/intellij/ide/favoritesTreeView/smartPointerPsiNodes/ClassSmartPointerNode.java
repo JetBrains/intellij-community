@@ -30,7 +30,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     if (getSettings().isShowMembers()) {
       PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(parent, result);
       for (PsiElement psiElement : result) {
-        psiElement.accept(new PsiElementVisitor() {
+        psiElement.accept(new JavaElementVisitor() {
           @Override public void visitClass(PsiClass aClass) {
             treeNodes.add(new ClassSmartPointerNode(getProject(), aClass, getSettings()));
           }

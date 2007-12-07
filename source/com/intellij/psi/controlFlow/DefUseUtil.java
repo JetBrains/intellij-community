@@ -259,7 +259,7 @@ public class DefUseUtil {
             if (instructionW.variable == def) {
 
               final PsiElement element = flow.getElement(index);
-              element.accept(new PsiRecursiveElementVisitor() {
+              element.accept(new JavaRecursiveElementVisitor() {
                 @Override public void visitReferenceExpression(PsiReferenceExpression ref) {
                   if (PsiUtil.isAccessedForWriting(ref)) {
                     if (ref.resolve() == def) {
@@ -304,7 +304,7 @@ public class DefUseUtil {
             if (instructionR.variable == def) {
 
               final PsiElement element = flow.getElement(index);
-              element.accept(new PsiRecursiveElementVisitor() {
+              element.accept(new JavaRecursiveElementVisitor() {
                 @Override public void visitReferenceExpression(PsiReferenceExpression ref) {
                   if (ref.resolve() == def) {
                     res.add(ref);

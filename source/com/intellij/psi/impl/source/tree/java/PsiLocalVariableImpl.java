@@ -24,6 +24,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.CharTable;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -229,7 +230,12 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitLocalVariable(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitLocalVariable(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
@@ -268,12 +274,10 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
         final Set<PsiFile> allIncluded = new THashSet<PsiFile>(10);
         final JspFile rootContext = contextManager.getRootContextFile(jspFile);
         allIncluded.add(rootContext);
-        JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new PsiElementVisitor() {
-          @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
-          }
-
-          @Override public void visitFile(final PsiFile file) {
+        JspSpiUtil.visitAllIncludedFilesRecursively(rootContext, new Processor<JspFile>()  {
+          public boolean process(final JspFile file) {
             allIncluded.add(file);
+            return true;
           }
         });
 

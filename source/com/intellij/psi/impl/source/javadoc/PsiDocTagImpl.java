@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
@@ -89,7 +90,12 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDocTag(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDocTag(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

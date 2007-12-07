@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class HighlightVisitorImpl extends PsiElementVisitor implements HighlightVisitor, Disposable {
+public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
 
   private final PsiResolveHelper myResolveHelper;
@@ -123,6 +122,14 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
   }
 
   @Override public void visitElement(PsiElement element) {
+    if (element instanceof XmlElement) {
+      element.accept(myXmlVisitor);
+
+      List<HighlightInfo> result = myXmlVisitor.getResult();
+      myHolder.addAll(result);
+      myXmlVisitor.clearResult();
+    }
+
     final List<Annotator> result;
     synchronized (element.getLanguage()) {
       result = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
@@ -961,24 +968,5 @@ public class HighlightVisitorImpl extends PsiElementVisitor implements Highlight
     else {
       myHolder.add(HighlightNamesUtil.highlightVariable(variable, variable.getNameIdentifier()));
     }
-  }
-
-  @Override public void visitXmlElement(XmlElement element) {
-    element.accept(myXmlVisitor);
-
-    List<HighlightInfo> result = myXmlVisitor.getResult();
-    myHolder.addAll(result);
-    myXmlVisitor.clearResult();
-    super.visitXmlElement(element);
-  }
-
-  @Override public void visitXmlText(XmlText text) {
-    super.visitXmlText(text);
-    visitElement(text);
-  }
-
-  @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
-    super.visitXmlAttributeValue(value);
-    visitElement(value);
   }
 }

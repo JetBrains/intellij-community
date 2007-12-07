@@ -78,7 +78,12 @@ public class PsiPrefixExpressionImpl extends CompositePsiElement implements PsiP
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitPrefixExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPrefixExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

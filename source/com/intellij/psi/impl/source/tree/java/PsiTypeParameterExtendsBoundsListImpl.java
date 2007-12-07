@@ -82,7 +82,12 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

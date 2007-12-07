@@ -764,7 +764,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitMethod(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethod(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

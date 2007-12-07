@@ -30,7 +30,7 @@ public class ResolveSnapshot {
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(scope.getContainingFile());
     final SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
     final Map<PsiElement, SmartPsiElementPointer> pointers = new HashMap<PsiElement, SmartPsiElementPointer>();
-    scope.accept(new PsiRecursiveElementVisitor() {
+    scope.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression refExpr) {
         if (!refExpr.isQualified()) {
           PsiElement resolved = refExpr.resolve();

@@ -65,7 +65,12 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitPrefixExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitPrefixExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {
@@ -97,7 +102,12 @@ public class ClsPrefixExpressionImpl extends ClsElementImpl implements PsiPrefix
     }
 
     public void accept(@NotNull PsiElementVisitor visitor) {
-      visitor.visitJavaToken(this);
+      if (visitor instanceof JavaElementVisitor) {
+        ((JavaElementVisitor)visitor).visitJavaToken(this);
+      }
+      else {
+        visitor.visitElement(this);
+      }
     }
   }
 }

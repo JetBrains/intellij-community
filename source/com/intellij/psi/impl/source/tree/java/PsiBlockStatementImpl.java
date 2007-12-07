@@ -1,14 +1,14 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiBlockStatement;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlockStatement {
@@ -45,7 +45,12 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitBlockStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitBlockStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

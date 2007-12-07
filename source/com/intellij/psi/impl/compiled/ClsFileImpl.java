@@ -391,7 +391,12 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitJavaFile(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitJavaFile(this);
+    }
+    else {
+      visitor.visitFile(this);
+    }
   }
 
   @NonNls

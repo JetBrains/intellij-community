@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
@@ -129,7 +130,12 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitExpressionList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitExpressionList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

@@ -20,7 +20,12 @@ public class LightEmptyImplementsList extends LightElement implements PsiReferen
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiElement copy() {

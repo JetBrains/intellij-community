@@ -114,7 +114,12 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitSuperExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitSuperExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

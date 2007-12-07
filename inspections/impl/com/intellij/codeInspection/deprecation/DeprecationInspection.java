@@ -53,7 +53,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
     return true;
   }
 
-  private static class DeprecationElementVisitor extends PsiElementVisitor {
+  private static class DeprecationElementVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
 
     public DeprecationElementVisitor(final ProblemsHolder holder) {

@@ -33,7 +33,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDocTagValue(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDocTagValue(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiReference getReference() {

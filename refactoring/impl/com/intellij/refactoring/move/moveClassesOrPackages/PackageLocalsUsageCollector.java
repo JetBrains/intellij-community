@@ -11,11 +11,11 @@ import com.intellij.util.containers.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
-class PackageLocalsUsageCollector extends PsiRecursiveElementVisitor {
-  private HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
+class PackageLocalsUsageCollector extends JavaRecursiveElementVisitor {
+  private final HashMap<PsiElement,HashSet<PsiElement>> myReported = new HashMap<PsiElement, HashSet<PsiElement>>();
   private final PsiElement[] myElementsToMove;
   private final List<String> myConflicts;
-  private PackageWrapper myTargetPackage;
+  private final PackageWrapper myTargetPackage;
 
   public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, List<String> conflicts) {
     myElementsToMove = elementsToMove;

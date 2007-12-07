@@ -16,9 +16,12 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.xml.*;
@@ -34,15 +37,18 @@ import org.jetbrains.annotations.NonNls;
  * To change this template use File | Settings | File Templates.
  */
 
-public class ImportsFormatter extends AbstractPostFormatProcessor {
-
+public class ImportsFormatter extends XmlRecursiveElementVisitor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.ImportsFormatter");
+  
   private FormattingDocumentModelImpl myDocumentModel;
   private final CodeStyleSettings.IndentOptions myIndentOptions;
   private static final @NonNls String PAGE_DIRECTIVE = "page";
   private static final @NonNls String IMPORT_ATT = "import";
 
+  private final AbstractPostFormatProcessor myPostProcessor;
+
   public ImportsFormatter(final CodeStyleSettings settings, PsiFile file) {
-    super(settings);
+    myPostProcessor = new AbstractPostFormatProcessor(settings);
     myDocumentModel = FormattingDocumentModelImpl.createOn(file);
     myIndentOptions = settings.getIndentOptions(file.getFileType());
   }
@@ -64,7 +70,8 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
   @Override public void visitXmlAttribute(XmlAttribute attribute) {
     if (isPageDirectiveTag(attribute.getParent())) {
       final XmlAttributeValue valueElement = attribute.getValueElement();
-      if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && isMultiline(valueElement)) {
+      if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && AbstractPostFormatProcessor
+        .isMultiline(valueElement)) {
         final int oldLength = attribute.getTextLength();
         ASTNode valueToken = findValueToken(valueElement.getNode());
         if (valueToken != null) {
@@ -73,7 +80,7 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
             attribute.setValue(newAttributeValue);
           }
           catch (IncorrectOperationException e) {
-            LOG.error(e);
+            AbstractPostFormatProcessor.LOG.error(e);
           }
           finally {
             updateResultRange(oldLength, attribute.getTextLength());
@@ -140,4 +147,27 @@ public class ImportsFormatter extends AbstractPostFormatProcessor {
     return IMPORT_ATT.equals(attribute.getName());
   }
 
+  protected void updateResultRange(final int oldTextLength, final int newTextLength) {
+    myPostProcessor.updateResultRange(oldTextLength, newTextLength);
+  }
+
+  protected boolean checkElementContainsRange(final PsiElement element) {
+    return myPostProcessor.checkElementContainsRange(element);
+  }
+
+  protected boolean checkRangeContainsElement(final PsiElement element) {
+    return myPostProcessor.checkRangeContainsElement(element);
+  }
+
+  public PsiElement process(PsiElement formatted) {
+    LOG.assertTrue(formatted.isValid());
+    formatted.accept(this);
+    return formatted;
+  }
+
+  public TextRange processText(final PsiFile source, final TextRange rangeToReformat) {
+    myPostProcessor.setResultTextRange(rangeToReformat);
+    source.accept(this);
+    return myPostProcessor.getResultTextRange();
+  }
 }

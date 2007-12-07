@@ -50,7 +50,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
   public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager inspectionManager) {
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    place.accept(new PsiRecursiveElementVisitor() {
+    place.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         final PsiType[] typeArguments = expression.getTypeArguments();
         if (typeArguments.length > 0) {

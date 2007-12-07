@@ -88,7 +88,12 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitMethodCallExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethodCallExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

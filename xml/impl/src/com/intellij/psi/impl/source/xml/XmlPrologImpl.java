@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlElementType;
@@ -20,7 +21,12 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlProlog(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlProlog(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public int getChildRole(ASTNode child) {

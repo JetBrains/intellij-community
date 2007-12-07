@@ -155,7 +155,12 @@ public class ClsModifierListImpl extends ClsElementImpl implements PsiModifierLi
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitModifierList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitModifierList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

@@ -148,7 +148,7 @@ public abstract class DependenciesBuilder {
   }
 
 
-  private static class DependenciesWalker extends PsiRecursiveElementVisitor {
+  private static class DependenciesWalker extends JavaRecursiveElementVisitor {
     private final DependencyProcessor myProcessor;
 
     public DependenciesWalker(DependencyProcessor processor) {

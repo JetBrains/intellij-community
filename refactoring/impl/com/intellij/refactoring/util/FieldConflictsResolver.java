@@ -52,7 +52,7 @@ public class FieldConflictsResolver {
   public PsiExpression fixInitializer(PsiExpression initializer) {
     if (myField == null) return initializer;
     final PsiReferenceExpression[] replacedRef = new PsiReferenceExpression[] { null };
-    initializer.accept(new PsiRecursiveElementVisitor() {
+    initializer.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         final PsiExpression qualifierExpression = expression.getQualifierExpression();
         if (qualifierExpression != null) {

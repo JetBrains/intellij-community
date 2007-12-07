@@ -81,7 +81,12 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitSwitchStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitSwitchStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

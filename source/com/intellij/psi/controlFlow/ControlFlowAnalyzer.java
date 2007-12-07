@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class ControlFlowAnalyzer extends PsiElementVisitor {
+class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ControlFlowAnalyzer");
 
   private final PsiElement myCodeFragment;

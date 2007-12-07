@@ -50,7 +50,12 @@ public class ClsClassObjectAccessExpressionImpl extends ClsElementImpl implement
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitClassObjectAccessExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClassObjectAccessExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NotNull

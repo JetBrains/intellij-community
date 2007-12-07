@@ -98,7 +98,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     final List<PsiVariable> writtenVariables = new ArrayList<PsiVariable>(Arrays.asList(ControlFlowUtil.getWrittenVariables(flow, start, end, false)));
     
     final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
-    body.accept(new PsiRecursiveElementVisitor() {
+    body.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitCodeBlock(PsiCodeBlock block) {
         super.visitCodeBlock(block);
         PsiElement anchor = block;
@@ -132,7 +132,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
         final HashSet<PsiElement> result = new HashSet<PsiElement>();
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
-          child.accept(new PsiElementVisitor() {
+          child.accept(new JavaElementVisitor() {
             @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
               visitReferenceElement(expression);
             }

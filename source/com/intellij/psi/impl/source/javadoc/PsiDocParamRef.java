@@ -3,7 +3,10 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -108,6 +111,11 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDocTagValue(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDocTagValue(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

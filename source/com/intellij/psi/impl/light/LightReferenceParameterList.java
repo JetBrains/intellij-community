@@ -42,7 +42,12 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceParameterList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiElement copy() {

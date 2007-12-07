@@ -31,7 +31,12 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlAttributeValue(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlAttributeValue(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String getValue() {

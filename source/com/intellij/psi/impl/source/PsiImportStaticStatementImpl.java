@@ -71,7 +71,12 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitImportStaticStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitImportStaticStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

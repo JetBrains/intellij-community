@@ -450,7 +450,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   private void substituteMethodTypeParams(PsiElement scope, final PsiSubstitutor substitutor) {
-    scope.accept(new PsiRecursiveElementVisitor() {
+    scope.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitTypeElement(PsiTypeElement typeElement) {
         PsiType type = typeElement.getType();
 
@@ -752,7 +752,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                                               int accessCount,
                                               boolean isAccessedForWriting) {
     if (strictlyFinal) {
-      class CanAllLocalsBeDeclaredFinal extends PsiRecursiveElementVisitor {
+      class CanAllLocalsBeDeclaredFinal extends JavaRecursiveElementVisitor {
         boolean success = true;
 
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {

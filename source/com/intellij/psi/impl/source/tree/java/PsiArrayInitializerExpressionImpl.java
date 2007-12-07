@@ -77,7 +77,12 @@ public class PsiArrayInitializerExpressionImpl extends CompositePsiElement imple
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitArrayInitializerExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitArrayInitializerExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

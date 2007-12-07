@@ -51,7 +51,12 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlDocument(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlDocument(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public int getChildRole(ASTNode child) {
@@ -281,7 +286,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     System.out.println("Statistics:");
     final TObjectIntHashMap<Object> map = new TObjectIntHashMap<Object>();
 
-    final PsiRecursiveElementVisitor psiRecursiveElementVisitor = new PsiRecursiveElementVisitor(){
+    final PsiElementVisitor psiRecursiveElementVisitor = new XmlRecursiveElementVisitor(){
       @NonNls private static final String TOKENS_KEY = "Tokens";
       @NonNls private static final String ELEMENTS_KEY = "Elements";
 

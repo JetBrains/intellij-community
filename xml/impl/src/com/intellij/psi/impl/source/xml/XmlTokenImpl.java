@@ -2,10 +2,7 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
@@ -30,7 +27,12 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlToken(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlToken(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

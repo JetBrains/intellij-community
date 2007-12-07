@@ -20,9 +20,39 @@ package com.intellij.psi;
  *
  * @see PsiRecursiveElementVisitor
  */
-public abstract class PsiElementVisitor extends XmlElementVisitor {
-  public void visitCodeFragment(PsiCodeFragment codeFragment) {
-    visitFile(codeFragment);
+public abstract class PsiElementVisitor {
+  public void visitElement(PsiElement element) {
   }
 
+  public void visitFile(PsiFile file) {
+    visitElement(file);
+  }
+
+  public void visitBinaryFile(PsiBinaryFile file){
+    visitFile(file);
+  }
+
+  public void visitPlainTextFile(PsiPlainTextFile file){
+    visitFile(file);
+  }
+
+  public void visitErrorElement(PsiErrorElement element) {
+    visitElement(element);
+  }
+
+  public void visitPlainText(PsiPlainText content) {
+    visitElement(content);
+  }
+
+  public void visitDirectory(PsiDirectory dir) {
+    visitElement(dir);
+  }
+
+  public void visitComment(PsiComment comment) {
+    visitElement(comment);
+  }
+
+  public void visitWhiteSpace(PsiWhiteSpace space) {
+    visitElement(space);
+  }
 }

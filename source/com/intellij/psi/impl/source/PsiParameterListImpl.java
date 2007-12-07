@@ -109,7 +109,12 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitParameterList(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitParameterList(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NonNls

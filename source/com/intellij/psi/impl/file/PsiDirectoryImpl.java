@@ -34,8 +34,8 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Icons;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -532,7 +532,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDirectory(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDirectory(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

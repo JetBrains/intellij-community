@@ -31,7 +31,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder h, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
+    return new JavaElementVisitor() {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression e) {
         validate(e, h);
       }

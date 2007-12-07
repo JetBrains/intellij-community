@@ -120,7 +120,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     final PsiExpression[] result = new PsiExpression[]{(PsiExpression)expression.copy()};
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), true);
     final IncorrectOperationException[] exception = new IncorrectOperationException[]{null};
-    result[0].accept(new PsiRecursiveElementVisitor() {
+    result[0].accept(new JavaRecursiveElementVisitor() {
       @Override public void visitElement(PsiElement element) {
         // read in all children in advance since due to Igorek's exercises element replace involves its siblings invalidation
         PsiElement[] children = element.getChildren();
@@ -160,7 +160,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
 
     final ExpressionVisitor expressionVisitor = new ExpressionVisitor(expression.getManager(), false);
     final Ref<Boolean> canBeSimplified = new Ref<Boolean>(Boolean.FALSE);
-    expression.accept(new PsiRecursiveElementVisitor() {
+    expression.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitElement(PsiElement element) {
         if (!canBeSimplified.get().booleanValue()) {
           super.visitElement(element);
@@ -179,7 +179,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     return canBeSimplified.get().booleanValue();
   }
 
-  private static class ExpressionVisitor extends PsiElementVisitor {
+  private static class ExpressionVisitor extends JavaElementVisitor {
     private PsiExpression resultExpression;
     private final PsiExpression trueExpression;
     private final PsiExpression falseExpression;

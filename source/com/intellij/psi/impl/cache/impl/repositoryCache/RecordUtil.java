@@ -47,7 +47,7 @@ public class RecordUtil {
     ourList.set(null);
 
     if (psiElement != null && mayContainClassesInside(psiElement, fileBuffer)) {
-      psiElement.accept(new PsiRecursiveElementVisitor() {
+      psiElement.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitClass(PsiClass aClass) {
           if (ourList.isNull()) ourList.set(new ArrayList<PsiClass>());
           ourList.get().add(aClass);

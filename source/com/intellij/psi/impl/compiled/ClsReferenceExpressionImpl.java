@@ -153,7 +153,12 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitReferenceExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

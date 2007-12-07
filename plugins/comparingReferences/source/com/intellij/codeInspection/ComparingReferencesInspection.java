@@ -79,7 +79,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
     if (where == null) return null;
 
     final ArrayList[] problemList = new ArrayList[]{null};
-    where.accept(new PsiRecursiveElementVisitor() {
+    where.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitMethod(PsiMethod method) {}
 
       @Override public void visitClass(PsiClass aClass) {}

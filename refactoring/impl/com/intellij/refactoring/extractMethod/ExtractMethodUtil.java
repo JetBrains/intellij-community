@@ -68,7 +68,7 @@ public class ExtractMethodUtil {
                                            final PsiElement oldFragment) {
     final PsiCodeBlock body = extracted.getBody();
     assert body != null;
-    final PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+    final JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);

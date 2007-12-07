@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiAnnotationMemberValue;
-import com.intellij.psi.PsiArrayInitializerMemberValue;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +61,12 @@ public class ClsArrayInitializerMemberValueImpl extends ClsElementImpl implement
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnnotationArrayInitializer(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotationArrayInitializer(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NotNull

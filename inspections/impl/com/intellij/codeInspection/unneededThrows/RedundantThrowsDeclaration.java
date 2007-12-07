@@ -55,7 +55,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, boolean isOnTheFly) {
     final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();
-    file.accept(new PsiRecursiveElementVisitor() {
+    file.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         final ProblemDescriptor descriptor = checkExceptionsNeverThrown(reference, manager);
         if (descriptor != null) {

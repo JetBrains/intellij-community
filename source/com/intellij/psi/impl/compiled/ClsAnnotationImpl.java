@@ -57,7 +57,12 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation, 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnnotation(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotation(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NotNull

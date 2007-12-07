@@ -114,7 +114,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       redundants = allImports;
       final PsiElement[] roots = file.getPsiRoots();
       for (PsiElement root : roots) {
-        root.accept(new PsiRecursiveElementVisitor() {
+        root.accept(new JavaRecursiveElementVisitor() {
           @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
             if (!reference.isQualified()) {
               final JavaResolveResult resolveResult = reference.advancedResolve(false);
@@ -852,7 +852,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             class CancelException extends RuntimeException {
             }
             try {
-              run.accept(new PsiRecursiveElementVisitor() {
+              run.accept(new JavaRecursiveElementVisitor() {
                 @Override public void visitVariable(PsiVariable variable) {
                   if (name1.equals(variable.getName())) {
                     throw new CancelException();

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.XmlDecl;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +15,11 @@ public class XmlDeclImpl extends XmlElementImpl implements XmlDecl{
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlDecl(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlDecl(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }

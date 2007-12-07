@@ -47,7 +47,12 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitEnumConstant(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitEnumConstant(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiExpressionList getArgumentList() {

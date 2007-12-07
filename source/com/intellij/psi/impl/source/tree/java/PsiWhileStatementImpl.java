@@ -1,10 +1,12 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhileStatement {
@@ -79,7 +81,12 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitWhileStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitWhileStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString(){

@@ -28,7 +28,12 @@ public class LightTypeElement extends LightElement implements PsiTypeElement {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitTypeElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiElement copy() {

@@ -218,7 +218,12 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlElement(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public static void copyEntityCaches(final PsiFile file, final PsiFile context) {

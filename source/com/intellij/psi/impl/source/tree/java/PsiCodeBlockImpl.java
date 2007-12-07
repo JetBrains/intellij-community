@@ -5,10 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpressionStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
@@ -167,7 +167,12 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitCodeBlock(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitCodeBlock(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

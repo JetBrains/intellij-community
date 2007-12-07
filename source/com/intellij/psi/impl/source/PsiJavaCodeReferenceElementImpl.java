@@ -847,7 +847,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   public final void accept(@NotNull final PsiElementVisitor visitor) {
-    visitor.visitReferenceElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitReferenceElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public final String toString() {

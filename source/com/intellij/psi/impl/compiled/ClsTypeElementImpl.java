@@ -209,7 +209,12 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
-    visitor.visitTypeElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitTypeElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

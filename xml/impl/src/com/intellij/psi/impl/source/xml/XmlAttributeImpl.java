@@ -7,8 +7,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.PomModel;
 import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
@@ -17,6 +17,7 @@ import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -124,7 +125,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitXmlAttribute(this);
+    if (visitor instanceof XmlElementVisitor) {
+      ((XmlElementVisitor)visitor).visitXmlAttribute(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String getValue() {

@@ -86,7 +86,12 @@ public class PsiThisExpressionImpl extends CompositePsiElement implements PsiThi
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitThisExpression(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitThisExpression(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

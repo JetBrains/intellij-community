@@ -9,7 +9,7 @@ import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiRecursiveElementVisitor;
+import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -63,7 +63,7 @@ public class IdRefReference extends BasicAttributeValueReference {
         public Result<List<XmlTag>> compute() {
           final List<XmlTag> result = new LinkedList<XmlTag>();
 
-          xmlFile.accept(new PsiRecursiveElementVisitor() {
+          xmlFile.accept(new XmlRecursiveElementVisitor() {
             @Override public void visitXmlTag(XmlTag tag) {
               if (isAcceptableTagType(tag)) result.add(tag);
               super.visitXmlTag(tag);

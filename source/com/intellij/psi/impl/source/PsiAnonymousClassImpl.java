@@ -147,7 +147,12 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnonymousClass(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnonymousClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

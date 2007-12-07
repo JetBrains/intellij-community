@@ -67,7 +67,12 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitDeclarationStatement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitDeclarationStatement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

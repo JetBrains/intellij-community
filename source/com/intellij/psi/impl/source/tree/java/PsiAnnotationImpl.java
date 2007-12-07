@@ -13,9 +13,9 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author ven
@@ -94,7 +94,12 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
   }
 
   public final void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitAnnotation(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitAnnotation(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public PsiMetaDataBase getMetaData() {

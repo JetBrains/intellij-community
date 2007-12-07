@@ -8,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.testFramework.ParsingTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +46,6 @@ public class CustomTypesTest extends ParsingTestCase {
     antFile.accept(new PsiRecursiveElementVisitor() {
       @Override public void visitElement(PsiElement element) {
         super.visitElement(element);
-      }
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
       }
     });
     final AntTypeDefinition result = antFile.getBaseTypeDefinition(myCustomTaskClass);

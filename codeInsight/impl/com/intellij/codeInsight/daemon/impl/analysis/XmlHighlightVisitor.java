@@ -57,7 +57,7 @@ import java.util.*;
 /**
  * @author Mike                                  
  */
-public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.ValidationHost {
+public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.ValidationHost {
   private static final Logger LOG = LoggerFactory.getInstance().getLoggerInstance(
     "com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor"
   );
@@ -796,10 +796,6 @@ public class XmlHighlightVisitor extends PsiElementVisitor implements Validator.
   private void addToResults(final HighlightInfo info) {
     if (myResult == null) myResult = new SmartList<HighlightInfo>();
     myResult.add(info);
-  }
-
-  @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-    visitExpression(expression);
   }
 
   public static void setDoJaxpTesting(boolean doJaxpTesting) {

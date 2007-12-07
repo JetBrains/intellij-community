@@ -507,7 +507,12 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitField(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitField(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   public String toString() {

@@ -275,7 +275,7 @@ public abstract class ParameterTablePanel extends JPanel {
   private static PsiExpression[] findVariableOccurrences(final PsiElement[] scopeElements, final PsiVariable variable) {
     final ArrayList<PsiExpression> result = new ArrayList<PsiExpression>();
     for (final PsiElement element : scopeElements) {
-      element.accept(new PsiRecursiveElementVisitor() {
+      element.accept(new JavaRecursiveElementVisitor() {
         @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (!expression.isQualified() && expression.isReferenceTo(variable)) {

@@ -61,7 +61,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       }
     }
 
-    topLevelClass.accept(new PsiRecursiveElementVisitor() {
+    topLevelClass.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitMethod(PsiMethod method) {
         //do not go inside method
       }
@@ -87,7 +87,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
     });
 
     final Set<PsiField> usedFields = new HashSet<PsiField>();
-    topLevelClass.accept(new PsiRecursiveElementVisitor() {
+    topLevelClass.accept(new JavaRecursiveElementVisitor() {
 
       @Override public void visitElement(PsiElement element) {
         if (!candidates.isEmpty()) super.visitElement(element);

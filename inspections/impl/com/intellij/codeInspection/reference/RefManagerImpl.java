@@ -297,7 +297,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  private class ProjectIterator extends PsiElementVisitor {
+  private class ProjectIterator extends JavaElementVisitor {
     private final RefUtilImpl REF_UTIL = (RefUtilImpl)RefUtil.getInstance();
     @Override public void visitElement(PsiElement element) {
       for (PsiElement aChildren : element.getChildren()) {

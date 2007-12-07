@@ -1056,7 +1056,12 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitClass(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitClass(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @NonNls

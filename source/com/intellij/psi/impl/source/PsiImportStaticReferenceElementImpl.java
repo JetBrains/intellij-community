@@ -355,6 +355,11 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitImportStaticReferenceElement(this);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitImportStaticReferenceElement(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 }
