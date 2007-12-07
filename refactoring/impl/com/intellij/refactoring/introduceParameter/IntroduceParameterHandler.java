@@ -102,7 +102,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return false;
 
-    final PsiType typeByExpression = !invokedOnDeclaration ? RefactoringUtil.getTypeByExpressionWithExpectedType(expr) : null;
+    final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (!invokedOnDeclaration && typeByExpression == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
       CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, HelpID.INTRODUCE_PARAMETER, myProject);
@@ -130,7 +130,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase implements R
     if (methodToSearchFor == null) return false;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methodToSearchFor)) return false;
 
-    TIntArrayList parametersToRemove = expr == null ? new TIntArrayList() : Util.findParametersToRemove(method, expr);
+    PsiExpression expressionToRemoveParamFrom = expr;
+    if (expr == null) {
+      expressionToRemoveParamFrom = localVar.getInitializer();
+    }
+    TIntArrayList parametersToRemove = expressionToRemoveParamFrom == null ? new TIntArrayList() : Util.findParametersToRemove(method, expressionToRemoveParamFrom);
 
     PsiExpression[] occurences;
     if (expr != null) {

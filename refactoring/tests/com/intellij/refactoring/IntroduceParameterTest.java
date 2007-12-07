@@ -10,15 +10,19 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.psi.*;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterProcessor;
 import com.intellij.refactoring.introduceParameter.Util;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.openapi.actionSystem.DataContext;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import gnu.trove.TIntArrayList;
 
 public class IntroduceParameterTest extends CodeInsightTestCase {
   private LanguageLevel myPreviousLanguageLevel;
@@ -167,6 +171,10 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
   }
 
+  public void testRemoveParameterAfterVariable() throws Exception {
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
+  }
+
   public void testRemoveParameterInHierarchy() throws Exception {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false, false, false);
   }
@@ -222,9 +230,16 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(myFile, startOffset, endOffset);
 
-    if (expr == null) return false;
-
-    PsiMethod method = Util.getContainingMethod(expr);
+    PsiLocalVariable localVariable = null;
+    if (expr == null) {
+      PsiElement element = CodeInsightUtil.findElementInRange(myFile, startOffset, endOffset, PsiElement.class);
+      localVariable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
+      if (localVariable == null) {
+        return false;
+      }
+    }
+    PsiElement context = expr == null ? localVariable : expr;
+    PsiMethod method = Util.getContainingMethod(context);
     if (method == null) return false;
 
     final PsiMethod methodToSearchFor;
@@ -234,9 +249,10 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
     else {
       methodToSearchFor = method;
     }
-    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, expr) : new TIntArrayList();
+    PsiExpression initializer = expr == null ? localVariable.getInitializer() : expr;
+    TIntArrayList parametersToRemove = removeUnusedParameters ? Util.findParametersToRemove(method, initializer) : new TIntArrayList();
     new IntroduceParameterProcessor(
-      myProject, method, methodToSearchFor, expr, expr, null, true, parameterName, replaceAllOccurences,
+      myProject, method, methodToSearchFor, initializer, expr, localVariable, true, parameterName, replaceAllOccurences,
       replaceFieldsWithGetters,
       declareFinal, generateDelegate, null, parametersToRemove).run();
 
