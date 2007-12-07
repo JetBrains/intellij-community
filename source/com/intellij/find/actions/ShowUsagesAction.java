@@ -8,6 +8,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -69,32 +70,35 @@ public class ShowUsagesAction extends AnAction {
   private static void showElementUsages(final Project project, final PsiElement element, Editor editor) {
     ArrayList<Usage> usages = new ArrayList<Usage>();
     CommonProcessors.CollectProcessor<Usage> collect = new CommonProcessors.CollectProcessor<Usage>(usages);
-    UsageViewPresentation presentation = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager().processUsages(element, collect);
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element);
+    UsageViewPresentation presentation = findUsagesManager.processUsages(element, collect, handler);
     if (presentation == null) return;
     if (usages.isEmpty()) {
-      HintManager.getInstance().showInformationHint(editor, FindBundle.message("no.usages.found.in", searchScopePresentableName(element)));
+      HintManager.getInstance().showInformationHint(editor, FindBundle.message("no.usages.found.in", searchScopePresentableName(element, handler)));
     }
     else if (usages.size() == 1) {
       Usage usage = usages.iterator().next();
-      navigateAndHint(usage, FindBundle.message("show.usages.only.usage", searchScopePresentableName(element)));
+      navigateAndHint(usage, FindBundle.message("show.usages.only.usage", searchScopePresentableName(element, handler)));
     }
     else {
       final String title = presentation.getTabText();
-      JBPopup popup = getUsagePopup(usages, title, project, element);
+      JBPopup popup = getUsagePopup(usages, title, project, element, handler);
       if (popup != null) {
         popup.showInBestPositionFor(editor);
       }
     }
   }
 
-  private static String searchScopePresentableName(PsiElement element) {
+  private static String searchScopePresentableName(PsiElement element, final FindUsagesHandler handler) {
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
-    SearchScope searchScope = findUsagesManager.getCurrentSearchScope(element);
+    SearchScope searchScope = findUsagesManager.getCurrentSearchScope(handler);
     if (searchScope == null) searchScope = ProjectScope.getAllScope(element.getProject());
     return searchScope.getDisplayName();
   }
 
-  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Project project, PsiElement element) {
+  private static JBPopup getUsagePopup(List<Usage> usages, final String title, final Project project, PsiElement element,
+                                       final FindUsagesHandler handler) {
     Usage[] arr = usages.toArray(new Usage[usages.size()]);
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setDetachedMode(true);
@@ -107,7 +111,7 @@ public class ShowUsagesAction extends AnAction {
     if (nodes.size() == 1) {
       // usage view can filter usages down to one
       Usage usage = nodes.get(0).getUsage();
-      navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(element)));
+      navigateAndHint(usage, FindBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(element, handler)));
       usageView.dispose();
       return null;
     }

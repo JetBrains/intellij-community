@@ -118,7 +118,7 @@ public class FindUsagesManager implements JDOMExternalizable {
         }
 
         if (element instanceof PsiDirectory) {
-          final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+          final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
           return psiPackage == null ? null : new Factory<FindUsagesHandler>() {
             public FindUsagesHandler create() {
               return new DefaultFindUsagesHandler(psiPackage, findClassOptions, findMethodOptions, findPackageOptions, findThrowOptions,
@@ -245,7 +245,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   @Nullable
-  private FindUsagesHandler findHandler(PsiElement element) {
+  public FindUsagesHandler getFindUsagesHandler(PsiElement element) {
     for (final Function<PsiElement,Factory<FindUsagesHandler>> function : myHandlers) {
       final Factory<FindUsagesHandler> factory = function.fun(element);
       if (factory != null) {
@@ -259,7 +259,7 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, final PsiFile scopeFile, final FileEditor editor) {
-    final FindUsagesHandler handler = findHandler(psiElement);
+    final FindUsagesHandler handler = getFindUsagesHandler(psiElement);
     if (handler == null) return;
 
     final AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(scopeFile != null, shouldOpenInNewTab(), mustOpenInNewTab());
@@ -287,17 +287,14 @@ public class FindUsagesManager implements JDOMExternalizable {
     }
   }
 
-  public SearchScope getCurrentSearchScope(@NotNull PsiElement element) {
-    final FindUsagesHandler handler = findHandler(element);
+  public SearchScope getCurrentSearchScope(FindUsagesHandler handler) {
     if (handler == null) return null;
-
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
     return findUsagesOptions.searchScope;
   }
 
   // return null on failure or cancel
-  public UsageViewPresentation processUsages(@NotNull PsiElement element, final Processor<Usage> processor) {
-    final FindUsagesHandler handler = findHandler(element);
+  public UsageViewPresentation processUsages(@NotNull PsiElement element, final Processor<Usage> processor, FindUsagesHandler handler) {
     if (handler == null) return null;
 
     FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
