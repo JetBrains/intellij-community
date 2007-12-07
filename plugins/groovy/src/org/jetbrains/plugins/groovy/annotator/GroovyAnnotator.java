@@ -21,34 +21,39 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.TObjectHashingStrategy;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
+import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicPropertyBase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
+import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -56,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -670,15 +676,40 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refExpr, annotation);
       }
 
-      addDynamickSuggestions(annotation, refExpr);
+      addDynPropertyIfNeeds(annotation, refExpr);
 
       //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
   }
 
-  private void addDynamickSuggestions(Annotation annotation, GrReferenceExpression refExpr) {
-    annotation.registerFix(new AddDynamicPropertyIntention(refExpr));
+  private void addDynPropertyIfNeeds(Annotation annotation, GrReferenceExpression refExpr) {
+    String dynamicValueTypeDefinitionText;
+
+    final Project project = refExpr.getProject();
+    final DynamicPropertiesManager dynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
+    Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(refExpr.getContainingFile().getVirtualFile());
+
+    if (refExpr.isQualified()) {
+      dynamicValueTypeDefinitionText = refExpr.getQualifierExpression().getType().getCanonicalText();
+
+    } else {
+      PsiElement refParent = refExpr.getParent();
+
+      while (refParent != null && !(refParent instanceof GroovyFileBase)) {
+        refParent = refParent.getParent();
+      }
+
+      if (refParent == null) return;
+      dynamicValueTypeDefinitionText = ((GroovyFileBase) refParent).getScriptClass().getQualifiedName();
+    }
+
+    DynamicProperty dynamicProperty = new DynamicPropertyBase(refExpr.getName(), dynamicValueTypeDefinitionText, module.getName());
+    final Element dynPropElement = dynamicPropertiesManager.findDynamicProperty(dynamicProperty);
+
+    if (dynPropElement == null) {
+      annotation.registerFix(new DynamicPropertyIntention(dynamicProperty));
+    }
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {

@@ -8,12 +8,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.*;
-import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.*;
-import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DynamicPropertyXMLElement.*;
 
 import java.io.*;
 import java.util.*;
@@ -108,65 +106,27 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
   @Nullable
   public DynamicProperty addDynamicProperty(final DynamicProperty dynamicProperty) {
-    final Module module = ModuleManager.getInstance(getProject()).findModuleByName(dynamicProperty.getModuleName());
+    final String moduleName = dynamicProperty.getModuleName();
 
-    final File moduleXML = myPathsToXmls.get(module);
+    Document document = loadModuleDynXML(moduleName);
+    Element rootElement = document.getRootElement();
 
-    Document document;
-    try {
-      document = JDOMUtil.loadDocument(moduleXML);
-    } catch (JDOMException e) {
-      document = new Document();
-    } catch (IOException e) {
-      return null;
-    }
+    final Element dynPropertyElement = findDynamicProperty(rootElement, dynamicProperty.getTypeQualifiedName(), dynamicProperty.getPropertyName());
 
-    Element rootElement;
-    if (document.hasRootElement()) {
-      rootElement = document.getRootElement();
-    } else {
-      rootElement = new Element(DynamicPropertyXMLElement.PROPERTIES_TAG_NAME);
-    }
+    if (dynPropertyElement == null) {
+      final Element dynPropertyTypeElement = findDynamicPropertyType(rootElement, dynamicProperty.getTypeQualifiedName());
 
-    final String typeQualifiedName = dynamicProperty.getTypeQualifiedName();
-    final List definedProperties = rootElement.getContent(new Filter() {
-      public boolean matches(Object o) {
-        if (!(o instanceof Element)) return false;
-        if (!PROPERTY_TAG_NAME.equals(((Element) o).getQualifiedName())) return false;
-
-        return typeQualifiedName.equals(((Element) o).getAttribute(QUALIFIED_TYPE_TAG_NAME).getValue());
+      if (dynPropertyTypeElement == null) {
+        rootElement.addContent(new DynamicPropertyXMLElementBase(dynamicProperty));
+      } else {
+        dynPropertyTypeElement.addContent(new DynamicPropertyNameElement(dynamicProperty.getPropertyName()));
       }
-    });
-
-    Element newRootElement;
-    if (definedProperties != null && definedProperties.size() != 0) {
-      if (definedProperties.size() > 1) return null;
-
-      final Element definedTypeDef = ((Element) definedProperties.get(0));
-
-      final List definedPropertiesInTypeDef = definedTypeDef.getContent(new Filter() {
-        public boolean matches(Object o) {
-          if (!(o instanceof Element)) return false;
-          if (!NAME_PROPERTY_TAG_NAME.equals(((Element) o).getQualifiedName())) return false;
-
-          return dynamicProperty.getPropertyName().equals(((Element) o).getText());
-        }
-      });
-
-      if (definedPropertiesInTypeDef == null || (definedPropertiesInTypeDef != null && definedPropertiesInTypeDef.size() == 0)) {
-        definedTypeDef.addContent(new DynamicPropertyNameElement(dynamicProperty.getPropertyName()));
-      }
-
-      newRootElement = rootElement;
-    } else {
-      rootElement.addContent(new DynamicPropertyXMLElementBase(dynamicProperty));
-      newRootElement = rootElement;
     }
 
     FileWriter writer = null;
     try {
-      writer = new FileWriter(moduleXML);
-      JDOMUtil.writeElement(newRootElement, writer, "\n");
+      writer = new FileWriter(myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName)));
+      JDOMUtil.writeElement(rootElement, writer, "\n");
     } catch (IOException e) {
     } finally {
       try {
@@ -181,9 +141,58 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     return dynamicProperty;
   }
 
+  private Document loadModuleDynXML(String moduleName) {
+    Document document;
+    try {
+      document = JDOMUtil.loadDocument(myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName)));
+    } catch (JDOMException e) {
+      document = new Document();
+    } catch (IOException e) {
+      document = new Document();
+    }
+
+    if (!document.hasRootElement()) {
+      document.setRootElement(new Element(DynamicPropertyXMLElement.PROPERTIES_TAG_NAME));
+    }
+    return document;
+  }
+
   @Nullable
   public DynamicProperty removeDynamicProperty(DynamicProperty dynamicProperty) {
     return null;
+  }
+
+  @Nullable
+  public Element findDynamicProperty(String moduleName, final String typeQualifiedName, final String propertyName) {
+    Document document = loadModuleDynXML(moduleName);
+
+    return findDynamicProperty(document.getRootElement(), typeQualifiedName, propertyName);
+  }
+
+  @Nullable
+  public Element findDynamicProperty(DynamicProperty dynamicProperty) {
+    return findDynamicProperty(dynamicProperty.getModuleName(), dynamicProperty.getTypeQualifiedName(), dynamicProperty.getPropertyName());
+  }
+
+  @Nullable
+  public Element findDynamicPropertyType(Element rootElement, final String typeQualifiedName) {
+    final List definedProperties = rootElement.getContent(DynamicPropertyXMLElement.createConcreatePropertyTagFilter(typeQualifiedName));
+
+    if (definedProperties == null || definedProperties.size() == 0 || definedProperties.size() > 1) return null;
+    return ((Element) definedProperties.get(0));
+  }
+
+  @Nullable
+  private Element findDynamicProperty(Element rootElement, final String typeQualifiedName, final String propertyName) {
+    Element definedTypeDef = findDynamicPropertyType(rootElement, typeQualifiedName);
+    if (definedTypeDef == null) return null;
+
+    final List definedPropertiesInTypeDef = definedTypeDef.getContent(DynamicPropertyXMLElement.createConcreatePropertyNameTagFilter(propertyName));
+    if (definedPropertiesInTypeDef == null || definedPropertiesInTypeDef.size() == 0) {
+      return null;
+    }
+
+    return (Element) definedPropertiesInTypeDef.get(0);
   }
 
   public void disposeComponent() {

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
@@ -33,5 +34,22 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
 
   @Nullable
   public abstract DynamicProperty removeDynamicProperty(DynamicProperty dynamicProperty);
+
+  /*
+  * Find dynamic property in class with name
+  */
+
+  @Nullable
+  public abstract Element findDynamicProperty(String moduleName, final String typeQualifiedName, final String propertyName);
+
+  /*
+  * Find dynamic property
+  */
+
+  @Nullable
+  public abstract Element findDynamicProperty(DynamicProperty dynamicProperty);
+
+  @Nullable
+  public abstract Element findDynamicPropertyType(Element rootElement, final String typeQualifiedName);
 
 }
