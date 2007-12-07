@@ -100,7 +100,7 @@ public class PluginDownloader {
     final IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptorFromJar(myFile);
     if (descriptor != null) {
       myPluginVersion = descriptor.getVersion();
-      if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(myPluginVersion, descriptor.getVersion()) >= 0) return false; //was not updated
+      if (ideaPluginDescriptor != null && IdeaPluginDescriptorImpl.compareVersion(ideaPluginDescriptor.getVersion(), descriptor.getVersion()) >= 0) return false; //was not updated
     }
     return true;
   }
