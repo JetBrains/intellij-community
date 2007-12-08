@@ -15,7 +15,9 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.util.ArrayUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -31,6 +33,7 @@ public class JdkChooserPanel extends JPanel {
   private DefaultListModel myListModel = null;
   private ProjectJdk myCurrentJdk;
   private Project myProject;
+  private SdkType[] myAllowedJdkTypes = null;
 
   public JdkChooserPanel(Project project) {
     super(new BorderLayout());
@@ -61,6 +64,16 @@ public class JdkChooserPanel extends JPanel {
     if (myListModel.getSize() > 0) {
       myList.setSelectedIndex(0);
     }
+  }
+
+  /**
+   * Sets the JDK types which may be shown in the panel.
+   *
+   * @param allowedJdkTypes the array of JDK types which may be shown, or null if all JDK types are allowed.
+   * @since 7.0.3
+   */
+  public void setAllowedJdkTypes(@Nullable final SdkType[] allowedJdkTypes) {
+    myAllowedJdkTypes = allowedJdkTypes;
   }
 
   public ProjectJdk getChosenJdk() {
@@ -122,7 +135,7 @@ public class JdkChooserPanel extends JPanel {
       final Set<ProjectJdk> compatibleJdks = new HashSet<ProjectJdk>();
       final Collection<ProjectJdk> collection = projectJdksModel.getProjectJdks().values();
       for (ProjectJdk projectJdk : collection) {
-        if (type == null || projectJdk.getSdkType() == type) {
+        if (isCompatibleJdk(projectJdk, type)) {
           compatibleJdks.add(projectJdk);
         }
       }
@@ -136,6 +149,16 @@ public class JdkChooserPanel extends JPanel {
     for (ProjectJdk jdk : jdks) {
       myListModel.addElement(jdk);
     }
+  }
+
+  private boolean isCompatibleJdk(final ProjectJdk projectJdk, final SdkType type) {
+    if (type != null) {
+      return projectJdk.getSdkType() == type;
+    }
+    if (myAllowedJdkTypes != null) {
+      return ArrayUtil.indexOf(myAllowedJdkTypes, projectJdk.getSdkType()) >= 0;
+    }
+    return true;
   }
 
   public JComponent getDefaultFocusedComponent() {
