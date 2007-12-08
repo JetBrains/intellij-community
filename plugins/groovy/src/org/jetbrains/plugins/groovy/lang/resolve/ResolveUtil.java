@@ -178,7 +178,7 @@ public class ResolveUtil {
 
       place = place.getContext();
 
-      if (place instanceof GrMember) break;
+      if (place instanceof GrMember || place instanceof GrClosableBlock) break;
     }
     return null;
   }
