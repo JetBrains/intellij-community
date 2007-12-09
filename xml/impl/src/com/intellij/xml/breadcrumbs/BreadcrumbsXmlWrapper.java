@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -228,8 +229,14 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     return myComponent;
   }
 
-  public void itemSelected(@NotNull final BreadcrumbsPsiItem item) {
-    moveEditorCaretTo(item.getPsiElement());
+  public void itemSelected(@NotNull final BreadcrumbsPsiItem item, final int modifiers) {
+    final PsiElement psiElement = item.getPsiElement();
+    moveEditorCaretTo(psiElement);
+
+    if ((modifiers & Event.SHIFT_MASK) == Event.SHIFT_MASK || (modifiers & Event.META_MASK) == Event.META_MASK) {
+      final TextRange range = psiElement.getTextRange();
+      myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+    }
   }
 
   public void dispose() {

@@ -159,7 +159,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     }
   }
 
-  private void setSelectedCrumb(@NotNull final Crumb<T> c) {
+  private void setSelectedCrumb(@NotNull final Crumb<T> c, final int modifiers) {
     final T selectedElement = c.getItem();
 
     final Set<BreadcrumbsItem> items = new HashSet<BreadcrumbsItem>();
@@ -185,17 +185,17 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       }
     }
 
-    fireItemSelected(selectedElement);
+    fireItemSelected(selectedElement, modifiers);
 
     repaint();
   }
 
   @SuppressWarnings({"ForLoopReplaceableByForEach"})
-  private void fireItemSelected(@Nullable final T item) {
+  private void fireItemSelected(@Nullable final T item, final int modifiers) {
     if (item != null) {
       final BreadcrumbsItemListener[] listeners = myListeners.toArray(new BreadcrumbsItemListener[myListeners.size()]);
       for (int i = 0; i < listeners.length; i++) {
-        listeners[i].itemSelected(item);
+        listeners[i].itemSelected(item, modifiers);
       }
     }
   }
@@ -402,6 +402,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
     public void mouseDragged(final MouseEvent e) {
       // nothing
+      System.out.println("BreadcrumbsComponent$CrumbLineMouseListener.mouseDragged");
     }
 
     public void mouseMoved(final MouseEvent e) {
@@ -423,7 +424,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     public void mouseClicked(final MouseEvent e) {
       final Crumb crumb = myBreadcrumbs.getCrumb(e.getPoint());
       if (crumb != null) {
-        crumb.performAction();
+        crumb.performAction(e.getModifiers());
       }
     }
   }
@@ -509,8 +510,8 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return myItem;
     }
 
-    public void performAction() {
-      myLine.setSelectedCrumb(this);
+    public void performAction(final int modifiers) {
+      myLine.setSelectedCrumb(this, modifiers);
     }
 
     public void setHovered(final boolean b) {
@@ -533,7 +534,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       myLine = line;
     }
 
-    public void performAction() {
+    public void performAction(final int modifiers) {
       if (myForward) {
         myLine.nextPage();
       }
@@ -552,7 +553,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       // does nothing
     }
 
-    public void performAction() {
+    public void performAction(final int modifiers) {
       // does nothing
     }
 

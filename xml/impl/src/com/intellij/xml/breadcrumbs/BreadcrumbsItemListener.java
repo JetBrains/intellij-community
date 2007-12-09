@@ -7,6 +7,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface BreadcrumbsItemListener<T extends BreadcrumbsItem> {
 
-  void itemSelected(@NotNull final T item);
+  void itemSelected(@NotNull final T item, final int modifiers);
 
 }
