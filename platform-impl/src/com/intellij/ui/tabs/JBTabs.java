@@ -352,15 +352,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void updateAll() {
-    relayout(false);
+    mySelectedInfo = getSelectedInfo();
+    removeDeferred(updateContainer(false));
     updateListeners();
-    updateSelected();
-
     updateTabActions();
-  }
-
-  private void updateSelected() {
-    setSelected(getSelectedInfo(), false);
   }
 
   private boolean isMyChildIsFocusedNow() {
@@ -393,7 +388,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     mySelectedInfo = info;
     final TabInfo newInfo = getSelectedInfo();
 
-    final Component deferredRemove = update(false);
+    final Component deferredRemove = updateContainer(false);
 
     if (oldInfo != newInfo) {
       for (TabsListener eachListener : myTabListeners) {
@@ -1214,7 +1209,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   @Nullable
-  private Component update(boolean forced) {
+  private Component updateContainer(boolean forced) {
     Component deferredRemove = null;
 
     for (TabInfo each : myInfos) {

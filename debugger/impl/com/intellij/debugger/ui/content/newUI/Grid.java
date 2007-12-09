@@ -68,16 +68,16 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   public void addNotify() {
     super.addNotify();
 
-    //if (!myLastUiStateWasRestored) {
-    //  myLastUiStateWasRestored = true;
-    //  myViewContext.setStateIsBeingRestored(true, this);
-    //  try {
-    //    restoreLastUiState();
-    //  }
-    //  finally {
-    //    myViewContext.setStateIsBeingRestored(false, this);
-    //  }
-    //}
+    if (!myLastUiStateWasRestored) {
+      myLastUiStateWasRestored = true;
+      myViewContext.setStateIsBeingRestored(true, this);
+      try {
+        restoreLastUiState();
+      }
+      finally {
+        myViewContext.setStateIsBeingRestored(false, this);
+      }
+    }
 
     updateSelection(true);
   }
