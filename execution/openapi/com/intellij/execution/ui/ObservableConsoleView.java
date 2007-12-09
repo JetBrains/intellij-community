@@ -4,7 +4,7 @@ import com.intellij.openapi.Disposable;
 
 import java.util.Collection;
 
-public interface ObservableConsoleView extends ConsoleView {
+public interface ObservableConsoleView  {
 
   void addChangeListener(ChangeListener listener, Disposable parent);
 

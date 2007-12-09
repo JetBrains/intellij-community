@@ -4,6 +4,7 @@ import com.intellij.codeInsight.navigation.IncrementalSearchHandler;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.*;
@@ -66,7 +67,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public final class ConsoleViewImpl extends JPanel implements ObservableConsoleView, DataProvider, OccurenceNavigator {
+public final class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
   private static final int FLUSH_DELAY = 200; //TODO : make it an option
