@@ -98,6 +98,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private boolean myListenerAdded;
   private final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
   private Animator myAnimator;
+  private static final String DEFERRED_REMOVE_FLAG = "JBTabs.deferredRemove";
 
   public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
     myProject = project;
@@ -432,7 +433,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     if (deferredRemove != null) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
-          remove(deferredRemove);
+          if (isForDeferredRemove(deferredRemove)) {
+            remove(deferredRemove);
+          }
           callback.setDone();
         }
       });
@@ -443,6 +446,19 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return callback;
   }
 
+  private boolean isForDeferredRemove(Component c) {
+    if (c instanceof JComponent) {
+      return ((JComponent)c).getClientProperty(DEFERRED_REMOVE_FLAG) != null;
+    } else {
+      return false;
+    }
+  }
+
+  private void setForDeferredRemove(Component c, boolean toRemove) {
+    if (c instanceof JComponent) {
+      ((JComponent)c).putClientProperty(DEFERRED_REMOVE_FLAG, toRemove ? Boolean.TRUE : null);
+    }
+  }
 
   public void propertyChange(final PropertyChangeEvent evt) {
     final TabInfo tabInfo = (TabInfo)evt.getSource();
@@ -1103,29 +1119,41 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
 
     if (toSelect != null) {
+      final JComponent deferred = processRemove(info);
       _setSelected(toSelect, true).doWhenDone(new Runnable() {
         public void run() {
-          processRemove(info);
+          removeDeferred(deferred);
         }
       });
     } else {
-      processRemove(info);
+      removeDeferred(processRemove(info));
     }
   }
 
-  private void processRemove(final TabInfo info) {
+  @Nullable
+  private JComponent processRemove(final TabInfo info) {
     remove(myInfo2Label.get(info));
     final JComponent tb = myInfo2Toolbar.get(info);
     if (tb != null) {
       remove(tb);
     }
-    remove(info.getComponent());
+
+    JComponent tabComponent = info.getComponent();
+
+    if (!isFocused(tabComponent)) {
+      remove(tabComponent);
+      tabComponent = null;
+    } else {
+      setForDeferredRemove(tabComponent, true);
+    }
 
     myInfos.remove(info);
     myInfo2Label.remove(info);
     myInfo2Toolbar.remove(info);
 
     updateAll();
+
+    return tabComponent;
   }
 
   public TabInfo findInfo(Component component) {
@@ -1185,9 +1213,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     Dimension myToolbar = new Dimension();
   }
 
+  @Nullable
   private Component update(boolean forced) {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
     Component deferredRemove = null;
 
     for (TabInfo each : myInfos) {
@@ -1204,7 +1231,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
       else {
         if (eachComponent.getParent() == null) continue;
-        if (focusOwner != null && (focusOwner == eachComponent || SwingUtilities.isDescendingFrom(focusOwner, eachComponent))) {
+        if (isFocused(eachComponent)) {
           deferredRemove = eachComponent;
         } else {
           remove(eachComponent);
@@ -1212,10 +1239,24 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
     }
 
+    if (deferredRemove != null) {
+      setForDeferredRemove(deferredRemove, true);
+    }
+
 
     relayout(forced);
 
     return deferredRemove;
+  }
+
+  protected void addImpl(final Component comp, final Object constraints, final int index) {
+    setForDeferredRemove(comp, false);
+    super.addImpl(comp, constraints, index);
+  }
+
+  private boolean isFocused(JComponent c) {
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    return focusOwner != null && (focusOwner == c || SwingUtilities.isDescendingFrom(focusOwner, c));
   }
 
   private void relayout(boolean forced) {

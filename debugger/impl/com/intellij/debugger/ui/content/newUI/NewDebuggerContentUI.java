@@ -56,7 +56,8 @@ public class NewDebuggerContentUI
   Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
 
   boolean myUiLastStateWasRestored;
-  private boolean myStateIsBeingRestored;
+
+  private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
 
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
@@ -257,10 +258,10 @@ public class NewDebuggerContentUI
   }
 
   private void restoreLastUiState() {
-    if (myStateIsBeingRestored) return;
+    if (isStateBeingRestored()) return;
 
     try {
-      myStateIsBeingRestored = true;
+      setStateIsBeingRestored(true, this);
 
       if (!NewDebuggerContentUI.ensureValid(myTabs)) return;
 
@@ -273,7 +274,7 @@ public class NewDebuggerContentUI
       restoreLastSelectedTab();
     }
     finally {
-      myStateIsBeingRestored = false;
+      setStateIsBeingRestored(false, this);
     }
   }
 
@@ -294,7 +295,7 @@ public class NewDebuggerContentUI
   }
 
   public void saveUiState() {
-    if (myStateIsBeingRestored) return;
+    if (isStateBeingRestored()) return;
 
     for (TabInfo each : myTabs.getTabs()) {
       Grid eachGrid = getGridFor(each);
@@ -379,6 +380,18 @@ public class NewDebuggerContentUI
     return !"true".equalsIgnoreCase(System.getProperty("old.debugger.ui"));
   }
 
+  public boolean isStateBeingRestored() {
+    return myRestoreStateRequestors.size() > 0;
+  }
+
+  public void setStateIsBeingRestored(final boolean restoredNow, final Object requestor) {
+    if (restoredNow) {
+      myRestoreStateRequestors.add(requestor);
+    } else {
+      myRestoreStateRequestors.remove(requestor);
+    }
+  }
+
 
   private class MyComponent extends Wrapper.FocusHolder implements DataProvider {
     public MyComponent() {
@@ -454,7 +467,9 @@ public class NewDebuggerContentUI
       eachParent = eachParent.getParent();
     }
 
-    if (eachParent == null) return false;
+    if (eachParent == null) {
+      eachParent = c.getRootPane();
+    }
 
     eachParent.validate();
 

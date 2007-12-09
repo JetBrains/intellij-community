@@ -53,7 +53,7 @@ public class GridCell {
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
-          minimize();
+          minimize(e);
         }
       }
     });
@@ -92,7 +92,7 @@ public class GridCell {
 
     revalidateCell(new Runnable() {
       public void run() {
-        myTabs.removeTab(info, false);
+        myTabs.removeTab(info, true);
       }
     });
   }
@@ -198,7 +198,7 @@ public class GridCell {
     Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
     for (Content each : contents) {
       if (myContainer.getStateFor(each).isMinimizedInGrid()) {
-        minimize();
+        minimize(each);
       }
     }
   }
@@ -237,17 +237,29 @@ public class GridCell {
     }
   }
 
-  public void minimize() {
+  public void minimize(Content[] contents) {
     myContext.saveUiState();
 
-    final Content content = getContentFor(myTabs.getSelectedInfo());
-    myMinimizedContents.add(content);
-    remove(content);
-    myContainer.minimize(content, new CellTransform.Restore() {
-      public ActionCallback restoreInGrid() {
-        return restore(content);
-      }
-    });
+    for (final Content each : contents) {
+      myMinimizedContents.add(each);
+      remove(each);
+      myContainer.minimize(each, new CellTransform.Restore() {
+        public ActionCallback restoreInGrid() {
+          return restore(each);
+        }
+      });
+    }
+  }
+
+  public void minimize(Content content) {
+    minimize(new Content[] {content});
+  }
+
+  public void minimize(MouseEvent e) {
+    TabInfo tabInfo = myTabs.findInfo(e);
+    if (tabInfo != null) {
+      minimize(getContentFor(tabInfo));
+    }
   }
 
   private ActionCallback restore(Content content) {
@@ -266,10 +278,7 @@ public class GridCell {
       if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
         TabInfo target = myTabs.getTargetInfo();
         if (target != null) {
-          Content content = getContentFor(target);
-          if (content != null) {
-            return new Content[] {content};
-          }
+          return new Content[] {getContentFor(target)};
         }
       } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
         return myContext;

@@ -45,4 +45,8 @@ public interface ViewContext extends Disposable {
   void moveToGrid(final Content content);
 
   ActionCallback select(Content content, boolean requestFocus);
+
+  boolean isStateBeingRestored();
+
+  void setStateIsBeingRestored(boolean state, final Object requestor);
 }
