@@ -407,7 +407,11 @@ public class CodeInsightUtil {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
     if (document == null) return element;
-    final Language language = element.getLanguage();
+    Language language = element.getLanguage();
+    LanguageDialect languageDialect = psiFile.getLanguageDialect();
+    if (languageDialect != null) {
+      language = languageDialect;
+    }
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
     final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());
     documentManager.doPostponedOperationsAndUnblockDocument(document);
