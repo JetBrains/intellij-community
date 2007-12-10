@@ -9,8 +9,8 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartTypePointer;
+import com.intellij.psi.SmartTypePointerManager;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.LinkedHashSet;
@@ -18,7 +18,7 @@ import java.util.Set;
 
 public class TypeExpression implements Expression {
   private final LookupItem[] myItems;
-  protected SmartTypePointer myDefaultType;
+  private final SmartTypePointer myDefaultType;
 
   public TypeExpression(final Project project, PsiType[] types) {
     final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
@@ -28,7 +28,7 @@ public class TypeExpression implements Expression {
 
     myItems = set.toArray(new LookupItem[set.size()]);
     final PsiType psiType = PsiUtil.convertAnonymousToBaseType(types[0]);
-    myDefaultType = SmartPointerManager.getInstance(project).createSmartTypePointer(psiType);
+    myDefaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(psiType);
 
   }
 

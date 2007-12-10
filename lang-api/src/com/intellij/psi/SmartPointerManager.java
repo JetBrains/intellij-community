@@ -35,7 +35,6 @@ public abstract class SmartPointerManager {
    * @return the smart pointer instance.
    */
   @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(E element);
-  @NotNull public abstract SmartTypePointer createSmartTypePointer(PsiType type);
 
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI

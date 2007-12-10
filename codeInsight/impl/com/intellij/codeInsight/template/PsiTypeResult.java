@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -13,11 +12,10 @@ import org.jetbrains.annotations.NotNull;
 public class PsiTypeResult implements Result {
   private final SmartTypePointer myTypePointer;
   private JavaPsiFacade myFacade;
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.template.PsiTypeResult");
 
   public PsiTypeResult(@NotNull PsiType type, Project project) {
     final PsiType actualType = PsiUtil.convertAnonymousToBaseType(type);
-    myTypePointer = SmartPointerManager.getInstance(project).createSmartTypePointer(actualType);
+    myTypePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(actualType);
     myFacade = JavaPsiFacade.getInstance(project);
   }
 

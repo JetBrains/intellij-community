@@ -23,8 +23,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class UsageInfo {
   public static final UsageInfo[] EMPTY_ARRAY = new UsageInfo[0];
@@ -67,7 +67,7 @@ public class UsageInfo {
     this(reference.getElement(), reference.getRangeInElement().getStartOffset(), reference.getRangeInElement().getEndOffset());
   }
 
-  public UsageInfo(@NotNull PsiJavaCodeReferenceElement reference) {
+  public UsageInfo(@NotNull PsiQualifiedReference reference) {
     this((PsiElement)reference);
   }
 
