@@ -157,8 +157,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
         final PsiManager manager = psiClass.getManager();
         final Project project = manager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass serializable = manager.findClass(SERIALIZABLE_CLASS_NAME,
-                                                        scope);
+      final PsiClass serializable = JavaPsiFacade.getInstance(manager.getProject()).findClass(SERIALIZABLE_CLASS_NAME, scope);
         if(serializable == null){
             // no jdk defined for project.
             return -1L;
@@ -357,7 +356,7 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
                 MemberSignature.getAssertionsDisabledFieldMemberSignature();
         nonPrivateFields.add(memberSignature);
         final PsiManager manager = clazz.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiClassType classType = factory.createType(clazz);
         createClassObjectAccessSynthetics(classType);
         if(staticInitializers.isEmpty()){

@@ -78,13 +78,11 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
             final PsiManager manager = expression.getManager();
             final Project project = manager.getProject();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            final PsiClass javaUtilLockClass =
-                    manager.findClass("java.lang.Number", scope);
+          final PsiClass javaUtilLockClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Number", scope);
             if (javaUtilLockClass == null) {
                 return false;
             }
-            final PsiElementFactory elementFactory =
-                    manager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiClassType javaLangNumberType =
                     elementFactory.createType(javaUtilLockClass);
             return type.equalsToText("java.lang.String") ||

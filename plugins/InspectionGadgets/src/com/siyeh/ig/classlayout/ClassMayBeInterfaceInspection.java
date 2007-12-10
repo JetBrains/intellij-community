@@ -78,7 +78,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
                     PsiTreeUtil.getPrevSiblingOfType(nameIdentifier,
                             PsiKeyword.class);
             final PsiManager manager = aClass.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiKeyword interfaceKeyword =
                     factory.createKeyword(PsiKeyword.INTERFACE);
             if (classKeyword == null) {
@@ -116,8 +116,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
                 throws IncorrectOperationException {
             final PsiManager psiManager = oldClass.getManager();
             final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-            final PsiElementFactory elementFactory =
-                    psiManager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiJavaCodeReferenceElement classReference =
                     elementFactory.createClassReferenceElement(oldClass);
             final SearchScope searchScope = oldClass.getUseScope();

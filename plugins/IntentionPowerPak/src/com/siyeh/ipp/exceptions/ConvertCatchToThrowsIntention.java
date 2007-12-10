@@ -50,7 +50,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
         //                                             [Yes][No][Cancel]
         final PsiReferenceList throwsList = method.getThrowsList();
         final PsiManager manager = element.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaCodeReferenceElement referenceElement =
                 factory.createReferenceElementByType(classType);
         throwsList.add(referenceElement);

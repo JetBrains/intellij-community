@@ -19,8 +19,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
@@ -36,8 +36,7 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix{
         final PsiClass aClass = (PsiClass) classIdentifier.getParent();
         assert aClass != null;
         final PsiManager psiManager = aClass.getManager();
-        final PsiElementFactory elementFactory =
-                psiManager.getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final long serialVersionUID =
                 SerialVersionUIDBuilder.computeDefaultSUID(aClass);
         final PsiField field =

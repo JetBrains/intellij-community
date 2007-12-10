@@ -9,7 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -47,15 +47,15 @@ public abstract class BaseTestNGInspectionsTest {
     myEnabledTool = getEnabledTool();
     myFixture.enableInspections(myEnabledTool);
     myFixture.setUp();
-    final PsiManager psiManager = PsiManager.getInstance(myFixture.getProject());
-    myLanguageLevel = psiManager.getEffectiveLanguageLevel();
-    psiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
+    myLanguageLevel = facade.getEffectiveLanguageLevel();
+    facade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
 
   @AfterMethod
   public void tearDown() throws Exception {
-    PsiManager.getInstance(myFixture.getProject()).setEffectiveLanguageLevel(myLanguageLevel);
+    JavaPsiFacade.getInstance(myFixture.getProject()).setEffectiveLanguageLevel(myLanguageLevel);
     myFixture.tearDown();
     myFixture = null;
     myEnabledTool = null;

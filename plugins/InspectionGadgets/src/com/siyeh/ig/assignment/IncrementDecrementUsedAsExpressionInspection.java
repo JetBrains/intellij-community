@@ -115,7 +115,7 @@ public class IncrementDecrementUsedAsExpressionInspection
                 return;
             }
             final PsiManager manager = element.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final String newStatementText = element.getText() + ';';
             final String operandText = operand.getText();
             if (parent instanceof PsiIfStatement ||

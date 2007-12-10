@@ -232,9 +232,8 @@ public class StringConcatenationInsideStringBufferAppendInspection
             }
             final PsiManager manager = containingClass.getManager();
             final Project project = containingClass.getProject();
-            final PsiClass appendableClass =
-                    manager.findClass("java.lang.Appendable",
-                            GlobalSearchScope.allScope(project));
+          final PsiClass appendableClass =
+            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Appendable", GlobalSearchScope.allScope(project));
             if(appendableClass == null){
                 return;
             }

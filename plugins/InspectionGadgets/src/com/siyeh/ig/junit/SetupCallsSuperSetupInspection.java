@@ -65,8 +65,7 @@ public class SetupCallsSuperSetupInspection extends BaseInspection {
                 return;
             }
             final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiElementFactory factory =
-                    psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiStatement newStatement =
                     factory.createStatementFromText("super.setUp();", null);
             final CodeStyleManager styleManager =

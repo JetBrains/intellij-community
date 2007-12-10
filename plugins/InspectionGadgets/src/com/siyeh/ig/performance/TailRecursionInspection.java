@@ -133,8 +133,7 @@ public class TailRecursionInspection extends BaseInspection {
                         tailCallIsContainedInLoop, builder);
             builder.append('}');
             @NonNls final String replacementText = builder.toString();
-            final PsiElementFactory elementFactory =
-                    psiManager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiCodeBlock block =
                     elementFactory.createCodeBlockFromText(replacementText,
                             method);

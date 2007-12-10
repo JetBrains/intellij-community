@@ -123,8 +123,7 @@ public class CaughtExceptionImmediatelyRethrownInspection
                 }
                 if (keepBlock) {
                     final PsiManager manager = element.getManager();
-                    final PsiElementFactory factory =
-                            manager.getElementFactory();
+                  final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                     final PsiBlockStatement resultStatement = (PsiBlockStatement)
                             factory.createStatementFromText("{}", element);
                     final PsiCodeBlock resultBlock =

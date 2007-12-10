@@ -390,7 +390,7 @@ public class TestNGUtil implements TestFramework
 
   public PsiMethod findSetUpMethod(final PsiClass psiClass) throws IncorrectOperationException {
     final PsiManager manager = psiClass.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     PsiMethod patternMethod = factory.createMethodFromText("@org.testng.annotations.BeforeMethod\n protected void setUp() throws Exception {}", null);
 
     final PsiClass superClass = psiClass.getSuperClass();
@@ -432,7 +432,7 @@ public class TestNGUtil implements TestFramework
   public static boolean checkTestNGInClasspath(PsiElement psiElement) {
     final Project project = psiElement.getProject();
     final PsiManager manager = PsiManager.getInstance(project);
-    if (manager.findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
+    if (JavaPsiFacade.getInstance(manager.getProject()).findClass(TestNG.class.getName(), psiElement.getResolveScope()) == null) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         if (Messages.showOkCancelDialog(psiElement.getProject(), "TestNG will be added to module classpath", "Unable to convert.", Messages.getWarningIcon()) !=
             DialogWrapper.OK_EXIT_CODE) {

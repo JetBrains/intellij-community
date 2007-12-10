@@ -93,7 +93,7 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             newStatement.append(';');
             initializer.delete();
             final PsiManager manager = statement.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiStatement ifStatement = factory.createStatementFromText(
                     newStatement.toString(), statement);
             final PsiElement parent = statement.getParent();

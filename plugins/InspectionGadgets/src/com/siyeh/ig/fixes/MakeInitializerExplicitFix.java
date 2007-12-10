@@ -44,7 +44,7 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix{
         }
         final PsiType type = field.getType();
         final PsiManager psiManager = PsiManager.getInstance(project);
-        final PsiElementFactory factory = psiManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiExpression initializer =
                 factory.createExpressionFromText(getDefaultValue(type), field);
         field.setInitializer(initializer);

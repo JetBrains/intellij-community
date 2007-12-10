@@ -15,11 +15,11 @@
  */
 package com.siyeh.ipp.forloop;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
@@ -56,9 +56,8 @@ class IndexedForEachLoopPredicate implements PsiElementPredicate{
             }
             final PsiManager manager = element.getManager();
             final Project project = element.getProject();
-            final PsiClass listInterface =
-                    manager.findClass("java.util.List",
-                            GlobalSearchScope.allScope(project));
+          final PsiClass listInterface =
+            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", GlobalSearchScope.allScope(project));
             if (listInterface == null ||
                     !InheritanceUtil.isInheritorOrSelf(aClass,
                                                        listInterface, true)) {

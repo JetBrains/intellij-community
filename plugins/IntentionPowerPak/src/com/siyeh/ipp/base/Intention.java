@@ -63,7 +63,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
                                             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
         final PsiManager mgr = expression.getManager();
-        final PsiElementFactory factory = mgr.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
         final PsiExpression newCall =
                 factory.createExpressionFromText(newExpression, expression);
         final PsiElement insertedElement = expression.replace(newCall);
@@ -76,7 +76,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
         final PsiManager manager = expression.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiExpression expressionToReplace = expression;
         final String newExpressionText = newExpression.getText();
         final String expString;
@@ -114,7 +114,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             @NotNull PsiExpression expression)
             throws IncorrectOperationException{
         final PsiManager mgr = expression.getManager();
-        final PsiElementFactory factory = mgr.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
 
         PsiExpression expressionToReplace = expression;
         final String expString;
@@ -137,7 +137,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
-        final PsiElementFactory factory = mgr.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
         final PsiStatement newCall =
                 factory.createStatementFromText(newStatement, statement);
         final PsiElement insertedElement = statement.replace(newCall);
@@ -150,7 +150,7 @@ public abstract class Intention extends PsiElementBaseIntentionAction {
             @NonNls @NotNull PsiStatement statement)
             throws IncorrectOperationException{
         final PsiManager mgr = statement.getManager();
-        final PsiElementFactory factory = mgr.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(mgr.getProject()).getElementFactory();
         final PsiStatement newCall =
                 factory.createStatementFromText(newStatement, statement);
         final PsiElement insertedElement = statement.replace(newCall);

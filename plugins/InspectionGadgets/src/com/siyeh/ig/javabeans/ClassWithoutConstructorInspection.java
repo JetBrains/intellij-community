@@ -59,7 +59,7 @@ public class ClassWithoutConstructorInspection extends BaseInspection {
             final PsiElement classIdentifier = descriptor.getPsiElement();
             final PsiClass aClass = (PsiClass)classIdentifier.getParent();
             final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiMethod constructor = factory.createConstructor();
             final PsiModifierList modifierList = constructor.getModifierList();
             if (aClass == null) {

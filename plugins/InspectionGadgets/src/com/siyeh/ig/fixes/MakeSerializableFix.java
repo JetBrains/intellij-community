@@ -20,9 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeSerializableFix extends InspectionGadgetsFix{
@@ -40,7 +40,7 @@ public class MakeSerializableFix extends InspectionGadgetsFix{
                 ClassUtils.getContainingClass(nameElement);
         assert containingClass != null;
         final PsiManager psiManager = containingClass.getManager();
-        final PsiElementFactory elementFactory = psiManager.getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiJavaCodeReferenceElement referenceElement =
                 elementFactory.createReferenceElementByFQClassName(

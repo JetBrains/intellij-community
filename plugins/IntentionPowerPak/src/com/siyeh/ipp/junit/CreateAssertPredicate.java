@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
@@ -87,8 +87,7 @@ class CreateAssertPredicate implements PsiElementPredicate{
         final PsiManager psiManager = aClass.getManager();
         final Project project = psiManager.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-        final PsiClass ancestorClass =
-                psiManager.findClass("junit.framework.TestCase", scope);
+      final PsiClass ancestorClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("junit.framework.TestCase", scope);
         return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
     }
 }

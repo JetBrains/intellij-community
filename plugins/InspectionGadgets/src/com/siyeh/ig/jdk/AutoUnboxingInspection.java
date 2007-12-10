@@ -151,8 +151,7 @@ public class AutoUnboxingInspection extends BaseInspection {
                 newExpressionText = expressionText + '.' + boxClassName + "()";
             }
             final PsiManager manager = expression.getManager();
-            final PsiElementFactory factory =
-                    manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiElement parent = expression.getParent();
             if (parent instanceof PsiPrefixExpression) {
                 final PsiPrefixExpression prefixExpression =

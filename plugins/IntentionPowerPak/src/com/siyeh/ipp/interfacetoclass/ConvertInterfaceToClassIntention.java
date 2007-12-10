@@ -42,7 +42,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
 		final PsiKeyword interfaceKeyword =
                 (PsiKeyword)interfaceToken.getOriginalElement();
 		final PsiManager manager = anInterface.getManager();
-		final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 		final PsiKeyword classKeyword = factory.createKeyword("class");
 		interfaceKeyword.replace(classKeyword);
 
@@ -106,7 +106,7 @@ public class ConvertInterfaceToClassIntention extends Intention {
             PsiClass oldInterface) throws IncorrectOperationException {
 		final PsiManager psiManager = oldInterface.getManager();
 		final PsiSearchHelper searchHelper = psiManager.getSearchHelper();
-		final PsiElementFactory elementFactory = psiManager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 		final PsiJavaCodeReferenceElement oldInterfaceReference =
 				elementFactory.createClassReferenceElement(oldInterface);
 		final SearchScope searchScope = oldInterface.getUseScope();

@@ -111,9 +111,8 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection {
             final PsiExpression qualifier =
                     methodExpression.getQualifierExpression();
             if(qualifier == null){
-                final PsiManager manager = call.getManager();
-                final PsiResolveHelper resolveHelper =
-                        manager.getResolveHelper();
+                final JavaPsiFacade facade = JavaPsiFacade.getInstance(call.getProject());
+                final PsiResolveHelper resolveHelper = facade.getResolveHelper();
                 final PsiVariable variable =
                         resolveHelper.resolveReferencedVariable(fieldName,
                                 call);

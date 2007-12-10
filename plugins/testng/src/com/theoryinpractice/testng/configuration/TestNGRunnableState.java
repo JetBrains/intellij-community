@@ -34,10 +34,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.PathUtil;
@@ -339,7 +336,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     PsiManager psiManager = PsiManager.getInstance(project);
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       final String packageName = data.getPackageName();
-      PsiPackage psiPackage = psiManager.findPackage(packageName);
+      PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
       if (psiPackage == null) {
         throw CantRunException.packageNotFound(packageName);
       } else {
@@ -351,7 +348,8 @@ public class TestNGRunnableState extends JavaCommandLineState
       }
     } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       //it's a class
-      PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
+      PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
+        .findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
@@ -365,7 +363,8 @@ public class TestNGRunnableState extends JavaCommandLineState
       classes.put(psiClass, testMethods);
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
-      PsiClass psiClass = psiManager.findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
+      PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
+        .findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }

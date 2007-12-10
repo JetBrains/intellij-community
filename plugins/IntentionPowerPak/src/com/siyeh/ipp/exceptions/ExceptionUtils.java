@@ -395,8 +395,7 @@ class ExceptionUtils{
                         (PsiClass) referenceElement.resolve();
                 if(exceptionClass != null){
                     final PsiManager psiManager = exceptionClass.getManager();
-                    final PsiElementFactory factory =
-                            psiManager.getElementFactory();
+                  final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
                     final PsiClassType exceptionType =
                             factory.createType(exceptionClass);
                     exceptionTypes.add(exceptionType);
@@ -427,8 +426,7 @@ class ExceptionUtils{
                         (PsiClass) referenceElement.resolve();
                 if(exceptionClass != null){
                     final PsiManager psiManager = exceptionClass.getManager();
-                    final PsiElementFactory factory =
-                            psiManager.getElementFactory();
+                  final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
                     final PsiClassType exceptionType =
                             factory.createType(exceptionClass);
                     exceptionTypes.add(exceptionType);

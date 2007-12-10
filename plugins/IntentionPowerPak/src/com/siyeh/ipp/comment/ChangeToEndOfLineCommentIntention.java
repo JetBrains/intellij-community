@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.comment;
 
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
@@ -39,7 +36,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
         final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
         final PsiElement parent = comment.getParent();
         assert parent != null;
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final String commentText = comment.getText();
         final PsiElement whitespace = comment.getNextSibling();
         final String text = commentText.substring(2, commentText.length() - 2);

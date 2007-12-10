@@ -101,7 +101,7 @@ public class MissortedModifiersInspection extends BaseInspection {
                 buffer.append(' ');
             }
             final PsiManager manager = modifierList.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             buffer.append("void x() {}");
             final String text = buffer.toString();
             final PsiMethod method =

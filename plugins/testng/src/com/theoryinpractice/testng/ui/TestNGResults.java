@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.peer.PeerFactory;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -264,7 +265,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         String packageName = packageNameFor(result.getTestClass());
         owner = getChildNodeNamed(owner, packageName);
         if (owner.getPsiElement() == null) {
-            owner.setPsiElement(PsiManager.getInstance(project).findPackage(packageName));
+          owner.setPsiElement(JavaPsiFacade.getInstance(PsiManager.getInstance(project).getProject()).findPackage(packageName));
         }
         owner = getChildNodeNamed(owner, classNameFor(result.getTestClass()));
         //look up the psiclass now

@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +76,7 @@ public class SerializationUtils {
 
     public static boolean isReadObject(@NotNull PsiMethod method) {
         final PsiManager manager = method.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final Project project = method.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClassType type = factory.createTypeByFQClassName(
@@ -87,7 +87,7 @@ public class SerializationUtils {
 
     public static boolean isWriteObject(@NotNull PsiMethod method) {
         final PsiManager manager = method.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final Project project = method.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final PsiClassType type = factory.createTypeByFQClassName(

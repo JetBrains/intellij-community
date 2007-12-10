@@ -103,13 +103,13 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
                 PsiMethodCallExpression expression) {
             super.visitMethodCallExpression(expression);
             final PsiManager manager = expression.getManager();
-            final PsiClass stringClass = manager.findClass("java.lang.String",
-                    expression.getResolveScope());
+          final PsiClass stringClass =
+            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.String", expression.getResolveScope());
             if (stringClass == null) {
                 return;
             }
-            final PsiClassType stringType =
-                    manager.getElementFactory().createType(stringClass);
+          final PsiClassType stringType =
+                    JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(stringClass);
             if (!MethodCallUtils.isCallToMethod(expression, "java.lang.String",
                     stringType, "concat", stringType)) {
                 return;

@@ -52,7 +52,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
             final PsiClass[] importedClasses = visitor.getImportedClasses();
             Arrays.sort(importedClasses, new PsiClassComparator());
             final PsiManager manager = importStatement.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiElement importList = importStatement.getParent();
             for (PsiClass importedClass : importedClasses) {
                 final PsiImportStatement newImportStatement =

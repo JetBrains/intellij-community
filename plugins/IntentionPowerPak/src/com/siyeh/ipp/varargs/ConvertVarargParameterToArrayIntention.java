@@ -70,7 +70,7 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
         }
         final PsiType arrayType = type.toArrayType();
         final PsiManager psiManager = lastParameter.getManager();
-        final PsiElementFactory factory = psiManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiTypeElement newTypeElement =
                 factory.createTypeElement(arrayType);
         final PsiTypeElement typeElement =
@@ -101,7 +101,7 @@ public class ConvertVarargParameterToArrayIntention extends Intention {
         }
         builder.append('}');
         final PsiManager manager = methodCallExpression.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiExpression arrayExpression =
                 factory.createExpressionFromText(builder.toString(),
                         methodCallExpression);

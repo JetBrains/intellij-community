@@ -231,12 +231,11 @@ public class ListIndexOfReplaceableByContainsInspection
             final PsiManager manager = expression.getManager();
             final GlobalSearchScope projectScope =
                     GlobalSearchScope.allScope(project);
-            final PsiClass javaUtilListClass =
-                    manager.findClass("java.util.List", projectScope);
+          final PsiClass javaUtilListClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.List", projectScope);
             if (javaUtilListClass == null) {
                 return false;
             }
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiClassType javaUtilListType =
                     factory.createType(javaUtilListClass);
             return javaUtilListType.isAssignableFrom(qualifierType);

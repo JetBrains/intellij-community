@@ -87,7 +87,7 @@ public class UtilityClassWithoutPrivateConstructorInspection
                 return;
             }
             final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiMethod constructor = factory.createConstructor();
             final PsiModifierList modifierList = constructor.getModifierList();
             modifierList.setModifierProperty(PsiModifier.PRIVATE, true);

@@ -74,7 +74,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           if (interfaceName != null) {
             registrar.registerGenericAttributeValueChildExtension(new XmlName("implementation"), PsiClass.class);
 
-            final PsiClass implClass = manager.findClass(interfaceName, GlobalSearchScope.allScope(manager.getProject()));
+            final PsiClass implClass =
+              JavaPsiFacade.getInstance(manager.getProject()).findClass(interfaceName, GlobalSearchScope.allScope(manager.getProject()));
             if (implClass != null) {
               registerXmlb(registrar, implClass);
             }
@@ -82,7 +83,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           else {
             final String beanClassName = extensionPoint.getBeanClass().getStringValue();
             if (beanClassName != null) {
-              final PsiClass beanClass = manager.findClass(beanClassName, GlobalSearchScope.allScope(manager.getProject()));
+              final PsiClass beanClass =
+                JavaPsiFacade.getInstance(manager.getProject()).findClass(beanClassName, GlobalSearchScope.allScope(manager.getProject()));
 
               if (beanClass != null) {
                 registerXmlb(registrar, beanClass);

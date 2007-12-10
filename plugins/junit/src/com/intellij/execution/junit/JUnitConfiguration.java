@@ -203,7 +203,8 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
 
     public PsiPackage getPsiElement() {
       final String qualifiedName = myData.getPackageName();
-      return qualifiedName != null ? PsiManager.getInstance(getProject()).findPackage(qualifiedName) : null;
+      return qualifiedName != null ? JavaPsiFacade.getInstance(PsiManager.getInstance(getProject()).getProject()).findPackage(qualifiedName)
+             : null;
     }
 
     public void setPsiElement(final PsiPackage psiPackage) {

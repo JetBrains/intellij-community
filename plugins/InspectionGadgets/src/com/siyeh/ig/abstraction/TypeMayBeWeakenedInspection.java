@@ -157,13 +157,13 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
             final PsiType[] parameterTypes = classType.getParameters();
             final PsiManager manager = element.getManager();
             final GlobalSearchScope scope = element.getResolveScope();
-            final PsiClass aClass = manager.findClass(fqClassName, scope);
+          final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqClassName, scope);
             if (aClass == null) {
                 return;
             }
             final PsiTypeParameter[] typeParameters =
                     aClass.getTypeParameters();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiClassType type;
             if (typeParameters.length != 0 &&
                     typeParameters.length == parameterTypes.length) {
@@ -218,8 +218,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         final PsiManager manager = variableOrMethod.getManager();
         final GlobalSearchScope scope = variableOrMethod.getResolveScope();
         Set<PsiClass> weakestTypeClasses = new HashSet();
-        final PsiClass javaLangObjectClass =
-                manager.findClass("java.lang.Object", scope);
+      final PsiClass javaLangObjectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", scope);
         if (javaLangObjectClass == null ||
                 variableOrMethodClass.equals(javaLangObjectClass)) {
             return Collections.EMPTY_LIST;
@@ -360,8 +359,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
                 if (foreachStatement.getIteratedValue() != referenceElement) {
                     return Collections.EMPTY_LIST;
                 }
-                final PsiClass javaLangIterableClass =
-                        manager.findClass("java.lang.Iterable", scope);
+              final PsiClass javaLangIterableClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", scope);
                 if (javaLangIterableClass == null) {
                     return Collections.EMPTY_LIST;
                 }

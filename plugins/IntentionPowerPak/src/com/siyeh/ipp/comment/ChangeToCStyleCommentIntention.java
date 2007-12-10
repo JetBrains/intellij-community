@@ -52,7 +52,7 @@ public class ChangeToCStyleCommentIntention extends Intention {
             firstComment = (PsiComment)prevComment;
         }
         final PsiManager manager = element.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final StringBuilder buffer =
                 new StringBuilder(getCommentContents(firstComment));
         final List<PsiElement> commentsToDelete = new ArrayList<PsiElement>();

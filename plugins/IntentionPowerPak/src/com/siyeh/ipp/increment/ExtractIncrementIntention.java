@@ -16,8 +16,8 @@
 package com.siyeh.ipp.increment;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
@@ -70,7 +70,7 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
             return;
         }
         final PsiManager manager = element.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final String newStatementText = element.getText() + ';';
         final String operandText = operand.getText();
         if (parent instanceof PsiIfStatement ||

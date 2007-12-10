@@ -93,8 +93,7 @@ public class StaticInheritanceInspection extends BaseInspection {
             deleteElement(referenceElement);
             for (PsiReferenceExpression reference : refsToRebind.keySet()) {
                 final PsiField field = refsToRebind.get(reference);
-                final PsiElementFactory elementFactory =
-                        manager.getElementFactory();
+              final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                 final PsiReferenceExpression qualified = (PsiReferenceExpression)
                         elementFactory.createExpressionFromText("xxx." +
                                 reference.getText(), reference);

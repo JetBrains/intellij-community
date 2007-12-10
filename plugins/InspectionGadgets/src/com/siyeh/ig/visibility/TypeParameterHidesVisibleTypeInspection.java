@@ -58,7 +58,7 @@ public class TypeParameterHidesVisibleTypeInspection extends BaseInspection {
             super.visitTypeParameter(parameter);
             final String unqualifiedClassName = parameter.getName();
 
-            final PsiManager manager = parameter.getManager();
+            final JavaPsiFacade manager = JavaPsiFacade.getInstance(parameter.getProject());
             final PsiFile containingFile = parameter.getContainingFile();
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiClass aClass =

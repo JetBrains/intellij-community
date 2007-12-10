@@ -25,8 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MethodCallUtils {
 
@@ -87,7 +87,7 @@ public class MethodCallUtils {
                     methodName);
         }
         final PsiManager manager = expression.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiType[] parameterTypes =
                 new PsiType[parameterTypeStrings.length];
         final GlobalSearchScope scope = expression.getResolveScope();

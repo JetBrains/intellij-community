@@ -143,7 +143,7 @@ public class MoveDeclarationIntention extends Intention {
             @NotNull PsiLocalVariable variable, PsiExpression initializer)
             throws IncorrectOperationException {
         final PsiManager manager = variable.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiDeclarationStatement newDeclaration =
                 factory.createVariableDeclarationStatement(
                         variable.getName(), variable.getType(), initializer);

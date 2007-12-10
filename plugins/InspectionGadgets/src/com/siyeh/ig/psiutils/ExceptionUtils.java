@@ -198,7 +198,7 @@ public class ExceptionUtils{
             }
             final PsiReferenceList throwsList = method.getThrowsList();
             final PsiManager psiManager = expression.getManager();
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiJavaCodeReferenceElement[] list =
                     throwsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement referenceElement : list){
@@ -220,7 +220,7 @@ public class ExceptionUtils{
             }
             final PsiReferenceList throwsList = method.getThrowsList();
             final PsiManager psiManager = expression.getManager();
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiJavaCodeReferenceElement[] list =
                     throwsList.getReferenceElements();
             for(final PsiJavaCodeReferenceElement referenceElement : list){

@@ -78,9 +78,8 @@ public class CovariantCompareToInspection extends BaseInspection {
                 }
             }
             final PsiManager manager = method.getManager();
-            final PsiClass comparableClass =
-                    manager.findClass("java.lang.Comparable",
-                            method.getResolveScope());
+          final PsiClass comparableClass =
+            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Comparable", method.getResolveScope());
             if (comparableClass != null &&
                     comparableClass.getTypeParameters().length == 1) {
                 final PsiSubstitutor superSubstitutor =

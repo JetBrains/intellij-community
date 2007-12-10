@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -56,8 +57,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection
                 return;
             }
             final PsiManager manager = aClass.getManager();
-            final PsiClass comparableClass = manager.findClass(
-                    "java.lang.Comparable", aClass.getResolveScope());
+          final PsiClass comparableClass =
+            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Comparable", aClass.getResolveScope());
             if (comparableClass == null) {
                 return;
             }

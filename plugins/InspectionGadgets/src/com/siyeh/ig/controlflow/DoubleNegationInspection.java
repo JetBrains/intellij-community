@@ -84,7 +84,7 @@ public class DoubleNegationInspection extends BaseInspection {
                     builder.append(rhsText);
                 }
                 final PsiManager manager = binaryExpression.getManager();
-                final PsiElementFactory factory = manager.getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                 final PsiExpression newExpression =
                         factory.createExpressionFromText(builder.toString(),
                                 binaryExpression);

@@ -143,7 +143,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
 
       try {
         final PsiElement inserted = method.getModifierList().addBefore(
-          tag.getManager().getElementFactory().createAnnotationFromText(annotationText.toString(), method),
+          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), method),
           method.getModifierList().getFirstChild());
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
 

@@ -41,7 +41,7 @@ public class ReplaceForLoopWithWhileLoopIntention extends Intention {
             parent.addBefore(initialization, forStatement);
         }
 	    final PsiManager manager = element.getManager();
-	    final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 	    final PsiWhileStatement whileStatement =
 			    (PsiWhileStatement)factory.createStatementFromText("while(true) {}", element);
 	    final PsiExpression forCondition = forStatement.getCondition();

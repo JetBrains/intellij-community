@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -113,7 +113,7 @@ public class EmptyCatchBlockInspection extends BaseInspection {
                 return;
             }
             final PsiManager manager = element.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiIdentifier newIdentifier =
                     factory.createIdentifier("ignored");
             identifier.replace(newIdentifier);

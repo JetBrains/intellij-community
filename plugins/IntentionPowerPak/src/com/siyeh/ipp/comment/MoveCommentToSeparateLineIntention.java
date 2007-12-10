@@ -49,7 +49,7 @@ public class MoveCommentToSeparateLineIntention extends Intention {
         final PsiElement parent = whiteSpace.getParent();
         assert parent != null;
         final PsiManager manager = selectedComment.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final String commentText = selectedComment.getText();
         final PsiComment newComment =
                 factory.createCommentFromText(commentText, parent);

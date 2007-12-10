@@ -157,7 +157,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
 
     public boolean process(ComponentType type, XmlTag component, XmlTagValue impl, XmlTagValue intf) {
       if (impl != null && myQualifiedName.equals(impl.getTrimmedText())) {
-        final PsiClass clazz = myManager.findClass(type.myClassName, myScope);
+        final PsiClass clazz = JavaPsiFacade.getInstance(myManager.getProject()).findClass(type.myClassName, myScope);
         if (clazz != null) {
           addType(clazz);
         }
@@ -169,7 +169,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
       final String actionClass = action.getAttributeValue("class");
       if (actionClass != null) {
         if (actionClass.trim().equals(myQualifiedName)) {
-          final PsiClass clazz = myManager.findClass(type.myClassName, myScope);
+          final PsiClass clazz = JavaPsiFacade.getInstance(myManager.getProject()).findClass(type.myClassName, myScope);
           if (clazz != null) {
             addType(clazz);
             return false;

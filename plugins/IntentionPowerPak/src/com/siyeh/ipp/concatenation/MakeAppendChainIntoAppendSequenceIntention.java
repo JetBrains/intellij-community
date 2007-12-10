@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
 
 public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
 
@@ -105,7 +105,7 @@ public class MakeAppendChainIntoAppendSequenceIntention extends Intention {
 		}
 		builder.append('}');
 		final PsiManager manager = element.getManager();
-		final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 		final PsiElement appendStatementParent = appendStatement.getParent();
 		final CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
 		final PsiCodeBlock codeBlock =

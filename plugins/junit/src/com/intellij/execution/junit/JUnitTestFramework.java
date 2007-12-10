@@ -31,7 +31,7 @@ public class JUnitTestFramework implements TestFramework {
 
   public PsiMethod findSetUpMethod(final PsiClass psiClass) throws IncorrectOperationException {
     final PsiManager manager = psiClass.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiMethod patternMethod = factory.createMethodFromText("protected void setUp() throws Exception {\nsuper.setUp();\n}", null);
 
     final PsiClass baseClass = psiClass.getSuperClass();

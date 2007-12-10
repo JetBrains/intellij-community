@@ -130,8 +130,7 @@ public class AssignmentToMethodParameterInspection
                 replacementText = '{' + className + ' ' + variableName + " = " +
                         parameterName + ';' + buffer;
             }
-            final PsiElementFactory elementFactory =
-                    manager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiCodeBlock block =
                     elementFactory.createCodeBlockFromText(
                             replacementText, null);

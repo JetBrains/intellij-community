@@ -74,7 +74,7 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
       if (parent instanceof PsiModifierList) {
         try {
           final PsiModifierListOwner element = (PsiModifierListOwner)parent.getParent();
-          final PsiElementFactory factory = element.getManager().getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
           PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
           if (docComment == null) {
             docComment = factory.createDocCommentFromText("/**\n */", element);

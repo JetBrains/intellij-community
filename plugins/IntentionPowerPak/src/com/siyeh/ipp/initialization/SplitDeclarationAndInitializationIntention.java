@@ -67,7 +67,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
             }
         }
         final PsiManager manager = field.getManager();
-        final PsiElementFactory elementFactory = manager.getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         if (classInitializer == null) {
             classInitializer = elementFactory.createClassInitializer();
             classInitializer = (PsiClassInitializer)

@@ -193,7 +193,7 @@ public class ReplaceSwitchWithIfIntention extends Intention {
                     firstBranch, renameBreaks, breakLabel,
                     pendingVariableDeclarations);
         }
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         if (hadSideEffects) {
             final PsiStatement declarationStatement =
                     factory.createStatementFromText(declarationString, null);

@@ -149,7 +149,7 @@ public class ImportUtils{
         final PsiManager manager = file.getManager();
         final String filePackageName = file.getPackageName();
         if(!filePackageName.equals(packageName)){
-            final PsiPackage filePackage = manager.findPackage(filePackageName);
+          final PsiPackage filePackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(filePackageName);
             if(filePackage != null){
                 final PsiClass[] classes = filePackage.getClasses();
                 for (PsiClass aClass : classes) {
@@ -169,8 +169,7 @@ public class ImportUtils{
         final String shortName = ClassUtil.extractClassName(fqName);
         final String packageName = ClassUtil.extractPackageName(fqName);
         if(!"java.lang".equals(packageName)){
-            final PsiPackage javaLangPackage =
-                    manager.findPackage("java.lang");
+          final PsiPackage javaLangPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("java.lang");
             if(javaLangPackage == null){
                 return false;
             }

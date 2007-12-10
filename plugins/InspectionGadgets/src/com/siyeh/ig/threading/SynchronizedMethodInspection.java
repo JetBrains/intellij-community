@@ -104,8 +104,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
                         '}';
             }
             final PsiManager psiManager = PsiManager.getInstance(project);
-            final PsiElementFactory elementFactory =
-                    psiManager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiCodeBlock block =
                     elementFactory.createCodeBlockFromText(replacementText,
                             null);

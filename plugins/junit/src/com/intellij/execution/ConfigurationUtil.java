@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Processor;
@@ -35,7 +34,6 @@ public class ConfigurationUtil {
   // return true if there is JUnit4 test
   public static boolean findAllTestClasses(final TestClassFilter testClassFilter, final Set<PsiClass> found) {
     final PsiManager manager = testClassFilter.getPsiManager();
-    final PsiSearchHelper searchHelper = manager.getSearchHelper();
 
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(manager.getProject());
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
@@ -47,7 +45,7 @@ public class ConfigurationUtil {
     }));
 
     // classes having suite() method
-    final PsiMethod[] suiteMethods = manager.getShortNamesCache().getMethodsByName(BaseTestRunner.SUITE_METHODNAME, scope);
+    final PsiMethod[] suiteMethods = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache().getMethodsByName(BaseTestRunner.SUITE_METHODNAME, scope);
     for (final PsiMethod method : suiteMethods) {
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) continue;
@@ -68,7 +66,8 @@ public class ConfigurationUtil {
                                              final Set<PsiClass> found, final String annotation, final boolean isMethod) {
     final Ref<Boolean> isJUnit4 = new Ref<Boolean>(Boolean.FALSE);
     // annotated with @Test
-    PsiClass testAnnotation = manager.findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
+    PsiClass testAnnotation =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(annotation, GlobalSearchScope.allScope(manager.getProject()));
     if (testAnnotation != null) {
       AnnotatedMembersSearch.search(testAnnotation, scope).forEach(new Processor<PsiMember>() {
         public boolean process(final PsiMember annotated) {

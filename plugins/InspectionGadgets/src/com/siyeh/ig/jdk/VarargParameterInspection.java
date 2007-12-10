@@ -87,7 +87,7 @@ public class VarargParameterInspection extends BaseInspection {
             }
             final PsiType arrayType = type.toArrayType();
             final PsiManager psiManager = lastParameter.getManager();
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiTypeElement newTypeElement =
                     factory.createTypeElement(arrayType);
             final PsiTypeElement typeElement =
@@ -122,7 +122,7 @@ public class VarargParameterInspection extends BaseInspection {
             }
             builder.append('}');
             final PsiManager manager = referenceExpression.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiExpression arrayExpression =
                     factory.createExpressionFromText(builder.toString(),
                             referenceExpression);

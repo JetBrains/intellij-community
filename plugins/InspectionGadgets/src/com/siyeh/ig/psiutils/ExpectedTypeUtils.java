@@ -357,8 +357,7 @@ public class ExpectedTypeUtils{
                         return;
                     }
                     final PsiClass aClass = field.getContainingClass();
-                    final PsiElementFactory factory =
-                            manager.getElementFactory();
+                  final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                     expectedType = factory.createType(aClass, substitutor);
                 } else if(element instanceof PsiMethod){
                     final PsiMethod method = (PsiMethod) element;
@@ -376,8 +375,7 @@ public class ExpectedTypeUtils{
                     } else{
                         aClass = method.getContainingClass();
                     }
-                    final PsiElementFactory factory =
-                            manager.getElementFactory();
+                  final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                     expectedType = factory.createType(aClass, substitutor);
                 } else{
                     expectedType = null;

@@ -200,7 +200,7 @@ public class TooBroadScopeInspection extends BaseInspection
                 throws IncorrectOperationException
         {
             final PsiManager manager = variable.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             String name = variable.getName();
             if (name == null)
             {

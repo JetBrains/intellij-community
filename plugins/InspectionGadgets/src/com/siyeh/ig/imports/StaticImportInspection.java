@@ -104,7 +104,7 @@ public class StaticImportInspection extends BaseInspection {
         private static void removeReference(
                 PsiJavaCodeReferenceElement reference, PsiMember target) {
             final PsiManager manager = reference.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiClass aClass = target.getContainingClass();
             final String qualifiedName = aClass.getQualifiedName();
             final String text = reference.getText();

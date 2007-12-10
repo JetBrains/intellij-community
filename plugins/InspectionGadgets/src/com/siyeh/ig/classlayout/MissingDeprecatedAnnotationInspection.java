@@ -64,7 +64,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
                     (PsiModifierListOwner)identifier.getParent();
             assert parent != null;
             final PsiManager psiManager = parent.getManager();
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiAnnotation annotation =
                     factory.createAnnotationFromText("@java.lang.Deprecated",
                             parent);

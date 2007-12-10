@@ -146,8 +146,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection {
         private static void addImport(PsiImportList importList, PsiClass aClass)
                 throws IncorrectOperationException {
             final PsiManager manager = importList.getManager();
-            final PsiElementFactory elementFactory =
-                    manager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiImportStatement importStatement =
                     elementFactory.createImportStatement(aClass);
             importList.add(importStatement);

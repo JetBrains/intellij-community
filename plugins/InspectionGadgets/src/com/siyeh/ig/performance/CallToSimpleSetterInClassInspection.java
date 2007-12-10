@@ -114,7 +114,7 @@ public class CallToSimpleSetterInClassInspection extends BaseInspection {
             }
             final String fieldName = field.getName();
             if(qualifier == null){
-                final PsiManager manager = call.getManager();
+                final JavaPsiFacade manager = JavaPsiFacade.getInstance(call.getProject());
                 final PsiResolveHelper resolveHelper =
                         manager.getResolveHelper();
                 final PsiVariable variable =

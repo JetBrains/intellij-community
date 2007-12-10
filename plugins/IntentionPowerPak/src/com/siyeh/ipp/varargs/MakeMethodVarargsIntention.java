@@ -45,7 +45,7 @@ public class MakeMethodVarargsIntention extends Intention {
         final PsiType componentType = type.getDeepComponentType();
         final String text = componentType.getCanonicalText();
         final PsiManager manager = element.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiParameter newParameter =
                 factory.createParameterFromText(text + "... " +
                         lastParameter.getName(), element);

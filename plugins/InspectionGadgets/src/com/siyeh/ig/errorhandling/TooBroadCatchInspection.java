@@ -144,8 +144,8 @@ public class TooBroadCatchInspection extends BaseInspection {
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       String name = codeStyleManager.suggestUniqueVariableName("e", myTryStatement.getTryBlock(), false);
-      PsiCatchSection section =
-        myTryStatement.getManager().getElementFactory().createCatchSection((PsiClassType)myThrown, name, myTryStatement);
+      PsiCatchSection section = JavaPsiFacade.getInstance(myTryStatement.getProject()).getElementFactory()
+        .createCatchSection((PsiClassType)myThrown, name, myTryStatement);
       PsiCatchSection element = (PsiCatchSection)myTryStatement.addBefore(section, myBeforeCatchSection);
       codeStyleManager.shortenClassReferences(element);
 

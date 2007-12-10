@@ -109,7 +109,7 @@ public class ConvertOldAnnotationInspection extends BaseJavaLocalInspectionTool 
       if (attribute.equals(pair.getName())) {
         final StringBuffer newAnnotationBuffer = new StringBuffer();
         newAnnotationBuffer.append(newAnnotation).append('(').append(')');
-        final PsiElementFactory factory = annotation.getManager().getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory();
         final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotationBuffer.toString(), modifierList);
         JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
       }

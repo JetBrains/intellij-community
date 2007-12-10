@@ -69,7 +69,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
             final PsiSwitchLabelStatement labelStatement =
                     (PsiSwitchLabelStatement) descriptor.getPsiElement();
             final PsiManager manager = labelStatement.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiStatement breakStatement =
                     factory.createStatementFromText("break;", labelStatement);
             final PsiElement parent = labelStatement.getParent();

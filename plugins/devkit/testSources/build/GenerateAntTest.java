@@ -65,8 +65,8 @@ public class GenerateAntTest extends IdeaTestCase {
 
   private void checkBuildsEqual(String generated, String expected) throws IncorrectOperationException {
     final CodeStyleManager manager = CodeStyleManager.getInstance(myProject);
-    XmlTag genTag = getPsiManager().getElementFactory().createTagFromText(StringUtil.convertLineSeparators(generated));
-    XmlTag expTag = getPsiManager().getElementFactory().createTagFromText(StringUtil.convertLineSeparators(expected));
+    XmlTag genTag = getJavaFacade().getElementFactory().createTagFromText(StringUtil.convertLineSeparators(generated));
+    XmlTag expTag = getJavaFacade().getElementFactory().createTagFromText(StringUtil.convertLineSeparators(expected));
     if (!tagsEqual(genTag, expTag)) {
       genTag = (XmlTag)manager.reformat(manager.reformat(genTag));
       expTag = (XmlTag)manager.reformat(manager.reformat(expTag));

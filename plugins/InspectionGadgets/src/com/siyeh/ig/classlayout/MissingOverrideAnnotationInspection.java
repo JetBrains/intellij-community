@@ -83,7 +83,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection {
             final PsiModifierListOwner modifierListOwner =
                     (PsiModifierListOwner)parent;
             final PsiManager psiManager = modifierListOwner.getManager();
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiAnnotation annotation =
                     factory.createAnnotationFromText("@java.lang.Override",
                             modifierListOwner);

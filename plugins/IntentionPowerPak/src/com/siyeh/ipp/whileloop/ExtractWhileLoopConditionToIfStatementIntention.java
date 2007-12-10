@@ -17,7 +17,6 @@ package com.siyeh.ipp.whileloop;
 
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -43,7 +42,7 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
         }
         final String conditionText = condition.getText();
         final PsiManager manager = whileStatement.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiExpression newCondition =
                 factory.createExpressionFromText("true", whileStatement);
         condition.replace(newCondition);

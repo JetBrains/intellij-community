@@ -15,10 +15,9 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 
 class AppendUtil{
@@ -53,8 +52,8 @@ class AppendUtil{
 	    }
 	    final PsiManager manager = containingClass.getManager();
 	    final Project project = containingClass.getProject();
-	    final PsiClass appendableClass =
-			    manager.findClass("java.lang.Appendable", GlobalSearchScope.allScope(project));
+      final PsiClass appendableClass =
+        JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Appendable", GlobalSearchScope.allScope(project));
 	    if (appendableClass == null) {
 		    return false;
 	    }

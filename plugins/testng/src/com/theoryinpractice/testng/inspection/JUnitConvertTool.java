@@ -71,7 +71,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       if (!TestNGUtil.checkTestNGInClasspath(psiClass)) return;
       try {
         final PsiManager manager = PsiManager.getInstance(project);
-        final PsiElementFactory factory = manager.getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaFile javaFile = (PsiJavaFile)psiClass.getContainingFile();
 
         for (PsiMethod method : psiClass.getMethods()) {

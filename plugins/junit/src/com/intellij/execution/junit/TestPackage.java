@@ -60,7 +60,7 @@ public class TestPackage extends TestObject {
     final PsiManager psiManager = PsiManager.getInstance(project);
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     final String packageName = data.getPackageName();
-    final PsiPackage aPackage = psiManager.findPackage(packageName);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName);
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);
     final TestClassFilter filter = getClassFilter(aPackage);
     final ExecutionException[] exception = new ExecutionException[1];
@@ -137,7 +137,8 @@ public class TestPackage extends TestObject {
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final String packageName = myConfiguration.getPersistentData().getPackageName();
-    final PsiPackage aPackage = PsiManager.getInstance(myConfiguration.getProject()).findPackage(packageName);
+    final PsiPackage aPackage =
+      JavaPsiFacade.getInstance(PsiManager.getInstance(myConfiguration.getProject()).getProject()).findPackage(packageName);
     if (aPackage == null) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("package.does.not.exist.error.message", packageName));
     }

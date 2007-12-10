@@ -22,8 +22,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author swr
@@ -76,7 +76,7 @@ public class ImplementOrExtendFix extends BaseFix {
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
     final PsiClass clazz = (PsiClass)myElement;
-    final PsiElementFactory elementFactory = clazz.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory();
     final PsiClassType compType = elementFactory.createType(myCompClass);
 
     final PsiReferenceList list;

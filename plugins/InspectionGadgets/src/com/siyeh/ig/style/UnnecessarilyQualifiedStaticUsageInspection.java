@@ -164,7 +164,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection
                 return false;
             }
             final PsiClass qualifyingClass = (PsiClass)resolvedQualifier;
-            final PsiManager manager = referenceElement.getManager();
+            final JavaPsiFacade manager = JavaPsiFacade.getInstance(referenceElement.getProject());
             final PsiResolveHelper resolveHelper = manager.getResolveHelper();
             final PsiMember member = (PsiMember) target;
             final PsiClass containingClass;

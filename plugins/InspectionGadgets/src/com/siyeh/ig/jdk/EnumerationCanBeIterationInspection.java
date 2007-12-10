@@ -212,7 +212,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             }
             newStatementText.append(';');
             final PsiManager manager = methodCallExpression.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final PsiStatement statement =
                     factory.createStatementFromText(newStatementText.toString(),
                             methodExpression);
@@ -229,7 +229,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 String newVariableName)
                 throws IncorrectOperationException {
             final PsiManager manager = enumerationVariable.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final Query<PsiReference> query = ReferencesSearch.search(
                     enumerationVariable);
             final List<PsiElement> referenceElements = new ArrayList();
@@ -290,11 +290,10 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
         private static String createVariableName(PsiElement context) {
             final PsiManager manager = context.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final Project project = context.getProject();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-            final PsiClass iteratorClass =
-                    manager.findClass("java.util.Iterator", scope);
+          final PsiClass iteratorClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.Iterator", scope);
             if (iteratorClass == null) {
                 return "iterator";
             }

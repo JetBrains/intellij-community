@@ -25,10 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
@@ -121,7 +118,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
       final GlobalSearchScope scope = checkedClass.getResolveScope();
 
       if (CHECK_ACTIONS) {
-        final PsiClass actionClass = psiManager.findClass(AnAction.class.getName(), scope);
+        final PsiClass actionClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnAction.class.getName(), scope);
         if (actionClass == null) {
           // stop if action class cannot be found (non-devkit module/project)
           return null;
@@ -147,7 +144,7 @@ public class ComponentNotRegisteredInspection extends DevKitInspectionBase {
 
       final ComponentType[] types = ComponentType.values();
       for (ComponentType type : types) {
-        final PsiClass compClass = psiManager.findClass(type.myClassName, scope);
+        final PsiClass compClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(type.myClassName, scope);
         if (compClass == null) {
           // stop if component classes cannot be found (non-devkit module/project)
           return null;

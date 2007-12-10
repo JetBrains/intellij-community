@@ -101,8 +101,7 @@ public class AssignmentToCatchBlockParameterInspection
             }
             final String text = '{' + className + ' ' + variableName + " = " +
                                 originalVariableName + ';' + buffer;
-            final PsiElementFactory elementFactory =
-                    psiManager.getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             final PsiCodeBlock block =
                     elementFactory.createCodeBlockFromText(text, null);
             body.replace(block);

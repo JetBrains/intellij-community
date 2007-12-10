@@ -43,7 +43,7 @@ public class GenerateComponentExternalizationAction extends AnAction {
     final PsiClass target = getComponentInContext(e.getDataContext());
     assert target != null;
 
-    final PsiElementFactory factory = target.getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(target.getProject()).getElementFactory();
     final CodeStyleManager formatter = target.getManager().getCodeStyleManager();
 
 

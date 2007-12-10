@@ -83,7 +83,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull @NonNls String newExpressionText)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
-        final PsiElementFactory factory = psiManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiExpression newExpression =
                 factory.createExpressionFromText(newExpressionText, expression);
         final PsiElement replacementExpression =
@@ -96,7 +96,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull PsiMember target)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
-        final PsiElementFactory factory = psiManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
         final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
       PsiElement element = replacementExpression.bindToElement(target);
@@ -109,7 +109,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull @NonNls String newExpressionText)
             throws IncorrectOperationException{
         final PsiManager psiManager = expression.getManager();
-        final PsiElementFactory factory = psiManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiExpression newExpression =
                 factory.createExpressionFromText(newExpressionText, expression);
         final PsiElement replacementExp = expression.replace(newExpression);
@@ -123,7 +123,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             @NotNull @NonNls String newStatementText)
             throws IncorrectOperationException{
         final PsiManager psiManager = statement.getManager();
-        final PsiElementFactory factory = psiManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiStatement newStatement =
                 factory.createStatementFromText(newStatementText, statement);
         final PsiElement replacementExp = statement.replace(newStatement);
@@ -175,7 +175,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
             styleManager.reformatRange(element, newTextRange.getStartOffset(),
                 newTextRange.getEndOffset());
         } else {
-            final PsiElementFactory factory = psiManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
             newStatement = factory.createStatementFromText(newStatementText,
                     statement);
             newStatement = (PsiStatement) statement.replace(newStatement);

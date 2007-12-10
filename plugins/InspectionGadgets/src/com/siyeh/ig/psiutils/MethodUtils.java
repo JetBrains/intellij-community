@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MethodUtils{
 
@@ -185,7 +185,7 @@ public class MethodUtils{
             @NonNls @Nullable String methodName,
             @NonNls @Nullable String... parameterTypeStrings) {
         final PsiManager manager = method.getManager();
-        final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         try {
             if (parameterTypeStrings != null) {
                 final PsiType[] parameterTypes =

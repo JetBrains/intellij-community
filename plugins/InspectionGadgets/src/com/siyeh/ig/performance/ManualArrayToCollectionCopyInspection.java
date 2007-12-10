@@ -263,7 +263,7 @@ public class ManualArrayToCollectionCopyInspection
                                                PsiElement context)
                 throws IncorrectOperationException {
             final PsiManager manager = context.getManager();
-            final PsiElementFactory factory = manager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
           final PsiConstantEvaluationHelper evaluationHelper = JavaPsiFacade.getInstance(manager.getProject()).getConstantEvaluationHelper();
             final PsiExpression fromOffsetExpression =
                     factory.createExpressionFromText(expressionText, context);

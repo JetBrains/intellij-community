@@ -17,12 +17,13 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author swr
@@ -46,7 +47,7 @@ public class CreateConstructorFix extends BaseFix {
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {
     final PsiClass clazz = (PsiClass)myElement;
 
-    PsiMethod ctor = clazz.getManager().getElementFactory().createConstructor();
+    PsiMethod ctor = JavaPsiFacade.getInstance(clazz.getProject()).getElementFactory().createConstructor();
     ctor.getModifierList().setModifierProperty(PsiModifier.PUBLIC, true);
 
     final PsiMethod[] constructors = clazz.getConstructors();
