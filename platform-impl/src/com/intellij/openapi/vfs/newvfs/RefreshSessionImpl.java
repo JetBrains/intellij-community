@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class RefreshSessionImpl extends RefreshSession {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshSessionImpl");
+
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private Runnable myFinishRunnable;
@@ -92,16 +95,18 @@ public class RefreshSessionImpl extends RefreshSession {
       if (myEvents.isEmpty() && myFinishRunnable == null) return;
 
       final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+
       manager.fireBeforeRefreshStart(myIsAsync);
-
-      while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
-        ManagingFS.getInstance().processEvents(mergeEventsAndReset());
-
-        scan();
+      try {
+        while (!myWorkQueue.isEmpty() || !myEvents.isEmpty()) {
+          ManagingFS.getInstance().processEvents(mergeEventsAndReset());
+          scan();
+        }
+        notifyCacheUpdaters();
+        manager.fireAfterRefreshFinish(myIsAsync);
+      } catch(Throwable e) {
+        LOG.error("Exception was thrown during refresh", e);
       }
-
-      notifyCacheUpdaters();
-      manager.fireAfterRefreshFinish(myIsAsync);
 
       if (myFinishRunnable != null) {
         myFinishRunnable.run();

@@ -216,20 +216,23 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
 
   public void refreshIoFiles(Iterable<File> files) {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
+
     manager.fireBeforeRefreshStart(false);
+    try {
+      List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
 
-    List<VirtualFile> filesToRefresh = new ArrayList<VirtualFile>();
-
-    for (File file : files) {
-      final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
-      if (virtualFile != null) {
-        filesToRefresh.add(virtualFile);
+      for (File file : files) {
+        final VirtualFile virtualFile = refreshAndFindFileByIoFile(file);
+        if (virtualFile != null) {
+          filesToRefresh.add(virtualFile);
+        }
       }
-    }
 
-    RefreshQueue.getInstance().refresh(false, false, null, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
-    
-    manager.fireAfterRefreshFinish(false);
+      RefreshQueue.getInstance().refresh(false, false, null, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
+      manager.fireAfterRefreshFinish(false);
+    } catch(Throwable e) {
+      LOG.error("Exception was thrown during refresh", e);
+    }
   }
 
   public void refreshFiles(Iterable<VirtualFile> files) {
