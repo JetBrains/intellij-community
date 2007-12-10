@@ -1,14 +1,15 @@
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
-import com.intellij.debugger.ui.content.newUI.NewContentState;
 import com.intellij.debugger.ui.content.newUI.PlaceInGrid;
 import com.intellij.debugger.ui.content.newUI.Tab;
+import com.intellij.debugger.ui.content.newUI.View;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -20,17 +21,13 @@ import java.util.*;
 
 @State(
   name = "DebuggerLayoutSettings",
-  storages = {
-    @Storage(
-      id ="other",
-      file = "$APP_CONFIG$/debugger.layout.xml"
-    )}
-)
+  storages = {@Storage(
+    id = "other",
+    file = "$APP_CONFIG$/debugger.layout.xml")})
 public class DebuggerLayoutSettings implements PersistentStateComponent<Element>, ApplicationComponent {
 
-  private static final String VIEW_STATE = "viewState";
 
-  private Map<String, NewContentState> myContentStates = new HashMap<String, NewContentState>();
+  private Map<String, View> myContentStates = new HashMap<String, View>();
   private Set<Tab> myTabs = new TreeSet<Tab>(new Comparator<Tab>() {
     public int compare(final Tab o1, final Tab o2) {
       return o1.getIndex() - o2.getIndex();
@@ -47,18 +44,17 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     read(state);
   }
 
-  public Element read(final Element parentNode)  {
-    final List newContents = parentNode.getChildren(VIEW_STATE);
-    myContentStates.clear();
-    for (Object content : newContents) {
-      final NewContentState state = new NewContentState(this, (Element)content);
-      myContentStates.put(state.getID(), state);
-    }
-
-    List tabs = parentNode.getChildren(Tab.TAB);
+  public Element read(final Element parentNode) {
+    List tabs = parentNode.getChildren(StringUtil.getShortName(Tab.class.getName()));
     for (Object eachTabElement : tabs) {
       Tab eachTab = new Tab((Element)eachTabElement);
       getOrCreateTab(eachTab.getIndex()).read((Element)eachTabElement);
+    }
+
+    final List views = parentNode.getChildren(StringUtil.getShortName(View.class.getName()));
+    for (Object content : views) {
+      final View state = new View(this, (Element)content);
+      myContentStates.put(state.getID(), state);
     }
 
     XmlSerializer.deserializeInto(myGeneral, parentNode);
@@ -67,10 +63,8 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   }
 
   public Element write(final Element parentNode) {
-    for (NewContentState eachState : myContentStates.values()) {
-      final Element content = new Element(VIEW_STATE);
-      parentNode.addContent(content);
-      eachState.write(content);
+    for (View eachState : myContentStates.values()) {
+      eachState.write(parentNode);
     }
 
     for (Tab eachTab : myTabs) {
@@ -110,7 +104,8 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
 
       if (each.getIndex() < Integer.MAX_VALUE) {
         index = each.getIndex() + 1;
-      } else {
+      }
+      else {
         break;
       }
     }
@@ -119,7 +114,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   }
 
   private boolean isUsed(Tab tab) {
-    for (NewContentState each : myContentStates.values()) {
+    for (View each : myContentStates.values()) {
       if (each.getTab() == tab) return true;
     }
 
@@ -135,29 +130,33 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
     return null;
   }
 
-  public NewContentState getStateFor(Content content) {
+  public View getStateFor(Content content) {
     Key key = getContentID(content);
 
     assert key != null : "Content for debugger UI must be specified with: " + DebuggerContentInfo.CONSOLE_CONTENT;
 
-    NewContentState state = myContentStates.get(key.toString());
+    View state = myContentStates.get(key.toString());
     return state != null ? state : getDefaultContentState(content);
   }
 
-  private NewContentState getDefaultContentState(final Content content) {
-    NewContentState state;
+  private View getDefaultContentState(final Content content) {
+    View state;
 
     final Key kind = getContentID(content);
     if (DebuggerContentInfo.FRAME_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
-    } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
-    } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
-    } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(1), getDefaultGridPlace(kind), false);
-    } else {
-      state =  new NewContentState(kind.toString(), getOrCreateTab(Integer.MAX_VALUE), getDefaultGridPlace(kind), false);
+      state = new View(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
+    }
+    else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(kind)) {
+      state = new View(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
+    }
+    else if (DebuggerContentInfo.WATCHES_CONTENT.equals(kind)) {
+      state = new View(kind.toString(), getOrCreateTab(0), getDefaultGridPlace(kind), false);
+    }
+    else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(kind)) {
+      state = new View(kind.toString(), getOrCreateTab(1), getDefaultGridPlace(kind), false);
+    }
+    else {
+      state = new View(kind.toString(), getOrCreateTab(Integer.MAX_VALUE), getDefaultGridPlace(kind), false);
     }
 
     myContentStates.put(state.getID(), state);
@@ -173,13 +172,17 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   public PlaceInGrid getDefaultGridPlace(Key id) {
     if (DebuggerContentInfo.FRAME_CONTENT.equals(id)) {
       return PlaceInGrid.left;
-    } else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(id)) {
+    }
+    else if (DebuggerContentInfo.VARIABLES_CONTENT.equals(id)) {
       return PlaceInGrid.center;
-    } else if (DebuggerContentInfo.WATCHES_CONTENT.equals(id)) {
+    }
+    else if (DebuggerContentInfo.WATCHES_CONTENT.equals(id)) {
       return PlaceInGrid.right;
-    } else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(id)) {
+    }
+    else if (DebuggerContentInfo.CONSOLE_CONTENT.equals(id)) {
       return PlaceInGrid.bottom;
-    } else {
+    }
+    else {
       return PlaceInGrid.bottom;
     }
   }

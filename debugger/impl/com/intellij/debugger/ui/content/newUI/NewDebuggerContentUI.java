@@ -504,14 +504,14 @@ public class NewDebuggerContentUI
 
   public void moveToTab(final Content content) {
     myManager.removeContent(content, false);
-    getStateFor(content).setTab(getLayoutSettings().createNewTab());
+    getStateFor(content).assignTab(getLayoutSettings().createNewTab());
     getStateFor(content).setPlaceInGrid(PlaceInGrid.center);
     myManager.addContent(content);
   }
 
   public void moveToGrid(final Content content) {
     myManager.removeContent(content, false);
-    getStateFor(content).setTab(getLayoutSettings().getDefaultTab());
+    getStateFor(content).assignTab(getLayoutSettings().getDefaultTab());
     getStateFor(content).setPlaceInGrid(getLayoutSettings().getDefaultGridPlace(content));
     myManager.addContent(content);
     select(content, true);
@@ -541,7 +541,7 @@ public class NewDebuggerContentUI
     return DebuggerSettings.getInstance();
   }
 
-  public NewContentState getStateFor(final Content content) {
+  public View getStateFor(final Content content) {
     return getSettings().getLayoutSettings().getStateFor(content);
   }
 

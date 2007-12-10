@@ -123,7 +123,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     return cell;
   }
 
-  NewContentState getStateFor(final Content content) {
+  View getStateFor(final Content content) {
     return myViewContext.getStateFor(content);
   }
 

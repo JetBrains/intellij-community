@@ -216,10 +216,10 @@ public class GridCell {
   }
 
   private void saveState(Content content, boolean minimized) {
-    NewContentState state = myContext.getStateFor(content);
+    View state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
-    state.setTab(myContainer.getTabIndex());
+    state.assignTab(myContainer.getTabIndex());
   }
 
   private void restoreProportions() {

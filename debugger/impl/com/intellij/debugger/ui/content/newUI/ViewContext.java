@@ -24,7 +24,7 @@ public interface ViewContext extends Disposable {
 
   Tab getTabFor(final Grid grid);
 
-  NewContentState getStateFor(Content content);
+  View getStateFor(Content content);
 
   void saveUiState();
 
