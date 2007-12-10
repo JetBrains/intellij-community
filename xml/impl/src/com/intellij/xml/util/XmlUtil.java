@@ -600,7 +600,7 @@ public class XmlUtil {
         }
         else if (!processor.execute(child)) return false;
       }
-      if (child instanceof XmlEntityDecl) {
+      if (targetFile != null && child instanceof XmlEntityDecl) {
         XmlEntityDecl xmlEntityDecl = (XmlEntityDecl)child;
         XmlEntityRefImpl.cacheParticularEntity(targetFile, xmlEntityDecl);
       }
