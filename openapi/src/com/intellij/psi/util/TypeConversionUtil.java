@@ -173,7 +173,6 @@ public class TypeConversionUtil {
 
     if (isAssignable(fromType, toType)) return true;
 
-    LOG.assertTrue(toType instanceof PsiClassType && fromType instanceof PsiClassType);
     PsiClassType fromClassType = (PsiClassType)fromType;
     PsiClassType toClassType = (PsiClassType)toType;
 
@@ -280,8 +279,7 @@ public class TypeConversionUtil {
                                                                    PsiSubstitutor derivedSubstitutor,
                                                                    final Set<PsiClass> visited,
                                                                    final LanguageLevel languageLevel) {
-    if (visited.contains(derived)) return true;
-    visited.add(derived);
+    if (!visited.add(derived)) return true;
 
     if (languageLevel.compareTo(LanguageLevel.JDK_1_5) < 0) return true;
     PsiClass base = baseResult.getElement();
@@ -879,8 +877,7 @@ public class TypeConversionUtil {
                                                               PsiSubstitutor candidateSubstitutor,
                                                               Set<PsiClass> visited,
                                                               PsiManager manager) {
-    if (visited.contains(candidate)) return null;
-    visited.add(candidate);
+    if (!visited.add(candidate)) return null;
 
     if (base == candidate) return candidateSubstitutor;
     if (manager.areElementsEquivalent(base, candidate)) {
