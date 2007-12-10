@@ -3,7 +3,7 @@ package com.intellij.structuralsearch;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.testFramework.IdeaTestCase;
@@ -19,9 +19,9 @@ abstract class StructuralSearchTestCase extends IdeaTestCase {
 
     testMatcher = new Matcher(myProject);
     options = new MatchOptions();
-    options.setLooseMatching( true );
+    options.setLooseMatching(true);
     options.setRecursiveSearch(true);
-    PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
+    JavaPsiFacade.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
   @Override

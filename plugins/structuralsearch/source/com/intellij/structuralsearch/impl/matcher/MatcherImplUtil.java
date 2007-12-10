@@ -34,7 +34,7 @@ public class MatcherImplUtil {
     File, Block, Class
   }
   public static PsiElement[] createTreeFromText(String text, TreeContext context, FileType fileType, Project project) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (fileType != StdFileTypes.JAVA) {
       String text1 = context == TreeContext.File ? text:"<QQQ>" + text + "</QQQ>";
       final PsiFile fileFromText = PsiFileFactory.getInstance(project).createFileFromText("dummy." + fileType.getDefaultExtension(), text1);

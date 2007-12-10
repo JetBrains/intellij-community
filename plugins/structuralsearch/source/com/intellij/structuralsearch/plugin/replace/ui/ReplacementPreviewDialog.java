@@ -13,12 +13,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.usageView.UsageInfo;
 
 import javax.swing.*;
@@ -87,7 +87,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
     PsiFile file;
     replacement = UIUtil.createEditor(
       PsiDocumentManager.getInstance(project).getDocument(
-        file = PsiManager.getInstance(project).getElementFactory().createCodeBlockCodeFragment(
+        file = JavaPsiFacade.getInstance(project).getElementFactory().createCodeBlockCodeFragment(
           "",null,true
         )
       ),

@@ -13,8 +13,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -43,7 +43,9 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -154,7 +156,7 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     }
 
     final PsiManager psimanager = PsiManager.getInstance(searchContext.getProject());
-    PsiCodeFragment file = psimanager.getElementFactory().createCodeBlockCodeFragment("", element, true);
+    PsiCodeFragment file = JavaPsiFacade.getInstance(psimanager.getProject()).getElementFactory().createCodeBlockCodeFragment("", element, true);
     Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(file);
     DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, false);
     Editor editor = UIUtil.createEditor(doc, searchContext.getProject(), true, true);

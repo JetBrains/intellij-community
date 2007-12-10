@@ -287,7 +287,7 @@ public class ReplacerImpl {
             if (unmatchedCatchSections!=null) {
               for(int i = unmatchedCatchSections.size()-1; i >= 0; --i) {
                 final PsiParameter parameter = unmatchedCatchSections.get(i).getParameter();
-                final PsiCatchSection catchSection = PsiManager.getInstance(project).getElementFactory().createCatchSection(
+                final PsiCatchSection catchSection = JavaPsiFacade.getInstance(project).getElementFactory().createCatchSection(
                   (PsiClassType)parameter.getType(),
                   parameter.getName(),
                   null
@@ -690,11 +690,11 @@ public class ReplacerImpl {
   }
 
   private static PsiElement createWhiteSpace(final PsiElement space) throws IncorrectOperationException {
-    return space.getManager().getElementFactory().createWhiteSpaceFromText(" ");
+    return JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createWhiteSpaceFromText(" ");
   }
 
   private static PsiElement createSemicolon(final PsiElement space) throws IncorrectOperationException {
-    final PsiStatement text = space.getManager().getElementFactory().createStatementFromText(";", null);
+    final PsiStatement text = JavaPsiFacade.getInstance(space.getProject()).getElementFactory().createStatementFromText(";", null);
     return text.getFirstChild();
   }
 

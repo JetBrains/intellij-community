@@ -306,7 +306,7 @@ public final class NavigateSearchResultsDialog extends DialogBase implements Mat
         PsiFile file;
         replacement = UIUtil.createEditor(
           PsiDocumentManager.getInstance(project).getDocument(
-            file = PsiManager.getInstance(project).getElementFactory().createCodeBlockCodeFragment(
+            file = JavaPsiFacade.getInstance(project).getElementFactory().createCodeBlockCodeFragment(
               "",null,true
             )
           ),

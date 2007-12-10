@@ -1,16 +1,10 @@
 package com.intellij.structuralsearch;
 
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.structuralsearch.plugin.replace.Replacer;
-import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.psi.PsiManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.application.PathManager;
-
-import java.io.IOException;
-import java.io.File;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.Replacer;
+import com.intellij.testFramework.IdeaTestCase;
 
 /**
  * Created by IntelliJ IDEA.
@@ -27,7 +21,7 @@ abstract class StructuralReplaceTestCase extends IdeaTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
+    JavaPsiFacade.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_4);
 
     options = new ReplaceOptions();
     options.setMatchOptions(new MatchOptions());
