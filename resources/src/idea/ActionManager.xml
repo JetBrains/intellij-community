@@ -591,9 +591,14 @@
       <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"/>
       <separator/>
       <reference ref="FoldingGroup"/>
-
+      <separator/>
+                                             
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
     </group>
+
+    <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncoding">
+      <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
+    </action>
 
     <group id="EditorPopupMenu2">
       <separator/>
@@ -1275,8 +1280,5 @@
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
 
-      <action id="ConfigureFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ConfigureFileEncodingAction" text="Configure Files Encoding" icon="/actions/lightning.png">
-        <add-to-group group-id="MainToolBar" anchor="after" relative-to-action="ChangeFileEncoding"/>
-      </action>
   </actions>
 </component>

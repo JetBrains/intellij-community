@@ -31,7 +31,7 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return "Files Encoding";
+    return "File Encodings";
   }
 
   @Nullable
@@ -46,7 +46,6 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
-    //myTreePanel.removeAll();
     myTreePanel.setViewportView(myTreeView);
     return myPanel;
   }

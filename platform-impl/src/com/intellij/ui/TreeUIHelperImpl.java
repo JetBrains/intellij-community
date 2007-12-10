@@ -21,6 +21,10 @@ public class TreeUIHelperImpl extends TreeUIHelper {
     new TreeSpeedSearch(tree);
   }
 
+  public void installListSpeedSearch(final JList list) {
+    new ListSpeedSearch(list);
+  }
+
   public void installEditSourceOnEnterKeyHandler(final JTree tree) {
     EditSourceOnEnterKeyHandler.install(tree);
   }

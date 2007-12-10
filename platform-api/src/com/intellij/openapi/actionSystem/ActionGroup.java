@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.actionSystem;
 
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -26,7 +27,7 @@ import java.beans.PropertyChangeSupport;
  */
 public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
-  private PropertyChangeSupport myChangeSupport;
+  private final PropertyChangeSupport myChangeSupport;
 
   /**
    * The actual value is a Boolean.
@@ -99,5 +100,6 @@ public abstract class ActionGroup extends AnAction {
    *
    * @return An array represting children of this group. All returned children must be not <code>null</code>.
    */
+  @NotNull
   public abstract AnAction[] getChildren(@Nullable AnActionEvent e);
 }

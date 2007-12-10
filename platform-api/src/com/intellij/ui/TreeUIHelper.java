@@ -17,6 +17,7 @@ public abstract class TreeUIHelper {
   public abstract void installEditSourceOnDoubleClick(JTree tree);
 
   public abstract void installTreeSpeedSearch(JTree tree);
+  public abstract void installListSpeedSearch(JList list);
 
   public abstract void installEditSourceOnEnterKeyHandler(JTree tree);
 

@@ -101,24 +101,12 @@ public class ChooseFileEncodingAction extends ComboBoxAction {
   private void fillAllAvailableCharsets(DefaultActionGroup group, final VirtualFile virtualFile) {
     Charset[] all = CharsetToolkit.getAvailableCharsets();
     for (Charset slave : all) {
-      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave);
+      ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave){
+        protected void chosen(final VirtualFile file, final Charset charset) {
+          ChooseFileEncodingAction.this.chosen(file, charset);
+        }
+      };
       group.add(action);
-    }
-  }
-
-  private class ChangeFileEncodingTo extends AnAction {
-    private final VirtualFile myFile;
-    private final Charset myCharset;
-
-    private ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset) {
-      super(charset.toString(),  "Change " + (file == null ? "default" : "file '"+file.getName()+"'") +
-                                 " encoding to '"+charset.name()+"'.", null);
-      myFile = file;
-      myCharset = charset;
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      chosen(myFile, myCharset);
     }
   }
 

@@ -44,7 +44,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   private Popup myPopup;
 
-  private BasePopup myParent;
+  private final BasePopup myParent;
 
   protected JPanel myContainer;
 
@@ -57,7 +57,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   protected JComponent myContent;
 
-  private Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
+  private final Timer myAutoSelectionTimer = new Timer(AUTO_POPUP_DELAY, this);
 
   private final SpeedSearch mySpeedSearch = new SpeedSearch() {
     protected void update() {
