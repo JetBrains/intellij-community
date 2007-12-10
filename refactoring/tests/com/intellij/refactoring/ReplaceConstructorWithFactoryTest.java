@@ -63,7 +63,7 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
     }
     PsiClass targetClass = null;
     if (targetClassName != null) {
-      targetClass = myPsiManager.findClass(targetClassName, GlobalSearchScope.allScope(getProject()));
+      targetClass = myJavaFacade.findClass(targetClassName, GlobalSearchScope.allScope(getProject()));
       assertTrue(targetClass != null);
     }
 

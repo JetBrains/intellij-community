@@ -115,7 +115,7 @@ public class ChangeContextUtil {
           if (ref != null) {
             final String qualifiedName = refClass.getQualifiedName();
             if (qualifiedName != null){
-              if (refClass.getManager().findClass(qualifiedName, scope.getResolveScope()) != null) {
+              if (JavaPsiFacade.getInstance(refClass.getProject()).findClass(qualifiedName, scope.getResolveScope()) != null) {
                 scope = ref.bindToElement(refClass);
               }
             }

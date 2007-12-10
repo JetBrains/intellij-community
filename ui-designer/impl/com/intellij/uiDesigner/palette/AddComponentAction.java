@@ -11,10 +11,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -90,8 +87,8 @@ public class AddComponentAction extends AnAction {
   private static void assignDefaultIcon(final Project project, final ComponentItem itemToBeAdded) {
     Palette palette = Palette.getInstance(project);
     if (itemToBeAdded.getIconPath() == null || itemToBeAdded.getIconPath().length() == 0) {
-      PsiClass aClass = PsiManager.getInstance(project).findClass(itemToBeAdded.getClassName().replace('$', '.'),
-                                                                  ProjectScope.getAllScope(project));
+      PsiClass aClass =
+        JavaPsiFacade.getInstance(project).findClass(itemToBeAdded.getClassName().replace('$', '.'), ProjectScope.getAllScope(project));
       while(aClass != null) {
         final ComponentItem item = palette.getItem(aClass.getQualifiedName());
         if (item != null) {
@@ -128,8 +125,8 @@ public class AddComponentAction extends AnAction {
     else if (psiFile.getFileType().equals(StdFileTypes.JAVA)) {
       final PsiClass psiClass = PsiTreeUtil.getChildOfType(psiFile, PsiClass.class);
       Project project = psiFile.getProject();
-      final PsiClass componentClass = PsiManager.getInstance(project).findClass(JComponent.class.getName(),
-                                                                                ProjectScope.getAllScope(project));
+      final PsiClass componentClass =
+        JavaPsiFacade.getInstance(project).findClass(JComponent.class.getName(), ProjectScope.getAllScope(project));
       if (psiClass != null && componentClass != null && psiClass.isInheritor(componentClass, true) && psiClass.getQualifiedName() != null) {
         return psiClass;
       }

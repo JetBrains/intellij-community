@@ -350,9 +350,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
   @Nullable public Object getData(Project project, String dataId) {
     if (dataId.equals(DataConstants.PSI_ELEMENT)) {
-      return PsiManager.getInstance(project).findClass(
-        myClassName,
-        GlobalSearchScope.allScope(project));
+      return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
     }
     if (dataId.equals(getClass().getName())) {
       return this;

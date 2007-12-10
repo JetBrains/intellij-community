@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -131,6 +132,10 @@ import java.util.HashSet;
 
   public final PsiManager getPsiManager() {
     return PsiManager.getInstance(myProject);
+  }
+
+  public final JavaPsiFacade getJavaFacade() {
+    return JavaPsiFacade.getInstance(myProject);
   }
 
   public Module getModule() {

@@ -40,7 +40,7 @@ public class InlineToAnonymousClassMultifileTest extends CodeInsightTestCase {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
-    PsiClass classToInline = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
+    PsiClass classToInline = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(myProject, 
                                                                                     classToInline,

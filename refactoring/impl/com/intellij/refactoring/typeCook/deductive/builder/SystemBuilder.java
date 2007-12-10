@@ -997,7 +997,8 @@ public class SystemBuilder {
         final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
         final PsiClass clazz = resolveResult.getElement();
         if (clazz != null) {
-          final PsiClass iterableClass = clazz.getManager().findClass("java.lang.Iterable", clazz.getResolveScope());
+          final PsiClass iterableClass =
+            JavaPsiFacade.getInstance(clazz.getProject()).findClass("java.lang.Iterable", clazz.getResolveScope());
           if (iterableClass != null) {
             final PsiTypeParameter[] typeParameters = iterableClass.getTypeParameters();
             if (typeParameters.length == 1) {

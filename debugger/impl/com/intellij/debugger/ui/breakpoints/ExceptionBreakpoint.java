@@ -16,10 +16,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
@@ -213,7 +210,7 @@ public class ExceptionBreakpoint extends Breakpoint {
     if (getClassName() == null) {
       return null;
     }
-    return PsiManager.getInstance(myProject).findClass(getClassName(), GlobalSearchScope.allScope(myProject));
+    return JavaPsiFacade.getInstance(myProject).findClass(getClassName(), GlobalSearchScope.allScope(myProject));
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {

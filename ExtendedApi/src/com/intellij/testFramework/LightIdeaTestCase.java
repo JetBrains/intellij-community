@@ -46,10 +46,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
@@ -120,6 +117,10 @@ import java.util.Map;
       ourPsiManager = PsiManager.getInstance(ourProject);
     }
     return ourPsiManager;
+  }
+
+  public static JavaPsiFacade getJavaFacade() {
+    return JavaPsiFacade.getInstance(ourProject);
   }
 
   public static void initApplication(final DataProvider dataProvider) throws Exception {

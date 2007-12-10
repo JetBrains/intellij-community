@@ -13,6 +13,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.util.ClassUtil;
 
 import java.util.Map;
@@ -43,8 +44,8 @@ public class PsiNestedFormLoader implements NestedFormLoader {
   }
 
   public String getClassToBindName(LwRootContainer container) {
-    PsiClass psiClass = PsiManager.getInstance(myModule.getProject()).findClass(container.getClassToBind(),
-                                                                                myModule.getModuleWithDependenciesScope());
+    PsiClass psiClass =
+      JavaPsiFacade.getInstance(myModule.getProject()).findClass(container.getClassToBind(), myModule.getModuleWithDependenciesScope());
     if (psiClass != null) {
       return ClassUtil.getJVMClassName(psiClass);
     }

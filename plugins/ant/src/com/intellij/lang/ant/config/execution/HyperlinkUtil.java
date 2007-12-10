@@ -3,10 +3,7 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +87,7 @@ final class HyperlinkUtil {
     ApplicationManager.getApplication().runReadAction(
       new Runnable(){
         public void run(){
-          PsiClass aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
           if (aClass == null) return;
           PsiFile file = aClass.getContainingFile();
           String fileName1 = fileName.replace(File.separatorChar, '/');

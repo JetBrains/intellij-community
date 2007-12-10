@@ -552,18 +552,19 @@ public class PsiClassImplUtil {
       PsiClass baseClass = baseClassReference.resolve();
       if (baseClass != null) {
         if (baseClass.isInterface()) {
-          PsiClass objectClass = psiClass.getManager().findClass("java.lang.Object", psiClass.getResolveScope());
+          PsiClass objectClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Object", psiClass.getResolveScope());
           return objectClass != null ? new PsiClass[]{objectClass, baseClass} : new PsiClass[]{baseClass};
         }
         return new PsiClass[]{baseClass};
       }
 
-      PsiClass objectClass = psiClass.getManager().findClass("java.lang.Object", psiClass.getResolveScope());
+      PsiClass objectClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Object", psiClass.getResolveScope());
       return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
     }
     else if (psiClass instanceof PsiTypeParameter) {
       if (extendsListTypes.length == 0) {
-        final PsiClass objectClass = psiClass.getManager().findClass("java.lang.Object", psiClass.getResolveScope());
+        final PsiClass objectClass =
+          JavaPsiFacade.getInstance(psiClass.getProject()).findClass("java.lang.Object", psiClass.getResolveScope());
         return objectClass != null ? new PsiClass[]{objectClass} : PsiClass.EMPTY_ARRAY;
       }
       return resolveClassReferenceList(extendsListTypes, psiClass.getManager(),

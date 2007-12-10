@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.ui.*;
@@ -189,8 +190,8 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       }
     }
 
-    return PsiManager.getInstance(module.getProject()).findClass(className,
-                                                                 GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return JavaPsiFacade.getInstance(module.getProject())
+      .findClass(className, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
   }
 
   public Object getData(final String dataId) {

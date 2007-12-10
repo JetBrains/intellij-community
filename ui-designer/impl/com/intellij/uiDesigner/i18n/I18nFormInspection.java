@@ -100,7 +100,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
 
   private static boolean isSetterNonNls(final Project project, final GlobalSearchScope searchScope,
                                         final String componentClassName, final String propertyName) {
-    PsiClass componentClass = PsiManager.getInstance(project).findClass(componentClassName, searchScope);
+    PsiClass componentClass = JavaPsiFacade.getInstance(project).findClass(componentClassName, searchScope);
     if (componentClass == null) {
       return false;
     }

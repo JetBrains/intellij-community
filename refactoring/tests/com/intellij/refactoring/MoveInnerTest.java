@@ -59,7 +59,7 @@ public class MoveInnerTest extends MultiFileTestCase {
                                      @NonNls @Nullable final String packageName) {
     return new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final PsiManager manager = PsiManager.getInstance(myProject);
+        final JavaPsiFacade manager = getJavaFacade();
         final PsiClass aClass = manager.findClass(innerClassName, GlobalSearchScope.moduleScope(myModule));
         final MoveInnerProcessor moveInnerProcessor = new MoveInnerProcessor(myProject, null);
         final PsiElement targetContainer = packageName != null ? findDirectory(packageName) : MoveInnerImpl.getTargetContainer(aClass, false);

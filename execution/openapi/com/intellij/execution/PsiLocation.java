@@ -17,10 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +82,8 @@ public class PsiLocation<E extends PsiElement> extends Location<E> {
   }
 
   public static Location<PsiClass> fromClassQualifiedName(final Project project, final String qualifiedName) {
-    final PsiClass psiClass = PsiManager.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.allScope(project));
+    final PsiClass psiClass =
+      JavaPsiFacade.getInstance(project).findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.allScope(project));
     return psiClass != null ? new PsiLocation<PsiClass>(project, psiClass) : null;
   }
 

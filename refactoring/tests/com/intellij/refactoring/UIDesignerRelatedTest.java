@@ -25,7 +25,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   public void testRenameBoundField() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myPsiManager.findClass("UIClass", ProjectScope.getAllScope(myProject));
+        PsiClass aClass = myJavaFacade.findClass("UIClass", ProjectScope.getAllScope(myProject));
         assertNotNull(aClass);
         final PsiField field = aClass.findFieldByName("UIField", false);
         assertNotNull(field);
@@ -50,7 +50,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   public void testRenameEnumConstant() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myPsiManager.findClass("PropEnum", ProjectScope.getAllScope(myProject));
+        PsiClass aClass = myJavaFacade.findClass("PropEnum", ProjectScope.getAllScope(myProject));
         assertNotNull(aClass);
         PsiField enumConstant = aClass.findFieldByName("valueB", false);
         assertNotNull(enumConstant);

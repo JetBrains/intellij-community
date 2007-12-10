@@ -109,8 +109,8 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
 
   private void doTestConflicts(String className, String targetClassName, String... expectedConflicts) throws Exception {
     prepareTest();
-    PsiClass classToMove = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
-    PsiClass targetClass = myPsiManager.findClass(targetClassName, ProjectScope.getAllScope(myProject));
+    PsiClass classToMove = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
+    PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     MoveClassToInnerProcessor processor = new MoveClassToInnerProcessor(myProject, classToMove, targetClass, true, true, null);
     UsageInfo[] usages = processor.findUsages();
     List<String> conflicts = processor.getConflicts(usages);
@@ -121,11 +121,11 @@ public class MoveClassToInnerTest extends CodeInsightTestCase {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];
-      classes[i] = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
+      classes[i] = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
       assertNotNull("Class " + className + " not found", classes[i]);
     }
 
-    PsiClass targetClass = myPsiManager.findClass(targetClassName, ProjectScope.getAllScope(myProject));
+    PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getAllScope(myProject));
     assertNotNull(targetClass);
 
     for(PsiClass psiClass: classes) {

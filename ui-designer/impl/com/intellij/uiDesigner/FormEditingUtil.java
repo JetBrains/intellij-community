@@ -845,10 +845,8 @@ public final class FormEditingUtil {
 
   @Nullable
   public static PsiClass findClassToBind(@NotNull final Module module, @NotNull final String classToBindName) {
-    return PsiManager.getInstance(module.getProject()).findClass(
-      classToBindName.replace('$','.'),
-      module.getModuleWithDependenciesScope()
-    );
+    return JavaPsiFacade.getInstance(module.getProject())
+      .findClass(classToBindName.replace('$', '.'), module.getModuleWithDependenciesScope());
   }
 
   public static interface ComponentVisitor <Type extends IComponent>{

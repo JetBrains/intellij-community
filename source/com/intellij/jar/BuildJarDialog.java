@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
@@ -217,7 +218,7 @@ public class BuildJarDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         String mainClass = myMainClass.getText();
         GlobalSearchScope scope = createMainClassScope();
-        PsiClass aClass = PsiManager.getInstance(myProject).findClass(mainClass, scope);
+        PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(mainClass, scope);
         TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
         final TreeClassChooser dialog =
           factory.createNoInnerClassesScopeChooser(IdeBundle.message("jar.build.main.class.title"), scope, null, aClass);

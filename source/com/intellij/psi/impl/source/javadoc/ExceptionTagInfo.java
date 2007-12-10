@@ -35,7 +35,7 @@ class ExceptionTagInfo implements JavadocTagInfo {
     final PsiClass exceptionClass = (PsiClass)element;
 
 
-    final PsiClass throwable = value.getManager().findClass("java.lang.Throwable", value.getResolveScope());
+    final PsiClass throwable = JavaPsiFacade.getInstance(value.getProject()).findClass("java.lang.Throwable", value.getResolveScope());
 
     if (throwable != null) {
       if (!exceptionClass.equals(throwable) && !exceptionClass.isInheritor(throwable, true)) {
@@ -43,14 +43,15 @@ class ExceptionTagInfo implements JavadocTagInfo {
       }
     }
 
-    final PsiClass runtimeException = value.getManager().findClass("java.lang.RuntimeException", value.getResolveScope());
+    final PsiClass runtimeException =
+      JavaPsiFacade.getInstance(value.getProject()).findClass("java.lang.RuntimeException", value.getResolveScope());
 
     if (runtimeException != null &&
         (exceptionClass.isInheritor(runtimeException, true) || exceptionClass.equals(runtimeException))) {
       return null;
     }
 
-    final PsiClass errorException = value.getManager().findClass("java.lang.Error", value.getResolveScope());
+    final PsiClass errorException = JavaPsiFacade.getInstance(value.getProject()).findClass("java.lang.Error", value.getResolveScope());
 
     if (errorException != null &&
         (exceptionClass.isInheritor(errorException, true) || exceptionClass.equals(errorException))) {

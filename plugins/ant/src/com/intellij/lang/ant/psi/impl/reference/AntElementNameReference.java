@@ -7,6 +7,7 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
@@ -136,6 +137,6 @@ public class AntElementNameReference extends AntGenericReference {
   @Nullable
   private static PsiElement findClass(final AntTypeDefinition elementDef, final AntStructuredElement element) {
     final String clazz = elementDef.getClassName();
-    return element.getManager().findClass(clazz, GlobalSearchScope.allScope(element.getProject()));
+    return JavaPsiFacade.getInstance(element.getProject()).findClass(clazz, GlobalSearchScope.allScope(element.getProject()));
   }
 }

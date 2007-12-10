@@ -44,7 +44,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
   public void testReplaceAnnotation() throws Exception {
     //be sure not to load tree
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);
-    PsiClass aClass = myPsiManager.findClass("Test", GlobalSearchScope.allScope(myProject));
+    PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.allScope(myProject));
     assertNotNull(aClass);
     final PsiAnnotation[] annotations = aClass.getModifierList().getAnnotations();
     assertEquals(1, annotations.length);

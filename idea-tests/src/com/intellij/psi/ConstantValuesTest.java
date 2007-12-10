@@ -43,7 +43,7 @@ public class ConstantValuesTest extends PsiTestCase{
       }
     );
 
-    myClass = myPsiManager.findClass("ClassWithConstants");
+    myClass = myJavaFacade.findClass("ClassWithConstants");
     assertNotNull(myClass);
   }
 

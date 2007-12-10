@@ -68,11 +68,11 @@ public class FormEnumUsageTest extends PsiTestCase {
       }
     }, "", null);
 
-    PsiClass enumClass = myPsiManager.findClass("PropEnum", ProjectScope.getAllScope(myProject));
+    PsiClass enumClass = myJavaFacade.findClass("PropEnum", ProjectScope.getAllScope(myProject));
     PsiField valueBField = enumClass.findFieldByName("valueB", false);
     assertNotNull(valueBField);
     assertTrue(valueBField instanceof PsiEnumConstant);
-    final PsiClass componentClass = myPsiManager.findClass("CustomComponent", ProjectScope.getAllScope(myProject));
+    final PsiClass componentClass = myJavaFacade.findClass("CustomComponent", ProjectScope.getAllScope(myProject));
     assertNotNull(componentClass);
 
     Query<PsiReference> query = ReferencesSearch.search(componentClass);

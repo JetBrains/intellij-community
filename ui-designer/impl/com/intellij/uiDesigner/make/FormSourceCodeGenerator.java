@@ -717,7 +717,7 @@ public final class FormSourceCodeGenerator {
   }
 
   private boolean haveSetDisplayedMnemonic(final Class controlClass, final Module module) {
-    PsiClass aClass = PsiManager.getInstance(myProject).findClass(controlClass.getName(), module.getModuleWithLibrariesScope());
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(controlClass.getName(), module.getModuleWithLibrariesScope());
     return aClass != null && aClass.findMethodsByName("setDisplayedMnemonicIndex", true).length > 0;
   }
 
@@ -1021,8 +1021,8 @@ public final class FormSourceCodeGenerator {
   }
 
   private boolean isAssignableFrom(final String className, final String fromName, final GlobalSearchScope scope) {
-    final PsiClass aClass = PsiManager.getInstance(myProject).findClass(className, scope);
-    final PsiClass fromClass = PsiManager.getInstance(myProject).findClass(fromName, scope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(className, scope);
+    final PsiClass fromClass = JavaPsiFacade.getInstance(myProject).findClass(fromName, scope);
     if (aClass == null || fromClass == null) {
       return false;
     }

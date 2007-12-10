@@ -193,7 +193,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
       else {
         final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass, myNewName);
-        final PsiClass conflictingClass = PsiManager.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
+        final PsiClass conflictingClass =
+          JavaPsiFacade.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
         if (conflictingClass != null) {
           conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
         }

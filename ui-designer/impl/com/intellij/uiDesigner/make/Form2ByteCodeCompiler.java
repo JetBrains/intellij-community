@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -221,7 +222,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
   }
 
   private static String getClassFileName(final String _className, final Module module) {
-    final PsiClass aClass = PsiManager.getInstance(module.getProject()).findClass(_className, GlobalSearchScope.moduleScope(module));
+    final PsiClass aClass = JavaPsiFacade.getInstance(module.getProject()).findClass(_className, GlobalSearchScope.moduleScope(module));
     if (aClass == null) {
       // ?
       return _className;

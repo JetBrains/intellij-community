@@ -664,7 +664,7 @@ public class TypeCookTest extends MultiFileTestCase {
   }
 
   private void performAction(String className, String rootDir, final boolean cookObjects) throws Exception {
-    PsiClass aClass = myPsiManager.findClass(className);
+    PsiClass aClass = myJavaFacade.findClass(className);
 
     assertNotNull("Class " + className + " not found", aClass);
 

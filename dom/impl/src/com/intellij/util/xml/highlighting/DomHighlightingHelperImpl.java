@@ -142,7 +142,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
                                                              final boolean canBeDecorator,
                                                              final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
-    PsiClass extendClass = PsiManager.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
+    PsiClass extendClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
     if (extendClass != null) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
       if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {

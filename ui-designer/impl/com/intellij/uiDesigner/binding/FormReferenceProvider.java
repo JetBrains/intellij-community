@@ -237,7 +237,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
       FormEnumConstantReference reference = ApplicationManager.getApplication().runReadAction(new Computable<FormEnumConstantReference>() {
         @Nullable
         public FormEnumConstantReference compute() {
-          PsiClass psiClass = file.getManager().findClass(className, ProjectScope.getAllScope(file.getProject()));
+          PsiClass psiClass = JavaPsiFacade.getInstance(file.getProject()).findClass(className, ProjectScope.getAllScope(file.getProject()));
           if (psiClass != null) {
             PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
             if (getter != null) {

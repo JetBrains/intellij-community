@@ -203,10 +203,8 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
 
     if (nodeClass.dims == rendererClass.dims) {
       GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      PsiClass psiNodeClass = PsiManager.getInstance(project).findClass(nodeClass.className,
-                                                                        scope);
-      PsiClass psiRendererClass = PsiManager.getInstance(project).findClass(rendererClass.className,
-                                                                            scope);
+      PsiClass psiNodeClass = JavaPsiFacade.getInstance(project).findClass(nodeClass.className, scope);
+      PsiClass psiRendererClass = JavaPsiFacade.getInstance(project).findClass(rendererClass.className, scope);
       return InheritanceUtil.isInheritorOrSelf(psiNodeClass, psiRendererClass, true);
     }
     else if (nodeClass.dims > rendererClass.dims) {

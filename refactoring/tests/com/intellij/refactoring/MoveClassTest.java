@@ -76,7 +76,7 @@ public class MoveClassTest extends CodeInsightTestCase {
     final PsiClass[] classes = new PsiClass[classNames.length];
     for(int i = 0; i < classes.length; i++){
       String className = classNames[i];
-      classes[i] = myPsiManager.findClass(className);
+      classes[i] = myJavaFacade.findClass(className);
       assertNotNull("Class " + className + " not found", classes[i]);
     }
 

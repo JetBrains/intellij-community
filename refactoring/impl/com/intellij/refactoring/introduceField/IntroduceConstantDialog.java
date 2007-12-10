@@ -297,7 +297,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
   private void targetClassChanged() {
     final String targetClassName = getTargetClassName();
-    myTargetClass = PsiManager.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+    myTargetClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
     updateVisibilityPanel();
   }
 

@@ -9,10 +9,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
@@ -70,7 +67,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
         PsiClass baseClass = null;
         TreeClassChooser.ClassFilter filter = null;
         if (extend != null) {
-          baseClass = PsiManager.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
+          baseClass = JavaPsiFacade.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
           if (extend.instantiatable()) {
             filter = TreeClassChooser.INSTANTIATABLE;
           }

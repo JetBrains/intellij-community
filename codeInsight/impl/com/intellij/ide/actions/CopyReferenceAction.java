@@ -391,7 +391,7 @@ public class CopyReferenceAction extends AnAction {
 
   @Nullable
   private static PsiMember fqnToElement(final Project project, final String fqn) {
-    PsiClass aClass = PsiManager.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
+    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(fqn, GlobalSearchScope.allScope(project));
     if (aClass != null) {
       return aClass;
     }
@@ -399,7 +399,7 @@ public class CopyReferenceAction extends AnAction {
     if (endIndex == -1) return null;
     String className = fqn.substring(0, endIndex);
     if (className == null) return null;
-    aClass = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+    aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
     if (aClass == null) return null;
     String memberName = fqn.substring(endIndex + 1);
     PsiField field = aClass.findFieldByName(memberName, false);

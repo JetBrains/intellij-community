@@ -275,7 +275,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   private static boolean isSerializable(PsiClass aClass) {
-    PsiClass serializableClass = aClass.getManager().findClass("java.io.Serializable", aClass.getResolveScope());
+    PsiClass serializableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 

@@ -53,7 +53,7 @@ public class RenameClassTest extends MultiFileTestCase {
   }
 
   private void performAction(String qClassName, String newName) throws Exception {
-    PsiClass aClass = myPsiManager.findClass(qClassName);
+    PsiClass aClass = myJavaFacade.findClass(qClassName);
     assertNotNull("Class " + qClassName + " not found", aClass);
 
     new RenameProcessor(myProject, aClass, newName, true, true).run();

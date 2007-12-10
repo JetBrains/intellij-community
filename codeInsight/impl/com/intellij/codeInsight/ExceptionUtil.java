@@ -367,7 +367,7 @@ public class ExceptionUtil {
     final PsiClass runtimeExceptionClass = ApplicationManager.getApplication().runReadAction(
         new Computable<PsiClass>() {
           public PsiClass compute() {
-            return aClass.getManager().findClass("java.lang.RuntimeException", searchScope);
+            return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.RuntimeException", searchScope);
           }
         }
     );
@@ -379,7 +379,7 @@ public class ExceptionUtil {
     final PsiClass errorClass = ApplicationManager.getApplication().runReadAction(
         new Computable<PsiClass>() {
           public PsiClass compute() {
-            return aClass.getManager().findClass("java.lang.Error", searchScope);
+            return JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Error", searchScope);
           }
         }
     );

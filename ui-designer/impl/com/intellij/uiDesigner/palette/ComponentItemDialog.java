@@ -203,7 +203,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     // TODO[vova] implement validation
     if (myClassRadioButton.isSelected()) {
       final String className = myDocument.getText().trim();
-      PsiClass psiClass = PsiManager.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+      PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
       if (psiClass != null) {
         myItemToBeEdited.setClassName(getClassOrInnerName(psiClass));        
       }
@@ -268,8 +268,8 @@ public final class ComponentItemDialog extends DialogWrapper {
                                CommonBundle.getErrorTitle());
       return false;
     }
-    PsiClass psiClass = PsiManager.getInstance(myProject).findClass(lwRootContainer.getClassToBind(),
-                                                                    GlobalSearchScope.projectScope(myProject));
+    PsiClass psiClass =
+      JavaPsiFacade.getInstance(myProject).findClass(lwRootContainer.getClassToBind(), GlobalSearchScope.projectScope(myProject));
     if (psiClass != null) {
       myItemToBeEdited.setClassName(getClassOrInnerName(psiClass));
     }
@@ -349,11 +349,9 @@ public final class ComponentItemDialog extends DialogWrapper {
 
     public void actionPerformed(final ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-      final TreeClassChooser chooser = factory.createInheritanceClassChooser(
-        UIDesignerBundle.message("title.choose.component.class"),
-        GlobalSearchScope.allScope(myProject),
-        PsiManager.getInstance(myProject).findClass(JComponent.class.getName(), GlobalSearchScope.allScope(myProject)),
-        true, true, null);
+      final TreeClassChooser chooser = factory.createInheritanceClassChooser(UIDesignerBundle.message("title.choose.component.class"),
+                                                                             GlobalSearchScope.allScope(myProject), JavaPsiFacade.getInstance(myProject).findClass(
+        JComponent.class.getName(), GlobalSearchScope.allScope(myProject)), true, true, null);
       chooser.showDialog();
       final PsiClass result = chooser.getSelectedClass();
       if (result != null) {

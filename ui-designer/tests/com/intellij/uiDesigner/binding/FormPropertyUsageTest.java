@@ -53,7 +53,7 @@ public class FormPropertyUsageTest extends PsiTestCase {
   }
 
   public void testClassUsage() {
-    PsiClass psiClass = myPsiManager.findClass(JButton.class.getName(), GlobalSearchScope.allScope(myProject));
+    PsiClass psiClass = myJavaFacade.findClass(JButton.class.getName(), GlobalSearchScope.allScope(myProject));
     final Query<PsiReference> query = ReferencesSearch.search(psiClass);
     final Collection<PsiReference> result = query.findAll();
     assertEquals(1, result.size());

@@ -1010,7 +1010,7 @@ public class GenericsHighlightUtil {
       PsiElement resolved = referenceElement.resolve();
       if (!(resolved instanceof PsiClass)) continue;
       if (throwableClass == null) {
-        throwableClass = aClass.getManager().findClass("java.lang.Throwable", aClass.getResolveScope());
+        throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
       }
       if (InheritanceUtil.isInheritorOrSelf((PsiClass)resolved, throwableClass, true)) {
         String message = JavaErrorMessages.message("generic.extend.exception");

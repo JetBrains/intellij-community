@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import org.jetbrains.annotations.NotNull;
 
 public class SetupJDKFix implements IntentionAction {
@@ -43,7 +44,7 @@ public class SetupJDKFix implements IntentionAction {
   }
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    return PsiManager.getInstance(project).findClass("java.lang.Object",file.getResolveScope()) == null;
+    return JavaPsiFacade.getInstance(project).findClass("java.lang.Object", file.getResolveScope()) == null;
   }
 
   public void invoke(Project project, Editor editor, final PsiFile file) {

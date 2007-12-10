@@ -412,8 +412,8 @@ public class CreateSnapShotAction extends AnAction {
     }
 
     private boolean isValidComponent(final SnapShotRemoteComponent rc) {
-      PsiClass componentClass = PsiManager.getInstance(myProject).findClass(rc.getClassName().replace('$', '.'),
-                                                                            GlobalSearchScope.allScope(myProject));
+      PsiClass componentClass =
+        JavaPsiFacade.getInstance(myProject).findClass(rc.getClassName().replace('$', '.'), GlobalSearchScope.allScope(myProject));
       while(componentClass != null) {
         if (JPanel.class.getName().equals(componentClass.getQualifiedName()) ||
             JTabbedPane.class.getName().equals(componentClass.getQualifiedName()) ||

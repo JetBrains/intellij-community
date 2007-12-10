@@ -4,10 +4,7 @@ import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.SingleClassConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -128,8 +125,8 @@ public class RefactoringListeners {
     }
 
     public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
-      return psiClass.getManager().findClass(qualifiedName.replace('$', '.'),
-                                             GlobalSearchScope.moduleScope(ExecutionUtil.findModule(psiClass)));
+      return JavaPsiFacade.getInstance(psiClass.getProject())
+        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(ExecutionUtil.findModule(psiClass)));
     }
 
     public String getQualifiedName(final PsiClass psiClass) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 
@@ -78,7 +79,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
         final GlobalSearchScope scope = module != null ?
                                   GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) :
                                   GlobalSearchScope.allScope(myProject);
-        final PsiClass appletClass = PsiManager.getInstance(project).findClass("java.applet.Applet", scope);
+        final PsiClass appletClass = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", scope);
         return new TreeClassChooserDialog.InheritanceClassFilterImpl(appletClass, false, false,
                                                                      ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS);
       }

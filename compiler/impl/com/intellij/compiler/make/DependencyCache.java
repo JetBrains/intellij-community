@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -743,7 +744,8 @@ public class DependencyCache {
         public void run() {
           myClassesWithOverrideAnnotatedMethods = new TIntHashSet();
           myClassesForAnonymousWithOverrideAnnotatedMethods = new TIntHashSet();
-          final PsiClass overrideClass = PsiManager.getInstance(project).findClass(Override.class.getName(), GlobalSearchScope.allScope(project));
+          final PsiClass overrideClass =
+            JavaPsiFacade.getInstance(project).findClass(Override.class.getName(), GlobalSearchScope.allScope(project));
           if (overrideClass != null) {
             final Query<PsiMember> query = AnnotatedMembersSearch.search(overrideClass);
             query.forEach(new Processor<PsiMember>() {

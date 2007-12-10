@@ -38,7 +38,7 @@ public class AssignableFromFilter implements ElementFilter{
   public boolean isAcceptable(Object element, PsiElement context){
     PsiType type = myType;
     if(type == null) {
-      final PsiClass aClass = context.getManager().findClass(myClassName, context.getResolveScope());
+      final PsiClass aClass = JavaPsiFacade.getInstance(context.getProject()).findClass(myClassName, context.getResolveScope());
       if (aClass != null) {
         type = aClass.getManager().getElementFactory().createType(aClass, PsiSubstitutor.EMPTY);
       }

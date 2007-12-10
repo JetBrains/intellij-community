@@ -117,9 +117,9 @@ public class TurnRefsToSuperTest extends MultiFileTestCase {
   }
 
   private void performAction(final String className, final String superClassName, boolean replaceInstanceOf) {
-    final PsiClass aClass = myPsiManager.findClass(className);
+    final PsiClass aClass = myJavaFacade.findClass(className);
     assertNotNull("Class " + className + " not found", aClass);
-    PsiClass superClass = myPsiManager.findClass(superClassName);
+    PsiClass superClass = myJavaFacade.findClass(superClassName);
     assertNotNull("Class " + superClassName + " not found", superClass);
 
     new TurnRefsToSuperProcessor(myProject, aClass, superClass, replaceInstanceOf).run();

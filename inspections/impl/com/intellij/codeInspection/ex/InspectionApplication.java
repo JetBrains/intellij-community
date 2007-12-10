@@ -27,6 +27,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
@@ -163,7 +164,8 @@ public class InspectionApplication {
 
       ProgressManager.getInstance().runProcess(new Runnable() {
         public void run() {
-          PsiClass psiObjectClass = PsiManager.getInstance(myProject).findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
+          PsiClass psiObjectClass =
+            JavaPsiFacade.getInstance(myProject).findClass("java.lang.Object", GlobalSearchScope.allScope(myProject));
           if (psiObjectClass == null) {
             if (ModuleManager.getInstance(myProject).getModules().length == 0) {
               logError(InspectionsBundle.message("inspection.no.modules.error.message"));

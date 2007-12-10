@@ -132,9 +132,9 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     final boolean delegateOtherMembers, final boolean generateGetter) {
     return new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myPsiManager.findClass(className);
+        PsiClass aClass = myJavaFacade.findClass(className);
         assertNotNull("Class " + className + " not found", aClass);
-        PsiClass baseClass = myPsiManager.findClass(baseClassName);
+        PsiClass baseClass = myJavaFacade.findClass(baseClassName);
         assertNotNull("Base class " + baseClassName + " not found", baseClass);
         final PsiMethod[] methods = baseClass.getMethods();
         final PsiMethod[] delegatedMethods = new PsiMethod[methodIndices.length];
@@ -144,7 +144,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
         for (int i = 0; i < delegatedInterfaceNames.length; i++) {
           String delegatedInterfaceName = delegatedInterfaceNames[i];
-          PsiClass anInterface = myPsiManager.findClass(delegatedInterfaceName);
+          PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName);
           assertNotNull(anInterface);
           delegatedInterfaces[i] = anInterface;
         }
@@ -162,9 +162,9 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     final boolean delegateOtherMembers, final boolean generateGetter) {
     return new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myPsiManager.findClass(className);
+        PsiClass aClass = myJavaFacade.findClass(className);
         assertNotNull("Class " + className + " not found", aClass);
-        PsiClass baseClass = myPsiManager.findClass(baseClassName);
+        PsiClass baseClass = myJavaFacade.findClass(baseClassName);
         assertNotNull("Base class " + baseClassName + " not found", baseClass);
         final PsiMethod[] delegatedMethods;
         final List<PsiMethod> methodsList = new ArrayList<PsiMethod>();
@@ -181,7 +181,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
         final PsiClass[] delegatedInterfaces = new PsiClass[delegatedInterfaceNames.length];
         for (int i = 0; i < delegatedInterfaceNames.length; i++) {
           String delegatedInterfaceName = delegatedInterfaceNames[i];
-          PsiClass anInterface = myPsiManager.findClass(delegatedInterfaceName);
+          PsiClass anInterface = myJavaFacade.findClass(delegatedInterfaceName);
           assertNotNull(anInterface);
           delegatedInterfaces[i] = anInterface;
         }

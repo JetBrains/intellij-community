@@ -405,7 +405,7 @@ public final class PsiUtil {
 
   // todo: move to PsiThrowsList?
   public static void addException(PsiMethod method, @NonNls String exceptionFQName) throws IncorrectOperationException {
-    PsiClass exceptionClass = method.getManager().findClass(exceptionFQName, method.getResolveScope());
+    PsiClass exceptionClass = JavaPsiFacade.getInstance(method.getProject()).findClass(exceptionFQName, method.getResolveScope());
     addException(method, exceptionClass, exceptionFQName);
   }
 

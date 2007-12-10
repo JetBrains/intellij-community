@@ -80,9 +80,9 @@ public class MoveMembersTest extends MultiFileTestCase {
   }
 
   private void performAction(String sourceClassName, String targetClassName, int[] memberIndices) throws Exception {
-    PsiClass sourceClass = myPsiManager.findClass(sourceClassName, ProjectScope.getProjectScope(myProject));
+    PsiClass sourceClass = myJavaFacade.findClass(sourceClassName, ProjectScope.getProjectScope(myProject));
     assertNotNull("Class " + sourceClassName + " not found", sourceClass);
-    PsiClass targetClass = myPsiManager.findClass(targetClassName, ProjectScope.getProjectScope(myProject));
+    PsiClass targetClass = myJavaFacade.findClass(targetClassName, ProjectScope.getProjectScope(myProject));
     assertNotNull("Class " + targetClassName + " not found", targetClass);
 
     PsiElement[] children = sourceClass.getChildren();

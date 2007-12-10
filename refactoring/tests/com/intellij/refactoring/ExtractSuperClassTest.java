@@ -50,7 +50,7 @@ public class ExtractSuperClassTest extends CodeInsightTestCase {
     String rootBefore = getRoot() + "/before";
     PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk("java 1.4"));
     final VirtualFile rootDir = PsiTestUtil.createTestProjectStructure(myProject, myModule, rootBefore, myFilesToDelete);
-    PsiClass psiClass = myPsiManager.findClass(className, ProjectScope.getAllScope(myProject));
+    PsiClass psiClass = myJavaFacade.findClass(className, ProjectScope.getAllScope(myProject));
     assertNotNull(psiClass);
     final MemberInfo[] members = PullUpTest.findMembers(psiClass, membersToFind);
     ExtractSuperClassProcessor processor = new ExtractSuperClassProcessor(myProject,

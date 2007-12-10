@@ -147,12 +147,12 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         if (listenerClassName.endsWith(LISTENER_SUFFIX)) {
           String adapterClassName = listenerClassName.substring(0, listenerClassName.length() - LISTENER_SUFFIX.length()) +
                                     ADAPTER_SUFFIX;
-          listenerClass = myClass.getManager().findClass(adapterClassName,
-                                                         GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+          listenerClass = JavaPsiFacade.getInstance(myClass.getProject())
+            .findClass(adapterClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
         }
         if (listenerClass == null) {
-          listenerClass = myClass.getManager().findClass(listenerClassName,
-                                                         GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+          listenerClass = JavaPsiFacade.getInstance(myClass.getProject())
+            .findClass(listenerClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
         }
         if (listenerClass == null) {
           Messages.showErrorDialog(myClass.getProject(), UIDesignerBundle.message("create.listener.class.not.found"), CommonBundle.getErrorTitle());

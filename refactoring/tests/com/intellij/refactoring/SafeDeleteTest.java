@@ -55,7 +55,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   private void performAction(String qClassName) throws Exception {
-    PsiClass aClass = myPsiManager.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
+    PsiClass aClass = myJavaFacade.findClass(qClassName, GlobalSearchScope.allScope(getProject()));
     assertNotNull("Class " + qClassName + " not found", aClass);
 
     String root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0].getPath();

@@ -536,7 +536,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
       return file != null ? PsiManager.getInstance(myProject).findDirectory(file) : null;
     } else if (element.getAttributeValue(ATTRIBUTE_CLASS) != null) {
       final String className = element.getAttributeValue(ATTRIBUTE_CLASS);
-      return className != null ? PsiManager.getInstance(myProject).findClass(className) : null;
+      return className != null ? JavaPsiFacade.getInstance(myProject).findClass(className) : null;
     }
     return null;
   }

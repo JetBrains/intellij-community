@@ -238,12 +238,8 @@ public class I18nInspection extends BaseLocalInspectionTool {
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
               createInheritanceClassChooser(
-                CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
-                scope,
-                PsiManager.getInstance(project).findClass("java.lang.Throwable", scope),
-                true,
-                true,
-                null);
+                CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
+                JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope), true, true, null);
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelectedClass();
             return selectedClass != null ? selectedClass.getQualifiedName() : null;
@@ -531,7 +527,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       value = value.substring(1); // A favor for JetBrains team to catch common Logger usage practice.
     }
 
-    return expression.getManager().findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
+    return JavaPsiFacade.getInstance(expression.getProject()).findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
   }
 
   public boolean isEnabledByDefault() {

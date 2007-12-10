@@ -10,10 +10,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NotNull;
@@ -172,10 +169,8 @@ final class BeanStep extends StepAdapter{
       if(newFqClassName.length() == 0){
         throw new CommitStepException(UIDesignerBundle.message("error.please.specify.fully.qualified.name.of.bean.class"));
       }
-      final PsiClass aClass = PsiManager.getInstance(myData.myProject).findClass(
-        newFqClassName,
-        GlobalSearchScope.allScope(myData.myProject)
-      );
+      final PsiClass aClass =
+        JavaPsiFacade.getInstance(myData.myProject).findClass(newFqClassName, GlobalSearchScope.allScope(myData.myProject));
       if(aClass == null){
         throw new CommitStepException(UIDesignerBundle.message("error.class.with.name.X.does.not.exist", newFqClassName));
       }

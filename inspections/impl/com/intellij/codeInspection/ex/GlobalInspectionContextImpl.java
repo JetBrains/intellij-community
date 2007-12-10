@@ -288,7 +288,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   public void doInspections(final AnalysisScope scope, final InspectionManager manager) {
-    while (PsiManager.getInstance(getProject()).findClass("java.lang.Object", GlobalSearchScope.allScope(getProject())) == null) {
+    while (JavaPsiFacade.getInstance(getProject()).findClass("java.lang.Object", GlobalSearchScope.allScope(getProject())) == null) {
       if (ModuleManager.getInstance(getProject()).getModules().length == 0) {
         Messages.showMessageDialog(getProject(), InspectionsBundle.message("inspection.no.modules.error.message"),
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());

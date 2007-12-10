@@ -7,6 +7,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.lw.LwXmlReader;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEnumEditor;
@@ -56,7 +57,8 @@ public final class Properties implements BaseComponent, JDOMExternalizable{
     Set<String> deprecated = myClass2DeprecatedProperties.get(aClass.getName());
     if (deprecated == null) {
       deprecated = new HashSet<String>();
-      PsiClass componentClass = PsiManager.getInstance(module.getProject()).findClass(aClass.getName(), module.getModuleWithDependenciesAndLibrariesScope(true));
+      PsiClass componentClass =
+        JavaPsiFacade.getInstance(module.getProject()).findClass(aClass.getName(), module.getModuleWithDependenciesAndLibrariesScope(true));
       if (componentClass != null) {
         PsiMethod[] methods = componentClass.getAllMethods();
         for(PsiMethod method: methods) {

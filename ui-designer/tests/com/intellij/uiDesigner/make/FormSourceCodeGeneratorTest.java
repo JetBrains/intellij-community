@@ -98,7 +98,7 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
       }
     }, "", null);
 
-    final PsiClass bindingTestClass = myPsiManager.findClass("BindingTest", ProjectScope.getAllScope(myProject));
+    final PsiClass bindingTestClass = myJavaFacade.findClass("BindingTest", ProjectScope.getAllScope(myProject));
     assertNotNull(bindingTestClass);
     final VirtualFile testAfter = myTestProjectRoot.findChild("BindingTest.java.after");
     assertNotNull(testAfter);

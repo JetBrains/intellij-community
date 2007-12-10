@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
 
@@ -95,7 +96,8 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
     }
 
     public void actionPerformed(ActionEvent e) {
-      final PsiClass throwableClass = PsiManager.getInstance(myProject).findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
+      final PsiClass throwableClass =
+        JavaPsiFacade.getInstance(myProject).findClass("java.lang.Throwable", GlobalSearchScope.allScope(myProject));
       TreeClassChooser chooser =
         TreeClassChooserFactory.getInstance(myProject).createInheritanceClassChooser(
           DebuggerBundle.message("add.exception.breakpoint.classchooser.title"), GlobalSearchScope.allScope(myProject),

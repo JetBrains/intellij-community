@@ -453,7 +453,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final boolean concrete = JavaClassReferenceProvider.CONCRETE.getBooleanValue(getOptions());
 
     for (String extendClassName : extendClasses) {
-      final PsiClass extendClass = context.getManager().findClass(extendClassName, allScope);
+      final PsiClass extendClass = JavaPsiFacade.getInstance(context.getProject()).findClass(extendClassName, allScope);
       if (extendClass != null) {
         // add itself
         if (packageScope.contains(extendClass.getContainingFile().getVirtualFile())) {

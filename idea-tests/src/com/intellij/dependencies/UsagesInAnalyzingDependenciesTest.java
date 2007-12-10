@@ -51,11 +51,11 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
-    searchFor.add(myPsiManager.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
+    searchFor.add(myJavaFacade.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
     final Set<PsiFile> searchIn = new HashSet<PsiFile>();
-    final PsiClass bClass = myPsiManager.findClass("com.b.B", GlobalSearchScope.allScope(myProject));
+    final PsiClass bClass = myJavaFacade.findClass("com.b.B", GlobalSearchScope.allScope(myProject));
     searchIn.add(bClass.getContainingFile());
-    final PsiClass cClass = myPsiManager.findClass("com.b.C", GlobalSearchScope.allScope(myProject));
+    final PsiClass cClass = myJavaFacade.findClass("com.b.C", GlobalSearchScope.allScope(myProject));
     searchIn.add(cClass.getContainingFile());
     final UsageInfo[] usagesInfos = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);
     final UsageInfo2UsageAdapter[] usages = UsageInfo2UsageAdapter.convert(usagesInfos);
@@ -82,11 +82,11 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
-    searchFor.add(myPsiManager.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
+    searchFor.add(myJavaFacade.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
     final Set<PsiFile> searchIn = new HashSet<PsiFile>();
-    final PsiClass bClass = myPsiManager.findClass("com.b.B", GlobalSearchScope.allScope(myProject));
+    final PsiClass bClass = myJavaFacade.findClass("com.b.B", GlobalSearchScope.allScope(myProject));
     searchIn.add(bClass.getContainingFile());
-    final PsiClass cClass = myPsiManager.findClass("com.a.C", GlobalSearchScope.allScope(myProject));
+    final PsiClass cClass = myJavaFacade.findClass("com.a.C", GlobalSearchScope.allScope(myProject));
     searchFor.add(cClass.getContainingFile());
     final UsageInfo[] usagesInfos = FindDependencyUtil.findBackwardDependencies(builder, searchIn, searchFor);
     final UsageInfo2UsageAdapter[] usages = UsageInfo2UsageAdapter.convert(usagesInfos);
@@ -102,10 +102,10 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
     builder.analyze();
 
     final Set<PsiFile> searchIn = new HashSet<PsiFile>();
-    final PsiClass aClass = myPsiManager.findClass("A", GlobalSearchScope.allScope(myProject));
+    final PsiClass aClass = myJavaFacade.findClass("A", GlobalSearchScope.allScope(myProject));
     searchIn.add(aClass.getContainingFile());
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
-    final PsiClass bClass = myPsiManager.findClass("B", GlobalSearchScope.allScope(myProject));
+    final PsiClass bClass = myJavaFacade.findClass("B", GlobalSearchScope.allScope(myProject));
     searchFor.add(bClass.getContainingFile());
 
     final UsageInfo[] usagesInfos = FindDependencyUtil.findDependencies(builder, searchIn, searchFor);

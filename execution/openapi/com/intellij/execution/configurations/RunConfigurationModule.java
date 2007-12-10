@@ -29,6 +29,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -130,7 +131,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     else {
       scope = myClassesInLibraries ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
     }
-    return PsiManager.getInstance(myProject).findClass(qualifiedName.replace('$', '.'), scope);
+    return JavaPsiFacade.getInstance(myProject).findClass(qualifiedName.replace('$', '.'), scope);
   }
 
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {

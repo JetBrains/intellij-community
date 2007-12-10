@@ -18,6 +18,7 @@ package com.intellij.util.xml;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -62,7 +63,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
       scope = searchScope;
     }
 
-    final PsiClass aClass = file.getManager().findClass(name, scope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(file.getProject()).findClass(name, scope);
     if (aClass != null) {
       assert aClass.isValid() : name;
     }

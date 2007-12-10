@@ -343,7 +343,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
 
     // all Throwable descendants from java.lang are side effects free
     if (JAVA_LANG_PCKG.equals(packageName) || JAVA_IO_PCKG.equals(packageName)) {
-      PsiClass throwableClass = aClass.getManager().findClass("java.lang.Throwable", aClass.getResolveScope());
+      PsiClass throwableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
       if (throwableClass != null && InheritanceUtil.isInheritorOrSelf(aClass, throwableClass, true)) {
         return true;
       }

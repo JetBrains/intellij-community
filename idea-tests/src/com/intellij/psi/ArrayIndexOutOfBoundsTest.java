@@ -64,7 +64,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   }
 
   public void testLongLivingClassAfterRename() throws Exception {
-    PsiClass psiClass = myPsiManager.findClass("bla.Bla");
+    PsiClass psiClass = myJavaFacade.findClass("bla.Bla");
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(psiClass);
     renamePackage();
     //assertTrue(psiClass.isValid());

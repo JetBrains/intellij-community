@@ -83,7 +83,7 @@ public class FieldBreakpointFactory extends BreakpointFactory{
                                        DebuggerBundle.message("add.field.breakpoint.dialog.title"), Messages.getErrorIcon());
             return false;
           }
-          PsiClass psiClass = PsiManager.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
+          PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
           if (psiClass != null) {
             PsiFile  psiFile  = psiClass.getContainingFile();
             Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);

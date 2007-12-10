@@ -122,7 +122,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
       return;
     }
 
-    final PsiClass aClass = PsiManager.getInstance(project).findClass(classToBind, GlobalSearchScope.allScope(project));
+    final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(classToBind, GlobalSearchScope.allScope(project));
     if(aClass == null){
       return;
     }

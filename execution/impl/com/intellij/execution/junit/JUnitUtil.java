@@ -137,7 +137,7 @@ public class JUnitUtil {
     return testCaseClass;
   }
   private static PsiClass getTestCaseClassOrNull(final GlobalSearchScope scope, final Project project) {
-    return PsiManager.getInstance(project).findClass(TESTCASE_CLASS, scope);
+    return JavaPsiFacade.getInstance(project).findClass(TESTCASE_CLASS, scope);
   }
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
@@ -162,7 +162,7 @@ public class JUnitUtil {
     else {
       scope = searchInLibs ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
     }
-    return PsiManager.getInstance(project).findClass(qualifiedName, scope);
+    return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope);
   }
 
   public static PsiPackage getContainingPackage(final PsiClass psiClass) {

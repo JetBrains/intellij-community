@@ -1,8 +1,8 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,7 +37,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
   private void doTest(final String className, final String methodSignature, final String newName) throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        final PsiManager manager = PsiManager.getInstance(myProject);
+        final JavaPsiFacade manager = getJavaFacade();
         final PsiClass aClass = manager.findClass(className, GlobalSearchScope.moduleScope(myModule));
         assertNotNull(aClass);
         final PsiMethod methodBySignature = aClass.findMethodBySignature(manager.getElementFactory().createMethodFromText(

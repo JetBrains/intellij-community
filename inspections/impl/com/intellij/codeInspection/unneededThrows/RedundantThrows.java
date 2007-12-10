@@ -100,7 +100,8 @@ public class RedundantThrows extends GlobalInspectionTool {
     if (!throwsType.equalsToText("java.rmi.RemoteException")) return false;
     PsiClass aClass = psiMethod.getContainingClass();
     if (aClass == null) return false;
-    PsiClass remote = aClass.getManager().findClass("java.rmi.Remote", GlobalSearchScope.allScope(aClass.getProject()));
+    PsiClass remote =
+      JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.rmi.Remote", GlobalSearchScope.allScope(aClass.getProject()));
     return remote != null && aClass.isInheritor(remote, true);
   }
 

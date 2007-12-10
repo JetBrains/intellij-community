@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.compiler.Utils;
 import org.jetbrains.annotations.NonNls;
@@ -67,7 +68,7 @@ public class UIDesignerFavoriteNodeProvider implements FavoriteNodeProvider {
           return null;
         }
         if (className == null) return null;
-        final PsiClass classToBind = PsiManager.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+        final PsiClass classToBind = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (classToBind != null) {
           Form form = new Form(classToBind);
           final AbstractTreeNode node = new FormNode(project, form, viewSettings);
