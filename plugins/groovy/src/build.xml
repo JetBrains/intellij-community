@@ -23,6 +23,7 @@
   <property name="production.dest.groovy_rt" location="${production.dest}/groovy_rt"/>
   <property name="idea.dir" value="${project.dir}/lib/idea"/>
   <property name="idea.lib" location="${idea.dir}/lib"/>
+  <property name="idea.plugins" location="${idea.dir}/plugins"/>
   <property name="groovy.lib" value="${project.dir}/GDK"/>
   <property name="test.dir" value="${project.dir}/test"/>
   <property name="test.dest" value="${project.dir}/classes/test/Groovy"/>
