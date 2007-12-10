@@ -110,7 +110,6 @@ public class MavenToIdeaConverter {
     RootModelAdapter rootModel = new RootModelAdapter(module);
     rootModel.init(mavenProject.getFile().getParent());
     configFolders(rootModel, mavenProject);
-    configOutputDirs(rootModel, mavenProject);
     configDependencies(rootModel, mavenProject);
     rootModel.setLanguageLevel(getLanguageLevel(getLanguageLevel(mavenProject)));
     rootModel.commit();
@@ -172,9 +171,10 @@ public class MavenToIdeaConverter {
 
   private void configFolders(RootModelAdapter m, MavenProject p) {
     configSourceFolders(m, p);
-    configStandardGeneratedSources(m, p);
+    configFoldersUnderTargetDir(m, p);
     configBuildHelperPluginSources(m, p);
     configAntRunPluginSources(m, p);
+    configOutputFolders(m, p);
   }
 
   private void configSourceFolders(RootModelAdapter m, MavenProject p) {
@@ -193,11 +193,23 @@ public class MavenToIdeaConverter {
     }
   }
 
-  private void configStandardGeneratedSources(RootModelAdapter m, MavenProject p) {
-    String generatedDir = p.getBuild().getDirectory() + "/generated-sources";
-    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(generatedDir);
+  private void configFoldersUnderTargetDir(RootModelAdapter m, MavenProject p) {
+    String path = p.getBuild().getDirectory();
+    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
     if (dir == null) return;
 
+    for (VirtualFile f : dir.getChildren()) {
+      if (!f.isDirectory()) continue;
+      if (FileUtil.pathsEqual(f.getName(), "generated-sources")) {
+        addAllSubDirsAsSources(m, f);
+      }
+      else {
+       m.excludeRoot(f.getPath());
+      }
+    }
+  }
+
+  private void addAllSubDirsAsSources(RootModelAdapter m, VirtualFile dir) {
     for (VirtualFile f : dir.getChildren()) {
       if (!f.isDirectory()) continue;
       m.addSourceDir(f.getPath(), false);
@@ -244,7 +256,7 @@ public class MavenToIdeaConverter {
     }
   }
 
-  private void configOutputDirs(RootModelAdapter m, MavenProject p) {
+  private void configOutputFolders(RootModelAdapter m, MavenProject p) {
     Build build = p.getBuild();
 
     if (myPrefs.isUseMavenOutput()) {

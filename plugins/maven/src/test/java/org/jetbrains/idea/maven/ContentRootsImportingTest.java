@@ -418,4 +418,30 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getParentPath() + "/target/classes",
                        getParentPath() + "/target/test-classes");
   }
+  
+  public void testExcludingAllDirectoriesUnderTargetDir() throws Exception {
+    createProjectSubDir("target/foo");
+    createProjectSubDir("target/bar");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertExcludes("project", "target/foo", "target/bar");
+  }
+
+  public void testExcludingAllDirectoriesUnderTargetDirButGeneratedOnes() throws Exception {
+    createProjectSubDir("target/foo");
+    createProjectSubDir("target/generated-sources/bar");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertExcludes("project", "target/foo");
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources",
+                  "target/generated-sources/bar");
+  }
 }

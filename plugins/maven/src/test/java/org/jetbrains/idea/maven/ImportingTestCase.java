@@ -244,10 +244,9 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   }
 
   protected <T, U> void assertElementsAreEqual(T[] expected, Collection<U> actual) {
-    assertEquals(expected.length, actual.size());
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+    assertEquals(s, expected.length, actual.size());
     for (T eachExpected : expected) {
-      String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
-
       boolean found = false;
       for (U eachActual : actual) {
         if (eachExpected.equals(eachActual)) {
