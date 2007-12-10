@@ -4,9 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,15 +36,15 @@ public class MavenArtifactDownloader {
 
   private final MavenArtifactPreferences myPreferences;
   private final MavenEmbedder myEmbedder;
-  private final ProgressIndicator myProgressIndicator;
+  private final Progress myProgress;
 
-  public MavenArtifactDownloader(MavenArtifactPreferences preferences, MavenEmbedder embedder, ProgressIndicator progressIndicator) {
+  public MavenArtifactDownloader(MavenArtifactPreferences preferences, MavenEmbedder embedder, Progress p) {
     myPreferences = preferences;
     myEmbedder = embedder;
-    myProgressIndicator = progressIndicator;
+    myProgress = p;
   }
 
-  public static void download(final Project project) {
+  public static void download(final Project project) throws CanceledException {
     final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
     final MavenImporter importer = project.getComponent(MavenImporter.class);
 
@@ -77,18 +74,20 @@ public class MavenArtifactDownloader {
     try {
       final MavenEmbedder mavenEmbedder = project.getComponent(MavenCore.class).getState().createEmbedder();
 
-      ProgressManager.getInstance().run(new Task.Modal(project, ProjectBundle.message("maven.title.downloading"), true) {
-        public void run(ProgressIndicator indicator) {
-          Collection<MavenId> moduleIds = new ArrayList<MavenId>();
-          for (MavenProject mavenProject : projectsToModules.keySet()) {
-            moduleIds.add(new MavenId(mavenProject.getArtifact()));
+      try {
+        Progress.run(project, ProjectBundle.message("maven.title.downloading"), new Progress.Process() {
+          public void run(Progress p) throws MavenException, CanceledException {
+            Collection<MavenId> moduleIds = new ArrayList<MavenId>();
+            for (MavenProject mavenProject : projectsToModules.keySet()) {
+              moduleIds.add(new MavenId(mavenProject.getArtifact()));
+            }
+            new MavenArtifactDownloader(importer.getArtifactPreferences(), mavenEmbedder, p)
+              .download(project, mavenProjects, moduleIds, true);
           }
-          new MavenArtifactDownloader(importer.getArtifactPreferences(), mavenEmbedder, indicator)
-            .download(project, mavenProjects, moduleIds, true);
-        }
-      });
-
-      MavenEnv.releaseEmbedder(mavenEmbedder);
+        });
+      } finally {
+        MavenEnv.releaseEmbedder(mavenEmbedder);
+      }
     }
     catch (MavenException e) {
       LOG.info("Maven Embedder initialization failed: " + e.getMessage());
@@ -105,26 +104,26 @@ public class MavenArtifactDownloader {
     VirtualFileManager.getInstance().refresh(false);
   }
 
-  void download(Project project,
+  public void download(Project project,
                 Map<MavenProject, Collection<String>> mavenProjects,
                 Collection<MavenId> mappedToModules,
-                boolean demand) {
+                boolean demand) throws CanceledException {
     final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
     final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsState, mavenProjects.keySet(), mappedToModules);
 
-    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
+    myProgress.check();
 
     if (isEnabled(myPreferences.getDownloadSources(), demand)) {
       download(libraryArtifacts, MavenToIdeaConverter.SOURCES_CLASSIFIER);
     }
 
-    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
+    myProgress.check();
 
     if (isEnabled(myPreferences.getDownloadJavadoc(), demand)) {
       download(libraryArtifacts, MavenToIdeaConverter.JAVADOC_CLASSIFIER);
     }
 
-    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
+    myProgress.check();
 
     if (isEnabled(myPreferences.getDownloadPlugins(), demand)) {
       final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(mavenProjects);
@@ -133,7 +132,7 @@ public class MavenArtifactDownloader {
       projectsState.updateAllFiles();
     }
 
-    if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
+    myProgress.check();
 
     if (isEnabled(myPreferences.getGenerateSources(), demand)) {
       generateSources(project, createGenerateCommand(mavenProjects));
@@ -156,7 +155,7 @@ public class MavenArtifactDownloader {
     return level == MavenArtifactPreferences.UPDATE_MODE.ALWAYS || (level == MavenArtifactPreferences.UPDATE_MODE.ON_DEMAND && demand);
   }
 
-  static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(MavenProjectsState projectsState,
+  private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(MavenProjectsState projectsState,
                                                                        Collection<MavenProject> mavenProjects,
                                                                        Collection<MavenId> mappedToModules) {
     final Map<MavenId, Set<ArtifactRepository>> repositoryArtifacts = new TreeMap<MavenId, Set<ArtifactRepository>>();
@@ -188,20 +187,25 @@ public class MavenArtifactDownloader {
     return repositoryArtifacts;
   }
 
-  void download(final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, final String classifier) {
-    if (myProgressIndicator != null) myProgressIndicator.setText(ProjectBundle.message("maven.progress.downloading", classifier));
+  private void download(final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts, final String classifier) throws CanceledException {
+    myProgress.setText(ProjectBundle.message("maven.progress.downloading", classifier));
     int step = 0;
     for (Map.Entry<MavenId, Set<ArtifactRepository>> entry : libraryArtifacts.entrySet()) {
-      if (myProgressIndicator != null && myProgressIndicator.isCanceled()) return;
+      myProgress.check();
+
       final MavenId id = entry.getKey();
-      if (myProgressIndicator != null) {
-        myProgressIndicator.setFraction(((double)step++) / libraryArtifacts.size());
-        myProgressIndicator.setText2(id.toString());
-      }
+
+      myProgress.setFraction(((double)step++) / libraryArtifacts.size());
+      myProgress.setText2(id.toString());
+
       try {
-        myEmbedder.resolve(
-          myEmbedder.createArtifactWithClassifier(id.groupId, id.artifactId, id.version, MavenToIdeaConverter.JAR_TYPE, classifier),
-          new ArrayList<ArtifactRepository>(entry.getValue()), myEmbedder.getLocalRepository());
+        Artifact a = myEmbedder.createArtifactWithClassifier(id.groupId,
+                                                             id.artifactId,
+                                                             id.version,
+                                                             MavenToIdeaConverter.JAR_TYPE,
+                                                             classifier);
+        List<ArtifactRepository> remoteRepos = new ArrayList<ArtifactRepository>(entry.getValue());
+        myEmbedder.resolve(a, remoteRepos, myEmbedder.getLocalRepository());
       }
       catch (ArtifactResolutionException ignore) {
       }
@@ -213,20 +217,18 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private void downloadPlugins(final Map<Plugin, MavenProject> plugins) {
-    if (myProgressIndicator != null) myProgressIndicator.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
+  private void downloadPlugins(final Map<Plugin, MavenProject> plugins) throws CanceledException {
+    myProgress.setText(ProjectBundle.message("maven.progress.downloading", "plugins"));
 
     int step = 0;
 
     for (Map.Entry<Plugin, MavenProject> entry : plugins.entrySet()) {
       final Plugin plugin = entry.getKey();
-      if (myProgressIndicator != null){
-        myProgressIndicator.setFraction(((double)step++) / plugins.size());
-        if (myProgressIndicator.isCanceled()) {
-          return;
-        }
-        myProgressIndicator.setText2(plugin.getKey());
-      }
+
+      myProgress.check();
+      myProgress.setFraction(((double)step++) / plugins.size());
+      myProgress.setText2(plugin.getKey());
+
       MavenEmbedderAdapter.verifyPlugin(plugin, entry.getValue(), myEmbedder);
     }
   }

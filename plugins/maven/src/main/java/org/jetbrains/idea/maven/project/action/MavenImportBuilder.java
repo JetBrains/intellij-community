@@ -170,7 +170,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   private boolean runConfigurationProcess(String message, Progress.Process p) throws ConfigurationException {
     try {
-      new Progress().run(null, message, p);
+      Progress.run(null, message, p);
     }
     catch (MavenException e) {
       throw new ConfigurationException(e.getMessage());

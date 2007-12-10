@@ -23,11 +23,11 @@ public class SynchronizeWithMavenAction extends AnAction {
       try {
         new MavenImportProcessor(project).synchronize(true);
       }
-      catch (MavenException e1) {
+      catch (MavenException ex) {
         // TODO temporary catch block
-        throw new RuntimeException(e1);
+        throw new RuntimeException(ex);
       }
-      catch (CanceledException e1) {
+      catch (CanceledException ex) {
       }
     }
   }

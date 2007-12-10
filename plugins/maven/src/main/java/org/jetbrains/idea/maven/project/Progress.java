@@ -28,18 +28,23 @@ public class Progress {
     if (myIndicator != null) myIndicator.setText2(s);
   }
 
+  public void setFraction(double value) {
+    if (myIndicator != null) myIndicator.setFraction(value);
+  }
+
   public void check() throws CanceledException {
     if (myIndicator != null && myIndicator.isCanceled()) throw new CanceledException();
   }
 
-  public void run(Project p, String title, final Process t) throws MavenException, CanceledException {
+  public static void run(Project project, String title, final Process t) throws MavenException, CanceledException {
     final MavenException[] mavenEx = new MavenException[1];
     final CanceledException[] canceledEx = new CanceledException[1];
 
-    ProgressManager.getInstance().run(new Task.Modal(p, title, true) {
+    ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
       public void run(ProgressIndicator i) {
+        Progress progress = new Progress();
         try {
-          t.run(Progress.this);
+          t.run(progress);
         }
         catch (MavenException e) {
           mavenEx[0] = e;
