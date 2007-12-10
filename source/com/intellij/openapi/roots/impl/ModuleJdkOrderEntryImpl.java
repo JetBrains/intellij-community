@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleJdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -115,12 +116,10 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public ProjectJdk getJdk() {
-    if (myRootModel.isWritable() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      final Project project = myRootModel.getModule().getProject();
-      return ProjectJdksModel.getInstance(project).getProjectJdks().get(myJdk);
-    }
-
-    return myJdk;
+    if (ApplicationManager.getApplication().isUnitTestMode() || !myRootModel.isWritable()) return myJdk;
+    final Project project = getRootModel().getModule().getProject();
+    final ProjectJdksModel model = ProjectStructureConfigurable.getInstance(project).getJdkConfig().getJdksTreeModel();
+    return myJdkName != null ? (ProjectJdk)model.findSdk(myJdkName) : myJdk;
   }
 
   public String getJdkName() {
