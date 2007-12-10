@@ -22,11 +22,12 @@
   <version>VERSION</version>
   <vendor url="http://www.jetbrains.com">JetBrains Inc.</vendor>
   <idea-version since-build="7530" until-build="7999"/>
+  <depends optional="true" config-file="groovy-js-integration.xml">JavaScript</depends>
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"
-                        serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings"
+                        serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings"/>
     <fileEditorProvider
         implementation="org.jetbrains.plugins.grails.perspectives.DomainClassesRelationsEditorProvider"/>
     <renameHandler implementation="org.jetbrains.plugins.groovy.refactoring.rename.PropertyRenameHandler"/>
@@ -198,6 +199,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider
       </implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.addins.js.JavaScriptIntegrationSettings</implementation-class>
     </component>
   </application-components>
 

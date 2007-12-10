@@ -28,9 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -82,9 +81,9 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
       return;
     }
     if (myCbSpecifyType.isEnabled()) {
-      GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE = myCbSpecifyType.isSelected();
+      GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE = myCbSpecifyType.isSelected();
     }
-    GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_VISIBILITY = myVisibilityPanel.getVisibility();
+    GroovyApplicationSettings.getInstance().EXTRACT_METHOD_VISIBILITY = myVisibilityPanel.getVisibility();
     super.doOKAction();
   }
 
@@ -92,8 +91,8 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     myCbSpecifyType.setMnemonic(KeyEvent.VK_T);
     myCbSpecifyType.setEnabled(myHelper.specifyType());
     myCbSpecifyType.setSelected(myHelper.specifyType());
-    if (myCbSpecifyType.isEnabled() && GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE != null) {
-      myCbSpecifyType.setSelected(GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE);
+    if (myCbSpecifyType.isEnabled() && GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE != null) {
+      myCbSpecifyType.setSelected(GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE);
     }
 
     myCbSpecifyType.addChangeListener(new ChangeListener() {
@@ -173,7 +172,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
     myNameField = new EditorTextField("", myProject, GroovyFileType.GROOVY_FILE_TYPE);
     myVisibilityPanel = new VisibilityPanel();
 
-    String visibility = GroovyRefactoringSettings.getInstance().EXTRACT_METHOD_VISIBILITY;
+    String visibility = GroovyApplicationSettings.getInstance().EXTRACT_METHOD_VISIBILITY;
     if (visibility == null) {
       visibility = PsiModifier.PRIVATE;
     }

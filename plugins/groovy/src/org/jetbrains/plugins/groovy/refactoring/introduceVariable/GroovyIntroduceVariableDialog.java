@@ -30,9 +30,9 @@ import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSettings;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import javax.swing.*;
@@ -134,9 +134,9 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       myCbTypeSpec.setEnabled(false);
       myTypeComboBox.setEnabled(false);
     } else {
-      if (GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY != null) {
-        myCbTypeSpec.setSelected(GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
-        myTypeComboBox.setEnabled(GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
+      if (GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY != null) {
+        myCbTypeSpec.setSelected(GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
+        myTypeComboBox.setEnabled(GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY);
       } else {
         myCbTypeSpec.setSelected(true);
         myTypeComboBox.setEnabled(true);
@@ -147,8 +147,8 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       }
     }
 
-    if (GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS != null) {
-      myCbIsFinal.setSelected(GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
+    if (GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS != null) {
+      myCbIsFinal.setSelected(GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS);
     }
 
     myCbTypeSpec.addActionListener(new ActionListener() {
@@ -229,10 +229,10 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
       return;
     }
     if (myCbTypeSpec.isEnabled()) {
-      GroovyRefactoringSettings.getInstance().SPECIFY_TYPE_EXPLICITLY = myCbTypeSpec.isSelected();
+      GroovyApplicationSettings.getInstance().SPECIFY_TYPE_EXPLICITLY = myCbTypeSpec.isSelected();
     }
     if (myCbIsFinal.isEnabled()) {
-      GroovyRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
+      GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbIsFinal.isSelected();
     }
     super.doOKAction();
   }

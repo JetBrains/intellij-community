@@ -41,6 +41,9 @@
       <include name="**/*.jar"/>
       <exclude name="boot.jar"/>
     </fileset>
+    <fileset dir="${idea.plugins}">
+        <include name="**/JavascriptLanguage.jar"/>
+    </fileset>
   </path>
 
   <path id="tools.path">

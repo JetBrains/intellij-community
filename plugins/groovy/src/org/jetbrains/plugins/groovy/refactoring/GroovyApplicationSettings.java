@@ -15,40 +15,50 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
-import com.intellij.openapi.components.*;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
 
 @State(
-  name = "GroovyRefactoringSettings",
+  name = "GroovyApplicationSettings",
   storages = {
     @Storage(
       id ="groovy_config",
       file = "$APP_CONFIG$/groovy_config.xml"
     )}
 )
-public class GroovyRefactoringSettings implements PersistentStateComponent<GroovyRefactoringSettings> {
+public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {
 
   public Boolean SPECIFY_TYPE_EXPLICITLY = null;
   public Boolean INTRODUCE_LOCAL_CREATE_FINALS = null;
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
-  public String EXTRACT_METHOD_VISIBILITY = null; 
+  public String EXTRACT_METHOD_VISIBILITY = null;
 
-  public GroovyRefactoringSettings getState() {
+  private boolean myJsSupportEnabled = false;
+
+  public GroovyApplicationSettings getState() {
     return this;
   }
 
-  public void loadState(GroovyRefactoringSettings groovyRefactoringSettings) {
-    XmlSerializerUtil.copyBean(groovyRefactoringSettings, this);
+  public void loadState(GroovyApplicationSettings groovyApplicationSettings) {
+    XmlSerializerUtil.copyBean(groovyApplicationSettings, this);
   }
 
-  public static GroovyRefactoringSettings getInstance() {
-    return ServiceManager.getService(GroovyRefactoringSettings.class);
+  public static GroovyApplicationSettings getInstance() {
+    return ServiceManager.getService(GroovyApplicationSettings.class);
+  }
+
+  public boolean isJsSupportEnabled() {
+      return myJsSupportEnabled;
+  }
+
+  public void setJsSupportEnabled(final boolean jsSupportEnabled) {
+      myJsSupportEnabled = jsSupportEnabled;
   }
 }
