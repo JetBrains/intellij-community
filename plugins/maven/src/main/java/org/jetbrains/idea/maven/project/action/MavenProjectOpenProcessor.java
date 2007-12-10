@@ -33,11 +33,17 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
 public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
     getBuilder().setFiles(Arrays.asList(file));
 
+  try {
     if(!getBuilder().setProfiles(new ArrayList<String>())){
       return false;
     }
+  }
+  catch (ConfigurationException e) {
+    // todo handle correctly
+    return false;
+  }
 
-    final List<MavenProjectModel.Node> projects = getBuilder().getList();
+  final List<MavenProjectModel.Node> projects = getBuilder().getList();
     try {
       getBuilder().setList(projects);
     }

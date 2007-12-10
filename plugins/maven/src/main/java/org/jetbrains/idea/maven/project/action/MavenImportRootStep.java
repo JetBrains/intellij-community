@@ -79,7 +79,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     suggestProjectNameAndPath(preferences.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     return getImportContext().setRootDirectory(myRootPathComponent.getPath());
   }
 

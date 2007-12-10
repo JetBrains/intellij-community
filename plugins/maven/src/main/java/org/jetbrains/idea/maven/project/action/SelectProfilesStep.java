@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.action;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class SelectProfilesStep extends ProjectImportWizardStep {
     profileChooser.setElements(getBuilder().getProfiles(), false);
   }
 
-  public boolean validate() {
+  public boolean validate() throws ConfigurationException {
     return getBuilder().setProfiles(profileChooser.getMarkedElements());
   }
 

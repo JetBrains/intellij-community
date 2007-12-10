@@ -19,10 +19,7 @@ import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
-import org.jetbrains.idea.maven.project.MavenImportProcessor;
-import org.jetbrains.idea.maven.project.MavenImporterPreferences;
-import org.jetbrains.idea.maven.project.MavenProjectModel;
-import org.jetbrains.idea.maven.project.MavenWorkspacePreferencesComponent;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
@@ -31,7 +28,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class ProjectImportingTestCase extends IdeaTestCase {
+public abstract class ImportingTestCase extends IdeaTestCase {
   private File dir;
   private File repoDir;
 
@@ -349,20 +346,39 @@ public abstract class ProjectImportingTestCase extends IdeaTestCase {
     importProject();
   }
 
-  protected void importProject() {
-    importProjectWithProfiles();
+  protected void importProjectUnsafe(String xml) throws IOException, MavenException {
+    createProjectPom(xml);
+    importProjectWithProfilesUnsafe();
   }
 
-  protected void importProjectWithProfiles(String... profiles) {
-    List<VirtualFile> files = Collections.singletonList(projectPom);
-    List<String> profilesList = Arrays.asList(profiles);
+  protected void importProject() {
+    try {
+      importProjectWithProfiles();
+    }
+    catch (MavenException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
-    MavenImportProcessor p = new MavenImportProcessor(myProject);
-    p.createMavenProjectModel(new HashMap<VirtualFile, Module>(), files, profilesList);
-    p.createMavenToIdeaMapping(false);
-    p.resolve(myProject, profilesList);
-    p.commit(myProject, profilesList, false);
-    projectModel = p.getMavenProjectModel();
+  protected void importProjectWithProfiles(String... profiles) throws MavenException {
+    importProjectWithProfilesUnsafe(profiles);
+  }
+
+  private void importProjectWithProfilesUnsafe(String... profiles) throws MavenException {
+    try {
+      List<VirtualFile> files = Collections.singletonList(projectPom);
+      List<String> profilesList = Arrays.asList(profiles);
+
+      MavenImportProcessor p = new MavenImportProcessor(myProject);
+      p.createMavenProjectModel(new HashMap<VirtualFile, Module>(), files, profilesList, new Progress());
+      p.createMavenToIdeaMapping(false);
+      p.resolve(myProject, profilesList);
+      p.commit(myProject, profilesList, false);
+      projectModel = p.getMavenProjectModel();
+    }
+    catch (CanceledException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void putArtefactInLocalRepository(String groupId, String artefactId, String version, String timestamp, String build) {

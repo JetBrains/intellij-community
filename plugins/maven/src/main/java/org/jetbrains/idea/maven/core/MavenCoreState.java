@@ -1,11 +1,11 @@
 package org.jetbrains.idea.maven.core;
 
 import org.apache.maven.embedder.MavenEmbedder;
-import org.apache.maven.embedder.MavenEmbedderException;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
 
@@ -181,7 +181,7 @@ public class MavenCoreState implements Cloneable {
     }
   }
 
-  public MavenEmbedder createEmbedder () throws MavenEmbedderException {
+  public MavenEmbedder createEmbedder () throws MavenException {
     return MavenEnv.createEmbedder(getMavenHome(),
                                    getEffectiveLocalRepository(),
                                    getMavenSettingsFile(),

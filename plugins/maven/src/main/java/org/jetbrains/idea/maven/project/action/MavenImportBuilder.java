@@ -2,11 +2,9 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
@@ -60,7 +58,17 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   @Override
   public boolean validate(Project current, Project dest) {
-    return myImportProcessor.resolve(dest, myProfiles);
+    try {
+      myImportProcessor.resolve(dest, myProfiles);
+    }
+    catch (MavenException e) {
+      Messages.showErrorDialog(dest, e.getMessage(), getTitle());
+      return false;
+    }
+    catch (CanceledException e) {
+      return false;
+    }
+    return true;
   }
 
   public void commit(final Project project) {
@@ -103,36 +111,35 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return getImportRoot();
   }
 
-  public boolean setRootDirectory(final String root) {
+  public boolean setRootDirectory(final String root) throws ConfigurationException {
     myFiles = null;
     myProfiles = null;
     myImportProcessor = null;
 
     importRoot = FileFinder.refreshRecursively(root);
-    if (getImportRoot() != null) {
-      ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
-        public void run(ProgressIndicator indicator) {
-          indicator.setText(ProjectBundle.message("maven.locating.files"));
-          myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(), MavenEnv.POM_FILE, new ArrayList<VirtualFile>(), null, indicator,
-                                               getImporterPreferences().isLookForNested());
-          myProfiles = collectProfiles(myFiles);
-          if(myProfiles.isEmpty()){
-            createImportProcessor();
-          }
-          indicator.setText2("");
+    if (getImportRoot() == null) return false;
+
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new Progress.Process() {
+      public void run(Progress p) throws MavenException, CanceledException {
+        p.setText(ProjectBundle.message("maven.locating.files"));
+        myFiles = FileFinder.findFilesByName(getImportRoot().getChildren(),
+                                             MavenEnv.POM_FILE,
+                                             new ArrayList<VirtualFile>(), null,
+                                             p.getIndicator(),
+                                             getImporterPreferences().isLookForNested());
+
+        myProfiles = collectProfiles(myFiles);
+
+        if (myProfiles.isEmpty()) {
+          createImportProcessor(p);
         }
 
-        public void onCancel() {
-          myFiles = null;
-          myProfiles = null;
-          myImportProcessor = null;
-        }
-      });
-    }
-    return myFiles != null;
+        p.setText2("");
+      }
+    });
   }
 
-  private List<String> collectProfiles(final Collection<VirtualFile> files) {
+  private List<String> collectProfiles(Collection<VirtualFile> files) throws MavenException {
     final SortedSet<String> profiles = new TreeSet<String>();
 
     final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(getCoreState());
@@ -149,27 +156,35 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     return myProfiles;
   }
 
-  public boolean setProfiles(final List<String> profiles) {
+  public boolean setProfiles(final List<String> profiles) throws ConfigurationException {
     myImportProcessor = null;
     myProfiles = new ArrayList<String>(profiles);
-    ProgressManager.getInstance().run(new Task.Modal(null, ProjectBundle.message("maven.scanning.projects"), true) {
-      public void run(ProgressIndicator indicator) {
-        createImportProcessor();
-        if (indicator != null) {
-          indicator.setText2("");
-        }
-      }
 
-      public void onCancel() {
-        myImportProcessor = null;
+    return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new Progress.Process() {
+      public void run(Progress p) throws MavenException, CanceledException {
+        createImportProcessor(p);
+        p.setText2("");
       }
     });
-    return myImportProcessor != null;
   }
 
-  private void createImportProcessor() {
+  private boolean runConfigurationProcess(String message, Progress.Process p) throws ConfigurationException {
+    try {
+      new Progress().run(null, message, p);
+    }
+    catch (MavenException e) {
+      throw new ConfigurationException(e.getMessage());
+    }
+    catch (CanceledException e) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private void createImportProcessor(Progress p) throws MavenException, CanceledException {
     myImportProcessor = new MavenImportProcessor(getProject(), getCoreState(), getImporterPreferences(), getArtifactPreferences());
-    myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles);
+    myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles, p);
   }
 
   public List<MavenProjectModel.Node> getList() {

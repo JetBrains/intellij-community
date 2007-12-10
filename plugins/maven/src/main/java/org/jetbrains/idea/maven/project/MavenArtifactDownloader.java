@@ -17,7 +17,6 @@ import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.apache.maven.embedder.MavenEmbedderAdapter;
-import org.apache.maven.embedder.MavenEmbedderException;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
@@ -91,7 +90,7 @@ public class MavenArtifactDownloader {
 
       MavenEnv.releaseEmbedder(mavenEmbedder);
     }
-    catch (MavenEmbedderException e) {
+    catch (MavenException e) {
       LOG.info("Maven Embedder initialization failed: " + e.getMessage());
     }
 
@@ -207,9 +206,6 @@ public class MavenArtifactDownloader {
       catch (ArtifactResolutionException ignore) {
       }
       catch (ArtifactNotFoundException ignore) {
-      }
-      catch (CancelChecker.CancelledException e) {
-        return;
       }
       catch (Exception e) {
         LOG.warn("Exception during artifact resolution", e);

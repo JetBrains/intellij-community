@@ -5,6 +5,7 @@ import org.apache.maven.embedder.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -149,12 +150,15 @@ public class MavenEnv {
 
   @NotNull
   public static MavenEmbedder createEmbedder(String mavenHome, File localRepo, String userSettings, ClassLoader classLoader)
-    throws MavenEmbedderException {
+    throws MavenException {
 
     Configuration configuration = new DefaultConfiguration();
 
     configuration.setLocalRepository(localRepo);
-    configuration.setMavenEmbedderLogger(new MavenEmbedderConsoleLogger());
+
+    MavenEmbedderConsoleLogger l = new MavenEmbedderConsoleLogger();
+    l.setThreshold(MavenEmbedderLogger.LEVEL_WARN);
+    configuration.setMavenEmbedderLogger(l);
 
     final File userSettingsFile = resolveUserSettingsFile(userSettings);
     if (userSettingsFile != null) {
@@ -168,30 +172,21 @@ public class MavenEnv {
 
     configuration.setClassLoader(classLoader);
 
-    ConfigurationValidationResult validationResult = MavenEmbedder.validateConfiguration(configuration);
+    ConfigurationValidationResult result = MavenEmbedder.validateConfiguration(configuration);
 
-    if (!validationResult.isValid()) {
-      throw new MavenEmbedderException(getErrorString(validationResult, globalSettingsFile, userSettingsFile));
+    if (!result.isValid()) {
+      throw new MavenException(Arrays.asList(result.getGlobalSettingsException(),
+                                             result.getUserSettingsException()));
     }
 
     System.setProperty(PROP_MAVEN_HOME, mavenHome);
 
-    return new MavenEmbedder(configuration);
-  }
-
-  @NonNls
-  private static String getErrorString(final ConfigurationValidationResult validationResult,
-                                       final File globalSettingsFile,
-                                       final File userSettingsFile) {
-    return getErrorString(validationResult.isGlobalSettingsFilePresent(), "Global settings file missing", globalSettingsFile) +
-           getErrorString(validationResult.isGlobalSettingsFileParses(), "Global settings file malformed", globalSettingsFile) +
-           getErrorString(validationResult.isUserSettingsFilePresent(), "User settings file missing", userSettingsFile) +
-           getErrorString(validationResult.isUserSettingsFileParses(), "User settings file malformed", userSettingsFile);
-  }
-
-  @NonNls
-  private static String getErrorString(final boolean flag, @NonNls final String message, final File file) {
-    return flag ? "" : (message + " (" + (file != null ? file.getPath() : "null") + ").");
+    try {
+      return new MavenEmbedder(configuration);
+    }
+    catch (MavenEmbedderException e) {
+      throw new MavenException(e);
+    }
   }
 
   public static void releaseEmbedder(MavenEmbedder mavenEmbedder) {

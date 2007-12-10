@@ -4,7 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
 
-public class ContentRootsImportingTest extends ProjectImportingTestCase {
+public class ContentRootsImportingTest extends ImportingTestCase {
   public void testSimpleProjectStructure() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

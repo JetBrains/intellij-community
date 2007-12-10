@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
 import java.io.IOException;
 
-public class BasicProjectImportingTest extends ProjectImportingTestCase {
+public class BasicImportingTest extends ImportingTestCase {
   public void testProjectWithDependency() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -347,10 +347,16 @@ public class BasicProjectImportingTest extends ProjectImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>2</version>");
 
-    importProject();
-    assertModules("project", "m1", "m2");
+    // will fail when problem with ranges is solved in embedder
+    try {
+      importProject();
+      fail();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
 
-    // commented until the problem will be solved...
+    //assertModules("project", "m1", "m2");
     //assertModuleModuleDeps("m1", "m2");
     //assertModuleLibDeps("m1");
   }
