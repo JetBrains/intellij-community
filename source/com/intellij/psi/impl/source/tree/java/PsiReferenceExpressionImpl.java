@@ -61,14 +61,14 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     PsiImportList importList = ((PsiJavaFile)getContainingFile()).getImportList();
     PsiImportStatementBase singleImportStatement = importList.findSingleImportStatement(staticName);
     if (singleImportStatement == null) {
-      importList.add(getManager().getElementFactory().createImportStaticStatement(qualifierClass, staticName));
+      importList.add(JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
     }
     else {
       if (singleImportStatement instanceof PsiImportStaticStatement) {
         String qName = qualifierClass.getQualifiedName() + "." + staticName;
         if (qName.equals(singleImportStatement.getImportReference().getQualifiedName())) return this;
       }
-      PsiReferenceExpression classRef = getManager().getElementFactory().createReferenceExpression(qualifierClass);
+      PsiReferenceExpression classRef = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createReferenceExpression(qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, treeCharTab, getManager());
       addInternal(dot, dot, SourceTreeToPsiMap.psiElementToTree(getParameterList()), Boolean.TRUE);
@@ -176,7 +176,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
       }
       final String packageName = getCachedTextSkipWhiteSpaceAndComments();
       final PsiManager manager = getManager();
-      final PsiPackage aPackage = manager.findPackage(packageName);
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
       if (aPackage == null) {
         if (!JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)) {
           return JavaResolveResult.EMPTY_ARRAY;
@@ -370,7 +370,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
     final PsiClass psiClass = importStaticStatement.resolveTargetClass();
     if (psiClass == null) return renameDirectly(newElementName);
-    final PsiElementFactory factory = getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
     final PsiReferenceExpression expression = (PsiReferenceExpression)factory.createExpressionFromText("X." + newElementName, this);
     final PsiReferenceExpression result = (PsiReferenceExpression)replace(expression);
     ((PsiReferenceExpression)result.getQualifierExpression()).bindToElement(psiClass);
@@ -384,7 +384,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     }
     final String oldRefName = oldIdentifier.getText();
     if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName)) return this;
-    PsiIdentifier identifier = getManager().getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -398,7 +398,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
     if (element instanceof PsiClass) {
       String qName = ((PsiClass)element).getQualifiedName();
       if (qName == null) throw new IncorrectOperationException("Cannot bind to unqualified class: "+element);
-      if (getManager().findClass(qName, getResolveScope()) == null) {
+      if (JavaPsiFacade.getInstance(getManager().getProject()).findClass(qName, getResolveScope()) == null) {
         return this;
       }
       boolean preserveQualification = CodeStyleSettingsManager.getSettings(getProject()).USE_FQ_CLASS_NAMES && isFullyQualified(this);

@@ -61,7 +61,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiManager psiManager = myMethodCall.getManager();
     final PsiFile callSite = myMethodCall.getContainingFile();
     final Project project = psiManager.getProject();
-    PsiElementFactory elementFactory = psiManager.getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 

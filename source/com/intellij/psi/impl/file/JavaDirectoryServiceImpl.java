@@ -32,7 +32,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
     String packageName = projectFileIndex.getPackageNameByDirectory(dir.getVirtualFile());
     if (packageName == null) return null;
-    return dir.getManager().findPackage(packageName);
+    return JavaPsiFacade.getInstance(dir.getManager().getProject()).findPackage(packageName);
   }
 
   @NotNull
@@ -173,7 +173,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
       return module.getEffectiveLanguageLevel();
     }
 
-    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
+    return JavaPsiFacade.getInstance(project).getEffectiveLanguageLevel();
   }
 
 }

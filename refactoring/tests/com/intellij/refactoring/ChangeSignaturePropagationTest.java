@@ -10,8 +10,8 @@ import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.containers.HashSet;
 
-import java.util.Set;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author ven
@@ -36,7 +36,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
   private void parameterPropagationTest() throws Exception {
     PsiMethod method = getPrimaryMethod();
     PsiClass aClass = method.getContainingClass();
-    PsiType newParamType = myPsiManager.getElementFactory().createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myProject));
+    PsiType newParamType = myJavaFacade.getElementFactory().createTypeByFQClassName("java.lang.Class", GlobalSearchScope.allScope(myProject));
     final ParameterInfo[] newParameters = new ParameterInfo[]{new ParameterInfo(-1, "clazz", newParamType, "null")};
     final Set<PsiMethod> methodsToPropagateParameters = new HashSet<PsiMethod>(Arrays.asList(aClass.getMethods()));
     doTest(newParameters, new ThrownExceptionInfo[0], methodsToPropagateParameters, null, method);
@@ -45,7 +45,7 @@ public class ChangeSignaturePropagationTest extends CodeInsightTestCase {
   private void exceptionPropagationTest() throws Exception {
     PsiMethod method = getPrimaryMethod();
     PsiClass aClass = method.getContainingClass();
-    PsiClassType newExceptionType = myPsiManager.getElementFactory().createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(myProject));
+    PsiClassType newExceptionType = myJavaFacade.getElementFactory().createTypeByFQClassName("java.lang.Exception", GlobalSearchScope.allScope(myProject));
     final ThrownExceptionInfo[] newExceptions = new ThrownExceptionInfo[]{new ThrownExceptionInfo(-1, newExceptionType)};
     final Set<PsiMethod> methodsToPropagateExceptions = new HashSet<PsiMethod>(Arrays.asList(aClass.getMethods()));
     doTest(new ParameterInfo[0], newExceptions, null, methodsToPropagateExceptions, method);

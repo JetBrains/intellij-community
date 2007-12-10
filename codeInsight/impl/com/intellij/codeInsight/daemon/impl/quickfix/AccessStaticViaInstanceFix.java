@@ -48,7 +48,7 @@ public class AccessStaticViaInstanceFix implements LocalQuickFix {
     if (containingClass == null) return;
     try {
       PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-      PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       if (qualifierExpression instanceof PsiThisExpression &&
           ((PsiThisExpression) qualifierExpression).getQualifier() == null) {
         // this.field -> field

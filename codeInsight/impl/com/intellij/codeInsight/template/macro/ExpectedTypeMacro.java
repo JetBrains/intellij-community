@@ -34,7 +34,7 @@ public class ExpectedTypeMacro implements Macro{
   public Result calculateResult(Expression[] params, ExpressionContext context) {
     PsiType[] types = getExpectedTypes(params, context);
     if (types == null || types.length == 0) return null;
-    return new PsiTypeResult(types[0], PsiManager.getInstance(context.getProject()));
+    return new PsiTypeResult(types[0], context.getProject());
   }
 
   public Result calculateQuickResult(Expression[] params, ExpressionContext context) {

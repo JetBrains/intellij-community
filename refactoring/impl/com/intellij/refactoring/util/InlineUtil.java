@@ -1,12 +1,12 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +36,7 @@ public class InlineUtil {
     if (exprType != null && !varType.equals(exprType)) {
       boolean matchedTypes = false;
       //try explicit type arguments
-      final PsiElementFactory elementFactory = manager.getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       if (expr instanceof PsiCallExpression && ((PsiCallExpression)expr).getTypeArguments().length == 0) {
         final JavaResolveResult resolveResult = ((PsiCallExpression)initializer).resolveMethodGenerics();
         final PsiElement resolved = resolveResult.getElement();
@@ -74,7 +74,7 @@ public class InlineUtil {
           }, ","));
           builder.append('}');
 
-          expr.replace(manager.getElementFactory().createExpressionFromText(builder.toString(), argumentList));
+          expr.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(builder.toString(), argumentList));
 
         } else {
           //try cast

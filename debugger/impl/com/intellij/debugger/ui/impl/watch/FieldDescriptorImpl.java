@@ -48,7 +48,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
     if (context.getFrameProxy() == null) return null;
     final ReferenceType type = myField.declaringType();
-    final PsiManager psiManager = PsiManager.getInstance(project);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String fieldName = myField.name();
     if (fieldName.startsWith("val$")) {
       // this field actually mirrors a local variable in the outer class
@@ -62,14 +62,15 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
         return null;
       }
       aClass = (PsiClass) aClass.getNavigationElement();
-      PsiVariable psiVariable = psiManager.getResolveHelper().resolveReferencedVariable(varName, aClass);
+      PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(varName, aClass);
       if (psiVariable == null) {
         return null;
       }
       return SourcePosition.createFromOffset(psiVariable.getContainingFile(), psiVariable.getTextOffset());
     }
     else {
-      PsiClass aClass = psiManager.findClass(type.name().replace('$', '.'), GlobalSearchScope.allScope(myProject));
+      PsiClass aClass =
+        facade.findClass(type.name().replace('$', '.'), GlobalSearchScope.allScope(myProject));
       if (aClass == null) return null;
       aClass = (PsiClass) aClass.getNavigationElement();
       PsiField[] fields = aClass.getFields();
@@ -144,7 +145,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = PsiManager.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     String fieldName;
     if(isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');

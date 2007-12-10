@@ -102,7 +102,7 @@ abstract class AddFieldBreakpointDialog extends DialogWrapper {
     if ("".equals(classQName)) {
       return null;
     }
-    return psiManager.findClass(classQName, GlobalSearchScope.allScope(myProject));
+    return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));
   }
 
   public JComponent getPreferredFocusedComponent() {

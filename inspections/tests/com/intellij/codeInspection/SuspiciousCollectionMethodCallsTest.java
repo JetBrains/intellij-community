@@ -10,7 +10,7 @@ public class SuspiciousCollectionMethodCallsTest extends InspectionTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myJavaFacade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
 

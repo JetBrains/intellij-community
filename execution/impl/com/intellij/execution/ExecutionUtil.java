@@ -9,10 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,9 +52,8 @@ public class ExecutionUtil {
 
   public static PsiClass findMainClass(final Module module, final String mainClassName) {
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    return psiManager.
-      findClass(mainClassName.replace('$', '.'),
-                GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return JavaPsiFacade.getInstance(psiManager.getProject())
+      .findClass(mainClassName.replace('$', '.'), GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
   }
 
   public static boolean isNewName(final String name) {

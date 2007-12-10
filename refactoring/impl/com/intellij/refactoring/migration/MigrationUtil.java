@@ -88,7 +88,7 @@ public class MigrationUtil {
   }
 
   static PsiPackage findOrCreatePackage(PsiManager manager, PsiMigration migration, String qName) {
-    PsiPackage aPackage = manager.findPackage(qName);
+    PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(qName);
     if (aPackage != null){
       return aPackage;
     }
@@ -98,7 +98,7 @@ public class MigrationUtil {
   }
 
   static PsiClass findOrCreateClass(PsiManager manager, PsiMigration migration, String qName) {
-    PsiClass aClass = manager.findClass(qName);
+    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName);
     if (aClass == null){
       aClass = migration.createClass(qName);
     }

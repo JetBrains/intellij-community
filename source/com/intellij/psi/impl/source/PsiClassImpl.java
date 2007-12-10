@@ -161,7 +161,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
 
     if (vFile == null || !idx.isInLibrarySource(vFile)) return this;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
-    PsiClass original = myManager.findClass(getQualifiedName(), new GlobalSearchScope() {
+    PsiClass original = JavaPsiFacade.getInstance(myManager.getProject()).findClass(getQualifiedName(), new GlobalSearchScope() {
       public int compare(VirtualFile file1, VirtualFile file2) {
         return 0;
       }
@@ -670,9 +670,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
         try {
           if (myValuesMethod == null || myValueOfMethod == null || !name.equals(myCachedForLongName)) {
             myCachedForLongName = name;
-            final PsiMethod valuesMethod = getManager().getElementFactory().createMethodFromText("public static " + name + "[] values() {}", this);
+            final PsiMethod valuesMethod = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createMethodFromText("public static " + name + "[] values() {}", this);
             myValuesMethod = new LightMethod(getManager(), valuesMethod, this);
-            final PsiMethod valueOfMethod = getManager().getElementFactory().createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
+            final PsiMethod valueOfMethod = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createMethodFromText("public static " + name + " valueOf(String name) throws IllegalArgumentException {}", this);
             myValueOfMethod = new LightMethod(getManager(), valueOfMethod, this);
           }
           final NameHint nameHint = processor.getHint(NameHint.class);

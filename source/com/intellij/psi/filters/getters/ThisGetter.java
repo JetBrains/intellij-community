@@ -19,7 +19,7 @@ public class ThisGetter implements ContextGetter{
   public Object[] get(PsiElement context, CompletionContext completionContext) {
     boolean first = true;
     final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
-    final PsiElementFactory factory = context.getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
 
     while(context != null){
       if(context instanceof PsiClass){

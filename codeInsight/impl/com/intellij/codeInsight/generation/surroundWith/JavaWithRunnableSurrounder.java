@@ -17,7 +17,7 @@ class JavaWithRunnableSurrounder extends JavaStatementsSurrounder{
 
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
     PsiManager manager = container.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     @NonNls String text = "Runnable runnable = new Runnable(){\npublic void run(){\n}};";

@@ -171,7 +171,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   private PsiCodeFragment createDefaultValueCodeFragment(final String expressionText, final PsiType expectedType) {
-    PsiExpressionCodeFragment codeFragment = myParameterList.getManager().getElementFactory().createExpressionCodeFragment(expressionText,
+    PsiExpressionCodeFragment codeFragment = JavaPsiFacade.getInstance(myParameterList.getProject()).getElementFactory().createExpressionCodeFragment(expressionText,
                                                                                                                            myReferenceExpression, expectedType, true);
     codeFragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return codeFragment;
@@ -206,7 +206,7 @@ class ParameterTableModel extends AbstractTableModel implements RowEditableTable
   }
 
   private PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
-    return myParameterList.getManager().getElementFactory().createTypeCodeFragment(
+    return JavaPsiFacade.getInstance(myParameterList.getProject()).getElementFactory().createTypeCodeFragment(
         typeText, context, false, true, true
       );
   }

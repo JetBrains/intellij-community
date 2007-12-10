@@ -113,7 +113,7 @@ public class GuessManagerImpl extends GuessManager {
 
     for (PsiClass derivedClass : processor.getCollection()) {
       if (derivedClass instanceof PsiAnonymousClass) continue;
-      PsiType derivedType = manager.getElementFactory().createType(derivedClass);
+      PsiType derivedType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(derivedClass);
       set.add(derivedType);
     }
   }

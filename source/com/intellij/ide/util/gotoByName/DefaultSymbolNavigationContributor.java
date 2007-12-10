@@ -49,7 +49,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   }
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    PsiShortNamesCache cache = PsiManager.getInstance(project).getShortNamesCache();
+    PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
     HashSet<String> set = new HashSet<String>();
     cache.getAllMethodNames(includeNonProjectItems, set);
     cache.getAllFieldNames(includeNonProjectItems, set);
@@ -59,7 +59,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    PsiShortNamesCache cache = PsiManager.getInstance(project).getShortNamesCache();
+    PsiShortNamesCache cache = JavaPsiFacade.getInstance(project).getShortNamesCache();
 
     PsiMethod[] methods = cache.getMethodsByName(name, scope);
     methods = filterInheritedMethods(methods);

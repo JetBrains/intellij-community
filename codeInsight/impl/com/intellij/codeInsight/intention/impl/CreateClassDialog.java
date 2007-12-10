@@ -12,19 +12,19 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.ui.RecentsManager;
+import com.intellij.ui.ReferenceEditorComboWithBrowseButton;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -121,7 +121,7 @@ public class CreateClassDialog extends DialogWrapper {
 
       myTfClassName.getDocument().addDocumentListener(new DocumentAdapter() {
         protected void textChanged(DocumentEvent e) {
-          getOKAction().setEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myTfClassName.getText()));
+          getOKAction().setEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myTfClassName.getText()));
         }
       });
       getOKAction().setEnabled(myClassName != null);

@@ -52,7 +52,7 @@ public class ImportClassFix implements IntentionAction {
   }
 
   private List<PsiClass> getClassesToImport(PsiManager manager) {
-    PsiShortNamesCache cache = manager.getShortNamesCache();
+    PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
     String name = myRef.getReferenceName();
     GlobalSearchScope scope = myRef.getResolveScope();
     PsiClass[] classes = cache.getClassesByName(name, scope);

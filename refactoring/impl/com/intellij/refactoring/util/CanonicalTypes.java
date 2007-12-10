@@ -119,7 +119,7 @@ public class CanonicalTypes {
     }
 
     public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-      return context.getManager().getElementFactory().createTypeFromText(myText, context);
+      return JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createTypeFromText(myText, context);
     }
 
     public String getTypeText() {
@@ -142,8 +142,9 @@ public class CanonicalTypes {
     }
 
     public PsiType getType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-      final PsiElementFactory factory = manager.getElementFactory();
-      final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+      final PsiElementFactory factory = facade.getElementFactory();
+      final PsiResolveHelper resolveHelper = facade.getResolveHelper();
       final PsiClass aClass = resolveHelper.resolveReferencedClass(myClassQName, context);
       if (aClass == null) {
         return factory.createTypeFromText(myClassQName, context);

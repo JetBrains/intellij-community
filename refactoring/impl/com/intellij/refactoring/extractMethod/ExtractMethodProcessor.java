@@ -125,7 +125,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myHelpId = helpId;
 
     myManager = PsiManager.getInstance(myProject);
-    myElementFactory = myManager.getElementFactory();
+    myElementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     myStyleManager = CodeStyleManager.getInstance(myProject);
   }
 
@@ -945,7 +945,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     PsiReferenceList throwsList = newMethod.getThrowsList();
     for (PsiClassType exception : exceptions) {
-      throwsList.add(myManager.getElementFactory().createReferenceElementByType(exception));
+      throwsList.add(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createReferenceElementByType(exception));
     }
 
     return (PsiMethod)myStyleManager.reformat(newMethod);

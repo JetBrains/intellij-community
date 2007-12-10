@@ -544,7 +544,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private static boolean isMainMethod(PsiMethod method) {
     if (!PsiType.VOID.equals(method.getReturnType())) return false;
-    PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     try {
       PsiMethod appMain = factory.createMethodFromText("void main(String[] args);", null);
       if (MethodSignatureUtil.areSignaturesEqual(method, appMain)) return true;

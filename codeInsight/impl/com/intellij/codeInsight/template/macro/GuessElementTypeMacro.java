@@ -8,7 +8,10 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiWildcardType;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -29,7 +32,7 @@ public class GuessElementTypeMacro implements Macro {
   public Result calculateResult(Expression[] params, final ExpressionContext context) {
     PsiType[] types = guessTypes(params, context);
     if (types == null || types.length == 0) return null;
-    return new PsiTypeResult(types[0], PsiManager.getInstance(context.getProject()));
+    return new PsiTypeResult(types[0], context.getProject());
   }
 
   public Result calculateQuickResult(Expression[] params, ExpressionContext context) {

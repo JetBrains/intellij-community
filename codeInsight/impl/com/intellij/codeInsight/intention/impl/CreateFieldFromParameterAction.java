@@ -167,7 +167,7 @@ public class CreateFieldFromParameterAction implements IntentionAction {
       public void run() {
         try {
           PsiManager psiManager = PsiManager.getInstance(project);
-          PsiElementFactory factory = psiManager.getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
           PsiField field = factory.createField(fieldName, type);
           PsiModifierList modifierList = field.getModifierList();

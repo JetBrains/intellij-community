@@ -61,7 +61,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private boolean addParameterToConstructor(final Project project, final PsiFile file, final Editor editor, PsiMethod constructor) throws IncorrectOperationException {
     PsiParameter[] parameters = constructor.getParameterList().getParameters();
     PsiExpression[] expressions = new PsiExpression[parameters.length+1];
-    PsiElementFactory factory = file.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       String value = PsiTypesUtil.getDefaultValueOfType(parameter.getType());

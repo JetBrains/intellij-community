@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -90,11 +91,11 @@ public class AppletConfigurationType implements LocatableConfigurationType {
     final GlobalSearchScope scope = module != null
                               ? GlobalSearchScope.moduleWithLibrariesScope(module)
                               : GlobalSearchScope.projectScope(manager.getProject());
-    PsiClass appletClass = manager.findClass("java.applet.Applet", scope);
+    PsiClass appletClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.applet.Applet", scope);
     if (appletClass != null) {
       if (aClass.isInheritor(appletClass, true)) return true;
     }
-    appletClass = manager.findClass("javax.swing.JApplet", scope);
+    appletClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("javax.swing.JApplet", scope);
     if (appletClass != null) {
       if (aClass.isInheritor(appletClass, true)) return true;
     }

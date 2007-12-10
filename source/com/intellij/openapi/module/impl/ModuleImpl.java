@@ -28,7 +28,7 @@ import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModule;
 import com.intellij.pom.core.impl.PomModuleImpl;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -321,7 +321,7 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     LanguageLevel level = getLanguageLevel();
     if (level != null) return level;
-    return PsiManager.getInstance(myProject).getEffectiveLanguageLevel();
+    return JavaPsiFacade.getInstance(myProject).getEffectiveLanguageLevel();
   }
   
   @Nullable

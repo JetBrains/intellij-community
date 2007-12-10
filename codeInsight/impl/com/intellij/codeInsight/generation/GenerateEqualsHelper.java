@@ -67,8 +67,9 @@ public class GenerateEqualsHelper implements Runnable {
     }
     final PsiManager manager = PsiManager.getInstance(project);
 
-    myFactory = manager.getElementFactory();
-    myJavaLangObject = manager.findClass(CommonClassNames.JAVA_LANG_OBJECT, aClass.getResolveScope());
+    myFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    myJavaLangObject =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, aClass.getResolveScope());
     if (myJavaLangObject == null) {
       throw new NoObjectClassException();
     }

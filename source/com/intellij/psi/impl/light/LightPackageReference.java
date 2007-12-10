@@ -25,7 +25,7 @@ public class LightPackageReference extends LightElement implements PsiJavaCodeRe
 
   public PsiElement resolve(){
     if (myPackageName != null){
-      return myManager.findPackage(myPackageName);
+      return JavaPsiFacade.getInstance(myManager.getProject()).findPackage(myPackageName);
     }
     else {
       return myRefPackage;

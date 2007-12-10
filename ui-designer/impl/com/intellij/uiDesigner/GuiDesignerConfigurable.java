@@ -146,7 +146,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable {
      * Removes all generated sources
      */
     private void vanishGeneratedSources() {
-      final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
+      final PsiShortNamesCache cache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
       final PsiMethod[] methods = cache.getMethodsByName(AsmCodeGenerator.SETUP_METHOD_NAME, GlobalSearchScope.projectScope(myProject));
 
       CodeInsightUtil.preparePsiElementsForWrite(Arrays.asList(methods));

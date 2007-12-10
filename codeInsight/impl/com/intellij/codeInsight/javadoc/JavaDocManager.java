@@ -780,7 +780,7 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
-    final PsiResolveHelper rh = expr.getManager().getResolveHelper();
+    final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
 
     final String text = expr.getText();

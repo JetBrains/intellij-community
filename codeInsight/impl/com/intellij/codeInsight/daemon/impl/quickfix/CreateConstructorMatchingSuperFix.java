@@ -83,7 +83,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
       new Runnable() {
         public void run() {
           try {
-            PsiElementFactory factory = myClass.getManager().getElementFactory();
+            PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
             CodeStyleManager reformatter = CodeStyleManager.getInstance(project);
             PsiMethod derived = null;
             for (PsiMethodMember candidate : constructors1) {

@@ -104,7 +104,7 @@ public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl im
           if (pair.getName() == null) {
             final String text = pair.getValue().getText();
             try {
-              final PsiAnnotation annotation = getManager().getElementFactory().createAnnotationFromText("@AAA(value = " + text + ")", null);
+              final PsiAnnotation annotation = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createAnnotationFromText("@AAA(value = " + text + ")", null);
               replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
             }
             catch (IncorrectOperationException e) {

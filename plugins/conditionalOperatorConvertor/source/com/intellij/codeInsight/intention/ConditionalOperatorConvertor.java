@@ -53,7 +53,7 @@ import org.jetbrains.annotations.Nullable;
     if (conditionalExpression == null) return;
     if (conditionalExpression.getThenExpression() == null || conditionalExpression.getElseExpression() == null) return;
 
-    final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     PsiElement originalStatement = PsiTreeUtil.getParentOfType(conditionalExpression, PsiStatement.class, false);
     while (originalStatement instanceof PsiForStatement) {

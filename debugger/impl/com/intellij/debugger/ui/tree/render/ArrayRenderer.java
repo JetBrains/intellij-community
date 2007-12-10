@@ -18,6 +18,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiManager;
@@ -179,9 +180,9 @@ public class ArrayRenderer extends NodeRendererImpl{
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
 
     final PsiManager manager = PsiManager.getInstance(node.getProject());
-    PsiElementFactory elementFactory = manager.getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     try {
-      LanguageLevel languageLevel = manager.getEffectiveLanguageLevel();
+      LanguageLevel languageLevel = JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel();
       return elementFactory.createExpressionFromText("this[" + descriptor.getIndex() + "]", elementFactory.getArrayClass(languageLevel));
     }
     catch (IncorrectOperationException e) {

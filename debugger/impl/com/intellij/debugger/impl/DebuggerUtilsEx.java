@@ -638,7 +638,8 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
             break;
           }
           final String qualifiedName = name.substring(0, separator);
-          final PsiClass psiClass = psiManager.findClass(qualifiedName, GlobalSearchScope.allScope(project));
+          final PsiClass psiClass =
+            JavaPsiFacade.getInstance(psiManager.getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project));
           if(psiClass != null) {
             int tail = separator + 1;
             while(tail < name.length() && Character.isDigit(name.charAt(tail))) tail ++;

@@ -173,7 +173,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   @Nullable
   private static PsiBinaryExpression breakStringLiteral(PsiLiteralExpression literalExpression, int offset) throws IncorrectOperationException {
     TextRange literalRange = literalExpression.getTextRange();
-    PsiElementFactory factory = literalExpression.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(literalExpression.getProject()).getElementFactory();
     if (literalRange.getStartOffset()+1 < offset && offset < literalRange.getEndOffset()-1) {
       PsiBinaryExpression expression = (PsiBinaryExpression)factory.createExpressionFromText("a + b", literalExpression);
       String value = (String)literalExpression.getValue();
@@ -189,7 +189,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler {
   }
 
   private PsiElement replaceStringLiteral(PsiLiteralExpression literalExpression, String i18nizedText) throws IncorrectOperationException {
-    PsiElementFactory factory = literalExpression.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(literalExpression.getProject()).getElementFactory();
     if (mySelectionRange != null) {
       try {
         PsiBinaryExpression binaryExpression = breakStringLiteral(literalExpression, mySelectionRange.getEndOffset());

@@ -1,5 +1,6 @@
 package com.intellij.psi.filters.classes;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -33,7 +34,7 @@ public abstract class ClassAssignableFilter implements ElementFilter{
     }
 
     if(myCachedClass.get() == null && manager != null){
-      myCachedClass = new SoftReference(manager.findClass(myClassName, scope));
+      myCachedClass = new SoftReference(JavaPsiFacade.getInstance(manager.getProject()).findClass(myClassName, scope));
     }
     return (PsiClass) myCachedClass.get();
   }

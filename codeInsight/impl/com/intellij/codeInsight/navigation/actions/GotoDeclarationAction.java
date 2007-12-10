@@ -131,8 +131,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         PsiElement referee = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(true).getElement();
         if (referee instanceof PsiClass) allowStatics = true;
       }
-      PsiManager manager = PsiManager.getInstance(project);
-      PsiResolveHelper helper = manager.getResolveHelper();
+      PsiResolveHelper helper = JavaPsiFacade.getInstance(project).getResolveHelper();
       PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
       ArrayList<PsiElement> methods = new ArrayList<PsiElement>();
       for (PsiElement candidate1 : candidates) {

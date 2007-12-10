@@ -1,12 +1,13 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.IButtonGroup;
@@ -18,7 +19,6 @@ import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -264,7 +264,7 @@ public final class ErrorAnalyzer {
     // Check that field has correct fieldType
     try {
       final String className = fieldClassName.replace('$', '.'); // workaround for PSI
-      final PsiType componentType = PsiManager.getInstance(module.getProject()).getElementFactory().createTypeFromText(
+      final PsiType componentType = JavaPsiFacade.getInstance(module.getProject()).getElementFactory().createTypeFromText(
         className,
         null
       );

@@ -1,12 +1,12 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
@@ -18,7 +18,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -115,7 +114,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
       EditorTextField field = myOldClassParameterNameFields.get(aClass);
       if (field.isEnabled()) {
         String parameterName = field.getText().trim();
-        if (!myMethod.getManager().getNameHelper().isIdentifier(parameterName)) {
+        if (!JavaPsiFacade.getInstance(myMethod.getProject()).getNameHelper().isIdentifier(parameterName)) {
           Messages
             .showErrorDialog(getProject(), RefactoringBundle.message("move.method.enter.a.valid.name.for.parameter"), myRefactoringName);
           return;

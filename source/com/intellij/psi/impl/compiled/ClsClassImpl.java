@@ -519,7 +519,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             }
             String name = field.getName();
             //if (name.indexOf('$') < 0 && name.indexOf('<') < 0){ // skip synthetic fields
-            if (myManager.getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated fields
+            if (JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name) && name.indexOf('$') < 0) { // skip synthetic&obfuscated fields
               array.add(field);
             }
             ptr.offset += 6;
@@ -586,7 +586,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
             ClsMethodImpl method = new ClsMethodImpl(this, ptr.offset);
             String name = method.getName();
             if (!method.isBridge() && !method.isSynthetic()) { //skip bridge & synthetic methods
-              if (myManager.getNameHelper().isIdentifier(name)) {
+              if (JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name)) {
                 array.add(method);
               }
             }
@@ -638,7 +638,7 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
           if (childName.startsWith(prefix)) {
             String innerName = childName.substring(prefix.length());
             if (innerName.indexOf('$') >= 0) continue;
-            if (!myManager.getNameHelper().isIdentifier(innerName)) continue;
+            if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(innerName)) continue;
             PsiClass aClass = new ClsClassImpl(myManager, this, new ClassFileData(child));
             array.add(aClass);
           }

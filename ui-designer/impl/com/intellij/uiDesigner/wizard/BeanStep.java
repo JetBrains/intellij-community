@@ -134,12 +134,12 @@ final class BeanStep extends StepAdapter{
         throw new CommitStepException(UIDesignerBundle.message("error.please.specify.class.name.of.the.bean.to.be.created"));
       }
       final PsiManager psiManager = PsiManager.getInstance(myData.myProject);
-      if(!psiManager.getNameHelper().isIdentifier(shortClassName)){
+      if(!JavaPsiFacade.getInstance(psiManager.getProject()).getNameHelper().isIdentifier(shortClassName)){
         throw new CommitStepException(UIDesignerBundle.message("error.X.is.not.a.valid.class.name", shortClassName));
       }
 
       final String packageName = myTfWithBtnChoosePackage.getText().trim();
-      if(packageName.length() != 0 && psiManager.findPackage(packageName) == null){
+      if(packageName.length() != 0 && JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(packageName) == null){
         throw new CommitStepException(UIDesignerBundle.message("error.package.with.name.X.does.not.exist", packageName));
       }
 
@@ -150,7 +150,8 @@ final class BeanStep extends StepAdapter{
       {
         final String fullClassName = packageName.length() != 0 ? packageName + "." + shortClassName : shortClassName;
         final Module module = ModuleUtil.findModuleForFile(myData.myFormFile, myData.myProject);
-        if (psiManager.findClass(fullClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null) {
+        if (JavaPsiFacade.getInstance(psiManager.getProject())
+          .findClass(fullClassName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null) {
           throw new CommitStepException(UIDesignerBundle.message("error.cannot.create.class.X.because.it.already.exists", fullClassName));
         }
       }

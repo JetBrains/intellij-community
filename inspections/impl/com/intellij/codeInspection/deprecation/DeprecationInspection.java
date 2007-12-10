@@ -83,7 +83,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         aClass = typeResult.getElement();
         if (aClass == null) return;
       }
-      final PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
       final PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length > 0 && list != null) {
         JavaResolveResult[] results = resolveHelper.multiResolveConstructor((PsiClassType)type, list, list);

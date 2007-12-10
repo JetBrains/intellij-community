@@ -14,6 +14,7 @@ import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -122,7 +123,8 @@ public class BuildJarSettings implements ModuleComponent, JDOMExternalizable {
   public void checkSettings() throws RuntimeConfigurationException {
     if (myMainClass != null && myMainClass.length() > 0) {
       final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
-      final PsiClass aClass = psiManager.findClass(myMainClass, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
+      final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject())
+        .findClass(myMainClass, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule));
       if (aClass == null) {
         throw new RuntimeConfigurationError(IdeBundle.message("jar.build.class.not.found", myMainClass));
       }

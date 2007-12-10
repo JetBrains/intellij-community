@@ -228,7 +228,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
       PsiTypeParameter parameter = it.next();
       if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
-    return getManager().findClass(myQualifiedName, getResolveScope());
+    return JavaPsiFacade.getInstance(getManager().getProject()).findClass(myQualifiedName, getResolveScope());
   }
 
   public void processVariants(PsiScopeProcessor processor) {

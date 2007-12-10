@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ven
@@ -34,7 +34,7 @@ public class CodeInsightServicesUtil {
   };
 
   public static PsiExpression invertCondition(PsiExpression booleanExpression) throws IncorrectOperationException {
-    PsiElementFactory factory = booleanExpression.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(booleanExpression.getProject()).getElementFactory();
 
     if (booleanExpression instanceof PsiBinaryExpression) {
       PsiBinaryExpression expression = (PsiBinaryExpression) booleanExpression;

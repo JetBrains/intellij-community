@@ -170,7 +170,7 @@ public class ChangeContextUtil {
                                                                   PsiExpression thisAccessExpr,
                                                                   PsiClass thisClass) throws IncorrectOperationException {
     PsiManager manager = refExpr.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     Project project = refExpr.getProject();
 
     PsiExpression qualifier = refExpr.getQualifierExpression();
@@ -271,7 +271,7 @@ public class ChangeContextUtil {
       if (!(qualifierRefElement instanceof PsiClass)) return false;
       PsiElement refElement = refExpr.resolve();
       if (refElement == null) return false;
-      PsiElementFactory factory = refExpr.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
       if (refExpr.getParent() instanceof PsiMethodCallExpression){
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)refExpr.getParent();
         PsiMethodCallExpression newMethodCall = (PsiMethodCallExpression)factory.createExpressionFromText(

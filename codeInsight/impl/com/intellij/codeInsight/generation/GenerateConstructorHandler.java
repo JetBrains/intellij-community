@@ -64,7 +64,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       PsiMethod[] methods = baseClass.getMethods();
       for (PsiMethod method : methods) {
         if (method.isConstructor()) {
-          if (method.getManager().getResolveHelper().isAccessible(method, aClass, aClass)) {
+          if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, aClass)) {
             array.add(method);
           }
         }
@@ -147,7 +147,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass, PsiMethod baseConstructor, boolean copyJavaDoc, PsiField[] fields) throws IncorrectOperationException {
     PsiManager manager = aClass.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
 
     PsiMethod constructor = factory.createConstructor();

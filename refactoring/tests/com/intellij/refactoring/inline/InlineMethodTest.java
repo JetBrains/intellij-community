@@ -17,12 +17,12 @@ public class InlineMethodTest extends CodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPreviousLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
-    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myPreviousLanguageLevel = getJavaFacade().getEffectiveLanguageLevel();
+    getJavaFacade().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected void tearDown() throws Exception {
-    getPsiManager().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    getJavaFacade().setEffectiveLanguageLevel(myPreviousLanguageLevel);
     super.tearDown();
   }
 

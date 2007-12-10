@@ -2,11 +2,11 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.light.LightClassReference;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -106,7 +106,7 @@ public class PsiClassReferenceType extends PsiClassType {
   public PsiClassType rawType() {
     PsiElement resolved = myReference.resolve();
     PsiManager manager = myReference.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (resolved instanceof PsiClass) {
       final PsiSubstitutor rawSubstitutor = factory.createRawSubstitutor((PsiClass) resolved);
       return factory.createType((PsiClass) resolved, rawSubstitutor, getLanguageLevel());

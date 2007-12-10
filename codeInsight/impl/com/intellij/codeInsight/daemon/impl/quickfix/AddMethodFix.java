@@ -7,10 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -44,7 +41,7 @@ public class AddMethodFix implements IntentionAction {
 
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
     try {
-      return implClass.getManager().getElementFactory().createMethodFromText(methodText, implClass);
+      return JavaPsiFacade.getInstance(implClass.getProject()).getElementFactory().createMethodFromText(methodText, implClass);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -40,7 +40,8 @@ public class InsertSuperFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(myConstructor.getContainingFile())) return;
     try {
-      PsiStatement superCall = myConstructor.getManager().getElementFactory().createStatementFromText("super();",null);
+      PsiStatement superCall =
+        JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText("super();",null);
 
       PsiCodeBlock body = myConstructor.getBody();
       PsiJavaToken lBrace = body.getLBrace();

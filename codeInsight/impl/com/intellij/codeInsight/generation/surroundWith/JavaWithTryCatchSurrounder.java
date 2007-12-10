@@ -23,7 +23,7 @@ public class JavaWithTryCatchSurrounder extends JavaStatementsSurrounder {
   public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements)
     throws IncorrectOperationException {
     PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, true);

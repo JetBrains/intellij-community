@@ -213,7 +213,7 @@ public class CopyReferenceAction extends AnAction {
         // pasting reference to default constructor of the class after new
         suffix = "()";
       }
-      final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       final PsiExpression expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);
       final PsiReferenceExpression referenceExpression = expression instanceof PsiMethodCallExpression
                                                          ? ((PsiMethodCallExpression)expression).getMethodExpression()

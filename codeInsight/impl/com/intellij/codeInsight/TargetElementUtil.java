@@ -229,7 +229,7 @@ public class TargetElementUtil {
       if (refElement instanceof PsiClass && refElement.getContainingFile().getVirtualFile() == null) { // in mirror file of compiled class
         String qualifiedName = ((PsiClass)refElement).getQualifiedName();
         if (qualifiedName == null) return null;
-        return manager.findClass(qualifiedName, refElement.getResolveScope());
+        return JavaPsiFacade.getInstance(manager.getProject()).findClass(qualifiedName, refElement.getResolveScope());
       }
       return refElement;
     }

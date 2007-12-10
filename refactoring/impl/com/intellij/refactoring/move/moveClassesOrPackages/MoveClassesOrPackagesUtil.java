@@ -154,7 +154,7 @@ public class MoveClassesOrPackagesUtil {
 
     aPackage.handleQualifiedNameChange(newPackageQualifiedName);
 
-    return manager.findPackage(newPackageQualifiedName);
+    return JavaPsiFacade.getInstance(manager.getProject()).findPackage(newPackageQualifiedName);
   }
 
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
@@ -295,7 +295,7 @@ public class MoveClassesOrPackagesUtil {
     }
     else {
       if (packageName.length() > 0) {
-        javaFile.add(manager.getElementFactory().createPackageStatement(packageName));
+        javaFile.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createPackageStatement(packageName));
       }
     }
   }

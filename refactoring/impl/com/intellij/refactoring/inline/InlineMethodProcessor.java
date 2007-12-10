@@ -72,7 +72,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myInlineThisOnly = isInlineThisOnly;
 
     myManager = PsiManager.getInstance(myProject);
-    myFactory = myManager.getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
     myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
     myDescriptiveName = UsageViewUtil.getDescriptiveName(myMethod);
@@ -719,7 +719,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
           final PsiClass varThisClass = RefactoringUtil.getThisClass(variable);
           if (RefactoringUtil.getThisClass(javaRef) != varThisClass) {
-            initializer = myManager.getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
+            initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
           }
         }
 
@@ -953,7 +953,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         ChangeContextUtil.encodeContextInfo(initializer, false);
         final PsiElement element = resultUsage.replace(resultVar.getInitializer());
         ChangeContextUtil
-          .decodeContextInfo(element, thisClass, element.getManager().getElementFactory().createExpressionFromText("this", null));
+          .decodeContextInfo(element, thisClass, JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createExpressionFromText("this", null));
         declaration.delete();
       }
     }

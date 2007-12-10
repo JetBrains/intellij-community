@@ -19,10 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.jsp.JspManager;
@@ -152,7 +149,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
   private XmlAttribute insertNsDeclaration(final PsiFile file, final String namespace, final Project project)
     throws IncorrectOperationException {
     final XmlTag rootTag = ((XmlFile)file).getDocument().getRootTag();
-    final PsiElementFactory elementFactory = rootTag.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(rootTag.getProject()).getElementFactory();
 
     if (myTaglibDeclaration) {
       final XmlTag childTag = rootTag.createChildTag("directive.taglib", XmlUtil.JSP_URI, null, false);

@@ -77,7 +77,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       else {
         PsiPackage aPackage = null;
         if (file instanceof PsiJavaFile) {
-          aPackage = element.getManager().findPackage(((PsiJavaFile)file).getPackageName());
+          aPackage = JavaPsiFacade.getInstance(element.getManager().getProject()).findPackage(((PsiJavaFile)file).getPackageName());
         }
 
         if (aPackage == null) {
@@ -119,7 +119,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(file);
       }
       else {
-        PsiPackage aPackage = file instanceof PsiJavaFile ? myManager.findPackage(((PsiJavaFile) file).getPackageName()) : null;
+        PsiPackage aPackage = file instanceof PsiJavaFile ? JavaPsiFacade.getInstance(myManager.getProject())
+          .findPackage(((PsiJavaFile)file).getPackageName()) : null;
         if (aPackage != null) {
           SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
           scope = scope.intersectWith(maximalUseScope);

@@ -264,11 +264,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (typeParameters1.length == 0 || typeParameters2.length == 0) {
       if (typeParameters1.length > 0) {
-        final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myArgumentsList.getProject()).getResolveHelper();
         methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, types1, types2, resolveHelper);
       }
       else if (typeParameters2.length > 0) {
-        final PsiResolveHelper resolveHelper = myArgumentsList.getManager().getResolveHelper();
+        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myArgumentsList.getProject()).getResolveHelper();
         methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, types2, types1, resolveHelper);
       }
     }

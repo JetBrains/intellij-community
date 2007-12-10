@@ -46,7 +46,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
           final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           if (typeParameters.length > 0) {
             PsiType[] mappings = new PsiType[typeParameters.length];
-            PsiResolveHelper helper = expression.getManager().getResolveHelper();
+            PsiResolveHelper helper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
             LanguageLevel level = PsiUtil.getLanguageLevel(expression);
             for (int i = 0; i < typeParameters.length; i++) {
               PsiTypeParameter typeParameter = typeParameters[i];
@@ -55,7 +55,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
               mappings[i] = substitution;
             }
 
-            final PsiElementFactory factory = expression.getManager().getElementFactory();
+            final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
             PsiMethodCallExpression copy = (PsiMethodCallExpression)expression.copy();
             final PsiReferenceParameterList parameterList = copy.getMethodExpression().getParameterList();
             LOG.assertTrue(parameterList != null);

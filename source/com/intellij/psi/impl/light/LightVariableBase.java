@@ -56,7 +56,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   public PsiTypeElement getTypeElement() {
-    return getManager().getElementFactory().createTypeElement(myType);
+    return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createTypeElement(myType);
   }
 
   public PsiModifierList getModifierList() {

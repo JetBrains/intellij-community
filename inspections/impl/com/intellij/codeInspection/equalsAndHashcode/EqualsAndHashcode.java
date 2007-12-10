@@ -27,7 +27,7 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
         new Computable<PsiClass>() {
           @Nullable
           public PsiClass compute() {
-            return psiManager.findClass("java.lang.Object");
+            return JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.lang.Object");
           }
         }
     );

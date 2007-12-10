@@ -437,7 +437,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid () {
     String name = getParameterName();
-    return name != null && PsiManager.getInstance(myProject).getNameHelper().isIdentifier(name.trim());
+    return name != null && JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name.trim());
   }
 
 

@@ -118,9 +118,9 @@ public class PsiPrimitiveType extends PsiType {
     if (boxedQName == null) return null;
 
     PsiManager manager = context.getManager();
-    final PsiClass aClass = manager.findClass(boxedQName, context.getResolveScope());
+    final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, context.getResolveScope());
     if (aClass == null) return null;
-    return manager.getElementFactory().createType(aClass, PsiSubstitutor.EMPTY, languageLevel);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass, PsiSubstitutor.EMPTY, languageLevel);
   }
 
   @Nullable
@@ -130,9 +130,9 @@ public class PsiPrimitiveType extends PsiType {
     //[ven]previous call returns null for NULL, VOID
     if (boxedQName == null) return null;
 
-    final PsiClass aClass = manager.findClass(boxedQName, resolveScope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, resolveScope);
     if (aClass == null) return null;
-    return manager.getElementFactory().createType(aClass);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass);
   }
 
   @NonNls

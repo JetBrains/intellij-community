@@ -195,7 +195,7 @@ public class SystemBuilder {
                                                  PsiElement parent,
                                                  ReductionSystem system) {
     PsiType substitution = PsiType.NULL;
-    PsiResolveHelper helper = typeParameter.getManager().getResolveHelper();
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(typeParameter.getProject()).getResolveHelper();
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
         PsiExpression argument = arguments[j];
@@ -285,7 +285,7 @@ public class SystemBuilder {
     }
 
     PsiType returnType = ((PsiMethod)typeParameter.getOwner()).getReturnType();
-    PsiType guess = parent.getManager().getResolveHelper()
+    PsiType guess = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper()
       .getSubstitutionForTypeParameter(typeParameter, returnType, type, false, PsiUtil.getLanguageLevel(parent));
 
     if (guess == PsiType.NULL) {
@@ -353,13 +353,13 @@ public class SystemBuilder {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
             if (PsiKeyword.THIS.equals(methodExpression.getText())) {
-              aType = myManager.getElementFactory().createType(aClass);
+              aType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(aClass);
             }
             else {
               LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
               PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
               qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
-              aType = myManager.getElementFactory().createType(aClass, qualifierSubstitutor);
+              aType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(aClass, qualifierSubstitutor);
             }
           }
         }
@@ -463,7 +463,7 @@ public class SystemBuilder {
                               theSubst = theSubst.put(parm, type);
                             }
 
-                            return aClass.getManager().getElementFactory()
+                            return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
                               .createType(aClass, theSubst);
                           }
 
@@ -541,7 +541,7 @@ public class SystemBuilder {
                     }
                   }
 
-                  return Util.createArrayType(aClass.getManager().getElementFactory().createType(aClass, theSubst), level);
+                  return Util.createArrayType(JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst), level);
                 }
 
                 return Util.createArrayType(type, level);
@@ -847,7 +847,7 @@ public class SystemBuilder {
           theSubst = theSubst.put(p, replaceWildCards(aSubst.substitute(p), system, definedSubst));
         }
 
-        return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
       }
     }
 

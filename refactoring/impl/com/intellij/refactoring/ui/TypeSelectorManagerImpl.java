@@ -30,7 +30,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   private ExpectedTypesProvider myExpectedTypesProvider;
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression mainOccurence, PsiExpression[] occurrences) {
-    myFactory = PsiManager.getInstance(project).getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     myDefaultType = type;
     myMainOccurence = mainOccurence;
     myOccurrences = occurrences;
@@ -56,7 +56,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
   }
 
   public TypeSelectorManagerImpl(Project project, PsiType type, PsiExpression[] occurrences, boolean areTypesDirected) {
-    myFactory = PsiManager.getInstance(project).getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     myDefaultType = type;
     myMainOccurence = null;
     myOccurrences = occurrences;

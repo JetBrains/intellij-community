@@ -276,7 +276,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
   protected void performRefactoring(UsageInfo[] usages) {
     PsiManager manager = myMember.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     try {
       for (UsageInfo usage : usages) {

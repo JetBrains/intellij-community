@@ -305,7 +305,7 @@ public class PropertyUtil {
   }
 
   public static PsiMethod generateGetterPrototype(PsiField field) {
-    PsiElementFactory factory = field.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
     Project project = field.getProject();
     String name = field.getName();
     String getName = suggestGetterName(project, field);
@@ -332,7 +332,7 @@ public class PropertyUtil {
   public static PsiMethod generateSetterPrototype(PsiField field) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    PsiElementFactory factory = field.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
 
     String name = field.getName();
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);

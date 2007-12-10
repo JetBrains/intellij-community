@@ -156,7 +156,7 @@ public class LocalToFieldHandler {
             field.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
           }
           if (annotateAsNonNls) {
-            PsiAnnotation annotation = local.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
+            PsiAnnotation annotation = JavaPsiFacade.getInstance(local.getProject()).getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, field);
             field.getModifierList().addAfter(annotation, null);
           }
           field.getModifierList().setModifierProperty(fieldVisibility, true);
@@ -173,7 +173,7 @@ public class LocalToFieldHandler {
           else {
             finalInitializerPlace = initializerPlace;
           }
-          final PsiElementFactory factory = myManager.getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
 
           switch (finalInitializerPlace) {
             case IN_FIELD_DECLARATION:
@@ -232,7 +232,7 @@ public class LocalToFieldHandler {
       pattern.append("=0");
     }
     pattern.append(";");
-    PsiElementFactory factory = myManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
       field = (PsiField)CodeStyleManager.getInstance(myProject).reformat(field);

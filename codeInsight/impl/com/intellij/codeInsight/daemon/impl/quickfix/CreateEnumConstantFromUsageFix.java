@@ -1,13 +1,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +25,8 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
     final String name = myReferenceExpression.getReferenceName();
     LOG.assertTrue(name != null);
     try {
-      final PsiEnumConstant enumConstant = myReferenceExpression.getManager().getElementFactory().createEnumConstantFromText(name, null);
+      final PsiEnumConstant enumConstant =
+        JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createEnumConstantFromText(name, null);
       targetClass.add(enumConstant);
     }
     catch (IncorrectOperationException e) {
@@ -42,7 +40,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix {
     final List<PsiClass> classes = getTargetClasses(getElement());
     if (classes.size() != 1 || !classes.get(0).isEnum()) return false;
     ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
-    PsiType enumType = myReferenceExpression.getManager().getElementFactory().createType(classes.get(0));
+    PsiType enumType = JavaPsiFacade.getInstance(myReferenceExpression.getProject()).getElementFactory().createType(classes.get(0));
     for (final ExpectedTypeInfo typeInfo : typeInfos) {
       if (ExpectedTypeUtil.matches(enumType, typeInfo)) return true;
     }

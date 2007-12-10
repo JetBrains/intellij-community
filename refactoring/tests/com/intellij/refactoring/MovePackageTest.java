@@ -2,6 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
@@ -42,11 +43,11 @@ public class MovePackageTest extends MultiFileTestCase {
     final PsiPackage[] packages = new PsiPackage[packageNames.length];
     for (int i = 0; i < packages.length; i++) {
       String packageName = packageNames[i];
-      packages[i] = myPsiManager.findPackage(packageName);
+      packages[i] = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
       assertNotNull("Package " + packageName + " not found", packages[i]);
     }
 
-    PsiPackage newParentPackage = myPsiManager.findPackage(newPackageName);
+    PsiPackage newParentPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(newPackageName);
     assertNotNull(newParentPackage);
     final PsiDirectory[] dirs = newParentPackage.getDirectories();
     assertEquals(dirs.length, 1);

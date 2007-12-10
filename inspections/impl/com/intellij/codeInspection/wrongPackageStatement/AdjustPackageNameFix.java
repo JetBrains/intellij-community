@@ -2,12 +2,12 @@ package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix implements LocalQuickFix {
@@ -46,7 +46,7 @@ public class AdjustPackageNameFix implements LocalQuickFix {
     if (!CodeInsightUtil.prepareFileForWrite(myFile)) return;
 
     try {
-      PsiElementFactory factory = myFile.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myFile.getProject()).getElementFactory();
       if (myTargetPackage.getQualifiedName().length() == 0) {
         if (myStatement != null) {
           myStatement.delete();

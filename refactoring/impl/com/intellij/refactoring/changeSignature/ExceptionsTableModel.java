@@ -1,15 +1,15 @@
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.ui.RowEditableTableModel;
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.ui.RowEditableTableModel;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
@@ -117,7 +117,7 @@ class ExceptionsTableModel extends AbstractTableModel implements RowEditableTabl
   }
 
   PsiTypeCodeFragment createParameterTypeCodeFragment(final String typeText, PsiElement context) {
-    return myContext.getManager().getElementFactory().createTypeCodeFragment(
+    return JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory().createTypeCodeFragment(
         typeText, context, false, true, true
       );
   }

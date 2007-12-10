@@ -103,7 +103,7 @@ public class StackTraceLine {
     if (project == null) return null;
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (psiManager == null) return null;
-    PsiClass psiClass = psiManager.findClass(className, GlobalSearchScope.allScope(project));
+    PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, GlobalSearchScope.allScope(project));
     if (psiClass == null || (psiClass.getNavigationElement() instanceof PsiCompiledElement)) return null;
     psiClass = (PsiClass)psiClass.getNavigationElement();
     final PsiFile psiFile = psiClass.getContainingFile();

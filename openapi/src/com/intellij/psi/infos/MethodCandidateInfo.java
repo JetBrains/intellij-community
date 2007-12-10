@@ -115,7 +115,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       }
     }
 
-    PsiResolveHelper helper = method.getManager().getResolveHelper();
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     return helper.inferTypeArguments(typeParameters,
                                                    method.getParameterList().getParameters(),
                                                    arguments,

@@ -3,7 +3,10 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiArrayType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 
 public class ComponentTypeOfMacro implements Macro {
   public String getName() {
@@ -45,7 +48,7 @@ public class ComponentTypeOfMacro implements Macro {
     if (result instanceof PsiTypeResult) {
       PsiType type = ((PsiTypeResult) result).getType();
       if (type instanceof PsiArrayType) {
-        return new PsiTypeResult(((PsiArrayType) type).getComponentType(), PsiManager.getInstance(context.getProject()));
+        return new PsiTypeResult(((PsiArrayType) type).getComponentType(), context.getProject());
       }
     }
 
@@ -58,7 +61,7 @@ public class ComponentTypeOfMacro implements Macro {
       type = expr.getType();
     }
     if (type instanceof PsiArrayType) {
-      return new PsiTypeResult(((PsiArrayType) type).getComponentType(), PsiManager.getInstance(context.getProject()));
+      return new PsiTypeResult(((PsiArrayType) type).getComponentType(), context.getProject());
     }
 
     return new PsiElementResult(null);

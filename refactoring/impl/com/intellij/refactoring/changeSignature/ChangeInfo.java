@@ -63,7 +63,7 @@ class ChangeInfo {
     oldName = method.getName();
     final PsiManager manager = method.getManager();
     if (!method.isConstructor()){
-      oldType = manager.getElementFactory().createTypeElement(method.getReturnType()).getText();
+      oldType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(method.getReturnType()).getText();
     }
     else{
       oldType = null;
@@ -74,7 +74,8 @@ class ChangeInfo {
     for(int i = 0; i < parameters.length; i++){
       PsiParameter parameter = parameters[i];
       oldParameterNames[i] = parameter.getName();
-      oldParameterTypes[i] = parameter.getManager().getElementFactory().createTypeElement(parameter.getType()).getText();
+      oldParameterTypes[i] =
+        JavaPsiFacade.getInstance(parameter.getProject()).getElementFactory().createTypeElement(parameter.getType()).getText();
     }
 
     isVisibilityChanged = !method.hasModifierProperty(newVisibility);
@@ -124,7 +125,7 @@ class ChangeInfo {
       toRemoveParm[info.oldParameterIndex] = false;
     }
 
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     defaultValues = new PsiExpression[newParms.length];
     for(int i = 0; i < newParms.length; i++){
       ParameterInfo info = newParms[i];

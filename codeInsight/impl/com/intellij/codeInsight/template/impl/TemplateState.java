@@ -543,7 +543,7 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     if (!aClass.isValid() || aClass.getQualifiedName() == null) return;
 
-    PsiManager manager = PsiManager.getInstance(myProject);
+    JavaPsiFacade manager = JavaPsiFacade.getInstance(myProject);
     PsiResolveHelper helper = manager.getResolveHelper();
 
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);

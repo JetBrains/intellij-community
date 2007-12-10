@@ -31,8 +31,8 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
     final PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null) qualifier.delete();
-    
-    PsiElementFactory factory = methodCall.getManager().getElementFactory();
+
+    PsiElementFactory factory = JavaPsiFacade.getInstance(methodCall.getProject()).getElementFactory();
     PsiExpressionList args = methodCall.getArgumentList();
     PsiElement addParameterAfter = null;
 

@@ -196,7 +196,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     final String classToBind = root.getClassToBind();
     if (classToBind != null) {
       final PsiManager manager = PsiManager.getInstance(project);
-      PsiClass aClass = manager.findClass(classToBind, GlobalSearchScope.allScope(project));
+      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(classToBind, GlobalSearchScope.allScope(project));
       if (aClass != null) {
         final PsiField oldBindingField = aClass.findFieldByName(fieldName, false);
         if (oldBindingField != null) {

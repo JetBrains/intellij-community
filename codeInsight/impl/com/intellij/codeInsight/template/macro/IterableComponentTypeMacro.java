@@ -33,10 +33,9 @@ public class IterableComponentTypeMacro implements Macro {
 
     PsiExpression expr = MacroUtil.resultToPsiExpression(result, context);
     if (expr == null) return null;
-    PsiManager manager = expr.getManager();
     PsiType type = expr.getType();
     if (type instanceof PsiArrayType) {
-      return new PsiTypeResult(((PsiArrayType)type).getComponentType(), manager);
+      return new PsiTypeResult(((PsiArrayType)type).getComponentType(), project);
     }
 
     if (type instanceof PsiClassType) {
@@ -44,7 +43,7 @@ public class IterableComponentTypeMacro implements Macro {
       PsiClass aClass = resolveResult.getElement();
 
       if (aClass != null) {
-        PsiClass iterableClass = manager.findClass("java.lang.Iterable", aClass.getResolveScope());
+        PsiClass iterableClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Iterable", aClass.getResolveScope());
         if (iterableClass != null) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterableClass, aClass, resolveResult.getSubstitutor());
           if (substitutor != null) {
@@ -55,11 +54,11 @@ public class IterableComponentTypeMacro implements Macro {
             if (parameterType != null) {
               if (parameterType instanceof PsiWildcardType) {
                 if (((PsiWildcardType)parameterType).isExtends()) {
-                  return new PsiTypeResult(((PsiWildcardType)parameterType).getBound(), manager);
+                  return new PsiTypeResult(((PsiWildcardType)parameterType).getBound(), project);
                 }
                 else return null;
               }
-              return new PsiTypeResult(parameterType, manager);
+              return new PsiTypeResult(parameterType, project);
             }
           }
         }

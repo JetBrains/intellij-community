@@ -80,7 +80,7 @@ public class ContextUtil {
     try {
       List<LocalVariableProxyImpl> list = frameProxy.visibleVariables();
 
-      PsiResolveHelper resolveHelper = element.getManager().getResolveHelper();
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
       buf.append('{');
       for (LocalVariableProxyImpl localVariable : list) {
         final String varName = localVariable.name();
@@ -93,7 +93,7 @@ public class ContextUtil {
       if (buf.length() <= 2) {
         return element;
       }
-      final PsiElementFactory elementFactory = element.getManager().getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
       final PsiCodeBlock codeBlockFromText = elementFactory.createCodeBlockFromText(buf.toString(), element);
 
       final PsiStatement[] statements = codeBlockFromText.getStatements();

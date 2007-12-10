@@ -7,6 +7,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -23,7 +24,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public static CompositeElement parseExpressionText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    final LanguageLevel level = manager.getEffectiveLanguageLevel();
+    final LanguageLevel level = JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel();
     Lexer originalLexer = new JavaLexer(level);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset, 0);
@@ -71,7 +72,7 @@ public class ExpressionParsing extends Parsing {
   }
 
   public TreeElement parseExpressionTextFragment(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, int state) {
-    Lexer originalLexer = new JavaLexer(manager.getEffectiveLanguageLevel());
+    Lexer originalLexer = new JavaLexer(JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state >= 0) {
       lexer.start(buffer, startOffset, endOffset, state);

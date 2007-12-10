@@ -16,10 +16,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.compiler.Utils;
 import org.jetbrains.annotations.NonNls;
@@ -140,7 +140,7 @@ public class UIDesignerFavoriteNodeProvider implements FavoriteNodeProvider {
 
   public Object[] createPathFromUrl(final Project project, final String url, final String moduleName) {
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiClass classToBind = psiManager.findClass(url, GlobalSearchScope.allScope(project));
+    final PsiClass classToBind = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(url, GlobalSearchScope.allScope(project));
     if (classToBind == null) return null;
     return new Object[] { new Form(classToBind) };
   }

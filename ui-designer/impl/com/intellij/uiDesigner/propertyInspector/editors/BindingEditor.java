@@ -6,17 +6,17 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.uiDesigner.*;
+import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.inspections.FormInspectionUtil;
+import com.intellij.uiDesigner.lw.IRootContainer;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
+import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
+import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadErrorComponent;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 import com.intellij.uiDesigner.radComponents.RadVSpacer;
-import com.intellij.uiDesigner.core.Spacer;
-import com.intellij.uiDesigner.lw.IRootContainer;
-import com.intellij.uiDesigner.propertyInspector.UIDesignerToolWindowManager;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
-import com.intellij.uiDesigner.propertyInspector.properties.BindingProperty;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -108,7 +108,7 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
       final PsiType componentType;
       try {
         componentType =
-          PsiManager.getInstance(component.getModule().getProject()).getElementFactory().createTypeFromText(componentClassName, null);
+          JavaPsiFacade.getInstance(component.getModule().getProject()).getElementFactory().createTypeFromText(componentClassName, null);
       }
       catch (IncorrectOperationException e) {
         continue;

@@ -65,7 +65,7 @@ public class ExtractSuperClassUtil {
   }
 
   private static void createConstructorsByPattern(Project project, final PsiClass superclass, PsiMethod[] patternConstructors) throws IncorrectOperationException {
-    PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     for (PsiMethod baseConstructor : patternConstructors) {
       PsiMethod constructor = (PsiMethod)superclass.add(factory.createConstructor());
@@ -146,7 +146,7 @@ public class ExtractSuperClassUtil {
     final PsiTypeParameterList originalTypeParameterList = superClass.getTypeParameterList();
     assert originalTypeParameterList != null;
     final PsiTypeParameterList newList = typeParameterList != null ? (PsiTypeParameterList)originalTypeParameterList.replace(typeParameterList) : originalTypeParameterList;
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
     for (final PsiTypeParameter parameter : newList.getTypeParameters()) {
       substitutionMap.put(parameter, factory.createType(findTypeParameterInDerived(derivedClass, parameter.getName())));

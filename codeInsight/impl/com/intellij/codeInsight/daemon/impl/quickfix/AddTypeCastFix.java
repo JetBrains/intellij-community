@@ -57,7 +57,7 @@ public class AddTypeCastFix implements IntentionAction {
   static PsiTypeCastExpression createCastExpression(PsiExpression originalExpression, Project project, PsiType type) throws IncorrectOperationException {
     // remove nested casts
     PsiElement element = PsiUtil.deparenthesizeExpression(originalExpression);
-    PsiElementFactory factory = originalExpression.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
 
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText("(Type)value", null);
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);

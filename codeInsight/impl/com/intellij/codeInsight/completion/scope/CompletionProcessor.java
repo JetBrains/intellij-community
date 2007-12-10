@@ -56,7 +56,7 @@ public class CompletionProcessor extends BaseScopeProcessor
       if (qualifier instanceof PsiSuperExpression) {
         myQualifierClass = ResolveUtil.getContextClass(myElement);
         if (myQualifierClass != null) {
-          myQualifierType = myElement.getManager().getElementFactory().createType(myQualifierClass);
+          myQualifierType = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory().createType(myQualifierClass);
         }
       }
       else if (qualifier != null) {
@@ -108,7 +108,7 @@ public class CompletionProcessor extends BaseScopeProcessor
       }
     }
 
-    PsiResolveHelper resolveHelper = myElement.getManager().getResolveHelper();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myElement.getProject()).getResolveHelper();
     if(!(element instanceof PsiMember) || resolveHelper.isAccessible((PsiMember)element, myElement, myQualifierClass)){
       final String name = PsiUtil.getName(element);
       if(name != null && myContext.prefixMatches(name)

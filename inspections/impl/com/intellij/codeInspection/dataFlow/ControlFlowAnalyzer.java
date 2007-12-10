@@ -494,7 +494,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitSwitchStatement(PsiSwitchStatement switchStmt) {
     startElement(switchStmt);
-    PsiElementFactory psiFactory = switchStmt.getManager().getElementFactory();
+    PsiElementFactory psiFactory = JavaPsiFacade.getInstance(switchStmt.getProject()).getElementFactory();
     PsiExpression caseExpression = switchStmt.getExpression();
 
     if (caseExpression != null /*&& !(caseExpression instanceof PsiReferenceExpression)*/) {

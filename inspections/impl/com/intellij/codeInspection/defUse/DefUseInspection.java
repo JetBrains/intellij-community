@@ -232,7 +232,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
           psiInitializer.delete();
         }
         else if (res == SideEffectWarningDialog.MAKE_STATEMENT) {
-          final PsiElementFactory factory = variable.getManager().getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
           final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
           declaration.getParent().addAfter(statementFromText, declaration);
           psiInitializer.delete();

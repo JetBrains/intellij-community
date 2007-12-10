@@ -3,8 +3,8 @@ package com.intellij.compiler.make;
 import com.intellij.compiler.SymbolTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.cls.ClsUtil;
@@ -31,13 +31,12 @@ public class ChangedRetentionPolicyDependencyProcessor {
     if (!hasRetentionPolicyChanged(annotationQName, oldCache, myDependencyCache.getNewClassesCache(), myDependencyCache.getSymbolTable())) {
       return;
     }
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
     final CacheCorruptedException[] _ex = new CacheCorruptedException[] {null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
           final String qName = myDependencyCache.resolve(annotationQName);
-          PsiClass[] classes = psiManager.findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
+          PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
           for (final PsiClass aClass : classes) {
             if (!aClass.isAnnotationType()) {
               continue;

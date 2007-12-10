@@ -245,7 +245,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       }
       else {
         VisibilityUtil.escalateVisibility((PsiField)myTargetVariable, expression);
-        newQualifier = manager.getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
+        newQualifier = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(myTargetVariable.getName(), null);
       }
 
       PsiExpression newArgument = null;
@@ -263,7 +263,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
         }
 
         if (thisArgumentText != null) {
-          newArgument = manager.getElementFactory().createExpressionFromText(thisArgumentText, null);
+          newArgument = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(thisArgumentText, null);
         }
       } else {
         if (!isInternalCall && oldQualifier != null) {
@@ -288,7 +288,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           if (oldQualifier != null) oldQualifier.delete();
         }
         else {
-          final PsiReferenceExpression refExpr = (PsiReferenceExpression)manager.getElementFactory()
+          final PsiReferenceExpression refExpr = (PsiReferenceExpression)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
               .createExpressionFromText("q." + myMethod.getName(), null);
           refExpr.getQualifierExpression().replace(newQualifier);
           methodExpression.replace(refExpr);
@@ -327,7 +327,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
 
   private static PsiExpression createThisExpr(final PsiManager manager)  {
     try {
-      return manager.getElementFactory().createExpressionFromText("this", null);
+      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText("this", null);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -352,7 +352,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     try {
       final PsiManager manager = myMethod.getManager();
-      final PsiElementFactory factory = manager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
       //correct internal references
       final PsiCodeBlock body = myMethod.getBody();
@@ -361,7 +361,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           @Override public void visitThisExpression(PsiThisExpression expression) {
             final PsiClass classReferencedByThis = MoveInstanceMembersUtil.getClassReferencedByThis(expression);
             if (classReferencedByThis != null) {
-              final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
               String paramName = getParameterNameToCreate(classReferencedByThis);
               try {
                 final PsiExpression refExpression = factory.createExpressionFromText(paramName, null);
@@ -456,7 +456,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       methodCopy.getParameterList().getParameters()[index].delete();
     }
 
-    addParameters(PsiManager.getInstance(myProject).getElementFactory(), methodCopy);
+    addParameters(JavaPsiFacade.getInstance(myProject).getElementFactory(), methodCopy);
     return methodCopy;
   }
 

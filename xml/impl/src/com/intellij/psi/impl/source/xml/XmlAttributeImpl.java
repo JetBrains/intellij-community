@@ -14,10 +14,7 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.XmlElementVisitor;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -72,7 +69,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
   public void setValue(String valueText) throws IncorrectOperationException{
     final ASTNode value = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild(this);
     final PomModel model = PomManager.getModel(getProject());
-    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute("a", valueText));
+    final ASTNode newValue = XmlChildRole.ATTRIBUTE_VALUE_FINDER.findChild((CompositeElement)JavaPsiFacade
+      .getInstance(getManager().getProject()).getElementFactory().createXmlAttribute("a", valueText));
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(this, aspect) {
       public PomModelEvent runInner(){
@@ -258,7 +256,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
     final String oldName = name.getText();
     final PomModel model = PomManager.getModel(getProject());
-    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)getManager().getElementFactory().createXmlAttribute(nameText, ""));
+    final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((CompositeElement)JavaPsiFacade
+      .getInstance(getManager().getProject()).getElementFactory().createXmlAttribute(nameText, ""));
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       public PomModelEvent runInner(){

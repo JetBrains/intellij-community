@@ -117,8 +117,9 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     boolean findGet = myDialog.isToEncapsulateGet();
     boolean findSet = myDialog.isToEncapsulateSet();
     PsiModifierList newModifierList = null;
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myProject);
     if (!myDialog.isToUseAccessorsWhenAccessible()){
-      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      PsiElementFactory factory = facade.getElementFactory();
       try{
         PsiField field = factory.createField("a", PsiType.INT);
         setNewFieldVisibility(field);
@@ -154,7 +155,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
           if (qualifier != null) {
             accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
-          if (PsiManager.getInstance(myProject).getResolveHelper()
+          if (facade.getResolveHelper()
             .isAccessible(field, newModifierList, ref, accessObjectClass, null)) {
             continue;
           }
@@ -275,7 +276,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     boolean processGet = myDialog.isToEncapsulateGet();
     boolean processSet = myDialog.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
     if (!processGet && !processSet) return;
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
 
     try{
       final PsiReferenceExpression expr = (PsiReferenceExpression)usage.getElement();
@@ -410,7 +411,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
 
   private PsiMethodCallExpression createSetterCall(final int fieldIndex, final PsiExpression setterArgument, PsiReferenceExpression expr) throws IncorrectOperationException {
     String[] setterNames = myDialog.getSetterNames();
-    PsiElementFactory factory = expr.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     final String setterName = setterNames[fieldIndex];
     @NonNls String text = setterName + "(a)";
     PsiExpression qualifier = expr.getQualifierExpression();
@@ -435,7 +436,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   private PsiMethodCallExpression createGetterCall(final int fieldIndex, PsiReferenceExpression expr)
           throws IncorrectOperationException {
     String[] getterNames = myDialog.getGetterNames();
-    PsiElementFactory factory = expr.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     final String getterName = getterNames[fieldIndex];
     @NonNls String text = getterName + "()";
     PsiExpression qualifier = expr.getQualifierExpression();
@@ -458,7 +459,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiMethodCallExpression checkMethodResolvable(PsiMethodCallExpression methodCall, final PsiMethod targetMethod, PsiReferenceExpression context) throws IncorrectOperationException {
-    PsiElementFactory factory = targetMethod.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(targetMethod.getProject()).getElementFactory();
     final PsiElement resolved = methodCall.getMethodExpression().resolve();
     if (resolved != targetMethod) {
       PsiClass containingClass;

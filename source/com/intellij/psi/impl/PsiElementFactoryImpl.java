@@ -488,7 +488,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiKeyword createKeyword(@NotNull String text) throws IncorrectOperationException {
-    if (!myManager.getNameHelper().isKeyword(text)) {
+    if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isKeyword(text)) {
       throw new IncorrectOperationException("\"" + text + "\" is not a keyword.");
     }
     return new LightKeyword(myManager, text);
@@ -513,7 +513,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (packageName.length() == 0) {
       throw new IncorrectOperationException("Cannot create import statement for default package.");
     }
-    if (!myManager.getNameHelper().isQualifiedName(packageName)) {
+    if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {
       throw new IncorrectOperationException("Incorrect package name: \"" + packageName + "\".");
     }
 
@@ -526,7 +526,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   public PsiDeclarationStatement createVariableDeclarationStatement(@NotNull String name, @NotNull PsiType type, PsiExpression initializer)
     throws IncorrectOperationException {
-    if (!myManager.getNameHelper().isIdentifier(name)) {
+    if (!JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isIdentifier(name)) {
       throw new IncorrectOperationException("\"" + name + "\" is not an identifier.");
     }
     if (type == PsiType.NULL) {

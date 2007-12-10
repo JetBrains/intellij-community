@@ -6,6 +6,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -87,7 +88,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
           final String namespace = getXmlName().getNamespace(getFile());
           @NonNls final String nsDecl = StringUtil.isEmpty(namespace) ? "" : " xmlns=\"" + namespace + "\"";
           final XmlFile xmlFile = getFile();
-          final XmlTag tag = xmlFile.getManager().getElementFactory().createTagFromText("<" + getXmlElementName() + nsDecl + "/>");
+          final XmlTag tag = JavaPsiFacade.getInstance(xmlFile.getProject()).getElementFactory().createTagFromText("<" + getXmlElementName() + nsDecl + "/>");
           result[0] = ((XmlDocument)xmlFile.getDocument().replace(((XmlFile)tag.getContainingFile()).getDocument())).getRootTag();
         }
         catch (IncorrectOperationException e) {

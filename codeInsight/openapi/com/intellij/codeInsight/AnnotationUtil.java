@@ -146,7 +146,7 @@ public class AnnotationUtil {
                                                          Set<String> annotationNames,
                                                          PsiElement place) {
     List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
-    PsiResolveHelper resolveHelper = place.getManager().getResolveHelper();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature superSignature : superSignatures) {
       PsiMethod superMethod = superSignature.getMethod();
       if (!resolveHelper.isAccessible(superMethod, place, null)) continue;

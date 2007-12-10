@@ -88,7 +88,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
     List<PsiReferenceExpression> outerReferences = new ArrayList<PsiReferenceExpression>();
     collectReferences(outerCodeBlock, variable, outerReferences);
 
-    PsiElementFactory factory = variable.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
     Project project = variable.getProject();
     String tempName = suggestNewName(project, variable);
     PsiDeclarationStatement tempVariableDeclaration = factory.createVariableDeclarationStatement(tempName, variable.getType(), null);

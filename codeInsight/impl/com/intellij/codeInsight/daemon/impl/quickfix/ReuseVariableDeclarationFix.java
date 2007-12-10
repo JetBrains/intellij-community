@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -64,7 +64,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
       return;
     }
     PsiDeclarationStatement declaration = (PsiDeclarationStatement) variable.getParent();
-    PsiElementFactory factory = variable.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
     PsiStatement statement = factory.createStatementFromText(variable.getName() + " = " + variable.getInitializer().getText()+";", variable);
     declaration.replace(statement);
   }

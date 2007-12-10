@@ -5,13 +5,13 @@ package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
+import com.intellij.lang.properties.psi.I18nizedTextGenerator;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.properties.psi.I18nizedTextGenerator;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +47,8 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix{
                                            String i18nizedText) throws IncorrectOperationException {
     PsiBinaryExpression concatenation = ConcatenationToMessageFormatAction.getEnclosingLiteralConcatenation(psiFile,editor);
 
-    PsiExpression expression = psiFile.getManager().getElementFactory().createExpressionFromText(i18nizedText, concatenation);
+    PsiExpression expression =
+      JavaPsiFacade.getInstance(psiFile.getProject()).getElementFactory().createExpressionFromText(i18nizedText, concatenation);
     return concatenation.replace(expression);
   }
 

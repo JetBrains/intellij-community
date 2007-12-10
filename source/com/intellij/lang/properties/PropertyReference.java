@@ -8,8 +8,8 @@ import com.intellij.codeInspection.i18n.CreatePropertyFix;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +94,7 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    PsiElementFactory factory = myElement.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
 
     if (myElement instanceof PsiLiteralExpression) {
       PsiExpression newExpression = factory.createExpressionFromText("\"" + newElementName + "\"", myElement);

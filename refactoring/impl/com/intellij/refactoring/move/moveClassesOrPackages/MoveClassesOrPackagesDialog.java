@@ -242,7 +242,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   protected boolean areButtonsValid() {
     if (isMoveToPackage()) {
       String name = getTargetPackage().trim();
-      return name.length() == 0 || myManager.getNameHelper().isQualifiedName(name);
+      return name.length() == 0 || JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(name);
     }
     else {
       return findTargetClass() != null && getValidationError() == null;
@@ -265,7 +265,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   @Nullable
   private PsiClass findTargetClass() {
     String name = myInnerClassChooser.getText().trim();
-    return myManager.findClass(name, ProjectScope.getProjectScope(myProject));
+    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(name, ProjectScope.getProjectScope(myProject));
   }
 
   private boolean isMoveToPackage() {
@@ -393,7 +393,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
 
   private MoveDestination selectDestination() {
     final String packageName = getTargetPackage().trim();
-    if (packageName.length() > 0 && !myManager.getNameHelper().isQualifiedName(packageName)) {
+    if (packageName.length() > 0 && !JavaPsiFacade.getInstance(myManager.getProject()).getNameHelper().isQualifiedName(packageName)) {
       Messages.showErrorDialog(myProject, RefactoringBundle.message("please.enter.a.valid.target.package.name"),
                                RefactoringBundle.message("move.tltle"));
       return null;

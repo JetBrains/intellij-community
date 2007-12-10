@@ -94,7 +94,8 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
   }
 
   public PsiClass getSuperClass() {
-    return myManager.findClass("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
+    return JavaPsiFacade.getInstance(myManager.getProject())
+      .findClass("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   public PsiClass[] getInterfaces() {

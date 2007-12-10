@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -361,8 +362,8 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     }
 
     public Object[] getElementsByName(final String name, final boolean checkBoxState) {
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass[] classes = manager.getShortNamesCache().getClassesByName(name, checkBoxState ? myScope : GlobalSearchScope.projectScope(myProject).intersectWith(myScope));
+      final PsiShortNamesCache cache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
+      PsiClass[] classes = cache.getClassesByName(name, checkBoxState ? myScope : GlobalSearchScope.projectScope(myProject).intersectWith(myScope));
 
       ArrayList<PsiClass> list = new ArrayList<PsiClass>();
       for (PsiClass aClass : classes) {

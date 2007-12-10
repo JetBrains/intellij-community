@@ -182,7 +182,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
       Set<PsiReference> refsSet = new HashSet<PsiReference>(refs);
       PsiCodeBlock anchorBlock = findAnchorBlock(refs);
       if (anchorBlock == null) return; //was assert, but need to fix the case when obsolete inspection highlighting is left
-      final PsiElementFactory elementFactory = manager.getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(manager.getProject());
       final String propertyName = styleManager.variableNameToPropertyName(myField.getName(), VariableKind.FIELD);
       String localName = styleManager.propertyNameToVariableName(propertyName, VariableKind.LOCAL_VARIABLE);

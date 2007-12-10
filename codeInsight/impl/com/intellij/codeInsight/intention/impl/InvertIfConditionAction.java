@@ -85,7 +85,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   private static void formatIf(PsiIfStatement ifStatement) throws IncorrectOperationException {
     PsiManager manager = ifStatement.getManager();
     Project project = manager.getProject();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     PsiElement thenBranch = ifStatement.getThenBranch().copy();
     PsiElement elseBranch = ifStatement.getElseBranch() != null ? ifStatement.getElseBranch().copy() : null;
@@ -159,7 +159,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   private static void setupBranches(PsiIfStatement ifStatement, ControlFlow flow) throws IncorrectOperationException {
-    PsiElementFactory factory = ifStatement.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(ifStatement.getProject()).getElementFactory();
     Project project = ifStatement.getProject();
 
     PsiStatement thenBranch = ifStatement.getThenBranch();

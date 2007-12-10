@@ -6,7 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.ui.*;
+import com.intellij.refactoring.ui.CodeFragmentTableCellEditor;
+import com.intellij.refactoring.ui.CodeFragmentTableCellRenderer;
+import com.intellij.refactoring.ui.RefactoringDialog;
+import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.*;
 import com.intellij.usageView.UsageViewUtil;
@@ -54,7 +57,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private PsiTypeCodeFragment createValueCodeFragment() {
-    return myManager.getElementFactory().createTypeCodeFragment(
+    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeCodeFragment(
       "",
       myClass.getLBrace(),
       false, true, false
@@ -115,7 +118,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
 
   private String validateAndCommitData() {
     for (final TypeParameterInfo info : myTypeParameterInfos) {
-      if (!info.isForExistingParameter() && !myClass.getManager().getNameHelper().isIdentifier(info.getNewName())) {
+      if (!info.isForExistingParameter() && !JavaPsiFacade.getInstance(myClass.getProject()).getNameHelper().isIdentifier(info.getNewName())) {
         return RefactoringBundle.message("error.wrong.name.input", info.getNewName());
       }
     }

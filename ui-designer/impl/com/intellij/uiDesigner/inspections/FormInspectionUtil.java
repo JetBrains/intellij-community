@@ -1,6 +1,7 @@
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -11,8 +12,8 @@ import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -25,9 +26,9 @@ public class FormInspectionUtil {
                                          final Class componentClass) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    final PsiClass aClass = psiManager.findClass(component.getComponentClassName(), scope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
     if (aClass != null) {
-      final PsiClass labelClass = psiManager.findClass(componentClass.getName(), scope);
+      final PsiClass labelClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(componentClass.getName(), scope);
       if (labelClass != null && InheritanceUtil.isInheritorOrSelf(aClass, labelClass, true)) {
         return true;
       }

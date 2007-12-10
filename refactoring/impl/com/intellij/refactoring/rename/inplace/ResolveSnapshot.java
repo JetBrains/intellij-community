@@ -69,7 +69,7 @@ public class ResolveSnapshot {
             @NonNls String qualifer = refereeClass == referentClass ? "this" :
                 refereeClass.getName() + ".this";
             String qualifiedRefText = qualifer + "." + ref.getText();
-            PsiElementFactory elementFactory = PsiManager.getInstance(referentClass.getProject()).getElementFactory();
+            PsiElementFactory elementFactory = JavaPsiFacade.getInstance(referentClass.getProject()).getElementFactory();
             try {
               PsiReferenceExpression qualifiedRef = (PsiReferenceExpression) elementFactory.createExpressionFromText(qualifiedRefText, null);
               ref.replace(qualifiedRef);

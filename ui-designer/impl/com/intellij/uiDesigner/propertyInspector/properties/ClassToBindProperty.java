@@ -17,14 +17,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.uiDesigner.FormEditingUtil;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.Property;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
-import com.intellij.uiDesigner.propertyInspector.InplaceContext;
 import com.intellij.uiDesigner.propertyInspector.renderers.ClassToBindRenderer;
+import com.intellij.uiDesigner.radComponents.RadComponent;
+import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -115,8 +115,8 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
 
     private void setEditorText(final String s) {
       final PsiManager manager = PsiManager.getInstance(myProject);
-      final PsiElementFactory factory = manager.getElementFactory();
-      PsiPackage defaultPackage = manager.findPackage("");
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
       final PsiCodeFragment fragment = factory.createReferenceCodeFragment(s, defaultPackage, true, true);
       myDocument = PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
       myEditorTextField.setDocument(myDocument);

@@ -109,7 +109,7 @@ public class VariableInplaceRenamer {
                   final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
                   if (templateState != null) {
                     final String newName = templateState.getVariableValue(PRIMARY_VARIABLE_NAME).toString();
-                    if (PsiManager.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
+                    if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(newName)) {
                       ApplicationManager.getApplication().runWriteAction(new Runnable() {
                         public void run() {
                           snapshot.apply(newName);

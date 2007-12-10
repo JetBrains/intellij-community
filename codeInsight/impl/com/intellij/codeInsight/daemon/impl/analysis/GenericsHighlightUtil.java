@@ -199,13 +199,15 @@ public class GenericsHighlightUtil {
     if (!extendFrom.isInterface() && referenceElements.length != 0 && element != referenceElements[0]) {
       final String description = HighlightClassUtil.INTERFACE_EXPECTED;
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
-      PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+      PsiClassType type =
+        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, new MoveBoundClassToFrontFix(aClass, type), null);
     }
     else if (referenceElements.length != 0 && element != referenceElements[0] && referenceElements[0].resolve() instanceof PsiTypeParameter) {
       final String description = JavaErrorMessages.message("type.parameter.cannot.be.followed.by.other.bounds");
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, element, description);
-      PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+      PsiClassType type =
+        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       IntentionAction fix = QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false);
       QuickFixAction.registerQuickFixAction(errorResult, fix, null);
     }
@@ -279,7 +281,8 @@ public class GenericsHighlightUtil {
                                                                     final PsiManager manager,
                                                                     final PsiClass aClass, final Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods) {
     PsiMethod method = signature.getMethod();
-    if (!manager.getResolveHelper().isAccessible(method, aClass, null)) return null;
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    if (!facade.getResolveHelper().isAccessible(method, aClass, null)) return null;
     MethodSignature signatureToErase = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
     HighlightInfo info;
@@ -537,7 +540,8 @@ public class GenericsHighlightUtil {
           while(iterator.hasNext()) {
             final PsiTypeParameter typeParameter = iterator.next();
             PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
-            PsiClassType otherType = typeParameter.getManager().getElementFactory().createType(castClass, modifiedSubstitutor);
+            PsiClassType otherType =
+              JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(castClass, modifiedSubstitutor);
             if (TypeConversionUtil.isAssignable(operandType, otherType, false)) return true;
           }
           return false;
@@ -617,7 +621,7 @@ public class GenericsHighlightUtil {
           return ellipsisType.getComponentType().accept(this);
         }
       }).booleanValue()) {
-        final PsiElementFactory elementFactory = method.getManager().getElementFactory();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
         PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
         String description = JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
                                                        HighlightUtil.formatMethod(method),
@@ -673,10 +677,10 @@ public class GenericsHighlightUtil {
       final PsiManager manager = aClass.getManager();
       final String qName = aClass.getQualifiedName();
       if (qName != null) {
-        final PsiClass myClass = manager.findClass(qName, expression.getResolveScope());
+        final PsiClass myClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, expression.getResolveScope());
         if (myClass != null) aClass = myClass;
       }
-      final PsiClass iterable = manager.findClass("java.lang.Iterable", aClass.getResolveScope());
+      final PsiClass iterable = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", aClass.getResolveScope());
       if (iterable == null) return null;
       final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(iterable, aClass, PsiSubstitutor.EMPTY);
       if (substitutor == null) return null;
@@ -883,7 +887,7 @@ public class GenericsHighlightUtil {
       highlightInfo = HighlightClassUtil.checkClassWithAbstractMethods(enumConstant.getContainingClass(), enumConstant.getNameIdentifier());
       if (highlightInfo != null) return highlightInfo;
     }
-    PsiClassType type = enumConstant.getManager().getElementFactory().createType(containingClass);
+    PsiClassType type = JavaPsiFacade.getInstance(enumConstant.getProject()).getElementFactory().createType(containingClass);
 
     return HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null);
   }
@@ -1015,7 +1019,7 @@ public class GenericsHighlightUtil {
       if (InheritanceUtil.isInheritorOrSelf((PsiClass)resolved, throwableClass, true)) {
         String message = JavaErrorMessages.message("generic.extend.exception");
         HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, referenceElement, message);
-        PsiClassType classType = aClass.getManager().getElementFactory().createType((PsiClass)resolved);
+        PsiClassType classType = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType((PsiClass)resolved);
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createExtendsListFix(aClass, classType, false));
         return highlightInfo;
       }

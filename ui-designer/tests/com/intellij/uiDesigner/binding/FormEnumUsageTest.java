@@ -55,7 +55,7 @@ public class FormEnumUsageTest extends PsiTestCase {
   }
 
   public void testEnumUsage() throws IncorrectOperationException {
-    myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myJavaFacade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         try {

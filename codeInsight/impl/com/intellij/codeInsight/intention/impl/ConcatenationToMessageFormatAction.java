@@ -43,17 +43,17 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     calculateFormatAndArguments(concatenation, formatString, args, argsToCombine, false);
     appendArgument(args, argsToCombine, formatString);
 
-    PsiMethodCallExpression call = (PsiMethodCallExpression) manager.getElementFactory().createExpressionFromText("java.text.MessageFormat.format()", concatenation);
+    PsiMethodCallExpression call = (PsiMethodCallExpression) JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText("java.text.MessageFormat.format()", concatenation);
     PsiExpressionList argumentList = call.getArgumentList();
     String format = prepareString(formatString.toString());
-    PsiExpression formatArgument = manager.getElementFactory().createExpressionFromText("\"" + format + "\"", null);
+    PsiExpression formatArgument = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText("\"" + format + "\"", null);
     argumentList.add(formatArgument);
     if (PsiUtil.getLanguageLevel(file).compareTo(LanguageLevel.JDK_1_5) >= 0) {
       for (PsiExpression arg : args) {
         argumentList.add(arg);
       }
     } else {
-      final PsiNewExpression arrayArg = (PsiNewExpression)manager.getElementFactory().createExpressionFromText("new java.lang.Object[]{}", null);
+      final PsiNewExpression arrayArg = (PsiNewExpression)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText("new java.lang.Object[]{}", null);
       final PsiArrayInitializerExpression arrayInitializer = arrayArg.getArrayInitializer();
       assert arrayInitializer != null;
       for (PsiExpression arg : args) {
@@ -132,7 +132,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     if (argsToCombine.isEmpty()) return;
     PsiExpression argument = argsToCombine.get(0);
     final PsiManager manager = argument.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     for (int i = 1; i < argsToCombine.size(); i++) {
       PsiBinaryExpression newArg = (PsiBinaryExpression) factory.createExpressionFromText("a+b", null);
       newArg.getLOperand().replace(argument);
@@ -150,7 +150,7 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     arg = PsiUtil.deparenthesizeExpression(arg);
     assert arg != null;
     final PsiManager manager = arg.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (PsiUtil.getLanguageLevel(arg).compareTo(LanguageLevel.JDK_1_5) < 0) {
       final PsiType type = arg.getType();
       if (type instanceof PsiPrimitiveType && !type.equals(PsiType.NULL)) {

@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -34,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
@@ -289,13 +289,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (manager == null) return false;
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    PsiShortNamesCache cache = manager.getShortNamesCache();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    PsiShortNamesCache cache = facade.getShortNamesCache();
     PsiElement refname = ref.getReferenceNameElement();
     if (!(refname instanceof PsiIdentifier)) return false;
     PsiElement refElement = ref.resolve();
     if (refElement != null) return false;
     String name = ref.getQualifiedName();
-    if (manager.getResolveHelper().resolveReferencedClass(name, ref) != null) return false;
+    if (facade.getResolveHelper().resolveReferencedClass(name, ref) != null) return false;
 
     GlobalSearchScope scope = ref.getResolveScope();
     PsiClass[] classes = cache.getClassesByName(name, scope);

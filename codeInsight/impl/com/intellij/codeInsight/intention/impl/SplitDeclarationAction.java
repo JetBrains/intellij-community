@@ -113,14 +113,14 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
     if (decl.getDeclaredElements().length == 1) {
       PsiLocalVariable var = (PsiLocalVariable) decl.getDeclaredElements()[0];
       var.normalizeDeclaration();
-      PsiExpressionStatement statement = (PsiExpressionStatement) psiManager.getElementFactory()
+      PsiExpressionStatement statement = (PsiExpressionStatement) JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
           .createStatementFromText(var.getName() + "=xxx;", null);
       statement = (PsiExpressionStatement) CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression) statement.getExpression();
       PsiExpression initializer = var.getInitializer();
       PsiExpression rExpression;
       if (initializer instanceof PsiArrayInitializerExpression) {
-        rExpression = psiManager.getElementFactory().createExpressionFromText(
+        rExpression = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(
             "new " + var.getTypeElement().getText() + " " + initializer.getText(), null
         );
       }
@@ -133,7 +133,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {
         final PsiDeclarationStatement varDeclStatement =
-          psiManager.getElementFactory().createVariableDeclarationStatement(var.getName(), var.getType(), null);
+          JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createVariableDeclarationStatement(var.getName(), var.getType(), null);
 
         // For index can't be final, right?
         for (PsiElement varDecl : varDeclStatement.getDeclaredElements()) {

@@ -13,7 +13,7 @@ public class AddClassToFileTest extends PsiTestCase{
     VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
     PsiDirectory dir = myPsiManager.findDirectory(root);
     PsiFile file = dir.createFile("AAA.java");
-    PsiClass aClass = myPsiManager.getElementFactory().createClass("AAA");
+    PsiClass aClass = myJavaFacade.getElementFactory().createClass("AAA");
     file.add(aClass);
 
     PsiTestUtil.checkFileStructure(file);

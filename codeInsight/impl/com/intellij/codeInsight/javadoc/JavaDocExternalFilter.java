@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -133,7 +134,7 @@ public class JavaDocExternalFilter {
         final String classRef = ourAnchorsuffix.matcher(elementRef).replaceAll("");
 
         return
-          (myManager.findClass(classRef, GlobalSearchScope.allScope(myProject)) != null)
+          (JavaPsiFacade.getInstance(myManager.getProject()).findClass(classRef, GlobalSearchScope.allScope(myProject)) != null)
           ? PSI_ELEMENT_PROTOCOL + elementRef
           : DOC_ELEMENT_PROTOCOL + doAnnihilate(nakedRoot + href);
       }

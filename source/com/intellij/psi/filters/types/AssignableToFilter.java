@@ -1,17 +1,11 @@
 package com.intellij.psi.filters.types;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.filters.InitializableFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.infos.CandidateInfo;
-import org.jdom.Element;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +37,7 @@ public class AssignableToFilter implements InitializableFilter{
       }
       else if (o instanceof PsiClass) {
         final PsiClass psiClass = (PsiClass)o;
-        currentType = psiClass.getManager().getElementFactory().createType(psiClass);
+        currentType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
       }
       if (currentType != null) {
         filters.add(new AssignableToFilter(currentType));

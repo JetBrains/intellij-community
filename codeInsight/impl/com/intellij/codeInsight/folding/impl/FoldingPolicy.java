@@ -561,7 +561,7 @@ class FoldingPolicy {
     else if (type.equals("class")) {
       String name = tokenizer.nextToken();
 
-      PsiNameHelper nameHelper = file.getManager().getNameHelper();
+      PsiNameHelper nameHelper = JavaPsiFacade.getInstance(file.getProject()).getNameHelper();
       if (nameHelper.isIdentifier(name)) {
         int index = 0;
         try {

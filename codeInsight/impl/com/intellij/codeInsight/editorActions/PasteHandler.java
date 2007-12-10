@@ -305,12 +305,13 @@ public class PasteHandler extends EditorActionHandler {
                                                                        RangeMarker bounds,
                                                                        TextBlockTransferable.ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
-    PsiResolveHelper helper = manager.getResolveHelper();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    PsiResolveHelper helper = facade.getResolveHelper();
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[referenceData.length];
     for (int i = 0; i < referenceData.length; i++) {
       TextBlockTransferable.ReferenceData data = referenceData[i];
 
-      PsiClass refClass = manager.findClass(data.qClassName, file.getResolveScope());
+      PsiClass refClass = facade.findClass(data.qClassName, file.getResolveScope());
       if (refClass == null) continue;
 
       int startOffset = data.startOffset + bounds.getStartOffset();
@@ -352,7 +353,7 @@ public class PasteHandler extends EditorActionHandler {
         try {
           PsiManager manager = reference.getManager();
           TextBlockTransferable.ReferenceData refData = referenceData[i];
-          PsiClass refClass = manager.findClass(refData.qClassName, reference.getResolveScope());
+          PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
           if (refClass != null) {
             if (refData.staticMemberName == null) {
               reference.bindToElement(refClass);
@@ -552,7 +553,7 @@ public class PasteHandler extends EditorActionHandler {
       if (ref != null) {
         LOG.assertTrue(ref.isValid());
         TextBlockTransferable.ReferenceData data = referenceData[i];
-        PsiClass refClass = manager.findClass(data.qClassName, ref.getResolveScope());
+        PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(data.qClassName, ref.getResolveScope());
         if (refClass == null) continue;
 
         Object refObject = refClass;

@@ -85,7 +85,7 @@ public class PsiImplUtil {
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
       try {
-        refs[i] = manager.getElementFactory().createPackageReferenceElement(name);
+        refs[i] = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createPackageReferenceElement(name);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -159,20 +159,20 @@ public class PsiImplUtil {
   public static PsiType getType (PsiClassObjectAccessExpression classAccessExpression) {
     GlobalSearchScope resolveScope = classAccessExpression.getResolveScope();
     PsiManager manager = classAccessExpression.getManager();
-    final PsiClass classClass = manager.findClass("java.lang.Class", resolveScope);
+    final PsiClass classClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", resolveScope);
     if (classClass == null){
       return new PsiClassReferenceType(new LightClassReference(manager, "Class", "java.lang.Class", resolveScope));
     }
     if (PsiUtil.getLanguageLevel(classAccessExpression).compareTo(LanguageLevel.JDK_1_5) < 0) {
       //Raw java.lang.Class
-      return manager.getElementFactory().createType(classClass);
+      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(classClass);
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiType operandType = classAccessExpression.getOperand().getType();
     if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
       if (PsiType.VOID.equals(operandType)) {
-        operandType = manager.getElementFactory().createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
+        operandType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
       }
       else {
         operandType = ((PsiPrimitiveType)operandType).getBoxedType(classAccessExpression);

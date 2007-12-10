@@ -5,15 +5,16 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.xml.JvmPsiTypeConverterImpl;
 import com.intellij.util.xml.AbstractConvertContext;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.JvmPsiTypeConverterImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +30,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
   protected String getValue() {
     final String rawValue = super.getValue();
     try {
-      final PsiType psiType = getPsiManager().getElementFactory().createTypeFromText(rawValue, null);
+      final PsiType psiType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(rawValue, null);
       final String s = JvmPsiTypeConverterImpl.convertToString(psiType);
       if (s != null) {
         return s;

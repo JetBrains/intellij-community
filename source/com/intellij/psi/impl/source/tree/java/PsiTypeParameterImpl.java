@@ -155,7 +155,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
         text = "";
       }
       try{
-        PsiTypeParameter typeParameter = myManager.getParserFacade().createTypeParameterFromText(text, this);
+        PsiTypeParameter typeParameter = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createTypeParameterFromText(text, this);
         myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
         new DummyHolder(myManager, myParsedFromRepository, getParent());
       }

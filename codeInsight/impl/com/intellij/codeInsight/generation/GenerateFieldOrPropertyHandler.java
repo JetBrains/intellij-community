@@ -40,7 +40,7 @@ public class GenerateFieldOrPropertyHandler extends GenerateMembersHandlerBase {
 
   @NotNull
   public List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
-    final PsiElementFactory psiElementFactory = aClass.getManager().getElementFactory();
+    final PsiElementFactory psiElementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     try {
       final String name = myMemberType == PropertyMemberType.FIELD? myAttributeName : JavaCodeStyleManager.getInstance(aClass.getProject()).propertyNameToVariableName(myAttributeName, VariableKind.FIELD);
       final PsiField psiField = psiElementFactory.createField(name, myType);

@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,10 +35,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
 
 /**
  * @author cdr
@@ -151,9 +151,10 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
     List<LocalQuickFix> result = new ArrayList<LocalQuickFix>();
     Set<Object> librariesToAdd = new THashSet<Object>();
-    PsiClass[] classes = psiElement.getManager().getShortNamesCache().getClassesByName(referenceName, GlobalSearchScope.allScope(project));
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(psiElement.getProject());
+    PsiClass[] classes = facade.getShortNamesCache().getClassesByName(referenceName, GlobalSearchScope.allScope(project));
     for (final PsiClass aClass : classes) {
-      if (!aClass.getManager().getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
+      if (!facade.getResolveHelper().isAccessible(aClass, psiElement, aClass)) continue;
       PsiFile psiFile = aClass.getContainingFile();
       if (psiFile == null) continue;
       VirtualFile virtualFile = psiFile.getVirtualFile();

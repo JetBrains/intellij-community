@@ -10,8 +10,8 @@ import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -220,7 +220,7 @@ public class PsiSuperMethodImplUtil {
         m1.put(typeParameter, t);
       }
     }
-    PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(candidateClass.getProject()).getElementFactory();
     return elementFactory.createSubstitutor(m1);
   }
 

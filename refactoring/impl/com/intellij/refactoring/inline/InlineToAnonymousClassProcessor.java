@@ -205,7 +205,8 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
       }
       else {
-        PsiJavaCodeReferenceElement element = myClass.getManager().getElementFactory().createClassReferenceElement(superType.resolve());
+        PsiJavaCodeReferenceElement element =
+          JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createClassReferenceElement(superType.resolve());
         psiNewExpression.getClassReference().replace(element);        
       }
     }
@@ -215,7 +216,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   private void replaceWithSuperType(final PsiTypeElement typeElement, final PsiClassType superType) {
-    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     PsiClassType psiType = (PsiClassType) typeElement.getType();
     PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
     PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
@@ -229,7 +230,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   private PsiClassType getSuperType() {
-    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
 
     PsiClassType superType;
     PsiClass superClass = myClass.getSuperClass();

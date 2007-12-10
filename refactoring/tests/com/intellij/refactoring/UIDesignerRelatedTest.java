@@ -2,10 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.rename.RenameProcessor;
 
@@ -18,7 +15,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   }
 
   protected void setupProject(VirtualFile rootDir) {
-    myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myJavaFacade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
     super.setupProject(rootDir);
   }
 
@@ -38,7 +35,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   public void testRenamePackage() throws Exception {
     doTest(new PerformAction() {
       public void performAction(VirtualFile rootDir, VirtualFile rootAfter) throws Exception {
-        PsiPackage aPackage = myPsiManager.findPackage("gov");
+        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("gov");
         assertNotNull(aPackage);
 
 

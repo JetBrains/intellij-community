@@ -251,7 +251,7 @@ public class MethodSignatureUtil {
 
     PsiSubstitutor result = signature2.getSubstitutor();
     for (int i = 0; i < typeParameters1.length; i++) {
-      PsiElementFactory factory = typeParameters1[i].getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(typeParameters1[i].getProject()).getElementFactory();
       result = result.put(typeParameters2[i], factory.createType(typeParameters1[i]));
     }
 

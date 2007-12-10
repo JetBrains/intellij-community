@@ -15,9 +15,9 @@ import com.intellij.refactoring.typeCook.deductive.builder.ReductionSystem;
 import com.intellij.refactoring.typeCook.deductive.builder.Subtype;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
-import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
+import gnu.trove.TObjectIntHashMap;
 
 import java.util.*;
 
@@ -347,7 +347,7 @@ public class ResolverTree {
       if (lowerClass != null && upperClass != null && !lowerClass.equals(upperClass)) {
         final PsiSubstitutor upperSubst = resultUpper.getSubstitutor();
         final PsiClass[] parents = upperClass.getSupers();
-        final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
 
         for (final PsiClass parent : parents) {
           final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(parent, upperClass, upperSubst);

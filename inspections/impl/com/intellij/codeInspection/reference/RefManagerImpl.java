@@ -78,7 +78,7 @@ public class RefManagerImpl extends RefManager {
     myProjectIterator = new ProjectIterator();
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     try {
       myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
       myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
@@ -87,8 +87,8 @@ public class RefManagerImpl extends RefManager {
       LOG.error(e);
     }
 
-    myApplet = psiManager.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = psiManager.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+    myApplet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   public void iterate(RefVisitor visitor) {

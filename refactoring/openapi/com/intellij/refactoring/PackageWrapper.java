@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
@@ -40,7 +41,7 @@ public class PackageWrapper {
   public PsiManager getManager() { return myManager; }
 
   public PsiDirectory[] getDirectories() {
-    final PsiPackage aPackage = myManager.findPackage(myQualifiedName);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(myQualifiedName);
     if (aPackage != null) {
       return aPackage.getDirectories();
     } else {
@@ -49,7 +50,7 @@ public class PackageWrapper {
   }
 
   public boolean exists() {
-    return myManager.findPackage(myQualifiedName) != null;
+    return JavaPsiFacade.getInstance(myManager.getProject()).findPackage(myQualifiedName) != null;
   }
 
   public String getQualifiedName() {

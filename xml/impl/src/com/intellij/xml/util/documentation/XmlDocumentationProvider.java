@@ -253,7 +253,7 @@ public class XmlDocumentationProvider extends ExtensibleDocumentationProvider im
           tagText.append("=\"").append(namespace).append("\"");
         }
 
-        XmlTag tagFromText = xmlTag.getManager().getElementFactory().createTagFromText("<" + tagText +"/>");
+        XmlTag tagFromText = JavaPsiFacade.getInstance(xmlTag.getProject()).getElementFactory().createTagFromText("<" + tagText +"/>");
         XmlElementDescriptor parentDescriptor = xmlTag.getDescriptor();
         elementDescriptor = (parentDescriptor!=null)?parentDescriptor.getElementDescriptor(tagFromText):null;
 

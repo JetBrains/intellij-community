@@ -30,7 +30,7 @@ public class VariableReturnValue implements ReturnValue {
   public PsiStatement createReplacement(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
     final PsiDeclarationStatement statement;
 
-    final PsiElementFactory elementFactory = methodCallExpression.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());
     statement = (PsiDeclarationStatement)styleManager.reformat(
       elementFactory.createVariableDeclarationStatement(myVariable.getName(), myVariable.getType(), methodCallExpression)

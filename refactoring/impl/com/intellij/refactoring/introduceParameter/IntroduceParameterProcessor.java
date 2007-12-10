@@ -239,7 +239,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             final PsiElement place = usageInfo.getElement();
             for (final PsiElement element : result) {
               if (element instanceof PsiMember &&
-                  !myManager.getResolveHelper().isAccessible((PsiMember)element, place, null)) {
+                  !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)element, place, null)) {
                 String message =
                   RefactoringBundle.message(
                     "0.is.not.accesible.from.1.value.for.introduced.parameter.in.that.method.call.will.be.incorrect",
@@ -312,7 +312,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(UsageInfo[] usages) {
     try {
-      PsiElementFactory factory = myManager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
 
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
 
@@ -398,7 +398,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   private void generateDelegate() throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)myMethodToReplaceIn.copy();
-    final PsiElementFactory elementFactory = myManager.getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     ChangeSignatureProcessor.makeEmptyBody(elementFactory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, delegate.getName());
     final PsiExpressionList argumentList = callExpression.getArgumentList();
@@ -427,7 +427,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
   private void addDefaultConstructor(PsiClass aClass) throws IncorrectOperationException {
     if (!(aClass instanceof PsiAnonymousClass)) {
-      final PsiElementFactory factory = myManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
       PsiMethod constructor = factory.createMethodFromText(aClass.getName() + "(){}", aClass);
       constructor = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(constructor);
       constructor = (PsiMethod) aClass.add(constructor);
@@ -437,7 +437,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   }
 
   private void addSuperCall(PsiMethod constructor) throws IncorrectOperationException {
-    final PsiElementFactory factory = myManager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     PsiExpressionStatement superCall =
             (PsiExpressionStatement) factory.createStatementFromText("super();", constructor);
     superCall = (PsiExpressionStatement) CodeStyleManager.getInstance(myProject).reformat(superCall);
@@ -485,7 +485,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     if (element.getParent() instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element.getParent();
 
-      PsiElementFactory factory = methodCall.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(methodCall.getProject()).getElementFactory();
       PsiExpression expression = factory.createExpressionFromText(myParameterName, null);
       final PsiExpressionList argList = methodCall.getArgumentList();
       final PsiExpression[] exprs = argList.getExpressions();
@@ -590,7 +590,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       if(myActualArgs.length < myMethodToReplaceIn.getParameterList().getParametersCount()) {
         LOG.debug(myContext.getText() + "\n-----\n" + myMethodToReplaceIn.getText());
       }
-      PsiElementFactory factory = myManager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
       PsiExpression instanceRef;
       if(myContext instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)myContext;
@@ -617,7 +617,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
       Set<Map.Entry<PsiExpression,String>> mappingsSet = myTempVars.entrySet();
 
-      PsiElementFactory factory = myContext.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory();
 
       for (Map.Entry<PsiExpression, String> entry : mappingsSet) {
         PsiExpression oldRef = entry.getKey();
@@ -630,7 +630,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
     private void resolveOldReferences(PsiElement expr, PsiElement oldExpr)
             throws IncorrectOperationException {
       if (expr == null || !expr.isValid() || oldExpr == null) return;
-      PsiElementFactory factory = myManager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
       PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
 
       if (oldExpr instanceof PsiReferenceExpression) {
@@ -685,7 +685,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
             if (myReplaceFieldsWithGetters != IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE) {
               if (myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL ||
                   myReplaceFieldsWithGetters == IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE &&
-                  !myManager.getResolveHelper().isAccessible((PsiMember)subj, newExpr, null)) {
+                  !JavaPsiFacade.getInstance(myProject).getResolveHelper().isAccessible((PsiMember)subj, newExpr, null)) {
                 newExpr = replaceFieldWithGetter(newExpr, (PsiField) subj);
               }
             }
@@ -752,8 +752,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
 
     if (getter != null) {
 
-      if (psiField.getManager().getResolveHelper().isAccessible(getter, newExpr, null)) {
-        PsiElementFactory factory = newExpr.getManager().getElementFactory();
+      if (JavaPsiFacade.getInstance(psiField.getProject()).getResolveHelper().isAccessible(getter, newExpr, null)) {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(newExpr.getProject()).getElementFactory();
         String id = getter.getName();
         PsiMethodCallExpression getterCall =
                 (PsiMethodCallExpression) factory.createExpressionFromText(id + "()", null);
@@ -787,7 +787,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
   private void changeMethodSignature(PsiMethod methodToReplaceIn, PsiType initializerType) throws IncorrectOperationException {
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(methodToReplaceIn);
     PsiManager manager = methodToReplaceIn.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     PsiParameter parameter = factory.createParameter(myParameterName, initializerType);
     parameter.getModifierList().setModifierProperty(PsiModifier.FINAL, myDeclareFinal);

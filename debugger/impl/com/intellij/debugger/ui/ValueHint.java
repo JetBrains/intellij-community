@@ -397,7 +397,7 @@ public class ValueHint {
           }
         }
         myCurrentRange = expression.getTextRange();
-        return expression.getManager().getElementFactory().createExpressionFromText(expression.getText(), context);
+        return JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(expression.getText(), context);
       }
     } catch (IncorrectOperationException e) {
       LOG.debug(e);
@@ -426,7 +426,7 @@ public class ValueHint {
           try {
             String text = myEditor.getSelectionModel().getSelectedText();
             if(text != null && ctx != null) {
-              selectedExpression[0] = PsiManager.getInstance(myProject).getElementFactory().createExpressionFromText(text, ctx);
+              selectedExpression[0] = JavaPsiFacade.getInstance(myProject).getElementFactory().createExpressionFromText(text, ctx);
               myCurrentRange = new TextRange(myEditor.getSelectionModel().getSelectionStart(), myEditor.getSelectionModel().getSelectionEnd());
             }
           } catch (IncorrectOperationException e) {

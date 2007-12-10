@@ -697,7 +697,7 @@ public final class FormEditingUtil {
   }
 
   public static PsiMethod findCreateComponentsMethod(final PsiClass aClass) {
-    PsiElementFactory factory = aClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     PsiMethod method;
     try {
       method = factory.createMethodFromText("void " + AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME + "() {}",

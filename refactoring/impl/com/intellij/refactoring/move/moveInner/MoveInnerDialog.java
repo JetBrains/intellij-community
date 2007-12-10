@@ -203,31 +203,35 @@ public class MoveInnerDialog extends RefactoringDialog {
     if ("".equals(className)) {
       message = RefactoringBundle.message("no.class.name.specified");
     }
-    else if (!manager.getNameHelper().isIdentifier(className)) {
-      message = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
-    }
     else {
-      if (myCbPassOuterClass.isSelected()) {
-        if ("".equals(parameterName)) {
-          message = RefactoringBundle.message("no.parameter.name.specified");
-        }
-        else if (!manager.getNameHelper().isIdentifier(parameterName)) {
-          message = RefactoringMessageUtil.getIncorrectIdentifierMessage(parameterName);
-        }
+      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(className)) {
+        message = RefactoringMessageUtil.getIncorrectIdentifierMessage(className);
       }
-      if (message == null) {
-        if (myTargetContainer instanceof PsiClass) {
-          PsiClass targetClass = (PsiClass)myTargetContainer;
-          PsiClass[] classes = targetClass.getInnerClasses();
-          for (PsiClass aClass : classes) {
-            if (className.equals(aClass.getName())) {
-              message = RefactoringBundle.message("inner.class.exists", className, targetClass.getName());
-              break;
+      else {
+        if (myCbPassOuterClass.isSelected()) {
+          if ("".equals(parameterName)) {
+            message = RefactoringBundle.message("no.parameter.name.specified");
+          }
+          else {
+            if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(parameterName)) {
+              message = RefactoringMessageUtil.getIncorrectIdentifierMessage(parameterName);
             }
           }
         }
-        else if (myTargetContainer instanceof PsiDirectory) {
-          message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)myTargetContainer, className);
+        if (message == null) {
+          if (myTargetContainer instanceof PsiClass) {
+            PsiClass targetClass = (PsiClass)myTargetContainer;
+            PsiClass[] classes = targetClass.getInnerClasses();
+            for (PsiClass aClass : classes) {
+              if (className.equals(aClass.getName())) {
+                message = RefactoringBundle.message("inner.class.exists", className, targetClass.getName());
+                break;
+              }
+            }
+          }
+          else if (myTargetContainer instanceof PsiDirectory) {
+            message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)myTargetContainer, className);
+          }
         }
       }
     }
@@ -260,7 +264,7 @@ public class MoveInnerDialog extends RefactoringDialog {
   private void createUIComponents() {
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiManager manager = myInnerClass.getManager();
-      PsiType outerType = manager.getElementFactory().createType(myInnerClass.getContainingClass());
+      PsiType outerType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(myInnerClass.getContainingClass());
       mySuggestedNameInfo =  JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
       String[] variants = mySuggestedNameInfo.names;
       myParameterField = new NameSuggestionsField(variants, myProject);

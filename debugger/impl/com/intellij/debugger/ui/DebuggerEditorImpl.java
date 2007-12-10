@@ -113,7 +113,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
       if (contextClass != null) {
-        final PsiClassType contextType = codeFragment.getManager().getElementFactory().createType(contextClass);
+        final PsiClassType contextType = JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
         codeFragment.setThisType(contextType);
       }
     }

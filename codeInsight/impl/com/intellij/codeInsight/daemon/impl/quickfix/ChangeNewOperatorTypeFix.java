@@ -48,7 +48,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
 
   private static void changeNewOperatorType(PsiExpression originalExpression, PsiType type, final Editor editor) throws IncorrectOperationException {
     PsiNewExpression newExpression;
-    PsiElementFactory factory = PsiManager.getInstance(originalExpression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
     int caretOffset;
     TextRange selection;
     if (type instanceof PsiArrayType) {
@@ -94,7 +94,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
         if (lClass != null) {
           PsiSubstitutor substitutor = getInheritorSubstitutorForNewExpression(lClass, rClass, lResolveResult.getSubstitutor(), expression);
           if (substitutor != null) {
-            newType = lClass.getManager().getElementFactory().createType(rClass, substitutor);
+            newType = JavaPsiFacade.getInstance(lClass.getProject()).getElementFactory().createType(rClass, substitutor);
           }
         }
       }
@@ -108,8 +108,9 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
   @Nullable
   private static PsiSubstitutor getInheritorSubstitutorForNewExpression(final PsiClass baseClass, final PsiClass inheritor,
                                                                        final PsiSubstitutor baseSubstitutor, final PsiElement context) {
-    PsiManager manager = baseClass.getManager();
-    final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+    final Project project = baseClass.getProject();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
     PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
     if (superSubstitutor == null) return null;
     PsiSubstitutor inheritorSubstitutor = PsiSubstitutor.EMPTY;
@@ -127,7 +128,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
           resolveHelper.getSubstitutionForTypeParameter(inheritorParameter, substituted, arg, true, PsiUtil.getLanguageLevel(context));
         if (substitution == PsiType.NULL) continue;
         if (substitution == null) {
-          return manager.getElementFactory().createRawSubstitutor(inheritor);
+          return facade.getElementFactory().createRawSubstitutor(inheritor);
         }
         inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
         break;

@@ -298,15 +298,16 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (getArrayClass(className) != null) {
-      return psiManager.getElementFactory().getArrayClass(psiManager.getEffectiveLanguageLevel());
+      return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().getArrayClass(JavaPsiFacade
+        .getInstance(psiManager.getProject()).getEffectiveLanguageLevel());
     }
     if(project.isDefault()) {
       return null;
     }
     final String _className = className.replace('$', '.');
-    final PsiClass aClass = psiManager.findClass(_className, scope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(_className, scope);
     if (aClass == null && scope != GlobalSearchScope.allScope(project)) {
-      return psiManager.findClass(_className, GlobalSearchScope.allScope(project)); 
+      return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(_className, GlobalSearchScope.allScope(project));
     }
     return aClass;
   }
@@ -317,13 +318,14 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     final PsiManager psiManager = PsiManager.getInstance(project);
     try {
       if (getArrayClass(className) != null) {
-        return psiManager.getElementFactory().createTypeFromText(className, null);
+        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTypeFromText(className, null);
       }
       if(project.isDefault()) {
         return null;
       }
-      final PsiClass aClass = psiManager.findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
-      return psiManager.getElementFactory().createType(aClass);
+      final PsiClass aClass =
+        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className.replace('$', '.'), GlobalSearchScope.allScope(project));
+      return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(aClass);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

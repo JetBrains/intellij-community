@@ -32,7 +32,7 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
   public ExtendsListFix(PsiClass aClass, PsiClass classToExtendFrom, boolean toAdd) {
     myClass = aClass;
     myClassToExtendFrom = classToExtendFrom;
-    myTypeToExtendFrom = aClass.getManager().getElementFactory().createType(classToExtendFrom);
+    myTypeToExtendFrom = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(classToExtendFrom);
     myToAdd = toAdd;
   }
 
@@ -130,7 +130,8 @@ public class ExtendsListFix implements IntentionAction, LocalQuickFix {
       else {
         anchor = referenceElements[position - 1];
       }
-      PsiJavaCodeReferenceElement classReferenceElement = myClass.getManager().getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
+      PsiJavaCodeReferenceElement classReferenceElement =
+        JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {

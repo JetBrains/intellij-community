@@ -164,7 +164,7 @@ public class RenameUtil {
     }
 
     public void addClassCollisions(PsiElement referenceElement, String newName, List<UsageInfo> results) {
-      final PsiResolveHelper resolveHelper = referenceElement.getManager().getResolveHelper();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(referenceElement.getProject()).getResolveHelper();
       final PsiClass aClass = resolveHelper.resolveReferencedClass(newName, referenceElement);
       if (aClass == null) return;
       final PsiFile containingFile = referenceElement.getContainingFile();
@@ -355,7 +355,8 @@ public class RenameUtil {
   private static void visitUpstreamLocalCollisions(PsiElement element, PsiElement scope,
                                                   String newName,
                                                   final CollidingVariableVisitor collidingNameVisitor) {
-    final PsiVariable collidingVariable = scope.getManager().getResolveHelper().resolveReferencedVariable(newName, scope);
+    final PsiVariable collidingVariable =
+      JavaPsiFacade.getInstance(scope.getProject()).getResolveHelper().resolveReferencedVariable(newName, scope);
     if (collidingVariable instanceof PsiLocalVariable || collidingVariable instanceof PsiParameter) {
       final PsiElement commonParent = PsiTreeUtil.findCommonParent(element, collidingVariable);
       if (commonParent != null) {
@@ -802,7 +803,7 @@ public class RenameUtil {
 
   private static void qualifyField(PsiField field, PsiElement occurence, String newName) throws IncorrectOperationException {
     PsiManager psiManager = occurence.getManager();
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     if (field.hasModifierProperty(PsiModifier.STATIC)) {
       PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText("a." + newName, null);
       qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
@@ -818,7 +819,7 @@ public class RenameUtil {
 
   public static PsiReferenceExpression createFieldReference(PsiField field, PsiElement context) throws IncorrectOperationException {
     final PsiManager manager = field.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final String name = field.getName();
     PsiReferenceExpression ref = (PsiReferenceExpression) factory.createExpressionFromText(name, context);
     PsiElement resolved = ref.resolve();

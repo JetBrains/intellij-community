@@ -139,7 +139,7 @@ public class FilterUtil{
       return (PsiType)element;
     }
     if(element instanceof PsiClass){
-      return element.getManager().getElementFactory().createType((PsiClass)element);
+      return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createType((PsiClass)element);
     }
     else if(element instanceof PsiMethod){
       return ((PsiMethod)element).getReturnType();

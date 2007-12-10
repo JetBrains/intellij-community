@@ -138,7 +138,7 @@ public class ClassUtil {
         return method;
       }
       else {
-        final PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
+        final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
         final List<HierarchicalMethodSignature> superSignatures = signatureHierarchical.getSuperSignatures();
         for (HierarchicalMethodSignature superSignatureHierarchical : superSignatures) {
           final PsiMethod superMethod = superSignatureHierarchical.getMethod();

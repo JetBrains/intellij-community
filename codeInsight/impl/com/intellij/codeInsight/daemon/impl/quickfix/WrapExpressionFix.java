@@ -65,7 +65,7 @@ public class WrapExpressionFix implements IntentionAction {
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     PsiMethod wrapper = findWrapper(myExpression.getType(), myExpectedType);
-    PsiElementFactory factory = file.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
     PsiMethodCallExpression call = (PsiMethodCallExpression) factory.createExpressionFromText(methodCallText,
                                                                                               null);

@@ -105,7 +105,7 @@ public class CreateFromUsageUtils {
       returnType = PsiType.VOID;
     }
 
-    PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
 
     LOG.assertTrue(!aClass.isInterface(), "Interface bodies should be already set up");
 
@@ -185,7 +185,7 @@ public class CreateFromUsageUtils {
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments)
     throws IncorrectOperationException {
     PsiManager psiManager = method.getManager();
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     PsiParameterList parameterList = method.getParameterList();
 
@@ -243,7 +243,7 @@ public class CreateFromUsageUtils {
                 if (!CodeInsightUtil.preparePsiElementForWrite(psiClass)) return null;
 
                 PsiManager manager = psiClass.getManager();
-                PsiElementFactory elementFactory = manager.getElementFactory();
+                PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
                 PsiClass result = classKind == INTERFACE ? elementFactory.createInterface(name) :
                                   classKind == CLASS ? elementFactory.createClass(name) :
                                   elementFactory.createEnum(name);
@@ -276,7 +276,7 @@ public class CreateFromUsageUtils {
       }
 
       if (aPackage == null) {
-        aPackage = manager.findPackage("");
+        aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
       }
     }
     if (aPackage == null) return null;
@@ -305,7 +305,8 @@ public class CreateFromUsageUtils {
                                       final PsiElement contextElement,
                                       final PsiFile sourceFile,
                                       final String superClassName) {
-    final PsiElementFactory factory = manager.getElementFactory();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    final PsiElementFactory factory = facade.getElementFactory();
 
     return ApplicationManager.getApplication().runWriteAction(
       new Computable<PsiClass>() {
@@ -332,7 +333,7 @@ public class CreateFromUsageUtils {
                 scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
                 return null;
               }
-              if (!manager.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
+              if (!facade.getResolveHelper().isAccessible(targetClass, contextElement, null)) {
                 targetClass.getModifierList().setModifierProperty(PsiKeyword.PUBLIC, true);
               }
             }
@@ -355,7 +356,8 @@ public class CreateFromUsageUtils {
             }
 
             if (superClassName != null) {
-              final PsiClass superClass = manager.findClass(superClassName, targetClass.getResolveScope());
+              final PsiClass superClass =
+                facade.findClass(superClassName, targetClass.getResolveScope());
               final PsiJavaCodeReferenceElement superClassReference = factory.createReferenceElementByFQClassName(superClassName, targetClass.getResolveScope());
               final PsiReferenceList list = classKind == INTERFACE || superClass == null || !superClass.isInterface() ?
                 targetClass.getExtendsList() : targetClass.getImplementsList();
@@ -428,7 +430,7 @@ public class CreateFromUsageUtils {
     VariablesProcessor varproc = new VariablesProcessor("", true, list){
       public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
         if(!(element instanceof PsiField) ||
-           element.getManager().getResolveHelper().isAccessible((PsiField)element, expression, null)) {
+           JavaPsiFacade.getInstance(element.getProject()).getResolveHelper().isAccessible((PsiField)element, expression, null)) {
           return super.execute(element, substitutor);
         }
         return true;
@@ -525,14 +527,15 @@ public class CreateFromUsageUtils {
     }
 
     if (typesList.isEmpty()) {
-      PsiElementFactory factory = manager.getElementFactory();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+      PsiElementFactory factory = facade.getElementFactory();
       for (String fieldName : expectedFieldNames) {
-        PsiField[] fields = manager.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
+        PsiField[] fields = facade.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = manager.getShortNamesCache().getMethodsByName(methodName, resolveScope);
+        PsiMethod[] methods = facade.getShortNamesCache().getMethodsByName(methodName, resolveScope);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
@@ -574,14 +577,15 @@ public class CreateFromUsageUtils {
     }
 
     if (typesList.isEmpty()) {
-      PsiElementFactory factory = manager.getElementFactory();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+      PsiElementFactory factory = facade.getElementFactory();
       for (String fieldName : expectedFieldNames) {
-        PsiField[] fields = manager.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
+        PsiField[] fields = facade.getShortNamesCache().getFieldsByName(fieldName, resolveScope);
         addMemberInfo(fields, expression, typesList, factory);
       }
 
       for (String methodName : expectedMethodNames) {
-        PsiMethod[] methods = manager.getShortNamesCache().getMethodsByName(methodName, resolveScope);
+        PsiMethod[] methods = facade.getShortNamesCache().getMethodsByName(methodName, resolveScope);
         addMemberInfo(methods, expression, typesList, factory);
       }
     }
@@ -669,13 +673,14 @@ public class CreateFromUsageUtils {
     List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
     PsiManager manager = expression.getManager();
     ExpectedTypesProvider provider = ExpectedTypesProvider.getInstance(manager.getProject());
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     for (int i = 0; i < Math.min(MAX_GUESSED_MEMBERS_COUNT, members.length); i++) {
       ProgressManager.getInstance().checkCanceled();
       PsiMember member = members[i];
       PsiClass aClass = member.getContainingClass();
       if (aClass instanceof PsiAnonymousClass) continue;
 
-      if (manager.getResolveHelper().isAccessible(aClass, expression, null)) {
+      if (facade.getResolveHelper().isAccessible(aClass, expression, null)) {
         PsiClassType type;
         final PsiElement pparent = expression.getParent().getParent();
         if (pparent instanceof PsiMethodCallExpression) {

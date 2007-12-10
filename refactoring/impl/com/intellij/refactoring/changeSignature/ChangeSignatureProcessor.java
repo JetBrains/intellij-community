@@ -91,7 +91,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
                                   Set<PsiMethod> propagateExceptionsMethods) {
     super(project);
     myManager = PsiManager.getInstance(project);
-    myFactory = myManager.getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     myGenerateDelegate = generateDelegate;
 
     myPropagateParametersMethods = propagateParametersMethods != null ? propagateParametersMethods : new HashSet<PsiMethod>();
@@ -306,7 +306,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
     try {
       PsiMethod prototype;
       PsiManager manager = PsiManager.getInstance(myProject);
-      PsiElementFactory factory = manager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiMethod method = myChangeInfo.getMethod();
       final CanonicalTypes.Type returnType = myChangeInfo.newReturnType;
       if (returnType != null) {
@@ -383,7 +383,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
           }
 
-          if (!element.getManager().getResolveHelper().isAccessible(method, modifierList, element, accessObjectClass, null)) {
+          if (!JavaPsiFacade.getInstance(element.getProject()).getResolveHelper()
+            .isAccessible(method, modifierList, element, accessObjectClass, null)) {
             String message =
               RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
                                         ConflictsUtil.getDescription(method, true),
@@ -439,7 +440,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(UsageInfo[] usages) {
-    PsiElementFactory factory = myManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
 
     try {
       if (myChangeInfo.isNameChanged) {
@@ -581,7 +582,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   public static PsiCallExpression addDelegatingCallTemplate(final PsiMethod delegate, final String newName) throws IncorrectOperationException {
     Project project = delegate.getProject();
-    PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     PsiCodeBlock body = delegate.getBody();
     assert body != null;
     final PsiCallExpression callExpression;
@@ -639,7 +640,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
   private PsiParameter createNewParameter(ParameterInfo newParm,
                                           PsiSubstitutor substitutor) throws IncorrectOperationException {
-    final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     final PsiType type = substitutor.substitute(newParm.createType(myChangeInfo.getMethod().getParameterList(), myManager));
     return factory.createParameter(newParm.getName(), type);
   }
@@ -736,7 +737,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       newExceptions = filterUnhandledExceptions(newExceptions, ref);
       if (newExceptions.length > 0) {
         //Add new try statement
-        PsiElementFactory elementFactory = myManager.getElementFactory();
+        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
         PsiTryStatement tryStatement = (PsiTryStatement)elementFactory.createStatementFromText("try {} catch (Exception e) {}", null);
         PsiStatement anchor = PsiTreeUtil.getParentOfType(ref, PsiStatement.class);
         LOG.assertTrue(anchor != null);
@@ -778,13 +779,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       String name = styleManager.suggestVariableName(VariableKind.PARAMETER, null, null, type).names[0];
       name = styleManager.suggestUniqueVariableName(name, tryStatement, false);
 
-      PsiCatchSection catchSection = tryStatement.getManager().getElementFactory().createCatchSection(type, name, tryStatement);
+      PsiCatchSection catchSection =
+        JavaPsiFacade.getInstance(tryStatement.getProject()).getElementFactory().createCatchSection(type, name, tryStatement);
       tryStatement.add(catchSection);
     }
   }
 
   private void fixPrimaryThrowsLists(PsiMethod method, PsiClassType[] newExceptions) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = myManager.getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[newExceptions.length];
     for (int i = 0; i < refs.length; i++) {
       refs[i] = elementFactory.createReferenceElementByType(newExceptions[i]);
@@ -825,7 +827,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private void fixActualArgumentsList(PsiExpressionList list,
                                       ChangeInfo changeInfo,
                                       boolean toInsertDefaultValue) throws IncorrectOperationException {
-    final PsiElementFactory factory = list.getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(list.getProject()).getElementFactory();
     if (changeInfo.isParameterSetOrOrderChanged) {
       if (changeInfo.isPropagationEnabled) {
         final ParameterInfo[] createdParmsInfo = changeInfo.getCreatedParmsInfoWithoutVarargs();
@@ -886,7 +888,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private PsiExpression createDefaultValue(final PsiElementFactory factory, final ParameterInfo info, final PsiExpressionList list)
     throws IncorrectOperationException {
     if (info.useAnySingleVariable) {
-      final PsiResolveHelper resolveHelper = list.getManager().getResolveHelper();
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       final PsiType type = info.getTypeWrapper().getType(myChangeInfo.getMethod(), myManager);
       final VariablesProcessor processor = new VariablesProcessor(false) {
               protected boolean check(PsiVariable var, PsiSubstitutor substitutor) {
@@ -950,7 +952,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       for (ThrownExceptionInfo thrownExceptionInfo : primaryNewExns) {
         if (thrownExceptionInfo.oldIndex < 0) {
           final PsiClassType type = (PsiClassType)thrownExceptionInfo.createType(caller, myManager);
-          final PsiJavaCodeReferenceElement ref = caller.getManager().getElementFactory().createReferenceElementByType(type);
+          final PsiJavaCodeReferenceElement ref =
+            JavaPsiFacade.getInstance(caller.getProject()).getElementFactory().createReferenceElementByType(type);
           newThrowns.add(ref);
         }
       }
@@ -964,7 +967,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
   private void processPrimaryMethod(PsiMethod method,
                                     PsiMethod baseMethod,
                                     boolean isOriginal) throws IncorrectOperationException {
-    PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
 
     if (myChangeInfo.isVisibilityChanged) {
       PsiModifierList modifierList = method.getModifierList();
@@ -981,7 +984,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       if (newName != null && !newName.equals(method.getName())) {
         final PsiIdentifier nameId = method.getNameIdentifier();
         assert nameId != null;
-        nameId.replace(myManager.getElementFactory().createIdentifier(newName));
+        nameId.replace(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createIdentifier(newName));
       }
     }
 
@@ -1071,7 +1074,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     PsiElement last = ref.getReferenceNameElement();
     if (last instanceof PsiIdentifier && last.getText().equals(oldName)) {
-      PsiElementFactory factory = ref.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
       PsiIdentifier newNameIdentifier = factory.createIdentifier(newName);
       last.replace(newNameIdentifier);
     }

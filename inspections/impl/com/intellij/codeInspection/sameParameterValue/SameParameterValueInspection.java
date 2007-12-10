@@ -151,7 +151,7 @@ public class SameParameterValueInspection extends GlobalInspectionTool {
 
       final PsiExpression defToInline;
       try {
-        defToInline = PsiManager.getInstance(project).getElementFactory().createExpressionFromText(myValue, parameter);
+        defToInline = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {
         return;

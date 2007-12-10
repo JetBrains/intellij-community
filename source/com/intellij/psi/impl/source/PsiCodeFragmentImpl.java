@@ -156,7 +156,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
       if (name != null) {
         String qNameImported = myPseudoImports.get(name);
         if (qNameImported != null) {
-          PsiClass imported = myManager.findClass(qNameImported, getResolveScope());
+          PsiClass imported = JavaPsiFacade.getInstance(myManager.getProject()).findClass(qNameImported, getResolveScope());
           if (imported != null) {
             if (!processor.execute(imported, substitutor)) return false;
           }
@@ -164,7 +164,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
       }
       else {
         for (String qNameImported : myPseudoImports.values()) {
-          PsiClass aClass = myManager.findClass(qNameImported, getResolveScope());
+          PsiClass aClass = JavaPsiFacade.getInstance(myManager.getProject()).findClass(qNameImported, getResolveScope());
           if (aClass != null) {
             if (!processor.execute(aClass, substitutor)) return false;
           }

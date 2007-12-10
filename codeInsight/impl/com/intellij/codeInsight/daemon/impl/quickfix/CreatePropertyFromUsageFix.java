@@ -146,7 +146,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
   protected void invokeImpl(PsiClass targetClass) {
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     boolean isStatic = false;
     PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
@@ -237,14 +237,14 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
               TemplateState state = TemplateManagerImpl.getTemplateState(editor);
               if (state == null) return;
               String fieldName = state.getVariableValue(FIELD_VARIABLE).getText();
-              if (!PsiManager.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
+              if (!JavaPsiFacade.getInstance(project).getNameHelper().isIdentifier(fieldName)) return;
               String fieldType = state.getVariableValue(TYPE_VARIABLE).getText();
 
               PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
               PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
               if (aClass == null) return;
               if (aClass.findFieldByName(fieldName, true) != null) return;
-              PsiElementFactory factory = aClass.getManager().getElementFactory();
+              PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
               try {
                 PsiType type = factory.createTypeFromText(fieldType, aClass);
                 try {

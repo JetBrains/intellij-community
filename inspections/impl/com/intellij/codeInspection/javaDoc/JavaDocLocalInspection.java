@@ -297,7 +297,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       try {
         final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
         if (owner != null) {

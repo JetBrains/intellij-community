@@ -4,10 +4,7 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReturnStatement;
-import com.intellij.psi.PsiStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
 
@@ -24,7 +21,7 @@ public class ReturnStatementReturnValue implements ReturnValue {
   }
 
   public PsiStatement createReplacement(final PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = methodCallExpression.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());
     PsiReturnStatement returnStatement = (PsiReturnStatement)elementFactory.createStatementFromText("return x;", null);
     returnStatement = (PsiReturnStatement) styleManager.reformat(returnStatement);

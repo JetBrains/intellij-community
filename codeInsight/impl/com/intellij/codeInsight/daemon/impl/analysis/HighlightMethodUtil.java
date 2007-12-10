@@ -883,7 +883,7 @@ public class HighlightMethodUtil {
   public static HighlightInfo checkOverrideEquivalentInheritedMethods(PsiClass aClass) {
     String errorDescription = null;
     final Collection<HierarchicalMethodSignature> visibleSignatures = aClass.getVisibleSignatures();
-    PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     Ultimate:
     for (HierarchicalMethodSignature signature : visibleSignatures) {
       PsiMethod method = signature.getMethod();
@@ -1021,7 +1021,7 @@ public class HighlightMethodUtil {
     if (list == null) return null;
     PsiClass aClass = typeResolveResult.getElement();
     if (aClass == null) return null;
-    final PsiResolveHelper resolveHelper = constructorCall.getManager().getResolveHelper();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(constructorCall.getProject()).getResolveHelper();
     PsiClass accessObjectClass = null;
     if (constructorCall instanceof PsiNewExpression) {
       PsiExpression qualifier = ((PsiNewExpression)constructorCall).getQualifier();

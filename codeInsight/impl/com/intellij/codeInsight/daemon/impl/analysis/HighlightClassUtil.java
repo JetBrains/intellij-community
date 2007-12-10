@@ -149,7 +149,7 @@ public class HighlightClassUtil {
     Module module = ModuleUtil.findModuleForPsiElement(aClass);
     if (module == null) return null;
 
-    PsiClass[] classes = manager.findClasses(qualifiedName, GlobalSearchScope.moduleScope(module));
+    PsiClass[] classes = JavaPsiFacade.getInstance(aClass.getProject()).findClasses(qualifiedName, GlobalSearchScope.moduleScope(module));
     if (classes.length < numOfClassesToFind) return null;
     String dupFileName = null;
     for (PsiClass dupClass : classes) {
@@ -400,7 +400,8 @@ public class HighlightClassUtil {
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR,
                                                       context,
                                                       mustBeInterface ? INTERFACE_EXPECTED : CLASS_EXPECTED);
-      PsiClassType type = aClass.getManager().getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+      PsiClassType type =
+        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, new ChangeExtendsToImplementsFix(aClass, type));
     }
     return errorResult;
@@ -720,7 +721,8 @@ public class HighlightClassUtil {
 
   private static boolean isExternalizable(PsiClass aClass) {
     PsiManager manager = aClass.getManager();
-    PsiClass externalizableClass = manager.findClass("java.io.Externalizable", aClass.getResolveScope());
+    PsiClass externalizableClass =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass("java.io.Externalizable", aClass.getResolveScope());
     return externalizableClass != null && aClass.isInheritor(externalizableClass, true);
   }
 
@@ -782,7 +784,7 @@ public class HighlightClassUtil {
     PsiExpression qualifier = superCall.getMethodExpression().getQualifierExpression();
     if (qualifier != null && PsiUtil.isInnerClass(targetClass)) {
       PsiClass outerClass = targetClass.getContainingClass();
-      PsiClassType outerType = superCall.getManager().getElementFactory().createType(outerClass);
+      PsiClassType outerType = JavaPsiFacade.getInstance(superCall.getProject()).getElementFactory().createType(outerClass);
       return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
     }
     return null;

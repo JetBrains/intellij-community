@@ -7,9 +7,9 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.ArrayElementDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ObjectCollectedException;
@@ -54,7 +54,7 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = PsiManager.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     try {
       return elementFactory.createExpressionFromText("this[" + myIndex + "]", null);
     }

@@ -214,7 +214,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     for (final PsiField constant : constants) {
       final PsiClass containingClass = constant.getContainingClass();
       if (containingClass == null) continue;
-      boolean isAccessible = PsiManager.getInstance(constant.getProject()).getResolveHelper() .isAccessible(constant, originalExpression,
+      boolean isAccessible = JavaPsiFacade.getInstance(constant.getProject()).getResolveHelper() .isAccessible(constant, originalExpression,
                                                                                                             containingClass);
       if (!isAccessible && containingClass.getQualifiedName() == null) {
         continue;
@@ -258,9 +258,11 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
   @Nullable
   private static PsiReferenceExpression createReferenceTo(final PsiField constant, final PsiLiteralExpression context) throws IncorrectOperationException {
-    PsiReferenceExpression reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText(constant.getName(), context);
+    PsiReferenceExpression reference = (PsiReferenceExpression)JavaPsiFacade.getInstance(constant.getProject()).getElementFactory()
+      .createExpressionFromText(constant.getName(), context);
     if (reference.isReferenceTo(constant)) return reference;
-    reference = (PsiReferenceExpression)constant.getManager().getElementFactory().createExpressionFromText("XXX."+constant.getName(), null);
+    reference = (PsiReferenceExpression)JavaPsiFacade.getInstance(constant.getProject()).getElementFactory()
+      .createExpressionFromText("XXX."+constant.getName(), null);
     final PsiReferenceExpression classQualifier = (PsiReferenceExpression)reference.getQualifierExpression();
     PsiClass containingClass = constant.getContainingClass();
     if (containingClass.getQualifiedName() == null) return null;

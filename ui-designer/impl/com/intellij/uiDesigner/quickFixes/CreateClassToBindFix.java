@@ -120,11 +120,11 @@ public final class CreateClassToBindFix extends QuickFix{
     FormEditingUtil.iterate(myEditor.getRootContainer(), new FormEditingUtil.ComponentVisitor() {
       public boolean visit(final IComponent component) {
         if (component.getBinding() != null) {
-          final PsiClass fieldClass = psiManager.findClass(component.getComponentClassName(), scope);
+          final PsiClass fieldClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
           if (fieldClass != null) {
-            PsiType fieldType = psiManager.getElementFactory().createType(fieldClass);
+            PsiType fieldType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(fieldClass);
             try {
-              PsiField field = psiManager.getElementFactory().createField(component.getBinding(), fieldType);
+              PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createField(component.getBinding(), fieldType);
               formClass.add(field);
             }
             catch (IncorrectOperationException e) {

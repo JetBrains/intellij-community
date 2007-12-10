@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -46,7 +46,7 @@ public class AddReturnFix implements IntentionAction {
 
     try {
       String value = suggestReturnValue();
-      PsiElementFactory factory = myMethod.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
       PsiCodeBlock body = myMethod.getBody();
       returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());

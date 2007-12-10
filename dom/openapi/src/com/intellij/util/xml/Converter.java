@@ -17,6 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
@@ -96,7 +97,7 @@ public abstract class Converter<T> {
     public PsiType fromString(final String s, final ConvertContext context) {
       if (s == null) return null;
       try {
-        return context.getFile().getManager().getElementFactory().createTypeFromText(s, null);
+        return JavaPsiFacade.getInstance(context.getFile().getProject()).getElementFactory().createTypeFromText(s, null);
       }
       catch (IncorrectOperationException e) {
         return null;

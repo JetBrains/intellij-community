@@ -7,7 +7,10 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.PsiTypeResult;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartTypePointer;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.LinkedHashSet;
@@ -30,13 +33,15 @@ public class TypeExpression implements Expression {
   }
 
   public Result calculateResult(ExpressionContext context) {
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-    return new PsiTypeResult(myDefaultType.getType(), PsiManager.getInstance(context.getProject()));
+    final Project project = context.getProject();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    return new PsiTypeResult(myDefaultType.getType(), project);
   }
 
   public Result calculateQuickResult(ExpressionContext context) {
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-    return new PsiTypeResult(myDefaultType.getType(), PsiManager.getInstance(context.getProject()));
+    final Project project = context.getProject();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    return new PsiTypeResult(myDefaultType.getType(), project);
   }
 
   public LookupItem[] calculateLookupItems(ExpressionContext context) {

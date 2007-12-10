@@ -123,16 +123,16 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
             ASTNode parent = call.getNode().getTreeParent();
             while (parent != null && parent.getElementType() != CLASS) parent = parent.getTreeParent();
             if (parent != null) {
-              qualifierType = manager.getElementFactory().createType((PsiClass)parent.getPsi());
+              qualifierType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType((PsiClass)parent.getPsi());
             }
           }
           if (qualifierType != null) {
-            PsiClass javaLangClass = manager.findClass("java.lang.Class", call.getResolveScope());
+            PsiClass javaLangClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Class", call.getResolveScope());
             if (javaLangClass != null && javaLangClass.getTypeParameters().length == 1) {
               Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
               map.put(javaLangClass.getTypeParameters()[0], PsiWildcardType.createExtends(manager, qualifierType));
-              PsiSubstitutor substitutor = manager.getElementFactory().createSubstitutor(map);
-              return manager.getElementFactory().createType(javaLangClass, substitutor, languageLevel);
+              PsiSubstitutor substitutor = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createSubstitutor(map);
+              return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(javaLangClass, substitutor, languageLevel);
             }
           }
         }

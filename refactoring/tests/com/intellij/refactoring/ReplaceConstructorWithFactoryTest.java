@@ -1,13 +1,13 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryProcessor;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -88,13 +88,13 @@ public class ReplaceConstructorWithFactoryTest extends CodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPrevLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
-    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myPrevLanguageLevel = getJavaFacade().getEffectiveLanguageLevel();
+    getJavaFacade().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
 
   protected void tearDown() throws Exception {
-    getPsiManager().setEffectiveLanguageLevel(myPrevLanguageLevel);
+    getJavaFacade().setEffectiveLanguageLevel(myPrevLanguageLevel);
     super.tearDown();
   }
 }

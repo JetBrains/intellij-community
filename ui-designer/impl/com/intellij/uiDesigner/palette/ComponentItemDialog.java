@@ -183,8 +183,8 @@ public final class ComponentItemDialog extends DialogWrapper {
 
   private void setEditorText(final String className) {
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = manager.getElementFactory();
-    PsiPackage defaultPackage = manager.findPackage("");
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
     final PsiCodeFragment fragment = factory.createReferenceCodeFragment(className, defaultPackage, true, true);
     myDocument = PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
     myEditorTextField.setDocument(myDocument);
@@ -308,14 +308,16 @@ public final class ComponentItemDialog extends DialogWrapper {
     myErrorLabel.setText(" ");
     if (myClassRadioButton.isSelected()) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
-      if (!psiManager.getNameHelper().isQualifiedName(myDocument.getText())) {
+      if (!JavaPsiFacade.getInstance(psiManager.getProject()).getNameHelper().isQualifiedName(myDocument.getText())) {
         if (myDocument.getTextLength() > 0) {
           myErrorLabel.setText(UIDesignerBundle.message("add.component.error.qualified.name.required"));
         }
         return false;
       }
-      PsiClass psiClass = psiManager.findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
-      PsiClass componentClass = psiManager.findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
+      PsiClass psiClass =
+        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(myDocument.getText(), ProjectScope.getAllScope(myProject));
+      PsiClass componentClass =
+        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(JComponent.class.getName(), ProjectScope.getAllScope(myProject));
       if (psiClass != null && componentClass != null && !InheritanceUtil.isInheritorOrSelf(psiClass, componentClass, true)) {
         myErrorLabel.setText(UIDesignerBundle.message("add.component.error.component.required"));
         return false;

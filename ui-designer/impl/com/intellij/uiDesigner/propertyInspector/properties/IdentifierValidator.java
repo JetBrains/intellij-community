@@ -10,9 +10,9 @@
  */
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.ui.InputValidator;
+import com.intellij.psi.JavaPsiFacade;
 
 public class IdentifierValidator implements InputValidator {
   private final Project myProject;
@@ -22,7 +22,7 @@ public class IdentifierValidator implements InputValidator {
   }
 
   public boolean checkInput(String inputString) {
-    return PsiManager.getInstance(myProject).getNameHelper().isIdentifier(inputString);
+    return JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(inputString);
   }
 
   public boolean canClose(String inputString) {

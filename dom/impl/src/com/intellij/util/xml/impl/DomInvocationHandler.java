@@ -11,8 +11,9 @@ import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -286,7 +287,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final String localName = tagName.getXmlName().getLocalName();
     if (localName.contains(":")) {
       try {
-        return myXmlTag.getManager().getElementFactory().createTagFromText("<" + localName + "/>");
+        return JavaPsiFacade.getInstance(myXmlTag.getProject()).getElementFactory().createTagFromText("<" + localName + "/>");
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

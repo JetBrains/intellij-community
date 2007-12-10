@@ -342,7 +342,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         // TODO: support type parameters in FQ names
         final String textSkipWhiteSpaceAndComments = getTextSkipWhiteSpaceAndComments();
         if (textSkipWhiteSpaceAndComments == null || textSkipWhiteSpaceAndComments.length() == 0) return JavaResolveResult.EMPTY_ARRAY;
-        final PsiClass aClass = getManager().findClass(textSkipWhiteSpaceAndComments, getResolveScope());
+        final PsiClass aClass =
+          JavaPsiFacade.getInstance(getManager().getProject()).findClass(textSkipWhiteSpaceAndComments, getResolveScope());
         if (aClass == null) return JavaResolveResult.EMPTY_ARRAY;
         return new JavaResolveResult[]{new CandidateInfo(aClass, updateSubstitutor(PsiSubstitutor.EMPTY, aClass), this, false)};
 
@@ -395,7 +396,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       case PACKAGE_NAME_KIND:
         final String packageName = getTextSkipWhiteSpaceAndComments();
         final PsiManager manager = getManager();
-        final PsiPackage aPackage = manager.findPackage(packageName);
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
         if (aPackage == null || !aPackage.isValid()) {
           if (!JavaPsiFacade.getInstance(manager.getProject()).isPartOfPackagePrefix(packageName)) {
             return JavaResolveResult.EMPTY_ARRAY;
@@ -433,7 +434,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
-    final PsiElement identifier = getManager().getElementFactory().createIdentifier(newElementName);
+    final PsiElement identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -497,15 +498,16 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
   private PsiElement bindToClass(final PsiClass aClass) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getManager().getProject());
     if (qName == null) {
       qName = aClass.getName();
-      final PsiClass psiClass = getManager().getResolveHelper().resolveReferencedClass(qName, this);
+      final PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
       if (!getManager().areElementsEquivalent(psiClass, aClass)) {
         throw cannotBindError(aClass);
       }
     }
     else {
-      if (getManager().findClass(qName, getResolveScope()) == null) {
+      if (facade.findClass(qName, getResolveScope()) == null) {
         return this;
       }
     }

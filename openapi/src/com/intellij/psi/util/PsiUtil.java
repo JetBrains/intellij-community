@@ -328,7 +328,7 @@ public final class PsiUtil {
   }
 
   public static boolean isAccessible(PsiMember member, PsiElement place, PsiClass accessObjectClass) {
-    return place.getManager().getResolveHelper().isAccessible(member, place, accessObjectClass);
+    return JavaPsiFacade.getInstance(place.getProject()).getResolveHelper().isAccessible(member, place, accessObjectClass);
   }
 
   public static JavaResolveResult getAccessObjectClass(PsiExpression accessObject) {
@@ -341,11 +341,12 @@ public final class PsiUtil {
           final PsiClass psiClass;
           final PsiSubstitutor substitutor;
           if (resolve instanceof PsiTypeParameter) {
-            final PsiClassType parameterType = resolve.getManager().getElementFactory().createType((PsiTypeParameter) resolve);
+            final PsiClassType parameterType = JavaPsiFacade.getInstance(resolve.getProject()).getElementFactory().createType((PsiTypeParameter) resolve);
             final PsiType superType = result.getSubstitutor().substitute(parameterType);
             if (superType instanceof PsiArrayType) {
               LanguageLevel languageLevel = getLanguageLevel(accessObject);
-              return resolve.getManager().getElementFactory().getArrayClassType(((PsiArrayType)superType).getComponentType(), languageLevel).resolveGenerics();
+              return JavaPsiFacade.getInstance(resolve.getProject()).getElementFactory()
+                .getArrayClassType(((PsiArrayType)superType).getComponentType(), languageLevel).resolveGenerics();
             }
             else if (superType instanceof PsiClassType) {
               final PsiClassType type = (PsiClassType)superType;
@@ -421,7 +422,7 @@ public final class PsiUtil {
       PsiClass aClass = (PsiClass)ref.resolve();
       if (exceptionClass != null && aClass != null) {
         if (aClass.isInheritor(exceptionClass, true)) {
-          PsiElementFactory factory = method.getManager().getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
           PsiJavaCodeReferenceElement ref1;
           if (exceptionName != null) {
             ref1 = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
@@ -439,7 +440,7 @@ public final class PsiUtil {
       }
     }
 
-    PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     PsiJavaCodeReferenceElement ref;
     if (exceptionName != null) {
       ref = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
@@ -461,7 +462,7 @@ public final class PsiUtil {
   }
 
   public static boolean isVariableNameUnique(String name, PsiElement place) {
-    PsiResolveHelper helper = place.getManager().getResolveHelper();
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(place.getProject()).getResolveHelper();
     return helper.resolveReferencedVariable(name, place) == null;
   }
 
@@ -1030,7 +1031,7 @@ public final class PsiUtil {
         }
 
         if (substitutionMap != null) {
-          final PsiElementFactory factory = aClass.getManager().getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
           final PsiSubstitutor newSubstitutor = factory.createSubstitutor(substitutionMap);
           return factory.createType(aClass, newSubstitutor);
         }
@@ -1210,12 +1211,14 @@ public final class PsiUtil {
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel(((PsiDirectory)element));
     final PsiFile file = element.getContainingFile();
-    if (file == null) return element.getManager().getEffectiveLanguageLevel();
+    if (file == null) {
+      return JavaPsiFacade.getInstance(element.getManager().getProject()).getEffectiveLanguageLevel();
+    }
 
     if (!(file instanceof PsiJavaFile)) {
       final PsiElement context = file.getContext();
       if (context != null) return getLanguageLevel(context);
-      return element.getManager().getEffectiveLanguageLevel();
+      return JavaPsiFacade.getInstance(element.getManager().getProject()).getEffectiveLanguageLevel();
     }
     return ((PsiJavaFile)file).getLanguageLevel();
   }

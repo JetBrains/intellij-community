@@ -110,7 +110,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
                 final String annotationText =
                   "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
                 try {
-                  result.put(annotationFQN, listOwner.getManager().getElementFactory().createAnnotationFromText(annotationText, null));
+                  result.put(annotationFQN, JavaPsiFacade.getInstance(listOwner.getProject()).getElementFactory().createAnnotationFromText(annotationText, null));
                 }
                 catch (IncorrectOperationException e) {
                   LOG.error(e);
@@ -290,13 +290,13 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         if (rootTag != null) {
           for (XmlTag tag : rootTag.getSubTags()) {
             if (Comparing.strEqual(tag.getAttributeValue("name"), externalName)) {
-              tag.add(xmlFile.getManager().getElementFactory().createTagFromText("<annotation name=\'" + annotationFQName + "\'/>"));
+              tag.add(JavaPsiFacade.getInstance(xmlFile.getProject()).getElementFactory().createTagFromText("<annotation name=\'" + annotationFQName + "\'/>"));
               return;
             }
           }
           @NonNls final String text =
             "<item name=\'" + externalName + "\'>\n" + "  <annotation name=\'" + annotationFQName + "\'/>\n" + "</item>";
-          rootTag.add(xmlFile.getManager().getElementFactory().createTagFromText(text));
+          rootTag.add(JavaPsiFacade.getInstance(xmlFile.getProject()).getElementFactory().createTagFromText(text));
         }
       }
     }
@@ -357,7 +357,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       }
       final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
       final String packageName = javaFile.getPackageName();
-      final PsiPackage psiPackage = myPsiManager.findPackage(packageName);
+      final PsiPackage psiPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
       if (psiPackage != null) {
         final Module module = ModuleUtil.findModuleForPsiElement(javaFile);
         final PsiDirectory[] dirsWithExternalAnnotations = module != null

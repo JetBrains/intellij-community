@@ -6,16 +6,16 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.util.*;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.VisibilityIcons;
-import com.intellij.ui.RowIcon;
 import gnu.trove.TIntObjectHashMap;
 
 import javax.swing.*;
@@ -120,7 +120,8 @@ public class ElementPresentationUtil {
     }
 
     final PsiManager manager = aClass.getManager();
-    final PsiClass javaLangTrowable = manager.findClass("java.lang.Throwable", aClass.getResolveScope());
+    final PsiClass javaLangTrowable =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", aClass.getResolveScope());
     final boolean isException = javaLangTrowable != null && InheritanceUtil.isInheritorOrSelf(aClass, javaLangTrowable, true);
     if (isException) {
       return CLASS_KIND_EXCEPTION;

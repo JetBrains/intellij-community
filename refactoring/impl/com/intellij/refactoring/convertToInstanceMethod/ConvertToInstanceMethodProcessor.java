@@ -341,7 +341,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
       referenceExpression.delete();
     }
     else {
-      final PsiExpression expression = myMethod.getManager().getElementFactory().createExpressionFromText("this", null);
+      final PsiExpression expression =
+        JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText("this", null);
       referenceExpression.replace(expression);
     }
   }
@@ -349,7 +350,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   private void processMethodCall(MethodCallUsageInfo usageInfo) throws IncorrectOperationException {
     PsiMethodCallExpression methodCall = usageInfo.getMethodCall();
     PsiParameterList parameterList = myMethod.getParameterList();
-    PsiElementFactory factory = myMethod.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
     int parameterIndex = parameterList.getParameterIndex(myTargetParameter);
     PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
     if (arguments.length <= parameterIndex) return;

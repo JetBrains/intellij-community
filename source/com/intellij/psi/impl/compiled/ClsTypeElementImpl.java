@@ -104,7 +104,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private boolean isPrimitive() {
-    return getManager().getElementFactory().createPrimitiveType(myTypeText) != null;
+    return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createPrimitiveType(myTypeText) != null;
   }
 
   private boolean isArray() {
@@ -130,7 +130,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   }
 
   private PsiType calculateType() {
-    PsiType result = getManager().getElementFactory().createPrimitiveType(myTypeText);
+    PsiType result = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createPrimitiveType(myTypeText);
     if (result != null) return result;
 
     if (isArray()) {

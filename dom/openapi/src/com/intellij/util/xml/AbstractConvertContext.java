@@ -16,13 +16,13 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,5 +90,9 @@ public abstract class AbstractConvertContext extends ConvertContext {
 
   public PsiManager getPsiManager() {
     return getFile().getManager();
+  }
+
+  public JavaPsiFacade getJavaFacade() {
+    return JavaPsiFacade.getInstance(getFile().getProject());
   }
 }

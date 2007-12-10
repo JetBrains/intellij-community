@@ -113,8 +113,9 @@ public class RefactoringUtil {
     throws IncorrectOperationException {
     final PsiManager manager = occurrence.getManager();
     final String fieldName = newField.getName();
-    final PsiVariable psiVariable = manager.getResolveHelper().resolveReferencedVariable(fieldName, occurrence);
-    final PsiElementFactory factory = manager.getElementFactory();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    final PsiVariable psiVariable = facade.getResolveHelper().resolveReferencedVariable(fieldName, occurrence);
+    final PsiElementFactory factory = facade.getElementFactory();
     if (psiVariable != null && psiVariable.equals(newField)) {
       return occurrence.replace(factory.createExpressionFromText(fieldName, null));
     }
@@ -137,7 +138,7 @@ public class RefactoringUtil {
       final String name = index > 0 ? baseName + index : baseName;
       index++;
       final PsiManager manager = place.getManager();
-      PsiResolveHelper helper = manager.getResolveHelper();
+      PsiResolveHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper();
       PsiVariable refVar = helper.resolveReferencedVariable(name, place);
       if (refVar != null && !manager.areElementsEquivalent(refVar, fieldToReplace)) continue;
       class CancelException extends RuntimeException {
@@ -590,7 +591,7 @@ public class RefactoringUtil {
   }
 
   public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (qualifierClass != null) {
       PsiThisExpression qualifiedThis = (PsiThisExpression)factory.createExpressionFromText("q.this", null);
       qualifiedThis = (PsiThisExpression)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
@@ -644,7 +645,7 @@ public class RefactoringUtil {
   }
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
-    PsiElementFactory factory = expr.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     return getTypeByExpression(expr, factory);
   }
 
@@ -847,7 +848,7 @@ public class RefactoringUtil {
     final String prefix = suggestedNames[0];
     final String id = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(prefix, context, true);
 
-    PsiElementFactory factory = expr.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
 
     if (expr instanceof PsiParenthesizedExpression) {
       PsiExpression expr1 = ((PsiParenthesizedExpression)expr).getExpression();
@@ -926,7 +927,7 @@ public class RefactoringUtil {
       return initializer;
     }
     LOG.assertTrue(initializerType instanceof PsiArrayType);
-    PsiElementFactory factory = initializer.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(initializer.getProject()).getElementFactory();
     PsiNewExpression result =
       (PsiNewExpression)factory.createExpressionFromText("new " + initializerType.getPresentableText() + "{}", null);
     result = (PsiNewExpression)CodeStyleManager.getInstance(initializer.getProject()).reformat(result);
@@ -1197,7 +1198,7 @@ public class RefactoringUtil {
         }
       }
       else {
-        newTags.add(method.getManager().getElementFactory().createParamTag(parameter.getName(), ""));
+        newTags.add(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createParamTag(parameter.getName(), ""));
       }
     }
     PsiDocTag anchor = paramTags.length > 0 ? paramTags[paramTags.length - 1] : null;
@@ -1484,7 +1485,7 @@ public class RefactoringUtil {
       }
     });
 
-    final PsiElementFactory elementFactory = elements[0].getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(elements[0].getProject()).getElementFactory();
     try {
       final PsiClass aClass = elementFactory.createClassFromText("class A {}", null);
       PsiTypeParameterList list = aClass.getTypeParameterList();

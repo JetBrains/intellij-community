@@ -71,7 +71,7 @@ public class OverrideImplementUtil {
     Map<PsiClass, PsiSubstitutor> substitutors = new HashMap<PsiClass,PsiSubstitutor>();
 
     PsiMethod[] allMethods = aClass.getAllMethods();
-    PsiResolveHelper resolveHelper = aClass.getManager().getResolveHelper();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (PsiMethod method : allMethods) {
       if (method.hasModifierProperty(PsiModifier.STATIC) || !resolveHelper.isAccessible(method, aClass, aClass)) continue;
       PsiClass hisClass = method.getContainingClass();
@@ -197,7 +197,7 @@ public class OverrideImplementUtil {
     if (results.isEmpty()) {
       PsiMethod method1 = substitutor == PsiSubstitutor.EMPTY ? method : GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
-      PsiElementFactory factory = method.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
       if (result instanceof PsiAnnotationMethod) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
@@ -232,7 +232,7 @@ public class OverrideImplementUtil {
         annotate(result, AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE);
       }
 
-      final PsiCodeBlock body = method.getManager().getElementFactory().createCodeBlockFromText("{}", null);
+      final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
       PsiCodeBlock oldbody = result.getBody();
       if (oldbody != null){
         oldbody.replace(body);
@@ -359,7 +359,7 @@ public class OverrideImplementUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
     FileTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
-    PsiElementFactory factory = originalMethod.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
     @NonNls String methodText;
     try {
       String bodyText = template.getText(properties);

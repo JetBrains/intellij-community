@@ -46,7 +46,8 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
 
   private PsiType getSuperType(PsiClass aClass) {
     if (aClass.isInterface()) {
-      return getManager().getElementFactory().createType(getManager().findClass("java.lang.Object", getResolveScope()));
+      return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createType(JavaPsiFacade.getInstance(getManager().getProject()).findClass("java.lang.Object",
+                                                                                                                        getResolveScope()));
     }
 
     if (aClass instanceof PsiAnonymousClass) {
@@ -62,9 +63,9 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
     if ("java.lang.Object".equals(aClass.getQualifiedName())) return null;
     PsiClassType[] superTypes = aClass.getExtendsListTypes();
     if (superTypes.length == 0) {
-      final PsiClass javaLangObject = getManager().findClass("java.lang.Object", getResolveScope());
+      final PsiClass javaLangObject = JavaPsiFacade.getInstance(getManager().getProject()).findClass("java.lang.Object", getResolveScope());
       if (javaLangObject != null) {
-        return getManager().getElementFactory().createType(javaLangObject);
+        return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createType(javaLangObject);
       }
       else {
         return null;

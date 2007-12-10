@@ -794,12 +794,12 @@ public class DependencyProcessor {
       public CacheCorruptedException compute() {
         try {
           final PsiManager psiManager = PsiManager.getInstance(myProject);
-          final PsiClass aClass = psiManager.findClass(qName, GlobalSearchScope.allScope(myProject));
+          final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(qName, GlobalSearchScope.allScope(myProject));
           if (aClass == null) {
             return null;
           }
-          final PsiElementFactory factory = psiManager.getElementFactory();
-          final PsiNameHelper nameHelper = PsiManager.getInstance(myProject).getNameHelper();
+          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+          final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myProject).getNameHelper();
           for (Iterator it = methodsToCheck.iterator(); it.hasNext();) {
             final MethodInfo methodInfo = (MethodInfo)it.next();
             if (!nameHelper.isIdentifier(myDependencyCache.resolve(methodInfo.getName()), LanguageLevel.JDK_1_3)) { // fix for SCR 16068

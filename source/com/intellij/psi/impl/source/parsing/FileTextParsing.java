@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.tree.*;
@@ -31,7 +32,8 @@ public class FileTextParsing extends Parsing {
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset,0);
     final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
-    JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable(), manager.getEffectiveLanguageLevel());
+    JavaParsingContext context = new JavaParsingContext(dummyRoot.getCharTable(),
+                                                        JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
 
     if (!skipHeader){
       TreeElement packageStatement = (TreeElement)context.getFileTextParsing().parsePackageStatement(filterLexer);

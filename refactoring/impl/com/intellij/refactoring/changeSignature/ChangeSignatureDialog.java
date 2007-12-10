@@ -198,7 +198,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
       JLabel typePrompt = new JLabel();
       panel.add(typePrompt);
-      final PsiElementFactory factory = myMethod.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       myReturnTypeCodeFragment = factory.createTypeCodeFragment(myMethod.getReturnTypeElement().getText(), myMethod.getParameterList(), true, true);
       final Document document = PsiDocumentManager.getInstance(myProject).getDocument(myReturnTypeCodeFragment);
       myReturnTypeField = new EditorTextField(document, myProject, StdFileTypes.JAVA);
@@ -536,10 +536,10 @@ public class ChangeSignatureDialog extends RefactoringDialog {
 
   private String validateAndCommitData() {
     PsiManager manager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     String name = getMethodName();
-    if (!manager.getNameHelper().isIdentifier(name)) {
+    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
       return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
     }
 
@@ -568,7 +568,7 @@ public class ChangeSignatureDialog extends RefactoringDialog {
       PsiTypeCodeFragment psiCodeFragment = codeFraments.get(i);
       PsiCodeFragment defaultValueFragment = defaultValueFraments.get(i);
 
-      if (!manager.getNameHelper().isIdentifier(info.getName())) {
+      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(info.getName())) {
         return RefactoringMessageUtil.getIncorrectIdentifierMessage(info.getName());
       }
 
@@ -619,7 +619,8 @@ public class ChangeSignatureDialog extends RefactoringDialog {
           return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
-        PsiClassType throwable = myMethod.getManager().getElementFactory().createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
+        PsiClassType throwable = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory()
+          .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return RefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());
         }

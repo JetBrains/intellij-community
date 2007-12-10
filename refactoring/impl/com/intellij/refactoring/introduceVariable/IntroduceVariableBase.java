@@ -82,7 +82,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     }
     final PsiFile file = expr.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
-    final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
 
     PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
@@ -305,7 +305,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
     if(isLoopOrIf(container)) {
       PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
       PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
-      PsiBlockStatement blockStatement = (PsiBlockStatement) container.getManager().getElementFactory().createStatementFromText("{}", null);
+      PsiBlockStatement blockStatement = (PsiBlockStatement)JavaPsiFacade.getInstance(container.getProject()).getElementFactory()
+        .createStatementFromText("{}", null);
       blockStatement = (PsiBlockStatement) CodeStyleManager.getInstance(container.getProject()).reformat(blockStatement);
       final PsiElement prevSibling = loopBody.getPrevSibling();
       if(prevSibling instanceof PsiWhiteSpace) {

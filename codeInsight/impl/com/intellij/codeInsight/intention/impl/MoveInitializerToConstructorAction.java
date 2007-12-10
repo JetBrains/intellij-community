@@ -93,7 +93,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
   }
 
   private static PsiElement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
-    PsiElementFactory factory = codeBlock.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(codeBlock.getProject()).getElementFactory();
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName()+" = y;", codeBlock);
     PsiAssignmentExpression expression = (PsiAssignmentExpression)statement.getExpression();
     PsiExpression initializer = field.getInitializer();
@@ -140,7 +140,7 @@ public class MoveInitializerToConstructorAction extends PsiElementBaseIntentionA
       PsiElement resolved = reference.resolve();
       if (resolved instanceof PsiVariable && !(resolved instanceof PsiField) && !PsiTreeUtil.isAncestor(root, resolved, false)) {
         PsiVariable variable = (PsiVariable)resolved;
-        PsiElementFactory factory = resolved.getManager().getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(resolved.getProject()).getElementFactory();
         PsiElement qualifiedExpr = factory.createExpressionFromText("this." + variable.getName(), expression);
         expression.replace(qualifiedExpr);
       }

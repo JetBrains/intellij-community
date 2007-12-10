@@ -150,7 +150,7 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
           }
         }
         PsiManager manager = file.getManager();
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiAnnotation annotation = factory.createAnnotationFromText("@" + myAnnotation, myModifierListOwner);
         PsiElement inserted = modifierList.addAfter(annotation, null);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);

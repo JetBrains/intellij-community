@@ -1,8 +1,9 @@
 package com.intellij.refactoring.changeClassSignature;
 
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -30,7 +31,7 @@ class TypeParameterInfo {
   }
 
   TypeParameterInfo(PsiClass aClass, String name, String defaultValue) throws IncorrectOperationException {
-    this(name, aClass.getManager().getElementFactory().createTypeFromText(defaultValue, aClass.getLBrace()));
+    this(name, JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createTypeFromText(defaultValue, aClass.getLBrace()));
   }
 
 

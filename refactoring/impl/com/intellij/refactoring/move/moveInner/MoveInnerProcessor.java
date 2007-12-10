@@ -143,7 +143,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
   protected void performRefactoring(final UsageInfo[] usages) {
     PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
     final RefactoringElementListener elementListener = getTransaction().getElementListener(myInnerClass);
     String newClassName = myNewClassName;
@@ -397,7 +397,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     throws IncorrectOperationException {
 
     PsiMethod[] constructors = aClass.getConstructors();
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     if (constructors.length > 0) {
       for (PsiMethod constructor : constructors) {
         if (parameterName != null) {
@@ -438,7 +438,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
   private PsiStatement createAssignmentStatement(PsiMethod constructor, String fieldname, String parameterName)
     throws IncorrectOperationException {
 
-    PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     @NonNls String pattern = fieldname + "=a;";
     if (fieldname.equals(parameterName)) {
       pattern = "this." + pattern;

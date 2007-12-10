@@ -374,7 +374,8 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
   private void checkToArray(PsiElement ref, PsiNewExpression newExpression) {
     PsiElement tmp;
 
-    final PsiClass javaUtilCollectionClass = myManager.findClass("java.util.Collection", ref.getResolveScope());
+    final PsiClass javaUtilCollectionClass =
+      JavaPsiFacade.getInstance(myManager.getProject()).findClass("java.util.Collection", ref.getResolveScope());
     if (javaUtilCollectionClass == null) return;
     tmp = newExpression.getParent();
     if (!(tmp instanceof PsiExpressionList)) return;

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -39,7 +39,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     PsiManager psiManager = myReferenceExpression.getManager();
     Project project = psiManager.getProject();
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
 
     PsiMember enclosingContext = null;

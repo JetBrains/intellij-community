@@ -36,20 +36,19 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 
 import java.util.ArrayList;
 
 public class DefaultFileNavigationContributor implements ChooseByNameContributor {
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return PsiManager.getInstance(project).getShortNamesCache().getAllFileNames();
+    return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllFileNames();
   }
 
   public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiFile[] psiFiles = psiManager.getShortNamesCache().getFilesByName(name);
+    final PsiFile[] psiFiles = JavaPsiFacade.getInstance(project).getShortNamesCache().getFilesByName(name);
     ArrayList<PsiFile> list = new ArrayList<PsiFile>();
     for (PsiFile file : psiFiles) {
       if (isEditable(file, includeNonProjectItems)) {

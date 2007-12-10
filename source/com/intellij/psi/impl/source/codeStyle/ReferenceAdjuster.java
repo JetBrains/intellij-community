@@ -68,7 +68,7 @@ public class ReferenceAdjuster implements Constants {
             refElement = ref.resolve();
           }
           else {
-            PsiResolveHelper helper = element.getManager().getResolveHelper();
+            PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getManager().getProject()).getResolveHelper();
             refElement = helper.resolveReferencedClass(
                 ((SourceJavaCodeReference)element).getClassNameText(),
               SourceTreeToPsiMap.treeElementToPsi(element)
@@ -186,8 +186,8 @@ public class ReferenceAdjuster implements Constants {
                                                                  @NotNull final PsiQualifiedReference reference) {
     PsiClass parentClass = refClass.getContainingClass();
     if (parentClass != null) {
-      PsiManager manager = parentClass.getManager();
-      final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(parentClass.getProject());
+      final PsiResolveHelper resolveHelper = facade.getResolveHelper();
       if (resolveHelper.isAccessible(refClass, reference, null) &&
           isSafeToShortenReference(reference.getReferenceName(), reference, refClass)) {
         return reference;
@@ -213,7 +213,8 @@ public class ReferenceAdjuster implements Constants {
 
   private static boolean isSafeToShortenReference(final String referenceText, final PsiElement psiReference, final PsiClass refClass) {
     final PsiManager manager = refClass.getManager();
-    return manager.areElementsEquivalent(refClass, manager.getResolveHelper().resolveReferencedClass(referenceText, psiReference));
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    return manager.areElementsEquivalent(refClass, facade.getResolveHelper().resolveReferencedClass(referenceText, psiReference));
   }
 
   @NotNull

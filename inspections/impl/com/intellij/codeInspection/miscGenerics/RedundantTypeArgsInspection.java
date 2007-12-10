@@ -83,7 +83,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
           final PsiTypeParameter[] typeParameters = method.getTypeParameters();
           if (typeParameters.length == typeArguments.length) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
-            PsiResolveHelper resolveHelper = expression.getManager().getResolveHelper();
+            PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
             for (int i = 0; i < typeParameters.length; i++) {
               PsiTypeParameter typeParameter = typeParameters[i];
               final PsiType inferedType = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, parameters,
@@ -127,7 +127,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)descriptor.getPsiElement();
       try {
         final PsiMethodCallExpression expr =
-          (PsiMethodCallExpression)PsiManager.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
+          (PsiMethodCallExpression)JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
         typeArgumentList.replace(expr.getTypeArgumentList());
       }
       catch (IncorrectOperationException e) {

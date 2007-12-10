@@ -2,6 +2,7 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,20 +24,21 @@ public class TypeOfVariableMacro implements Macro {
   public Result calculateResult(Expression[] params, ExpressionContext context) {
     if (params == null || params.length == 0) return null;
 
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+    final Project project = context.getProject();
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
     Result result = params[0].calculateQuickResult(context);
     if (result instanceof PsiElementResult) {
       final PsiElement element = ((PsiElementResult)result).getElement();
       if (element instanceof PsiVariable) {
-        return new PsiTypeResult(((PsiVariable)element).getType(), element.getManager());
+        return new PsiTypeResult(((PsiVariable)element).getType(), project);
       }
     } else if (result instanceof TextResult) {
-      PsiFile file = PsiDocumentManager.getInstance(context.getProject()).getPsiFile(context.getEditor().getDocument());
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
       PsiElement place = file.findElementAt(context.getStartOffset());
       final PsiVariable[] vars = MacroUtil.getVariablesVisibleAt(place, "");
       final String name = result.toString();
       for (final PsiVariable var : vars) {
-        if (name.equals(var.getName())) return new PsiTypeResult(var.getType(), var.getManager());
+        if (name.equals(var.getName())) return new PsiTypeResult(var.getType(), project);
       }
     }
     return null;

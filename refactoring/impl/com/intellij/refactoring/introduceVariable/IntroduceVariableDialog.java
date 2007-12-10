@@ -7,8 +7,8 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -267,7 +267,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
   private void updateOkStatus() {
     String text = getEnteredName();
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(text));
+    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text));
   }
 
   public JComponent getPreferredFocusedComponent() {

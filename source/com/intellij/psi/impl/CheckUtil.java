@@ -1,10 +1,8 @@
 package com.intellij.psi.impl;
 
-import com.intellij.psi.*;
-
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -12,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
  */
 public class CheckUtil {
   public static void checkIsIdentifier(PsiManager manager, String text) throws IncorrectOperationException{
-    if (!manager.getNameHelper().isIdentifier(text)){
+    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
       throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );
     }
   }

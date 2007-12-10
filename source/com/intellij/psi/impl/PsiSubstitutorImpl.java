@@ -29,7 +29,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
 
   public PsiType substitute(PsiTypeParameter typeParameter){
     if(!mySubstitutionMap.containsKey(typeParameter)){
-      return typeParameter.getManager().getElementFactory().createType(typeParameter);
+      return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
     }
     return mySubstitutionMap.get(typeParameter);
   }
@@ -149,7 +149,8 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
       if (!processClass(aClass, resolveResult.getSubstitutor(), hashMap)) {
         return null;
       }
-      return aClass.getManager().getElementFactory().createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
+      return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
+        .createType(aClass, createSubstitutor(hashMap), classType.getLanguageLevel());
     }
 
     private PsiType substituteTypeParameter(final PsiTypeParameter typeParameter) {
@@ -245,7 +246,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
             if (aClass instanceof PsiTypeParameter) {
               return rawTypeForTypeParameter((PsiTypeParameter)aClass);
             } else {
-              return aClass.getManager().getElementFactory().createType(aClass);
+              return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
             }
           }
           else {

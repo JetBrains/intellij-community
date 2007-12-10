@@ -247,7 +247,7 @@ public class PackageUtil {
     PsiManager manager = PsiManager.getInstance(project);
     String nameToMatch = packageName;
     while (true) {
-      PsiPackage aPackage = manager.findPackage(nameToMatch);
+      PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(nameToMatch);
       if (aPackage != null && isWritablePackage(aPackage)) return aPackage;
       int lastDotIndex = nameToMatch.lastIndexOf(".");
       if (lastDotIndex >= 0) {

@@ -80,7 +80,7 @@ public class AssignFieldFromParameterAction extends BaseIntentionAction {
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return;
     PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     String fieldName = field.getName();
     String parameterName = parameter.getName();
     final boolean isMethodStatic = method.hasModifierProperty(PsiModifier.STATIC);

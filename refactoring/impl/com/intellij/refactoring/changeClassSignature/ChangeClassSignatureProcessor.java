@@ -97,7 +97,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
   private void changeClassSignature(final PsiTypeParameter[] originalTypeParameters, boolean[] toRemoveParms)
     throws IncorrectOperationException {
-    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     List<PsiTypeParameter> newTypeParameters = new ArrayList<PsiTypeParameter>();
     for (final TypeParameterInfo info : myNewSignature) {
       int oldIndex = info.getOldParameterIndex();
@@ -125,7 +125,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
 
   private void processUsage(final UsageInfo usage, final PsiTypeParameter[] originalTypeParameters, final boolean[] toRemoveParms)
     throws IncorrectOperationException {
-    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)usage.getElement();
     PsiSubstitutor usageSubstitutor = determineUsageSubstitutor(referenceElement);
 

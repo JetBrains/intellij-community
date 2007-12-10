@@ -1,12 +1,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -38,7 +39,7 @@ public class RenamePublicClassFix implements IntentionAction {
 
   public boolean isAvailable(Project project, Editor editor, PsiFile file) {
     return myClass.isValid() &&
-           file.getManager().getNameHelper().isIdentifier(file.getVirtualFile().getNameWithoutExtension());
+           JavaPsiFacade.getInstance(file.getProject()).getNameHelper().isIdentifier(file.getVirtualFile().getNameWithoutExtension());
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {

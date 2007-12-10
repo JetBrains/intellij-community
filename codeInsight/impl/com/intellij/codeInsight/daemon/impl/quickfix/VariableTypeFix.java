@@ -7,10 +7,7 @@ import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.GenericsUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -50,7 +47,7 @@ public class VariableTypeFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(myVariable.getContainingFile())) return;
     try {
       myVariable.normalizeDeclaration();
-      myVariable.getTypeElement().replace(file.getManager().getElementFactory().createTypeElement(myReturnType));
+      myVariable.getTypeElement().replace(JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(myReturnType));
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
       UndoUtil.markPsiFileForUndo(file);
     } catch (IncorrectOperationException e) {

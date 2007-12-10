@@ -224,7 +224,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
 
     public boolean isAccessible() {
       if (myAccessible == null) {
-        myAccessible = getManager().getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null);
+        myAccessible = JavaPsiFacade.getInstance(getManager().getProject()).getResolveHelper().isAccessible(myTarget, PsiImportStaticReferenceElementImpl.this, null);
       }
       return myAccessible.booleanValue();
     }
@@ -311,7 +311,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (oldIdentifier == null){
       throw new IncorrectOperationException();
     }
-    PsiIdentifier identifier = getManager().getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -337,7 +337,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       throw new IncorrectOperationException();
     }
 
-    PsiIdentifier identifier = getManager().getElementFactory().createIdentifier(((PsiNamedElement)element).getName());
+    PsiIdentifier identifier = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createIdentifier(((PsiNamedElement)element).getName());
     oldIdentifier.replace(identifier);
     return this;
   }

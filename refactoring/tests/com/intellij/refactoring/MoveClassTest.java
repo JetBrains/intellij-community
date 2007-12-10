@@ -80,7 +80,7 @@ public class MoveClassTest extends CodeInsightTestCase {
       assertNotNull("Class " + className + " not found", classes[i]);
     }
 
-    PsiPackage aPackage = myPsiManager.findPackage(newPackageName);
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(newPackageName);
     assertNotNull("Package " + newPackageName + " not found", aPackage);
     final PsiDirectory[] dirs = aPackage.getDirectories();
     assertEquals(dirs.length, 1);

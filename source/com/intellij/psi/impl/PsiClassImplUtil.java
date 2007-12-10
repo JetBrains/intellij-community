@@ -1,10 +1,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.OrFilter;
@@ -18,11 +18,11 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
-import com.intellij.ui.RowIcon;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -394,7 +394,7 @@ public class PsiClassImplUtil {
                                                PsiClass aClass,
                                                PsiSubstitutor substitutor,
                                                final PsiElement place) {
-    PsiElementFactory elementFactory = candidateClass.getManager().getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(candidateClass.getProject()).getElementFactory();
     if (PsiUtil.isRawSubstitutor(aClass, substitutor)) {
       return elementFactory.createRawSubstitutor(candidateClass);
     }
@@ -506,16 +506,17 @@ public class PsiClassImplUtil {
     GlobalSearchScope resolveScope = psiClass.getResolveScope();
 
     if (psiClass.isInterface()) {
-      return manager.findClass("java.lang.Object", resolveScope);
+      return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
     }
     if (psiClass.isEnum()) {
-      return manager.findClass("java.lang.Enum", resolveScope);
+      return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Enum", resolveScope);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassReference = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassReference.resolve();
-      if (baseClass == null || baseClass.isInterface()) return manager.findClass("java.lang.Object", resolveScope);
+      if (baseClass == null || baseClass.isInterface()) return JavaPsiFacade.getInstance(manager.getProject())
+        .findClass("java.lang.Object", resolveScope);
       return baseClass;
     }
 
@@ -523,10 +524,10 @@ public class PsiClassImplUtil {
 
     final PsiClassType[] referenceElements = psiClass.getExtendsListTypes();
 
-    if (referenceElements.length == 0) return manager.findClass("java.lang.Object", resolveScope);
+    if (referenceElements.length == 0) return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
 
     PsiClass psiResoved = referenceElements[0].resolve();
-    return psiResoved == null ? manager.findClass("java.lang.Object", resolveScope) : psiResoved;
+    return psiResoved == null ? JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope) : psiResoved;
   }
 
   @NotNull public static PsiClass[] getSupers(PsiClass psiClass) {
@@ -590,7 +591,7 @@ public class PsiClassImplUtil {
         return new PsiClassType[]{baseClassType};
       }
       else {
-        PsiClassType objectType = psiClass.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object",
+        PsiClassType objectType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object",
                                                                                                     psiClass.getResolveScope());
         return new PsiClassType[]{objectType, baseClassType};
       }
@@ -608,7 +609,7 @@ public class PsiClassImplUtil {
         return PsiClassType.EMPTY_ARRAY;
       }
       PsiManager manager = psiClass.getManager();
-      PsiClassType objectType = manager.getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
+      PsiClassType objectType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", psiClass.getResolveScope());
       result[0] = objectType;
     }
     System.arraycopy(implementsTypes, 0, result, extendsListLength, implementsTypes.length);
@@ -616,16 +617,17 @@ public class PsiClassImplUtil {
   }
 
   private static PsiClassType getAnnotationSuperType(PsiClass psiClass) {
-    return psiClass.getManager().getElementFactory().createTypeByFQClassName("java.lang.annotation.Annotation", psiClass.getResolveScope());
+    return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory()
+      .createTypeByFQClassName("java.lang.annotation.Annotation", psiClass.getResolveScope());
   }
 
   private static PsiClassType getEnumSuperType(PsiClass psiClass) {
     PsiClassType superType;
     final PsiManager manager = psiClass.getManager();
-    final PsiClass enumClass = manager.findClass("java.lang.Enum", psiClass.getResolveScope());
+    final PsiClass enumClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Enum", psiClass.getResolveScope());
     if (enumClass == null) {
       try {
-        superType = (PsiClassType)manager.getElementFactory().createTypeFromText("java.lang.Enum", null);
+        superType = (PsiClassType)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeFromText("java.lang.Enum", null);
       }
       catch (IncorrectOperationException e) {
         superType = null;
@@ -638,7 +640,7 @@ public class PsiClassImplUtil {
       }
       else {
         superType = new PsiImmediateClassType(enumClass, PsiSubstitutor.EMPTY.put(
-          typeParameters[0], manager.getElementFactory().createType(psiClass)
+          typeParameters[0], JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(psiClass)
         ));
       }
     }
@@ -678,7 +680,7 @@ public class PsiClassImplUtil {
   private static PsiClass[] resolveClassReferenceList(final PsiClassType[] listOfTypes,
                                                       final PsiManager manager, final GlobalSearchScope resolveScope, boolean includeObject)
   {
-    PsiClass objectClass = manager.findClass("java.lang.Object", resolveScope);
+    PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
     if (objectClass == null) includeObject = false;
     if (listOfTypes == null || listOfTypes.length == 0) {
       if (includeObject) return new PsiClass[]{objectClass};

@@ -37,7 +37,7 @@ public class MacroUtil {
     if (decl != null) {
       place = file.findElementAt(decl.getTextOffset() -1);
     }
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     try{
       return factory.createTypeFromText(text, place);
     }
@@ -70,7 +70,7 @@ public class MacroUtil {
         }
       }
     }
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     try{
       return factory.createExpressionFromText(text, place);
     }
@@ -81,7 +81,7 @@ public class MacroUtil {
 
   @NotNull private static PsiExpression[] getStandardExpressions(PsiElement place) {
     ArrayList<PsiExpression> array = new ArrayList<PsiExpression>();
-    PsiElementFactory factory = place.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(place.getProject()).getElementFactory();
     try {
       array.add(factory.createExpressionFromText("true", null));
       array.add(factory.createExpressionFromText("false", null));

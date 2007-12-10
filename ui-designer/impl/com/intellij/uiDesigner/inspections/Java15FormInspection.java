@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -34,7 +35,7 @@ public class Java15FormInspection extends BaseFormInspection {
   protected void checkComponentProperties(Module module, final IComponent component, final FormErrorCollector collector) {
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    final PsiClass aClass = psiManager.findClass(component.getComponentClassName(), scope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(component.getComponentClassName(), scope);
     if (aClass == null) {
       return;
     }

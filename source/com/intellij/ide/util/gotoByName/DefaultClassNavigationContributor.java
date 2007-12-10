@@ -34,8 +34,8 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.ArrayList;
@@ -45,12 +45,12 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   }
 
   public String[] getNames(Project project, boolean includeNonProjectItems) {
-    return PsiManager.getInstance(project).getShortNamesCache().getAllClassNames(includeNonProjectItems);
+    return JavaPsiFacade.getInstance(project).getShortNamesCache().getAllClassNames(includeNonProjectItems);
   }
 
   public NavigationItem[] getItemsByName(String name, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    return filterUnshowable(PsiManager.getInstance(project).getShortNamesCache().getClassesByName(name, scope));
+    return filterUnshowable(JavaPsiFacade.getInstance(project).getShortNamesCache().getClassesByName(name, scope));
   }
 
   private static NavigationItem[] filterUnshowable(PsiClass[] items) {

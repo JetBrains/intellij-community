@@ -180,7 +180,7 @@ public final class Match {
       statement = getReturnValue().createReplacement(methodCallExpression);
     }
     else {
-      final PsiElementFactory elementFactory = methodCallExpression.getManager().getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
       PsiExpressionStatement expressionStatement = (PsiExpressionStatement) elementFactory.createStatementFromText("x();", null);
       final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getManager());
       expressionStatement = (PsiExpressionStatement)styleManager.reformat(expressionStatement);

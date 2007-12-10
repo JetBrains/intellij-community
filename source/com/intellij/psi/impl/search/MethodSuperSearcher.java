@@ -3,10 +3,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.psi.HierarchicalMethodSignature;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -67,6 +64,6 @@ public class MethodSuperSearcher implements QueryExecutor<MethodSignatureBackedB
     boolean hisStatic = superMethod.hasModifierProperty(PsiModifier.STATIC);
     if (hisStatic != method.hasModifierProperty(PsiModifier.STATIC) || !allowStaticMethod && hisStatic) return false;
 
-    return method.getManager().getResolveHelper().isAccessible(superMethod, method, null);
+    return JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(superMethod, method, null);
   }
 }

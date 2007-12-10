@@ -1,5 +1,6 @@
 package com.intellij.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -15,7 +16,6 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   private void deleteNewPackage() {
     Runnable runnable = new Runnable() {
       public void run() {
-        PsiPackage aPackage = myPsiManager.findPackage("anotherBla");
+        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
         assertNotNull("Package anotherBla not found", aPackage);
         try {
           aPackage.getDirectories()[0].delete();
@@ -107,7 +107,7 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   private void renamePackage() {
     Runnable runnable = new Runnable() {
       public void run() {
-        PsiPackage aPackage = myPsiManager.findPackage("bla");
+        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("bla");
         assertNotNull("Package bla not found", aPackage);
 
         PsiDirectory dir = aPackage.getDirectories()[0];

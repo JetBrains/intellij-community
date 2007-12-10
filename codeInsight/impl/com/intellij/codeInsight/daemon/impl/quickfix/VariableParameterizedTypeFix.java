@@ -15,9 +15,10 @@ public class VariableParameterizedTypeFix {
 
     String shortName = ((PsiClassType)type).getClassName();
     PsiManager manager = parameterList.getManager();
-    PsiShortNamesCache shortNamesCache = manager.getShortNamesCache();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    PsiShortNamesCache shortNamesCache = facade.getShortNamesCache();
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = facade.getElementFactory();
     for (PsiClass aClass : classes) {
       if (GenericsHighlightUtil.checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();

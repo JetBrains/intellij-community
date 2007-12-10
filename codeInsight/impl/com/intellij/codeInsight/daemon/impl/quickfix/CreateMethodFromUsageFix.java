@@ -44,7 +44,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiReferenceExpression ref = call.getMethodExpression();
     String name = ref.getReferenceName();
 
-    if (name == null || !ref.getManager().getNameHelper().isIdentifier(name)) return false;
+    if (name == null || !JavaPsiFacade.getInstance(ref.getProject()).getNameHelper().isIdentifier(name)) return false;
     if (hasErrorsInArgumentList(call)) return false;
     setText(QuickFixBundle.message("create.method.from.usage.text", name));
     return true;
@@ -115,7 +115,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
 
     try {
-      PsiElementFactory factory = psiManager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
       PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 

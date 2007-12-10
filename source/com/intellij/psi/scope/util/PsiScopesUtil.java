@@ -20,8 +20,8 @@ import com.intellij.psi.scope.processor.MethodsProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiScopesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.util.PsiScopesUtil");
@@ -98,7 +98,7 @@ public class PsiScopesUtil {
     if(classNameElement == null) return true;
     if (qualifier != null){
       // Composite expression
-      final PsiElementFactory factory = ref.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
       PsiElement target = null;
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
       PsiType type = null;
@@ -303,7 +303,7 @@ public class PsiScopesUtil {
     }
     else if (type instanceof PsiArrayType) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
-      JavaResolveResult qualifierResult = manager.getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType(),
+      JavaResolveResult qualifierResult = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().getArrayClassType(((PsiArrayType)type).getComponentType(),
                                                                                         languageLevel).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
     }
@@ -351,7 +351,7 @@ public class PsiScopesUtil {
           return;
         }
       }
-      final PsiElementFactory factory = aClass.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
       final PsiMethod dummyConstructor = factory.createConstructor();
       if(aClass.getNameIdentifier() != null){
         dummyConstructor.getNameIdentifier().replace(aClass.getNameIdentifier());

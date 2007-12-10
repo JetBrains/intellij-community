@@ -478,7 +478,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     for (Pair<String, RefactoringElementListener> pair : listenersForPackages) {
       String qualifiedName = pair.getFirst();
       RefactoringElementListener listener = pair.getSecond();
-      final PsiPackage aPackage = psiManager.findPackage(qualifiedName);
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(qualifiedName);
       if (aPackage == null) {
         LOG.error("Package cannot be found: "+qualifiedName+"; listener="+listener);
       }

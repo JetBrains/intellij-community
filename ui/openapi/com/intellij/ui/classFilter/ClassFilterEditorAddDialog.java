@@ -27,10 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.UIBundle;
 
@@ -102,7 +99,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
     if ("".equals(classQName)) {
       return null;
     }
-    return psiManager.findClass(classQName, GlobalSearchScope.allScope(myProject));
+    return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(classQName, GlobalSearchScope.allScope(myProject));
   }
 
   public JComponent getPreferredFocusedComponent() {

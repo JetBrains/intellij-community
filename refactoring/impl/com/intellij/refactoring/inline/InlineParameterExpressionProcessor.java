@@ -61,7 +61,8 @@ public class InlineParameterExpressionProcessor {
         final PsiElement element = referenceExpression.resolve();
         if (element instanceof PsiLocalVariable) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
-          final PsiExpression paramRef = myMethod.getManager().getElementFactory().createExpressionFromText(param.getName(), myMethod);
+          final PsiExpression paramRef =
+            JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText(param.getName(), myMethod);
           myLocalReplacements.put((PsiLocalVariable) element, paramRef);
         }
       }
@@ -146,7 +147,7 @@ public class InlineParameterExpressionProcessor {
                            RefactoringBundle.message("inline.parameter.command.name", myParameter.getName()),
                            containingFiles.toArray(new PsiFile[containingFiles.size()])) {
       protected void run(final Result result) throws Throwable {
-        final PsiElementFactory factory = myMethod.getManager().getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
         if (!createLocal) {
           for(PsiReference ref: parameterRefs) {
             InlineUtil.inlineVariable(myParameter, initializerInMethod, (PsiJavaCodeReferenceElement) ref.getElement());

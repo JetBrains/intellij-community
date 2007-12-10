@@ -316,7 +316,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     public PsiType getType() {
       if (myType.isValid()) return myType;
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)mySmartPsiElementPointer.getElement();
-      final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       if (referenceElement != null) {
         myType = factory.createType(referenceElement);
       }

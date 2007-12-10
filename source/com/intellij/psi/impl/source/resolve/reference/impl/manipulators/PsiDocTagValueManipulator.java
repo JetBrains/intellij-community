@@ -6,6 +6,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.util.IncorrectOperationException;
@@ -23,7 +24,7 @@ public class PsiDocTagValueManipulator extends AbstractElementManipulator<PsiDoc
       range.getEndOffset(),
       newContent
     );
-    return (PsiDocTag)tag.replace(tag.getManager().getElementFactory().createDocTagFromText(replacement.toString(), null));
+    return (PsiDocTag)tag.replace(JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(replacement.toString(), null));
   }
 
   public TextRange getRangeInElement(final PsiDocTag tag) {

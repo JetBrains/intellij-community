@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
 
 /**
  * @author yole
@@ -35,7 +35,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
           assert ref != null;
           String refName = ref.getReferenceName();
           LOG.assertTrue(refName != null);
-          PsiElementFactory elementFactory = newExpression.getManager().getElementFactory();
+          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
           PsiClass created = elementFactory.createClass(refName);
           final PsiModifierList modifierList = created.getModifierList();
           LOG.assertTrue(modifierList != null);

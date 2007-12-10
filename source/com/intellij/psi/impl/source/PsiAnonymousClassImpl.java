@@ -78,14 +78,14 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
           return getTypeByTree();
         }
 
-        myCachedBaseType = myManager.getElementFactory().createType(ref);
+        myCachedBaseType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(ref);
       }
       return myCachedBaseType;
     }
   }
 
   private PsiClassType getTypeByTree() {
-    return myManager.getElementFactory().createType(getBaseClassReference());
+    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(getBaseClassReference());
   }
 
   public PsiIdentifier getNameIdentifier() {

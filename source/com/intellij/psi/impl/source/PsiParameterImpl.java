@@ -88,7 +88,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
 
       String typeText = getRepositoryManager().getMethodView().getParameterTypeText(getRepositoryId(), getIndex());
       try {
-        final PsiType type = getManager().getParserFacade().createTypeFromText(typeText, this);
+        final PsiType type = JavaPsiFacade.getInstance(getManager().getProject()).getParserFacade().createTypeFromText(typeText, this);
         myCachedType = new PatchedSoftReference<PsiType>(type);
         return type;
       }
@@ -193,7 +193,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
         cachedAnnotations = annotationStrings.length == 0 ? PsiAnnotation.EMPTY_ARRAY : new PsiAnnotation[annotationStrings.length];
         for (int i = 0; i < annotationStrings.length; i++) {
           try {
-            cachedAnnotations[i] = getManager().getParserFacade().createAnnotationFromText(annotationStrings[i], this);
+            cachedAnnotations[i] = JavaPsiFacade.getInstance(getManager().getProject()).getParserFacade().createAnnotationFromText(annotationStrings[i], this);
             LOG.assertTrue(cachedAnnotations[i] != null);
           }
           catch (IncorrectOperationException e) {

@@ -62,7 +62,7 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
   }
 
   private PsiClassType[] createTypes(final PsiJavaCodeReferenceElement[] refs) {
-    final PsiElementFactory factory = getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
     PsiClassType[] types = new PsiClassType[refs.length];
     for (int i = 0; i < refs.length; i++) {
       types[i] = factory.createType(refs[i]);

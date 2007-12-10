@@ -1,6 +1,5 @@
 package com.intellij.refactoring.encapsulateFields;
 
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
@@ -10,25 +9,28 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.ui.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.IconUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
-
-import org.jetbrains.annotations.NonNls;
 
 public class EncapsulateFieldsDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(
@@ -453,13 +455,13 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
         String name;
         if (isToEncapsulateGet()) {
           name = myGetterNames[idx];
-          if (!manager.getNameHelper().isIdentifier(name)) {
+          if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
             return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
           }
         }
         if (!myFinalMarks[idx] && isToEncapsulateSet()) {
           name = mySetterNames[idx];
-          if (!manager.getNameHelper().isIdentifier(name)) {
+          if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name)) {
             return RefactoringMessageUtil.getIncorrectIdentifierMessage(name);
           }
         }
@@ -473,7 +475,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
                           ? PropertyUtil.generateGetterPrototype(field)
                           : PropertyUtil.generateSetterPrototype(field);
     try {
-      PsiElementFactory factory = field.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
       PsiIdentifier identifier = factory.createIdentifier(methodName);
       prototype.getNameIdentifier().replace(identifier);
       //prototype.getModifierList().setModifierProperty(getAccessorsVisibility(), true);

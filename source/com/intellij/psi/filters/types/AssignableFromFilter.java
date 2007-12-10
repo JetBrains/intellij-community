@@ -1,13 +1,10 @@
 package com.intellij.psi.filters.types;
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
-import org.jdom.Element;
 
 
 /**
@@ -40,7 +37,7 @@ public class AssignableFromFilter implements ElementFilter{
     if(type == null) {
       final PsiClass aClass = JavaPsiFacade.getInstance(context.getProject()).findClass(myClassName, context.getResolveScope());
       if (aClass != null) {
-        type = aClass.getManager().getElementFactory().createType(aClass, PsiSubstitutor.EMPTY);
+        type = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, PsiSubstitutor.EMPTY);
       }
       else {
         type = null;
@@ -64,7 +61,7 @@ public class AssignableFromFilter implements ElementFilter{
       for (final PsiTypeParameter parameter : parameters) {
         PsiType returnType = method.getReturnType();
         if (substitutor != null) returnType = substitutor.substitute(returnType);
-        final PsiType substitutionForParameter = method.getManager().getResolveHelper().getSubstitutionForTypeParameter(parameter,
+        final PsiType substitutionForParameter = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().getSubstitutionForTypeParameter(parameter,
                                                                                                                         returnType, type,
                                                                                                                         false,
                                                                                                                         PsiUtil.getLanguageLevel(context));

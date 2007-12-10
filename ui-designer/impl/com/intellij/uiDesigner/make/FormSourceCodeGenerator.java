@@ -210,7 +210,7 @@ public final class FormSourceCodeGenerator {
     final String methodText = myBuffer.toString();
 
     final PsiManager psiManager = PsiManager.getInstance(module.getProject());
-    final PsiElementFactory elementFactory = psiManager.getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     PsiClass newClass = (PsiClass) classToBind.copy();
 
@@ -303,7 +303,7 @@ public final class FormSourceCodeGenerator {
       }
     }
     if (!callsThisConstructor.get().booleanValue()) {
-      final PsiElementFactory factory = constructor.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(constructor.getProject()).getElementFactory();
       try {
         PsiStatement setupUIStatement = factory.createStatementFromText(AsmCodeGenerator.SETUP_METHOD_NAME + "();", constructor);
         psiCodeBlock.addBefore(setupUIStatement, anchor);
@@ -425,7 +425,7 @@ public final class FormSourceCodeGenerator {
   }
 
   private void generateMethodIfRequired(PsiClass aClass, PsiMethod anchor, final String methodName, String methodText, boolean condition) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = PsiManager.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     PsiMethod newMethod = null;
     PsiMethod[] oldMethods = aClass.findMethodsByName(methodName, false);
     if (!condition) {

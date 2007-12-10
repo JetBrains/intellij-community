@@ -1,16 +1,15 @@
 package com.intellij.refactoring.typeCook.deductive;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.Iterator;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -88,6 +87,7 @@ public class PsiTypeVariableFactory {
 
                                if (aClass != null) {
                                  final PsiManager manager = aClass.getManager();
+                                 final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
 
                                  if (aClass instanceof PsiTypeParameter) {
                                    final PsiTypeParameterListOwner owner =
@@ -111,7 +111,7 @@ public class PsiTypeVariableFactory {
                                      return Boolean.FALSE;
                                    }
                                  }
-                                 else if (!manager.getResolveHelper().isAccessible(aClass, myContext, null)) {
+                                 else if (!facade.getResolveHelper().isAccessible(aClass, myContext, null)) {
                                    return Boolean.FALSE;
                                  }
 

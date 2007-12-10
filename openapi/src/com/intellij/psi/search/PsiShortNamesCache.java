@@ -15,10 +15,7 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,12 +24,12 @@ import org.jetbrains.annotations.NotNull;
  * Allows to retrieve files and Java classes, methods and fields in a project by
  * non-qualified names.
  *
- * @see com.intellij.psi.PsiManager#getShortNamesCache()
+ * @see JavaPsiFacade#getShortNamesCache()
  */
 public interface PsiShortNamesCache {
   /**
    * Initializes the cache. To be used by custom PsiShortNameCache implementations
-   * registered through {@link com.intellij.psi.PsiManager#registerShortNamesCache(PsiShortNamesCache)} }.
+   * registered through {@link JavaPsiFacade#registerShortNamesCache(PsiShortNamesCache)} }.
    */
   void runStartupActivity();
 

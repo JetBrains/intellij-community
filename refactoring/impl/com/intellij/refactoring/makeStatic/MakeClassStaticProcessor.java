@@ -107,7 +107,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
   private void addAssignmentToField(final String parameterName, final PsiMethod constructor) {
     @NonNls String fieldName = convertToFieldName(parameterName);
     final PsiManager manager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     final PsiCodeBlock body = constructor.getBody();
     if (body != null) {
       try {
@@ -134,7 +134,7 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
     PsiElement parent = usageInfo.getElement().getParent();
     LOG.assertTrue(parent instanceof PsiCallExpression); //either this() or new()
     PsiCallExpression call = (PsiCallExpression) parent;
-    PsiElementFactory factory = call.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(call.getProject()).getElementFactory();
     PsiExpressionList args = call.getArgumentList();
     PsiElement addParameterAfter = null;
 

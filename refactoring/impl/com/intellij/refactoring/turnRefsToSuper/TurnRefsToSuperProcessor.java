@@ -94,7 +94,7 @@ public class TurnRefsToSuperProcessor extends TurnRefsToSuperProcessorBase {
     if (member instanceof PsiField) {
       final PsiClass containingClass = ((PsiField) member).getContainingClass();
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(member);
-      if (manager.areElementsEquivalent(containingClass, manager.getElementFactory().getArrayClass(languageLevel))) {
+      if (manager.areElementsEquivalent(containingClass, JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().getArrayClass(languageLevel))) {
         return true;
       }
     } else if (member instanceof PsiMethod) {

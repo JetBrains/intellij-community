@@ -38,14 +38,14 @@ public class RightSideTypeMacro implements Macro {
       if (rhs == null) return null;
       final PsiType rhsType = rhs.getType();
       if (rhsType == null) return null;
-      return new PsiTypeResult(rhsType, rhs.getManager());
+      return new PsiTypeResult(rhsType, project);
     } else if (element instanceof PsiVariable) {
       PsiVariable var = (PsiVariable) element;
       PsiExpression initializer = var.getInitializer();
       if (initializer == null) return null;
       PsiType type = RefactoringUtil.getTypeByExpression(initializer);
       if (type == null) return null;
-      return new PsiTypeResult(type, initializer.getManager());
+      return new PsiTypeResult(type, project);
     }
     return null;
   }

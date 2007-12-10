@@ -34,8 +34,8 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
         }
       }
       else {
-        PsiType collectionType =
-          variable.getManager().getElementFactory().createTypeByFQClassName("java.util.Collection", variable.getResolveScope());
+        PsiType collectionType = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory()
+          .createTypeByFQClassName("java.util.Collection", variable.getResolveScope());
         if (!collectionType.isAssignableFrom(variable.getType())) continue;
         final PsiTypeElement[] typeParameterElements = ref.getParameterList().getTypeParameterElements();
         for (PsiTypeElement typeParameterElement : typeParameterElements) {

@@ -48,7 +48,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     myTargetClass = targetClass;
     myFactoryName = factoryName;
     myManager = PsiManager.getInstance(project);
-    myFactory = myManager.getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
 
     myIsInner = isInner(myOriginalClass);
   }
@@ -123,7 +123,8 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     UsageInfo[] usages = refUsages.get();
 
     ArrayList<String> conflicts = new ArrayList<String>();
-    if (!myManager.getResolveHelper().isAccessible(getConstructorContainingClass(), myTargetClass, null)) {
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
+    if (!helper.isAccessible(getConstructorContainingClass(), myTargetClass, null)) {
       String message = RefactoringBundle.message("class.0.is.not.accessible.from.target.1",
                                                  ConflictsUtil.getDescription(getConstructorContainingClass(), true),
                                                  ConflictsUtil.getDescription(myTargetClass, true));
@@ -136,7 +137,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
       final PsiElement container = ConflictsUtil.getContainer(usage.getElement());
       if (!reportedContainers.contains(container)) {
         reportedContainers.add(container);
-        if (!myManager.getResolveHelper().isAccessible(myTargetClass, usage.getElement(), null)) {
+        if (!helper.isAccessible(myTargetClass, usage.getElement(), null)) {
           String message = RefactoringBundle.message("target.0.is.not.accessible.from.1",
                                                      targetClassDescription,
                                                      ConflictsUtil.getDescription(container, true));

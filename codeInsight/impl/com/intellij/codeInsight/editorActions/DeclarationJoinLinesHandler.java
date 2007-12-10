@@ -1,12 +1,12 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
@@ -46,7 +46,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       return -1;
     }
 
-    final PsiElementFactory factory = psiManager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     PsiExpression initializerExpression;
     final IElementType originalOpSign = assignment.getOperationSign().getTokenType();
     if (originalOpSign == JavaTokenType.EQ) {

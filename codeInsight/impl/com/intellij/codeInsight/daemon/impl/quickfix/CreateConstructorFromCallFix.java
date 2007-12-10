@@ -30,7 +30,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   protected void invokeImpl(PsiClass targetClass) {
     PsiManager psiManager = myConstructorCall.getManager();
     final Project project = psiManager.getProject();
-    PsiElementFactory elementFactory = psiManager.getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
 
     try {
       PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());

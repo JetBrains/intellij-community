@@ -25,7 +25,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   public void testGenericTypes() throws Exception {
     doTest(null, null, "T", new GenParams() {
       public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
-        final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         return new ParameterInfo[]{
           new ParameterInfo(-1, "x", factory.createTypeFromText("T", method.getParameterList()), "null"),
           new ParameterInfo(-1, "y", factory.createTypeFromText("C<T>", method.getParameterList()), "null")
@@ -37,7 +37,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   public void testGenericTypesInOldParameters() throws Exception {
     doTest(null, null, null, new GenParams() {
       public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
-        final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         return new ParameterInfo[] {
           new ParameterInfo(0, "t", factory.createTypeFromText("T", method), null)
         };
@@ -48,7 +48,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   public void testTypeParametersInMethod() throws Exception {
     doTest(null, null, null, new GenParams() {
              public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
-               final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
+               final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
                return new ParameterInfo[]{
                    new ParameterInfo(-1, "t", factory.createTypeFromText("T", method.getParameterList()), "null"),
                    new ParameterInfo(-1, "u", factory.createTypeFromText("U", method.getParameterList()), "null"),
@@ -121,7 +121,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
   public void testUseAnyVariable() throws Exception {
     doTest(null, null, null, new GenParams() {
       public ParameterInfo[] genParams(PsiMethod method) throws IncorrectOperationException {
-        final PsiElementFactory factory = method.getManager().getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
         return new ParameterInfo[] {
           new ParameterInfo(-1, "l", factory.createTypeFromText("List", method), "null", true)
         };
@@ -157,7 +157,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
-                 new ThrownExceptionInfo(-1, method.getManager().getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+                 new ThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
                };
              }
            },
@@ -169,7 +169,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
-                 new ThrownExceptionInfo(-1, method.getManager().getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
+                 new ThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
                };
              }
            },
@@ -181,7 +181,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
            new GenExceptions() {
              public ThrownExceptionInfo[] genExceptions(PsiMethod method) {
                return new ThrownExceptionInfo[] {
-                 new ThrownExceptionInfo(-1, method.getManager().getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
+                 new ThrownExceptionInfo(-1, JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
                };
              }
            },
@@ -191,7 +191,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
 
   protected void setUpJdk() {
     super.setUpJdk();
-    PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    JavaPsiFacade.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   private void doTest(String newReturnType, ParameterInfo[] parameterInfos, final boolean generateDelegate) throws Exception {
@@ -218,7 +218,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
-    final PsiElementFactory factory = PsiManager.getInstance(getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     PsiType newType = newReturnType != null ? factory.createTypeFromText(newReturnType, method) : method.getReturnType();
     new ChangeSignatureProcessor(getProject(), method, generateDelegate, newVisibility,
                                  newName != null ? newName : method.getName(),

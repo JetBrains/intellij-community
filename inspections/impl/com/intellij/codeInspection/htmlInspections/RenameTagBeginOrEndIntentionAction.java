@@ -11,7 +11,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.xml.XmlTag;
@@ -61,7 +61,7 @@ public class RenameTagBeginOrEndIntentionAction implements LocalQuickFix {
 
       new WriteCommandAction(project) {
         protected void run(final Result result) throws Throwable {
-          final XmlTag newTag = PsiManager.getInstance(project).getElementFactory().createTagFromText("<" + myTargetName + "/>");
+          final XmlTag newTag = JavaPsiFacade.getInstance(project).getElementFactory().createTagFromText("<" + myTargetName + "/>");
           CodeEditUtil.replaceChild(myParent, myTarget.getNode(), newTag.getChildren()[1].getNode());
         }
       }.execute();

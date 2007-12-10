@@ -7,6 +7,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.ParsingContext;
@@ -70,7 +71,7 @@ public class JavadocParsing extends Parsing {
   }
 
   public TreeElement parseDocCommentText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset) {
-    Lexer originalLexer = new JavaDocLexer(manager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
+    Lexer originalLexer = new JavaDocLexer(JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
 
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(TOKEN_FILTER));
     lexer.start(buffer, startOffset, endOffset, 0);
@@ -158,26 +159,29 @@ public class JavadocParsing extends Parsing {
       else if (LINK_TAG.equals(tagName) && isInlineItem) {
         return parseSeeTagValue(lexer);
       }
-      else if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0 &&
-               LINKPLAIN_TAG.equals(tagName) && isInlineItem) {
-        return parseSeeTagValue(lexer);
-      }
-      else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
-        final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false);
-        lexer.advance();
-        final CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
-        TreeUtil.addChildren(tagValue, element);
-        return tagValue;
-      }
-      else if (!isInlineItem && tagName != null && tagName.equals(PARAM_TAG)) {
-        return parseParamTagValue(lexer);
-      }
-      else if (manager.getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 &&
-               VALUE_TAG.equals(tagName) && isInlineItem) {
-        return parseSeeTagValue(lexer);
-      }
       else {
-        return parseSimpleTagValue(lexer);
+        if (JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0 &&
+                 LINKPLAIN_TAG.equals(tagName) && isInlineItem) {
+          return parseSeeTagValue(lexer);
+        }
+        else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
+          final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false);
+          lexer.advance();
+          final CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
+          TreeUtil.addChildren(tagValue, element);
+          return tagValue;
+        }
+        else if (!isInlineItem && tagName != null && tagName.equals(PARAM_TAG)) {
+          return parseParamTagValue(lexer);
+        }
+        else {
+          if (JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 && VALUE_TAG.equals(tagName) && isInlineItem) {
+            return parseSeeTagValue(lexer);
+          }
+          else {
+            return parseSimpleTagValue(lexer);
+          }
+        }
       }
     }
     else {

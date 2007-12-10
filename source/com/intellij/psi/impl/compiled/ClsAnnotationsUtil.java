@@ -1,8 +1,8 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.cache.DeclarationView;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -11,10 +11,10 @@ import com.intellij.psi.impl.source.parsing.JavaParsingContext;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.cls.BytePointer;
 import com.intellij.util.io.RecordDataOutput;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +85,7 @@ public class ClsAnnotationsUtil {
   }
 
   @NotNull public static PsiAnnotationMemberValue createMemberValueFromText(String text, PsiManager manager, ClsElementImpl parent) {
-    PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)manager.getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
+    PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
     final FileElement holderElement = new DummyHolder(manager, dummyJavaFile).getTreeElement();
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(parent);
     JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), languageLevel);

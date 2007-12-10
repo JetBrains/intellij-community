@@ -24,9 +24,10 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ui.Tree;
@@ -309,7 +310,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private final class MyGotoFileModel implements ChooseByNameModel {
     private int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
     public Object[] getElementsByName(final String name, final boolean checkBoxState) {
-      final PsiFile[] psiFiles = PsiManager.getInstance(myProject).getShortNamesCache().getFilesByName(name);
+      final PsiFile[] psiFiles = JavaPsiFacade.getInstance(myProject).getShortNamesCache().getFilesByName(name);
       return filterFiles(psiFiles);
     }
 
@@ -345,7 +346,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     public String[] getNames(final boolean checkBoxState) {
-      final String[] fileNames = PsiManager.getInstance(myProject).getShortNamesCache().getAllFileNames();
+      final String[] fileNames = JavaPsiFacade.getInstance(myProject).getShortNamesCache().getAllFileNames();
 
       final Set<String> array = new THashSet<String>();
       FileTypeManager fileTypeManager = FileTypeManager.getInstance();

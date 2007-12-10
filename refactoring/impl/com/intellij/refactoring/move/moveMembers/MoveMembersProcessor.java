@@ -63,7 +63,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     setCommandName(members);
 
     final PsiManager manager = PsiManager.getInstance(myProject);
-    myTargetClass = manager.findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
+    myTargetClass =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(dialog.getTargetClassName(), GlobalSearchScope.projectScope(myProject));
     myNewVisibility = dialog.getMemberVisibility();
   }
 
@@ -300,7 +301,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       removeQualifier(refExpr);
     }
     else {
-      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
     }
   }
@@ -423,7 +424,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           /* do nothing and hope for the best */
         }
       }
-      PsiManager manager = member.getManager();
+      JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
       for (PsiReference psiReference : ReferencesSearch.search(member).findAll()) {
         PsiElement ref = psiReference.getElement();
         if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {

@@ -23,9 +23,9 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ArrayList;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private final PsiManager myManager;
@@ -204,7 +204,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   private static Pair<PsiType, ConstraintType> getFailedInferenceConstraint(final PsiTypeParameter typeParameter) {
-    return new Pair<PsiType, ConstraintType>(typeParameter.getManager().getElementFactory().createType(typeParameter), ConstraintType.EQUALS);
+    return new Pair<PsiType, ConstraintType>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter), ConstraintType.EQUALS);
   }
 
   public PsiType inferTypeForMethodTypeParameter(final PsiTypeParameter typeParameter,
@@ -418,7 +418,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         PsiClass argClass = (PsiClass)argResult.getElement();
         if (argClass == null) return null;
 
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiType patternType = factory.createType(typeParam);
         if (isContraVariantPosition) {
           PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());

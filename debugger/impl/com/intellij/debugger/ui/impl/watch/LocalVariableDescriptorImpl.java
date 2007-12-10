@@ -77,7 +77,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
       return null;
     }
 
-    PsiVariable psiVariable = PsiManager.getInstance(project).getResolveHelper().resolveReferencedVariable(getName(), place);
+    PsiVariable psiVariable = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(getName(), place);
     if (psiVariable == null) {
       return null;
     }
@@ -139,7 +139,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = PsiManager.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     try {
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }

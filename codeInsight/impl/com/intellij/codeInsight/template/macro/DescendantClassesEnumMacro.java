@@ -4,10 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -58,7 +55,8 @@ public class DescendantClassesEnumMacro implements Macro {
     if (paramResult == null) return null;
 
     final boolean isAllowAbstract = isAllowAbstract(context, params);
-    final PsiClass myBaseClass = instance.findClass(paramResult, GlobalSearchScope.allScope(context.getProject()));
+    final PsiClass myBaseClass =
+      JavaPsiFacade.getInstance(instance.getProject()).findClass(paramResult, GlobalSearchScope.allScope(context.getProject()));
 
     if (myBaseClass != null) {
       PsiSearchHelper helper = instance.getSearchHelper();

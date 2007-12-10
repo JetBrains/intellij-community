@@ -3,11 +3,9 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class ExpectedTypeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeUtil");
@@ -143,7 +141,7 @@ public class ExpectedTypeUtil {
   }
 
   public static @Nullable PsiSubstitutor inferSubstitutor(final PsiMethod method, final PsiMethodCallExpression callExpr, final boolean forCompletion) {
-    final PsiResolveHelper helper = method.getManager().getResolveHelper();
+    final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     PsiExpression[] args = callExpr.getArgumentList().getExpressions();
     PsiSubstitutor result = PsiSubstitutor.EMPTY;

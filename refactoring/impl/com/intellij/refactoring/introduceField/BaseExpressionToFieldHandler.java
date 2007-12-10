@@ -187,8 +187,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             field.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
           }
           if (settings.isAnnotateAsNonNls()) {
-            PsiAnnotation annotation =
-              myParentClass.getManager().getElementFactory().createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
+            PsiAnnotation annotation = JavaPsiFacade.getInstance(myParentClass.getProject()).getElementFactory()
+              .createAnnotationFromText("@" + AnnotationUtil.NON_NLS, myParentClass);
             field.getModifierList().addAfter(annotation, null);
             JavaCodeStyleManager.getInstance(myParentClass.getProject()).shortenClassReferences(field.getModifierList());
           }
@@ -384,7 +384,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     final PsiExpressionStatement expressionStatement =
-      (PsiExpressionStatement)myParentClass.getManager().getElementFactory().createStatementFromText(field.getName() + "= expr;", null);
+      (PsiExpressionStatement)JavaPsiFacade.getInstance(myParentClass.getProject()).getElementFactory()
+        .createStatementFromText(field.getName() + "= expr;", null);
     PsiAssignmentExpression expr = (PsiAssignmentExpression)expressionStatement.getExpression();
     final PsiExpression rExpression = expr.getRExpression();
     LOG.assertTrue(rExpression != null);
@@ -423,7 +424,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         added = true;
       }
       if (!added && enclosingConstructor == null) {
-        PsiElementFactory factory = field.getManager().getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
         PsiMethod constructor = (PsiMethod)aClass.add(factory.createConstructor());
         final PsiCodeBlock body = constructor.getBody();
         PsiStatement assignment = createAssignment(field, initializerExpression, body.getLastChild());
@@ -444,7 +445,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     pattern.append(";");
     PsiManager psiManager = myParentClass.getManager();
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     try {
       PsiField field = factory.createFieldFromText(pattern.toString(), null);
       field = (PsiField)CodeStyleManager.getInstance(psiManager.getProject()).reformat(field);
@@ -464,7 +465,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     try {
       @NonNls String pattern = "x=0;";
       PsiManager psiManager = myParentClass.getManager();
-      PsiElementFactory factory = psiManager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
       PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, null);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(statement);
 

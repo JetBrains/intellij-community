@@ -283,7 +283,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         longTypeName = "java.lang.Object";
       }
       String name = map.nameByType(longTypeName);
-      if (name != null && PsiManager.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+      if (name != null && JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
         return new String[]{name};
       }
     }
@@ -339,7 +339,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       return;
     }
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiClass collectionClass = manager.findClass("java.util.Collection", element.getResolveScope());
+    final PsiClass collectionClass =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.Collection", element.getResolveScope());
     if( collectionClass == null )
     {
       return;
@@ -827,7 +828,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
       suggestion = changeIfNotIdentifier(suggestion + getSuffixByVariableKind(variableKind));
 
-      if (PsiManager.getInstance(myProject).getNameHelper().isIdentifier(suggestion, LanguageLevel.HIGHEST)) {
+      if (JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(suggestion, LanguageLevel.HIGHEST)) {
         list.add(suggestion);
       }
     }
@@ -1006,7 +1007,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private String changeIfNotIdentifier(String name) {
     PsiManager manager = PsiManager.getInstance(myProject);
 
-    if (!manager.getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
+    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(name, LanguageLevel.HIGHEST)) {
       char c = name.charAt(0);
       if (StringUtil.isVowel(c)) {
         return "an" + Character.toUpperCase(c) + name.substring(1);

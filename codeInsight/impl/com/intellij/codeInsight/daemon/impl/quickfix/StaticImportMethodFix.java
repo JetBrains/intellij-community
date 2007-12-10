@@ -17,8 +17,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiProximityComparator;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +67,8 @@ public class StaticImportMethodFix implements IntentionAction {
 
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
-    PsiShortNamesCache cache = myMethodCall.getManager().getShortNamesCache();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(myMethodCall.getProject());
+    PsiShortNamesCache cache = facade.getShortNamesCache();
     PsiReferenceExpression reference = myMethodCall.getMethodExpression();
     PsiExpressionList argumentList = myMethodCall.getArgumentList();
     String name = reference.getReferenceName();

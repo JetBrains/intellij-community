@@ -132,7 +132,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              PsiElementFactory factory = aClass.getManager().getElementFactory();
+              PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
               PsiMethod method;
               try {
                 method = factory.createMethodFromText("private void " +

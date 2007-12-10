@@ -1,5 +1,6 @@
 package com.intellij.psi.filters.types;
 
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -25,7 +26,7 @@ public class AssignableGroupFilter extends OrFilter implements InitializableFilt
     for (Object aClass : classes) {
       if (aClass instanceof PsiClass) {
         final PsiClass psiClass = (PsiClass)aClass;
-        PsiType type = psiClass.getManager().getElementFactory().createType(psiClass, PsiSubstitutor.EMPTY);
+        PsiType type = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass, PsiSubstitutor.EMPTY);
         addFilter(new AssignableFromFilter(type));
       }
       if (aClass instanceof PsiType) {

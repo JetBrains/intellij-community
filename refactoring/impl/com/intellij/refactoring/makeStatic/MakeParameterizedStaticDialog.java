@@ -239,7 +239,7 @@ public class MakeParameterizedStaticDialog extends AbstractMakeStaticDialog {
         setOKActionEnabled(false);
       }
       else {
-        setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(classParameterName.trim()));
+        setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(classParameterName.trim()));
       }
     }
     else

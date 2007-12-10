@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -321,8 +322,8 @@ public final class InsertComponentProcessor extends EventProcessor {
     PsiManager manager = PsiManager.getInstance(myEditor.getProject());
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
     final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
-    final PsiClass componentClass = manager.findClass(item.getClassName(), projectScope);
-    if (componentClass != null && manager.findClass(item.getClassName(), moduleScope) == null) {
+    final PsiClass componentClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), projectScope);
+    if (componentClass != null && JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), moduleScope) == null) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
       List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
       if (entries.size() > 0) {

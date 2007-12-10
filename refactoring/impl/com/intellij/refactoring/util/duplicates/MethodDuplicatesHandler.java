@@ -189,7 +189,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler {
       if (isEssentialStaticContextAbsent(match)) {
         myMethod.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
       }
-      final PsiElementFactory factory = myMethod.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
       final boolean needQualifier = match.getInstanceExpression() != null;
       final boolean needStaticQualifier = isExternal(match);
       final @NonNls String text = needQualifier || needStaticQualifier ?  "q." + myMethod.getName() + "()": myMethod.getName() + "()";

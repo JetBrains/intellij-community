@@ -104,7 +104,7 @@ public class CreateSubclassAction extends PsiElementBaseIntentionAction {
                     });
               return null;
             }
-            PsiJavaCodeReferenceElement ref = file.getManager().getElementFactory().createClassReferenceElement(psiClass);
+            PsiJavaCodeReferenceElement ref = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createClassReferenceElement(psiClass);
 
             try {
               if (psiClass.isInterface()) {

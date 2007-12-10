@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
@@ -30,10 +31,10 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
         PsiPackage[] sourcePackages = new PsiPackage[packageNames.length];
         for (int i = 0; i < packageNames.length; i++) {
           String packageName = packageNames[i];
-          sourcePackages[i] = manager.findPackage(packageName);
+          sourcePackages[i] = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
           assertNotNull(sourcePackages[i]);
         }
-        PsiPackage targetPackage = manager.findPackage(targetPackageName);
+        PsiPackage targetPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(targetPackageName);
         assertNotNull(targetPackage);
         new MoveClassesOrPackagesProcessor(myProject, sourcePackages,
                                            new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),

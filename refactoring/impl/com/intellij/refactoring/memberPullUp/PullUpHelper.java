@@ -258,7 +258,7 @@ public class PullUpHelper {
       }
     }
 
-    final PsiElementFactory factory = myManager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
 
     if (constructor == null) {
       constructor = (PsiMethod) myTargetSuperClass.add(factory.createConstructor());
@@ -334,7 +334,7 @@ public class PullUpHelper {
         }
       }
 
-      final PsiElementFactory factory = subConstructor.getManager().getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(subConstructor.getProject()).getElementFactory();
       try {
         if (superCall == null) {
             PsiExpressionStatement statement =
@@ -548,7 +548,7 @@ public class PullUpHelper {
     ArrayList<PsiJavaCodeReferenceElement> refs = collector.getReferences();
     ArrayList<PsiElement> members = collector.getReferees();
     ArrayList<PsiClass> classes = collector.getRefereeClasses();
-    PsiElementFactory factory = classMember.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(classMember.getProject()).getElementFactory();
 
     for (int i = 0; i < refs.size(); i++) {
       PsiJavaCodeReferenceElement ref = refs.get(i);
@@ -625,7 +625,7 @@ public class PullUpHelper {
       final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
       if (qualifier != null && qualifier.isReferenceTo(mySourceClass)) {
         try {
-          expression.replace(myManager.getElementFactory().createExpressionFromText(myTargetSuperClass.getName() + ".this", null));
+          expression.replace(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(myTargetSuperClass.getName() + ".this", null));
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
@@ -677,7 +677,7 @@ public class PullUpHelper {
     }
 
     public void fixSupers() throws IncorrectOperationException {
-      final PsiElementFactory factory = myManager.getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
       PsiThisExpression thisExpression = (PsiThisExpression) factory.createExpressionFromText("this", null);
       for (PsiExpression psiExpression : mySupersToDelete) {
         psiExpression.delete();

@@ -151,7 +151,7 @@ public class DebuggerTreeNodeExpression {
         }
         else if(type instanceof PsiArrayType) {
           LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expressionWithThis);
-          if(thisClass == expressionWithThis.getManager().getElementFactory().getArrayClass(languageLevel)) {
+          if(thisClass == JavaPsiFacade.getInstance(expressionWithThis.getProject()).getElementFactory().getArrayClass(languageLevel)) {
             castNeeded = false;
           }
         }
@@ -173,7 +173,8 @@ public class DebuggerTreeNodeExpression {
     }
 
     try {
-      return howToEvaluateThis.getManager().getElementFactory().createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
+      return JavaPsiFacade.getInstance(howToEvaluateThis.getProject()).getElementFactory()
+        .createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(e.getMessage(), e);
@@ -198,7 +199,7 @@ public class DebuggerTreeNodeExpression {
 
       typeName =  normalize(typeName, contextElement, project);
 
-      PsiElementFactory elementFactory = manager.getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       try {
         PsiParenthesizedExpression parenthExpression = (PsiParenthesizedExpression)elementFactory.createExpressionFromText(
           "((" + typeName + ")expression)", null);
@@ -224,10 +225,10 @@ public class DebuggerTreeNodeExpression {
       return qualifiedName;
     }
 
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    PsiClass aClass = psiManager.findClass(qualifiedName, GlobalSearchScope.allScope(project));
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    PsiClass aClass = facade.findClass(qualifiedName, GlobalSearchScope.allScope(project));
     if (aClass != null) {
-      return normalizePsiClass(aClass, contextElement, psiManager.getResolveHelper());
+      return normalizePsiClass(aClass, contextElement, facade.getResolveHelper());
     }
     return qualifiedName;
   }

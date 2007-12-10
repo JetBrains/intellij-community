@@ -436,7 +436,7 @@ public class ReductionSystem {
             theSubst = theSubst.put(parm, substitute(type));
           }
 
-          return aClass.getManager().getElementFactory().createType(aClass, theSubst);
+          return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
         }
         else {
           return t;

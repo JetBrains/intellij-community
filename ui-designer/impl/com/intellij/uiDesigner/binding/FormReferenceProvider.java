@@ -297,7 +297,8 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
                 final FieldFormReference fieldRef = ((FieldFormReference)ref);
                 final String componentClassName = fieldRef.getComponentClassName();
                 if (componentClassName != null) {
-                  final PsiClassType type = element.getManager().getElementFactory().createTypeByFQClassName(componentClassName, element.getResolveScope());
+                  final PsiClassType type = JavaPsiFacade.getInstance(element.getProject()).getElementFactory()
+                    .createTypeByFQClassName(componentClassName, element.getResolveScope());
                   map.put(fieldRef.getRangeText(), new Pair<PsiType, TextRange>(type, fieldRef.getComponentClassNameTextRange()));
                 }
               }

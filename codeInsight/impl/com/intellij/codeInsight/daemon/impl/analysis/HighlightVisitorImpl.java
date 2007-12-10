@@ -65,7 +65,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
   public HighlightVisitorImpl(PsiManager manager) {
-    this(manager.getResolveHelper());
+    this(JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper());
   }
 
   private HighlightVisitorImpl(@NotNull PsiResolveHelper resolveHelper) {

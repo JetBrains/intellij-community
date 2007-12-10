@@ -110,7 +110,7 @@ public class SharedPsiElementImplUtil {
 
   public static PsiElement setName(PsiElement element, String name) throws IncorrectOperationException{
     PsiManager manager = element.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
   }

@@ -90,7 +90,8 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         !(qualifier instanceof PsiMethodCallExpression) &&
         !(qualifier instanceof PsiLiteralExpression && ((PsiLiteralExpression)qualifier).getValue() == null)) {
       try {
-        PsiBinaryExpression binary = (PsiBinaryExpression)qualifier.getManager().getElementFactory().createExpressionFromText("a != null",
+        PsiBinaryExpression binary = (PsiBinaryExpression)JavaPsiFacade.getInstance(qualifier.getProject()).getElementFactory()
+          .createExpressionFromText("a != null",
                                                                                                                               null);
         binary.getLOperand().replace(qualifier);
         if (PsiUtil.getLanguageLevel(qualifier).hasAssertKeyword()) {
@@ -328,7 +329,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiInstanceOfExpression) {
         try {
-          final PsiExpression compareToNull = psiElement.getManager().getElementFactory().
+          final PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
             createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null",
                                      psiElement.getParent());
           psiElement.replace(compareToNull);

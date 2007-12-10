@@ -450,7 +450,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       protected void selected(PsiClass... classes) {
         List<PsiReference> refs = new ArrayList<PsiReference>();
         final ArrayList<PsiElement> otherOccurrences = new ArrayList<PsiElement>();
-        final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
         for (PsiClass aClass : classes) {
           addExceptionThrownPlaces(refs, otherOccurrences, factory.createType(aClass), place, typeFilter);

@@ -62,11 +62,12 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
 
   public PsiElement resolve() {
     if (myClassName != null) {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
       if (myContext != null) {
-        return myManager.getResolveHelper().resolveReferencedClass(myClassName, myContext);
+        return facade.getResolveHelper().resolveReferencedClass(myClassName, myContext);
       }
       else {
-        return myManager.findClass(myClassName, myResolveScope);
+        return facade.findClass(myClassName, myResolveScope);
       }
     }
     else {
@@ -80,7 +81,7 @@ public class LightClassReference extends LightElement implements PsiJavaCodeRefe
     PsiSubstitutor substitutor = mySubstitutor;
     if (substitutor == null) {
       if (resolved instanceof PsiClass) {
-        substitutor = myManager.getElementFactory().createRawSubstitutor((PsiClass) resolved);
+        substitutor = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createRawSubstitutor((PsiClass) resolved);
       } else {
         substitutor = PsiSubstitutor.EMPTY;
       }

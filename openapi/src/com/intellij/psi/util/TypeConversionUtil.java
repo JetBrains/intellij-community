@@ -268,7 +268,7 @@ public class TypeConversionUtil {
     final PsiClass superClass = result.getElement();
     if (superClass != null) {
       final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, null);
-      return typeParameter.getManager().getElementFactory().createType(superClass, substitutor);
+      return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(superClass, substitutor);
     }
     return superType;
   }
@@ -814,7 +814,7 @@ public class TypeConversionUtil {
       PsiTypeParameter[] baseParams = superClassCandidate.getTypeParameters();
       PsiTypeParameter[] derivedParams = derivedClassCandidate.getTypeParameters();
       if (baseParams.length > 0 && derivedParams.length == 0) {
-        return superClassCandidate.getManager().getElementFactory().createRawSubstitutor(superClassCandidate);
+        return JavaPsiFacade.getInstance(superClassCandidate.getProject()).getElementFactory().createRawSubstitutor(superClassCandidate);
       }
       return derivedSubstitutor;
     }
@@ -846,10 +846,10 @@ public class TypeConversionUtil {
 
     final PsiManager manager = superClass.getManager();
     if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
-      return manager.getElementFactory().createRawSubstitutor(superClass);
+      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(superClass);
     }
 
-    final PsiClass objectClass = manager.findClass("java.lang.Object", superClass.getResolveScope());
+    final PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", superClass.getResolveScope());
     if (manager.areElementsEquivalent(superClass, objectClass)) {
       return PsiSubstitutor.EMPTY;
     }
@@ -883,7 +883,7 @@ public class TypeConversionUtil {
     if (manager.areElementsEquivalent(base, candidate)) {
       PsiTypeParameter[] baseParams = base.getTypeParameters();
       PsiTypeParameter[] candidateParams = candidate.getTypeParameters();
-      PsiElementFactory factory = base.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(base.getProject()).getElementFactory();
       if (baseParams.length > 0 && candidateParams.length == 0) {
         return factory.createRawSubstitutor(base);
       }
@@ -920,7 +920,7 @@ public class TypeConversionUtil {
         final PsiSubstitutor newSubstitutor = getSuperClassSubstitutorInner(base, (PsiClass)newCandidate,
                                                                             substitutor, set, manager);
         if (newSubstitutor != null) {
-          return type.isRaw() ? manager.getElementFactory().createRawSubstitutor(base) : newSubstitutor;
+          return type.isRaw() ? JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(base) : newSubstitutor;
         }
       }
     }
@@ -1022,7 +1022,7 @@ public class TypeConversionUtil {
         return typeParameterErasureInner(boundTypeParameter, visited);
       }
       else if (psiClass != null) {
-        return typeParameter.getManager().getElementFactory().createType(psiClass);
+        return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
       }
     }
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
@@ -1039,7 +1039,7 @@ public class TypeConversionUtil {
         }
       }
       else if (psiClass != null) {
-        return typeParameter.getManager().getElementFactory().createType(psiClass);
+        return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
       }
     }
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());

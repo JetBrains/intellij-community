@@ -15,12 +15,13 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -79,7 +80,7 @@ public class ExceptionFilter implements Filter{
     try{
       final int lineNumber = Integer.parseInt(lineString);
       final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiClass aClass = manager.findClass(className, GlobalSearchScope.allScope(myProject));
+      PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(className, GlobalSearchScope.allScope(myProject));
       if (aClass == null) return null;
       final PsiFile file = (PsiFile) aClass.getContainingFile().getNavigationElement();
       if (file == null) return null;

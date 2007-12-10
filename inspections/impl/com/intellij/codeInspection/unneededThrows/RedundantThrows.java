@@ -223,7 +223,7 @@ public class RedundantThrows extends GlobalInspectionTool {
           final PsiElement psiElement = problem.getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
             final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
-            final PsiType psiType = psiManager.getElementFactory().createType(classRef);
+            final PsiType psiType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(classRef);
             removeException(refMethod, psiType, refsToDelete, psiMethod);
           } else {
             final PsiReferenceList throwsList = psiMethod.getThrowsList();
@@ -255,7 +255,7 @@ public class RedundantThrows extends GlobalInspectionTool {
 
       PsiJavaCodeReferenceElement[] refs = psiMethod.getThrowsList().getReferenceElements();
       for (PsiJavaCodeReferenceElement ref : refs) {
-        PsiType refType = psiManager.getElementFactory().createType(ref);
+        PsiType refType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(ref);
         if (exceptionType.isAssignableFrom(refType)) {
           refsToDelete.add(ref);
         }

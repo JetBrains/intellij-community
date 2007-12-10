@@ -244,7 +244,7 @@ class ExtractMethodDialog extends DialogWrapper {
         }
       });
     }
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
+    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()));
 
     return panel;
   }
@@ -261,7 +261,7 @@ class ExtractMethodDialog extends DialogWrapper {
       myCbMakeStatic.setEnabled(myCanBeStatic && !isChainedConstructor());
     }
     updateSignature();
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
+    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(myNameField.getText()) ||
                        isChainedConstructor());
   }
 
@@ -394,7 +394,7 @@ class ExtractMethodDialog extends DialogWrapper {
   private void checkMethodConflicts(Collection<String> conflicts) {
     PsiMethod prototype;
     try {
-      PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
       prototype = factory.createMethod(
               myNameField.getText().trim(),
               myReturnType

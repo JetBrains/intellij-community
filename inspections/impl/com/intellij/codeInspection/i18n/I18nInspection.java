@@ -407,7 +407,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
         final PsiManager manager = expression.getManager();
         if (PsiUtil.getLanguageLevel(expression).hasEnumKeywordAndAutoboxing() &&
-            manager.findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
+            JavaPsiFacade.getInstance(manager.getProject()).findClass(AnnotationUtil.NON_NLS, expression.getResolveScope()) != null) {
           for(PsiModifierListOwner element: nonNlsTargets) {
             if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true)) {
               fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
@@ -759,7 +759,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final PsiManager manager = expression.getManager();
     final Project project = manager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass junitAssert = manager.findClass("junit.framework.Assert", scope);
+    final PsiClass junitAssert = JavaPsiFacade.getInstance(manager.getProject()).findClass("junit.framework.Assert", scope);
     return junitAssert != null && !containingClass.isInheritor(junitAssert, true);
   }
 
@@ -785,7 +785,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final PsiManager manager = expression.getManager();
     final Project project = manager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass throwable = manager.findClass("java.lang.Throwable", scope);
+    final PsiClass throwable = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", scope);
     return throwable != null && aClass.isInheritor(throwable, true);
   }
 

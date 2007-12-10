@@ -147,7 +147,7 @@ public class RemoveUnusedVariableFix implements IntentionAction {
   private static boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, int deleteMode)
     throws IncorrectOperationException {
     if (!element.isValid()) return true;
-    PsiElementFactory factory = variable.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
     while (element != null) {
       if (element instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression expression = (PsiAssignmentExpression)element;

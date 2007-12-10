@@ -111,7 +111,7 @@ public class RefactoringListeners {
     }
 
     public PsiPackage findNewElement(final PsiPackage psiPackage, final String qualifiedName) {
-      return psiPackage.getManager().findPackage(qualifiedName);
+      return JavaPsiFacade.getInstance(psiPackage.getManager().getProject()).findPackage(qualifiedName);
     }
 
     public String getQualifiedName(final PsiPackage psiPackage) {

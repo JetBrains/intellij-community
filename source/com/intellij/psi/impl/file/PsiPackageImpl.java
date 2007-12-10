@@ -389,13 +389,13 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   private PsiClass findClassByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
     final String classQName = qName.length() > 0 ? qName + "." + name : name;
-    return myManager.findClass(classQName, scope);
+    return JavaPsiFacade.getInstance(myManager.getProject()).findClass(classQName, scope);
   }
 
   private PsiPackage findSubPackageByName(String name, GlobalSearchScope scope) {
     final String qName = getQualifiedName();
     final String subpackageQName = qName.length() > 0 ? qName + "." + name : name;
-    PsiPackage aPackage = myManager.findPackage(subpackageQName);
+    PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(subpackageQName);
     if (aPackage == null) return null;
     if (aPackage.getDirectories(scope).length == 0) return null;
     return aPackage;
@@ -416,14 +416,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       if (nameHint != null) {
         final PsiClass aClass = findClassByName(nameHint.getName(), scope);
         if (aClass != null &&
-            (!isPlacePhysical || getManager().getResolveHelper().isAccessible(aClass, place, null))) {
+            (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null))) {
           if (!processor.execute(aClass, substitutor)) return false;
         }
       }
       else {
         PsiClass[] classes = getClasses(scope);
         for (PsiClass aClass : classes) {
-          if (!isPlacePhysical || getManager().getResolveHelper().isAccessible(aClass, place, null)) {
+          if (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
             if (!processor.execute(aClass, substitutor)) {
               return false;
             }
@@ -454,7 +454,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         for (PsiPackage pack : packs) {
           final String packageName = pack.getName();
           if (packageName == null) continue;
-          if (!getManager().getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
+          if (!JavaPsiFacade.getInstance(getManager().getProject()).getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
           if (!processor.execute(pack, substitutor)) {
@@ -524,7 +524,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         }
       }
 
-      for (PsiClass aClass : getManager().findClasses(getQualifiedName() + ".package-info", ProjectScope.getAllScope(getProject()))) {
+      for (PsiClass aClass : JavaPsiFacade.getInstance(getProject()).findClasses(getQualifiedName() + ".package-info", ProjectScope.getAllScope(getProject()))) {
         ContainerUtil.addIfNotNull(aClass.getModifierList(), list);
       }
 

@@ -480,11 +480,12 @@ public class CodeInsightUtil {
     });
 
     final PsiManager manager = context.getManager();
-    final PsiResolveHelper resolveHelper = manager.getResolveHelper();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
 
     query.forEach(new Processor<PsiClass>() {
       public boolean process(PsiClass inheritor) {
-        if(!manager.getResolveHelper().isAccessible(inheritor, context, null)) return true;
+        if(!facade.getResolveHelper().isAccessible(inheritor, context, null)) return true;
 
         if(inheritor.getUserData(CompletionUtil.COPY_KEY) != null){
           final PsiClass newClass = (PsiClass) inheritor.getUserData(CompletionUtil.COPY_KEY);
@@ -501,7 +502,7 @@ public class CodeInsightUtil {
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(baseClass, inheritor, PsiSubstitutor.EMPTY);
         if(superSubstitutor == null) return true;
         if(getRawSubtypes){
-          result.add(createType(inheritor, manager.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+          result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
           return true;
         }
 
@@ -523,7 +524,7 @@ public class CodeInsightUtil {
                                                                                  PsiUtil.getLanguageLevel(context));
             if (substitution == PsiType.NULL || substitution instanceof PsiWildcardType) continue;
             if (substitution == null) {
-              result.add(createType(inheritor, manager.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
+              result.add(createType(inheritor, facade.getElementFactory().createRawSubstitutor(inheritor), arrayDim));
               return true;
             }
             inheritorSubstitutor = inheritorSubstitutor.put(inheritorParameter, substitution);
@@ -543,7 +544,7 @@ public class CodeInsightUtil {
   private static PsiType createType(PsiClass cls,
                              PsiSubstitutor currentSubstitutor,
                              int arrayDim) {
-    final PsiElementFactory elementFactory = cls.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(cls.getProject()).getElementFactory();
     PsiType newType = elementFactory.createType(cls, currentSubstitutor);
     for(int i = 0; i < arrayDim; i++){
       newType = newType.createArrayType();

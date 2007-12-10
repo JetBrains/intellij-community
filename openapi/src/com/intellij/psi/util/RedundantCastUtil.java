@@ -190,7 +190,7 @@ public class RedundantCastUtil {
 
       try {
         PsiManager manager = methodExpr.getManager();
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
         PsiMethodCallExpression newCall = (PsiMethodCallExpression)factory.createExpressionFromText(methodCall.getText(), methodCall);
         PsiExpression newQualifier = newCall.getMethodExpression().getQualifierExpression();
@@ -339,7 +339,7 @@ public class RedundantCastUtil {
           if (!(element instanceof PsiMember)) return;
           PsiClass accessClass = ((PsiClassType)fromType).resolve();
           if (accessClass == null) return;
-          if (!parent.getManager().getResolveHelper().isAccessible((PsiMember)element, typeCast, accessClass)) return;
+          if (!JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper().isAccessible((PsiMember)element, typeCast, accessClass)) return;
           if (!isCastRedundantInRefExpression(refExpression, typeCast.getOperand())) return;
         }
       }
@@ -356,7 +356,7 @@ public class RedundantCastUtil {
     refExpression.getManager().performActionWithFormatterDisabled(new Runnable() {
       public void run() {
         try {
-          final PsiElementFactory elementFactory = refExpression.getManager().getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();
           final PsiExpression copyExpression = elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
           if (copyExpression instanceof PsiReferenceExpression) {
             final PsiReferenceExpression copy = (PsiReferenceExpression)copyExpression;

@@ -12,10 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -48,7 +45,7 @@ public class ChangeBoundFieldTypeFix implements IntentionAction {
       public void run() {
         try {
           final PsiManager manager = myField.getManager();
-          myField.getTypeElement().replace(manager.getElementFactory().createTypeElement(myTypeToSet));
+          myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myTypeToSet));
         }
         catch (final IncorrectOperationException e) {
           ApplicationManager.getApplication().invokeLater(new Runnable(){

@@ -2,8 +2,8 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
@@ -11,8 +11,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *  @author dsl
@@ -71,7 +71,8 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
     if (initializerResolveResult.getElement() == null) return null;
     final PsiSubstitutor targetSubstitutor = TypeConversionUtil.getClassSubstitutor(variableResolveResult.getElement(), initializerResolveResult.getElement(), initializerResolveResult.getSubstitutor());
     if (targetSubstitutor == null) return null;
-    PsiType type = variable.getManager().getElementFactory().createType(variableResolveResult.getElement(), targetSubstitutor);
+    PsiType type =
+      JavaPsiFacade.getInstance(variable.getProject()).getElementFactory().createType(variableResolveResult.getElement(), targetSubstitutor);
     newTypeName = type.getCanonicalText();
     return Pair.create(variable, type);
   }
@@ -85,6 +86,6 @@ public class MakeTypeGenericAction extends PsiElementBaseIntentionAction {
     PsiVariable variable = pair.getFirst();
     PsiType type = pair.getSecond();
 
-    variable.getTypeElement().replace(variable.getManager().getElementFactory().createTypeElement(type));
+    variable.getTypeElement().replace(JavaPsiFacade.getInstance(variable.getProject()).getElementFactory().createTypeElement(type));
   }
 }

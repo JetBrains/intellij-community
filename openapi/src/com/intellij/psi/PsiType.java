@@ -92,7 +92,7 @@ public abstract class PsiType {
    * @return the class instance.
    */
   public static PsiClassType getJavaLangObject(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
   }
 
   /**
@@ -103,7 +103,7 @@ public abstract class PsiType {
    * @return the class instance.
    */
   public static PsiClassType getJavaLangClass(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLASS, resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_CLASS, resolveScope);
   }
 
   /**
@@ -114,7 +114,7 @@ public abstract class PsiType {
    * @return the class instance.
    */
   public static PsiClassType getJavaLangTrowable(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_THROWABLE, resolveScope);
   }
 
   /**
@@ -125,7 +125,7 @@ public abstract class PsiType {
    * @return the class instance.
    */
   public static PsiClassType getJavaLangString(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, resolveScope);
   }
 
   /**
@@ -136,7 +136,7 @@ public abstract class PsiType {
    * @return the class instance.
    */
   public static PsiClassType getJavaLangError(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_ERROR, resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_ERROR, resolveScope);
   }
 
   /**
@@ -147,7 +147,7 @@ public abstract class PsiType {
    * @return the class instance.
    */
   public static PsiClassType getJavaLangRuntimeException(PsiManager manager, GlobalSearchScope resolveScope) {
-    return manager.getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, resolveScope);
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, resolveScope);
   }
 
   /**

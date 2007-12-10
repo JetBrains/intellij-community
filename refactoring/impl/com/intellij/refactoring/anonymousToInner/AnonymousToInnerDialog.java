@@ -117,23 +117,25 @@ class AnonymousToInnerDialog extends DialogWrapper{
     if ("".equals(innerClassName)) {
       errorString = RefactoringBundle.message("anonymousToInner.no.inner.class.name");
     }
-    else if (!manager.getNameHelper().isIdentifier(innerClassName)) {
-      errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(innerClassName);
-    }
-    else{
-      PsiElement targetContainer = AnonymousToInnerHandler.findTargetContainer(myAnonClass);
-      if (targetContainer instanceof PsiClass) {
-        PsiClass targetClass = (PsiClass)targetContainer;
-        PsiClass[] innerClasses = targetClass.getInnerClasses();
-        for (PsiClass innerClass : innerClasses) {
-          if (innerClassName.equals(innerClass.getName())) {
-            errorString = RefactoringBundle.message("inner.class.exists", innerClassName, targetClass.getName());
-            break;
+    else {
+      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(innerClassName)) {
+        errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(innerClassName);
+      }
+      else{
+        PsiElement targetContainer = AnonymousToInnerHandler.findTargetContainer(myAnonClass);
+        if (targetContainer instanceof PsiClass) {
+          PsiClass targetClass = (PsiClass)targetContainer;
+          PsiClass[] innerClasses = targetClass.getInnerClasses();
+          for (PsiClass innerClass : innerClasses) {
+            if (innerClassName.equals(innerClass.getName())) {
+              errorString = RefactoringBundle.message("inner.class.exists", innerClassName, targetClass.getName());
+              break;
+            }
           }
         }
-      }
-      else {
-        LOG.assertTrue(false);
+        else {
+          LOG.assertTrue(false);
+        }
       }
     }
 

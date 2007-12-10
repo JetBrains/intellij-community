@@ -75,7 +75,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       }
     });
 
-    PsiImportStaticStatement importStaticStatement = file.getManager().getElementFactory().createImportStaticStatement(((PsiMember)resolved).getContainingClass(),
+    PsiImportStaticStatement importStaticStatement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(((PsiMember)resolved).getContainingClass(),
                                                                                                                        ((PsiNamedElement)resolved).getName());
     ((PsiJavaFile)file).getImportList().add(importStaticStatement);
 
@@ -89,7 +89,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
             PsiElement referent = expression.getUserData(TEMP_REFERENT_USER_DATA);
 
             if (referent instanceof PsiMember && referent != expression.resolve()) {
-              PsiElementFactory factory = expression.getManager().getElementFactory();
+              PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
               try {
                 PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + expression.getReferenceName(), null);
                 expression = (PsiReferenceExpression)expression.replace(copy);

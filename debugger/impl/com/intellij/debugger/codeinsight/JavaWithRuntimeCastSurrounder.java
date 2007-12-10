@@ -97,7 +97,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
           try {
             LOG.assertTrue(type != null);
 
-            PsiElementFactory factory = myElement.getManager().getElementFactory();
+            PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
             PsiParenthesizedExpression parenth = (PsiParenthesizedExpression) factory.createExpressionFromText("((" + type + ")expr)", null);
             PsiTypeCastExpression cast = (PsiTypeCastExpression) parenth.getExpression();
             cast.getOperand().replace(myElement);

@@ -2,11 +2,11 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.typeCook.Settings;
@@ -35,7 +35,7 @@ public class TypeCookTest extends MultiFileTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPsiManager.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myJavaFacade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   public String getTestRoot() {

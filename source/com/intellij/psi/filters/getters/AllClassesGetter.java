@@ -181,7 +181,8 @@ public class AllClassesGetter implements ContextGetter{
       }
     });
 
-    final PsiShortNamesCache cache = manager.getShortNamesCache();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    final PsiShortNamesCache cache = facade.getShortNamesCache();
 
     final GlobalSearchScope scope = context.getContainingFile().getResolveScope();
     final String[] names = cache.getAllClassNames(true);

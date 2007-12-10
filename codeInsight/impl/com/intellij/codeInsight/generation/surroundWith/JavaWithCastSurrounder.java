@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -45,9 +44,9 @@ class JavaWithCastSurrounder extends JavaExpressionSurrounder {
     for (PsiType type : suggestedTypes) {
       LookupItemUtil.addLookupItem(itemSet, type, "");
     }
-    final LookupItem[] lookupItems = (LookupItem[]) itemSet.toArray(new LookupItem[itemSet.size()]);
+    final LookupItem[] lookupItems = itemSet.toArray(new LookupItem[itemSet.size()]);
 
-    final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], PsiManager.getInstance(project)) : null;
+    final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], project) : null;
 
     Expression expr = new Expression() {
       public LookupItem[] calculateLookupItems(ExpressionContext context) {

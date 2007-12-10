@@ -428,7 +428,7 @@ class JavaDocInfoGenerator {
     htmlText = StringUtil.replace(htmlText, "*/", "&#42;&#47;");
 
     final String fileText = "/** " + htmlText + " */";
-    final PsiElementFactory elementFactory = packageHtmlFile.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(packageHtmlFile.getProject()).getElementFactory();
     final PsiDocComment docComment;
     try {
       docComment = elementFactory.createDocCommentFromText(fileText, null);
@@ -486,7 +486,7 @@ class JavaDocInfoGenerator {
       if (resolved instanceof PsiClass) {
         final PsiClass annotationType = (PsiClass)resolved;
         if (AnnotationUtil.isAnnotated(annotationType, "java.lang.annotation.Documented", false)) {
-          final PsiClassType type = manager.getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
+          final PsiClassType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(annotationType, PsiSubstitutor.EMPTY);
           buffer.append("@");
           generateType(buffer, type, owner);
           final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
@@ -704,7 +704,7 @@ class JavaDocInfoGenerator {
 
     String s = buffer.toString();
     s = StringUtil.replace(s, "<ClassName>", method.getContainingClass().getName());
-    final PsiElementFactory elementFactory = PsiManager.getInstance(myProject).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     try {
       return elementFactory.createDocCommentFromText(s, null);
     }
@@ -1214,7 +1214,8 @@ class JavaDocInfoGenerator {
         }
         if (contains) continue;
         try {
-          PsiClassType t = (PsiClassType)method.getManager().getElementFactory().createTypeFromText(valueElement.getText(), method);
+          PsiClassType t = (PsiClassType)JavaPsiFacade.getInstance(method.getProject()).getElementFactory()
+            .createTypeFromText(valueElement.getText(), method);
 
           if (!holder.contains(t)) {
             holder.addFirst(t);
@@ -1252,7 +1253,7 @@ class JavaDocInfoGenerator {
         }
         else {
           try {
-            final PsiDocTag tag = method.getManager().getElementFactory().createDocCommentFromText("/** @exception " + paramName + " */",
+            final PsiDocTag tag = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createDocCommentFromText("/** @exception " + paramName + " */",
                                                                                                    method.getContainingFile()).getTags()[0];
 
             collectedTags.addLast(new Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>(tag, ourEmptyProvider));

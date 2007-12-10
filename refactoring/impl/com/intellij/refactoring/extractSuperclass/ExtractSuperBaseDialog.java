@@ -1,18 +1,18 @@
 package com.intellij.refactoring.extractSuperclass;
 
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
@@ -157,35 +157,37 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
         errorString[0] = getExtractedSuperNameNotSpecifiedKey();
         myExtractedSuperNameField.requestFocusInWindow();
       }
-      else if (!manager.getNameHelper().isIdentifier(extractedSuperName)) {
-        errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(extractedSuperName);
-        myExtractedSuperNameField.requestFocusInWindow();
-      }
       else {
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            try {
-              final PsiPackage aPackage = manager.findPackage(packageName);
-              if (aPackage != null) {
-                final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
-                if (directories.length >= 1) {
-                  myTargetDirectory = directories[0];
+        if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(extractedSuperName)) {
+          errorString[0] = RefactoringMessageUtil.getIncorrectIdentifierMessage(extractedSuperName);
+          myExtractedSuperNameField.requestFocusInWindow();
+        }
+        else {
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            public void run() {
+              try {
+                final PsiPackage aPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
+                if (aPackage != null) {
+                  final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
+                  if (directories.length >= 1) {
+                    myTargetDirectory = directories[0];
+                  }
                 }
+                myTargetDirectory
+                  = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myTargetDirectory, true);
+                if (myTargetDirectory == null) {
+                  errorString[0] = ""; // message already reported by PackageUtil
+                  return;
+                }
+                errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, extractedSuperName);
               }
-              myTargetDirectory
-                = PackageUtil.findOrCreateDirectoryForPackage(myProject, packageName, myTargetDirectory, true);
-              if (myTargetDirectory == null) {
-                errorString[0] = ""; // message already reported by PackageUtil
-                return;
+              catch (IncorrectOperationException e) {
+                errorString[0] = e.getMessage();
+                myPackageNameField.requestFocusInWindow();
               }
-              errorString[0] = RefactoringMessageUtil.checkCanCreateClass(myTargetDirectory, extractedSuperName);
             }
-            catch (IncorrectOperationException e) {
-              errorString[0] = e.getMessage();
-              myPackageNameField.requestFocusInWindow();
-            }
-          }
-        }, RefactoringBundle.message("create.directory"), null);
+          }, RefactoringBundle.message("create.directory"), null);
+        }
       }
       if (errorString[0] != null) {
         if (errorString[0].length() > 0) {

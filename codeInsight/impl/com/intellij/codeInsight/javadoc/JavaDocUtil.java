@@ -90,13 +90,14 @@ public class JavaDocUtil {
     LOG.assertTrue(context == null || context.isValid());
 
     int poundIndex = refText.indexOf('#');
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (poundIndex < 0) {
-      PsiClass aClass = manager.getResolveHelper().resolveReferencedClass(refText, context);
+      PsiClass aClass = facade.getResolveHelper().resolveReferencedClass(refText, context);
 
-      if (aClass == null) aClass = manager.findClass(refText, context.getResolveScope());
+      if (aClass == null) aClass = facade.findClass(refText, context.getResolveScope());
 
       if (aClass != null) return aClass.getNavigationElement();
-      PsiPackage aPackage = manager.findPackage(refText);
+      PsiPackage aPackage = facade.findPackage(refText);
       if (aPackage!=null) return aPackage;
       DocumentationProvider provider = JavaDocManager.getProviderFromElement(context);
       if (provider!=null) {
@@ -107,9 +108,9 @@ public class JavaDocUtil {
     else {
       String classRef = refText.substring(0, poundIndex).trim();
       if (classRef.length() > 0) {
-        PsiClass aClass = manager.getResolveHelper().resolveReferencedClass(classRef, context);
+        PsiClass aClass = facade.getResolveHelper().resolveReferencedClass(classRef, context);
 
-        if (aClass == null) aClass = manager.findClass(classRef, context.getResolveScope());
+        if (aClass == null) aClass = facade.findClass(classRef, context.getResolveScope());
 
         if (aClass == null) return null;
         return findReferencedMember(aClass, refText.substring(poundIndex + 1), context);
@@ -153,7 +154,7 @@ public class JavaDocUtil {
       StringTokenizer tokenizer = new StringTokenizer(parmsText.replaceAll("[*]", ""), ",");
       PsiType[] types = new PsiType[tokenizer.countTokens()];
       int i = 0;
-      PsiElementFactory factory = aClass.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
       while (tokenizer.hasMoreTokens()) {
         String parmText = tokenizer.nextToken().trim();
         try {
@@ -278,7 +279,7 @@ public class JavaDocUtil {
     if (qName == null) return shortName;
 
     final PsiManager manager = aClass.getManager();
-    return manager.areElementsEquivalent(aClass, manager.getResolveHelper().resolveReferencedClass(shortName, context))
+    return manager.areElementsEquivalent(aClass, JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().resolveReferencedClass(shortName, context))
       ? shortName
       : qName;
   }

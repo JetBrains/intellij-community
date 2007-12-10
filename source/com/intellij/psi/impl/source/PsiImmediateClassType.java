@@ -93,7 +93,7 @@ public class PsiImmediateClassType extends PsiClassType {
 
   @NotNull
   public PsiClassType rawType() {
-    return myClass.getManager().getElementFactory().createType(myClass);
+    return JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createType(myClass);
   }
 
   public String getPresentableText() {
@@ -197,7 +197,7 @@ public class PsiImmediateClassType extends PsiClassType {
   }
 
   public boolean equalsToText(String text) {
-    PsiElementFactory factory = myManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     final PsiType patternType;
     try {
       patternType = factory.createTypeFromText(text, null);

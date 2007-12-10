@@ -130,7 +130,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
   @NotNull
   public PsiType getType() {
-    return getManager().getElementFactory().createType(getContainingClass());
+    return JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createType(getContainingClass());
   }
 
   public PsiTypeElement getTypeElement() {
@@ -154,8 +154,9 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public PsiMethod resolveMethod() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
-    JavaResolveResult resolveResult = getManager().getResolveHelper()
-      .resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    JavaResolveResult resolveResult = facade.getResolveHelper()
+      .resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
     return (PsiMethod)resolveResult.getElement();
   }
 
@@ -163,8 +164,8 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public JavaResolveResult resolveMethodGenerics() {
     PsiClass containingClass = getContainingClass();
     LOG.assertTrue(containingClass != null);
-    return getManager().getResolveHelper()
-      .resolveConstructor(getManager().getElementFactory().createType(containingClass), getArgumentList(), this);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    return facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this);
   }
 
   public PsiIdentifier getNameIdentifier() {
@@ -276,9 +277,9 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
     @NotNull
     public JavaResolveResult[] multiResolve(boolean incompleteCode) {
-      PsiManager manager = getManager();
-      PsiClassType type = manager.getElementFactory().createType(getContainingClass());
-      return manager.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      PsiClassType type = facade.getElementFactory().createType(getContainingClass());
+      return facade.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
     }
 
     @NotNull

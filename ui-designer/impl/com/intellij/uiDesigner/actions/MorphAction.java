@@ -5,19 +5,19 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.designSurface.InsertComponentProcessor;
+import com.intellij.uiDesigner.inspections.FormInspectionUtil;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.palette.ComponentItem;
@@ -131,7 +131,7 @@ public class MorphAction extends AbstractGuiEditorAction {
   private static void updateBoundFieldType(final GuiEditor editor, final RadComponent oldComponent, final ComponentItem targetItem) {
     PsiField oldBoundField = BindingProperty.findBoundField(editor.getRootContainer(), oldComponent.getBinding());
     if (oldBoundField != null) {
-      final PsiElementFactory factory = PsiManager.getInstance(editor.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(editor.getProject()).getElementFactory();
       try {
         PsiType componentType = factory.createTypeFromText(targetItem.getClassName().replace('$', '.'), null);
         if (!oldBoundField.getType().isAssignableFrom(componentType)) {

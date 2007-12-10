@@ -127,7 +127,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     call.append(");");
 
     PsiManager psiManager = method.getManager();
-    PsiStatement stmt = psiManager.getElementFactory().createStatementFromText(call.toString(), method);
+    PsiStatement stmt = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText(call.toString(), method);
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
@@ -142,7 +142,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
 
   private static void clearMethod(PsiMethod method) throws IncorrectOperationException {
     LOG.assertTrue(!method.isPhysical());
-    PsiCodeBlock codeBlock = method.getManager().getElementFactory().createCodeBlock();
+    PsiCodeBlock codeBlock = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlock();
     if (method.getBody() != null) {
       method.getBody().replace(codeBlock);
     }
@@ -189,7 +189,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     final PsiMethod[] allMethods = targetClass.getAllMethods();
     final Set<MethodSignature> signatures = new HashSet<MethodSignature>();
     Map<PsiClass, PsiSubstitutor> superSubstitutors = new HashMap<PsiClass, PsiSubstitutor>();
-    PsiManager manager = targetClass.getManager();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(target.getProject());
     for (PsiMethod method : allMethods) {
       final PsiClass superClass = method.getContainingClass();
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) continue;
@@ -203,7 +203,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
       MethodSignature signature = method.getSignature(methodSubstitutor);
       if (!signatures.contains(signature)) {
         signatures.add(signature);
-        if (manager.getResolveHelper().isAccessible(method, target, aClass)) {
+        if (facade.getResolveHelper().isAccessible(method, target, aClass)) {
           methodInstances.add(new PsiMethodMember(method, methodSubstitutor));
         }
       }
@@ -267,7 +267,7 @@ public class GenerateDelegateHandler implements CodeInsightActionHandler {
     List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();
 
     final PsiField[] fields = aClass.getAllFields();
-    PsiResolveHelper helper = aClass.getManager().getResolveHelper();
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (PsiField field : fields) {
       final PsiType type = field.getType();
       if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType) {

@@ -18,7 +18,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -144,13 +143,13 @@ public class ImportHelper{
       String shortName = PsiNameHelper.getShortClassName(name);
 
       String thisPackageClass = thisPackageName.length() > 0 ? thisPackageName + "." + shortName : shortName;
-      if (manager.findClass(thisPackageClass, resolveScope) != null) {
+      if (JavaPsiFacade.getInstance(manager.getProject()).findClass(thisPackageClass, resolveScope) != null) {
         namesToUseSingle.add(name);
         continue;
       }
       if (!isImplicitlyImported) {
         String langPackageClass = JAVA_LANG_PACKAGE + "." + shortName; //TODO : JSP!
-        if (manager.findClass(langPackageClass, resolveScope) != null) {
+        if (JavaPsiFacade.getInstance(manager.getProject()).findClass(langPackageClass, resolveScope) != null) {
           namesToUseSingle.add(name);
           continue;
         }
@@ -158,7 +157,7 @@ public class ImportHelper{
       for (String onDemandName : onDemandImports) {
         if (prefix.equals(onDemandName)) continue;
         if (namesToImportStaticly.contains(name)) {
-          PsiClass aClass = manager.findClass(onDemandName, resolveScope);
+          PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(onDemandName, resolveScope);
           if (aClass != null) {
             PsiField field = aClass.findFieldByName(shortName, true);
             if (field != null && field.hasModifierProperty(PsiModifier.STATIC)) {
@@ -181,7 +180,7 @@ public class ImportHelper{
           }
         }
         else {
-          PsiClass aClass = manager.findClass(onDemandName + "." + shortName, resolveScope);
+          PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(onDemandName + "." + shortName, resolveScope);
           if (aClass != null) {
             namesToUseSingle.add(name);
           }
@@ -225,9 +224,9 @@ public class ImportHelper{
    * @return false when the FQ-name have to be used in code (e.g. when conflicting imports already exist)
    */
   public boolean addImport(PsiJavaFile file, PsiClass refClass){
-    PsiManager manager = file.getManager();
-    PsiElementFactory factory = manager.getElementFactory();
-    PsiResolveHelper helper = manager.getResolveHelper();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
+    PsiElementFactory factory = facade.getElementFactory();
+    PsiResolveHelper helper = facade.getResolveHelper();
 
     String className = refClass.getQualifiedName();
     if (className == null) return true;
@@ -273,7 +272,7 @@ public class ImportHelper{
       if (useOnDemand){
         PsiElement[] onDemandRefs = file.getOnDemandImports(false, true);
         if (onDemandRefs.length > 0){
-          PsiPackage aPackage = manager.findPackage(packageName);
+          PsiPackage aPackage = facade.findPackage(packageName);
           if (aPackage != null){
             PsiDirectory[] dirs = aPackage.getDirectories();
             for (PsiDirectory dir : dirs) {
@@ -285,12 +284,11 @@ public class ImportHelper{
                     String refName = ref instanceof PsiClass ? ((PsiClass)ref).getQualifiedName() : ((PsiPackage)ref).getQualifiedName();
                     String conflictClassName = refName + "." + name;
                     GlobalSearchScope resolveScope = file.getResolveScope();
-                    PsiClass conflictClass = manager.findClass(conflictClassName, resolveScope);
+                    PsiClass conflictClass = facade.findClass(conflictClassName, resolveScope);
                     if (conflictClass != null && helper.isAccessible(conflictClass, file, null)) {
                       String conflictClassName2 = aPackage.getQualifiedName() + "." + name;
-                      PsiClass conflictClass2 = manager.findClass(conflictClassName2, resolveScope);
+                      PsiClass conflictClass2 = facade.findClass(conflictClassName2, resolveScope);
                       if (conflictClass2 != null && helper.isAccessible(conflictClass2, file, null)) {
-                        PsiSearchHelper searchHelper = manager.getSearchHelper();
                         PsiReference[] usages =
                           ReferencesSearch.search(conflictClass, new LocalSearchScope(file), false).toArray(new PsiReference[0]);
                         if (usages.length > 0) {

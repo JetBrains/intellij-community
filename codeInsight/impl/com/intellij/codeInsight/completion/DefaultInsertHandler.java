@@ -320,7 +320,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
         PsiClass[] classes = aClass.getInnerClasses();
         for (PsiClass inner : classes) {
           if (!inner.hasModifierProperty(PsiModifier.STATIC)) continue;
-          if (!inner.getManager().getResolveHelper().isAccessible(inner, place, null)) continue;
+          if (!JavaPsiFacade.getInstance(inner.getProject()).getResolveHelper().isAccessible(inner, place, null)) continue;
           needParens = false;
           break;
         }
@@ -341,7 +341,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
 
       final PsiMethod[] constructors = aClass.getConstructors();
       for (PsiMethod constructor : constructors) {
-        if (!aClass.getManager().getResolveHelper().isAccessible(constructor, place, null)) continue;
+        if (!JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper().isAccessible(constructor, place, null)) continue;
         if (constructor.getParameterList().getParametersCount() > 0) {
           hasParms = true;
           break;

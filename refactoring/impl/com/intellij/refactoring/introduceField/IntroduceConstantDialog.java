@@ -271,8 +271,8 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (myTypeSelectorManager.isSuggestedType("java.lang.String") &&
-        psiManager.getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing() &&
-        psiManager.findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
+        JavaPsiFacade.getInstance(psiManager.getProject()).getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing() &&
+        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
       myCbNonNls.setSelected(component.isTrueValue(NONNLS_SELECTED_PROPERTY));
       myCbNonNls.addItemListener(new ItemListener() {
@@ -363,7 +363,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
           try {
             final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier;
-            final PsiField field = psiManager.getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
+            final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
             if (!ResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
               iterator.remove();
             }
@@ -386,7 +386,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     if (!"".equals (targetClassName)) {
       final PsiManager manager = PsiManager.getInstance(myProject);
-      newClass = manager.findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
+      newClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         CommonRefactoringUtil.showErrorMessage(
                 IntroduceConstantHandler.REFACTORING_NAME,
@@ -402,7 +402,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     String errorString = null;
     if ("".equals(fieldName)) {
       errorString = RefactoringBundle.message("no.field.name.specified");
-    } else if (!PsiManager.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
+    } else if (!JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
     if (errorString != null) {

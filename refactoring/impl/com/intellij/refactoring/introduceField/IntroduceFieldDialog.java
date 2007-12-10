@@ -500,7 +500,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     String errorString = null;
     if ("".equals(fieldName)) {
       errorString = RefactoringBundle.message("no.field.name.specified");
-    } else if (!PsiManager.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
+    } else if (!JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
     }
     if (errorString != null) {

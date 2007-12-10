@@ -49,10 +49,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -176,7 +173,7 @@ public abstract class CodeStyleAbstractPanel {
     final PsiManager manager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         try {
           //important not mark as generated not to get the classes before setting language level
           PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("a." + getFileType().getDefaultExtension(),

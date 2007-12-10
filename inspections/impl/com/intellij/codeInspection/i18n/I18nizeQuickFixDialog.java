@@ -97,7 +97,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper {
 
     myResourceBundleSuggester.setLayout(new BorderLayout());
     PsiManager psiManager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = psiManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
     PsiClass resourceBundle = null;
     try {
       myResourceBundleManager = ResourceBundleManager.getManager(context);

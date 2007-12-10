@@ -195,13 +195,14 @@ public class ClassUtil {
     final int topIdx = externalName.indexOf('$');
     if (topIdx > -1) {
       if (psiClass == null) {
-        psiClass = psiManager.findClass(externalName.substring(0, topIdx), GlobalSearchScope.allScope(psiManager.getProject()));
+        psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
+          .findClass(externalName.substring(0, topIdx), GlobalSearchScope.allScope(psiManager.getProject()));
       }
       if (psiClass == null) return null;
       externalName = externalName.substring(topIdx + 1);
       return findSubclass(psiManager, externalName, psiClass, jvmCompatible);
     } else {
-      return psiManager.findClass(externalName, GlobalSearchScope.allScope(psiManager.getProject()));
+      return JavaPsiFacade.getInstance(psiManager.getProject()).findClass(externalName, GlobalSearchScope.allScope(psiManager.getProject()));
     }
   }
 

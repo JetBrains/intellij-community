@@ -246,7 +246,8 @@ public class HighlightUtil {
     }
 
     try {
-      PsiModifierList modifierListCopy = refElement.getManager().getElementFactory().createFieldFromText("int a;", null).getModifierList();
+      PsiModifierList modifierListCopy =
+        JavaPsiFacade.getInstance(refElement.getProject()).getElementFactory().createFieldFromText("int a;", null).getModifierList();
       modifierListCopy.setModifierProperty(PsiModifier.STATIC, modifierList.hasModifierProperty(PsiModifier.STATIC));
       int i = 0;
       if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
@@ -259,7 +260,8 @@ public class HighlightUtil {
       for (; i < modifiers.length; i++) {
         String modifier = modifiers[i];
         modifierListCopy.setModifierProperty(modifier, true);
-        if (refElement.getManager().getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
+        if (JavaPsiFacade.getInstance(refElement.getProject()).getResolveHelper()
+          .isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(refElement.getModifierList(), modifier, true, true);
           TextRange fixRange = new TextRange(errorResult.startOffset, errorResult.endOffset);
           PsiElement ref = place.getReferenceNameElement();
@@ -1764,7 +1766,7 @@ public class HighlightUtil {
   @Nullable
   public static HighlightInfo checkMustBeThrowable(PsiType type, PsiElement context, boolean addCastIntention) {
     if (type == null) return null;
-    PsiElementFactory factory = context.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
     PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", context.getResolveScope());
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange());
@@ -1782,7 +1784,7 @@ public class HighlightUtil {
   @Nullable
   private static HighlightInfo checkMustBeThrowable(PsiClass aClass, PsiElement context) {
     if (aClass == null) return null;
-    PsiClassType type = aClass.getManager().getElementFactory().createType(aClass);
+    PsiClassType type = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
     return checkMustBeThrowable(type, context, false);
   }
 
@@ -1999,7 +2001,7 @@ public class HighlightUtil {
 
   public static boolean isSerializable(PsiClass aClass) {
     PsiManager manager = aClass.getManager();
-    PsiClass serializableClass = manager.findClass("java.io.Serializable", aClass.getResolveScope());
+    PsiClass serializableClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 

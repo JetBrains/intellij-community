@@ -82,7 +82,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   private static PsiClassType createType(final PsiClass aClass) {
-    return aClass.getManager().getElementFactory().createType(aClass);
+    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
   }
 
   private static PsiType makeArray(final int dimensions, final PsiType type) {

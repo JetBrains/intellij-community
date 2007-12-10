@@ -136,7 +136,8 @@ final class HyperlinkUtil {
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        PsiClass psiClass = psiManager.findClass(possibleTestClassName, GlobalSearchScope.allScope(project));
+        PsiClass psiClass =
+          JavaPsiFacade.getInstance(psiManager.getProject()).findClass(possibleTestClassName, GlobalSearchScope.allScope(project));
         if (psiClass == null) return;
         PsiElement parent = psiClass.getParent();
         if (parent instanceof PsiFile) {

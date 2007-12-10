@@ -52,13 +52,13 @@ public class ExpectedTypesProvider {
 
   private static ExpectedClassProvider ourGlobalScopeClassProvider = new ExpectedClassProvider() {
     public PsiField[] findDeclaredFields(final PsiManager manager, String name) {
-      final PsiShortNamesCache cache = manager.getShortNamesCache();
+      final PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
       GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
       return cache.getFieldsByName(name, scope);
     }
 
     public PsiMethod[] findDeclaredMethods(final PsiManager manager, String name) {
-      final PsiShortNamesCache cache = manager.getShortNamesCache();
+      final PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
       GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
       return cache.getMethodsByName(name, scope);
     }
@@ -160,8 +160,8 @@ public class ExpectedTypesProvider {
       PsiManager manager = PsiManager.getInstance(project);
       GlobalSearchScope resolveScope = type.getResolveScope();
       if (resolveScope == null) resolveScope = GlobalSearchScope.allScope(project);
-      PsiClass objectClass = manager.findClass("java.lang.Object", resolveScope);
-      PsiClassType objectType = manager.getElementFactory().createType(objectClass);
+      PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
+      PsiClassType objectType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(objectClass);
       processType(objectType, visitor, set);
 
       if (type instanceof PsiClassType) {
@@ -310,8 +310,9 @@ public class ExpectedTypesProvider {
                                                     arrayType, TailType.NONE);
 
         PsiManager manager = statement.getManager();
-        PsiElementFactory factory = manager.getElementFactory();
-        PsiClass iterableClass = manager.findClass("java.lang.Iterable", statement.getResolveScope());
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        PsiClass iterableClass =
+          JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
         if (iterableClass == null || iterableClass.getTypeParameters().length != 1) {
           myResult = new ExpectedTypeInfo[]{info1};
         } else {
@@ -335,14 +336,14 @@ public class ExpectedTypesProvider {
       }
 
       PsiManager manager = statement.getManager();
-      PsiClassType enumType = manager.getElementFactory().createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
+      PsiClassType enumType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
       ExpectedTypeInfoImpl enumInfo = createInfoImpl(enumType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, enumType, TailType.NONE);
       myResult = new ExpectedTypeInfo[] {info, enumInfo};
     }
 
 
     @Override public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
-      PsiElementFactory factory = statement.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();
       PsiType objectType = factory.createTypeByFQClassName("java.lang.Object", myExpr.getResolveScope());
       myResult = new ExpectedTypeInfo[]{createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailType.NONE)};
     }
@@ -409,7 +410,7 @@ public class ExpectedTypesProvider {
     }
 
     @Override public void visitExpressionList(PsiExpressionList list) {
-      PsiResolveHelper helper = list.getManager().getResolveHelper();
+      PsiResolveHelper helper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       if (list.getParent() instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)list.getParent();
         CandidateInfo[] candidates = helper.getReferencedMethodCandidates(methodCall, false);
@@ -481,7 +482,7 @@ public class ExpectedTypesProvider {
       if (myForCompletion && op1.equals(myExpr)) return;
       PsiExpression anotherExpr = op1.equals(myExpr) ? op2 : op1;
       PsiType anotherType = anotherExpr != null ? anotherExpr.getType() : null;
-      PsiElementFactory factory = expr.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
       IElementType i = sign.getTokenType();
       if (i == JavaTokenType.MINUS ||
           i == JavaTokenType.ASTERISK ||
@@ -715,7 +716,7 @@ public class ExpectedTypesProvider {
     @Override public void visitThrowStatement(PsiThrowStatement statement) {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
-        PsiType throwableType = manager.getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
+        PsiType throwableType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
         PsiMember container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiClass.class);
         PsiType[] throwsTypes = PsiType.EMPTY_ARRAY;
         if (container instanceof PsiMethod) {
@@ -723,7 +724,7 @@ public class ExpectedTypesProvider {
         }
 
         if (throwsTypes.length == 0) {
-          final PsiClassType exceptionType = manager.getElementFactory().createTypeByFQClassName("java.lang.Exception", myExpr.getResolveScope());
+          final PsiClassType exceptionType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", myExpr.getResolveScope());
           throwsTypes = new PsiClassType[]{exceptionType};
         }
 
@@ -929,7 +930,7 @@ public class ExpectedTypesProvider {
               }
               final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
               if (aClass != null) {
-                return aClass.getManager().getElementFactory().createType(aClass);
+                return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
               }
             }
             return null;
@@ -1003,19 +1004,20 @@ public class ExpectedTypesProvider {
     private ExpectedTypeInfo[] findClassesWithDeclaredMethod(final PsiMethodCallExpression methodCallExpr, final boolean forCompletion) {
       final PsiReferenceExpression reference = methodCallExpr.getMethodExpression();
       final PsiManager manager = methodCallExpr.getManager();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
       final PsiMethod[] methods = myClassProvider.findDeclaredMethods(reference.getManager(), reference.getReferenceName());
       List<ExpectedTypeInfo> types = new ArrayList<ExpectedTypeInfo>();
       for (PsiMethod method : methods) {
         final PsiClass aClass = method.getContainingClass();
-        if (!manager.getResolveHelper().isAccessible(method, reference, aClass)) continue;
+        if (!facade.getResolveHelper().isAccessible(method, reference, aClass)) continue;
 
         final PsiSubstitutor substitutor = ExpectedTypeUtil.inferSubstitutor(method, methodCallExpr, forCompletion);
         final PsiClassType type;
         if (substitutor != null) {
-          type = manager.getElementFactory().createType(aClass, substitutor);
+          type = facade.getElementFactory().createType(aClass, substitutor);
         }
         else {
-          type = manager.getElementFactory().createType(aClass);
+          type = facade.getElementFactory().createType(aClass);
         }
 
         if (method.hasModifierProperty(PsiModifier.STATIC) ||
@@ -1032,14 +1034,14 @@ public class ExpectedTypesProvider {
     }
 
     private ExpectedTypeInfo[] findClassesWithDeclaredField(PsiReferenceExpression expression) {
-      final PsiManager manager = expression.getManager();
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(expression.getProject());
       PsiField[] fields = myClassProvider.findDeclaredFields(expression.getManager(), expression.getReferenceName());
       List<ExpectedTypeInfo> types = new ArrayList<ExpectedTypeInfo>();
       for (PsiField field : fields) {
         final PsiClass aClass = field.getContainingClass();
-        if (!manager.getResolveHelper().isAccessible(field, expression, aClass)) continue;
+        if (!facade.getResolveHelper().isAccessible(field, expression, aClass)) continue;
 
-        final PsiType type = manager.getElementFactory().createType(aClass);
+        final PsiType type = facade.getElementFactory().createType(aClass);
 
         int kind = field.hasModifierProperty(PsiModifier.STATIC) ||
                    field.hasModifierProperty(PsiModifier.FINAL) ||

@@ -193,7 +193,7 @@ public final class Generator {
 
           final PsiClass fakeClass;
           try {
-            fakeClass = data.myBeanClass.getManager().getElementFactory()
+            fakeClass = JavaPsiFacade.getInstance(data.myBeanClass.getProject()).getElementFactory()
               .createClassFromText(membersBuffer.toString() + methodsBuffer.toString(), null);
 
             final PsiField[] fields = fakeClass.getFields();
@@ -349,7 +349,7 @@ public final class Generator {
 
     final PsiClass fakeClass;
     try {
-      fakeClass = PsiManager.getInstance(data.myProject).getElementFactory().createClassFromText(textOfMethods, null);
+      fakeClass = JavaPsiFacade.getInstance(data.myProject).getElementFactory().createClassFromText(textOfMethods, null);
 
       final PsiMethod methodSetData = fakeClass.getMethods()[0];
       final PsiMethod methodGetData = fakeClass.getMethods()[1];
@@ -409,7 +409,7 @@ public final class Generator {
     final PsiDirectory rootDirectory = psiManager.findDirectory(sourceRoot);
     LOG.assertTrue(rootDirectory != null);
 
-    final PsiPackage aPackage = psiManager.findPackage(wizardData.myPackageName);
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(wizardData.myPackageName);
     if (aPackage == null) {
       throw new MyException(UIDesignerBundle.message("error.package.does.not.exist", wizardData.myPackageName));
     }
@@ -491,7 +491,7 @@ public final class Generator {
 
     final PsiClass fakeClass;
     try {
-      fakeClass = aClass.getManager().getElementFactory().createClassFromText(
+      fakeClass = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createClassFromText(
         membersBuffer.toString() + methodsBuffer.toString(),
         null
       );

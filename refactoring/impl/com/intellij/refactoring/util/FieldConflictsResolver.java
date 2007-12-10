@@ -29,8 +29,8 @@ public class FieldConflictsResolver {
     myName = name;
     myScope = scope;
     if (myScope == null) return;
-    PsiManager manager = myScope.getManager();
-    final PsiVariable oldVariable = manager.getResolveHelper().resolveReferencedVariable(myName, myScope);
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(myScope.getProject());
+    final PsiVariable oldVariable = facade.getResolveHelper().resolveReferencedVariable(myName, myScope);
     if (!(oldVariable instanceof PsiField)) return;
     myField = (PsiField) oldVariable;
     final PsiReference[] references = ReferencesSearch.search(myField, new LocalSearchScope(myScope), false).toArray(new PsiReference[0]);
@@ -89,7 +89,7 @@ public class FieldConflictsResolver {
   private PsiReferenceExpression qualifyReference(PsiReferenceExpression referenceExpression) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiReferenceExpression expressionFromText;
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     if (myQualifyingClass == null) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(referenceExpression, PsiClass.class);
       final PsiClass containingClass = myField.getContainingClass();

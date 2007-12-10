@@ -155,7 +155,8 @@ public class MoveFieldAssignmentToInitializerAction extends BaseIntentionAction 
           || parent instanceof PsiWhileStatement
           || parent instanceof PsiForStatement
           || parent instanceof PsiForeachStatement) {
-        PsiStatement emptyStatement = file.getManager().getElementFactory().createStatementFromText(";", statement);
+        PsiStatement emptyStatement =
+          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createStatementFromText(";", statement);
         statement.replace(emptyStatement);
       }
       else {

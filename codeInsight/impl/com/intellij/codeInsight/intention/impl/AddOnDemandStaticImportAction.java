@@ -50,7 +50,8 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
-    PsiImportStaticStatement importStaticStatement = file.getManager().getElementFactory().createImportStaticStatement(aClass, "*");
+    PsiImportStaticStatement importStaticStatement =
+      JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
     ((PsiJavaFile)file).getImportList().add(importStaticStatement);
 
     PsiFile[] roots = file.getPsiRoots();

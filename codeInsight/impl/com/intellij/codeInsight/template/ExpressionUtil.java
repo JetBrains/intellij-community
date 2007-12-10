@@ -64,7 +64,8 @@
            final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
            if (iteratedValue != null) {
              try {
-               final PsiArrayAccessExpression expr = (PsiArrayAccessExpression)iteratedValue.getManager().getElementFactory().createExpressionFromText("a[0]", var);
+               final PsiArrayAccessExpression expr = (PsiArrayAccessExpression)JavaPsiFacade.getInstance(iteratedValue.getProject())
+                 .getElementFactory().createExpressionFromText("a[0]", var);
                expr.getArrayExpression().replace(iteratedValue);
                initializer = expr; //note: non physical with no parent
              }

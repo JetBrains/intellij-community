@@ -11,7 +11,7 @@ public class AddRemoveInTypeParameterListTest extends LightIdeaTestCase{
     PsiJavaCodeReferenceElement ref = aClass.getExtendsList().getReferenceElements()[0];
     PsiReferenceParameterList list = ref.getParameterList();
 
-    PsiElementFactory factory = getPsiManager().getElementFactory();
+    PsiElementFactory factory = getJavaFacade().getElementFactory();
 
     PsiTypeElement typeElement1 = factory.createTypeElement(factory.createTypeFromText("A", null));
     list.add(typeElement1);

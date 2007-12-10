@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Service for resolving references to declarations.
  *
- * @see PsiManager#getResolveHelper()
+ * @see JavaPsiFacade#getResolveHelper()
  */
 public interface PsiResolveHelper {
   /**

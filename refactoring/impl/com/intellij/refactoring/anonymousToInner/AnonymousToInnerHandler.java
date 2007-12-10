@@ -160,7 +160,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
     buf.append(")");
-    PsiExpression newClassExpression = myManager.getElementFactory().createExpressionFromText(buf.toString(), null);
+    PsiExpression newClassExpression = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(buf.toString(), null);
     newExpr.replace(newClassExpression);
   }
 
@@ -268,7 +268,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private PsiClass createClass(String name) throws IncorrectOperationException {
-    PsiElementFactory factory = myAnonClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myAnonClass.getProject()).getElementFactory();
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
     final PsiNewExpression newExpression = (PsiNewExpression) myAnonClass.getParent();
     final PsiMethod superConstructor = newExpression.resolveConstructor();
@@ -372,7 +372,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
         }
       } else {
         PsiField field = (PsiField) element;
-        final PsiExpressionStatement statement = (PsiExpressionStatement)myManager.getElementFactory()
+        final PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getInstance(myManager.getProject())
+          .getElementFactory()
           .createStatementFromText(field.getName() + "= 0;", null);
         PsiExpression rightExpression = ((PsiAssignmentExpression) statement.getExpression()).getRExpression();
         assert rightExpression != null;
@@ -408,7 +409,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void fillParameterList(PsiMethod constructor) throws IncorrectOperationException {
-    PsiElementFactory factory = constructor.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(constructor.getProject()).getElementFactory();
     PsiParameterList parameterList = constructor.getParameterList();
     for (VariableInfo info : myVariableInfos) {
       if (info.passAsParameter) {
@@ -418,7 +419,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void createFields(PsiClass aClass) throws IncorrectOperationException {
-    PsiElementFactory factory = myManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     for (VariableInfo info : myVariableInfos) {
       if (info.saveInField) {
         PsiType type = info.variable.getType();
@@ -431,7 +432,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void createAssignmentStatements(PsiMethod constructor) throws IncorrectOperationException {
-    PsiElementFactory factory = constructor.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(constructor.getProject()).getElementFactory();
     for (VariableInfo info : myVariableInfos) {
       if (info.saveInField) {
         @NonNls String text = info.fieldName + "=a;";
@@ -460,7 +461,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   private void renameReferences(PsiElement scope) throws IncorrectOperationException {
-    PsiElementFactory factory = myManager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     for (VariableInfo info : myVariableInfos) {
       Collection<PsiReference> references = ReferencesSearch.search(info.variable, new LocalSearchScope(scope)).findAll();
       for (PsiReference reference : references) {
@@ -484,7 +485,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private void createSuperStatement(PsiMethod constructor, PsiExpression[] paramExpressions) throws IncorrectOperationException {
     PsiCodeBlock body = constructor.getBody();
     assert body != null;
-    final PsiElementFactory factory = constructor.getManager().getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(constructor.getProject()).getElementFactory();
 
     PsiStatement statement = factory.createStatementFromText("super();", null);
     statement = (PsiStatement) CodeStyleManager.getInstance(myProject).reformat(statement);

@@ -3,10 +3,7 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.ActionListener;
@@ -31,8 +28,8 @@ public class ReferenceEditorComboWithBrowseButton extends ComponentWithBrowseBut
   }
 
   private static Document createDocument(final String text, PsiManager manager, boolean isClassesAccepted) {
-    PsiPackage defaultPackage = manager.findPackage("");
-    final PsiCodeFragment fragment = manager.getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
+    PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
+    final PsiCodeFragment fragment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
   }

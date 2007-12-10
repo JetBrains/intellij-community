@@ -40,13 +40,12 @@ public class ChangedConstantsDependencyProcessor {
   }
 
   public void run() throws CacheCorruptedException {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
     final CacheCorruptedException[] _ex = new CacheCorruptedException[] {null};
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         try {
           final String qName = myDependencyCache.resolve(myQName);
-          PsiClass[] classes = psiManager.findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
+          PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(qName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
           for (PsiClass aClass : classes) {
             PsiField[] psiFields = aClass.getFields();
             for (PsiField psiField : psiFields) {
@@ -82,7 +81,7 @@ public class ChangedConstantsDependencyProcessor {
       final PsiFile containingFile = aClass.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
         final String packageName = ((PsiJavaFile)containingFile).getPackageName();
-        final PsiPackage aPackage = PsiManager.getInstance(myProject).findPackage(packageName);
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(PsiManager.getInstance(myProject).getProject()).findPackage(packageName);
         if (aPackage != null) {
           searchScope = GlobalSearchScope.packageScope(aPackage, false);
           searchScope = searchScope.intersectWith(aClass.getUseScope());

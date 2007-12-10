@@ -70,7 +70,8 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
         continue;
       }
       final String qname = ((PsiClass)candidate).getQualifiedName();
-      if (qname != null && !consumer.process(psiManager.findPackage(qname.substring(0, qname.lastIndexOf('.'))))) {
+      if (qname != null && !consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(
+        qname.substring(0, qname.lastIndexOf('.'))))) {
         return false;
       }
     }
@@ -96,7 +97,7 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
 
         if (!psiManager.areElementsEquivalent(ref.resolve(), annClass)) return true;
 
-        wantmore[0] = consumer.process(psiManager.findPackage(stmt.getPackageName()));
+        wantmore[0] = consumer.process(JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(stmt.getPackageName()));
         return wantmore[0];
       }
     }, true);

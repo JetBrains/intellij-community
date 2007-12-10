@@ -94,7 +94,8 @@ public class GenerateMainAction extends AnAction {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           public void run() {
             try {
-              PsiMethod method = file.getManager().getElementFactory().createMethodFromText(mainBuilder.toString(), file);
+              PsiMethod method =
+                JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createMethodFromText(mainBuilder.toString(), file);
               List<PsiGenerationInfo<PsiMethod>> infos = Collections.singletonList(new PsiGenerationInfo<PsiMethod>(method));
               List<PsiGenerationInfo<PsiMethod>> resultMembers = GenerateMembersUtil.insertMembersAtOffset(file, offset, infos);
               GenerateMembersUtil.positionCaret(editor, resultMembers.get(0).getPsiMember(), false);

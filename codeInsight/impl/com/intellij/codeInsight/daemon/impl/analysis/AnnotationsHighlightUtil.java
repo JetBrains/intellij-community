@@ -251,7 +251,8 @@ public class AnnotationsHighlightUtil {
 
   private static PsiField[] getElementTypeFields(PsiElement owner) {
     PsiManager manager = owner.getManager();
-    PsiClass elementTypeClass = manager.findClass("java.lang.annotation.ElementType", owner.getResolveScope());
+    PsiClass elementTypeClass =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.annotation.ElementType", owner.getResolveScope());
     if (elementTypeClass == null) return null;
 
     if (owner instanceof PsiClass) {

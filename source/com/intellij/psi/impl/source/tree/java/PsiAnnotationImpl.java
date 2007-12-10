@@ -60,7 +60,7 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
     DeclarationView view = (DeclarationView)getRepositoryManager().getItemView(parentId);
     final String text = view.getAnnotations(parentId)[getIndex()];
     try {
-      myParsedFromRepository = (CompositeElement)myManager.getParserFacade().createAnnotationFromText(text, this).getNode();
+      myParsedFromRepository = (CompositeElement)JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createAnnotationFromText(text, this).getNode();
       return myParsedFromRepository;
     }
     catch (IncorrectOperationException e) {

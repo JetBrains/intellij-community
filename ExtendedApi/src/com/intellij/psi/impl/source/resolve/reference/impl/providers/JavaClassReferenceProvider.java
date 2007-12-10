@@ -126,12 +126,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       };
       final String defPackageName = DEFAULT_PACKAGE.getValue(myOptions);
       if (StringUtil.isNotEmpty(defPackageName)) {
-        final PsiPackage defaultPackage = manager.findPackage(defPackageName);
+        final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(defPackageName);
         if (defaultPackage != null) {
           defaultPackage.processDeclarations(processor, PsiSubstitutor.EMPTY, position, position);
         }
       }
-      final PsiPackage rootPackage = manager.findPackage("");
+      final PsiPackage rootPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
       if (rootPackage != null) {
         rootPackage.processDeclarations(processor, PsiSubstitutor.EMPTY, position, position);
       }

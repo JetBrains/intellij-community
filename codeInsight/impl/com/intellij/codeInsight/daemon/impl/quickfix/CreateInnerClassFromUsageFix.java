@@ -115,7 +115,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
     assert ref != null;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
-    PsiElementFactory elementFactory = aClass.getManager().getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
     PsiClass created = myKind == INTERFACE
                       ? elementFactory.createInterface(refName)
                       : myKind == CLASS ? elementFactory.createClass(refName) : elementFactory.createEnum(refName);

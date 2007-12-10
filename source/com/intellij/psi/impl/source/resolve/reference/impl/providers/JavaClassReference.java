@@ -210,7 +210,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public Object[] getVariants() {
     PsiElement context = getContext();
     if (context == null) {
-      context = getElement().getManager().findPackage("");
+      context = JavaPsiFacade.getInstance(getElement().getManager().getProject()).findPackage("");
     }
     if (context instanceof PsiPackage) {
       final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
@@ -318,7 +318,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     PsiManager manager = psiElement.getManager();
     GlobalSearchScope scope = getScope();
     if (myIndex == myJavaClassReferenceSet.getReferences().length - 1) {
-      final PsiClass aClass = manager.findClass(qName, scope);
+      final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, scope);
       if (aClass != null) {
         return new ClassCandidateInfo(aClass, PsiSubstitutor.EMPTY, false, psiElement);
       } else {
@@ -327,9 +327,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         }
       }
     }
-    PsiElement resolveResult = manager.findPackage(qName);
+    PsiElement resolveResult = JavaPsiFacade.getInstance(manager.getProject()).findPackage(qName);
     if (resolveResult == null) {
-      resolveResult = manager.findClass(qName, scope);
+      resolveResult = JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, scope);
     }
     if (myInStaticImport && resolveResult == null) {
       resolveResult = resolveMember(qName, manager, getElement().getResolveScope());
@@ -519,13 +519,13 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
   @Nullable
   public static PsiElement resolveMember(String fqn, PsiManager manager, GlobalSearchScope resolveScope) {
-    PsiClass aClass = manager.findClass(fqn, resolveScope);
+    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, resolveScope);
     if (aClass != null) return aClass;
     int i = fqn.lastIndexOf('.');
     if (i==-1) return null;
     String memberName = fqn.substring(i+1);
     fqn = fqn.substring(0, i);
-    aClass = manager.findClass(fqn, resolveScope);
+    aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqn, resolveScope);
     if (aClass == null) return null;
     PsiMember member = aClass.findFieldByName(memberName, true);
     if (member != null) return member;

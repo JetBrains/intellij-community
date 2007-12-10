@@ -4,7 +4,7 @@ import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.uiDesigner.UIDesignerBundle;
 
@@ -79,7 +79,7 @@ final class BindToNewBeanStep extends StepAdapter{
     }
 
     // Check that all included fields are bound to valid bean properties
-    final PsiNameHelper nameHelper = PsiManager.getInstance(myData.myProject).getNameHelper();
+    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myData.myProject).getNameHelper();
     for(int i = 0; i <myData.myBindings.length; i++){
       final FormProperty2BeanProperty binding = myData.myBindings[i];
       if(binding.myBeanProperty == null){

@@ -52,7 +52,7 @@ public class ReturnTypeFilter implements ElementFilter{
 
       try {
         final PsiExpression templateExpression =
-            context.getManager().getElementFactory().createExpressionFromText(resultingText.toString(), context);
+          JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createExpressionFromText(resultingText.toString(), context);
         type = templateExpression.getType();
       }
       catch (IncorrectOperationException e) { // can happen when text of the template does not form an expression

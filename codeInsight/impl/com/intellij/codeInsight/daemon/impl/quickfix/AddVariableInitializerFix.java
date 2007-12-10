@@ -43,7 +43,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     if (!CodeInsightUtil.prepareFileForWrite(myVariable.getContainingFile())) return;
 
     String initializerText = suggestInitializer();
-    PsiElementFactory factory = myVariable.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();
     PsiExpression initializer = factory.createExpressionFromText(initializerText, myVariable);
     if (myVariable instanceof PsiLocalVariable) {
       ((PsiLocalVariable)myVariable).setInitializer(initializer);

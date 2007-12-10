@@ -1,12 +1,12 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
+import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -17,12 +17,12 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPreviousLanguageLevel = getPsiManager().getEffectiveLanguageLevel();
-    getPsiManager().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myPreviousLanguageLevel = getJavaFacade().getEffectiveLanguageLevel();
+    getJavaFacade().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected void tearDown() throws Exception {
-    getPsiManager().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    getJavaFacade().setEffectiveLanguageLevel(myPreviousLanguageLevel);
     super.tearDown();
   }
 

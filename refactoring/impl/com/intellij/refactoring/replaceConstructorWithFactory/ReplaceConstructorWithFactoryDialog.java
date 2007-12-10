@@ -166,7 +166,8 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final Project project = getProject();
     final PsiManager manager = PsiManager.getInstance(project);
     final String targetClassName = getTargetClassName();
-    final PsiClass targetClass = manager.findClass(targetClassName, GlobalSearchScope.allScope(project));
+    final PsiClass targetClass =
+      JavaPsiFacade.getInstance(manager.getProject()).findClass(targetClassName, GlobalSearchScope.allScope(project));
     if (targetClass == null) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("class.0.not.found", targetClassName));
       CommonRefactoringUtil.showErrorMessage(ReplaceConstructorWithFactoryHandler.REFACTORING_NAME,
@@ -182,7 +183,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String name = myNameField.getEnteredName();
-    final PsiNameHelper nameHelper = myContainingClass.getManager().getNameHelper();
+    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(myContainingClass.getProject()).getNameHelper();
     return nameHelper.isIdentifier(name);
   }
 }

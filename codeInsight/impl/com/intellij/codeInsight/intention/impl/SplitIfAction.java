@@ -95,7 +95,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     ifStatement.getCondition().replace(lOperand);
 
     if (ifStatement.getThenBranch() instanceof PsiBlockStatement) {
-      PsiBlockStatement blockStmt = (PsiBlockStatement)psiManager.getElementFactory().createStatementFromText("{}", null);
+      PsiBlockStatement blockStmt = (PsiBlockStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText("{}", null);
       blockStmt = (PsiBlockStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(blockStmt);
       blockStmt = (PsiBlockStatement)ifStatement.getThenBranch().replace(blockStmt);
       blockStmt.getCodeBlock().add(subIf);
@@ -115,7 +115,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     PsiElement e = expression;
     while (!(e.getParent() instanceof PsiIfStatement)) e = e.getParent();
 
-    return expression.getManager().getElementFactory().createExpressionFromText(
+    return JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(
         e.getText().substring(expression.getROperand().getTextRange().getStartOffset() - e.getTextRange().getStartOffset()), e.getParent());
   }
 

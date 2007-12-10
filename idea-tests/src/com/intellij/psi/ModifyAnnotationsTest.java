@@ -1,15 +1,15 @@
 package com.intellij.psi;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -23,8 +23,8 @@ public class ModifyAnnotationsTest extends PsiTestCase {
       new Runnable() {
 
         public void run() {
-          try{
-            PsiManager.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+          try {
+            JavaPsiFacade.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
             String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/modifyAnnotations";
             PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk15("mock 1.5"));
             PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
@@ -49,7 +49,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     final PsiAnnotation[] annotations = aClass.getModifierList().getAnnotations();
     assertEquals(1, annotations.length);
     assertEquals("A", annotations[0].getNameReferenceElement().getReferenceName());
-    final PsiAnnotation newAnnotation = myPsiManager.getElementFactory().createAnnotationFromText("@B", null);
+    final PsiAnnotation newAnnotation = myJavaFacade.getElementFactory().createAnnotationFromText("@B", null);
     //here the tree is going to be loaded
     myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {

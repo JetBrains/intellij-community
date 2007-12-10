@@ -49,7 +49,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     TreeElement element = getFirstChildNode();
     while(element != null){
       if (element.getTreeNext() == null && PRIMITIVE_TYPE_BIT_SET.contains(element.getElementType())) {
-        myCachedType = cachedType = getManager().getElementFactory().createPrimitiveType(element.getText());
+        myCachedType = cachedType = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createPrimitiveType(element.getText());
       }
       else if (element.getElementType() == JavaElementType.TYPE) {
         PsiType componentType = ((PsiTypeElement)SourceTreeToPsiMap.treeElementToPsi(element)).getType();
@@ -73,7 +73,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiType type;
     if (myCachedDetachedType != null && (type = myCachedDetachedType.get()) != null) return type;
     try {
-      type = getManager().getElementFactory().createTypeFromText(getText(), context);
+      type = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createTypeFromText(getText(), context);
       myCachedDetachedType = new PatchedSoftReference<PsiType>(type);
     }
     catch (IncorrectOperationException e) {

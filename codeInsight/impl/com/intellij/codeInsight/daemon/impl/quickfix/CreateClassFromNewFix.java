@@ -41,7 +41,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   public static void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
-    final PsiElementFactory elementFactory = newExpression.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         public void run() {
@@ -90,7 +90,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
   public static void setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilder templateBuilder)
     throws IncorrectOperationException {
-    PsiElementFactory elementFactory = targetClass.getManager().getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
 
     PsiClass superClass = targetClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) &&
@@ -123,7 +123,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     PsiJavaCodeReferenceElement ref = getReferenceElement(expr);
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
-    PsiElementFactory factory = expr.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
     targetClass.getTypeParameterList().add(factory.createTypeParameterFromText("T", null));
     for (int i = 2; i <= numParams; i++) {
       targetClass.getTypeParameterList().add(factory.createTypeParameterFromText("T" + (i-1), null));
@@ -142,7 +142,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       PsiClass aClass = classType.resolve();
       if (aClass == null) continue;
       if (aClass.equals(targetClass) || aClass.hasModifierProperty(PsiModifier.FINAL)) continue;
-      PsiElementFactory factory = aClass.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
 
       if (aClass.isInterface()) {
         PsiReferenceList implementsList = targetClass.getImplementsList();

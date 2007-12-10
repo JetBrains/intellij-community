@@ -22,10 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.Tree;
@@ -181,7 +178,7 @@ public class PsiViewerDialog extends DialogWrapper {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     PsiElement rootElement = null;
     try {
-      PsiElementFactory factory = psiManager.getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
       if (myRbMethod.isSelected()) {
         rootElement = factory.createMethodFromText(text, null);
       }

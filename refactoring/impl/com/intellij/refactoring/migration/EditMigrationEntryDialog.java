@@ -3,10 +3,11 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.DocumentAdapter;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.IdeBorderFactory;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -104,12 +105,12 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     String text = myOldNameField.getText();
     text = text.trim();
     PsiManager manager = PsiManager.getInstance(myProject);
-    if (!manager.getNameHelper().isQualifiedName(text)){
+    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(text)){
       isEnabled = false;
     }
     text = myNewNameField.getText();
     text = text.trim();
-    if (!manager.getNameHelper().isQualifiedName(text)){
+    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(text)){
       isEnabled = false;
     }
     setOKActionEnabled(isEnabled);

@@ -54,7 +54,9 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   private LanguageLevel getLanguageLevel(final PsiElement context) {
-    if (context == null) return myManager.getEffectiveLanguageLevel();
+    if (context == null) {
+      return JavaPsiFacade.getInstance(myManager.getProject()).getEffectiveLanguageLevel();
+    }
     return PsiUtil.getLanguageLevel(context);
   }
 
@@ -104,7 +106,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiField createFieldFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, myManager.getEffectiveLanguageLevel(), text,
+    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, JavaPsiFacade
+      .getInstance(myManager.getProject()).getEffectiveLanguageLevel(), text,
                                                                                                          DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != JavaElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
@@ -114,7 +117,8 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   protected JavaParsingContext getJavaParsingContext (FileElement holderElement) {
-    return new JavaParsingContext(holderElement.getCharTable(), myManager.getEffectiveLanguageLevel());
+    return new JavaParsingContext(holderElement.getCharTable(),
+                                  JavaPsiFacade.getInstance(myManager.getProject()).getEffectiveLanguageLevel());
   }
 
   private static JavaParsingContext getJavaParsingContext (FileElement holderElement, LanguageLevel languageLevel) {
@@ -135,7 +139,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public final PsiMethod createMethodFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    return createMethodFromText(text, context, myManager.getEffectiveLanguageLevel());
+    return createMethodFromText(text, context, JavaPsiFacade.getInstance(myManager.getProject()).getEffectiveLanguageLevel());
   }
 
   @NotNull

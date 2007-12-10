@@ -102,7 +102,7 @@ public class ConflictsUtil {
                                                 classDescr));
       }
       else { // method somewhere in base class
-        if (method.getManager().getResolveHelper().isAccessible(method, aClass, null)) {
+        if (JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, aClass, null)) {
           String protoMethodInfo = getMethodPrototypeString(prototype);
           String className = CommonRefactoringUtil.htmlEmphasize(UsageViewUtil.getDescriptiveName(method.getContainingClass()));
           if (PsiUtil.getAccessLevel(prototype.getModifierList()) >= PsiUtil.getAccessLevel(method.getModifierList()) ) {

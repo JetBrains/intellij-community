@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReferenceBase;
@@ -27,7 +28,7 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
 
   @Nullable
   private PsiPackage getPsiPackage() {
-    return myIndex == 0 ? getElement().getManager().findPackage("") : myReferenceSet.getReference(myIndex - 1).resolve();
+    return myIndex == 0 ? JavaPsiFacade.getInstance(getElement().getManager().getProject()).findPackage("") : myReferenceSet.getReference(myIndex - 1).resolve();
   }
 
   public boolean isSoft() {

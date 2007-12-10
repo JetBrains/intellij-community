@@ -86,12 +86,12 @@ public class GenericsUtil {
       PsiClass aClass = classResolveResult1.getElement();
       PsiClass bClass = classResolveResult2.getElement();
       if (aClass == null || bClass == null) {
-        return manager.getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(manager.getProject()));
+        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(manager.getProject()));
       }
 
       PsiClass[] supers = getLeastUpperClasses(aClass, bClass);
       if (supers.length == 0) {
-        return manager.getElementFactory().createTypeByFQClassName("java.lang.Object", aClass.getResolveScope());
+        return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", aClass.getResolveScope());
       }
 
       PsiClassType[] conjuncts = new PsiClassType[supers.length];
@@ -116,13 +116,13 @@ public class GenericsUtil {
           }
         }
 
-        conjuncts[i] = manager.getElementFactory().createType(aSuper, substitutor);
+        conjuncts[i] = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aSuper, substitutor);
       }
 
       return PsiIntersectionType.createIntersection(conjuncts);
     }
 
-    return manager.getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(manager.getProject()));
+    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(manager.getProject()));
   }
 
   private static PsiType getLeastContainingTypeArgument(PsiType type1,
@@ -282,7 +282,7 @@ public class GenericsUtil {
           }
 
           PsiManager manager = aClass.getManager();
-          PsiType result = manager.getElementFactory().createType(aClass, substitutor);
+          PsiType result = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass, substitutor);
           if (toExtend) result = PsiWildcardType.createExtends(manager, result);
           return result;
         }

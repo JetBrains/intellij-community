@@ -284,7 +284,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (required.nonEmpty() && isEmpty(child, stringValue)) {
       return annotator.createProblem(child, IdeBundle.message("value.must.not.be.empty"));
     }
-    if (required.identifier() && !PsiManager.getInstance(child.getManager().getProject()).getNameHelper().isIdentifier(stringValue)) {
+    if (required.identifier() && !JavaPsiFacade.getInstance(child.getManager().getProject()).getNameHelper().isIdentifier(stringValue)) {
       return annotator.createProblem(child, IdeBundle.message("value.must.be.identifier"));
     }
     return null;

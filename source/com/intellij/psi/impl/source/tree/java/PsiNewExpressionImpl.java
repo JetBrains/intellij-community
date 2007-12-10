@@ -26,14 +26,14 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
       }
       else if (PRIMITIVE_TYPE_BIT_SET.contains(child.getElementType())){
         LOG.assertTrue(type == null);
-        type = getManager().getElementFactory().createPrimitiveType(child.getText());
+        type = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory().createPrimitiveType(child.getText());
       }
       else if (child.getElementType() == LBRACKET){
         LOG.assertTrue(type != null);
         type = type.createArrayType();
       }
       else if (child.getElementType() == ANONYMOUS_CLASS){
-        PsiElementFactory factory = getManager().getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
         type = factory.createType((PsiClass) SourceTreeToPsiMap.treeElementToPsi(child));
       }
     }
@@ -76,11 +76,12 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
   @NotNull
   public JavaResolveResult resolveMethodGenerics() {
     ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (classRef != null){
       ASTNode argumentList = TreeUtil.skipElements(classRef.getTreeNext(), StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
       if (argumentList != null && argumentList.getElementType() == EXPRESSION_LIST) {
-        PsiType aClass = getManager().getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
-        return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
+        PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
+        return facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
                                                                   (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                   this);
       }
@@ -91,7 +92,7 @@ public class PsiNewExpressionImpl extends CompositePsiElement implements PsiNewE
         final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
         PsiType aClass = anonymousClass.getBaseClassType();
         ASTNode argumentList = TreeUtil.findChild(anonymousClassElement, EXPRESSION_LIST);
-        return getManager().getResolveHelper().resolveConstructor((PsiClassType)aClass,
+        return facade.getResolveHelper().resolveConstructor((PsiClassType)aClass,
                                                                   (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
                                                                   anonymousClass);
       }

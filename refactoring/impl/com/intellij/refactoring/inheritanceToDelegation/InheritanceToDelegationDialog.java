@@ -83,7 +83,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
 
   protected boolean areButtonsValid() {
     final String fieldName = getFieldName();
-    final PsiNameHelper helper = PsiManager.getInstance(myProject).getNameHelper();
+    final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     if (!helper.isIdentifier(fieldName)) return false;
     if (myInnerClassNameField != null) {
       final String className = myInnerClassNameField.getEnteredName();
@@ -227,7 +227,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private void updateTargetClass() {
     final PsiClass targetClass = getSelectedTargetClass();
     PsiManager psiManager = myClass.getManager();
-    PsiType superType = psiManager.getElementFactory().createType(targetClass);
+    PsiType superType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(targetClass);
     SuggestedNameInfo suggestedNameInfo =
       JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(VariableKind.FIELD, null, null, superType);
     myFieldNameField.setSuggestions(suggestedNameInfo.names);

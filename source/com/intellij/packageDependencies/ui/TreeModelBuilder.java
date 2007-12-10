@@ -336,7 +336,7 @@ public class TreeModelBuilder {
       } else {
         final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
         if (packageName != null) {
-          aPackage = myPsiManager.findPackage(packageName);
+          aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
         }
       }
       if (aPackage != null) {
@@ -477,11 +477,11 @@ public class TreeModelBuilder {
       if (directory != null) {
         final String packageName = myFileIndex.getPackageNameByDirectory(directory);
         if (packageName != null) {
-          return myPsiManager.findPackage(packageName);
+          return JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(packageName);
         }
       }
     }
-    return myPsiManager.findPackage(file.getPackageName());
+    return JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage(file.getPackageName());
   }
 
   private ScopeType getFileScopeType(VirtualFile file) {

@@ -175,7 +175,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
   @Nullable
   private static PsiDeclarationStatement createLocalVariableDeclaration(final PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
-    PsiElementFactory factory = instanceOfExpression.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(instanceOfExpression.getProject()).getElementFactory();
     PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", instanceOfExpression);
     PsiType castType = instanceOfExpression.getCheckType().getType();
     cast.getCastType().replace(factory.createTypeElement(castType));
@@ -189,7 +189,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
   private static PsiDeclarationStatement insertAtAnchor(final PsiInstanceOfExpression instanceOfExpression, PsiDeclarationStatement toInsert) throws IncorrectOperationException {
     boolean negated = isNegated(instanceOfExpression);
     PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
-    PsiElementFactory factory = toInsert.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(toInsert.getProject()).getElementFactory();
     PsiElement anchorAfter = null;
     PsiBlockStatement emptyBlockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", instanceOfExpression);
     if (statement instanceof PsiIfStatement) {

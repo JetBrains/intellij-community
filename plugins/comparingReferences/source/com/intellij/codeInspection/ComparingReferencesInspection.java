@@ -129,7 +129,7 @@ public class ComparingReferencesInspection extends BaseJavaLocalInspectionTool {
         if (rExpr == null)
           return;
 
-        PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         PsiMethodCallExpression equalsCall = (PsiMethodCallExpression)factory.createExpressionFromText("a.equals(b)", null);
 
         equalsCall.getMethodExpression().getQualifierExpression().replace(lExpr);

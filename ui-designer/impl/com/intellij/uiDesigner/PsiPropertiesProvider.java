@@ -1,14 +1,11 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.uiDesigner.lw.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +35,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
 
     final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule);
-    final PsiClass aClass = psiManager.findClass(className, scope);
+    final PsiClass aClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(className, scope);
     if (aClass == null) {
       return null;
     }
@@ -66,7 +63,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
 
       LwIntrospectedProperty property = CompiledClassPropertiesProvider.propertyFromClassName(propertyClassName, name);
       if (property == null) {
-        PsiClass propClass = psiManager.findClass(propertyClassName, scope);
+        PsiClass propClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(propertyClassName, scope);
         if (propClass == null) continue;
         if (propClass.isEnum()) {
           final String enumClassName = ClassUtil.getJVMClassName(propClass);
@@ -79,8 +76,8 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
           }
         }
         else {
-          PsiClass componentClass = psiManager.findClass(Component.class.getName(), scope);
-          PsiClass listModelClass = psiManager.findClass(ListModel.class.getName(), scope);
+          PsiClass componentClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(Component.class.getName(), scope);
+          PsiClass listModelClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(ListModel.class.getName(), scope);
           if (componentClass != null && InheritanceUtil.isInheritorOrSelf(propClass, componentClass, true)) {
             property = new LwIntroComponentProperty(name, propertyClassName);
           }

@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiSubstitutorEx {
   public PsiType substitute(PsiTypeParameter typeParameter){
-    return typeParameter.getManager().getElementFactory().createType(typeParameter);
+    return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }
 
   public PsiType substitute(PsiType type){
@@ -19,7 +19,7 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
   }
 
   public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {
-    return typeParameter.getManager().getElementFactory().createType(typeParameter);
+    return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }
 
   public PsiType substituteInternal(PsiType type) {

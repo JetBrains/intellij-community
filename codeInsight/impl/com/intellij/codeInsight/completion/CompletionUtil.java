@@ -355,7 +355,7 @@ public class CompletionUtil {
           map.put(typeParam, substituted);
         }
 
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
         type = factory.createType(aClass, substitutor);
       }

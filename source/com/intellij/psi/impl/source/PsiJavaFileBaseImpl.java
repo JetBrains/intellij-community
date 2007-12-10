@@ -330,7 +330,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
       // check in current package
       String packageName = getPackageName();
-      PsiPackage aPackage = myManager.findPackage(packageName);
+      PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(packageName);
       if (aPackage != null){
         if (!PsiScopesUtil.processScope(aPackage, processor, substitutor, null, place)) {
           return false;
@@ -350,7 +350,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
 
     if(classHint == null || classHint.shouldProcess(PsiPackage.class)){
-      final PsiPackage rootPackage = getManager().findPackage("");
+      final PsiPackage rootPackage = JavaPsiFacade.getInstance(getManager().getProject()).findPackage("");
       processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, rootPackage);
       if(rootPackage != null) rootPackage.processDeclarations(processor, substitutor, null, place);
     }
@@ -474,7 +474,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();
       if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
-      return getManager().getEffectiveLanguageLevel();
+      return JavaPsiFacade.getInstance(getManager().getProject()).getEffectiveLanguageLevel();
     }
     final Project project = getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
@@ -495,12 +495,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
 
-    return PsiManager.getInstance(project).getEffectiveLanguageLevel();
+    return JavaPsiFacade.getInstance(project).getEffectiveLanguageLevel();
   }
 
   private LanguageLevel getLanguageLevel(final VirtualFile dirFile) {
     final VirtualFile[] children = dirFile.getChildren();
-    final LanguageLevel defaultLanguageLevel = getManager().getEffectiveLanguageLevel();
+    final LanguageLevel defaultLanguageLevel = JavaPsiFacade.getInstance(getManager().getProject()).getEffectiveLanguageLevel();
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
         return ClsFileImpl.getLanguageLevel(child, defaultLanguageLevel);

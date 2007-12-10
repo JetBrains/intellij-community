@@ -59,7 +59,7 @@ public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
       PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
         String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
-        noInspectionTag.replace(PsiManager.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
+        noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
         DaemonCodeAnalyzer.getInstance(project).restart();
         return;
       }

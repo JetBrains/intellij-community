@@ -157,7 +157,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
       LOG.error(e);
     }
 
-    final PsiElementFactory factory = PsiManager.getInstance(myProject).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     member.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         decodeRef(expression, factory, targetClass, expression);
@@ -233,7 +233,7 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
 
   private void pushDownToClass(PsiClass targetClass) throws IncorrectOperationException {
-    PsiElementFactory factory = myClass.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();
       PsiMember newMember = null;

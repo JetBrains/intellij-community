@@ -159,7 +159,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
           return;
         }
 
-        PsiElementFactory factory = myClass.getManager().getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
         final PsiCodeBlock body = constructor.getBody();
         LOG.assertTrue(body != null);
 
@@ -244,7 +244,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     private PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
-        PsiElementFactory factory = aClass.getManager().getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
         PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
         final PsiMethod[] psiMethods = aClass.getMethods();
         PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods [0];

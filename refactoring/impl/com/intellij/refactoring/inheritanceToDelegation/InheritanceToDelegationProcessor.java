@@ -82,7 +82,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     myInnerClassName = innerClassName;
     myIsDelegateOtherMembers = delegateOtherMembers;
     myManager = myClass.getManager();
-    myFactory = myManager.getElementFactory();
+    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
 
     myBaseClass = targetBaseClass;
     LOG.assertTrue(
@@ -447,7 +447,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     if (!(expression instanceof PsiThisExpression || expression instanceof PsiSuperExpression)) {
       delegateQualifier = "a.";
     } else {
-      PsiResolveHelper resolveHelper = myManager.getResolveHelper();
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
       final PsiVariable psiVariable = resolveHelper.resolveReferencedVariable(myFieldName, element);
       if (psiVariable == null) {
         delegateQualifier = "";

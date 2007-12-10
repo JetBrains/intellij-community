@@ -4,18 +4,15 @@
  */
 package com.intellij.uiDesigner.quickFixes;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiFile;
-import com.intellij.uiDesigner.designSurface.GuiEditor;
+import com.intellij.psi.*;
 import com.intellij.uiDesigner.UIDesignerBundle;
+import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.CommonBundle;
 
 import java.text.MessageFormat;
 
@@ -46,7 +43,7 @@ public class ChangeFieldTypeFix extends QuickFix {
           public void run() {
             try {
               final PsiManager manager = myField.getManager();
-              myField.getTypeElement().replace(manager.getElementFactory().createTypeElement(myNewType));
+              myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myNewType));
             }
             catch (final IncorrectOperationException e) {
               ApplicationManager.getApplication().invokeLater(new Runnable(){

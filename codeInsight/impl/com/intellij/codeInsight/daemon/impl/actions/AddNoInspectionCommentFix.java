@@ -68,7 +68,7 @@ public class AddNoInspectionCommentFix implements IntentionAction {
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(container, PsiWhiteSpace.class);
-    PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     if (prev instanceof PsiComment) {
       String text = prev.getText();
       if (text.startsWith(COMMENT_START_TEXT)) {

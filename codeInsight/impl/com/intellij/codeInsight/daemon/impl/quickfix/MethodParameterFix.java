@@ -90,7 +90,7 @@ public class MethodParameterFix implements IntentionAction {
   private ParameterInfo[] getNewParametersInfo() throws IncorrectOperationException {
     List<ParameterInfo> result = new ArrayList<ParameterInfo>();
     PsiParameter[] parameters = myMethod.getParameterList().getParameters();
-    PsiElementFactory factory = myMethod.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myMethod.getProject());
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
     PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);

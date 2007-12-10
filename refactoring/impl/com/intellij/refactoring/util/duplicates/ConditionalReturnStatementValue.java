@@ -22,7 +22,7 @@ public class ConditionalReturnStatementValue implements ReturnValue {
   }
 
   public PsiStatement createReplacement(PsiMethodCallExpression methodCallExpression) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = methodCallExpression.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     PsiIfStatement statement;
     if (myReturnValue == null) {
       statement = (PsiIfStatement)elementFactory.createStatementFromText("if(a) return;", null);

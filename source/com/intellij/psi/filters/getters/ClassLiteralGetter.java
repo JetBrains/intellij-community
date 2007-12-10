@@ -63,7 +63,7 @@ public class ClassLiteralGetter implements ContextGetter {
       try {
         final PsiManager manager = context.getManager();
         PsiExpression expr =
-          manager.getElementFactory().createExpressionFromText(type.getCanonicalText() + DOT_CLASS, context);
+          JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createExpressionFromText(type.getCanonicalText() + DOT_CLASS, context);
         expr = (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
         list.add(LookupElementFactory.getInstance().createLookupElement(expr, expr.getText()).setPriority(priority));
       }

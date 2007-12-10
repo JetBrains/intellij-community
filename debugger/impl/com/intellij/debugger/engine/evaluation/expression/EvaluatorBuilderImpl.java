@@ -257,7 +257,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
             PsiType type = localVariable.getType();
 
-            PsiElementFactory elementFactory = localVariable.getManager().getElementFactory();
+            PsiElementFactory elementFactory = JavaPsiFacade.getInstance(localVariable.getProject()).getElementFactory();
             try {
               PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(type), null);
               Object value = ConstantExpressionEvaluator.computeConstantExpression(initialValue, null, true);
@@ -567,7 +567,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         final boolean isPlus = opType == JavaTokenType.PLUSPLUS;
 
         try {
-          PsiElementFactory elementFactory = expression.getManager().getElementFactory();
+          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
           PsiExpression one = elementFactory.createExpressionFromText("1", null);
           one.accept(this);
 

@@ -112,7 +112,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     if (object instanceof PsiClass && myExpectedInfos != null) {
       final PsiClass psiClass = (PsiClass)object;
       for (final ExpectedTypeInfo info : myExpectedInfos) {
-        final PsiClassType psiClassType = psiClass.getManager().getElementFactory().createType(psiClass);
+        final PsiClassType psiClassType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
         if(info.getType().getDeepComponentType().equals(psiClassType)) {
           result[0] = Integer.MAX_VALUE;
           break;
@@ -276,13 +276,13 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
         if (type instanceof PsiClassType && ((PsiClassType) type).resolve() instanceof PsiTypeParameter) return -1;
       }
 
-      if (!method.getManager().getResolveHelper().isAccessible(method, myPosition, null)) return -2;
+      if (!JavaPsiFacade.getInstance(method.getProject()).getResolveHelper().isAccessible(method, myPosition, null)) return -2;
 
     }
     else if (o instanceof PsiClass && myExpectedInfos.length == 1) {
       final PsiClass psiClass = (PsiClass)o;
       final PsiType type = myExpectedInfos[0].getType();
-      final PsiType objectType = psiClass.getManager().getElementFactory().createType(psiClass);
+      final PsiType objectType = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
       PsiType componentType = type.getDeepComponentType();
 
       if(type instanceof PsiArrayType && componentType.equals(objectType)){
@@ -308,7 +308,7 @@ public class CompletionPreferencePolicy implements LookupItemPreferencePolicy{
     }
     else if (o instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)o;
-      return psiClass.getManager().getElementFactory().createType(psiClass);
+      return JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
     }
     else if (o instanceof PsiExpression) {
       return ((PsiExpression)o).getType();

@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
 
@@ -228,7 +228,7 @@ class CreateFieldFromParameterDialog extends DialogWrapper {
 
   private void updateOkStatus() {
     String text = getEnteredName();
-    setOKActionEnabled(PsiManager.getInstance(myProject).getNameHelper().isIdentifier(text));
+    setOKActionEnabled(JavaPsiFacade.getInstance(myProject).getNameHelper().isIdentifier(text));
   }
 
   public JComponent getPreferredFocusedComponent() {

@@ -106,7 +106,8 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
         comment.delete();
       }
       else {
-        PsiComment newComment = comment.getManager().getElementFactory().createCommentFromText("// " + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
+        PsiComment newComment = JavaPsiFacade.getInstance(comment.getProject()).getElementFactory()
+          .createCommentFromText("// " + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
         comment.replace(newComment);
       }
     }
@@ -121,7 +122,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     }
     else if (newText != null) {
       newText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
-      PsiDocTag newTag = tag.getManager().getElementFactory().createDocTagFromText(newText, tag);
+      PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText, tag);
       tag.replace(newTag);
     }
   }

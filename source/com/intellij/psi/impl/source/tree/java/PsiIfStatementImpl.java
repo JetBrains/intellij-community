@@ -58,14 +58,14 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     PsiKeyword elseElement = getElseElement();
     if (elseElement != null) elseElement.delete();
 
-    PsiElementFactory elementFactory = getManager().getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
     PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", null);
     ifStatement.getElseBranch().replace(statement);
 
     addRange(ifStatement.getElseElement(), ifStatement.getLastChild());
   }
   public void setThenBranch(PsiStatement statement) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = getManager().getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
     ASTNode keyword = findChildByRole(ChildRole.IF_KEYWORD);
     LOG.assertTrue(keyword != null);
     PsiIfStatement ifStatementPattern = (PsiIfStatement)elementFactory.createStatementFromText("if (){}", this);

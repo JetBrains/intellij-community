@@ -120,7 +120,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
 
   private static PsiExpression normalize(PsiExpression expression) {
     if (expression instanceof PsiArrayInitializerExpression) {
-      PsiElementFactory factory = expression.getManager().getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
       try {
         final PsiType type = expression.getType();
         if (type != null) {
@@ -153,7 +153,7 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     initializer.accept(collector);
     HashSet<PsiMember> referencedWithVisibility = collector.myReferencedMembers;
 
-    PsiResolveHelper resolveHelper = myField.getManager().getResolveHelper();
+    PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myField.getProject()).getResolveHelper();
     for (UsageInfo info : usagesIn) {
       PsiElement element = info.getElement();
       if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {

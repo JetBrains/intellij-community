@@ -726,7 +726,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     PsiManager manager = method.getManager();
-    final PsiElementFactory factory = manager.getElementFactory();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    final PsiElementFactory factory = facade.getElementFactory();
     final PsiModifierList privateModifierList;
     try {
       final PsiMethod newMethod = factory.createMethod("x3", PsiType.VOID);
@@ -739,7 +740,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (!isInside(element, myElements) && !isInside(element, deleted)
-          && !manager.getResolveHelper().isAccessible(method, privateModifierList, element, null, null)) {
+          && !facade.getResolveHelper().isAccessible(method, privateModifierList, element, null, null)) {
         return false;
       }
     }

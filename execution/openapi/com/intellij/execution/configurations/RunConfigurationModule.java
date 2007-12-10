@@ -26,10 +26,9 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -137,7 +136,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public static Collection<Module> getModulesForClass(@NotNull final Project project, final String className) {
     if (project.isDefault()) return Arrays.asList(ModuleManager.getInstance(project).getModules());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final PsiClass[] possibleClasses = PsiManager.getInstance(project).findClasses(className, GlobalSearchScope.projectScope(project));
+    final PsiClass[] possibleClasses = JavaPsiFacade.getInstance(project).findClasses(className, GlobalSearchScope.projectScope(project));
 
     final Set<Module> modules = new THashSet<Module>();
     for (PsiClass aClass : possibleClasses) {

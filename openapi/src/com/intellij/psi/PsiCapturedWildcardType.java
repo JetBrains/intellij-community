@@ -85,7 +85,8 @@ public class PsiCapturedWildcardType extends PsiType {
 
   public PsiType getUpperBound () {
     return myExistential.isExtends() ? myExistential.getBound()
-           : myExistential.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+           : JavaPsiFacade.getInstance(myContext.getProject()).getElementFactory()
+             .createTypeByFQClassName("java.lang.Object", getResolveScope());
   }
 
   public PsiWildcardType getWildcard() {

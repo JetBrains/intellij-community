@@ -55,7 +55,7 @@ public class YourkitFilter implements Filter{
 
         final int textStartOffset = entireLength - line.length();
 
-        final PsiShortNamesCache cache = PsiManager.getInstance(myProject).getShortNamesCache();
+        final PsiShortNamesCache cache = JavaPsiFacade.getInstance(myProject).getShortNamesCache();
         final PsiFile[] psiFiles = cache.getFilesByName(fileName);
 
         if (psiFiles.length == 0) return null;

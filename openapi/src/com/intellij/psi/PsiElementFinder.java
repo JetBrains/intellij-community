@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows to extend the mechanism of locating classes and packages by full-qualified name.
  * Implementations of this interface need to be registered as project components in order
- * to be picked up by {@link PsiManager}.
+ * to be picked up by {@link JavaPsiFacade}.
  */
 public interface PsiElementFinder {
   /**
@@ -32,7 +32,7 @@ public interface PsiElementFinder {
    * @param qualifiedName the full-qualified name of the class to find.
    * @param scope the scope to search.
    * @return the PSI class, or null if no class with such name is found.
-   * @see PsiManager#findClass(String, com.intellij.psi.search.GlobalSearchScope)
+   * @see JavaPsiFacade#findClass(String, GlobalSearchScope)
    */
   @Nullable
   PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
@@ -44,7 +44,7 @@ public interface PsiElementFinder {
    * @param qualifiedName the full-qualified name of the class to find.
    * @param scope the scope to search.
    * @return the array of found classes, or an empty array if no classes are found.
-   * @see PsiManager#findClasses(String, com.intellij.psi.search.GlobalSearchScope)
+   * @see JavaPsiFacade#findClasses(String, GlobalSearchScope)
    */
   @NotNull
   PsiClass[] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope);
@@ -55,7 +55,7 @@ public interface PsiElementFinder {
    *
    * @param qualifiedName the full-qualified name of the package to find.
    * @return the PSI package, or null if no package with such name is found.
-   * @see PsiManager#findPackage(String)
+   * @see JavaPsiFacade#findPackage(String)
    */
   @Nullable
   PsiPackage findPackage(@NotNull String qualifiedName);
@@ -66,7 +66,7 @@ public interface PsiElementFinder {
    * @param psiPackage the package to return the list of subpackages for.
    * @param scope the scope in which subpackages are searched.
    * @return the list of subpackages.
-   * @see PsiPackage#getSubPackages(com.intellij.psi.search.GlobalSearchScope)
+   * @see PsiPackage#getSubPackages(GlobalSearchScope)
    */
   @NotNull
   PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope);
@@ -77,7 +77,7 @@ public interface PsiElementFinder {
    * @param psiPackage the package to return the list of classes in.
    * @param scope the scope in which classes are searched.
    * @return the list of classes.
-   * @see PsiPackage#getClasses(com.intellij.psi.search.GlobalSearchScope)
+   * @see PsiPackage#getClasses(GlobalSearchScope)
    */
   @NotNull
   PsiClass[] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope);

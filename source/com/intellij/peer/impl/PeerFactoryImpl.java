@@ -26,19 +26,19 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.DialogWrapperPeerFactory;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.module.ModuleConfigurationEditor;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
-import com.intellij.openapi.roots.ui.configuration.CommonContentEntriesEditor;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
@@ -190,7 +190,8 @@ public class PeerFactoryImpl extends PeerFactory {
     }
 
     public TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project) {
-      final PsiExpressionCodeFragment fragment = PsiManager.getInstance(project).getElementFactory().createExpressionCodeFragment(text, context, type, true);
+      final PsiExpressionCodeFragment fragment =
+        JavaPsiFacade.getInstance(project).getElementFactory().createExpressionCodeFragment(text, context, type, true);
       final Document document = PsiDocumentManager.getInstance(project).getDocument(fragment);
       return new EditorTextField(document, project, StdFileTypes.JAVA);
     }

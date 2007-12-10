@@ -247,7 +247,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
       else {
         if (!PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
-          final PsiReferenceExpression ref = containingClass.getManager().getElementFactory().createReferenceExpression(containingClass);
+          final PsiReferenceExpression ref =
+            JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory().createReferenceExpression(containingClass);
           addAfter(ref, null);
         }
       }
@@ -279,7 +280,8 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         }
         newText.append("*/");
 
-        PsiComment comment = containingClass.getManager().getElementFactory().createCommentFromText(newText.toString(), null);
+        PsiComment comment =
+          JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory().createCommentFromText(newText.toString(), null);
         PsiElement tag = PsiTreeUtil.getChildOfType(comment, PsiDocTag.class);
         PsiElement ref = PsiTreeUtil.getChildOfType(tag, PsiDocMethodOrFieldRef.class);
         return replace(ref);

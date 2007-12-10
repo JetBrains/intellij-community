@@ -7,10 +7,10 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,7 +31,7 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
-    final PsiElementFactory elementFactory = PsiManager.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final String text = item.getText();
 
     final PsiCodeFragment fragment;

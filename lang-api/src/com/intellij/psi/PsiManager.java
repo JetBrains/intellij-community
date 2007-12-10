@@ -20,16 +20,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,57 +82,6 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract PsiDirectory findDirectory(@NotNull VirtualFile file);
 
   /**
-   * Searches the project and all its libraries for a class with the specified full-qualified
-   * name and returns one if it is found.
-   *
-   * @param qualifiedName the full-qualified name of the class to find.
-   * @return the PSI class, or null if no class with such name is found.
-   * @deprecated use {@link #findClass(String, GlobalSearchScope)}
-   */
-  @Nullable
-  public PsiClass findClass(@NotNull @NonNls String qualifiedName) {
-    return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName);
-  }
-
-  /**
-   * Searches the specified scope within the project for a class with the specified full-qualified
-   * name and returns one if it is found.
-   *
-   * @param qualifiedName the full-qualified name of the class to find.
-   * @param scope the scope to search.
-   * @return the PSI class, or null if no class with such name is found.
-   */
-  @Nullable
-  public PsiClass findClass(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, scope);
-  }
-
-  /**
-   * Searches the specified scope within the project for classes with the specified full-qualified
-   * name and returns all found classes.
-   *
-   * @param qualifiedName the full-qualified name of the class to find.
-   * @param scope the scope to search.
-   * @return the array of found classes, or an empty array if no classes are found.
-   */
-  @NotNull
-  public PsiClass[] findClasses(@NonNls @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(getProject()).findClasses(qualifiedName, scope);
-  }
-
-  /**
-   * Searches the project for the package with the specified full-qualified name and returns one
-   * if it is found.
-   *
-   * @param qualifiedName the full-qualified name of the package to find.
-   * @return the PSI package, or null if no package with such name is found.
-   */
-  @Nullable
-  public PsiPackage findPackage(@NonNls @NotNull String qualifiedName) {
-    return JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName);
-  }
-
-  /**
    * Checks if the specified two PSI elements (possibly invalid) represent the same source element
    * (for example, a class with the same full-qualified name). Can be used to match two versions of the
    * PSI tree with each other after a reparse.
@@ -187,29 +132,6 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract CodeStyleManager getCodeStyleManager();
 
   /**
-   * Returns the element factory for the project, which can be used to
-   * create instances of Java and XML PSI elements.
-   *
-   * @return the element factory instance.
-   */
-  @NotNull
-  public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
-  }
-
-  /**
-   * Returns the factory for the project, which can be used to create instances of certain java constructs from their textual
-   * presentation. Elements created shall not be used to later interfer (like insert into) a PSI parsed from the user codebase
-   * since no formatting to the user codestyle will be performed in this case. Please use {@link #getElementFactory()} instead, which
-   * provides exactly same methods but ensures created instances will get properly formatted.
-   * @return the parser facade.
-   */
-  @NotNull
-  public PsiJavaParserFacade getParserFacade() {
-    return JavaPsiFacade.getInstance(getProject()).getParserFacade();
-  }
-
-  /**
    * Returns the search helper for the project, which provides low-level search and
    * find usages functionality. It can be used to perform operations like finding references
    * to an element, finding overriding / inheriting elements, finding to do items and so on.
@@ -218,49 +140,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    */
   @NotNull
   public abstract PsiSearchHelper getSearchHelper();
-
-  /**
-   * Returns the resolve helper for the project, which can be used to resolve references
-   * and check accessibility of elements.
-   *
-   * @return the resolve helper instance.
-   */
-  @NotNull
-  public PsiResolveHelper getResolveHelper() {
-    return JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-  }
-
-  /**
-   * Returns the short name cache for the project, which can be used to locate files, classes,
-   * methods and fields by non-qualified names.
-   *
-   * @return the short name cache instance.
-   */
-  @NotNull
-  public PsiShortNamesCache getShortNamesCache() {
-    return JavaPsiFacade.getInstance(getProject()).getShortNamesCache();
-  }
-
-  /**
-   * Registers a custom short name cache implementation for the project, which is used
-   * in addition to the standard IDEA implementation. Should not be used by most plugins.
-   *
-   * @param cache the short name cache instance.
-   */
-  public void registerShortNamesCache(@NotNull PsiShortNamesCache cache) {
-    JavaPsiFacade.getInstance(getProject()).registerShortNamesCache(cache);
-  }
-
-  /**
-   * Returns the name helper for the project, which can be used to validate
-   * and parse Java identifiers.
-   *
-   * @return the name helper instance.
-   */
-  @NotNull
-  public PsiNameHelper getNameHelper() {
-    return JavaPsiFacade.getInstance(getProject()).getNameHelper();
-  }
 
   /**
    * Returns the modification tracker for the project, which can be used to get the PSI
@@ -330,27 +209,6 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return true if the PSI manager is disposed, false otherwise.
    */
   public abstract boolean isDisposed();
-
-  /**
-   * Returns the language level set for this project.
-   *
-   * @deprecated  use {@link com.intellij.psi.PsiJavaFile#getLanguageLevel()} or
-   * {@link com.intellij.psi.util.PsiUtil#getLanguageLevel(PsiElement)}
-   * @return the language level instance.
-   */
-  @NotNull
-  public LanguageLevel getEffectiveLanguageLevel() {
-    return JavaPsiFacade.getInstance(getProject()).getEffectiveLanguageLevel();
-  }
-
-  /**
-   * Sets the language level to use for this project. For tests only.
-   *
-   * @param languageLevel the language level to set.
-   */
-  public void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    JavaPsiFacade.getInstance(getProject()).setEffectiveLanguageLevel(languageLevel);
-  }
 
   /**
    * Clears the resolve caches of the PSI manager. Can be used to reduce memory consumption

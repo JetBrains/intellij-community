@@ -65,7 +65,7 @@ public class MethodThrowsFix implements IntentionAction {
         }
       }
       if (myShouldThrow && !alreadyThrows) {
-        final PsiElementFactory factory = myMethod.getManager().getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
         final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
         PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
         ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);

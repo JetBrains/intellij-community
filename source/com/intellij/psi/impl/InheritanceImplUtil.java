@@ -41,7 +41,7 @@ public class InheritanceImplUtil {
 
     @NonNls final String baseName = baseClass.getName();
     if ("Object".equals(baseName)) {
-      PsiClass objectClass = manager.findClass("java.lang.Object", candidateClass.getResolveScope());
+      PsiClass objectClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", candidateClass.getResolveScope());
       if (manager.areElementsEquivalent(baseClass, objectClass)) {
         if (manager.areElementsEquivalent(candidateClass, objectClass)) return false;
         if (checkDeep || candidateClass.isInterface()) return true;
@@ -94,7 +94,8 @@ public class InheritanceImplUtil {
     if (extList != null) {
       final PsiJavaCodeReferenceElement[] refs = extList.getReferenceElements();
       for (PsiJavaCodeReferenceElement ref : refs) {
-        if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && manager.findClass(baseQName, scope) != null)
+        if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && JavaPsiFacade
+          .getInstance(manager.getProject()).findClass(baseQName, scope) != null)
           return true;
       }
     }

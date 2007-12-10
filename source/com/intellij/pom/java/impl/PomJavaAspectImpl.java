@@ -31,6 +31,7 @@
  */
 package com.intellij.pom.java.impl;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -47,7 +48,6 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.java.JavaLanguage;
 
 import java.util.*;
 
@@ -75,12 +75,12 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
 
   public PomMemberOwner findClass(String fqn, PomScope scope) {
     //TODO scope conversion
-    return myPsiManager.findClass(fqn, null).getPom();
+    return JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(fqn, null).getPom();
   }
 
   public PomMemberOwner[] findClasses(String fqn, PomScope scope) {
     //TODO scope conversion
-    PsiClass[] psis = myPsiManager.findClasses(fqn, null);
+    PsiClass[] psis = JavaPsiFacade.getInstance(myProject).findClasses(fqn, null);
     PomMemberOwner[] poms = new PomMemberOwner[psis.length];
     for (int i = 0; i < poms.length; i++) {
       poms[i] = psis[i].getPom();
@@ -111,7 +111,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   }
 
   public LanguageLevel getLanguageLevel() {
-    return myPsiManager.getEffectiveLanguageLevel();
+    return JavaPsiFacade.getInstance(myPsiManager.getProject()).getEffectiveLanguageLevel();
   }
 
   public void projectOpened() {

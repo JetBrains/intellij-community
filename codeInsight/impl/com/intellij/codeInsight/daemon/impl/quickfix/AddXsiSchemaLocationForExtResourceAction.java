@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -62,7 +63,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
   }
 
   private static TextRange doIt(final PsiFile file, final String uri, final XmlTag tag, final String s) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = file.getManager().getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
 
     if (tag.getAttributeValue(XMLNS_XSI_ATTR_NAME) == null) {
       tag.add(elementFactory.createXmlAttribute(XMLNS_XSI_ATTR_NAME, XmlUtil.XML_SCHEMA_INSTANCE_URI));

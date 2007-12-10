@@ -109,7 +109,7 @@ public final class CreateFieldFix extends QuickFix{
                                   final boolean showErrors,
                                   final IContainer rootContainer) {
     // 1. Create field
-    final PsiElementFactory factory = PsiManager.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiType type = factory.createType(fieldClass);
     try {
       final PsiField field = factory.createField(fieldName, type);

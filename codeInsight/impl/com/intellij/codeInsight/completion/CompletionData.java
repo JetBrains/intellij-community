@@ -96,7 +96,7 @@ public class CompletionData {
 
   public static void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position){
     for (final CompletionVariant variant : variants) {
-      variant.addKeywords(context.file.getManager().getElementFactory(), set, context, position);
+      variant.addKeywords(JavaPsiFacade.getInstance(context.file.getProject()).getElementFactory(), set, context, position);
     }
   }
 

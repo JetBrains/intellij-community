@@ -54,7 +54,7 @@ public class GenerateMembersUtil {
       anchor = anchor.getNextSibling();
 
       if (spaceNode.getStartOffset() <= offset && spaceNode.getStartOffset() + spaceNode.getTextLength() >= offset) {
-        final ASTNode singleNewLineWhitespace = file.getManager().getElementFactory().createWhiteSpaceFromText(spaceNode.getText().substring(0, offset - spaceNode.getStartOffset())).getNode();
+        final ASTNode singleNewLineWhitespace = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createWhiteSpaceFromText(spaceNode.getText().substring(0, offset - spaceNode.getStartOffset())).getNode();
         spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837
       }
     }
@@ -198,7 +198,7 @@ public class GenerateMembersUtil {
 
   public static PsiMethod substituteGenericMethod(PsiMethod method, PsiSubstitutor substitutor) {
     Project project = method.getProject();
-    PsiElementFactory factory = method.getManager().getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     boolean isRaw = PsiUtil.isRawSubstitutor(method, substitutor);
 
     PsiTypeParameter[] typeParams = method.getTypeParameters();

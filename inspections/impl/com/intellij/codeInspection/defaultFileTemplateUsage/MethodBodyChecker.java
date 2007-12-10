@@ -51,7 +51,7 @@ public class MethodBodyChecker {
       final Map<String, PsiMethod> cache = getTemplatesCache(project);
       PsiMethod method = cache.get(key);
       if (method == null) {
-        method = PsiManager.getInstance(project).getElementFactory().createMethod("x", returnType);
+        method = JavaPsiFacade.getInstance(project).getElementFactory().createMethod("x", returnType);
         setupMethodBody(superSignatures, method, aClass, true);
         cache.put(key, method);
       }
@@ -150,7 +150,7 @@ public class MethodBodyChecker {
     List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
     FileTemplate template;
     try {
-      PsiMethod templateMethod = method.getManager().getElementFactory().createMethod("x", returnType);
+      PsiMethod templateMethod = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createMethod("x", returnType);
       template = setupMethodBody(superSignatures, templateMethod, aClass, false);
     }
     catch (IncorrectOperationException e) {
@@ -167,7 +167,7 @@ public class MethodBodyChecker {
         if (aClass == null) return;
         List<HierarchicalMethodSignature> superSignatures = method.getHierarchicalMethodSignature().getSuperSignatures();
         try {
-          PsiMethod templateMethod = method.getManager().getElementFactory().createMethod("x", returnType);
+          PsiMethod templateMethod = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createMethod("x", returnType);
           setupMethodBody(superSignatures, templateMethod, aClass, false);
           final PsiCodeBlock templateBody = templateMethod.getBody();
           if (templateBody == null) return;

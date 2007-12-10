@@ -16,7 +16,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 public class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsParsingUtil");
   public static PsiExpression createExpressionFromText(String exprText, PsiManager manager, ClsElementImpl parent) {
-    PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)manager.getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
+    PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
     final FileElement holderElement = new DummyHolder(manager, dummyJavaFile).getTreeElement();
     CompositeElement _expr = ExpressionParsing.parseExpressionText(manager, exprText, 0, exprText.length(), holderElement.getCharTable());
     if (_expr == null){

@@ -75,7 +75,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     //Leave initializer assignment
     PsiExpression initializer = myOutOfScopeVariable.getInitializer();
     if (initializer != null) {
-      PsiExpressionStatement assignment = (PsiExpressionStatement)manager.getElementFactory().createStatementFromText(myOutOfScopeVariable
+      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText(myOutOfScopeVariable
         .getName() + "= e;", null);
       ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
       assignment = (PsiExpressionStatement)manager.getCodeStyleManager().reformat(assignment);
@@ -92,7 +92,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
                        ((PsiElement)myOutOfScopeVariable) : myUnresolvedReference;
 
     while(child.getParent() != commonParent) child = child.getParent();
-    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)manager.getElementFactory().createStatementFromText("int i = 0", null);
+    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText("int i = 0", null);
     newDeclaration.getDeclaredElements()[0].replace(myOutOfScopeVariable);
 
     while(!(child instanceof PsiStatement) || !(child.getParent() instanceof PsiCodeBlock)) {

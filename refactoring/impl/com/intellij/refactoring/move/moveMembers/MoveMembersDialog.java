@@ -236,49 +236,51 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     if ("".equals(fqName)) {
       return RefactoringBundle.message("no.destination.class.specified");
     }
-    else if (!manager.getNameHelper().isQualifiedName(fqName)) {
-      return RefactoringBundle.message("0.is.not.a.legal.fq.name", fqName);
-    }
     else {
-      RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, fqName);
-      final PsiClass[] targetClass = new PsiClass[]{null};
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        public void run() {
-          try {
-            targetClass[0] = findOrCreateTargetClass(manager, fqName);
-          }
-          catch (IncorrectOperationException e) {
-            CommonRefactoringUtil.showErrorMessage(
-              MoveMembersImpl.REFACTORING_NAME,
-              e.getMessage(),
-              HelpID.MOVE_MEMBERS,
-              myProject);
-          }
-        }
-
-      }, RefactoringBundle.message("create.class.command", fqName), null);
-
-      if (targetClass[0] == null) {
-        return "";
-      }
-
-      if (mySourceClass.equals(targetClass[0])) {
-        return RefactoringBundle.message("source.and.destination.classes.should.be.different");
+      if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isQualifiedName(fqName)) {
+        return RefactoringBundle.message("0.is.not.a.legal.fq.name", fqName);
       }
       else {
-        for (MemberInfo info : myMemberInfos) {
-          if (!info.isChecked()) continue;
-          if (PsiTreeUtil.isAncestor(info.getMember(), targetClass[0], false)) {
-            return RefactoringBundle.message("cannot.move.inner.class.0.into.itself", info.getDisplayName());
+        RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, fqName);
+        final PsiClass[] targetClass = new PsiClass[]{null};
+        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          public void run() {
+            try {
+              targetClass[0] = findOrCreateTargetClass(manager, fqName);
+            }
+            catch (IncorrectOperationException e) {
+              CommonRefactoringUtil.showErrorMessage(
+                MoveMembersImpl.REFACTORING_NAME,
+                e.getMessage(),
+                HelpID.MOVE_MEMBERS,
+                myProject);
+            }
           }
-        }
 
-        if (!targetClass[0].isWritable()) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, targetClass[0])) return "";
+        }, RefactoringBundle.message("create.class.command", fqName), null);
+
+        if (targetClass[0] == null) {
           return "";
         }
 
-        return null;
+        if (mySourceClass.equals(targetClass[0])) {
+          return RefactoringBundle.message("source.and.destination.classes.should.be.different");
+        }
+        else {
+          for (MemberInfo info : myMemberInfos) {
+            if (!info.isChecked()) continue;
+            if (PsiTreeUtil.isAncestor(info.getMember(), targetClass[0], false)) {
+              return RefactoringBundle.message("cannot.move.inner.class.0.into.itself", info.getDisplayName());
+            }
+          }
+
+          if (!targetClass[0].isWritable()) {
+            if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, targetClass[0])) return "";
+            return "";
+          }
+
+          return null;
+        }
       }
     }
   }
@@ -297,7 +299,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
 
 
-    PsiClass aClass = manager.findClass(fqName, GlobalSearchScope.projectScope(myProject));
+    PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(fqName, GlobalSearchScope.projectScope(myProject));
     if (aClass != null) return aClass;
 
     final PsiDirectory directory = PackageUtil.findOrCreateDirectoryForPackage(
@@ -387,7 +389,8 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
 
     public void updateTargetClass() {
       final PsiManager manager = PsiManager.getInstance(myProject);
-      myTargetClass = manager.findClass(getTargetClassName(), GlobalSearchScope.projectScope(myProject));
+      myTargetClass =
+        JavaPsiFacade.getInstance(manager.getProject()).findClass(getTargetClassName(), GlobalSearchScope.projectScope(myProject));
       myTable.fireExternalDataChange();
     }
   }

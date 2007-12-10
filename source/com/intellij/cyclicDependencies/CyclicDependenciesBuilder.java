@@ -213,7 +213,7 @@ public class CyclicDependenciesBuilder{
         @Override public void visitFile(PsiFile file) {
           if (file instanceof PsiJavaFile) {
             PsiJavaFile psiJavaFile = (PsiJavaFile)file;
-            final PsiPackage aPackage = psiManager.findPackage(psiJavaFile.getPackageName());
+            final PsiPackage aPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(psiJavaFile.getPackageName());
             if (aPackage != null) {
               myPackages.put(aPackage.getQualifiedName(), aPackage);
             }

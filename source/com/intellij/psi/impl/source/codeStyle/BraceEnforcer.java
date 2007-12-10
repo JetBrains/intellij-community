@@ -92,7 +92,7 @@ public class BraceEnforcer extends JavaRecursiveElementVisitor {
 
     final PsiManager manager = statement.getManager();
     AbstractPostFormatProcessor.LOG.assertTrue(manager != null);
-    final PsiElementFactory factory = manager.getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     
     String oldText = blockCandidate.getText();
     StringBuffer buf = new StringBuffer(oldText.length() + 3);

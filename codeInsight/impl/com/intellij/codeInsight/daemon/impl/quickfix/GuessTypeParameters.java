@@ -75,7 +75,7 @@ public class GuessTypeParameters {
         return;
       }
       else {
-        PsiElementFactory factory = manager.getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         PsiType type = info.getType();
         PsiType defaultType = info.getDefaultType();
         try {

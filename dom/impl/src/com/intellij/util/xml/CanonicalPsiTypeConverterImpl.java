@@ -4,18 +4,18 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.codeInsight.completion.scope.CompletionProcessor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceSet;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.codeInsight.completion.scope.CompletionProcessor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -30,7 +30,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     try {
-      return context.getFile().getManager().getElementFactory().createTypeFromText(s, null);
+      return JavaPsiFacade.getInstance(context.getFile().getProject()).getElementFactory().createTypeFromText(s, null);
     }
     catch (IncorrectOperationException e) {
       return null;

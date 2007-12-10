@@ -3,16 +3,16 @@ package com.intellij.codeInsight.hint.api.impls;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.lang.parameterInfo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -241,7 +241,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static CandidateInfo[] getMethods(PsiExpressionList argList) {
     final PsiCall call = getCall(argList);
-    PsiResolveHelper helper = argList.getManager().getResolveHelper();
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(argList.getProject()).getResolveHelper();
 
     if (call instanceof PsiCallExpression) {
       CandidateInfo[] candidates = helper.getReferencedMethodCandidates((PsiCallExpression)call, true);

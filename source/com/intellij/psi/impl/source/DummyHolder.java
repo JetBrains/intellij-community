@@ -78,7 +78,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   public boolean importClass(PsiClass aClass) {
     if (myContext != null) {
-      final PsiClass resolved = getManager().getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
+      final PsiClass resolved = JavaPsiFacade.getInstance(getProject()).getResolveHelper().resolveReferencedClass(aClass.getName(), myContext);
       if (resolved != null) {
         return getManager().areElementsEquivalent(aClass, resolved);
       }

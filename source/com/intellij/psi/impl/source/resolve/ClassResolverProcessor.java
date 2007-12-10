@@ -149,19 +149,20 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         if (manager.areElementsEquivalent(placeParent, parent)) accessible = true;
       }
     }
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
       accessible = false;
-      if (JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, myPlace)) {
+      if (facade.arePackagesTheSame(aClass, myPlace)) {
         accessible = true;
       }
       else {
         if (aClass.getContainingClass() != null) {
-          accessible = myAccessClass == null || manager.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
+          accessible = myAccessClass == null || facade.getResolveHelper().isAccessible(aClass, myPlace, myAccessClass);
         }
       }
     }
     if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      if (!JavaPsiFacade.getInstance(manager.getProject()).arePackagesTheSame(aClass, myPlace)) {
+      if (!facade.arePackagesTheSame(aClass, myPlace)) {
         accessible = false;
       }
     }

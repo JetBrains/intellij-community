@@ -139,7 +139,7 @@ class CopyClassDialog extends DialogWrapper{
 
     final String[] errorString = new String[1];
     final PsiManager manager = PsiManager.getInstance(myProject);
-    final PsiNameHelper nameHelper = manager.getNameHelper();
+    final PsiNameHelper nameHelper = JavaPsiFacade.getInstance(manager.getProject()).getNameHelper();
     if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) {
       errorString[0] = RefactoringBundle.message("invalid.target.package.name.specified");
     } else if ("".equals(className)) {

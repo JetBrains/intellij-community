@@ -38,7 +38,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
     PsiManager manager = file.getManager();
     PsiExpression expr = myInitializer.getInitializers()[0];
     PsiType type = expr.getType();
-    PsiElementFactory factory = manager.getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
     @NonNls String text = "new " + type.getPresentableText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);

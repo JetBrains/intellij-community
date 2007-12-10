@@ -35,7 +35,7 @@ class StatementMover extends LineMover {
         if (document.getText().charAt(endOffset-1) == '\n') endOffset--;
         final RangeMarker lineRangeMarker = document.createRangeMarker(startOffset, endOffset);
 
-        final PsiElementFactory factory = statementToSurroundWithCodeBlock.getManager().getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(statementToSurroundWithCodeBlock.getProject()).getElementFactory();
         PsiCodeBlock codeBlock = factory.createCodeBlock();
         codeBlock.add(statementToSurroundWithCodeBlock);
         final PsiBlockStatement blockStatement = (PsiBlockStatement)factory.createStatementFromText("{}", statementToSurroundWithCodeBlock);

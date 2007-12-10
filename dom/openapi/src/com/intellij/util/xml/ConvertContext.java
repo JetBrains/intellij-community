@@ -15,14 +15,15 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.openapi.module.Module;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,4 +62,6 @@ public abstract class ConvertContext {
   public abstract Module getModule();
   
   public abstract PsiManager getPsiManager();
+
+  public abstract JavaPsiFacade getJavaFacade();
 }

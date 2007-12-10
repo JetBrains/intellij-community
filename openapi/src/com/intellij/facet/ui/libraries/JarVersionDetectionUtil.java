@@ -3,6 +3,7 @@ package com.intellij.facet.ui.libraries;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -50,7 +51,7 @@ public class JarVersionDetectionUtil {
 
    @Nullable
    private static VirtualFile getDetectionFile(final String detectionClass, final GlobalSearchScope scope, final PsiManager psiManager) {
-     final PsiClass psiClass = psiManager.findClass(detectionClass, scope);
+     final PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass(detectionClass, scope);
      if (psiClass == null) {
        return null;
      }

@@ -8,6 +8,7 @@ import com.intellij.packageDependencies.BackwardDependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.FindDependencyUtil;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
@@ -47,7 +48,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
   }
 
   public void testForwardPackageScope(){
-    final PsiPackage bPackage = myPsiManager.findPackage("com.b");
+    final PsiPackage bPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("com.b");
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
@@ -78,7 +79,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
   }
 
    public void testBackwardPackageScope(){
-    final PsiPackage bPackage = myPsiManager.findPackage("com.a");
+     final PsiPackage bPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("com.a");
     final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();

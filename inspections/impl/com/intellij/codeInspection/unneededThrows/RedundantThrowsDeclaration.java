@@ -80,7 +80,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     if (aClass == null) return null;
 
     PsiManager manager = referenceElement.getManager();
-    PsiClassType exceptionType = manager.getElementFactory().createType(referenceElement);
+    PsiClassType exceptionType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(referenceElement);
     if (ExceptionUtil.isUncheckedExceptionOrSuperclass(exceptionType)) return null;
 
     PsiCodeBlock body = method.getBody();
