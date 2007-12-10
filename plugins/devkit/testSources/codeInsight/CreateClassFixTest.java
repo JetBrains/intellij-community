@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -61,7 +62,7 @@ public class CreateClassFixTest {
     }
     Assert.assertNotNull(resultAction);
     myFixture.launchAction(resultAction);
-    Assert.assertNotNull(PsiManager.getInstance(myFixture.getProject()).findClass(testName));
+    Assert.assertNotNull(JavaPsiFacade.getInstance(myFixture.getProject()).findClass(testName));
   }
 
 

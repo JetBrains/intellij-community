@@ -87,7 +87,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
       annotationName = "org.testng.annotations." + annotationName;
       final StringBuffer annotationText = new StringBuffer("@");
       annotationText.append(annotationName);
-      final PsiClass annotationClass = method.getManager().findClass(annotationName, method.getResolveScope());
+      final PsiClass annotationClass = JavaPsiFacade.getInstance(method.getProject()).findClass(annotationName, method.getResolveScope());
       PsiElement[] dataElements = tag.getDataElements();
       if (dataElements.length > 1) {
         annotationText.append('(');

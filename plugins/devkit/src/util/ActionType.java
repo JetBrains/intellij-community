@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -45,7 +46,7 @@ public enum ActionType {
   }
 
   public boolean isOfType(PsiClass klass) {
-    final PsiClass psiClass = klass.getManager().findClass(myClassName, klass.getResolveScope());
+    final PsiClass psiClass = JavaPsiFacade.getInstance(klass.getProject()).findClass(myClassName, klass.getResolveScope());
     return psiClass != null && klass.isInheritor(psiClass, true);
   }
 

@@ -102,10 +102,10 @@ public class GenerateComponentExternalizationAction extends AnAction {
       return null;
     }
 
-    PsiClass componentClass = file.getManager().findClass(BASE_COMPONENT, file.getResolveScope());
+    PsiClass componentClass = JavaPsiFacade.getInstance(file.getProject()).findClass(BASE_COMPONENT, file.getResolveScope());
     if (componentClass == null || !contextClass.isInheritor(componentClass, true)) return null;
 
-    PsiClass externClass = file.getManager().findClass(JDOM_EXTERN, file.getResolveScope());
+    PsiClass externClass = JavaPsiFacade.getInstance(file.getProject()).findClass(JDOM_EXTERN, file.getResolveScope());
     if (externClass == null || contextClass.isInheritor(externClass, true)) return null;
 
 

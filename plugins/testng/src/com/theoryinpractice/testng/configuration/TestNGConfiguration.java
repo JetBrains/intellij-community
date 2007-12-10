@@ -77,7 +77,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     @Nullable
     public PsiClass getPsiElement() {
       final String qualifiedName = data.getMainClassName();
-      return qualifiedName != null ? PsiManager.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project)) : null;
+      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project)) : null;
     }
 
     public void setPsiElement(final PsiClass psiClass) {
@@ -210,7 +210,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
       if (scope == null) {
         throw new RuntimeConfigurationException("Invalid scope specified");
       }
-      PsiClass psiClass = PsiManager.getInstance(project).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
+      PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(data.getMainClassName(), scope.getGlobalSearchScope());
       if (psiClass == null)
         throw new RuntimeConfigurationException("Invalid class '" + data.getMainClassName() + "'specified");
       if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {

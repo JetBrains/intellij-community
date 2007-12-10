@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -172,7 +173,7 @@ public class ConfigurationsTest {
   }
 
   private PsiClass findTestClass(final Project project) {
-    final PsiClass psiClass = PsiManager.getInstance(project).findClass("Testt");
+    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass("Testt");
     assert psiClass != null;
     return psiClass;
   }
