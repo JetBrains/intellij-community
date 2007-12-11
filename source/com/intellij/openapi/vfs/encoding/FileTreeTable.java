@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -280,7 +281,7 @@ public class FileTreeTable extends TreeTable {
       super(project);
     }
 
-    protected void appendChildren(final Collection<ConvenientNode> children) {
+    protected void appendChildrenTo(final Collection<ConvenientNode> children) {
       Project project = getObject();
       VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
       
@@ -289,7 +290,7 @@ public class FileTreeTable extends TreeTable {
         for (VirtualFile candidate : roots) {
           if (VfsUtil.isAncestor(candidate, root, true)) continue NextRoot;
         }
-        children.add(new FileNode(root));
+        children.add(new FileNode(root, project));
       }
     }
   }
@@ -305,7 +306,7 @@ public class FileTreeTable extends TreeTable {
       return myObject;
     }
 
-    protected abstract void appendChildren(final Collection<ConvenientNode> children);
+    protected abstract void appendChildrenTo(final Collection<ConvenientNode> children);
 
     public int getChildCount() {
       init();
@@ -326,7 +327,7 @@ public class FileTreeTable extends TreeTable {
       if (getUserObject() == null) {
         setUserObject(myObject);
         Collection<ConvenientNode> children = new ArrayList<ConvenientNode>();
-        appendChildren(children);
+        appendChildrenTo(children);
         int i=0;
         for (ConvenientNode child : children) {
           insert(child, i++);
@@ -347,14 +348,20 @@ public class FileTreeTable extends TreeTable {
   }
 
   private static class FileNode extends ConvenientNode<VirtualFile> {
-    private FileNode(@NotNull VirtualFile file) {
+    private final Project myProject;
+
+    private FileNode(@NotNull VirtualFile file, final Project project) {
       super(file);
+      myProject = project;
     }
 
-    protected void appendChildren(final Collection<ConvenientNode> children) {
+    protected void appendChildrenTo(final Collection<ConvenientNode> children) {
       VirtualFile[] childrenf = getObject().getChildren();
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
       for (VirtualFile child : childrenf) {
-        children.add(new FileNode(child));
+        if (fileIndex.isInContent(child)) {
+          children.add(new FileNode(child, myProject));
+        }
       }
     }
   }
