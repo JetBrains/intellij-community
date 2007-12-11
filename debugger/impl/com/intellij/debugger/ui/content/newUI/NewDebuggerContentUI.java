@@ -79,7 +79,7 @@ public class NewDebuggerContentUI
         return super.getData(dataId);
       }
     };
-    myTabs.setPopupGroup((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW), TAB_POPUP_PLACE);
+    myTabs.setPopupGroup((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW_POPUP), TAB_POPUP_PLACE);
     myTabs.setPaintBorder(false);
     myTabs.setPaintFocus(false);
     myTabs.setRequestFocusOnLastFocusedComponent(true);
@@ -192,7 +192,7 @@ public class NewDebuggerContentUI
 
     tab.setSideComponent(toolbar);
 
-    tab.setTabLabelActions((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW), TAB_TOOLBAR_PLACE);
+    tab.setTabLabelActions((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
 
     myTabs.addTab(tab);
     myTabs.sortTabs(myTabsComparator);
@@ -500,6 +500,14 @@ public class NewDebuggerContentUI
 
     saveUiState();
     rebuildMinimizedActions();
+  }
+
+  public CellTransform.Restore detach(final Content[] content) {
+    return new CellTransform.Restore() {
+      public ActionCallback restoreInGrid() {
+        return new ActionCallback.Done();
+      }
+    };
   }
 
   public void moveToTab(final Content content) {

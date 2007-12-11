@@ -13,6 +13,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class Grid extends Wrapper implements Disposable, CellTransform.Facade, DataProvider {
@@ -163,8 +164,33 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   }
 
   static class Placeholder extends Wrapper implements NullableComponent {
+
+    private JComponent myContent;
+
     public boolean isNull() {
       return getComponentCount() == 0;
+    }
+
+    public CellTransform.Restore detach() {
+      if (getComponentCount() == 1) {
+        myContent = (JComponent)getComponent(0);
+        removeAll();
+      }
+
+      if (getParent() instanceof JComponent) {
+        ((JComponent)getParent()).revalidate();
+        getParent().repaint();
+      }
+
+      return new CellTransform.Restore() {
+        public ActionCallback restoreInGrid() {
+          if (myContent != null) {
+            setContent(myContent);
+            myContent = null;
+          }
+          return new ActionCallback.Done();
+        }
+      };
     }
   }
 
@@ -189,7 +215,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     }
   }
 
-  private Tab getTab() {
+  public Tab getTab() {
     return myViewContext.getTabFor(this);
   }
 
@@ -255,6 +281,28 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
     });
   }
 
+  public void moveToTab(final Content content) {
+    myViewContext.getCellTransform().moveToTab(content);
+  }
+
+  public void moveToGrid(final Content content) {
+    myViewContext.getCellTransform().moveToGrid(content);
+  }
+
+  public CellTransform.Restore detach(final Content[] content) {
+    final CellTransform.Restore.List restore = new CellTransform.Restore.List();
+    restore.add(myViewContext.getCellTransform().detach(content));
+    restore.add(new CellTransform.Restore() {
+      public ActionCallback restoreInGrid() {
+        revalidate();
+        repaint();
+        return new ActionCallback.Done();
+      }
+    });
+
+    return restore;
+  }
+
   @Nullable
   public Object getData(@NonNls final String dataId) {
     if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
@@ -264,5 +312,9 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
       return contents.toArray(new Content[contents.size()]);
     }
     return null;
+  }
+
+  public String getSessionName() {
+    return mySessionName;
   }
 }

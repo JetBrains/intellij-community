@@ -41,5 +41,6 @@ public interface DebuggerActions {
   @NonNls String INSPECT = "Debugger.Inspect";
   @NonNls String EXPORT_THREADS = "ExportThreads";
   @NonNls String LAYOUT = "Debugger.Layout";
-  @NonNls String DEBUGGER_VIEW = "Debugger.View";
+  @NonNls String DEBUGGER_VIEW_POPUP = "Debugger.View.Popup";
+  @NonNls String DEBUGGER_VIEW_TOOLBAR = "Debugger.View.Toolbar";
 }

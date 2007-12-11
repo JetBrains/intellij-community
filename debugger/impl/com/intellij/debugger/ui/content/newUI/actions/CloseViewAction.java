@@ -25,7 +25,9 @@ public class CloseViewAction extends BaseDebuggerViewAction {
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    context.findCellFor(content[0]).minimize(content);
+    for (Content each : content) {
+      context.findCellFor(each).detach();
+    }
   }
 
 }

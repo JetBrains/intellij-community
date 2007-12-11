@@ -40,9 +40,6 @@ public interface ViewContext extends Disposable {
 
   Grid findGridFor(Content content);
 
-  void moveToTab(final Content content);
-
-  void moveToGrid(final Content content);
 
   ActionCallback select(Content content, boolean requestFocus);
 

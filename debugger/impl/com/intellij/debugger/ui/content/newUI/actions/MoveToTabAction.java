@@ -19,6 +19,6 @@ public class MoveToTabAction extends BaseDebuggerViewAction {
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    context.moveToTab(content[0]);
+    context.getCellTransform().moveToTab(content[0]);
   }
 }

@@ -4,9 +4,16 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.MutualMap;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
@@ -18,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -29,12 +37,14 @@ public class GridCell {
 
   private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
   private Set<Content> myMinimizedContents = new HashSet<Content>();
+  private Set<Content> myDetachedContents = new HashSet<Content>();
 
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
   private PlaceInGrid myPlaceInGrid;
 
   private ViewContext myContext;
+  private CellTransform.Restore.List myRestoreFromDetach;
 
   public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
@@ -57,7 +67,8 @@ public class GridCell {
         }
       }
     });
-    myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW), ViewContext.CELL_POPUP_PLACE);
+    myTabs.setPopupGroup((ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW_POPUP),
+                         ViewContext.CELL_POPUP_PLACE);
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
         if (!myTabs.isShowing()) return;
@@ -101,7 +112,8 @@ public class GridCell {
     if (myContents.size() == 0) {
       myPlaceholder.removeAll();
       myTabs.removeAllTabs();
-    } else {
+    }
+    else {
       if (myPlaceholder.isNull()) {
         myPlaceholder.setContent(myTabs);
       }
@@ -134,7 +146,7 @@ public class GridCell {
     myContents.remove(content);
     myContents.put(content, tabInfo);
 
-    ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW);
+    ActionGroup group = (ActionGroup)myContext.getActionManager().getAction(DebuggerActions.DEBUGGER_VIEW_TOOLBAR);
     tabInfo.setTabLabelActions(group, ViewContext.CELL_TOOLBAR_PLACE);
 
     return tabInfo;
@@ -155,6 +167,7 @@ public class GridCell {
     }
   }
 
+
   private static class ProviderWrapper extends NonOpaquePanel implements DataProvider {
 
     Content myContent;
@@ -170,8 +183,9 @@ public class GridCell {
     @Nullable
     public Object getData(@NonNls final String dataId) {
       if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
-        return new Content[] {myContent};
-      } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+        return new Content[]{myContent};
+      }
+      else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
         return myContext;
       }
       return null;
@@ -231,7 +245,8 @@ public class GridCell {
       final TabInfo eachTab = getTabFor(each);
       if (eachTab != null && myTabs.getSelectedInfo() == eachTab && isShowing) {
         myContext.getContentManager().addSelectedContent(each);
-      } else {
+      }
+      else {
         myContext.getContentManager().removeFromSelection(each);
       }
     }
@@ -251,8 +266,71 @@ public class GridCell {
     }
   }
 
+  public void detach() {
+    final DimensionService dimService = DimensionService.getInstance();
+    Point storedLocation = dimService.getLocation(getDimensionKey(), myContext.getProject());
+    Dimension storedSize = dimService.getSize(getDimensionKey(), myContext.getProject());
+    if (storedLocation == null) {
+      storedLocation = myTabs.getLocationOnScreen();
+      storedSize = myTabs.getSize();
+    }
+
+    detachTo(storedLocation, storedSize, false);
+  }
+
+  private void detachTo(Point screenPoint, Dimension size, boolean dragging) {
+    final Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
+
+    myRestoreFromDetach = new CellTransform.Restore.List();
+
+    myRestoreFromDetach.add(myPlaceholder.detach());
+    myRestoreFromDetach.add(myContainer.detach(contents));
+    myRestoreFromDetach.add(new CellTransform.Restore() {
+      public ActionCallback restoreInGrid() {
+        myTabs.setSelected(myTabs.getSelectedInfo(), true);
+        return new ActionCallback.Done();
+      }
+    });
+
+    final JBPopup popup = createPopup(dragging);
+    popup.setSize(size);
+    popup.setLocation(screenPoint);
+    popup.show(myPlaceholder);
+  }
+
+  private JBPopup createPopup(boolean dragging) {
+    Wrapper wrapper = new Wrapper(myTabs);
+    wrapper.setBorder(new EmptyBorder(1, 0, 0, 0));
+    final ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(wrapper, myTabs)
+      .setTitle(myContainer.getSessionName())
+      .setMovable(true)
+      .setRequestFocus(true)
+      .setResizable(true)
+      .setCancelButton(new MinimizeButton("Back"))
+      .setDimensionServiceKey(myContext.getProject(), getDimensionKey(), true)
+      .setCancelOnOtherWindowOpen(false)
+      .setCancelOnClickOutside(false)
+      .setCancelKeyEnabled(true)
+      .setLocateByContent(dragging)
+      .setLocateWithinScreenBounds(!dragging)
+      .setCancelKeyEnabled(false)
+      .setBelongsToGlobalPopupStack(false)
+      .setCancelCallback(new Computable<Boolean>() {
+        public Boolean compute() {
+          myRestoreFromDetach.restoreInGrid();
+          return Boolean.TRUE;
+        }
+      });
+
+    return builder.createPopup();
+  }
+
+  private String getDimensionKey() {
+    return "GridCell.Tab." + myContainer.getTab().getIndex();
+  }
+
   public void minimize(Content content) {
-    minimize(new Content[] {content});
+    minimize(new Content[]{content});
   }
 
   public void minimize(MouseEvent e) {
@@ -278,9 +356,10 @@ public class GridCell {
       if (ViewContext.CONTENT_KEY.getName().equals(dataId)) {
         TabInfo target = myTabs.getTargetInfo();
         if (target != null) {
-          return new Content[] {getContentFor(target)};
+          return new Content[]{getContentFor(target)};
         }
-      } else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
+      }
+      else if (ViewContext.CONTEXT_KEY.getName().equals(dataId)) {
         return myContext;
       }
 
