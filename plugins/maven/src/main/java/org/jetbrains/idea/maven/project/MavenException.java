@@ -3,11 +3,16 @@ package org.jetbrains.idea.maven.project;
 import org.apache.maven.project.InvalidProjectModelException;
 import org.apache.maven.project.validation.ModelValidationResult;
 
+import java.io.File;
+import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class MavenException extends Exception {
-  private String myDetails;
+  private String mySummary;
+  private List<Error> myErrors = new ArrayList<Error>();
 
   public MavenException(String message) {
     this(new Exception(message));
@@ -18,32 +23,64 @@ public class MavenException extends Exception {
   }
 
   public MavenException(List<Exception> ee) {
-    myDetails = collectDetails(ee);
-  }
+    mySummary = "";
 
-  private String collectDetails(List<Exception> ee) {
-    String result = "";
-    for (Exception e : ee) {
-      for (String s : collectDetails(e)) {
-        result += result.length() == 0 ? "" : "\n";
-        result += s;
+    for (Exception exception : ee) {
+      Error error = createError(exception);
+      myErrors.add(error);
+
+      for (String s : error.messages) {
+        mySummary += mySummary.length() == 0 ? "" : "\n";
+        mySummary += s;
       }
     }
+  }
+
+  private Error createError(Exception e) {
+    Error result = new Error();
+
+    result.pomFile = retrievePomFilePath(e);
+    result.messages = collectMessages(e);
+
     return result;
   }
 
-  private List<String> collectDetails(Exception e) {
+  private String retrievePomFilePath(Exception e) {
+    try {
+      Method m = e.getClass().getMethod("getPomFile");
+      File f = (File)m.invoke(e);
+      return f == null ? null : f.getPath();
+    }
+    catch (NoSuchMethodException ex) {
+    }
+    catch (InvocationTargetException ex) {
+    }
+    catch (IllegalAccessException ex) {
+    }
+    return null;
+  }
+
+  private List<String> collectMessages(Exception e) {
     if (e instanceof InvalidProjectModelException) {
       ModelValidationResult r = ((InvalidProjectModelException)e).getValidationResult();
       return r.getMessages();
+    } else {
+      String m = e.getMessage() == null ? e.getClass().getName() : e.getMessage();
+      return Collections.singletonList(m);
     }
-
-    String m = e.getMessage() == null ? e.getClass().getName() : e.getMessage();
-    return Collections.singletonList(m);
   }
 
   @Override
   public String getMessage() {
-    return myDetails;
+    return mySummary;
+  }
+
+  public List<Error> getErrors() {
+    return myErrors;
+  }
+
+  public static class Error {
+    public String pomFile;
+    public List<String> messages;
   }
 }

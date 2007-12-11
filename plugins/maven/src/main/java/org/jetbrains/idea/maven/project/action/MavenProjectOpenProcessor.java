@@ -6,6 +6,7 @@ package org.jetbrains.idea.maven.project.action;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.Nullable;
@@ -30,28 +31,19 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase {
     return new String[]{MavenEnv.POM_FILE};
   }
 
-public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
+  public boolean doQuickImport(VirtualFile file, final WizardContext wizardContext) {
     getBuilder().setFiles(Arrays.asList(file));
 
-  try {
-    if(!getBuilder().setProfiles(new ArrayList<String>())){
-      return false;
-    }
-  }
-  catch (ConfigurationException e) {
-    // todo handle correctly
-    return false;
-  }
-
-  final List<MavenProjectModel.Node> projects = getBuilder().getList();
     try {
+      if (!getBuilder().setProfiles(new ArrayList<String>())) return false;
+
+      List<MavenProjectModel.Node> projects = getBuilder().getList();
       getBuilder().setList(projects);
+
+      if (projects.size() != 1) return false;
     }
     catch (ConfigurationException e) {
-      return false;
-    }
-
-    if(projects.size()!=1){
+      Messages.showErrorDialog(e.getMessage(), "Maven Importer Error");
       return false;
     }
 
