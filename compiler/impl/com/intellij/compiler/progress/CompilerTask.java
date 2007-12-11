@@ -19,6 +19,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -69,7 +70,7 @@ public class CompilerTask extends Task.Backgroundable {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private boolean myMessagesAutoActivated = false;
 
-  private volatile ProgressIndicator myIndicator;
+  private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
   private Runnable myCompileWork;
   private AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
 
@@ -94,7 +95,7 @@ public class CompilerTask extends Task.Backgroundable {
     return new NotificationInfo("Compiler", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
   }
 
-  public void run(final ProgressIndicator indicator) {
+  public void run(@NotNull final ProgressIndicator indicator) {
     myIndicator = indicator;
 
     final Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
@@ -112,8 +113,7 @@ public class CompilerTask extends Task.Backgroundable {
   }
 
   private void prepareMessageView() {
-    final ProgressIndicator indicator = myIndicator;
-    if (indicator == null || !indicator.isRunning()) {
+    if (!myIndicator.isRunning()) {
       return;
     }
     if (myMessageViewWasPrepared.getAndSet(true)) {

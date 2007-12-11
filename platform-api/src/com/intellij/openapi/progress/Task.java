@@ -50,7 +50,7 @@ public abstract class Task implements TaskInfo {
     myCanBeCancelled = canBeCancelled;
   }
 
-  public abstract void run(ProgressIndicator indicator);
+  public abstract void run(@NotNull ProgressIndicator indicator);
 
   public void onCancel() {}
 
