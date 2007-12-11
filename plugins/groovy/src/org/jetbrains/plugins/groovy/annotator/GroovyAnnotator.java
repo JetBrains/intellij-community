@@ -703,7 +703,6 @@ public class GroovyAnnotator implements Annotator {
     final DynamicPropertiesManager dynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
     Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(refExpr.getContainingFile().getVirtualFile());
 
-    // todo [dimaskin] module may be null, for library sources
     if (module != null) {
       if (refExpr.isQualified()) {
         GrExpression qualifier = refExpr.getQualifierExpression();
@@ -725,8 +724,7 @@ public class GroovyAnnotator implements Annotator {
         }
       }
 
-      // todo [dimaskin], altered to prevent NPE, please, be careful
-      dynamicValueTypeDefinitionText = dynamicValueTypeDefinitionText != null ? dynamicValueTypeDefinitionText : "";
+      if (dynamicValueTypeDefinitionText == null) return;
       DynamicProperty dynamicProperty = new DynamicPropertyBase(refExpr.getName(), dynamicValueTypeDefinitionText, module.getName());
       final Element dynPropElement = dynamicPropertiesManager.findDynamicProperty(dynamicProperty);
 
