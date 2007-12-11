@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,32 @@ public class PsiSubstitutorImpl implements PsiSubstitutorEx {
     if (type == null) return null;
     PsiType substituted = type.accept(myAddingBoundsSubstitutionVisitor);
     return correctExternalSubstitution(substituted, type);
+  }
+
+  public PsiType substituteNoErase(PsiType type) {
+    if (type == null) return null;
+    PsiType substituted = type.accept(new SubstitutionVisitorBase(){
+      public PsiType visitClassType(final PsiClassType classType) {
+        final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+        final PsiClass aClass = resolveResult.getElement();
+        if (aClass == null) return classType;
+        if (aClass instanceof PsiTypeParameter) {
+          final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
+          PsiType t = mySubstitutionMap.get(typeParameter);
+          if (t == null) {
+            return null;
+          }
+          else {
+            return addBounds(t, typeParameter);
+          }
+        }
+        PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+        PsiSubstitutor substitutor = PsiUtil.isRawSubstitutor(aClass, PsiSubstitutorImpl.this) ?
+                                     factory.createRawSubstitutor(aClass) : resolveResult.getSubstitutor();
+        return factory.createType(aClass, substitutor, classType.getLanguageLevel());
+      }
+    });
+    return substituted;
   }
 
   public PsiType substituteWithBoundsPromotion(PsiTypeParameter typeParameter) {

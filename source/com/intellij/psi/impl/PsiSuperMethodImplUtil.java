@@ -132,7 +132,7 @@ public class PsiSuperMethodImplUtil {
       PsiClassType.ClassResolveResult superTypeResolveResult = superType.resolveGenerics();
       PsiClass superClass = superTypeResolveResult.getElement();
       if (superClass == null) continue;
-      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), substitutor);
+      PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(superClass, superTypeResolveResult.getSubstitutor(), aClass, substitutor);
 
       if (!visited.add(superClass)) continue; // cyclic inheritance
       Map<MethodSignatureBackedByPsiMethod, HierarchicalMethodSignatureImpl> superResult = newbuildMethodHierarchy(superClass, finalSubstitutor, false, visited);
@@ -206,21 +206,42 @@ public class PsiSuperMethodImplUtil {
     return hierarchicalMethodSignature;
   }
 
-  private static PsiSubstitutor obtainFinalSubstitutor(PsiClass candidateClass,
-                                                       PsiSubstitutor candidateSubstitutor,
-                                                       PsiSubstitutor substitutor) {
-    final Iterator<PsiTypeParameter> it = PsiUtil.typeParametersIterator(candidateClass);
-    if (!it.hasNext()) return PsiSubstitutor.EMPTY;
-    final Map<PsiTypeParameter, PsiType> map = candidateSubstitutor.getSubstitutionMap();
+  private static PsiSubstitutor obtainFinalSubstitutor(PsiClass superClass,
+                                                       PsiSubstitutor superSubstitutor, final PsiClass derivedClass, PsiSubstitutor derivedSubstitutor) {
+    PsiTypeParameter[] superTypeParams = superClass.getTypeParameters();
+    if (superTypeParams.length == 0) return PsiSubstitutor.EMPTY;
+
+    if (PsiUtil.isRawSubstitutor(derivedClass, derivedSubstitutor)) {
+      Map<PsiTypeParameter, PsiType> substitutionMap = derivedSubstitutor.getSubstitutionMap();
+      Map<PsiTypeParameter, PsiType> boundSubstituted = new HashMap<PsiTypeParameter, PsiType>();
+      boolean boundSubsted = false;
+      for (PsiTypeParameter typeParameter : substitutionMap.keySet()) {
+        PsiType type = substitutionMap.get(typeParameter);
+        PsiClassType[] extendsTypes = typeParameter.getExtendsListTypes();
+        if (type == null && extendsTypes.length != 0) {
+          boundSubstituted.put(typeParameter, extendsTypes[0]);
+          boundSubsted = true;
+        }
+        else {
+          boundSubstituted.put(typeParameter, type);
+        }
+      }
+      if (boundSubsted) {
+        PsiElementFactory elementFactory = JavaPsiFacade.getInstance(superClass.getProject()).getElementFactory();
+        derivedSubstitutor = elementFactory.createSubstitutor(boundSubstituted);
+      }
+    }
+
+    final Map<PsiTypeParameter, PsiType> map = superSubstitutor.getSubstitutionMap();
     final Map<PsiTypeParameter, PsiType> m1 = new HashMap<PsiTypeParameter, PsiType>();
-    while(it.hasNext()) {
-      final PsiTypeParameter typeParameter = it.next();
+    for (PsiTypeParameter typeParameter : superTypeParams) {
       if (map.containsKey(typeParameter)) { //optimization
-        final PsiType t = substitutor.substitute(candidateSubstitutor.substitute(typeParameter));
+        PsiType type = superSubstitutor.substitute(typeParameter);
+        final PsiType t = ((PsiSubstitutorEx)derivedSubstitutor).substituteNoErase(type);
         m1.put(typeParameter, t);
       }
     }
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(candidateClass.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(superClass.getProject()).getElementFactory();
     return elementFactory.createSubstitutor(m1);
   }
 

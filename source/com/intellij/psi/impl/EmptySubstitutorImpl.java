@@ -22,10 +22,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }
 
-  public PsiType substituteInternal(PsiType type) {
-    return substitute(type);
-  }
-
   public PsiSubstitutor put(PsiTypeParameter classParameter, PsiType mapping){
     final PsiSubstitutor substitutor = new PsiSubstitutorImpl();
     return substitutor.put(classParameter, mapping);
@@ -55,5 +51,9 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
 
   public PsiSubstitutor inplacePutAll(PsiClass parentClass, PsiType[] mappings) {
     return putAll(parentClass, mappings);
+  }
+
+  public PsiType substituteNoErase(final PsiType type) {
+    return type;
   }
 }
