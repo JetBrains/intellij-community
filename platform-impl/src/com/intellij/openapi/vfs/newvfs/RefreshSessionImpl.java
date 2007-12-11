@@ -6,6 +6,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.util.ArrayList;
@@ -103,13 +103,12 @@ public class RefreshSessionImpl extends RefreshSession {
           scan();
         }
         notifyCacheUpdaters();
-        manager.fireAfterRefreshFinish(myIsAsync);
-      } catch(Throwable e) {
-        LOG.error("Exception was thrown during refresh", e);
       }
-
-      if (myFinishRunnable != null) {
-        myFinishRunnable.run();
+      finally {
+        manager.fireAfterRefreshFinish(myIsAsync);
+        if (myFinishRunnable != null) {
+          myFinishRunnable.run();
+        }
       }
     }
     finally {
