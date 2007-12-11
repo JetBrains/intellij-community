@@ -12,6 +12,10 @@ public class MoveToTabAction extends BaseDebuggerViewAction {
       e.getPresentation().setEnabled(false);
       return;
     }
+    if (isDetached(context, content[0])) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
 
     Grid grid = context.findGridFor(content[0]);
     Tab tab = context.getTabFor(grid);

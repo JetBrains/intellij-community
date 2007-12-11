@@ -1,6 +1,9 @@
 package com.intellij.debugger.ui.content.newUI.actions;
 
 import com.intellij.debugger.ui.content.newUI.ViewContext;
+import com.intellij.debugger.ui.content.newUI.View;
+import com.intellij.debugger.ui.content.newUI.Tab;
+import com.intellij.debugger.ui.content.newUI.Grid;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
@@ -41,4 +44,14 @@ public abstract class BaseDebuggerViewAction extends AnAction {
     return e.getData(ViewContext.CONTENT_KEY);
   }
 
+  protected static boolean isDetached(ViewContext context, Content content) {
+    View state = context.getStateFor(content);
+    return state.getTab().isDetached(state.getPlaceInGrid());   
+  }
+
+  protected static Tab getTabFor(final ViewContext context, final Content[] content) {
+    Grid grid = context.findGridFor(content[0]);
+    Tab tab = context.getTabFor(grid);
+    return tab;
+  }
 }

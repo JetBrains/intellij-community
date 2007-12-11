@@ -8,6 +8,11 @@ import com.intellij.ui.content.Content;
 
 public class DetachCellAction extends BaseDebuggerViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
+    if (content.length == 0 || isDetached(context, content[0])) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
     Grid grid = context.findGridFor(content[0]);
     Tab tab = context.getTabFor(grid);
 

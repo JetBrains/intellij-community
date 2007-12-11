@@ -13,6 +13,11 @@ public class MoveToGridAction extends BaseDebuggerViewAction {
       return;
     }
 
+    if (isDetached(context, content[0])) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
     Grid grid = context.findGridFor(content[0]);
     Tab tab = context.getTabFor(grid);
     e.getPresentation().setEnabled(!tab.isDefault() && grid.getContents().size() == 1);

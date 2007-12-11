@@ -207,7 +207,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void run() {
-    //updateTabActions();
+    updateTabActions();
   }
 
   public void updateTabActions() {

@@ -126,5 +126,35 @@ public class Tab {
     return myIndex == 0;
   }
 
+  public boolean isDetached(PlaceInGrid place) {
+    switch (place) {
+      case bottom:
+        return isBottomDetached();
+      case center:
+        return isCenterDetached();
+      case left:
+        return isLeftDetached();
+      case right:
+        return isRightDetached();
+    }
+
+    return false;
+  }
+
+  public void setDetached(PlaceInGrid place, boolean detached) {
+    switch (place) {
+      case bottom:
+        setBottomDetached(detached);
+        break;
+      case center:
+        setCenterDetached(detached);
+        break;
+      case left:
+        setLeftDetached(detached);
+      case right:
+        setRightDetached(detached);
+    }
+  }
+
 
 }

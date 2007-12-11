@@ -59,6 +59,7 @@ public class NewDebuggerContentUI
 
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
 
+
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
     mySettings = settings;
@@ -574,4 +575,5 @@ public class NewDebuggerContentUI
 
     return result;
   }
+
 }

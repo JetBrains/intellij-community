@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.ui.content.newUI.actions.CloseViewAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,6 @@ public class GridCell {
 
   private MutualMap<Content, TabInfo> myContents = new MutualMap<Content, TabInfo>(true);
   private Set<Content> myMinimizedContents = new HashSet<Content>();
-  private Set<Content> myDetachedContents = new HashSet<Content>();
 
   private JBTabs myTabs;
   private Grid.Placeholder myPlaceholder;
@@ -45,6 +45,7 @@ public class GridCell {
 
   private ViewContext myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
+  private JBPopup myPopup;
 
   public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
@@ -63,7 +64,11 @@ public class GridCell {
     myTabs.addTabMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (UIUtil.isCloseClick(e)) {
-          minimize(e);
+          if (isDetached()) {
+            myPopup.cancel();
+          } else {
+            minimize(e);
+          }
         }
       }
     });
@@ -209,12 +214,16 @@ public class GridCell {
   public void restoreLastUiState() {
     restoreProportions();
 
-    Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
+    Content[] contents = getContents();
     for (Content each : contents) {
       if (myContainer.getStateFor(each).isMinimizedInGrid()) {
         minimize(each);
       }
     }
+  }
+
+  private Content[] getContents() {
+    return myContents.getKeys().toArray(new Content[myContents.size()]);
   }
 
   public void saveUiState() {
@@ -234,6 +243,8 @@ public class GridCell {
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
     state.assignTab(myContainer.getTabIndex());
+
+    state.getTab().setDetached(myPlaceInGrid, isDetached());
   }
 
   private void restoreProportions() {
@@ -267,6 +278,8 @@ public class GridCell {
   }
 
   public void detach() {
+    myContext.saveUiState();
+
     final DimensionService dimService = DimensionService.getInstance();
     Point storedLocation = dimService.getLocation(getDimensionKey(), myContext.getProject());
     Dimension storedSize = dimService.getSize(getDimensionKey(), myContext.getProject());
@@ -279,7 +292,7 @@ public class GridCell {
   }
 
   private void detachTo(Point screenPoint, Dimension size, boolean dragging) {
-    final Content[] contents = myContents.getKeys().toArray(new Content[myContents.size()]);
+    final Content[] contents = getContents();
 
     myRestoreFromDetach = new CellTransform.Restore.List();
 
@@ -292,10 +305,12 @@ public class GridCell {
       }
     });
 
-    final JBPopup popup = createPopup(dragging);
-    popup.setSize(size);
-    popup.setLocation(screenPoint);
-    popup.show(myPlaceholder);
+    myPopup = createPopup(dragging);
+    myPopup.setSize(size);
+    myPopup.setLocation(screenPoint);
+    myPopup.show(myPlaceholder);
+
+    myContext.saveUiState();
   }
 
   private JBPopup createPopup(boolean dragging) {
@@ -318,6 +333,8 @@ public class GridCell {
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
           myRestoreFromDetach.restoreInGrid();
+          myRestoreFromDetach = null;
+          myContext.saveUiState();
           return Boolean.TRUE;
         }
       });
@@ -325,8 +342,12 @@ public class GridCell {
     return builder.createPopup();
   }
 
+  private boolean isDetached() {
+    return myRestoreFromDetach != null;
+  }
+
   private String getDimensionKey() {
-    return "GridCell.Tab." + myContainer.getTab().getIndex();
+    return "GridCell.Tab." + myContainer.getTab().getIndex() + "." + myPlaceInGrid.name();
   }
 
   public void minimize(Content content) {
@@ -334,6 +355,8 @@ public class GridCell {
   }
 
   public void minimize(MouseEvent e) {
+    if (!CloseViewAction.isEnabled(myContext, getContents(), ViewContext.CELL_TOOLBAR_PLACE)) return;
+
     TabInfo tabInfo = myTabs.findInfo(e);
     if (tabInfo != null) {
       minimize(getContentFor(tabInfo));
