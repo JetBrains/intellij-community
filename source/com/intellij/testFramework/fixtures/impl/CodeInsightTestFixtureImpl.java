@@ -25,6 +25,8 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
@@ -60,8 +62,9 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
-import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
+import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
@@ -177,7 +180,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        configureByFiles(filePaths);
+        configureByFilesInner(filePaths);
         collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
       }
     }.execute().throwException();
@@ -204,7 +207,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public PsiReference getReferenceAtCaretPosition(final String filePath) throws Throwable {
     final RunResult<PsiReference> runResult = new WriteCommandAction<PsiReference>(myProjectFixture.getProject()) {
       protected void run(final Result<PsiReference> result) throws Throwable {
-        configureByFiles(filePath);
+        configureByFilesInner(filePath);
         final int offset = myEditor.getCaretModel().getOffset();
         final PsiReference psiReference = getFile().findReferenceAt(offset);
         result.setResult(psiReference);
@@ -227,7 +230,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final Project project = myProjectFixture.getProject();
     return new WriteCommandAction<List<IntentionAction>>(project) {
       protected void run(final Result<List<IntentionAction>> result) throws Throwable {
-        final int offset = configureByFiles(filePaths);
+        final int offset = configureByFilesInner(filePaths);
         result.setResult(getAvailableIntentions(project, doHighlighting(), offset, myEditor, myFile));
       }
     }.execute().getResultObject();
@@ -246,7 +249,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        configureByFiles(filesBefore);
+        configureByFilesInner(filesBefore);
         new CodeCompletionHandler().invoke(getProject(), myEditor, myFile);
         checkResultByFile(fileAfter, myFile, false);
       }
@@ -261,7 +264,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
       protected void run() throws Throwable {
-        configureByFiles(fileBefore);
+        configureByFilesInner(fileBefore);
         final Ref<LookupItem[]> myItems = Ref.create(null);
         new CodeCompletionHandler(){
           @Nullable
@@ -289,13 +292,25 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testRename(final String fileBefore, final String fileAfter, final String newName) throws Throwable {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Throwable {
-        configureByFiles(fileBefore);
+        configureByFilesInner(fileBefore);
         PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
         assert element != null: "element not found at caret position, offset " + myEditor.getCaretModel().getOffset();
         new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
         checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
+  }
+
+  public PsiReference[] testFindUsages(@NonNls final String... fileNames) throws Throwable {
+    configureByFiles(fileNames);
+    FindUsagesProvider handler = LanguageFindUsages.INSTANCE.forLanguage(getFile().getLanguage());
+    PsiElement referenceTo = TargetElementUtil.findTargetElement(getEditor(),
+                                                            TargetElementUtil.ELEMENT_NAME_ACCEPTED |
+                                                            TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+
+    assert referenceTo != null && handler.canFindUsagesFor(referenceTo) : "Cannot find element in caret";
+    final Project project = getProject();
+    return ReferencesSearch.search(referenceTo, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);
   }
 
   public void moveFile(@NonNls final String filePath, @NonNls final String to) throws Throwable {
@@ -320,7 +335,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(project) {
 
       protected void run() throws Throwable {
-        final int offset = configureByFiles(filePath);
+        final int offset = configureByFilesInner(filePath);
 
         final Collection<HighlightInfo> infos = doHighlighting();
         for (HighlightInfo info :infos) {
@@ -439,7 +454,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     super.tearDown();
   }
 
-  private int configureByFiles(@NonNls String... filePaths) throws IOException {
+  private int configureByFilesInner(@NonNls String... filePaths) throws IOException {
     myFile = null;
     myEditor = null;
     int offset = -1;
@@ -457,10 +472,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     new WriteCommandAction.Simple(getProject()) {
       protected void run() throws Throwable {
         configureByFileInner(file);
-
       }
     }.execute();
   }
+
+  public void configureByFiles(@NonNls final String... files) throws Throwable {
+    new WriteCommandAction.Simple(getProject()) {
+      protected void run() throws Throwable {
+        configureByFilesInner(files);
+      }
+    }.execute();
+  }
+
   /**
    *
    * @param filePath

@@ -155,6 +155,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void configureByFile(@NonNls String file) throws Throwable;
 
+  void configureByFiles(@NonNls String... files) throws Throwable;
+
   /**
    * Compares current file against the given one.
    *
@@ -188,6 +190,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    * @throws Throwable any exception.
    */
   void testRename(@NonNls String fileBefore, @NonNls String fileAfter, @NonNls String newName) throws Throwable;
+
+  PsiReference[] testFindUsages(@NonNls String... fileNames) throws Throwable;
 
   void moveFile(@NonNls String filePath, @NonNls String to) throws Throwable;
 
