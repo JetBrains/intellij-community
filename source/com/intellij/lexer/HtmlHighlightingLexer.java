@@ -35,7 +35,12 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
         setEmbeddedLexer();
         
         if (embeddedLexer!=null) {
-          embeddedLexer.start(getBufferSequence(),HtmlHighlightingLexer.super.getTokenStart(),skipToTheEndOfTheEmbeddment(),0);
+          embeddedLexer.start(
+            getBufferSequence(),
+            HtmlHighlightingLexer.super.getTokenStart(),
+            skipToTheEndOfTheEmbeddment(),
+            embeddedLexer instanceof EmbedmentLexer ? ((EmbedmentLexer)embeddedLexer).getEmbeddedInitialState(tokenType) : 0
+          );
           
           if (embeddedLexer.getTokenType() == null) {
             // no content for embeddment
