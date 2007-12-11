@@ -229,9 +229,8 @@ public final class LocalFileSystemImpl extends LocalFileSystem implements Applic
       }
 
       RefreshQueue.getInstance().refresh(false, false, null, filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]));
+    } finally {
       manager.fireAfterRefreshFinish(false);
-    } catch(Throwable e) {
-      LOG.error("Exception was thrown during refresh", e);
     }
   }
 
