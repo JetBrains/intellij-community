@@ -6,6 +6,9 @@
  */
 package com.theoryinpractice.testng;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
@@ -27,45 +30,48 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class TestNGReferenceProvider implements ProjectComponent {
+public class TestNGReferenceProvider implements ProjectComponent
+{
 
   public TestNGReferenceProvider(final Project project, ReferenceProvidersRegistry registry) {
     registry
-      .registerReferenceProvider(new TestAnnotationFilter("dependsOnMethods"), PsiLiteralExpression.class, new PsiReferenceProviderBase() {
-        @NotNull
-        public PsiReference[] getReferencesByElement(PsiElement element) {
-          return new MethodReference[]{new MethodReference((PsiLiteralExpression)element)};
-        }
-      });
+        .registerReferenceProvider(new TestAnnotationFilter("dependsOnMethods"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
+        {
+          @NotNull
+          public PsiReference[] getReferencesByElement(PsiElement element) {
+            return new MethodReference[] {new MethodReference((PsiLiteralExpression) element)};
+          }
+        });
     registry
-      .registerReferenceProvider(new TestAnnotationFilter("dataProvider"), PsiLiteralExpression.class, new PsiReferenceProviderBase() {
-        @NotNull
-        public PsiReference[] getReferencesByElement(PsiElement element) {
-          return new DataProviderReference[]{new DataProviderReference((PsiLiteralExpression)element)};
-        }
-      });
-    registry.registerReferenceProvider(new TestAnnotationFilter("groups"), PsiLiteralExpression.class, new PsiReferenceProviderBase() {
+        .registerReferenceProvider(new TestAnnotationFilter("dataProvider"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
+        {
+          @NotNull
+          public PsiReference[] getReferencesByElement(PsiElement element) {
+            return new DataProviderReference[] {new DataProviderReference((PsiLiteralExpression) element)};
+          }
+        });
+    registry.registerReferenceProvider(new TestAnnotationFilter("groups"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
+    {
       @NotNull
       public PsiReference[] getReferencesByElement(PsiElement element) {
-        return new GroupReference[]{new GroupReference(project, (PsiLiteralExpression)element)};
+        return new GroupReference[] {new GroupReference(project, (PsiLiteralExpression) element)};
       }
     });
     registry
-      .registerReferenceProvider(new TestAnnotationFilter("dependsOnGroups"), PsiLiteralExpression.class, new PsiReferenceProviderBase() {
-        @NotNull
-        public PsiReference[] getReferencesByElement(PsiElement element) {
-          return new GroupReference[]{new GroupReference(project, (PsiLiteralExpression)element)};
-        }
-      });
+        .registerReferenceProvider(new TestAnnotationFilter("dependsOnGroups"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
+        {
+          @NotNull
+          public PsiReference[] getReferencesByElement(PsiElement element) {
+            return new GroupReference[] {new GroupReference(project, (PsiLiteralExpression) element)};
+          }
+        });
   }
 
+  public void projectOpened() {
+  }
 
-  public void projectOpened() {}
-
-  public void projectClosed() {}
+  public void projectClosed() {
+  }
 
   @NonNls
   @NotNull
@@ -73,11 +79,14 @@ public class TestNGReferenceProvider implements ProjectComponent {
     return "TestNGReferenceProvider";
   }
 
-  public void initComponent() {}
+  public void initComponent() {
+  }
 
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
-  private static class DataProviderReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static class DataProviderReference extends PsiReferenceBase<PsiLiteralExpression>
+  {
 
     public DataProviderReference(PsiLiteralExpression element) {
       super(element, false);
@@ -91,8 +100,12 @@ public class TestNGReferenceProvider implements ProjectComponent {
         @NonNls String val = getValue();
         for (PsiMethod method : methods) {
           if (AnnotationUtil.isAnnotated(method, DataProvider.class.getName(), false)) {
-            if (method.getName().equals(val)) {
-              return method;
+            PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+            PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
+            for (PsiNameValuePair value : values) {
+              if ("name".equals(value.getName())) {
+                return method;
+              }
             }
           }
         }
@@ -109,7 +122,13 @@ public class TestNGReferenceProvider implements ProjectComponent {
         for (PsiMethod method : methods) {
           if (current != null && method.getName().equals(current.getName())) continue;
           if (AnnotationUtil.isAnnotated(method, DataProvider.class.getName(), false)) {
-            list.add(LookupValueFactory.createLookupValue(method.getName(), null));
+            PsiAnnotation dataProviderAnnotation = AnnotationUtil.findAnnotation(method, DataProvider.class.getName());
+            PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
+            for (PsiNameValuePair value : values) {
+              if ("name".equals(value.getName())) {
+                list.add(LookupValueFactory.createLookupValue(value.getText(), null));
+              }
+            }
           }
         }
       }
@@ -117,7 +136,8 @@ public class TestNGReferenceProvider implements ProjectComponent {
     }
   }
 
-  private static class MethodReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static class MethodReference extends PsiReferenceBase<PsiLiteralExpression>
+  {
 
     public MethodReference(PsiLiteralExpression element) {
       super(element, false);
@@ -161,7 +181,8 @@ public class TestNGReferenceProvider implements ProjectComponent {
     }
   }
 
-  private static class GroupReference extends PsiReferenceBase<PsiLiteralExpression> {
+  private static class GroupReference extends PsiReferenceBase<PsiLiteralExpression>
+  {
     private final Project myProject;
 
     public GroupReference(Project project, PsiLiteralExpression element) {
@@ -180,7 +201,7 @@ public class TestNGReferenceProvider implements ProjectComponent {
 
       InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getInspectionProfile(myElement);
       final InspectionProfileEntry inspectionTool = inspectionProfile.getInspectionTool(DependsOnGroupsInspection.SHORT_NAME);
-      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection)((LocalInspectionToolWrapper)inspectionTool).getTool();
+      DependsOnGroupsInspection inspection = (DependsOnGroupsInspection) ((LocalInspectionToolWrapper) inspectionTool).getTool();
 
       for (String groupName : inspection.groups) {
         list.add(LookupValueFactory.createLookupValue(groupName, null));
@@ -188,14 +209,14 @@ public class TestNGReferenceProvider implements ProjectComponent {
 
       if (!list.isEmpty()) {
         return list.toArray();
-      }
-      else {
+      } else {
         return null;
       }
     }
   }
 
-  private static class TestAnnotationFilter implements ElementFilter {
+  private static class TestAnnotationFilter implements ElementFilter
+  {
 
     private String myParameterName;
 
