@@ -200,9 +200,6 @@
       <implementation-class>org.jetbrains.plugins.grails.lang.gsp.completion.GspXmlFileNSInfoProvider
       </implementation-class>
     </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.grails.addins.js.JavaScriptIntegrationSettings</implementation-class>
-    </component>
   </application-components>
 
 </idea-plugin>
