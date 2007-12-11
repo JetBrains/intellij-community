@@ -138,7 +138,7 @@ public class TestPackage extends TestObject {
     super.checkConfiguration();
     final String packageName = myConfiguration.getPersistentData().getPackageName();
     final PsiPackage aPackage =
-      JavaPsiFacade.getInstance(PsiManager.getInstance(myConfiguration.getProject()).getProject()).findPackage(packageName);
+      JavaPsiFacade.getInstance(myConfiguration.getProject()).findPackage(packageName);
     if (aPackage == null) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("package.does.not.exist.error.message", packageName));
     }
