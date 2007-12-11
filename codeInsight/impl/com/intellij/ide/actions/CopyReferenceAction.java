@@ -56,7 +56,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   private static boolean isEnabled(final DataContext dataContext) {
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
     PsiElement member = getMember(element);
     return member != null;
@@ -64,7 +64,7 @@ public class CopyReferenceAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
@@ -209,9 +209,15 @@ public class CopyReferenceAction extends AnAction {
           targetElement = targetElement.getContainingClass();
         }
       }
-      else if (targetElement instanceof PsiClass && isAfterNew(file, elementAtCaret)) {
-        // pasting reference to default constructor of the class after new
-        suffix = "()";
+      else if (targetElement instanceof PsiClass) {
+        if (isAfterNew(file, elementAtCaret)) {
+          // pasting reference to default constructor of the class after new
+          suffix = "()";
+        }
+        else if (toInsert != null && toInsert.length() != 0 && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
+          //separate identifiers with space
+          suffix = " ";
+        }
       }
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       final PsiExpression expression = factory.createExpressionFromText(toInsert + suffix, elementAtCaret);
@@ -284,7 +290,7 @@ public class CopyReferenceAction extends AnAction {
   public static class MyPasteProvider implements PasteProvider {
     public void performPaste(DataContext dataContext) {
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      final Editor editor = DataKeys.EDITOR.getData(dataContext);
+      final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       if (project == null || editor == null) return;
 
       final String fqn = getCopiedFqn();
@@ -298,7 +304,7 @@ public class CopyReferenceAction extends AnAction {
 
     public boolean isPasteEnabled(DataContext dataContext) {
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      final Editor editor = DataKeys.EDITOR.getData(dataContext);
+      final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       return project != null && editor != null && getCopiedFqn() != null;
     }
   }
