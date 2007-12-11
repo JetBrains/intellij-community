@@ -73,16 +73,6 @@ public class FileTreeTable extends TreeTable {
       }
     });
 
-    final ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(true, true){
-      protected void chosen(VirtualFile virtualFile, Charset charset) {
-        valueColumn.getCellEditor().stopCellEditing();
-        int ret = askWhetherClearSubdirectories(virtualFile);
-        if (ret != 2) {
-          myModel.setValueAt(charset, new DefaultMutableTreeNode(virtualFile), 1);
-        }
-      }
-    };
-    final JComponent comboComponent = changeAction.createCustomComponent(changeAction.getTemplatePresentation());
     valueColumn.setCellEditor(new DefaultCellEditor(new JComboBox()){
       private VirtualFile myVirtualFile;
 
@@ -90,7 +80,7 @@ public class FileTreeTable extends TreeTable {
         delegate = new EditorDelegate() {
             public void setValue(Object value) {
               myModel.setValueAt(value, new DefaultMutableTreeNode(myVirtualFile), -1);
-              comboComponent.revalidate();
+              //comboComponent.revalidate();
             }
 
 	    public Object getCellEditorValue() {
@@ -101,6 +91,18 @@ public class FileTreeTable extends TreeTable {
       public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, int row, int column) {
         Object o = table.getModel().getValueAt(row, 0);
         myVirtualFile = o instanceof Project ? null : (VirtualFile)o;
+
+        final ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(myVirtualFile, myProject){
+          protected void chosen(VirtualFile virtualFile, Charset charset) {
+            valueColumn.getCellEditor().stopCellEditing();
+            int ret = askWhetherClearSubdirectories(virtualFile);
+            if (ret != 2) {
+              myModel.setValueAt(charset, new DefaultMutableTreeNode(virtualFile), 1);
+            }
+          }
+        };
+        final JComponent comboComponent = changeAction.createCustomComponent(changeAction.getTemplatePresentation());
+
         DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.VIRTUAL_FILE, myVirtualFile, SimpleDataContext.getProjectContext(myProject));
         AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, changeAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
         changeAction.update(event);
@@ -152,7 +154,7 @@ public class FileTreeTable extends TreeTable {
   }
 
   private int askWhetherClearSubdirectories(final VirtualFile parent) {
-    Map<VirtualFile, Charset> mappings = EncodingProjectManager.getInstance(myProject).getAllMappings();
+    Map<VirtualFile, Charset> mappings = myModel.myCurrentMapping;
     Map<VirtualFile, Charset> subdirectoryMappings = new THashMap<VirtualFile, Charset>();
     for (VirtualFile file : mappings.keySet()) {
       if (file != null && (parent == null || VfsUtil.isAncestor(parent, file, true))) {
@@ -204,12 +206,7 @@ public class FileTreeTable extends TreeTable {
     }
 
     private Map<VirtualFile, Charset> getValues() {
-      Map<VirtualFile, Charset> map = new HashMap<VirtualFile, Charset>();
-      for (VirtualFile file : myCurrentMapping.keySet()) {
-        Charset t = myCurrentMapping.get(file);
-        map.put(file, t);
-      }
-      return map;
+      return new HashMap<VirtualFile, Charset>(myCurrentMapping);
     }
 
     public int getColumnCount() {

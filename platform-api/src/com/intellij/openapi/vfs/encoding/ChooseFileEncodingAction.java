@@ -9,59 +9,47 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class ChooseFileEncodingAction extends ComboBoxAction {
-  private final boolean myShowClearEncoding;
-  private final boolean myWorksForProjectNode;
-  private VirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
+  private final Project myProject;
 
-  public ChooseFileEncodingAction() {
-    this(false, false);
-  }
-  public ChooseFileEncodingAction(boolean showClearEncoding, final boolean worksForProjectNode) {
-    myShowClearEncoding = showClearEncoding;
-    myWorksForProjectNode = worksForProjectNode;
+  public ChooseFileEncodingAction(VirtualFile virtualFile, Project project) {
+    myVirtualFile = virtualFile;
+    myProject = project;
   }
 
   public void update(final AnActionEvent e) {
-    myVirtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    boolean enabled = project != null && (myVirtualFile != null || myWorksForProjectNode);
-    if (enabled && myVirtualFile != null) {
+    boolean enabled = true;
+    if (myVirtualFile != null) {
       String prefix;
-      Charset charset = encodingFromContent(project, myVirtualFile);
+      Charset charset = encodingFromContent(myProject, myVirtualFile);
       if (charset != null) {
         prefix = "Encoding:";
         enabled = false;
       }
-      else if (FileDocumentManager.getInstance().isFileModified(myVirtualFile)) {
-        prefix = "Save in:";
-      }
       else {
-        prefix = "View in:";
+        prefix = "";
       }
       if (charset == null) charset = myVirtualFile.getCharset();
       e.getPresentation().setText(prefix + " " + charset.toString());
-    }
-    else {
-      e.getPresentation().setText("Encoding");
     }
     e.getPresentation().setEnabled(enabled);
   }
@@ -83,24 +71,17 @@ public class ChooseFileEncodingAction extends ComboBoxAction {
     List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
 
-    if (myShowClearEncoding) {
-      group.add(new ClearThisFileEncodingAction(myVirtualFile));
-    }
-    for (Charset favorite : favorites) {
-      ChangeFileEncodingTo action = new ChangeFileEncodingTo(myVirtualFile, favorite);
-      group.add(action);
-    }
+    group.add(new ClearThisFileEncodingAction(myVirtualFile));
+    fillCharsetActions(group, myVirtualFile, favorites);
 
     DefaultActionGroup more = new DefaultActionGroup("more", true);
     group.add(more);
-    fillAllAvailableCharsets(more, myVirtualFile);
-    myVirtualFile = null;
+    fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
     return group;
   }
 
-  private void fillAllAvailableCharsets(DefaultActionGroup group, final VirtualFile virtualFile) {
-    Charset[] all = CharsetToolkit.getAvailableCharsets();
-    for (Charset slave : all) {
+  private void fillCharsetActions(DefaultActionGroup group, final VirtualFile virtualFile, List<Charset> charsets) {
+    for (Charset slave : charsets) {
       ChangeFileEncodingTo action = new ChangeFileEncodingTo(virtualFile, slave){
         protected void chosen(final VirtualFile file, final Charset charset) {
           ChooseFileEncodingAction.this.chosen(file, charset);
