@@ -66,7 +66,7 @@ public class ChooseFileEncodingAction extends ComboBoxAction {
     e.getPresentation().setEnabled(enabled);
   }
 
-  private static Charset encodingFromContent(Project project, VirtualFile virtualFile) {
+  public static Charset encodingFromContent(Project project, VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);

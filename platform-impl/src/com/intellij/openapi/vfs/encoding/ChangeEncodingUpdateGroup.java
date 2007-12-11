@@ -1,14 +1,11 @@
 package com.intellij.openapi.vfs.encoding;
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
@@ -23,7 +20,7 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
     boolean enabled = project != null && virtualFile != null;
     if (enabled) {
       String pattern;
-      Charset charset = encodingFromContent(project, virtualFile);
+      Charset charset = ChooseFileEncodingAction.encodingFromContent(project, virtualFile);
       if (charset != null) {
         pattern = "Encoding: {0}";
         enabled = false;
@@ -41,15 +38,5 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
       e.getPresentation().setText("Encoding");
     }
     e.getPresentation().setEnabled(enabled);
-  }
-  private static Charset encodingFromContent(Project project, VirtualFile virtualFile) {
-    FileType fileType = virtualFile.getFileType();
-    if (fileType instanceof LanguageFileType) {
-      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-      if (document == null) return null;
-      String text = document.getText();
-      return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
-    }
-    return null;
   }
 }
