@@ -124,7 +124,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
       clon.XML_INDENT_OPTIONS = (IndentOptions)XML_INDENT_OPTIONS.clone();
       clon.OTHER_INDENT_OPTIONS = (IndentOptions)OTHER_INDENT_OPTIONS.clone();
 
-      clon.ourAdditionalIndentOptions = new HashMap<FileType, IndentOptions>();
+      clon.ourAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
       for(Map.Entry<FileType,IndentOptions> optionEntry:ourAdditionalIndentOptions.entrySet()) {
         clon.ourAdditionalIndentOptions.put(optionEntry.getKey(),(IndentOptions)optionEntry.getValue().clone());
       }
@@ -197,7 +197,7 @@ public class CodeStyleSettings implements Cloneable, JDOMExternalizable {
   public IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
   public IndentOptions OTHER_INDENT_OPTIONS = new IndentOptions();
 
-  private Map<FileType,IndentOptions> ourAdditionalIndentOptions = new HashMap<FileType, IndentOptions>();
+  private Map<FileType,IndentOptions> ourAdditionalIndentOptions = new LinkedHashMap<FileType, IndentOptions>();
 
   private static final String ourSystemLineSeparator = SystemProperties.getLineSeparator();
 
