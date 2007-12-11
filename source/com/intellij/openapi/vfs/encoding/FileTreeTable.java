@@ -189,6 +189,9 @@ public class FileTreeTable extends TreeTable {
 
   public void reset(final Map<VirtualFile, Charset> mappings) {
     myModel.reset(mappings);
+    myModel.nodeChanged((TreeNode)myModel.getRoot());
+    getTree().setModel(null);
+    getTree().setModel(myModel);
   }
 
 
@@ -271,6 +274,7 @@ public class FileTreeTable extends TreeTable {
     public void reset(final Map<VirtualFile, Charset> mappings) {
       myCurrentMapping.clear();
       myCurrentMapping.putAll(mappings);
+      ((ProjectRootNode)getRoot()).clearCachedChildren();
     }
   }
 
@@ -331,6 +335,17 @@ public class FileTreeTable extends TreeTable {
           insert(child, i++);
         }
       }
+    }
+
+    public void clearCachedChildren() {
+      if (children != null) {
+        for (Object child : children) {
+          ConvenientNode<T> node = (ConvenientNode<T>)child;
+          node.clearCachedChildren();
+        }
+      }
+      removeAllChildren();
+      setUserObject(null);
     }
   }
 
