@@ -236,7 +236,7 @@ public class PackageChooserDialog extends PackageChooser {
           ((DefaultMutableTreeNode)myModel.getRoot()).setUserObject(aPackage);
         }
         else {
-          PsiPackage defaultPackage = JavaPsiFacade.getInstance(PsiManager.getInstance(myProject).getProject()).findPackage("");
+          PsiPackage defaultPackage = JavaPsiFacade.getInstance(myProject).findPackage("");
           addPackage(defaultPackage);
           DefaultMutableTreeNode defaultPackageNode = findNodeForPackage("");
           LOG.assertTrue(defaultPackageNode != null);

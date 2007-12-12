@@ -89,7 +89,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
 
         if (aPackage != null) {
-          SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
+          SearchScope scope = PackageScope.packageScope(aPackage, false);
           scope = scope.intersectWith(maximalUseScope);
           return scope;
         }
@@ -123,7 +123,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         PsiPackage aPackage = file instanceof PsiJavaFile ? JavaPsiFacade.getInstance(myManager.getProject())
           .findPackage(((PsiJavaFile)file).getPackageName()) : null;
         if (aPackage != null) {
-          SearchScope scope = GlobalSearchScope.packageScope(aPackage, false);
+          SearchScope scope = PackageScope.packageScope(aPackage, false);
           scope = scope.intersectWith(maximalUseScope);
           return scope;
         }

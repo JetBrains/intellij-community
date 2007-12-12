@@ -76,7 +76,7 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
         VirtualFile root = index.getSourceRootForFile(parentFile);
         if (root != null) {
           final String path = VfsUtil.getRelativePath(parentFile, root, '.');
-          final PsiPackage psiPackage = JavaPsiFacade.getInstance(PsiManager.getInstance(project).getProject()).findPackage(path);
+          final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(path);
           if (psiPackage != null) {
             final Module module = ModuleUtil.findModuleForFile(file, project);
             assert module != null;

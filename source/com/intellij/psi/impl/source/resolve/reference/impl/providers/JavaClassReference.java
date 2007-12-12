@@ -33,6 +33,7 @@ import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -442,7 +443,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @NotNull
   private Object[] getSubclassVariants(@NotNull PsiPackage context, @NotNull String[] extendClasses) {
     HashSet<Object> lookups = new HashSet<Object>();
-    GlobalSearchScope packageScope = GlobalSearchScope.packageScope(context, true);
+    GlobalSearchScope packageScope = PackageScope.packageScope(context, true);
     GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope();
     if (scope != null) {
       packageScope = packageScope.intersectWith(scope);

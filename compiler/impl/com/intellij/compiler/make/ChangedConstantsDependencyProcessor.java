@@ -81,9 +81,9 @@ public class ChangedConstantsDependencyProcessor {
       final PsiFile containingFile = aClass.getContainingFile();
       if (containingFile instanceof PsiJavaFile) {
         final String packageName = ((PsiJavaFile)containingFile).getPackageName();
-        final PsiPackage aPackage = JavaPsiFacade.getInstance(PsiManager.getInstance(myProject).getProject()).findPackage(packageName);
+        final PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
         if (aPackage != null) {
-          searchScope = GlobalSearchScope.packageScope(aPackage, false);
+          searchScope = PackageScope.packageScope(aPackage, false);
           searchScope = searchScope.intersectWith(aClass.getUseScope());
         }
       }

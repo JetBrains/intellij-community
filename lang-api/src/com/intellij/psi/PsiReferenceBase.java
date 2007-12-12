@@ -17,8 +17,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -122,11 +120,6 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
         return EMPTY_ARRAY;
       }
     };
-  }
-
-  @Nullable
-  public Module getModule() {
-    return ModuleUtil.findModuleForPsiElement(myElement);
   }
 
   @Nullable
