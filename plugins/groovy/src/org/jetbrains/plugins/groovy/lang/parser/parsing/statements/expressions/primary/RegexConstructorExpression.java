@@ -34,14 +34,18 @@ public class RegexConstructorExpression implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, mREGEX_BEGIN)) {
       GroovyElementType result = regexConstructorValuePart(builder);
       if (result.equals(WRONGWAY)) {
-        builder.error(GroovyBundle.message("identifier.or.block.expected"));
+        if (!ParserUtils.getToken(builder, mREGEX_END)) {
+          builder.error(GroovyBundle.message("identifier.or.block.expected"));
+        }
         sMarker.done(REGEX);
         return REGEX;
       } else {
         while (ParserUtils.getToken(builder, mREGEX_CONTENT) && !result.equals(WRONGWAY)) {
           result = regexConstructorValuePart(builder);
         }
-        ParserUtils.getToken(builder, mREGEX_END, GroovyBundle.message("regex.end.expected"));
+        if (!ParserUtils.getToken(builder, mREGEX_END)) {
+          builder.error(GroovyBundle.message("identifier.or.block.expected"));
+        }
         sMarker.done(REGEX);
         return REGEX;
       }

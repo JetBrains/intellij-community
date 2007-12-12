@@ -15,12 +15,13 @@
 
 package org.jetbrains.plugins.groovy.lang.editor;
 
-import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -28,14 +29,14 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -71,6 +72,8 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
         myOriginalHandler != null &&
         myOriginalHandler.isEnabled(editor, dataContext)) {
       myOriginalHandler.execute(editor, dataContext);
+      Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(project).commitDocument(document);
     }
   }
 

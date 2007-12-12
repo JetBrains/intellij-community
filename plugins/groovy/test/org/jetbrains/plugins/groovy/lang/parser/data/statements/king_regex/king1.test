@@ -1,0 +1,15 @@
+def x = /I cost $$@$@$$/
+-----
+Groovy script
+  Variable definitions
+    Modifiers
+      PsiElement(def)('def')
+    PsiWhiteSpace(' ')
+    Variable
+      PsiElement(identifier)('x')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      Compound regular expression
+        PsiElement(regex begin)('/I cost $$@$@$$')
+        PsiElement(regex end)('/')

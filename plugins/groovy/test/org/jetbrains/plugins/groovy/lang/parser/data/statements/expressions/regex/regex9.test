@@ -55,7 +55,7 @@ Groovy script
               PsiElement(Integer)('5')
             PsiElement())(')')
         PsiElement(})('}')
-      PsiErrorElement:Regex ending expected
+      PsiErrorElement:Identifier or code block expected
         <empty list>
   PsiElement(new line)('\n')
   Assignment expression

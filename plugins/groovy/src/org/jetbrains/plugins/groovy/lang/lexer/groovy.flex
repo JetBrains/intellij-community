@@ -215,6 +215,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 %xstate IN_TRIPLE_DOT
 %xstate IN_TRIPLE_NLS
 %xstate WRONG_STRING
+%xstate KING_STATE
+%xstate KING_STATE_INNER
+%xstate KING_STATE_CONTENT
+%xstate KING_STATE_INNER_CONTENT
 %xstate IN_WRONG_SINGLE_GSTRING
 
 %state IN_INNER_BLOCK
@@ -397,6 +401,68 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////  regexes //////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+<KING_STATE> {  // Processing nasty $ signs
+  ("{" | {mIDENT})                        {  yypushback(yytext().length());
+                                             gStringStack.push(mDIV);       // For regexes
+                                             yybegin(IN_REGEX_DOLLAR); }
+
+  . | {mNLS}                              {  yypushback(1);
+                                             yybegin(KING_STATE_INNER);
+                                          }
+}
+
+<KING_STATE_CONTENT> {  // Processing nasty $ signs
+  ("{" | {mIDENT})                        {  yypushback(yytext().length());
+                                             gStringStack.push(mDIV);       // For regexes
+                                             yybegin(IN_REGEX_DOLLAR); }
+
+  . | {mNLS}                              {  yypushback(1);
+                                             yybegin(KING_STATE_INNER_CONTENT);
+                                          }
+}
+
+<KING_STATE_INNER> {
+  "$"                                     {  yybegin(KING_STATE);
+                                             return mREGEX_BEGIN; }
+
+  "/"                                     {  if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return mREGEX_END; }
+
+  .                                       {  return mREGEX_BEGIN; }
+
+  {mNLS}                                  {  clearStacks();
+                                             yybegin(NLS_AFTER_NLS);
+                                             afterComment = YYINITIAL;
+                                             return mNLS; }
+
+}
+
+<KING_STATE_INNER_CONTENT> {
+  "$"                                     {  yybegin(KING_STATE_CONTENT);
+                                             return mREGEX_CONTENT; }
+
+  "/"                                     {  if (blockStack.isEmpty()){
+                                               yybegin(YYINITIAL);
+                                             } else {
+                                               yybegin(IN_INNER_BLOCK);
+                                             }
+                                             return mREGEX_END; }
+
+  .                                       {  return mREGEX_CONTENT; }
+
+  {mNLS}                                  {  clearStacks();
+                                             yybegin(NLS_AFTER_NLS);
+                                             afterComment = YYINITIAL;
+                                             return mNLS; }
+}
+
+
+
+
 <WAIT_FOR_REGEX> {
 
 {mWS}                                     {  afterComment = YYINITIAL;
@@ -410,11 +476,10 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
                                              } else {
                                                yybegin(IN_INNER_BLOCK);
                                              }
-                                             return(mREGEX_LITERAL);  }
+                                             return(mREGEX_LITERAL); }
 
-{mREGEX_BEGIN}                            {  yybegin(IN_REGEX_DOLLAR);
-                                             gStringStack.push(mDIV);       // For regexes
-                                             return(mREGEX_BEGIN); }
+{mREGEX_BEGIN}                            {  yybegin(KING_STATE);
+                                             return mREGEX_BEGIN; }
 
 "/" ([^\""$"\n\r"/"] | {mSTRING_ESC} | {ESCAPPED_REGEX_SEP})? {mREGEX_CONTENT} { return mWRONG_REGEX_LITERAL; }
 
@@ -458,7 +523,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 }
 
 <IN_REGEX> {
-  {mREGEX_CONTENT}"$"                     {  yybegin(IN_REGEX_DOLLAR);
+  {mREGEX_CONTENT}"$"                     {  yybegin(KING_STATE_CONTENT);
                                              return mREGEX_CONTENT; }
   {mREGEX_CONTENT} ("$" "/" | "/")        {  gStringStack.pop();
                                              if (blockStack.isEmpty()){

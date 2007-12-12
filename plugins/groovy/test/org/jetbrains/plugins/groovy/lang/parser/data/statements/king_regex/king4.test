@@ -1,0 +1,19 @@
+/abcde $2$$  ${/asdc $$ asdd $ident3 123/}  $$ $ident2 asd/
+-----
+Groovy script
+  Compound regular expression
+    PsiElement(regex begin)('/abcde $2$$  $')
+    Closable block
+      PsiElement({)('{')
+      Parameter list
+        <empty list>
+      Compound regular expression
+        PsiElement(regex begin)('/asdc $$ asdd $')
+        Reference expression
+          PsiElement(identifier)('ident3')
+        PsiElement(regex end)(' 123/')
+      PsiElement(})('}')
+    PsiElement(regex content)('  $$ $')
+    Reference expression
+      PsiElement(identifier)('ident2')
+    PsiElement(regex end)(' asd/')
