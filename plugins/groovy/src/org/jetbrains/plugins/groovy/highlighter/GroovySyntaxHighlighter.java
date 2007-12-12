@@ -21,7 +21,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyFlexLexer;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 
 import java.util.HashMap;
@@ -215,7 +215,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
 
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new GroovyFlexLexer();
+    return new GroovyLexer();
   }
 
   @NotNull
