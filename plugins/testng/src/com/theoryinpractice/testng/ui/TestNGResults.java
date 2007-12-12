@@ -265,7 +265,7 @@ public class TestNGResults  implements TestFrameworkRunningModel, LogConsoleMana
         String packageName = packageNameFor(result.getTestClass());
         owner = getChildNodeNamed(owner, packageName);
         if (owner.getPsiElement() == null) {
-          owner.setPsiElement(JavaPsiFacade.getInstance(PsiManager.getInstance(project).getProject()).findPackage(packageName));
+          owner.setPsiElement(JavaPsiFacade.getInstance(project).findPackage(packageName));
         }
         owner = getChildNodeNamed(owner, classNameFor(result.getTestClass()));
         //look up the psiclass now

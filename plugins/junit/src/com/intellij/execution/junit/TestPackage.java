@@ -32,7 +32,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import gnu.trove.THashSet;
@@ -99,7 +99,7 @@ public class TestPackage extends TestObject {
       module = null;
     }
     final TestClassFilter classFilter = TestClassFilter.create(getSourceScope(), module);
-    return classFilter.intersectionWith(GlobalSearchScope.packageScope(aPackage, true));
+    return classFilter.intersectionWith(PackageScope.packageScope(aPackage, true));
   }
 
   public String suggestActionName() {

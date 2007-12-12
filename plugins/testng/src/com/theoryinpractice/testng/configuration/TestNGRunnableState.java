@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
@@ -471,7 +471,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     TestSearchScope scope = config.getPersistantData().getScope();
     //TODO we should narrow this down by module really, if that's what's specified
     TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
-    return projectFilter.intersectionWith(GlobalSearchScope.packageScope(psiPackage, true));
+    return projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
   }
 
 }

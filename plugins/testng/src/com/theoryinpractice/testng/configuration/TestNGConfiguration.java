@@ -58,7 +58,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
     @Nullable
     public PsiPackage getPsiElement() {
       final String qualifiedName = data.getPackageName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(PsiManager.getInstance(getProject()).getProject()).findPackage(qualifiedName)
+      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName)
              : null;
     }
 
@@ -226,7 +226,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
         }
       }
     } else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
-      PsiPackage psiPackage = JavaPsiFacade.getInstance(PsiManager.getInstance(project).getProject()).findPackage(data.getPackageName());
+      PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(data.getPackageName());
       if (psiPackage == null)
         throw new RuntimeConfigurationException("Invalid package '" + data.getMainClassName() + "'specified");
     } else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
