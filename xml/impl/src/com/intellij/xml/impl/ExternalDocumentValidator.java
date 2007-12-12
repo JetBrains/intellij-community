@@ -327,11 +327,6 @@ public class ExternalDocumentValidator {
     if (rootTag == null) return;
 
     if (XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
-    if (rootTag.getNSDescriptor(XmlUtil.JSF_HTML_URI,true) != null ||
-        rootTag.getNSDescriptor(XmlUtil.JSF_CORE_URI,true) != null
-       ) {
-      return; // nonschema ns descriptors, not supported by Xerces
-    }
 
     final Project project = context.getProject();
 
