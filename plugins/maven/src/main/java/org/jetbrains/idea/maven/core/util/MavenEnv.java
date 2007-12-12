@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven.core.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import org.apache.maven.embedder.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,8 @@ import java.util.List;
  * @author Vladislav.Kaznacheev
  */
 public class MavenEnv {
+  private static final Logger LOG = Logger.getInstance("#" + MavenEnv.class.getName());
+
   @NonNls public static final String POM_FILE = "pom.xml";
 
   @NonNls private static final String PROP_MAVEN_HOME = "maven.home";
@@ -185,6 +188,7 @@ public class MavenEnv {
       return new MavenEmbedder(configuration);
     }
     catch (MavenEmbedderException e) {
+      LOG.info(e);
       throw new MavenException(e);
     }
   }
