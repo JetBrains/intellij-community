@@ -340,7 +340,6 @@ public class GridCell implements Disposable {
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
           if (myDisposed) return Boolean.TRUE;
-
           myRestoreFromDetach.restoreInGrid();
           myRestoreFromDetach = null;
           myContext.saveUiState();
@@ -350,6 +349,13 @@ public class GridCell implements Disposable {
 
     return builder.createPopup();
   }
+
+  public void attach() {
+    if (isDetached()) {
+      myPopup.cancel();
+    }
+  }
+
 
   private boolean isDetached() {
     return myRestoreFromDetach != null;

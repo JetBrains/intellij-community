@@ -572,6 +572,7 @@
         <action id="Debugger.MoveViewToGrid" class="com.intellij.debugger.ui.content.newUI.actions.MoveToGridAction" icon="/debugger/toGrid.png"/>
         <action id="Debugger.MoveViewToTab" class="com.intellij.debugger.ui.content.newUI.actions.MoveToTabAction" icon="/debugger/toTab.png"/>
         <action id="Debugger.DetachCell" class="com.intellij.debugger.ui.content.newUI.actions.DetachCellAction" icon="/debugger/detach.png"/>
+        <action id="Debugger.AttachCell" class="com.intellij.debugger.ui.content.newUI.actions.AttachCellAction" icon="/debugger/attach.png"/>
         <separator/>
         <action id="Debugger.CloseView" class="com.intellij.debugger.ui.content.newUI.actions.CloseViewAction" icon="/actions/cross.png"/>
       </group>
@@ -580,6 +581,7 @@
         <reference ref="Debugger.MoveViewToGrid"/>
         <reference ref="Debugger.MoveViewToTab"/>
         <reference ref="Debugger.DetachCell"/>
+        <reference ref="Debugger.AttachCell"/>
         <reference ref="Debugger.CloseView"/>
       </group>
 
