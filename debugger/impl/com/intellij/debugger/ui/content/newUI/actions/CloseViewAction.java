@@ -7,7 +7,7 @@ import com.intellij.ui.content.Content;
 public class CloseViewAction extends BaseDebuggerViewAction {
 
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    e.getPresentation().setEnabled(isEnabled(context, content, e.getPlace()));
+    setEnabled(e, isEnabled(context, content, e.getPlace()));
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {

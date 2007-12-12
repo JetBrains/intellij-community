@@ -9,7 +9,7 @@ import com.intellij.ui.content.Content;
 public class DetachCellAction extends BaseDebuggerViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     if (content.length == 0 || isDetached(context, content[0])) {
-      e.getPresentation().setEnabled(false);
+      setEnabled(e, false);
       return;
     }
 
@@ -17,14 +17,14 @@ public class DetachCellAction extends BaseDebuggerViewAction {
     Tab tab = context.getTabFor(grid);
 
     if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace())) {
-      e.getPresentation().setEnabled(false);
+      setEnabled(e, false);
     }
     else {
       if (ViewContext.TAB_POPUP_PLACE.equals(e.getPlace())) {
-        e.getPresentation().setEnabled(!tab.isDefault() && grid.getContents().size() > 0);
+        setEnabled(e, !tab.isDefault() && grid.getContents().size() > 0);
       }
       else {
-        e.getPresentation().setEnabled(true);
+        setEnabled(e, true);
       }
     }
   }

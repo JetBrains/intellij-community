@@ -2,6 +2,7 @@ package com.intellij.debugger.ui.content.newUI;
 
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.ui.content.newUI.actions.CloseViewAction;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
@@ -9,10 +10,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.MutualMap;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -32,7 +30,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-public class GridCell {
+public class GridCell implements Disposable {
 
   private Grid myContainer;
 
@@ -46,10 +44,13 @@ public class GridCell {
   private ViewContext myContext;
   private CellTransform.Restore.List myRestoreFromDetach;
   private JBPopup myPopup;
+  private boolean myDisposed;
 
   public GridCell(ViewContext context, Grid container, Grid.Placeholder placeholder, PlaceInGrid placeInGrid) {
     myContext = context;
     myContainer = container;
+
+    Disposer.register(context, this);
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
@@ -220,6 +221,10 @@ public class GridCell {
         minimize(each);
       }
     }
+
+    if (myContainer.getTab().isDetached(myPlaceInGrid)) {
+      detach();
+    }
   }
 
   private Content[] getContents() {
@@ -292,6 +297,8 @@ public class GridCell {
   }
 
   private void detachTo(Point screenPoint, Dimension size, boolean dragging) {
+    if (isDetached()) return;
+
     final Content[] contents = getContents();
 
     myRestoreFromDetach = new CellTransform.Restore.List();
@@ -332,6 +339,8 @@ public class GridCell {
       .setBelongsToGlobalPopupStack(false)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
+          if (myDisposed) return Boolean.TRUE;
+
           myRestoreFromDetach.restoreInGrid();
           myRestoreFromDetach = null;
           myContext.saveUiState();
@@ -390,4 +399,12 @@ public class GridCell {
     }
   }
 
+  public void dispose() {
+    myDisposed = true;
+
+    if (myPopup != null) {
+      myPopup.cancel();
+      myPopup = null;
+    }
+  }
 }

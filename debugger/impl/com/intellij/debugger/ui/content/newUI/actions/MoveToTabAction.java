@@ -9,17 +9,17 @@ import com.intellij.ui.content.Content;
 public class MoveToTabAction extends BaseDebuggerViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     if (content.length != 1) {
-      e.getPresentation().setEnabled(false);
+      setEnabled(e, false);
       return;
     }
     if (isDetached(context, content[0])) {
-      e.getPresentation().setEnabled(false);
+      setEnabled(e, false);
       return;
     }
 
     Grid grid = context.findGridFor(content[0]);
     Tab tab = context.getTabFor(grid);
-    e.getPresentation().setEnabled(tab.isDefault());
+    setEnabled(e, tab.isDefault());
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {

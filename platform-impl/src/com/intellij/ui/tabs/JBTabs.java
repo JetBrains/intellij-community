@@ -192,6 +192,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   public void removeNotify() {
     super.removeNotify();
+
+    setFocused(false);
+    
     removeTimerUpdate();
   }
 

@@ -54,4 +54,8 @@ public abstract class BaseDebuggerViewAction extends AnAction {
     Tab tab = context.getTabFor(grid);
     return tab;
   }
+
+  protected final void setEnabled(AnActionEvent e, boolean enabled) {
+    e.getPresentation().setVisible(enabled);
+  }
 }
