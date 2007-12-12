@@ -22,12 +22,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class ChooseFileEncodingAction extends ComboBoxAction {
+public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
   private final Project myProject;
 
@@ -102,11 +104,22 @@ public class ChooseFileEncodingAction extends ComboBoxAction {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      chosen(myFile, null);
+      chosen(myFile, NO_ENCODING);
     }
   }
 
-  protected void chosen(VirtualFile virtualFile, Charset charset) {
-    EncodingManager.getInstance().setEncoding(virtualFile, charset);
-  }
+  public static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
+    public boolean contains(final Charset cs) {
+      return false;
+    }
+
+    public CharsetDecoder newDecoder() {
+      return null;
+    }
+
+    public CharsetEncoder newEncoder() {
+      return null;
+    }
+  };
+  abstract protected void chosen(VirtualFile virtualFile, Charset charset);
 }

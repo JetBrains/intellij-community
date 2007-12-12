@@ -258,7 +258,7 @@ public class FileTreeTable extends TreeTable {
       if (userObject instanceof Project) return;
       VirtualFile file = (VirtualFile)userObject;
       Charset charset = (Charset)aValue;
-      if (charset == null) {
+      if (charset == ChooseFileEncodingAction.NO_ENCODING) {
         myCurrentMapping.remove(file);
       }
       else {

@@ -64,12 +64,9 @@ public class EncodingManager implements ApplicationComponent {
   }
 
   public void setMapping(final Map<VirtualFile, Charset> map) {
-    Set<Project> projects = new THashSet<Project>();
-    for (VirtualFile virtualFile : map.keySet()) {
-      Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-      if (projects.add(project)) {
-        EncodingProjectManager.getInstance(project).setMapping(map);
-      }
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      EncodingProjectManager.getInstance(project).setMapping(map);
     }
   }
 }
