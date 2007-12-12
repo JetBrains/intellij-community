@@ -9,11 +9,11 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
@@ -33,10 +33,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 
 public class FileTreeTable extends TreeTable {
   private final MyModel myModel;
@@ -326,8 +324,23 @@ public class FileTreeTable extends TreeTable {
     private void init() {
       if (getUserObject() == null) {
         setUserObject(myObject);
-        Collection<ConvenientNode> children = new ArrayList<ConvenientNode>();
+        List<ConvenientNode> children = new ArrayList<ConvenientNode>();
         appendChildrenTo(children);
+        Collections.sort(children, new Comparator<ConvenientNode>() {
+          public int compare(final ConvenientNode node1, final ConvenientNode node2) {
+            Object o1 = node1.getObject();
+            Object o2 = node2.getObject();
+            if (o1 == o2) return 0;
+            if (o1 instanceof Project) return -1;
+            if (o2 instanceof Project) return 1;
+            VirtualFile file1 = (VirtualFile)o1;
+            VirtualFile file2 = (VirtualFile)o2;
+            if (file1.isDirectory() != file2.isDirectory()) {
+              return file1.isDirectory() ? -1 : 1;
+            }
+            return file1.getName().compareTo(file2.getName());
+          }
+        });
         int i=0;
         for (ConvenientNode child : children) {
           insert(child, i++);
