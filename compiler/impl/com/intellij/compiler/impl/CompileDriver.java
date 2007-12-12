@@ -28,7 +28,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
@@ -1675,31 +1674,24 @@ public class CompileDriver {
                                  final CompileScope scope,
                                  final String contentName,
                                  final Runnable onTaskFinished) {
-    final CompilerTask indicator =
+    final CompilerTask progressManagerTask =
       new CompilerTask(myProject, CompilerWorkspaceConfiguration.getInstance(myProject).COMPILE_IN_BACKGROUND, contentName, false);
-    final CompileContextImpl compileContext = new CompileContextImpl(myProject, indicator, scope, null, this, false);
+    final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, null, this, false);
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    //noinspection HardCodedStringLiteral
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    progressManagerTask.start(new Runnable() {
       public void run() {
-        synchronized (CompilerManager.getInstance(myProject)) {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            public void run() {
-              try {
-                task.execute(compileContext);
-              }
-              catch (ProcessCanceledException ex) {
-                // suppressed
-              }
-              finally {
-                if (onTaskFinished != null) {
-                  onTaskFinished.run();
-                }
-              }
-            }
-          }, compileContext.getProgressIndicator());
+        try {
+          task.execute(compileContext);
+        }
+        catch (ProcessCanceledException ex) {
+          // suppressed
+        }
+        finally {
+          if (onTaskFinished != null) {
+            onTaskFinished.run();
+          }
         }
       }
     });
