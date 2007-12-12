@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -255,8 +256,8 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
     }
 
     public void processError(final SAXParseException ex, final boolean warning) {
-      String error = buildMessageString(ex);
       if (LOG.isDebugEnabled()) {
+        String error = buildMessageString(ex);
         LOG.debug("enter: processError(error='" + error + "')");
       }
 
@@ -266,12 +267,16 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
         SwingUtilities.invokeLater(
             new Runnable() {
               public void run() {
+                final VirtualFile file = getFile(ex.getPublicId(), ex.getSystemId());
                 myErrorsView.addMessage(
                     warning ? MessageCategory.WARNING : MessageCategory.ERROR,
                     new String[]{ex.getLocalizedMessage()},
-                    getFile(ex.getPublicId(), ex.getSystemId()),
-                    ex.getLineNumber() - 1 ,
-                    ex.getColumnNumber() - 1, null);
+                    file != null ? file.getPresentableUrl():"",
+                    file != null ? new OpenFileDescriptor(myProject, file, ex.getLineNumber() - 1, ex.getColumnNumber() - 1):null,
+                    NewErrorTreeViewPanel.createExportPrefix(ex.getLineNumber()),
+                    NewErrorTreeViewPanel.createRendererPrefix(ex.getLineNumber(), ex.getColumnNumber()),
+                    null
+                );
               }
             }
         );
