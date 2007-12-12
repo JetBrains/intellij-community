@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.builder.execution;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.builder.MavenBuilderConfigurable;
 import org.jetbrains.idea.maven.builder.MavenBuilderState;
@@ -21,7 +22,7 @@ class MavenRunSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
 
   Configurable myCompositeConfigurable;
 
-  public MavenRunSettingsEditor() {
+  public MavenRunSettingsEditor(final Project p) {
     myCompositeConfigurable = new CompositeConfigurable(
        new MavenRunConfigurable() {
       protected MavenBuildParameters getParameters() {
@@ -31,7 +32,7 @@ class MavenRunSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
       protected MavenCoreState getState() {
         return configuration.getCoreState();
       }
-    }, new MavenBuilderConfigurable(false) {
+    }, new MavenBuilderConfigurable(p, false) {
       protected MavenBuilderState getState() {
         return configuration.getBuilderState();
       }
