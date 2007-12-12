@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.containers.HashSet;
@@ -107,6 +106,10 @@ public class ModuleUtil {
     Project project = element.getProject();
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
     final ProjectFileIndex fileIndex = projectRootManager == null ? null : projectRootManager.getFileIndex();
+
+
+    /*
+     TODO[max]: Remove. This code seem to be unused and incorrect at the same time. At least module for PsiDirectory is being found using totally different way, which honors libraries
     if (element instanceof PsiPackage) {
       for (PsiDirectory directory : ((PsiPackage)element).getDirectories()) {
         final Module module = fileIndex.getModuleForFile(directory.getVirtualFile());
@@ -116,6 +119,7 @@ public class ModuleUtil {
       }
       return null;
     }
+    */
 
     if (element instanceof PsiDirectory) {
       final VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
