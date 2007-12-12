@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.AddEditRemovePanel;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,8 +37,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       }
     };
 
-    myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(
-      IdeBundle.message("label.edit.external.resource.configure.external.resources"), new ExtUrlsTableModel(), myPairs) {
+    myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(new ExtUrlsTableModel(), myPairs, IdeBundle.message("label.edit.external.resource.configure.external.resources")) {
       protected EditLocationDialog.NameLocationPair addItem() {
         return addExtLocation();
       }
@@ -66,8 +66,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
-    myIgnorePanel = new AddEditRemovePanel<String>(IdeBundle.message("label.edit.external.resource.configure.ignored.resources"),
-                                                   new IgnoredUrlsModel(), myIgnoredUrls) {
+    myIgnorePanel = new AddEditRemovePanel<String>(new IgnoredUrlsModel(), myIgnoredUrls, IdeBundle.message("label.edit.external.resource.configure.ignored.resources")) {
       protected String addItem() {
         return addIgnoreLocation();
       }
@@ -193,10 +192,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     if (!dialog.isOK()) return null;
     setModified(true);
     return dialog.getPair().myName;
-  }
-
-  public void editUri() {
-    myExtPanel.doEdit();
   }
 
   public void selectResource(final String uri) {

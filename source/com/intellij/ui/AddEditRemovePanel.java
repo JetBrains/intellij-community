@@ -1,7 +1,5 @@
-package com.intellij.j2ee.extResources;
+package com.intellij.ui;
 
-import com.intellij.ui.PanelWithButtons;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.Table;
 
 import javax.swing.*;
@@ -28,14 +26,20 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
   private List<T> myData;
   private AbstractTableModel myTableModel;
 
-  public AddEditRemovePanel(String labelText, TableModel<T> model, List<T> data) {
+  public AddEditRemovePanel(TableModel<T> model, List<T> data) {
+    this(model, data, null);
+  }
+
+  public AddEditRemovePanel(TableModel<T> model, List<T> data, String labelText) {
     myModel = model;
     myData = data;
 
     initPanel();
     updateButtons();
 
-    setBorder(BorderFactory.createTitledBorder(new EtchedBorder(),labelText));
+    if (labelText != null) {
+      setBorder(BorderFactory.createTitledBorder(new EtchedBorder(),labelText));
+    }
   }
 
   protected String getLabelText(){
@@ -159,6 +163,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
     myTableModel.fireTableDataChanged();
   }
 
+  public List<T> getData() {
+    return myData;
+  }
+
   public void setRenderer(int index, TableCellRenderer renderer) {
       myTable.getColumn(myModel.getColumnName(index)).setCellRenderer(renderer);
   }
@@ -168,7 +176,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons {
     myRemoveButton.setEnabled(myTable.getSelectedRowCount() >= 1);
   }
 
-  void setSelected(Object o) {
+  public void setSelected(Object o) {
     for(int i = 0; i < myTableModel.getRowCount(); ++i) {
       if (myData.get(i).equals(o)) {
         myTable.getSelectionModel().setSelectionInterval(i,i);
