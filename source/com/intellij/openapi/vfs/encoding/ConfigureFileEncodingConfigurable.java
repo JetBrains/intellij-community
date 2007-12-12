@@ -36,7 +36,7 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
 
   @Nullable
   public Icon getIcon() {
-    return IconLoader.getIcon("/general/keymap.png");
+    return IconLoader.getIcon("/general/configureEncoding.png");
   }
 
   @Nullable
