@@ -2,6 +2,8 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.JobUtil;
 import com.intellij.ide.todo.TodoConfiguration;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +22,6 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -220,15 +221,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return count;
   }
 
-  private static final TokenSet COMMENT_BIT_SET = TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA, JavaDocTokenType.DOC_TAG_VALUE_TOKEN,
-                                                                  JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT);
-
   @NotNull
   public PsiElement[] findCommentsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope) {
     final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
     TextOccurenceProcessor processor = new TextOccurenceProcessor() {
       public boolean execute(PsiElement element, int offsetInElement) {
-        if (element.getNode() != null && !COMMENT_BIT_SET.contains(element.getNode().getElementType())) return true;
+        final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+        if (parserDefinition == null) return true;
+
+        if (element.getNode() != null && !parserDefinition.getCommentTokens().contains(element.getNode().getElementType())) return true;
         if (element.findReferenceAt(offsetInElement) == null) {
           synchronized (results) {
             results.add(element);
