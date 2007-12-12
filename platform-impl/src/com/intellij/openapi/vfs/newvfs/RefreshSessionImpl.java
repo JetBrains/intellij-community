@@ -6,7 +6,6 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
@@ -24,8 +23,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public class RefreshSessionImpl extends RefreshSession {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshSessionImpl");
-
   private final boolean myIsAsync;
   private final boolean myIsRecursive;
   private Runnable myFinishRunnable;
