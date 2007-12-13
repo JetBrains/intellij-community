@@ -55,7 +55,19 @@ public class FileTreeTable extends TreeTable {
         if (t != null) {
           setText(t.name());
         }
-
+        else {
+          Object userObject = table.getModel().getValueAt(row, 0);
+          if (userObject instanceof VirtualFile) {
+            VirtualFile file = (VirtualFile)userObject;
+            Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
+            if (charset != null) {
+              setText("Encoding: " + charset);
+              setEnabled(false);
+              return this;
+            }
+          }
+        }
+        setEnabled(true);
         return this;
       }
     });
@@ -198,9 +210,11 @@ public class FileTreeTable extends TreeTable {
 
   private static class MyModel extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, Charset> myCurrentMapping = new HashMap<VirtualFile, Charset>();
+    private final Project myProject;
 
     private MyModel(Project project) {
       super(new ProjectRootNode(project));
+      myProject = project;
       myCurrentMapping.putAll(EncodingProjectManager.getInstance(project).getAllMappings());
     }
 
@@ -247,7 +261,14 @@ public class FileTreeTable extends TreeTable {
     public boolean isCellEditable(final Object node, final int column) {
       switch(column) {
         case 0: return false;
-        case 1: return true;
+        case 1:
+          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+          if (userObject instanceof VirtualFile) {
+            VirtualFile file = (VirtualFile)userObject;
+            Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
+            return charset == null;
+          }
+          return true;
         default: throw new RuntimeException("invalid column " + column);
       }
     }
