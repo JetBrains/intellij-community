@@ -140,8 +140,14 @@ public class FileTreeTable extends TreeTable {
           setText("Project");
           return this;
         }
-        VirtualFile file = ((FileNode)value).getObject();
-        setText(file.getName());
+        FileNode fileNode = (FileNode)value;
+        VirtualFile file = fileNode.getObject();
+        if (fileNode.getParent() instanceof FileNode) {
+          setText(file.getName());
+        }
+        else {
+          setText(file.getPresentableUrl());
+        }
 
         Icon icon;
         if (file.isDirectory()) {
