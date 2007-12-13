@@ -22,7 +22,7 @@ public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
   @NonNls private static final String ANNOTATION_TARGET_MESSAGE_KEY_PREFIX = "annotation.target.";
   @NonNls private static final String PACKAGE_INFO_JAVA = "package-info.java";
-  private static String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
+  private static final String TARGET_ANNOTATION_FQ_NAME = "java.lang.annotation.Target";
 
   public static HighlightInfo checkNameValuePair(PsiNameValuePair pair) {
     PsiReference ref = pair.getReference();

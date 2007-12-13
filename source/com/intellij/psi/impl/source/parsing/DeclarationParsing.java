@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.DummyHolder;
-import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -32,7 +31,7 @@ public class DeclarationParsing extends Parsing {
     super(context);
   }
 
-  public TreeElement parseEnumConstantText(PsiManager manager, CharSequence buffer) {
+  public TreeElement parseEnumConstantText(CharSequence buffer) {
     Lexer originalLexer = new JavaLexer(LanguageLevel.JDK_1_5);
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, 0, buffer.length(),0);
@@ -78,10 +77,10 @@ public class DeclarationParsing extends Parsing {
     if (tokenType == null) return null;
 
     if (tokenType == LBRACE){
-      if (context == FILE_CONTEXT || context == CODE_BLOCK_CONTEXT) return null;
+      if (context == Context.FILE_CONTEXT || context == Context.CODE_BLOCK_CONTEXT) return null;
     }
     else if (tokenType == IDENTIFIER || PRIMITIVE_TYPE_BIT_SET.contains(tokenType)){
-      if (context == FILE_CONTEXT) return null;
+      if (context == Context.FILE_CONTEXT) return null;
     }
     else if (tokenType instanceof IChameleonElementType) {
       LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
@@ -90,7 +89,7 @@ public class DeclarationParsing extends Parsing {
       return declaration;
     }
     else if (!MODIFIER_BIT_SET.contains(tokenType) && !CLASS_KEYWORD_BIT_SET.contains(tokenType)
-             && tokenType != AT && (context == CODE_BLOCK_CONTEXT || tokenType != LT)){
+             && tokenType != AT && (context == Context.CODE_BLOCK_CONTEXT || tokenType != LT)){
       return null;
     }
 
@@ -119,7 +118,7 @@ public class DeclarationParsing extends Parsing {
       tokenType = lexer.getTokenType();
     }
 
-    if (context == FILE_CONTEXT){
+    if (context == Context.FILE_CONTEXT){
       final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.class.or.interface"));
       TreeUtil.insertAfter(modifierList, errorElement);
       if (classParameterList != null){
@@ -139,7 +138,7 @@ public class DeclarationParsing extends Parsing {
       final LexerPosition idPos = lexer.getCurrentPosition();
       type = parseType(lexer);
       if (lexer.getTokenType() == LPARENTH){ //constructor
-        if (context == CODE_BLOCK_CONTEXT){
+        if (context == Context.CODE_BLOCK_CONTEXT){
           lexer.restore(startPos);
           return null;
         }
@@ -161,10 +160,9 @@ public class DeclarationParsing extends Parsing {
       }
     }
     else if (tokenType == LBRACE){
-      if (context == CODE_BLOCK_CONTEXT){
+      if (context == Context.CODE_BLOCK_CONTEXT){
         TreeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier.or.type"));
         TreeUtil.insertAfter(last, errorElement);
-        last = errorElement;
         return first;
       }
 
@@ -187,7 +185,6 @@ public class DeclarationParsing extends Parsing {
         TreeUtil.addChildren(errorElement, classParameterList);
       }
       TreeUtil.insertAfter(last, errorElement);
-      last = errorElement;
       return first;
     }
 
@@ -195,7 +192,7 @@ public class DeclarationParsing extends Parsing {
     last = type;
 
     if (lexer.getTokenType() != IDENTIFIER){
-      if (context == CODE_BLOCK_CONTEXT && modifierList.getFirstChildNode() == null){
+      if (context == Context.CODE_BLOCK_CONTEXT && modifierList.getFirstChildNode() == null){
         lexer.restore(startPos);
         return null;
       }
@@ -207,7 +204,6 @@ public class DeclarationParsing extends Parsing {
           TreeUtil.insertBefore(last, errorElement1);
         }
         TreeUtil.insertAfter(last, errorElement);
-        last = errorElement;
         return first;
       }
     }
@@ -216,10 +212,9 @@ public class DeclarationParsing extends Parsing {
     lexer.advance();
 
     TreeUtil.insertAfter(last, identifier);
-    last = identifier;
 
     if (lexer.getTokenType() == LPARENTH){
-      if (context == CLASS_CONTEXT){ //method
+      if (context == Context.CLASS_CONTEXT){ //method
         CompositeElement method = Factory.createCompositeElement(METHOD);
         if (classParameterList == null){
           classParameterList = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
@@ -228,7 +223,7 @@ public class DeclarationParsing extends Parsing {
         TreeUtil.addChildren(method, first);
         parseMethodFromLparenth(lexer, method, false);
         return method;
-      } else if (context == ANNOTATION_INTERFACE_CONTEXT) {
+      } else if (context == Context.ANNOTATION_INTERFACE_CONTEXT) {
         CompositeElement method = Factory.createCompositeElement(ANNOTATION_METHOD);
         if (classParameterList == null){
           classParameterList = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
@@ -256,11 +251,11 @@ public class DeclarationParsing extends Parsing {
       TreeUtil.insertAfter(first, errorElement);
     }
     CompositeElement variable;
-    if (context == CLASS_CONTEXT || context == ANNOTATION_INTERFACE_CONTEXT){
+    if (context == Context.CLASS_CONTEXT || context == Context.ANNOTATION_INTERFACE_CONTEXT){
       variable = Factory.createCompositeElement(FIELD);
       TreeUtil.addChildren(variable, first);
     }
-    else if (context == CODE_BLOCK_CONTEXT){
+    else if (context == Context.CODE_BLOCK_CONTEXT){
       variable = Factory.createCompositeElement(LOCAL_VARIABLE);
       TreeUtil.addChildren(variable, first);
     }
@@ -380,7 +375,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   @NotNull
-  public CompositeElement parseModifierList (Lexer lexer) {
+  private CompositeElement parseModifierList (Lexer lexer) {
     CompositeElement modifierList = Factory.createCompositeElement(MODIFIER_LIST);
     while (true) {
       IElementType tokenType = lexer.getTokenType();
@@ -452,9 +447,9 @@ public class DeclarationParsing extends Parsing {
         lexer.advance();
         return parameterList;
       }
-      else {
-        TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, true));
-      }
+      CompositeElement firstParam = parseAnnotationParameter(lexer, true);
+      TreeUtil.addChildren(parameterList, firstParam);
+      boolean isFirstParamNamed = firstParam.getChildRole(firstParam.getFirstChildNode()) == ChildRole.NAME;
 
       boolean afterBad = false;
       while (true) {
@@ -465,9 +460,14 @@ public class DeclarationParsing extends Parsing {
           return parameterList;
         }
         else if (tokenType == COMMA) {
-          TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
+          TreeElement comma = ParseUtil.createTokenElement(lexer, myContext.getCharTable());
           lexer.advance();
-          TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, false));
+          CompositeElement param = parseAnnotationParameter(lexer, false);
+          if (!isFirstParamNamed && param != null && param.getChildRole(param.getFirstChildNode()) == ChildRole.NAME) {
+            TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("annotation.name.is.missing")));
+          }
+          TreeUtil.addChildren(parameterList, comma);
+          TreeUtil.addChildren(parameterList, param);
         }
         else if (tokenType == BAD_CHARACTER || KEYWORD_BIT_SET.contains(tokenType)) {
           TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
@@ -499,21 +499,24 @@ public class DeclarationParsing extends Parsing {
       if (value != null && lexer.getTokenType() != EQ) {
         TreeUtil.addChildren(pair, value);
         return pair;
-      } else {
+      }
+      else {
         lexer.restore(pos);
       }
     }
 
     if (lexer.getTokenType() != IDENTIFIER) {
       TreeUtil.addChildren(pair, Factory.createErrorElement(JavaErrorMessages.message("expected.identifier")));
-    } else {
+    }
+    else {
       TreeUtil.addChildren(pair, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
 
     if (lexer.getTokenType() != EQ) {
       TreeUtil.addChildren(pair, Factory.createErrorElement(JavaErrorMessages.message("expected.eq")));
-    } else {
+    }
+    else {
       TreeUtil.addChildren(pair, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
     }
@@ -550,9 +553,8 @@ public class DeclarationParsing extends Parsing {
       TreeUtil.addChildren(memberList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       return memberList;
-    } else {
-      TreeUtil.addChildren(memberList, parseAnnotationMemberValue(lexer));
     }
+    TreeUtil.addChildren(memberList, parseAnnotationMemberValue(lexer));
 
 
     while (true) {
@@ -579,7 +581,6 @@ public class DeclarationParsing extends Parsing {
   }
 
   private TreeElement parseClassFromKeyword(Lexer lexer, TreeElement modifierList, TreeElement atToken) {
-    IElementType tokenType;
     CompositeElement aClass = Factory.createCompositeElement(CLASS);
     TreeUtil.addChildren(aClass, modifierList);
 
@@ -620,17 +621,16 @@ public class DeclarationParsing extends Parsing {
     if (lexer.getTokenType() != LBRACE){
       CompositeElement invalidElementsGroup = Factory.createErrorElement(JavaErrorMessages.message("expected.lbrace"));
       TreeUtil.addChildren(aClass, invalidElementsGroup);
-      Loop:
-        while(true){
-          tokenType = lexer.getTokenType();
-          if (tokenType == IDENTIFIER || tokenType == COMMA || tokenType == EXTENDS_KEYWORD || tokenType == IMPLEMENTS_KEYWORD) {
-            TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
-          }
-          else {
-            break Loop;
-          }
-          lexer.advance();
+      while (true) {
+        IElementType tokenType = lexer.getTokenType();
+        if (tokenType == IDENTIFIER || tokenType == COMMA || tokenType == EXTENDS_KEYWORD || tokenType == IMPLEMENTS_KEYWORD) {
+          TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         }
+        else {
+          break;
+        }
+        lexer.advance();
+      }
     }
 
     parseClassBodyWithBraces(aClass, lexer, atToken != null, isEnum);
@@ -638,7 +638,7 @@ public class DeclarationParsing extends Parsing {
     return aClass;
   }
 
-  public TreeElement parseTypeParameterList(Lexer lexer) {
+  private TreeElement parseTypeParameterList(Lexer lexer) {
     final CompositeElement result = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
     if (lexer.getTokenType() != LT){
       return result;
@@ -703,7 +703,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   @Nullable
-  public CompositeElement parseTypeParameter(Lexer lexer) {
+  private CompositeElement parseTypeParameter(Lexer lexer) {
     if (lexer.getTokenType() != IDENTIFIER) return null;
     final CompositeElement result = Factory.createCompositeElement(TYPE_PARAMETER);
     TreeUtil.addChildren(result, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -733,11 +733,8 @@ public class DeclarationParsing extends Parsing {
           braceCount--;
         }
 
-        if (braceCount == 0){
-          return true;
-        }
+        return braceCount == 0;
 
-        return false;
       }
     }, lexer);
 
@@ -826,7 +823,7 @@ public class DeclarationParsing extends Parsing {
             TreeUtil.addChildren(invalidElementsGroup, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           }
           else {
-            break Loop;
+            break;
           }
           lexer.advance();
         }
@@ -923,22 +920,22 @@ public class DeclarationParsing extends Parsing {
   }
 
   @Nullable
-  public ASTNode parseExtendsList(Lexer lexer) {
+  private ASTNode parseExtendsList(Lexer lexer) {
     return parseReferenceList(lexer, EXTENDS_LIST, COMMA, EXTENDS_KEYWORD);
   }
 
   @Nullable
-  public ASTNode parseImplementsList(Lexer lexer) {
+  private ASTNode parseImplementsList(Lexer lexer) {
     return parseReferenceList(lexer, IMPLEMENTS_LIST, COMMA, IMPLEMENTS_KEYWORD);
   }
 
   @Nullable
-  public ASTNode parseThrowsList(Lexer lexer) {
+  private ASTNode parseThrowsList(Lexer lexer) {
     return parseReferenceList(lexer, THROWS_LIST, COMMA, THROWS_KEYWORD);
   }
 
   @Nullable
-  public CompositeElement parseReferenceList(Lexer lexer, IElementType elementType, IElementType referenceDelimiter, IElementType keyword) {
+  private CompositeElement parseReferenceList(Lexer lexer, IElementType elementType, IElementType referenceDelimiter, IElementType keyword) {
     if (lexer.getTokenType() != keyword) return null;
 
     CompositeElement list = Factory.createCompositeElement(elementType);

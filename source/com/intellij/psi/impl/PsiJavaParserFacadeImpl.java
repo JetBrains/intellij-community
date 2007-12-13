@@ -251,7 +251,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiEnumConstant createEnumConstantFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
-    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseEnumConstantText(myManager, text);
+    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseEnumConstantText(text);
     if (decl == null || decl.getElementType() != JavaElementType.ENUM_CONSTANT) {
       throw new IncorrectOperationException("Incorrect enum constant text \"" + text + "\".");
     }
