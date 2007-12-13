@@ -23,7 +23,7 @@
   </extensions>
   <application-components>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.builder.execution.MavenRunConfigurationType</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.idea.maven.core.MavenApplicationComponent</implementation-class>
@@ -40,8 +40,8 @@
       <implementation-class>org.jetbrains.idea.maven.state.MavenProjectsStateComponent</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.idea.maven.builder.MavenBuilder</interface-class>
-      <implementation-class>org.jetbrains.idea.maven.builder.MavenBuilderImpl</implementation-class>
+      <interface-class>org.jetbrains.idea.maven.runner.MavenRunner</interface-class>
+      <implementation-class>org.jetbrains.idea.maven.runner.MavenRunnerImpl</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>
@@ -95,7 +95,7 @@
       </action>
 
       <action id="Maven.ToggleSkipTests"
-              class="org.jetbrains.idea.maven.builder.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
+              class="org.jetbrains.idea.maven.runner.action.ToggleSkipTestsAction" text="Toggle 'Skip tests' mode"
               description="Toggle 'Skip tests' mode for Maven"
               icon="/nodes/exceptionClass.png">
       </action>
@@ -106,22 +106,22 @@
 
     <group id="Maven.OutputToolbar" description="Output toolbar">
       <action id="Maven.Rerun"
-              class="org.jetbrains.idea.maven.builder.action.RerunMavenAction"
+              class="org.jetbrains.idea.maven.runner.action.RerunMavenAction"
               text="Rerun"
               description="Reruns the latest Maven build"
               icon="/actions/refreshUsages.png"/>
       <action id="Maven.PauseOutput"
-              class="org.jetbrains.idea.maven.builder.action.PauseOutputAction"
+              class="org.jetbrains.idea.maven.runner.action.PauseOutputAction"
               text="Pause/Resume Output"
               description="Pauses/resumes the output in the build output window"
               icon="/actions/pause.png"/>
       <action id="Maven.Stop"
-              class="org.jetbrains.idea.maven.builder.action.StopMavenAction"
+              class="org.jetbrains.idea.maven.runner.action.StopMavenAction"
               text="Stop"
               description="Stops the currently running Maven build"
               icon="/actions/suspend.png"/>
       <action id="Maven.CloseOutput"
-              class="org.jetbrains.idea.maven.builder.action.CloseOutputPanelAction"
+              class="org.jetbrains.idea.maven.runner.action.CloseOutputPanelAction"
               text="Close Output Panel"
               description="Closes the output window"
               icon="/actions/cancel.png"/>
@@ -149,7 +149,7 @@
     </group>
 
     <action id="Maven.Run"
-            class="org.jetbrains.idea.maven.builder.action.RunGoalsAction" text="_Build"
+            class="org.jetbrains.idea.maven.runner.action.RunGoalsAction" text="_Build"
             description="Execute Maven Build"
             icon="/actions/compile.png">
     </action>
