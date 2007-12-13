@@ -207,6 +207,7 @@ public class XmlUtil {
     return findNamespacePrefixByURI(file, XML_SCHEMA_INSTANCE_URI);
   }
 
+  @Nullable
   public static XmlFile findNamespace(PsiFile base, @NotNull String uri) {
     final XmlFile xmlFile = XmlSchemaProvider.findSchema(uri, base);
     return xmlFile == null ? findXmlFile(base, uri) : xmlFile;
