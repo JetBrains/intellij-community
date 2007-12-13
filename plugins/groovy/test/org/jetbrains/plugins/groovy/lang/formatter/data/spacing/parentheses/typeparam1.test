@@ -1,0 +1,3 @@
+class BugSample<  T  >  implements Iterator  <  T  > {}
+-----
+class BugSample<T> implements Iterator<T> {}

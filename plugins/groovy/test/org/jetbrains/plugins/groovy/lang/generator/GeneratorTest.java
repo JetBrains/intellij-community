@@ -5,10 +5,14 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.GeneratingCompiler;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
@@ -141,6 +145,15 @@ public class GeneratorTest extends SimpleGroovyFileSetTestCase {
       return null;
     }
   }
+
+  protected IdeaProjectTestFixture createFixture() {
+    final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = factory.createFixtureBuilder();
+    JavaModuleFixtureBuilder fixtureBuilder = builder.addModule(JavaModuleFixtureBuilder.class).addJdk(TestUtils.getMockJdkHome());
+    fixtureBuilder.addLibraryJars("GROOVY", TestUtils.getMockGrailsLibraryHome(), "groovy-all.jar");
+    return builder.getFixture();
+  }
+
 
   public static Test suite() {
     return new GeneratorTest();

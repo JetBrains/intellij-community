@@ -9,14 +9,14 @@ class Derived extends Base {
 }
 -----
 public class Base extends groovy.lang.GroovyObjectSupport {
-  public Base(String s, int i) {
+  public Base(java.lang.String s, int i) {
 
   }
 }
 ---
 public class Derived extends Base {
-  public Derived()  throws Exception{
-    super((String)null, (int)0);
+  public Derived()  throws java.lang.Exception{
+    super((java.lang.String)null, (int)0);
   }
 }
 ---

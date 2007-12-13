@@ -17,10 +17,17 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -226,7 +233,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return prefix;
   }
 
-  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFileBase file, String typeDefinitionName, PsiClass groovyClass, GrPackageDefinition packageDefinition) {
+  private String createJavaSourceFile(VirtualFile outputRootDirectory, GroovyFileBase file, String typeDefinitionName, PsiClass typeDefinition, GrPackageDefinition packageDefinition) {
     //prefix defines structure of directories tree
     String prefix = "";
     if (packageDefinition != null) {
@@ -235,7 +242,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     StringBuffer text = new StringBuffer();
 
-    writeTypeDefinition(text, typeDefinitionName, groovyClass, packageDefinition);
+    writeTypeDefinition(text, typeDefinitionName, typeDefinition, packageDefinition);
 
     VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
@@ -266,21 +273,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     return isOnlyInnerTypeDef;
   }
 
-  private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, PsiClass groovyClass, GrPackageDefinition packageDefinition) {
-    final boolean isScript = groovyClass == null;
+  private void writeTypeDefinition(StringBuffer text, String typeDefinitionName, PsiClass typeDefinition, GrPackageDefinition packageDefinition) {
+    final boolean isScript = typeDefinition == null;
 
     writePackageStatement(text, packageDefinition);
 
-    GrMembersDeclaration[] membersDeclarations = groovyClass instanceof GrTypeDefinition ? ((GrTypeDefinition) groovyClass).getMemberDeclarations() : GrMembersDeclaration.EMPTY_ARRAY; //todo
+    GrMembersDeclaration[] membersDeclarations = typeDefinition instanceof GrTypeDefinition ? ((GrTypeDefinition) typeDefinition).getMemberDeclarations() : GrMembersDeclaration.EMPTY_ARRAY; //todo
 
-    boolean isClassDef = groovyClass instanceof GrClassDefinition;
-    boolean isInterface = groovyClass instanceof GrInterfaceDefinition;
+    boolean isClassDef = typeDefinition instanceof GrClassDefinition;
+    boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
 
 
-    if (groovyClass != null) {
-      PsiModifierList modifierList = groovyClass.getModifierList();
+    if (typeDefinition != null) {
+      PsiModifierList modifierList = typeDefinition.getModifierList();
 
-      boolean wasAddedModifiers = modifierList != null && writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS, groovyClass.isInterface());
+      boolean wasAddedModifiers = modifierList != null && writeTypeDefinitionMethodModifiers(text, modifierList, JAVA_TYPE_DEFINITION_MODIFIERS, typeDefinition.isInterface());
       if (!wasAddedModifiers) {
         text.append("public ");
       }
@@ -298,13 +305,27 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(" ");
 
     text.append(typeDefinitionName);
+
+    if (typeDefinition != null && typeDefinition.hasTypeParameters()) {
+      text.append("<");
+      int i = 0;
+      PsiTypeParameter[] parameters = typeDefinition.getTypeParameters();
+      for (PsiTypeParameter parameter : parameters) {
+        text.append(parameter.getName());
+        if (i++ < parameters.length - 1) {
+          text.append(", ");
+        }
+      }
+      text.append(">");
+    }
+
     text.append(" ");
 
     if (isScript) {
       text.append("extends ");
       text.append("groovy.lang.Script ");
     } else {
-      final PsiClassType[] extendsClassesTypes = groovyClass.getExtendsListTypes();
+      final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
         text.append("extends ");
@@ -318,7 +339,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         }
       }
 
-      PsiClassType[] implementsTypes = groovyClass.getImplementsListTypes();
+      PsiClassType[] implementsTypes = typeDefinition.getImplementsListTypes();
 
       if (implementsTypes.length > 0) {
         text.append(isInterface ? "extends " : "implements ");
@@ -338,7 +359,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
 
-    PsiMethod[] methods = groovyClass.getMethods();
+    PsiMethod[] methods = typeDefinition == null ? PsiMethod.EMPTY_ARRAY : typeDefinition.getMethods();
     for (PsiMethod method : methods) {
       if (method instanceof GrConstructor) {
         writeConstructor(text, (GrConstructor) method);
@@ -365,7 +386,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           if (variable instanceof GrField && ((GrField) variable).isProperty()) {
             PsiMethod getter = ((GrField) variable).getGetter();
             if (getter != null) writeMethod(text, getter);
-            
+
             PsiMethod setter = ((GrField) variable).getSetter();
             if (setter != null) writeMethod(text, setter);
           }
@@ -492,7 +513,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
               text.append("(" + typeText + ")" + getDefaultValueText(typeText));
             }
           }
-          
+
           text.append(")");
           text.append(";");
         }

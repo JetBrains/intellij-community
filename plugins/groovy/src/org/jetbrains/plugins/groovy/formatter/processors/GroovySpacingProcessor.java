@@ -25,6 +25,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCondit
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 
 /**
  * @author ilyas
@@ -47,6 +49,16 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     // For multi-line strings
     if (!child1.getNode().getTextRange().equals(child1.getTextRange()) ||
         !child2.getNode().getTextRange().equals(child2.getTextRange())) {
+      return NO_SPACING;
+    }
+
+    //For type parameters
+    if (mLT == leftNode.getElementType() &&
+        rightNode.getPsi() instanceof GrTypeParameter ||
+        mGT == rightNode.getElementType() &&
+            leftNode.getPsi() instanceof GrTypeParameter ||
+        mIDENT == leftNode.getElementType() &&
+        rightNode.getPsi() instanceof GrTypeParameterList) {
       return NO_SPACING;
     }
 

@@ -11,13 +11,13 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
     return null;
   }
 
-  public Object[] getObj() {
+  public java.lang.Object[] getObj() {
     return null;
   }
 
   private int[] integers = null;
 
-  private String[] strings = null;
+  private java.lang.String[] strings = null;
 
   public int[] getIntegers() {
     return null;
@@ -27,11 +27,11 @@ public class Foo extends groovy.lang.GroovyObjectSupport {
     return ;
   }
 
-  public String[] getStrings() {
+  public java.lang.String[] getStrings() {
     return null;
   }
 
-  public void setStrings(String[] p) {
+  public void setStrings(java.lang.String[] p) {
     return ;
   }
 }

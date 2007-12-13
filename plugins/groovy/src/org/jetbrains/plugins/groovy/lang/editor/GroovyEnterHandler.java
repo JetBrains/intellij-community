@@ -71,9 +71,9 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     if (project == null || !handleEnter(editor, dataContext, project) &&
         myOriginalHandler != null &&
         myOriginalHandler.isEnabled(editor, dataContext)) {
-      myOriginalHandler.execute(editor, dataContext);
       Document document = editor.getDocument();
       PsiDocumentManager.getInstance(project).commitDocument(document);
+      myOriginalHandler.execute(editor, dataContext);
     }
   }
 
