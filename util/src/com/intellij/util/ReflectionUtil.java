@@ -34,6 +34,11 @@ public class ReflectionUtil {
 
   @Nullable
   public static Type resolveVariable(TypeVariable variable, final Class classType) {
+    return resolveVariable(variable, classType, true);
+  }
+
+  @Nullable
+  public static Type resolveVariable(TypeVariable variable, final Class classType, boolean resolveInInterfacesOnly) {
     final Class aClass = getRawType(classType);
     int index = ContainerUtil.findByEquals(ReflectionCache.getTypeParameters(aClass), variable);
     if (index >= 0) {
@@ -42,8 +47,17 @@ public class ReflectionUtil {
 
     final Class[] classes = ReflectionCache.getInterfaces(aClass);
     final Type[] genericInterfaces = ReflectionCache.getGenericInterfaces(aClass);
-    for (int i = 0; i < classes.length; i++) {
-      Class anInterface = classes[i];
+    for (int i = 0; i <= classes.length; i++) {
+      Class anInterface;
+      if (i < classes.length) {
+        anInterface = classes[i];
+      }
+      else {
+        anInterface = aClass.getSuperclass();
+        if (resolveInInterfacesOnly || anInterface == null) {
+          continue;
+        }
+      }
       final Type resolved = resolveVariable(variable, anInterface);
       if (resolved instanceof Class || resolved instanceof ParameterizedType) {
         return resolved;
@@ -57,7 +71,7 @@ public class ReflectionUtil {
                               "genericDeclaration = " + declarationToString(typeVariable.getGenericDeclaration()) + "\n" +
                               "searching in " + declarationToString(anInterface));
         }
-        final Type type = genericInterfaces[i];
+        final Type type = i < genericInterfaces.length ? genericInterfaces[i] : aClass.getGenericSuperclass();
         if (type instanceof Class) {
           return Object.class;
         }

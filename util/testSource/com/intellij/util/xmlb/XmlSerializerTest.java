@@ -793,7 +793,21 @@ public class XmlSerializerTest extends TestCase {
     @Tag("actions")
     public org.jdom.Element actions;
   }
-  public void testJDOMElementField() throws Exception {
+
+  public void testSerializeJDOMElementField() throws Exception {
+    BeanWithJDOMElement element = new BeanWithJDOMElement();
+    element.STRING_V = "a";
+    element.actions = new Element("x").addContent(new Element("a")).addContent(new Element("b"));
+    assertSerializer(element, "<BeanWithJDOMElement>\n" +
+                              "  <option name=\"STRING_V\" value=\"a\" />\n" +
+                              "  <actions>\n" +
+                              "    <a />\n" +
+                              "    <b />\n" +
+                              "  </actions>\n" +
+                              "</BeanWithJDOMElement>", null);
+  }
+
+  public void testDeserializeJDOMElementField() throws Exception {
 
 
     final BeanWithJDOMElement bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(
@@ -811,11 +825,19 @@ public class XmlSerializerTest extends TestCase {
     @Tag("actions")
     public org.jdom.Element[] actions;
   }
+
   public void testJDOMElementArrayField() throws Exception {
-
-
-    final BeanWithJDOMElementArray bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(
-      "<BeanWithJDOMElementArray><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions><actions><action/></actions></BeanWithJDOMElementArray>"
+    String text = "<BeanWithJDOMElementArray>\n" +
+                  "  <option name=\"STRING_V\" value=\"bye\" />\n" +
+                  "  <actions>\n" +
+                  "    <action />\n" +
+                  "    <action />\n" +
+                  "  </actions>\n" +
+                  "  <actions>\n" +
+                  "    <action />\n" +
+                  "  </actions>\n" +
+                  "</BeanWithJDOMElementArray>";
+    final BeanWithJDOMElementArray bean = XmlSerializer.deserialize(JDOMUtil.loadDocument(text
     ).getRootElement(), BeanWithJDOMElementArray.class);
 
 
@@ -824,6 +846,8 @@ public class XmlSerializerTest extends TestCase {
     assertEquals(2, bean.actions.length);
     assertEquals(2, bean.actions[0].getChildren().size());
     assertEquals(1, bean.actions[1].getChildren().size());
+
+    assertSerializer(bean, text, null);
   }
 
   public static class BeanWithTextAnnotation {

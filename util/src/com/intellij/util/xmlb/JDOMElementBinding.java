@@ -20,6 +20,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+
 class JDOMElementBinding implements Binding {
   private Accessor myAccessor;
   private String myTagName;
@@ -32,7 +34,23 @@ class JDOMElementBinding implements Binding {
   }
 
   public Object serialize(Object o, Object context) {
-    throw new UnsupportedOperationException("Method serialize is not supported in " + getClass());
+    Object value = myAccessor.read(o);
+    if (value instanceof Element) {
+      Element targetElement;
+      targetElement = (Element)((Element)value).clone();
+      targetElement.setName(myTagName);
+      return targetElement;
+    }
+    if (value instanceof Element[]) {
+      ArrayList<Element> result = new ArrayList<Element>();
+      for (Element element : ((Element[])value)) {
+        Element target = ((Element)element.clone()).setName(myTagName);
+        result.add(target);
+
+      }
+      return result;
+    }
+    throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
   }
 
   @Nullable
