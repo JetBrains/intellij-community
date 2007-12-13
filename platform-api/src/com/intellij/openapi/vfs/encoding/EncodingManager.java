@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,12 @@ public class EncodingManager implements ApplicationComponent {
   @Nullable
   public Charset getEncoding(@NotNull VirtualFile virtualFile, boolean useParentDefaults) {
     Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
-    if (project == null) return null;
+
+    if (project == null) {
+      ProjectManager projectManager = ProjectManager.getInstance();
+      if (projectManager == null) return null; //tests
+      project = projectManager.getDefaultProject();
+    }
     return EncodingProjectManager.getInstance(project).getEncoding(virtualFile, useParentDefaults);
   }
 
@@ -68,5 +74,11 @@ public class EncodingManager implements ApplicationComponent {
     for (Project project : projects) {
       EncodingProjectManager.getInstance(project).setMapping(map);
     }
+  }
+
+  public void restoreEncoding(final VirtualFile virtualFile, final Charset charsetBefore) {
+    Charset actual = getEncoding(virtualFile, true);
+    if (Comparing.equal(actual, charsetBefore)) return;
+    setEncoding(virtualFile, charsetBefore);
   }
 }

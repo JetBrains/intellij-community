@@ -87,9 +87,10 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
   @Nullable
   public Charset getEncoding(@NotNull VirtualFile virtualFile, boolean useParentDefaults) {
     VirtualFile parent = virtualFile;
-    while (parent != null) {
+    while (true) {
       Charset charset = myMapping.get(parent);
       if (charset != null || !useParentDefaults) return charset;
+      if (parent == null) break;
       parent = parent.getParent();
     }
     return null;

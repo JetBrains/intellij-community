@@ -80,7 +80,7 @@ public abstract class ProjectManager {
    *
    * @return the template project instance.
    */
-
+  @NotNull
   public abstract Project getDefaultProject();
 
   /**

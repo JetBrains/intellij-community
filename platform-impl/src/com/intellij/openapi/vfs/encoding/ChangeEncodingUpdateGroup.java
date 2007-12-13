@@ -4,8 +4,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
@@ -21,6 +23,13 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
       virtualFile = null;
     }
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (virtualFile != null){
+      Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
+      if (navigatable instanceof OpenFileDescriptor) {
+        // prefer source to the class file
+        virtualFile = ((OpenFileDescriptor)navigatable).getFile();
+      }
+    }
     boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(project, virtualFile);
     if (enabled) {
       String pattern;

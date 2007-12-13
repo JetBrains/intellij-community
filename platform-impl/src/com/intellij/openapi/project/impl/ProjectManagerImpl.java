@@ -241,6 +241,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     return filePath;
   }
 
+  @NotNull
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
       myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null);

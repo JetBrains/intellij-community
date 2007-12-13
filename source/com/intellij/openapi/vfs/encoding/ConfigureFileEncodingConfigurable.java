@@ -58,7 +58,7 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     Map<VirtualFile,Charset> result = myTreeView.getValues();
-    EncodingManager.getInstance().setMapping(result);
+    EncodingProjectManager.getInstance(myProject).setMapping(result);
   }
 
   public void reset() {
