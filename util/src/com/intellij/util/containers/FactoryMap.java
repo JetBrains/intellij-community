@@ -58,6 +58,10 @@ public abstract class FactoryMap<T,V> {
     myMap.put(key, value);
   }
 
+  public void removeEntry(T key) {
+    myMap.remove(key);
+  }
+
   public Set<T> keySet() {
     final Set<T> ts = myMap.keySet();
     if (ts.contains(NULL)) {
