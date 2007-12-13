@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
 import com.intellij.psi.impl.source.Constants;
@@ -130,8 +131,9 @@ public class CodeFormatterFacade implements Constants {
       if (!psiElement.isValid()) {
         if (rangeMarker != null) {
           final PsiElement at = file.findElementAt(rangeMarker.getStartOffset());
-          assert psiElement.getClass().isInstance(at);
-          return at.getNode();
+          final PsiElement result = PsiTreeUtil.getParentOfType(at, psiElement.getClass(), false);
+          assert result != null;
+          return result.getNode();
         } else {
           assert false;
         }
