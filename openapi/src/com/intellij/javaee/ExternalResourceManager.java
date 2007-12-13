@@ -17,6 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * author: lesya
  */
-public abstract class ExternalResourceManager {
+public abstract class ExternalResourceManager implements ModificationTracker {
   public static ExternalResourceManager getInstance() {
     return ApplicationManager.getApplication().getComponent(ExternalResourceManager.class);
   }

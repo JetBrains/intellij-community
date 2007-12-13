@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * @author mike
  */
-public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable, ApplicationComponent, ModificationTracker {
+public class ExternalResourceManagerImpl extends ExternalResourceManagerEx implements JDOMExternalizable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl");
 
   @NonNls public static final String J2EE_1_3 = "http://java.sun.com/dtd/";
