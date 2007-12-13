@@ -12,7 +12,7 @@ public class RunnerBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls
-  private static final String BUNDLE = "BuilderBundle";
+  private static final String BUNDLE = "RunnerBundle";
 
   private RunnerBundle() {
   }

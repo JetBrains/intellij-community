@@ -37,7 +37,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   /**
    * reflection
    */
-  public MavenRunConfigurationType() {
+  MavenRunConfigurationType() {
     myFactory = new ConfigurationFactory(this) {
       public RunConfiguration createTemplateConfiguration(Project project) {
         return new MavenRunConfiguration(project, this, "");
