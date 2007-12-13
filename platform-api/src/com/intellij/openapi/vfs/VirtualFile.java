@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -378,7 +379,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
+    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
     getFileSystem().moveFile(requestor, this, newParent);
+    EncodingManager.getInstance().restoreEncoding(this, charsetBefore);
   }
 
   public VirtualFile copy(Object requestor, VirtualFile newParent, final String copyName) throws IOException {
@@ -390,7 +393,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    return getFileSystem().copyFile(requestor, this, newParent, copyName);
+    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
+    VirtualFile newFile = getFileSystem().copyFile(requestor, this, newParent, copyName);
+    EncodingManager.getInstance().restoreEncoding(newFile, charsetBefore);
+    return newFile;
   }
 
 

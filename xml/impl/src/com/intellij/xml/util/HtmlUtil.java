@@ -322,13 +322,25 @@ public class HtmlUtil {
 
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
+          if ("meta".equals(name) && metHttpEquiv && contentAttributeValue != null) {
+            int start = contentAttributeValue.indexOf(CHARSET_PREFIX);
+            if (start == -1) return;
+            start += CHARSET_PREFIX.length();
+            int end = contentAttributeValue.indexOf(';', start);
+            if (end == -1) end = contentAttributeValue.length();
+            String charsetName = contentAttributeValue.substring(start, end);
+            charsetNameRef.set(charsetName);
+            terminate();
+          }
           if ("head".equals(name)) {
             terminate();  
           }
           inTag.remove(name);
           metHttpEquiv = false;
+          contentAttributeValue = null;
         }
 
+        private String contentAttributeValue;
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
@@ -336,15 +348,8 @@ public class HtmlUtil {
             if (name.equals("http-equiv")) {
               metHttpEquiv |= value.equals("content-type");
             }
-            if (metHttpEquiv && name.equals("content")) {
-              int start = value.indexOf(CHARSET_PREFIX);
-              if (start == -1) return;
-              start += CHARSET_PREFIX.length();
-              int end = value.indexOf(';', start);
-              if (end == -1) end = value.length();
-              String charsetName = value.substring(start, end);
-              charsetNameRef.set(charsetName);
-              terminate();
+            if (name.equals("content")) {
+              contentAttributeValue = value;
             }
           }
         }
