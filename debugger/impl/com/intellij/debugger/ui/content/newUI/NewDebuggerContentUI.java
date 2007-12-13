@@ -524,9 +524,12 @@ public class NewDebuggerContentUI
       }
     }
 
+    updateTabsUI();
+
     return new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
         showHiddenTabs();
+        updateTabsUI();
         return new ActionCallback.Done();
       }
     };

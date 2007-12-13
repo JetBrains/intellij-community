@@ -6,6 +6,7 @@ import com.intellij.debugger.ui.content.newUI.Grid;
 import com.intellij.debugger.ui.content.newUI.Tab;
 import com.intellij.debugger.ui.content.newUI.GridCell;
 import com.intellij.ui.content.Content;
+import com.intellij.idea.ActionsBundle;
 
 public class DetachCellAction extends BaseDebuggerViewAction {
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
@@ -21,11 +22,14 @@ public class DetachCellAction extends BaseDebuggerViewAction {
       setEnabled(e, !tab.isDefault() && grid.getContents().size() == 1);
     }
     else {
+      GridCell cell = grid.getCellFor(content[0]);
       if (ViewContext.CELL_TOOLBAR_PLACE.equals(e.getPlace()) && content.length == 1) {
-        GridCell cell = grid.getCellFor(content[0]);
         setEnabled(e, cell.getContentCount() == 1);
       } else {
         setEnabled(e, true);
+        if (cell.getContentCount() > 1) {
+          e.getPresentation().setText(ActionsBundle.message("action.Debugger.DetachCells.text", cell.getContentCount()));
+        }
       }
     }
   }
