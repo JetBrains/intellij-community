@@ -16,7 +16,7 @@ import java.util.Map;
 
 public class ConfigureFileEncodingConfigurable implements Configurable {
   private final Project myProject;
-  private final FileTreeTable myTreeView;
+  private FileTreeTable myTreeView;
   private JScrollPane myTreePanel;
   private JPanel myPanel;
 
@@ -26,7 +26,6 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
 
   public ConfigureFileEncodingConfigurable(Project project) {
     myProject = project;
-    myTreeView = new FileTreeTable(myProject);
   }
 
   @Nls
@@ -46,6 +45,7 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
   }
 
   public JComponent createComponent() {
+    myTreeView = new FileTreeTable(myProject);
     myTreePanel.setViewportView(myTreeView);
     return myPanel;
   }
