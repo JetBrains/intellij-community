@@ -108,17 +108,17 @@
       <action id="Maven.Rerun"
               class="org.jetbrains.idea.maven.runner.action.RerunMavenAction"
               text="Rerun"
-              description="Reruns the latest Maven build"
+              description="Reruns the latest Maven goal"
               icon="/actions/refreshUsages.png"/>
       <action id="Maven.PauseOutput"
               class="org.jetbrains.idea.maven.runner.action.PauseOutputAction"
               text="Pause/Resume Output"
-              description="Pauses/resumes the output in the build output window"
+              description="Pauses/resumes the output in the output window"
               icon="/actions/pause.png"/>
       <action id="Maven.Stop"
               class="org.jetbrains.idea.maven.runner.action.StopMavenAction"
               text="Stop"
-              description="Stops the currently running Maven build"
+              description="Stops the currently running Maven goal"
               icon="/actions/suspend.png"/>
       <action id="Maven.CloseOutput"
               class="org.jetbrains.idea.maven.runner.action.CloseOutputPanelAction"
@@ -149,9 +149,9 @@
     </group>
 
     <action id="Maven.Run"
-            class="org.jetbrains.idea.maven.runner.action.RunGoalsAction" text="_Build"
-            description="Execute Maven Build"
-            icon="/actions/compile.png">
+            class="org.jetbrains.idea.maven.runner.action.RunGoalsAction" text="_Run Goal"
+            description="Execute selected goal"
+            icon="/actions/execute.png">
     </action>
 
     <group id="Maven.State">

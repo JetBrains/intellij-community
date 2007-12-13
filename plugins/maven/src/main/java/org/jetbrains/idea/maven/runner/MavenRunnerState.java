@@ -18,11 +18,17 @@
 
 package org.jetbrains.idea.maven.runner;
 
+import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MavenRunnerState implements Cloneable {
@@ -73,6 +79,13 @@ public class MavenRunnerState implements Cloneable {
     }
   }
 
+  public void useExternalMaven() {
+    setUseMavenEmbedder(false);
+    if (StringUtil.isEmpty(jreName)) {
+      jreName = collectJdkNamesAndDescriptions().get(0).getFirst();
+    }
+  }
+
   @NotNull
   public String getVmOptions() {
     return vmOptions;
@@ -99,6 +112,20 @@ public class MavenRunnerState implements Cloneable {
   @SuppressWarnings({"UnusedDeclaration"})
   public void setMavenProperties(Map<String, String> mavenProperties) {
     this.mavenProperties = mavenProperties;
+  }
+
+  public List<Pair<String, String>> collectJdkNamesAndDescriptions() {
+    List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
+
+    for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      String name = projectJdk.getName();
+      result.add(new Pair<String, String>(name, name));
+    }
+
+    result.add(new Pair<String, String>(USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal")));
+    result.add(new Pair<String, String>(USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env")));
+
+    return result;
   }
 
   public boolean equals(final Object o) {

@@ -50,7 +50,7 @@ public class MavenExternalExecutor extends MavenExecutor {
       myProcessHandler = new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myRunnerState)) {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-        public void notifyTextAvailable(final String text, final Key outputType) {
+        public void notifyTextAvailable(String text, Key outputType) {
           if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
             super.notifyTextAvailable(text, outputType);
           }
