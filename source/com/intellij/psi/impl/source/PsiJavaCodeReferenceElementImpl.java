@@ -12,7 +12,6 @@ import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiSubstitutorEx;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
@@ -331,7 +330,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {
     final PsiType[] parameters = getTypeParameters();
     if (psiClass != null) {
-      subst = ((PsiSubstitutorEx)subst).inplacePutAll(psiClass, parameters);
+      subst = subst.putAll(psiClass, parameters);
     }
     return subst;
   }

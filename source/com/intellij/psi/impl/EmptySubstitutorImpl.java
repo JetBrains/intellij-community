@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  *  @author dsl
  */
-public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiSubstitutorEx {
+public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiSubstitutor {
   public PsiType substitute(PsiTypeParameter typeParameter){
     return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
   }

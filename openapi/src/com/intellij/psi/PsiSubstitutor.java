@@ -47,6 +47,14 @@ public interface PsiSubstitutor {
   PsiType substitute(PsiTypeParameter typeParameter);
 
   /**
+   * do not erase completely all type parameters if only one of them is raw, e.g. if T -> null, then A<List<T>> -> A<List>, not just A.
+   *
+   * @param type the type to substitute the type parameters for.
+   * @return the result of the substitution.
+   */
+  PsiType substituteNoErase(PsiType type);
+
+  /**
    * Substitutes type parameters occuring in <code>type</code> with their values.
    * If value for type parameter is <code>null<code>, appropriate erasure is returned.
    *

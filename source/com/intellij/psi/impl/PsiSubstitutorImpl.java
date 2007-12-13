@@ -2,8 +2,8 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +16,7 @@ import java.util.Set;
 /**
  * @author ik, dsl
  */
-public class PsiSubstitutorImpl implements PsiSubstitutorEx {
+public class PsiSubstitutorImpl implements PsiSubstitutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiSubstitutorImpl");
   private final Map<PsiTypeParameter, PsiType> mySubstitutionMap;
 

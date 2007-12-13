@@ -11,7 +11,6 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiSubstitutorEx;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
@@ -139,7 +138,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
         final JavaResolveResult[] newResult = new JavaResolveResult[result.length];
         for (int i = 0; i < result.length; i++) {
           final CandidateInfo resolveResult = (CandidateInfo)result[i];
-          newResult[i] = new CandidateInfo(resolveResult, ((PsiSubstitutorEx)resolveResult.getSubstitutor()).inplacePutAll(
+          newResult[i] = new CandidateInfo(resolveResult, resolveResult.getSubstitutor().putAll(
             (PsiClass)resolveResult.getElement(), parameters));
         }
         return newResult;

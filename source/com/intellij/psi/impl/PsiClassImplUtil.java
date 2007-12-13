@@ -375,7 +375,7 @@ public class PsiClassImplUtil {
             if (isRaw && !candidateMethod.hasModifierProperty(PsiModifier.STATIC)) { //static methods are not erased due to raw overriding
               PsiTypeParameter[] methodTypeParameters = candidateMethod.getTypeParameters();
               for (PsiTypeParameter methodTypeParameter : methodTypeParameters) {
-                finalSubstitutor = ((PsiSubstitutorEx)finalSubstitutor).inplacePut(methodTypeParameter, null);
+                finalSubstitutor = finalSubstitutor.put(methodTypeParameter, null);
               }
             }
             processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);

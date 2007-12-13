@@ -237,7 +237,7 @@ public class PsiSuperMethodImplUtil {
     for (PsiTypeParameter typeParameter : superTypeParams) {
       if (map.containsKey(typeParameter)) { //optimization
         PsiType type = superSubstitutor.substitute(typeParameter);
-        final PsiType t = ((PsiSubstitutorEx)derivedSubstitutor).substituteNoErase(type);
+        final PsiType t = derivedSubstitutor.substituteNoErase(type);
         m1.put(typeParameter, t);
       }
     }

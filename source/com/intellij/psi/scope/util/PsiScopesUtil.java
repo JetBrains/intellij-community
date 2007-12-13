@@ -10,7 +10,6 @@ package com.intellij.psi.scope.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiSubstitutorEx;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -150,7 +149,7 @@ public class PsiScopesUtil {
           }
           final PsiType[] types = referenceElement.getTypeParameters();
           if(target instanceof PsiClass) {
-            substitutor = ((PsiSubstitutorEx)substitutor).inplacePutAll((PsiClass)target, types);
+            substitutor = substitutor.putAll((PsiClass)target, types);
           }
         }
       }
