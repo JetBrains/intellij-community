@@ -12,8 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.builder.MavenBuilder;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
@@ -156,12 +156,12 @@ public class MavenKeymapExtension implements KeymapExtension {
     public void actionPerformed(AnActionEvent e) {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project != null) {
-        final MavenBuilder mavenBuilder = project.getComponent(MavenBuilder.class);
-        if (!mavenBuilder.isRunning()) {
-          final MavenBuildParameters buildParameters =
+        final MavenRunner runner = project.getComponent(MavenRunner.class);
+        if (!runner.isRunning()) {
+          final MavenRunnerParameters runnerParameters =
             new MavenTask(myPomPath, myGoal).createBuildParameters(project.getComponent(MavenProjectsState.class));
-          if (buildParameters != null) {
-            mavenBuilder.run(buildParameters);
+          if (runnerParameters != null) {
+            runner.run(runnerParameters);
           }
         }
       }

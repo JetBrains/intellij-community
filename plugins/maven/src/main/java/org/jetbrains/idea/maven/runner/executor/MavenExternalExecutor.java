@@ -16,7 +16,7 @@
  */
 
 
-package org.jetbrains.idea.maven.builder.executor;
+package org.jetbrains.idea.maven.runner.executor;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.DefaultJavaProcessHandler;
@@ -26,10 +26,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.maven.builder.BuilderBundle;
-import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.RunnerBundle;
+import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 
 public class MavenExternalExecutor extends MavenExecutor {
 
@@ -38,36 +38,37 @@ public class MavenExternalExecutor extends MavenExecutor {
   @NonNls private static final String PHASE_INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
 
-  public MavenExternalExecutor(MavenBuildParameters parameters, MavenCoreState mavenCoreState, MavenBuilderState builderState) {
-    super(parameters, mavenCoreState, builderState, BuilderBundle.message("external.executor.caption"));
+  public MavenExternalExecutor(MavenRunnerParameters parameters, MavenCoreState mavenCoreState, MavenRunnerState runnerState) {
+    super(parameters, mavenCoreState, runnerState, RunnerBundle.message("external.executor.caption"));
   }
 
   public boolean execute() {
     displayProgress();
 
     try {
-      myProcessHandler =
-        new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myBuilderState)) {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-          public void notifyTextAvailable(final String text, final Key outputType) {
-            if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
-              super.notifyTextAvailable(text, outputType);
-            }
-            updateProgress(indicator, text);
+      myProcessHandler = new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myRunnerState)) {
+        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+
+        public void notifyTextAvailable(final String text, final Key outputType) {
+          if (isNotSuppressed(MavenLogUtil.getLevel(text))) {
+            super.notifyTextAvailable(text, outputType);
           }
-        };
+          updateProgress(indicator, text);
+        }
+      };
 
       attachToProcess(myProcessHandler);
     }
     catch (ExecutionException e) {
-      systemMessage(MavenLogUtil.LEVEL_FATAL, BuilderBundle.message("external.startup.failed", e.getMessage()), null);
+      systemMessage(MavenLogUtil.LEVEL_FATAL, RunnerBundle.message("external.startup.failed", e.getMessage()), null);
       return false;
     }
 
     start();
     readProcessOutput();
     stop();
+
     return printExitSummary();
   }
 
@@ -75,7 +76,7 @@ public class MavenExternalExecutor extends MavenExecutor {
     if (myProcessHandler != null) {
       myProcessHandler.destroyProcess();
       myProcessHandler.waitFor();
-      setExitCode(myProcessHandler.getProcess().exitValue());
+      TODO : setExitCode(myProcessHandler.getProcess().exitValue());
     }
     super.stop();
   }

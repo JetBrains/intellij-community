@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.events;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.util.Arrays;
@@ -59,10 +59,10 @@ public class MavenTask implements Cloneable {
   }
 
   @Nullable
-  public MavenBuildParameters createBuildParameters(final MavenProjectsState projectsState) {
+  public MavenRunnerParameters createBuildParameters(final MavenProjectsState projectsState) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pomPath);
     if (virtualFile != null) {
-      return new MavenBuildParameters(pomPath, Arrays.asList(goal), projectsState.getProfiles(virtualFile));
+      return new MavenRunnerParameters(pomPath, Arrays.asList(goal), projectsState.getProfiles(virtualFile));
     }
     return null;
   }

@@ -16,23 +16,23 @@
  */
 
 
-package org.jetbrains.idea.maven.builder.executor;
+package org.jetbrains.idea.maven.runner.executor;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.idea.maven.builder.BuilderBundle;
-import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.logger.MavenLogUtil;
+import org.jetbrains.idea.maven.runner.RunnerBundle;
+import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 
 import java.text.MessageFormat;
 
 public abstract class MavenExecutor extends ConsoleAdapter {
 
-  final MavenBuildParameters myParameters;
+  final MavenRunnerParameters myParameters;
   final MavenCoreState myCoreState;
-  final MavenBuilderState myBuilderState;
+  final MavenRunnerState myRunnerState;
   private final String myCaption;
   private String myAction;
 
@@ -40,11 +40,11 @@ public abstract class MavenExecutor extends ConsoleAdapter {
   private boolean cancelled = false;
   private int exitCode = 0;
 
-  public MavenExecutor(MavenBuildParameters parameters, MavenCoreState coreState, MavenBuilderState builderState, String caption) {
+  public MavenExecutor(MavenRunnerParameters parameters, MavenCoreState coreState, MavenRunnerState runnerState, String caption) {
     super(coreState.getOutputLevel());
     myParameters = parameters;
     myCoreState = coreState;
-    myBuilderState = builderState;
+    myRunnerState = runnerState;
     myCaption = caption;
   }
 
@@ -85,7 +85,7 @@ public abstract class MavenExecutor extends ConsoleAdapter {
   void displayProgress() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : BuilderBundle.message("maven.building"),
+      indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : RunnerBundle.message("maven.building"),
                                              FileUtil.toSystemDependentName(myParameters.getPomPath())));
       indicator.setText2(myParameters.getGoals().toString());
     }
@@ -93,15 +93,15 @@ public abstract class MavenExecutor extends ConsoleAdapter {
 
   protected boolean printExitSummary() {
     if (isCancelled()) {
-      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("maven.execution.aborted"), null);
+      systemMessage(MavenLogUtil.LEVEL_INFO, RunnerBundle.message("maven.execution.aborted"), null);
       return false;
     }
     else if (exitCode == 0) {
-      systemMessage(MavenLogUtil.LEVEL_INFO, BuilderBundle.message("maven.execution.finished"), null);
+      systemMessage(MavenLogUtil.LEVEL_INFO, RunnerBundle.message("maven.execution.finished"), null);
       return true;
     }
     else {
-      systemMessage(MavenLogUtil.LEVEL_ERROR, BuilderBundle.message("maven.execution.terminated.abnormally", exitCode), null);
+      systemMessage(MavenLogUtil.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
       return false;
     }
   }

@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.builder;
+package org.jetbrains.idea.maven.runner;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;

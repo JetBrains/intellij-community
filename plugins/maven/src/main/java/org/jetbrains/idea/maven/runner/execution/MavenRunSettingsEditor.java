@@ -1,13 +1,13 @@
-package org.jetbrains.idea.maven.builder.execution;
+package org.jetbrains.idea.maven.runner.execution;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.builder.MavenBuilderConfigurable;
-import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.MavenRunnerConfigurable;
+import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.MavenCoreConfigurable;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 import org.jetbrains.idea.maven.core.action.CompositeConfigurable;
@@ -25,16 +25,16 @@ class MavenRunSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
   public MavenRunSettingsEditor(final Project p) {
     myCompositeConfigurable = new CompositeConfigurable(
        new MavenRunConfigurable() {
-      protected MavenBuildParameters getParameters() {
-        return configuration.getBuildParameters();
+      protected MavenRunnerParameters getParameters() {
+        return configuration.getRunnerParameters();
       }
     }, new MavenCoreConfigurable() {
       protected MavenCoreState getState() {
         return configuration.getCoreState();
       }
-    }, new MavenBuilderConfigurable(p, false) {
-      protected MavenBuilderState getState() {
-        return configuration.getBuilderState();
+    }, new MavenRunnerConfigurable(p, true) {
+      protected MavenRunnerState getState() {
+        return configuration.getRunnerState();
       }
     });
   }

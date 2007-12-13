@@ -1,11 +1,11 @@
-package org.jetbrains.idea.maven.builder.executor;
+package org.jetbrains.idea.maven.runner.executor;
 
 import com.intellij.execution.filters.*;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.idea.maven.builder.logger.MavenLogUtil;
+import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 import org.jetbrains.idea.maven.core.util.ErrorHandler;
 
 /**

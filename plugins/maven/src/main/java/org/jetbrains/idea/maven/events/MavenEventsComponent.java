@@ -25,8 +25,8 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.builder.MavenBuilder;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
@@ -53,7 +53,7 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
 
   private final Project myProject;
   private final MavenProjectsState myProjectsState;
-  private final MavenBuilder myMavenBuilder;
+  private final MavenRunner myRunner;
 
   private MavenEventsState myState = new MavenEventsState();
 
@@ -61,10 +61,10 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   private Collection<Listener> myListeners = new HashSet<Listener>();
   private TaskSelector myTaskSelector;
 
-  public MavenEventsComponent(final Project project, final MavenProjectsState projectsState, final MavenBuilder mavenBuilder) {
+  public MavenEventsComponent(final Project project, final MavenProjectsState projectsState, final MavenRunner runner) {
     myProject = project;
     myProjectsState = projectsState;
-    myMavenBuilder = mavenBuilder;
+    myRunner = runner;
 
     myProjectsState.addListener(new MyProjectStateListener(project));
   }
@@ -87,15 +87,15 @@ public class MavenEventsComponent extends DummyProjectComponent implements Persi
   }
 
   public boolean execute(@NotNull Collection<MavenTask> mavenTasks) {
-    final List<MavenBuildParameters> parametersList = new ArrayList<MavenBuildParameters>();
+    final List<MavenRunnerParameters> parametersList = new ArrayList<MavenRunnerParameters>();
     for (MavenTask mavenTask : mavenTasks) {
-      final MavenBuildParameters buildParameters = mavenTask.createBuildParameters(myProjectsState);
-      if (buildParameters == null) {
+      final MavenRunnerParameters runnerParameters = mavenTask.createBuildParameters(myProjectsState);
+      if (runnerParameters == null) {
         return false;
       }
-      parametersList.add(buildParameters);
+      parametersList.add(runnerParameters);
     }
-    return myMavenBuilder.runBatch(parametersList, null, null, EventsBundle.message("maven.event.executing"));
+    return myRunner.runBatch(parametersList, null, null, EventsBundle.message("maven.event.executing"));
   }
 
   public String getActionId(@Nullable String pomPath, @Nullable String goal) {

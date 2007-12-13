@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.builder.execution;
+package org.jetbrains.idea.maven.runner.execution;
 
 import com.intellij.execution.LocatableConfigurationType;
 import com.intellij.execution.Location;
@@ -18,8 +18,8 @@ import com.intellij.psi.PsiElement;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.builder.BuilderBundle;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.RunnerBundle;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
@@ -46,11 +46,11 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   }
 
   public String getDisplayName() {
-    return BuilderBundle.message("maven.run.configuration.name");
+    return RunnerBundle.message("maven.run.configuration.name");
   }
 
   public String getConfigurationTypeDescription() {
-    return BuilderBundle.message("maven.run.configuration.description");
+    return RunnerBundle.message("maven.run.configuration.description");
   }
 
   public Icon getIcon() {
@@ -73,22 +73,22 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   public void disposeComponent() {
   }
 
-  private static MavenBuildParameters createBuildParameters() {
+  private static MavenRunnerParameters createBuildParameters() {
     final DataContext dataContext = DataManager.getInstance().getDataContext();
-    return dataContext != null ? MavenBuildParameters.createBuildParameters(dataContext) : null;
+    return dataContext != null ? MavenRunnerParameters.createBuildParameters(dataContext) : null;
   }
 
-  public static String generateName(final Project project, final MavenBuildParameters buildParameters) {
+  public static String generateName(final Project project, final MavenRunnerParameters runnerParameters) {
     StringBuilder stringBuilder = new StringBuilder();
 
-    final String name = getMavenProjectName(project, buildParameters);
+    final String name = getMavenProjectName(project, runnerParameters);
     if (!StringUtil.isEmptyOrSpaces(name)) {
       stringBuilder.append(name);
       stringBuilder.append(" ");
     }
 
     stringBuilder.append("[");
-    listGoals(stringBuilder, buildParameters.getGoals());
+    listGoals(stringBuilder, runnerParameters.getGoals());
     stringBuilder.append("]");
 
     return stringBuilder.toString();
@@ -111,9 +111,9 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     }
   }
 
-  private static String getMavenProjectName(final Project project, final MavenBuildParameters buildParameters) {
+  private static String getMavenProjectName(final Project project, final MavenRunnerParameters runnerParameters) {
     LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final VirtualFile virtualFile = localFileSystem.findFileByPath(buildParameters.getPomPath());
+    final VirtualFile virtualFile = localFileSystem.findFileByPath(runnerParameters.getPomPath());
     if (virtualFile != null) {
       MavenProject mavenProject = project.getComponent(MavenProjectsState.class).getMavenProject(virtualFile);
       if (mavenProject != null) {
@@ -126,20 +126,20 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   }
 
   public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-    final MavenBuildParameters buildParameters = createBuildParameters();
-    if (buildParameters == null) {
+    final MavenRunnerParameters runnerParameters = createBuildParameters();
+    if (runnerParameters == null) {
       return null;
     }
 
     final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(location.getProject())
-      .createConfiguration(generateName(location.getProject(), buildParameters), myFactory);
+      .createConfiguration(generateName(location.getProject(), runnerParameters), myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
-    runConfiguration.setBuildParameters(buildParameters);
+    runConfiguration.setRunnerParameters(runnerParameters);
     return settings;
   }
 
   public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
     return configuration instanceof MavenRunConfiguration &&
-           ((MavenRunConfiguration)configuration).getBuildParameters().equals(createBuildParameters());
+           ((MavenRunConfiguration)configuration).getRunnerParameters().equals(createBuildParameters());
   }
 }

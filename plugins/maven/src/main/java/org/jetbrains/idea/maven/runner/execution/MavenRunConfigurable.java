@@ -1,4 +1,4 @@
-package org.jetbrains.idea.maven.builder.execution;
+package org.jetbrains.idea.maven.runner.execution;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
@@ -7,8 +7,8 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.builder.BuilderBundle;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.RunnerBundle;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.util.Strings;
 
 import javax.swing.*;
@@ -23,7 +23,7 @@ public abstract class MavenRunConfigurable implements Configurable {
   private LabeledComponent<JTextField> profilesComponent;
 
   public MavenRunConfigurable() {
-    pomComponent.getComponent().addBrowseFolderListener(BuilderBundle.message("maven.select.maven.project.file"), "", null,
+    pomComponent.getComponent().addBrowseFolderListener(RunnerBundle.message("maven.select.maven.project.file"), "", null,
                                                         new FileChooserDescriptor(true, false, false, false, false, false));
   }
 
@@ -35,7 +35,7 @@ public abstract class MavenRunConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return BuilderBundle.message("maven.tab.project");
+    return RunnerBundle.message("maven.tab.project");
   }
 
   @Nullable
@@ -50,7 +50,7 @@ public abstract class MavenRunConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    MavenBuildParameters formParameters = new MavenBuildParameters();
+    MavenRunnerParameters formParameters = new MavenRunnerParameters();
     setData(formParameters);
     return !formParameters.equals(getParameters());
   }
@@ -63,17 +63,17 @@ public abstract class MavenRunConfigurable implements Configurable {
     getData(getParameters());
   }
 
-  private void setData(final MavenBuildParameters data) {
+  private void setData(final MavenRunnerParameters data) {
     data.setPomPath(pomComponent.getComponent().getText());
     data.setGoals(Strings.tokenize(goalsComponent.getComponent().getText(), " "));
     data.setProfiles(Strings.tokenize(profilesComponent.getComponent().getText(), " ,"));
   }
 
-  private void getData(final MavenBuildParameters data) {
+  private void getData(final MavenRunnerParameters data) {
     pomComponent.getComponent().setText(data.getPomPath());
     goalsComponent.getComponent().setText(Strings.detokenize(data.getGoals(), ' '));
     profilesComponent.getComponent().setText(Strings.detokenize(data.getProfiles(), ','));
   }
 
-  protected abstract MavenBuildParameters getParameters();
+  protected abstract MavenRunnerParameters getParameters();
 }

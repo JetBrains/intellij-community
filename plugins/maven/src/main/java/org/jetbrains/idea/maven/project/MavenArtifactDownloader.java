@@ -18,9 +18,9 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.maven.builder.MavenBuilder;
-import org.jetbrains.idea.maven.builder.MavenBuilderState;
-import org.jetbrains.idea.maven.builder.executor.MavenBuildParameters;
+import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
@@ -234,25 +234,25 @@ public class MavenArtifactDownloader {
   }
 
 
-  private static void generateSources(Project project, final List<MavenBuildParameters> commands) {
+  private static void generateSources(Project project, final List<MavenRunnerParameters> commands) {
     final MavenCore core = project.getComponent(MavenCore.class);
-    final MavenBuilder builder = project.getComponent(MavenBuilder.class);
+    final MavenRunner runner = project.getComponent(MavenRunner.class);
 
     final MavenCoreState coreState = core.getState().clone();
     coreState.setFailureBehavior(MavenExecutionRequest.REACTOR_FAIL_NEVER);
     coreState.setNonRecursive(false);
 
-    final MavenBuilderState builderState = builder.getState().clone();
-    builderState.setRunMavenInBackground(false);
+    final MavenRunnerState runnerState = runner.getState().clone();
+    runnerState.setRunMavenInBackground(false);
 
-    builder.runBatch(commands, coreState, builderState, ProjectBundle.message("maven.import.generating.sources"));
+    runner.runBatch(commands, coreState, runnerState, ProjectBundle.message("maven.import.generating.sources"));
   }
 
   @NonNls private final static String[] generateGoals =
     {"clean", "generate-sources", "generate-resources", "generate-test-sources", "generate-test-resources"};
 
-  private static List<MavenBuildParameters> createGenerateCommand(Map<MavenProject, Collection<String>> projects) {
-    final List<MavenBuildParameters> commands = new ArrayList<MavenBuildParameters>();
+  private static List<MavenRunnerParameters> createGenerateCommand(Map<MavenProject, Collection<String>> projects) {
+    final List<MavenRunnerParameters> commands = new ArrayList<MavenRunnerParameters>();
     final List<String> goals = Arrays.asList(generateGoals);
 
     final Set<String> modulePaths = new HashSet<String>();
@@ -263,7 +263,7 @@ public class MavenArtifactDownloader {
     for (Map.Entry<MavenProject, Collection<String>> entry : projects.entrySet()) {
       final File file = entry.getKey().getFile();
       if (!modulePaths.contains(FileUtil.toSystemIndependentName(file.getParent()))) { // only for top-level projects
-        commands.add(new MavenBuildParameters(file.getPath(), goals, entry.getValue()));
+        commands.add(new MavenRunnerParameters(file.getPath(), goals, entry.getValue()));
       }
     }
     return commands;
