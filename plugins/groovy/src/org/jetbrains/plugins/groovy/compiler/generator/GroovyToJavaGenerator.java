@@ -16,10 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
@@ -27,7 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
@@ -549,6 +546,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
   }
 
   private void writeMethod(StringBuffer text, PsiMethod method) {
+    if (method == null) return;
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     /************* type and name **********/
@@ -575,9 +573,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     //writes parameters
     int i = 0;
     while (i < parameterList.length) {
+      PsiParameter parameter = parameterList[i];
+      if(parameter == null) continue;
+
       if (i > 0) text.append(", ");  //append ','
 
-      PsiParameter parameter = parameterList[i];
       text.append(getTypeText(parameter.getType()));
       text.append(" ");
       text.append(parameter.getName());
