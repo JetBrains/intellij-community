@@ -320,7 +320,7 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  private void removeRedundantImports(final Set<PsiJavaFile> javaFiles) {
+  protected void removeRedundantImports(final Set<PsiJavaFile> javaFiles) {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
     for (PsiJavaFile file : javaFiles) {
       try {
@@ -334,7 +334,7 @@ public abstract class BaseRefactoringProcessor {
     }
   }
 
-  private static Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
+  protected static Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();

@@ -132,6 +132,8 @@ class MigrationProcessor extends BaseRefactoringProcessor {
           MigrationUtil.doClassMigration(psiManager, psiMigration, entry.getNewName(), usages);
         }
       }
+
+      removeRedundantImports(getTouchedJavaFiles(usages));
     }
     finally {
       a.finish();
