@@ -16,6 +16,10 @@ import java.text.MessageFormat;
 public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
   public void update(final AnActionEvent e) {
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files != null && files.length > 1) {
+      virtualFile = null;
+    }
     Project project = e.getData(PlatformDataKeys.PROJECT);
     boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(project, virtualFile);
     if (enabled) {
