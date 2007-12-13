@@ -128,14 +128,17 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   public void addMessage(ErrorTreeElementKind kind, String[] text, VirtualFile file, int line, int column, Object data) {
     if (file != null) {
+      final int guiline = line < 0 ? -1 : line + 1;
+      final int guicolumn = column < 0 ? -1:column + 1;
+
       addNavigatableMessage(
         file.getPresentableUrl(),
         new OpenFileDescriptor(myProject, file, line, column),
         kind,
         text,
         data,
-        NewErrorTreeViewPanel.createExportPrefix(line),
-        NewErrorTreeViewPanel.createRendererPrefix(line, column),
+        NewErrorTreeViewPanel.createExportPrefix(guiline),
+        NewErrorTreeViewPanel.createRendererPrefix(guiline, guicolumn),
         file
       );
     }

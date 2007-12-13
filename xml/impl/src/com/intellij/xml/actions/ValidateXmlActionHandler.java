@@ -275,7 +275,7 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                     file != null ? new OpenFileDescriptor(myProject, file, ex.getLineNumber() - 1, ex.getColumnNumber() - 1):null,
                     NewErrorTreeViewPanel.createExportPrefix(ex.getLineNumber()),
                     NewErrorTreeViewPanel.createRendererPrefix(ex.getLineNumber(), ex.getColumnNumber()),
-                    null
+                    file
                 );
               }
             }
