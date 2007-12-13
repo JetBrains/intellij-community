@@ -3,26 +3,26 @@
  */
 package com.intellij.psi.impl.beanProperties;
 
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.meta.PsiMetaDataBase;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
 /**
  * @author peter
 */
-public abstract class RenameableFakePsiElement extends FakePsiElement implements PsiMetaBaseOwner, PsiPresentableMetaData {
+public abstract class RenameableFakePsiElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
   private final PsiFile myContainingFile;
 
   public RenameableFakePsiElement(final PsiFile containingFile) {
@@ -48,7 +48,7 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   }
 
   @Nullable
-  public PsiMetaDataBase getMetaData() {
+  public PsiMetaData getMetaData() {
     return this;
   }
 

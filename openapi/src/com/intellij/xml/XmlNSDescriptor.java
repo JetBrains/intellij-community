@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public interface XmlNSDescriptor extends PsiMetaData{
+public interface XmlNSDescriptor extends PsiMetaData {
   @Nullable
   XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag);
 

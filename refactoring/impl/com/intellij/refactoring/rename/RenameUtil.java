@@ -11,8 +11,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -431,9 +431,9 @@ public class RenameUtil {
   }
 
   private static String getStringToReplace(PsiElement element, String newName, boolean nonJava) {
-    if (element instanceof PsiMetaBaseOwner) {
-      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)element;
-      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+      final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
         return metaData.getName();
       }
@@ -538,8 +538,8 @@ public class RenameUtil {
   private static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages, RefactoringElementListener listener)
     throws IncorrectOperationException {
     PsiWritableMetaData writableMetaData = null;
-    if (namedElement instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)namedElement).getMetaData();
+    if (namedElement instanceof PsiMetaOwner) {
+      final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();
       if (metaData instanceof PsiWritableMetaData) {
         writableMetaData = (PsiWritableMetaData)metaData;
       }

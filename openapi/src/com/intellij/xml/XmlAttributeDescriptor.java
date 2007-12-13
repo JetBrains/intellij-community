@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public interface XmlAttributeDescriptor extends PsiMetaData{
+public interface XmlAttributeDescriptor extends PsiMetaData {
   XmlAttributeDescriptor[] EMPTY = new XmlAttributeDescriptor[0];
 
   boolean isRequired();

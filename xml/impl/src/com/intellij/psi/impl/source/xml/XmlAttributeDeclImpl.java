@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -14,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
-import com.intellij.ide.util.EditSourceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,10 +112,6 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
 
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
-  }
-
-  public boolean isMetaEnough() {
-    return true;
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {

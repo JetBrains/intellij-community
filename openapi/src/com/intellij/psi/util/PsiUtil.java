@@ -32,8 +32,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo.ApplicabilityLevel;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -764,8 +764,8 @@ public final class PsiUtil {
    */
   public static String getName(PsiElement element) {
     String name = null;
-    if (element instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase data = ((PsiMetaBaseOwner) element).getMetaData();
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
       if (data != null)
         name = data.getName(element);
     }
@@ -1143,8 +1143,8 @@ public final class PsiUtil {
   }
 
   public static boolean checkName(PsiElement element, String name, final PsiElement context) {
-    if (element instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase data = ((PsiMetaBaseOwner) element).getMetaData();
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
       if (data != null) return name.equals(data.getName(context));
     }
     return element instanceof PsiNamedElement && name.equals(((PsiNamedElement)element).getName());

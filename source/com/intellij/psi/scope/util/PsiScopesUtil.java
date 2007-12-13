@@ -11,8 +11,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
@@ -55,16 +53,17 @@ public class PsiScopesUtil {
   }
 
   public static boolean processScope(PsiElement scope, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
-    if(scope instanceof PsiMetaOwner){
-      final PsiMetaOwner owner = (PsiMetaOwner) scope;
-      if (!owner.isMetaEnough() && !scope.processDeclarations(processor, substitutor, lastParent, place)) {
-        return false;
-      }
+    //if(scope instanceof PsiMetaOwner){
+    //  final PsiMetaOwner owner = (PsiMetaOwner) scope;
+    //  if (!owner.isMetaEnough() && !scope.processDeclarations(processor, substitutor, lastParent, place)) {
+    //    return false;
+    //  }
+    //
+    //  final PsiMetaData data = owner.getMetaData();
+    //  return data == null || data.processDeclarations(scope, processor, substitutor, lastParent, place);
+    //
+    //}
 
-      final PsiMetaData data = owner.getMetaData();
-      return data == null || data.processDeclarations(scope, processor, substitutor, lastParent, place);
-
-    }
     return scope.processDeclarations(processor, substitutor, lastParent, place);
   }
 

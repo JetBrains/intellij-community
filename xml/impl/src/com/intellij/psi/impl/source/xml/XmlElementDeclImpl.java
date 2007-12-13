@@ -11,7 +11,10 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,10 +58,6 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
-  }
-
-  public boolean isMetaEnough() {
-    return true;
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {

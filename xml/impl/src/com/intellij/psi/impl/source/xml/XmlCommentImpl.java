@@ -6,8 +6,8 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.jsp.JspSpiUtil;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlElementType;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType, PsiMetaBaseOwner {
+public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlElementType, PsiMetaOwner {
   public XmlCommentImpl() {
     super(XML_COMMENT);
   }
@@ -61,7 +61,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   }
 
   @Nullable
-  public PsiMetaDataBase getMetaData() {
+  public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 }

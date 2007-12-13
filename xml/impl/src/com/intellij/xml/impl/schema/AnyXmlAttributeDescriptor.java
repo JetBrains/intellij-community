@@ -9,11 +9,9 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.xml.XmlAttributeDescriptor;
 
 public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
   private final String myAttributeName;
@@ -30,10 +28,6 @@ public class AnyXmlAttributeDescriptor implements XmlAttributeDescriptor {
 
   public PsiElement getDeclaration(){
     return null;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    return true;
   }
 
   public String getName(PsiElement context){

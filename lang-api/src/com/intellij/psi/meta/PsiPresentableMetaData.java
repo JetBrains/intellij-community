@@ -22,7 +22,7 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public interface PsiPresentableMetaData extends PsiMetaDataBase {
+public interface PsiPresentableMetaData extends PsiMetaData {
   String getTypeName();
 
   @Nullable

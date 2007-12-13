@@ -1124,10 +1124,6 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
     return MetaRegistry.getMeta(this);
   }
 
-  public boolean isMetaEnough() {
-    return false;
-  }
-
   @NotNull
   public ClsAnnotationImpl[] getAnnotations() {
     if (myAnnotations == null) {

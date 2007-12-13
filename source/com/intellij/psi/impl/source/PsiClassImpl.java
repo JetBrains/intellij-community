@@ -741,10 +741,6 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return MetaRegistry.getMeta(this);
   }
 
-  public boolean isMetaEnough(){
-    return false;
-  }
-
   // optimization to not load tree when resolving bases of anonymous and locals
   // if there is no local classes with such name in scope it's possible to use outer scope as context
   @Nullable

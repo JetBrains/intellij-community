@@ -7,7 +7,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,7 +94,7 @@ public class ClsAnnotationImpl extends ClsElementImpl implements PsiAnnotation, 
     return buffer.toString();
   }
 
-  public PsiMetaDataBase getMetaData() {
+  public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 

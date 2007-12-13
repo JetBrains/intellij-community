@@ -17,8 +17,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
@@ -267,7 +267,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         }
 
         XmlFile currentFile = retrieveFile(fileLocation, version);
-        PsiMetaBaseOwner currentOwner = retrieveOwner(currentFile, namespace);
+        PsiMetaOwner currentOwner = retrieveOwner(currentFile, namespace);
         if (currentOwner != null) {
           descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
           if (descriptor != null) {
@@ -295,7 +295,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   }
 
   @Nullable
-  private PsiMetaBaseOwner retrieveOwner(final XmlFile file, final String namespace) {
+  private PsiMetaOwner retrieveOwner(final XmlFile file, final String namespace) {
     if (file == null) {
       return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }
@@ -805,10 +805,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   public PsiMetaData getMetaData() {
     return MetaRegistry.getMeta(this);
-  }
-
-  public boolean isMetaEnough() {
-    return true;
   }
 
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean beforeB) {

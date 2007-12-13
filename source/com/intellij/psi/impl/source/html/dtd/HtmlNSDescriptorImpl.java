@@ -3,8 +3,6 @@ package com.intellij.psi.impl.source.html.dtd;
 import com.intellij.jsp.impl.RelaxedHtmlFromSchemaNSDescriptor;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -95,14 +93,6 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor {
 
   public PsiElement getDeclaration() {
     return myDelegate == null ? null : myDelegate.getDeclaration();
-  }
-
-  public boolean processDeclarations(PsiElement context,
-                                     PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
-                                     PsiElement lastElement,
-                                     PsiElement place) {
-    return myDelegate == null || myDelegate.processDeclarations(context, processor, substitutor, lastElement, place);
   }
 
   public String getName(PsiElement context) {

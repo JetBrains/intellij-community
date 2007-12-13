@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -92,7 +92,7 @@ public class BeanProperty {
     return PropertyUtil.isSimplePropertyAccessor(method) ? new BeanProperty(method) : null;
   }
 
-  private class BeanPropertyElement extends FakePsiElement implements PsiMetaBaseOwner, PsiPresentableMetaData {
+  private class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner, PsiPresentableMetaData {
 
     public PsiManager getManager() {
       return myMethod.getManager();
@@ -130,7 +130,7 @@ public class BeanProperty {
     }
 
     @Nullable
-    public PsiMetaDataBase getMetaData() {
+    public PsiMetaData getMetaData() {
       return this;
     }
 

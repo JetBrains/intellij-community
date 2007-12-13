@@ -25,7 +25,7 @@ import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -291,7 +291,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
   }
 
   public interface MetaHandler {
-    boolean isAcceptableMetaData(PsiMetaDataBase metadata, final String url);
+    boolean isAcceptableMetaData(PsiMetaData metadata, final String url);
     String searchFor();
   }
 
@@ -302,7 +302,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
       this.tag = tag;
     }
 
-    public boolean isAcceptableMetaData(final PsiMetaDataBase metaData, final String url) {
+    public boolean isAcceptableMetaData(final PsiMetaData metaData, final String url) {
       if (metaData instanceof TldDescriptor) {
         if (((TldDescriptor)metaData).getElementDescriptor(tag) != null) return true;
         return false;
@@ -350,7 +350,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
 
         final boolean wordFound = checkIfGivenXmlHasTheseWords(searchFor, tldFileByUri);
         if (!wordFound) continue;
-        final PsiMetaDataBase metaData = tldFileByUri.getDocument().getMetaData();
+        final PsiMetaData metaData = tldFileByUri.getDocument().getMetaData();
 
         if (metaHandler.isAcceptableMetaData(metaData, uri)) {
           processor.process(uri, null);
@@ -383,7 +383,7 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
         if (xmlFile != null) {
           final boolean wordFound = checkIfGivenXmlHasTheseWords(searchFor, xmlFile);
           if (!wordFound) continue;
-          final PsiMetaDataBase metaData = xmlFile.getDocument().getMetaData();
+          final PsiMetaData metaData = xmlFile.getDocument().getMetaData();
 
           if (metaHandler.isAcceptableMetaData(metaData, url)) {
             final XmlNSDescriptorImpl descriptor = metaData instanceof XmlNSDescriptorImpl ? (XmlNSDescriptorImpl)metaData:null;

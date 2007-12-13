@@ -35,8 +35,8 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -979,9 +979,9 @@ public class RefactoringUtil {
   }
 
   public static String getStringToSearch(PsiElement element, boolean nonJava) {
-    if (element instanceof PsiMetaBaseOwner) {
-      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)element;
-      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+      final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) {
         return metaData.getName();
       }

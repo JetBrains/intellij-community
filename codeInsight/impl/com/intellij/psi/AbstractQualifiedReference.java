@@ -13,8 +13,8 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -118,8 +118,8 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     if (element instanceof PsiPackage) {
       return replaceReference(((PsiPackage)element).getQualifiedName());
     }
-    if (element instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)element).getMetaData();
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
       if (metaData != null) {
         final String name = metaData.getName(this);
         if (name != null) {

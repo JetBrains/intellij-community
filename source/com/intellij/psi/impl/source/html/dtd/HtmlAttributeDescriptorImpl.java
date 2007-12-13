@@ -1,8 +1,6 @@
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -55,14 +53,6 @@ public class HtmlAttributeDescriptorImpl implements XmlAttributeDescriptor {
 
   public PsiElement getDeclaration() {
     return delegate.getDeclaration();
-  }
-
-  public boolean processDeclarations(PsiElement context,
-                                     PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
-                                     PsiElement lastElement,
-                                     PsiElement place) {
-    return delegate.processDeclarations(context, processor, substitutor, lastElement, place);
   }
 
   public String getName(PsiElement context) {

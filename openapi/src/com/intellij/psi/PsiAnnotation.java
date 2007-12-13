@@ -15,7 +15,7 @@
  */
 package com.intellij.psi;
 
-import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ven
  */
-public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaBaseOwner {
+public interface PsiAnnotation extends PsiAnnotationMemberValue, PsiMetaOwner {
   /**
    * The empty array of PSI annotations which can be reused to avoid unnecessary allocations.
    */

@@ -1,8 +1,6 @@
 package com.intellij.xml.util;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -93,16 +91,6 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
       if(declaration != null) return declaration;
     }
     return null;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    final Iterator iterator = sequence.iterator();
-    while(iterator.hasNext()){
-      final XmlNSDescriptor descriptor = (XmlNSDescriptor) iterator.next();
-      if(!descriptor.processDeclarations(context, processor, substitutor, lastElement, place)) return false;
-    }
-
-    return true;
   }
 
   public String getName(PsiElement context){

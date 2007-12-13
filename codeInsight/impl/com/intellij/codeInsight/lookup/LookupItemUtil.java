@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,8 +161,8 @@ public class LookupItemUtil{
       }
       item.setAttribute(LookupItem.TYPE, original);
     }
-    else if (object instanceof PsiMetaDataBase) {
-      s = ((PsiMetaDataBase)object).getName();
+    else if (object instanceof PsiMetaData) {
+      s = ((PsiMetaData)object).getName();
     }
     else if (object instanceof String) {
       s = (String)object;

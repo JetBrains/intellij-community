@@ -11,7 +11,7 @@ import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +102,7 @@ public class PsiAnnotationImpl extends IndexedRepositoryPsiElement implements Ps
     }
   }
 
-  public PsiMetaDataBase getMetaData() {
+  public PsiMetaData getMetaData() {
     return MetaRegistry.getMetaBase(this);
   }
 

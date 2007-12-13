@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.meta.PsiMetaDataBase;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -180,7 +177,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
             if (includedDocument != null) {
-              final PsiMetaDataBase data = includedDocument.getMetaData();
+              final PsiMetaData data = includedDocument.getMetaData();
               if (data instanceof XmlNSDescriptorImpl) {
                 final XmlElementDescriptor elementDescriptor =
                   ((XmlNSDescriptorImpl)data).getElementDescriptor(localName, namespace, visited, reference);
@@ -275,7 +272,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
             final XmlDocument includedDocument = xmlFile.getDocument();
             if (includedDocument != null) {
-              final PsiMetaDataBase data = includedDocument.getMetaData();
+              final PsiMetaData data = includedDocument.getMetaData();
 
               if(data instanceof XmlNSDescriptorImpl){
                 final XmlAttributeDescriptor attributeDescriptor = ((XmlNSDescriptorImpl)data).getAttributeImpl(localName, namespace,visited);
@@ -833,10 +830,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return myFile.getDocument();
   }
 
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    return PsiScopesUtil.walkChildrenScopes(context, processor, substitutor, lastElement, place);
-  }
-
   public String getName(PsiElement context){
     return getName();
   }
@@ -934,7 +927,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     XmlFile file = getRedefinedElementDescriptorFile(parentTag);
     if (file != null) {
       final XmlDocument document = file.getDocument();
-      final PsiMetaDataBase metaData = document != null ? document.getMetaData():null;
+      final PsiMetaData metaData = document != null ? document.getMetaData():null;
       if (metaData instanceof XmlNSDescriptorImpl) return (XmlNSDescriptorImpl)metaData;
     }
     return null;

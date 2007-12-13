@@ -18,14 +18,9 @@ package com.intellij.psi.meta;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 05.05.2003
- *
- * Use this if your meta data can have declaration processing functionality, i.e. it implements PsiMetaData
+ * @author peter
  */
-public interface PsiMetaOwner extends PsiMetaBaseOwner{
+public interface PsiMetaOwner {
   @Nullable
   PsiMetaData getMetaData();
-  boolean isMetaEnough();
 }

@@ -10,8 +10,6 @@ package com.intellij.xml.impl;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -47,10 +45,6 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
     }
 
     return null;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    return true;
   }
 
   public String getName(PsiElement context){

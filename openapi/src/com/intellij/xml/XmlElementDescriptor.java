@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public interface XmlElementDescriptor extends PsiMetaData{
+public interface XmlElementDescriptor extends PsiMetaData {
   XmlElementDescriptor[] EMPTY_ARRAY = new XmlElementDescriptor[0];
 
   String getQualifiedName();

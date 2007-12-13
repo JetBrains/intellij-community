@@ -13,7 +13,6 @@ import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.TargetNamespaceFilter;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.xml.*;
@@ -133,36 +132,36 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   }
 
-  private static final Key<CachedValue<PsiMetaDataBase>> META_DATA_KEY = Key.create("META DATA KEY");
+  private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 
-  public static void bindDataToElement(final PsiElement element, final PsiMetaDataBase data){
-    CachedValue<PsiMetaDataBase> value =
-      element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaDataBase>() {
-      public CachedValueProvider.Result<PsiMetaDataBase> compute() {
+  public static void bindDataToElement(final PsiElement element, final PsiMetaData data){
+    CachedValue<PsiMetaData> value =
+      element.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<PsiMetaData>() {
+      public CachedValueProvider.Result<PsiMetaData> compute() {
         data.init(element);
-        return new Result<PsiMetaDataBase>(data, data.getDependences());
+        return new Result<PsiMetaData>(data, data.getDependences());
       }
     });
     element.putUserData(META_DATA_KEY, value);
   }
 
   public static PsiMetaData getMeta(final PsiElement element) {
-    final PsiMetaDataBase base = getMetaBase(element);
-    return base instanceof PsiMetaData ? (PsiMetaData)base : null;
+    final PsiMetaData base = getMetaBase(element);
+    return base instanceof PsiMetaData ? base : null;
   }
 
-  private static UserDataCache<CachedValue<PsiMetaDataBase>, PsiElement, Object> ourCachedMetaCache =
-    new UserDataCache<CachedValue<PsiMetaDataBase>, PsiElement, Object>() {
-      protected CachedValue<PsiMetaDataBase> compute(final PsiElement element, Object p) {
+  private static UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object> ourCachedMetaCache =
+    new UserDataCache<CachedValue<PsiMetaData>, PsiElement, Object>() {
+      protected CachedValue<PsiMetaData> compute(final PsiElement element, Object p) {
         return element.getManager().getCachedValuesManager()
-        .createCachedValue(new CachedValueProvider<PsiMetaDataBase>() {
-          public Result<PsiMetaDataBase> compute() {
+        .createCachedValue(new CachedValueProvider<PsiMetaData>() {
+          public Result<PsiMetaData> compute() {
             try {
               for (final MyBinding binding : ourBindings) {
                 if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
-                  final PsiMetaDataBase data = binding.myDataClass.newInstance();
+                  final PsiMetaData data = binding.myDataClass.newInstance();
                   data.init(element);
-                  return new Result<PsiMetaDataBase>(data, data.getDependences());
+                  return new Result<PsiMetaData>(data, data.getDependences());
                 }
               }
             } catch (IllegalAccessException iae) {
@@ -172,19 +171,19 @@ public class MetaRegistry extends MetaDataRegistrar {
               throw new RuntimeException(ie);
             }
 
-            return new Result<PsiMetaDataBase>(null, element);
+            return new Result<PsiMetaData>(null, element);
           }
         }, false);
       }
     };
   
   @Nullable
-  public static PsiMetaDataBase getMetaBase(final PsiElement element) {
+  public static PsiMetaData getMetaBase(final PsiElement element) {
     ProgressManager.getInstance().checkCanceled();
     return ourCachedMetaCache.get(META_DATA_KEY, element, null).getValue();
   }
 
-  public static <T extends PsiMetaDataBase> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
+  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass, Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
     addBinding(binding);
     Disposer.register(parentDisposable, new Disposable() {
@@ -194,23 +193,23 @@ public class MetaRegistry extends MetaDataRegistrar {
     });
   }
 
-  public static <T extends PsiMetaDataBase> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
+  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
     addBinding(new MyBinding(filter, aMetadataClass));
   }
 
-  private static <T extends PsiMetaDataBase> void addBinding(final MyBinding binding) {
+  private static <T extends PsiMetaData> void addBinding(final MyBinding binding) {
     ourBindings.add(0, binding);
   }
 
-  public <T extends PsiMetaDataBase> void registerMetaData(ElementFilter filter, Class<T> metadataDescriptorClass) {
+  public <T extends PsiMetaData> void registerMetaData(ElementFilter filter, Class<T> metadataDescriptorClass) {
     addMetadataBinding(filter, metadataDescriptorClass);
   }
 
   private static class MyBinding {
     ElementFilter myFilter;
-    Class<PsiMetaDataBase> myDataClass;
+    Class<PsiMetaData> myDataClass;
 
-    public <T extends PsiMetaDataBase> MyBinding(ElementFilter filter, Class<T> dataClass) {
+    public <T extends PsiMetaData> MyBinding(ElementFilter filter, Class<T> dataClass) {
       LOG.assertTrue(filter != null);
       LOG.assertTrue(dataClass != null);
       myFilter = filter;

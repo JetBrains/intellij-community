@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -164,8 +164,8 @@ public class FindUsagesUtil {
         if (norm instanceof PsiVariable) {
           return ((PsiVariable)norm).getName();
         }
-        if (norm instanceof PsiMetaBaseOwner) {
-          final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)norm).getMetaData();
+        if (norm instanceof PsiMetaOwner) {
+          final PsiMetaData metaData = ((PsiMetaOwner)norm).getMetaData();
           if (metaData != null) {
             return metaData.getName();
           }

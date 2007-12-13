@@ -282,10 +282,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     return MetaRegistry.getMeta(this);
   }
 
-  public boolean isMetaEnough() {
-    return true;
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void dumpStatistics(){
     System.out.println("Statistics:");

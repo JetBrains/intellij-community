@@ -16,8 +16,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -131,10 +131,10 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    PsiMetaDataBase metaData = null;
+    PsiMetaData metaData = null;
 
-    if (element instanceof PsiMetaBaseOwner){
-      final PsiMetaBaseOwner owner = (PsiMetaBaseOwner)element;
+    if (element instanceof PsiMetaOwner){
+      final PsiMetaOwner owner = (PsiMetaOwner)element;
       metaData = owner.getMetaData();
 
       if (metaData instanceof XmlElementDescriptor){

@@ -6,7 +6,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
@@ -128,7 +128,7 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
     else if (element instanceof PsiNamedElement) {
       return false;
     }
-    else if (element instanceof PsiMetaBaseOwner) {
+    else if (element instanceof PsiMetaOwner) {
       return false;
     }
     else{
@@ -196,7 +196,7 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
     }
     else if (element instanceof PsiNamedElement ||
              element instanceof XmlAttributeValue ||
-             element instanceof PsiMetaBaseOwner) {
+             element instanceof PsiMetaOwner) {
 
     }
     else{

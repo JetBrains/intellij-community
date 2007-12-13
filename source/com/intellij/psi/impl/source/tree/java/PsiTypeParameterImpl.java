@@ -374,10 +374,6 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
     return MetaRegistry.getMeta(this);
   }
 
-  public boolean isMetaEnough(){
-    return false;
-  }
-
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }

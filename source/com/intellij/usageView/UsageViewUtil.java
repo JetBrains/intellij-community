@@ -11,8 +11,8 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -34,9 +34,9 @@ public class UsageViewUtil {
   private UsageViewUtil() { }
 
   public static String createNodeText(PsiElement element, boolean useFullName) {
-    if (element instanceof PsiMetaBaseOwner) {
-      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)element;
-      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+      final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData instanceof PsiPresentableMetaData) {
         return ((PsiPresentableMetaData)metaData).getTypeName() + " " + getMetaDataName(metaData);
       }
@@ -44,7 +44,7 @@ public class UsageViewUtil {
 
     if (element instanceof XmlTag) {
       final XmlTag xmlTag = (XmlTag)element;
-      final PsiMetaDataBase metaData = xmlTag.getMetaData();
+      final PsiMetaData metaData = xmlTag.getMetaData();
       final String name = metaData != null ? getMetaDataName(metaData) : xmlTag.getName();
       return UsageViewBundle.message("usage.target.xml.tag.of.file", metaData == null ? "<" + name + ">" : name, xmlTag.getContainingFile().getName());
     }
@@ -59,7 +59,7 @@ public class UsageViewUtil {
     return "";
   }
 
-  private static String getMetaDataName(final PsiMetaDataBase metaData) {                    
+  private static String getMetaDataName(final PsiMetaData metaData) {
     final String name = metaData.getName();
     return StringUtil.isEmpty(name) ? "''" : name;
   }
@@ -113,8 +113,8 @@ public class UsageViewUtil {
 
   public static String getShortName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
-    if (psiElement instanceof PsiMetaBaseOwner) {
-      PsiMetaDataBase metaData = ((PsiMetaBaseOwner)psiElement).getMetaData();
+    if (psiElement instanceof PsiMetaOwner) {
+      PsiMetaData metaData = ((PsiMetaOwner)psiElement).getMetaData();
       if (metaData!=null) return getMetaDataName(metaData);
     }
 
@@ -178,14 +178,14 @@ public class UsageViewUtil {
   }
 
   public static String getType(@NotNull PsiElement psiElement) {
-    if (psiElement instanceof PsiMetaBaseOwner) {
-      final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)psiElement).getMetaData();
+    if (psiElement instanceof PsiMetaOwner) {
+      final PsiMetaData metaData = ((PsiMetaOwner)psiElement).getMetaData();
       if (metaData instanceof PsiPresentableMetaData) {
         return ((PsiPresentableMetaData)metaData).getTypeName();
       }
     }
     if (psiElement instanceof XmlTag) {
-      final PsiMetaDataBase metaData = ((XmlTag)psiElement).getMetaData();
+      final PsiMetaData metaData = ((XmlTag)psiElement).getMetaData();
       if (metaData != null && metaData.getDeclaration() instanceof XmlTag) {
         return ((XmlTag)metaData.getDeclaration()).getName();
       }
@@ -215,9 +215,9 @@ public class UsageViewUtil {
   public static String getDescriptiveName(final PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid());
 
-    if (psiElement instanceof PsiMetaBaseOwner) {
-      final PsiMetaBaseOwner psiMetaBaseOwner = (PsiMetaBaseOwner)psiElement;
-      final PsiMetaDataBase metaData = psiMetaBaseOwner.getMetaData();
+    if (psiElement instanceof PsiMetaOwner) {
+      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)psiElement;
+      final PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) return getMetaDataName(metaData);
     }
 

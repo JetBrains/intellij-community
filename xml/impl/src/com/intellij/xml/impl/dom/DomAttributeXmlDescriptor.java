@@ -1,8 +1,6 @@
 package com.intellij.xml.impl.dom;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -52,11 +50,6 @@ public class DomAttributeXmlDescriptor implements XmlAttributeDescriptor {
   @Nullable
   public String validateValue(final XmlElement context, final String value) {
     return null;
-  }
-
-  public boolean processDeclarations(final PsiElement context, final PsiScopeProcessor processor, final PsiSubstitutor substitutor,
-                                     final PsiElement lastElement, final PsiElement place) {
-    throw new UnsupportedOperationException("Method processDeclarations not implemented in " + getClass());
   }
 
   public PsiElement getDeclaration() {

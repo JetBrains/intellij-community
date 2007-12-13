@@ -3,9 +3,7 @@ package com.intellij.xml.impl.schema;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
@@ -40,10 +38,6 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
 
   public PsiElement getDeclaration(){
     return myDescriptorTag;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    return true;
   }
 
   public String getName(PsiElement context){

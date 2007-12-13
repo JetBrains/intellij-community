@@ -350,10 +350,6 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return MetaRegistry.getMeta(this);
   }
 
-  public boolean isMetaEnough() {
-    return false;
-  }
-
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }

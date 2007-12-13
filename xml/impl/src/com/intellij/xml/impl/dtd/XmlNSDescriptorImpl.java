@@ -5,11 +5,7 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.SimpleFieldCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -144,24 +140,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
 
   public PsiElement getDeclaration() {
     return myElement;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
-    final NameHint nameHint = processor.getHint(NameHint.class);
-
-    if (classHint == null || classHint.shouldProcess(XmlElementDecl.class)) {
-      if (nameHint != null) {
-        final XmlElementDecl element = getElement(nameHint.getName());
-        if (element != null) return processor.execute(element, substitutor);
-      }
-      else {
-        for (final XmlElementDescriptor xmlElementDescriptor : buildDeclarationMap().values()) {
-          if (!processor.execute(xmlElementDescriptor.getDeclaration(), substitutor)) return false;
-        }
-      }
-    }
-    return true;
   }
 
   public String getName(PsiElement context){

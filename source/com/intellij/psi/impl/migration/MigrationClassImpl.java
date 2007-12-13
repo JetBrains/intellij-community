@@ -264,10 +264,6 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
     return null;
   }
 
-  public boolean isMetaEnough() {
-    return false;
-  }
-
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }

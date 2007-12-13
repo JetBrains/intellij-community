@@ -8,7 +8,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -77,7 +77,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       isTag = false;
     } else if (element instanceof XmlTag) {
       final XmlTag xmlTag = ((XmlTag)element);
-      final PsiMetaDataBase metaData = xmlTag.getMetaData();
+      final PsiMetaData metaData = xmlTag.getMetaData();
       key = (metaData!=null)?metaData.getName():null;
       isTag = xmlTag.getLocalName().equals(ELEMENT_ELEMENT_NAME);
 

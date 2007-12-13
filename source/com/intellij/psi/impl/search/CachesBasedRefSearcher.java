@@ -9,8 +9,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -42,14 +42,14 @@ public class CachesBasedRefSearcher implements QueryExecutor<PsiReference, Refer
         }
         else if (refElement instanceof PsiNamedElement) {
           text = ((PsiNamedElement)refElement).getName();
-          if (refElement instanceof PsiMetaBaseOwner) {
-            final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+          if (refElement instanceof PsiMetaOwner) {
+            final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
             if (metaData != null) text = metaData.getName();
           }
         }
 
-        if (text == null && refElement instanceof PsiMetaBaseOwner) {
-          final PsiMetaDataBase metaData = ((PsiMetaBaseOwner)refElement).getMetaData();
+        if (text == null && refElement instanceof PsiMetaOwner) {
+          final PsiMetaData metaData = ((PsiMetaOwner)refElement).getMetaData();
           if (metaData != null) text = metaData.getName();
         }
         return text;

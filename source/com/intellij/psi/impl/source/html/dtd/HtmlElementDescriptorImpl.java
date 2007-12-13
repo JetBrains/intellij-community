@@ -2,8 +2,6 @@ package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.jsp.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -110,14 +108,6 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
 
   public PsiElement getDeclaration() {
     return myDelegate.getDeclaration();
-  }
-
-  public boolean processDeclarations(PsiElement context,
-                                     PsiScopeProcessor processor,
-                                     PsiSubstitutor substitutor,
-                                     PsiElement lastElement,
-                                     PsiElement place) {
-    return myDelegate.processDeclarations(context, processor, substitutor, lastElement, place);
   }
 
   public String getName(PsiElement context) {

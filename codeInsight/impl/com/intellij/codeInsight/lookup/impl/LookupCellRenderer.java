@@ -18,7 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
@@ -429,8 +429,8 @@ class LookupCellRenderer implements ListCellRenderer {
     else if (o instanceof XmlElementDescriptor) {
       name = ((XmlElementDescriptor)o).getDefaultName();
     }
-    else if (o instanceof PsiMetaDataBase) {
-      name = ((PsiMetaDataBase)o).getName();
+    else if (o instanceof PsiMetaData) {
+      name = ((PsiMetaData)o).getName();
     }
     else if (o instanceof PresentableLookupValue ) {
       name = ((PresentableLookupValue)o).getPresentation();

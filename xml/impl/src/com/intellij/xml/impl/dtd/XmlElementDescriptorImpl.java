@@ -5,17 +5,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.meta.PsiMetaDataBase;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -59,37 +55,6 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
 
   public PsiElement getDeclaration(){
     return myElementDecl;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    final ElementClassHint hint = processor.getHint(ElementClassHint.class);
-    final XmlTag tag = (XmlTag)context;
-    final PsiMetaDataBase meta = tag.getMetaData();
-    if (meta == null) {
-      return true;
-    }
-    if(hint == null || hint.shouldProcess(XmlAttributeDecl.class)){
-      final XmlAttlistDecl[] decls = getAttlistDecls();
-
-      for (XmlAttlistDecl decl : decls) {
-        final String name = decl.getName();
-
-        if (name != null && name.equals(meta.getName())) {
-          final XmlAttributeDecl[] attributes = decl.getAttributeDecls();
-          for (XmlAttributeDecl attribute : attributes) {
-            if (!processor.execute(attribute, substitutor)) return false;
-          }
-        }
-      }
-    }
-    if(hint == null || hint.shouldProcess(XmlElementDecl.class)){
-      final XmlElementDescriptor[] decls = getElementsDescriptors(tag);
-      for (final XmlElementDescriptor decl : decls) {
-        if (!processor.execute(decl.getDeclaration(), substitutor)) return false;
-      }
-    }
-
-    return true;
   }
 
   public String getName(PsiElement context){

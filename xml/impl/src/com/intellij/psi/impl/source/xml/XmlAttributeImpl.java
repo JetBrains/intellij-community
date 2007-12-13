@@ -18,7 +18,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -347,8 +347,8 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
 
     // TODO[ik]: namespace support
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-      if (element instanceof PsiMetaBaseOwner){
-        final PsiMetaBaseOwner owner = (PsiMetaBaseOwner)element;
+      if (element instanceof PsiMetaOwner){
+        final PsiMetaOwner owner = (PsiMetaOwner)element;
         if (owner.getMetaData() instanceof XmlElementDescriptor){
           setName(owner.getMetaData().getName());
         }

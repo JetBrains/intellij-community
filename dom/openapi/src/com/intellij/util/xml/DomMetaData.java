@@ -16,11 +16,9 @@
 package com.intellij.util.xml;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.meta.PsiWritableMetaData;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -42,11 +40,6 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
 
   public T getElement() {
     return myElement;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement,
-                                     PsiElement place) {
-    return true;
   }
 
   @NonNls

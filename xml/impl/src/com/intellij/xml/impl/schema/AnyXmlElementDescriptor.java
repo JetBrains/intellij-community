@@ -9,8 +9,6 @@
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -33,10 +31,6 @@ public  class AnyXmlElementDescriptor implements XmlElementDescriptor {
 
   public PsiElement getDeclaration(){
     return null;
-  }
-
-  public boolean processDeclarations(PsiElement context, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastElement, PsiElement place){
-    return true;
   }
 
   public String getName(PsiElement context){

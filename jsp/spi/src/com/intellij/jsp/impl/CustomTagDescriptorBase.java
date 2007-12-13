@@ -3,8 +3,8 @@
  */
 package com.intellij.jsp.impl;
 
-import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiWritableMetaData;
 
 /**
  * @author peter

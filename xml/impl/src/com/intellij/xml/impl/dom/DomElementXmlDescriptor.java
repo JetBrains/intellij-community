@@ -3,9 +3,7 @@ package com.intellij.xml.impl.dom;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.impl.beanProperties.FakePsiElement;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
@@ -139,11 +137,6 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
         throw new UnsupportedOperationException("Method isHierarhyEnabled not implemented in " + getClass());
       }
 
-      public boolean processDeclarations(final PsiElement context, final PsiScopeProcessor processor, final PsiSubstitutor substitutor,
-                                         final PsiElement lastElement, final PsiElement place) {
-        throw new UnsupportedOperationException("Method processDeclarations not implemented in " + getClass());
-      }
-
       @Nullable
       public PsiElement getDeclaration() {
         throw new UnsupportedOperationException("Method getDeclaration not implemented in " + getClass());
@@ -171,11 +164,6 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
   public int getContentType() {
     throw new UnsupportedOperationException("Method getContentType not implemented in " + getClass());
-  }
-
-  public boolean processDeclarations(final PsiElement context, final PsiScopeProcessor processor, final PsiSubstitutor substitutor,
-                                     final PsiElement lastElement, final PsiElement place) {
-    throw new UnsupportedOperationException("Method processDeclarations not implemented in " + getClass());
   }
 
   @Nullable

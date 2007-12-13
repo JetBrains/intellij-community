@@ -14,8 +14,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.meta.PsiMetaBaseOwner;
-import com.intellij.psi.meta.PsiMetaDataBase;
+import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
@@ -146,9 +146,9 @@ public class PsiElement2UsageTargetAdapter implements UsageTarget, TypeSafeDataP
         myIconClosed = presentation != null ? presentation.getIcon(false) : null;
         myPresentableText = UsageViewUtil.createNodeText(element, true);
         if (myIconOpen == null || myIconClosed == null) {
-          if (element instanceof PsiMetaBaseOwner) {
-            final PsiMetaBaseOwner psiMetaOwner = (PsiMetaBaseOwner)element;
-            final PsiMetaDataBase metaData = psiMetaOwner.getMetaData();
+          if (element instanceof PsiMetaOwner) {
+            final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
+            final PsiMetaData metaData = psiMetaOwner.getMetaData();
             if (metaData instanceof PsiPresentableMetaData) {
               final PsiPresentableMetaData psiPresentableMetaData = (PsiPresentableMetaData)metaData;
               if (myIconOpen == null) myIconOpen = psiPresentableMetaData.getIcon();

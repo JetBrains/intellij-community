@@ -17,7 +17,4 @@ public class XmlMarkupDeclImpl extends XmlElementImpl implements XmlMarkupDecl {
     return MetaRegistry.getMeta(this);
   }
 
-  public boolean isMetaEnough(){
-    return true;  //To change body of implemented methods use Options | File Templates.
-  }
 }
