@@ -45,14 +45,6 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor implements PsiS
     return true;
   }
 
-  public PsiSubstitutor inplacePut(PsiTypeParameter classParameter, PsiType mapping) {
-    return put(classParameter, mapping);
-  }
-
-  public PsiSubstitutor inplacePutAll(PsiClass parentClass, PsiType[] mappings) {
-    return putAll(parentClass, mappings);
-  }
-
   public PsiType substituteNoErase(final PsiType type) {
     return type;
   }

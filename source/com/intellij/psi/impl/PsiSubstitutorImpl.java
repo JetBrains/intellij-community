@@ -371,24 +371,4 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return Collections.unmodifiableMap(mySubstitutionMap);
   }
-
-  public PsiSubstitutor inplacePut(PsiTypeParameter typeParameter, PsiType mapping) {
-    mySubstitutionMap.put(typeParameter, mapping);
-    return this;
-  }
-
-  public PsiSubstitutor inplacePutAll(PsiClass parentClass, PsiType[] mappings) {
-    final PsiTypeParameter[] params = parentClass.getTypeParameters();
-
-    for (int i = 0; i < params.length; i++) {
-      if (mappings != null && mappings.length > i) {
-        mySubstitutionMap.put(params[i], mappings[i]);
-      }
-      else {
-        mySubstitutionMap.put(params[i], null);
-      }
-    }
-
-    return this;
-  }
 }
