@@ -26,7 +26,6 @@ public abstract class JspManager {
   public static final Key<VirtualFile[]> DIRECTORIES_KEY = Key.create("TagDirOriginalDirs");
   public static final  @NonNls String TAG_DIR_NS_PREFIX = "urn:jsptagdir:";
 
-  @Nullable
   public static JspManager getInstance(@NotNull Project project) {
     return project.getComponent(JspManager.class);
   }
