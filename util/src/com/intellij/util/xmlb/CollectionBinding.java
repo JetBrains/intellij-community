@@ -39,8 +39,13 @@ class CollectionBinding extends AbstractCollectionBinding  {
 
   Iterable getIterable(Object o) {
     if (o instanceof Set) {
-      Set set = (Set)o;
-      return new TreeSet(set);
+      // if we already have sorted set, we shouldn't make a copy.
+      // if we gonna need it someday notwithstanding, we'll have to copy its comparator too.
+      if (o instanceof SortedSet) {
+        //return new TreeSet((SortedSet)o); 
+        return (Iterable)o;
+      }
+      return new TreeSet((Set)o);
     }
     return (Collection)o;
   }
