@@ -130,7 +130,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
   public void updateGridUI() {
     for (final GridCell cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1);
+      cell.setHideTabs(myContents.size() == 1 && !cell.isDetached());
     }
   }
 
@@ -267,6 +267,23 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   void setRightProportion(float proportion) {
     final int componentSize = myTopSplit.getOrientation() ? myTopSplit.getHeight() : myTopSplit.getWidth();
     myTopSplit.setLastSize((int)(proportion * (float)(componentSize - 2 * myTopSplit.getDividerWidth())));
+  }
+
+  public List<Content> getAttachedContents() {
+    ArrayList<Content> result = new ArrayList<Content>();
+
+    for (Content each : getContents()) {
+      if (!isDetached(each)) {
+        result.add(each);
+      }
+    }
+
+    return result;
+  }
+
+
+  private boolean isDetached(Content content) {
+    return getCellFor(content).isDetached();
   }
 
   public List<Content> getContents() {

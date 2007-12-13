@@ -67,7 +67,8 @@ public class GridCell implements Disposable {
         if (UIUtil.isCloseClick(e)) {
           if (isDetached()) {
             myPopup.cancel();
-          } else {
+          }
+          else {
             minimize(e);
           }
         }
@@ -222,13 +223,17 @@ public class GridCell implements Disposable {
       }
     }
 
-    if (myContainer.getTab().isDetached(myPlaceInGrid)) {
+    if (!isRestoringFromDetach() && myContainer.getTab().isDetached(myPlaceInGrid)) {
       detach();
     }
   }
 
   private Content[] getContents() {
     return myContents.getKeys().toArray(new Content[myContents.size()]);
+  }
+
+  public int getContentCount() {
+    return myContents.size();
   }
 
   public void saveUiState() {
@@ -307,7 +312,7 @@ public class GridCell implements Disposable {
     myRestoreFromDetach.add(myContainer.detach(contents));
     myRestoreFromDetach.add(new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
-        myTabs.setSelected(myTabs.getSelectedInfo(), true);
+        ensureVisible();
         return new ActionCallback.Done();
       }
     });
@@ -315,9 +320,15 @@ public class GridCell implements Disposable {
     myPopup = createPopup(dragging);
     myPopup.setSize(size);
     myPopup.setLocation(screenPoint);
-    myPopup.show(myPlaceholder);
+    myPopup.show(myContext.getContentManager().getComponent());
 
     myContext.saveUiState();
+  }
+
+  private void ensureVisible() {
+    if (myTabs.getSelectedInfo() != null) {
+      myContext.select(getContentFor(myTabs.getSelectedInfo()), true);
+    }
   }
 
   private JBPopup createPopup(boolean dragging) {
@@ -357,8 +368,12 @@ public class GridCell implements Disposable {
   }
 
 
-  private boolean isDetached() {
-    return myRestoreFromDetach != null;
+  public boolean isDetached() {
+    return myRestoreFromDetach != null && !myRestoreFromDetach.isRestoringNow();
+  }
+
+  public boolean isRestoringFromDetach() {
+    return myRestoreFromDetach != null && myRestoreFromDetach.isRestoringNow();
   }
 
   private String getDimensionKey() {

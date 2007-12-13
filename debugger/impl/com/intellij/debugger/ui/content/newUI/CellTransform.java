@@ -12,17 +12,20 @@ public interface CellTransform {
 
     class List implements Restore {
       private ArrayList<Restore> myActions = new ArrayList();
+      private boolean myRestoringNow;
 
       public void add(Restore restore) {
         myActions.add(restore);
       }
 
       public ActionCallback restoreInGrid() {
+        myRestoringNow = true;
         if (myActions.size() == 0) return new ActionCallback.Done();
         final ActionCallback topCallback = restore(0);
         return topCallback.doWhenDone(new Runnable() {
           public void run() {
             myActions.clear();
+            myRestoringNow = false;
           }
         });
       }
@@ -42,6 +45,10 @@ public interface CellTransform {
         });
 
         return result;
+      }
+
+      public boolean isRestoringNow() {
+        return myRestoringNow;
       }
     }
   }

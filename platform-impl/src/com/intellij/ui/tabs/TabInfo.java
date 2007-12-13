@@ -17,6 +17,7 @@ public final class TabInfo {
   static final String ALERT_ICON = "alertIcon";
 
   static final String ALERT_STATUS = "alertStatus";
+  static final String HIDDEN = "hidden";
 
   private JComponent myComponent;
   private JComponent myPreferredFocusableComponent;
@@ -40,6 +41,7 @@ public final class TabInfo {
 
   private int myBlinkCount;
   private boolean myAlertRequested;
+  private boolean myHidden;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -184,5 +186,15 @@ public final class TabInfo {
 
   boolean isAlertRequested() {
     return myAlertRequested;
+  }
+
+  public void setHidden(boolean hidden) {
+    boolean old = myHidden;
+    myHidden = hidden;
+    myChangeSupport.firePropertyChange(HIDDEN, old, myHidden);
+  }
+
+  public boolean isHidden() {
+    return myHidden;
   }
 }

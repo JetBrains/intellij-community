@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.debugger.ui.content.newUI.ViewContext;
 import com.intellij.debugger.ui.content.newUI.Grid;
 import com.intellij.debugger.ui.content.newUI.Tab;
+import com.intellij.debugger.ui.content.newUI.GridCell;
 import com.intellij.ui.content.Content;
 
 public class DetachCellAction extends BaseDebuggerViewAction {
@@ -16,14 +17,14 @@ public class DetachCellAction extends BaseDebuggerViewAction {
     Grid grid = context.findGridFor(content[0]);
     Tab tab = context.getTabFor(grid);
 
-    if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace())) {
-      setEnabled(e, false);
+    if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace()) || (ViewContext.TAB_POPUP_PLACE.equals(e.getPlace()))) {
+      setEnabled(e, !tab.isDefault() && grid.getContents().size() == 1);
     }
     else {
-      if (ViewContext.TAB_POPUP_PLACE.equals(e.getPlace())) {
-        setEnabled(e, !tab.isDefault() && grid.getContents().size() > 0);
-      }
-      else {
+      if (ViewContext.CELL_TOOLBAR_PLACE.equals(e.getPlace()) && content.length == 1) {
+        GridCell cell = grid.getCellFor(content[0]);
+        setEnabled(e, cell.getContentCount() == 1);
+      } else {
         setEnabled(e, true);
       }
     }

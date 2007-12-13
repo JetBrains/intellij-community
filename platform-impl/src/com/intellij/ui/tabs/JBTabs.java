@@ -45,7 +45,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private static DataKey<JBTabs> NAVIGATION_ACTIONS_KEY = DataKey.create("JBTabs");
 
   private ActionManagerEx myActionManager;
-  private List<TabInfo> myInfos = new ArrayList<TabInfo>();
+  private List<TabInfo> myVisibleInfos = new ArrayList<TabInfo>();
+  private Set<TabInfo> myHiddenInfos = new HashSet<TabInfo>();
 
   private TabInfo mySelectedInfo;
   private Map<TabInfo, TabLabel> myInfo2Label = new HashMap<TabInfo, TabLabel>();
@@ -99,6 +100,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private final Set<TabInfo> myAttractions = new HashSet<TabInfo>();
   private Animator myAnimator;
   private static final String DEFERRED_REMOVE_FLAG = "JBTabs.deferredRemove";
+  private List<TabInfo> myAllTabs;
 
   public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
     myProject = project;
@@ -171,7 +173,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private void repaintAttractions() {
     boolean needsUpdate = false;
-    for (TabInfo each : myInfos) {
+    for (TabInfo each : myVisibleInfos) {
       TabLabel eachLabel = myInfo2Label.get(each);
       needsUpdate |= eachLabel.repaintAttraction();
     }
@@ -221,7 +223,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private void showMorePopup(final MouseEvent e) {
     myMorePopup = new JPopupMenu();
-    for (final TabInfo each : myInfos) {
+    for (final TabInfo each : myVisibleInfos) {
       final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
       myMorePopup.add(item);
       if (getSelectedInfo() == each) {
@@ -315,14 +317,16 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     myInfo2Label.put(info, label);
 
     if (index < 0) {
-      myInfos.add(info);
+      myVisibleInfos.add(info);
     }
-    else if (index > myInfos.size() - 1) {
-      myInfos.add(info);
+    else if (index > myVisibleInfos.size() - 1) {
+      myVisibleInfos.add(info);
     }
     else {
-      myInfos.add(index, info);
+      myVisibleInfos.add(index, info);
     }
+
+    myAllTabs = null;
 
     add(label);
 
@@ -331,7 +335,12 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     updateSideComponent(info);
     updateTabActions(info);
 
-    updateAll();
+    updateAll(false);
+
+    if (info.isHidden()) {
+      updateHiding();
+    }
+
 
     return info;
   }
@@ -354,9 +363,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     myPopupPlace = place;
   }
 
-  private void updateAll() {
+  private void updateAll(final boolean forcedRelayout) {
     mySelectedInfo = getSelectedInfo();
-    removeDeferred(updateContainer(false));
+    removeDeferred(updateContainer(forcedRelayout));
     updateListeners();
     updateTabActions();
   }
@@ -446,10 +455,17 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private boolean isForDeferredRemove(Component c) {
     if (c instanceof JComponent) {
-      return ((JComponent)c).getClientProperty(DEFERRED_REMOVE_FLAG) != null;
-    } else {
-      return false;
+      if (((JComponent)c).getClientProperty(DEFERRED_REMOVE_FLAG) == null) return false;
+
+      if (mySelectedInfo != null && mySelectedInfo.getComponent() == c) {
+        return false;
+      } else {
+        return true;
+      }
+
     }
+
+    return false;
   }
 
   private void setForDeferredRemove(Component c, boolean toRemove) {
@@ -475,9 +491,45 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
     else if (TabInfo.TAB_ACTION_GROUP.equals(evt.getPropertyName())) {
       updateTabActions(tabInfo);
+    } else if (TabInfo.HIDDEN.equals(evt.getPropertyName())) {
+      updateHiding();
     }
 
     relayout(false);
+  }
+
+  private void updateHiding() {
+    boolean update = false;
+
+    Iterator<TabInfo> visible = myVisibleInfos.iterator();
+    while (visible.hasNext()) {
+      TabInfo each = visible.next();
+      if (each.isHidden() && !myHiddenInfos.contains(each)) {
+        myHiddenInfos.add(each);
+        visible.remove();
+        update = true;
+      }
+    }
+
+
+    Iterator<TabInfo> hidden = myHiddenInfos.iterator();
+    while (hidden.hasNext()) {
+      TabInfo each = hidden.next();
+      if (!each.isHidden() && myHiddenInfos.contains(each)) {
+        myVisibleInfos.add(each);
+        hidden.remove();
+        update = true;
+      }
+    }
+
+
+    if (update) {
+      myAllTabs = null;
+      if (mySelectedInfo != null && myHiddenInfos.contains(mySelectedInfo)) {
+        mySelectedInfo = getToSelectOnRemoveOf(mySelectedInfo);
+      }
+      updateAll(true);
+    }
   }
 
   private void updateIcon(final TabInfo tabInfo) {
@@ -525,22 +577,22 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   @Nullable
   public TabInfo getSelectedInfo() {
-    if (!myInfos.contains(mySelectedInfo)) {
+    if (!myVisibleInfos.contains(mySelectedInfo)) {
       mySelectedInfo = null;
     }
-    return mySelectedInfo != null ? mySelectedInfo : (myInfos.size() > 0 ? myInfos.get(0) : null);
+    return mySelectedInfo != null ? mySelectedInfo : (myVisibleInfos.size() > 0 ? myVisibleInfos.get(0) : null);
   }
 
   @Nullable
   private TabInfo getToSelectOnRemoveOf(TabInfo info) {
-    if (!myInfos.contains(info)) return null;
+    if (!myVisibleInfos.contains(info)) return null;
     if (mySelectedInfo != info) return null;
 
-    if (myInfos.size() == 1) return null;
+    if (myVisibleInfos.size() == 1) return null;
 
-    int index = myInfos.indexOf(info);
-    if (index > 0) return myInfos.get(index - 1);
-    if (index < myInfos.size() - 1) return myInfos.get(index + 1);
+    int index = myVisibleInfos.indexOf(info);
+    if (index > 0) return myVisibleInfos.get(index - 1);
+    if (index < myVisibleInfos.size() - 1) return myVisibleInfos.get(index + 1);
 
     return null;
   }
@@ -550,11 +602,19 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public TabInfo getTabAt(final int tabIndex) {
-    return myInfos.get(tabIndex);
+    return getTabs().get(tabIndex);
   }
 
   public List<TabInfo> getTabs() {
-    return Collections.unmodifiableList(myInfos);
+    if (myAllTabs != null) return myAllTabs;
+
+    ArrayList<TabInfo> result = new ArrayList<TabInfo>();
+    result.addAll(myVisibleInfos);
+    result.addAll(myHiddenInfos);
+
+    myAllTabs = result;
+    
+    return result;
   }
 
   public TabInfo getTargetInfo() {
@@ -709,7 +769,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     data.table.add(eachTableRow);
 
     int selectedRow = -1;
-    for (TabInfo eachInfo : myInfos) {
+    for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel eachLabel = myInfo2Label.get(eachInfo);
       final Dimension size = eachLabel.getPreferredSize();
       if (eachX + size.width <= data.toFitRec.getMaxX()) {
@@ -764,7 +824,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         myLastSingRowLayout != null &&
         myLastSingRowLayout.contentCount == getTabCount() &&
         myLastSingRowLayout.laayoutSize.equals(getSize())) {
-      for (TabInfo each : myInfos) {
+      for (TabInfo each : myVisibleInfos) {
         if (getSelectedInfo() == each) {
           final TabLabel eachLabel = myInfo2Label.get(each);
           if (eachLabel.getBounds().width != 0) {
@@ -816,10 +876,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
 
-    if (data.toLayout.size() > 0 && myInfos.size() > 0) {
-      final int left = myInfos.indexOf(data.toLayout.get(0));
-      final int right = myInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
-      myMoreIcon.setPaintedIcons(left > 0, right < myInfos.size() - 1);
+    if (data.toLayout.size() > 0 && myVisibleInfos.size() > 0) {
+      final int left = myVisibleInfos.indexOf(data.toLayout.get(0));
+      final int right = myVisibleInfos.indexOf(data.toLayout.get(data.toLayout.size() - 1));
+      myMoreIcon.setPaintedIcons(left > 0, right < myVisibleInfos.size() - 1);
     }
     else {
       myMoreIcon.setPaintedIcons(false, false);
@@ -872,7 +932,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     final int toolbarInset = getToolbarInset();
     data.displayedHToolbar = myHorizontalSide && selectedToolbar != null;
     data.toFitWidth = getWidth() - insets.left - insets.right - (data.displayedHToolbar ? toolbarInset : 0);
-    for (TabInfo eachInfo : myInfos) {
+    for (TabInfo eachInfo : myVisibleInfos) {
       data.requiredWidth += myInfo2Label.get(eachInfo).getPreferredSize().width;
       data.toLayout.add(eachInfo);
     }
@@ -902,20 +962,28 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void resetLayout(boolean resetLabels) {
-    for (TabInfo each : myInfos) {
-      final JComponent c = each.getComponent();
-      if (c != null) {
-        c.setBounds(0, 0, 0, 0);
-      }
+    for (TabInfo each : myVisibleInfos) {
+      reset(each, resetLabels);
+    }
 
-      final JComponent toolbar = myInfo2Toolbar.get(each);
-      if (toolbar != null) {
-        toolbar.setBounds(0, 0, 0, 0);
-      }
+    for (TabInfo each : myHiddenInfos) {
+      reset(each, resetLabels);
+    }
+  }
 
-      if (resetLabels) {
-        myInfo2Label.get(each).setBounds(0, 0, 0, 0);
-      }
+  private void reset(final TabInfo each, final boolean resetLabels) {
+    final JComponent c = each.getComponent();
+    if (c != null) {
+      c.setBounds(0, 0, 0, 0);
+    }
+
+    final JComponent toolbar = myInfo2Toolbar.get(each);
+    if (toolbar != null) {
+      toolbar.setBounds(0, 0, 0, 0);
+    }
+
+    if (resetLabels) {
+      myInfo2Label.get(each).setBounds(0, 0, 0, 0);
     }
   }
 
@@ -1033,7 +1101,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private boolean isNavigationVisible() {
     if (myStealthTabMode && getTabCount() == 1) return false;
-    return myInfos.size() > 0;
+    return myVisibleInfos.size() > 0;
   }
 
 
@@ -1082,7 +1150,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
   private Max computeMaxSize() {
     Max max = new Max();
-    for (TabInfo eachInfo : myInfos) {
+    for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
       max.myLabel.height = Math.max(max.myLabel.height, label.getPreferredSize().height);
       max.myLabel.width = Math.max(max.myLabel.width, label.getPreferredSize().width);
@@ -1099,7 +1167,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public int getTabCount() {
-    return myInfos.size();
+    return getTabs().size();
   }
 
   public void removeTab(final JComponent component) {
@@ -1145,17 +1213,19 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       setForDeferredRemove(tabComponent, true);
     }
 
-    myInfos.remove(info);
+    myVisibleInfos.remove(info);
+    myHiddenInfos.remove(info);
     myInfo2Label.remove(info);
     myInfo2Toolbar.remove(info);
+    myAllTabs = null;
 
-    updateAll();
+    updateAll(false);
 
     return tabComponent;
   }
 
   public TabInfo findInfo(Component component) {
-    for (TabInfo each : myInfos) {
+    for (TabInfo each : getTabs()) {
       if (each.getComponent() == component) return each;
     }
 
@@ -1165,7 +1235,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   public TabInfo findInfo(String text) {
     if (text == null) return null;
 
-    for (TabInfo each : myInfos) {
+    for (TabInfo each : getTabs()) {
       if (text.equals(each.getText())) return each;
     }
 
@@ -1200,11 +1270,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void removeAllTabs() {
-    final TabInfo[] infos = myInfos.toArray(new TabInfo[myInfos.size()]);
-    for (TabInfo each : infos) {
+    for (TabInfo each : getTabs()) {
       removeTab(each);
     }
   }
+
 
   private class Max {
     Dimension myLabel = new Dimension();
@@ -1215,7 +1285,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private Component updateContainer(boolean forced) {
     Component deferredRemove = null;
 
-    for (TabInfo each : myInfos) {
+    for (TabInfo each : myVisibleInfos) {
       final JComponent eachComponent = each.getComponent();
       if (getSelectedInfo() == each && getSelectedInfo() != null) {
         final Container parent = eachComponent.getParent();
@@ -1258,7 +1328,9 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void relayout(boolean forced) {
-    myForcedRelayout = forced;
+    if (!myForcedRelayout) {
+      myForcedRelayout = forced;
+    }
     revalidate();
     repaint();
   }
@@ -1280,7 +1352,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void addListeners() {
-    for (TabInfo eachInfo : myInfos) {
+    for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
       for (MouseListener eachListener : myTabMouseListeners) {
         label.addMouseListener(eachListener);
@@ -1289,7 +1361,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   private void removeListeners() {
-    for (TabInfo eachInfo : myInfos) {
+    for (TabInfo eachInfo : myVisibleInfos) {
       final TabLabel label = myInfo2Label.get(eachInfo);
       for (MouseListener eachListener : myTabMouseListeners) {
         label.removeMouseListener(eachListener);
@@ -1549,8 +1621,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       e.getPresentation().setVisible(tabs != null);
       if (tabs == null) return;
 
-      final int selectedIndex = tabs.myInfos.indexOf(tabs.getSelectedInfo());
-      final boolean enabled = tabs.myInfos.size() > 0 && selectedIndex >= 0;
+      final int selectedIndex = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
+      final boolean enabled = tabs.myVisibleInfos.size() > 0 && selectedIndex >= 0;
       e.getPresentation().setEnabled(enabled);
       if (enabled) {
         _update(e, tabs, selectedIndex);
@@ -1563,7 +1635,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       JBTabs tabs = e.getData(NAVIGATION_ACTIONS_KEY);
       if (tabs == null) return;
 
-      final int index = tabs.myInfos.indexOf(tabs.getSelectedInfo());
+      final int index = tabs.myVisibleInfos.indexOf(tabs.getSelectedInfo());
       if (index == -1) return;
       _actionPerformed(e, tabs, index);
     }
@@ -1578,11 +1650,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
     protected void _update(final AnActionEvent e, final JBTabs tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.myInfos.size() > 0 && selectedIndex < tabs.myInfos.size() - 1);
+      e.getPresentation().setEnabled(tabs.myVisibleInfos.size() > 0 && selectedIndex < tabs.myVisibleInfos.size() - 1);
     }
 
     protected void _actionPerformed(final AnActionEvent e, final JBTabs tabs, final int selectedIndex) {
-      tabs.setSelected(tabs.myInfos.get(selectedIndex + 1), true);
+      tabs.setSelected(tabs.myVisibleInfos.get(selectedIndex + 1), true);
     }
   }
 
@@ -1592,11 +1664,11 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     }
 
     protected void _update(final AnActionEvent e, final JBTabs tabs, int selectedIndex) {
-      e.getPresentation().setEnabled(tabs.myInfos.size() > 0 && selectedIndex > 0);
+      e.getPresentation().setEnabled(tabs.myVisibleInfos.size() > 0 && selectedIndex > 0);
     }
 
     protected void _actionPerformed(final AnActionEvent e, final JBTabs tabs, final int selectedIndex) {
-      tabs.setSelected(tabs.myInfos.get(selectedIndex - 1), true);
+      tabs.setSelected(tabs.myVisibleInfos.get(selectedIndex - 1), true);
     }
   }
 
@@ -1620,7 +1692,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   public void setSideComponentVertical(final boolean vertical) {
     myHorizontalSide = !vertical;
 
-    for (TabInfo each : myInfos) {
+    for (TabInfo each : myVisibleInfos) {
       each.getChangeSupport().firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2");
     }
 
@@ -1669,7 +1741,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void sortTabs(Comparator<TabInfo> comparator) {
-    Collections.sort(myInfos, comparator);
+    Collections.sort(myVisibleInfos, comparator);
 
     relayout(true);
   }
@@ -1926,8 +1998,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
         }
       }
     });
-
     south.add(attract1);
+
+    final JCheckBox hide1 = new JCheckBox("Hide 1", toAnimate1.isHidden());
+    hide1.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        toAnimate1.setHidden(!toAnimate1.isHidden());
+      }
+    });
+    south.add(hide1);
 
 
     final JButton refire = new JButton("Re-fire attraction");
@@ -1961,7 +2040,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     });
 
 
-    frame.setBounds(200, 200, 600, 200);
+    frame.setBounds(200, 200, 800, 400);
     frame.show();
   }
 

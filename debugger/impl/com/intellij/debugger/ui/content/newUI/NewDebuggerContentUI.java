@@ -267,7 +267,8 @@ public class NewDebuggerContentUI
       if (!NewDebuggerContentUI.ensureValid(myTabs)) return;
 
 
-      List<TabInfo> tabs = myTabs.getTabs();
+      List<TabInfo> tabs = new ArrayList<TabInfo>();
+      tabs.addAll(myTabs.getTabs());
       for (TabInfo each : tabs) {
         getGridFor(each).restoreLastUiState();
       }
@@ -503,12 +504,42 @@ public class NewDebuggerContentUI
     rebuildMinimizedActions();
   }
 
+  private static boolean willBeEmptyOnRemove(Grid grid, List<Content> toRemove) {
+    List<Content> attachedToGrid = grid.getAttachedContents();
+    for (Content each : attachedToGrid) {
+      if (!toRemove.contains(each)) return false;
+    }
+
+    return true;
+  }
+
+
   public CellTransform.Restore detach(final Content[] content) {
+    List<Content> contents = Arrays.asList(content);
+
+    for (Content each : content) {
+      Grid eachGrid = getGridFor(each, false);
+      if (willBeEmptyOnRemove(eachGrid, contents)) {
+        myTabs.findInfo(eachGrid).setHidden(true);
+      }
+    }
+
     return new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
+        showHiddenTabs();
         return new ActionCallback.Done();
       }
     };
+  }
+
+  private void showHiddenTabs() {
+    List<TabInfo> tabs = myTabs.getTabs();
+    for (TabInfo eachInfos : tabs) {
+      Grid eachGrid = (Grid)eachInfos.getComponent();
+      if (eachGrid.getAttachedContents().size() > 0) {
+        eachInfos.setHidden(false);
+      }
+    }
   }
 
   public void moveToTab(final Content content) {
