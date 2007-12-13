@@ -36,6 +36,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
@@ -43,6 +44,7 @@ import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.refactoring.GroovyClassMoveCallback;
@@ -137,6 +139,7 @@ public class GroovyLoader implements ApplicationComponent {
         RefactoringListenerManager.getInstance(project).addListenerProvider(new GroovyClassMoveCallback());
 
         ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
+        ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrReferenceExpression.class, new DynamicPropertiesReferenceProvider());
       }
     });
   }

@@ -111,10 +111,10 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     Document document = loadModuleDynXML(moduleName);
     Element rootElement = document.getRootElement();
 
-    final Element dynPropertyElement = findDynamicProperty(rootElement, dynamicProperty.getTypeQualifiedName(), dynamicProperty.getPropertyName());
+    final String dynPropertyElement = findConcreateDynamicProperty(rootElement, dynamicProperty.getTypeQualifiedName(), dynamicProperty.getPropertyName());
 
     if (dynPropertyElement == null) {
-      final Element dynPropertyTypeElement = findDynamicPropertyType(rootElement, dynamicProperty.getTypeQualifiedName());
+      final Element dynPropertyTypeElement = findDynamicPropertyTypeElement(rootElement, dynamicProperty.getTypeQualifiedName());
 
       if (dynPropertyTypeElement == null) {
         rootElement.addContent(new DynamicPropertyXMLElementBase(dynamicProperty));
@@ -163,19 +163,35 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  public Element findDynamicProperty(String moduleName, final String typeQualifiedName, final String propertyName) {
+  public String findConcreateDynamicProperty(String moduleName, final String typeQualifiedName, final String propertyName) {
     Document document = loadModuleDynXML(moduleName);
 
-    return findDynamicProperty(document.getRootElement(), typeQualifiedName, propertyName);
+    return findConcreateDynamicProperty(document.getRootElement(), typeQualifiedName, propertyName);
   }
 
   @Nullable
-  public Element findDynamicProperty(DynamicProperty dynamicProperty) {
-    return findDynamicProperty(dynamicProperty.getModuleName(), dynamicProperty.getTypeQualifiedName(), dynamicProperty.getPropertyName());
+  public String findConcreateDynamicProperty(DynamicProperty dynamicProperty) {
+    return findConcreateDynamicProperty(dynamicProperty.getModuleName(), dynamicProperty.getTypeQualifiedName(), dynamicProperty.getPropertyName());
   }
 
   @Nullable
-  public Element findDynamicPropertyType(Element rootElement, final String typeQualifiedName) {
+  public String[] findDynamicPropertiesForType(String moduleName, String typeQualifiedName) {
+    Document document = loadModuleDynXML(moduleName);
+
+    final Element dynPropTypeElement = findDynamicPropertyTypeElement(document.getRootElement(), typeQualifiedName);
+    if (dynPropTypeElement == null) return new String[0];
+
+    final List propertiesOfType = dynPropTypeElement.getContent(DynamicPropertyXMLElement.createPropertyNameTagFilter());
+    List<String> result = new ArrayList<String>();
+    for (Object o : propertiesOfType) {
+      result.add(((Element) o).getText());
+    }
+
+    return result.toArray(new String[0]);
+  }
+
+  @Nullable
+  private Element findDynamicPropertyTypeElement(Element rootElement, final String typeQualifiedName) {
     final List definedProperties = rootElement.getContent(DynamicPropertyXMLElement.createConcreatePropertyTagFilter(typeQualifiedName));
 
     if (definedProperties == null || definedProperties.size() == 0 || definedProperties.size() > 1) return null;
@@ -183,8 +199,8 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  private Element findDynamicProperty(Element rootElement, final String typeQualifiedName, final String propertyName) {
-    Element definedTypeDef = findDynamicPropertyType(rootElement, typeQualifiedName);
+  private String findConcreateDynamicProperty(Element rootElement, final String typeQualifiedName, final String propertyName) {
+    Element definedTypeDef = findDynamicPropertyTypeElement(rootElement, typeQualifiedName);
     if (definedTypeDef == null) return null;
 
     final List definedPropertiesInTypeDef = definedTypeDef.getContent(DynamicPropertyXMLElement.createConcreatePropertyNameTagFilter(propertyName));
@@ -192,7 +208,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
       return null;
     }
 
-    return (Element) definedPropertiesInTypeDef.get(0);
+    return definedPropertiesInTypeDef.get(0).toString();
   }
 
   public void disposeComponent() {
