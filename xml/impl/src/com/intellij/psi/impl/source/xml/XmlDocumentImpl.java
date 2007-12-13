@@ -190,7 +190,12 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     }
 
     if (strict) return null;
-
+    if (namespace == XmlUtil.EMPTY_URI) {
+      final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, namespace);
+      if (xmlFile != null) {
+        return (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+      }
+    }
     try {
       final PsiFile fileFromText = PsiFileFactory.getInstance(getManager().getProject())
         .createFileFromText(containingFile.getName() + ".dtd", XmlUtil.generateDocumentDTD(this));
