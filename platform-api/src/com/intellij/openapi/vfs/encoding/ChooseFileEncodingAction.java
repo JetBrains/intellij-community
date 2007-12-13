@@ -14,6 +14,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,13 +41,12 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   public void update(final AnActionEvent e) {
-    boolean enabled = true;
+    boolean enabled = isEnabled(myProject, myVirtualFile);
     if (myVirtualFile != null) {
       String prefix;
       Charset charset = encodingFromContent(myProject, myVirtualFile);
       if (charset != null) {
         prefix = "Encoding:";
-        enabled = false;
       }
       else {
         prefix = "";
@@ -56,6 +57,30 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     e.getPresentation().setEnabled(enabled);
   }
 
+  public static boolean isEnabled(Project project, VirtualFile virtualFile) {
+    if (project == null) return false;
+    boolean enabled = true;
+    if (virtualFile != null) {
+      Charset charset = encodingFromContent(project, virtualFile);
+      if (charset != null) {
+        enabled = false;
+      }
+      else {
+        FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
+        if (fileType.isBinary()
+            || fileType == StdFileTypes.GUI_DESIGNER_FORM
+            || fileType == StdFileTypes.IDEA_MODULE
+            || fileType == StdFileTypes.IDEA_PROJECT
+            || fileType == StdFileTypes.IDEA_WORKSPACE
+            || fileType == StdFileTypes.PATCH
+            || fileType == StdFileTypes.UNKNOWN
+          ) {
+          enabled = false;
+        }
+      }
+    }
+    return enabled;
+  }
   public static Charset encodingFromContent(Project project, VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     if (fileType instanceof LanguageFileType) {

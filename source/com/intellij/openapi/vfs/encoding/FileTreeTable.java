@@ -62,9 +62,9 @@ public class FileTreeTable extends TreeTable {
             Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
             if (charset != null) {
               setText("Encoding: " + charset);
-              setEnabled(false);
               return this;
             }
+            setEnabled(ChooseFileEncodingAction.isEnabled(myProject, file));
           }
         }
         setEnabled(true);
@@ -265,8 +265,7 @@ public class FileTreeTable extends TreeTable {
           Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
           if (userObject instanceof VirtualFile) {
             VirtualFile file = (VirtualFile)userObject;
-            Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
-            return charset == null;
+            return ChooseFileEncodingAction.isEnabled(myProject, file);
           }
           return true;
         default: throw new RuntimeException("invalid column " + column);

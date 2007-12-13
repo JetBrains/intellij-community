@@ -3,15 +3,12 @@ package com.intellij.compiler.impl.javaCompiler;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,46 +20,7 @@ import java.util.List;
  */
 public class DummyTranslatingCompiler implements TranslatingCompiler, IntermediateOutputCompiler{
   @NonNls private static final String DESCRIPTION = "DUMMY TRANSLATOR";
-  @NonNls public static final String FILETYPE_EXTENSION = ".dummy";
-
-  public DummyTranslatingCompiler() {
-  }
-  
-  public static final FileType INPUT_FILE_TYPE = new FileType() {
-
-      @NotNull @NonNls
-      public String getName() {
-        return "DUMMY";
-      }
-
-      @NotNull
-      public String getDescription() {
-        return "DUMMY_TYPE";
-      }
-
-      @NotNull @NonNls
-      public String getDefaultExtension() {
-        return FILETYPE_EXTENSION;
-      }
-
-      @Nullable
-      public Icon getIcon() {
-        return null;
-      }
-
-      public boolean isBinary() {
-        return false;
-      }
-
-      public boolean isReadOnly() {
-        return false;
-      }
-
-      @Nullable @NonNls
-      public String getCharset(@NotNull final VirtualFile file) {
-        return null;
-      }
-    };
+  @NonNls private static final String FILETYPE_EXTENSION = ".dummy";
 
   public boolean isCompilableFile(final VirtualFile file, final CompileContext context) {
     return file.getName().endsWith(FILETYPE_EXTENSION);
@@ -101,7 +59,7 @@ public class DummyTranslatingCompiler implements TranslatingCompiler, Intermedia
     };
   }
 
-  private File doCompile(VirtualFile out, VirtualFile src) throws IOException {
+  private static File doCompile(VirtualFile out, VirtualFile src) throws IOException {
     final String originalName = src.getName();
     String compiledName = originalName.substring(0, originalName.length() - FILETYPE_EXTENSION.length());
     final File destFile = new File(out.getPath(), compiledName + ".java");

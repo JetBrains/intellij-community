@@ -17,7 +17,7 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
   public void update(final AnActionEvent e) {
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    boolean enabled = project != null && virtualFile != null;
+    boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(project, virtualFile);
     if (enabled) {
       String pattern;
       Charset charset = ChooseFileEncodingAction.encodingFromContent(project, virtualFile);
