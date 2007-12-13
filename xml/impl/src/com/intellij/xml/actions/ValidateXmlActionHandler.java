@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -271,11 +270,10 @@ public class ValidateXmlActionHandler implements CodeInsightActionHandler {
                 myErrorsView.addMessage(
                     warning ? MessageCategory.WARNING : MessageCategory.ERROR,
                     new String[]{ex.getLocalizedMessage()},
-                    file != null ? file.getPresentableUrl():"",
-                    file != null ? new OpenFileDescriptor(myProject, file, ex.getLineNumber() - 1, ex.getColumnNumber() - 1):null,
-                    NewErrorTreeViewPanel.createExportPrefix(ex.getLineNumber()),
-                    NewErrorTreeViewPanel.createRendererPrefix(ex.getLineNumber(), ex.getColumnNumber()),
-                    file
+                    file,
+                    ex.getLineNumber() - 1,
+                    ex.getColumnNumber() - 1,
+                    null
                 );
               }
             }
