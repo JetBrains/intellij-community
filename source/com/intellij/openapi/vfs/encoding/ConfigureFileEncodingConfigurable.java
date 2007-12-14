@@ -8,6 +8,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -66,5 +67,9 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
+  }
+
+  public void selectFile(@NotNull VirtualFile virtualFile) {
+    myTreeView.select(virtualFile);
   }
 }

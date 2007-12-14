@@ -14,10 +14,12 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.TableUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
 import com.intellij.util.ui.treetable.TreeTableCellRenderer;
 import com.intellij.util.ui.treetable.TreeTableModel;
@@ -208,9 +210,34 @@ public class FileTreeTable extends TreeTable {
 
   public void reset(final Map<VirtualFile, Charset> mappings) {
     myModel.reset(mappings);
-    myModel.nodeChanged((TreeNode)myModel.getRoot());
+    final TreeNode root = (TreeNode)myModel.getRoot();
+    myModel.nodeChanged(root);
     getTree().setModel(null);
     getTree().setModel(myModel);
+  }
+
+  public void select(final VirtualFile toSelect) {
+    if (toSelect != null) {
+      select(toSelect, (TreeNode)myModel.getRoot());
+    }
+  }
+  private void select(@NotNull VirtualFile toSelect, final TreeNode root) {
+    for (int i = 0; i < root.getChildCount(); i++) {
+      TreeNode child = root.getChildAt(i);
+      VirtualFile file = ((FileNode)child).getObject();
+      if (VfsUtil.isAncestor(file, toSelect, false)) {
+        if (file == toSelect) {
+          TreeUtil.selectNode(getTree(), child);
+          getSelectionModel().clearSelection();
+          addSelectedPath(TreeUtil.getPathFromRoot(child));
+          TableUtil.scrollSelectionToVisible(this);
+        }
+        else {
+          select(toSelect, child);
+        }
+        return;
+      }
+    }
   }
 
 

@@ -5,13 +5,21 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class ConfigureFileDefaultEncoding extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
-    ConfigureFileEncodingConfigurable configurable = ConfigureFileEncodingConfigurable.getInstance(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+    final ConfigureFileEncodingConfigurable configurable = ConfigureFileEncodingConfigurable.getInstance(project);
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable(){
+      public void run() {
+        if (virtualFile != null) {
+          configurable.selectFile(virtualFile);
+        }
+      }
+    });
   }
 
   public void update(final AnActionEvent e) {

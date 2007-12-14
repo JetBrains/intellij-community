@@ -65,7 +65,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       if (charset != null) {
         enabled = false;
       }
-      else {
+      else if (!virtualFile.isDirectory()) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(virtualFile);
         if (fileType.isBinary()
             || fileType == StdFileTypes.GUI_DESIGNER_FORM
@@ -73,7 +73,6 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
             || fileType == StdFileTypes.IDEA_PROJECT
             || fileType == StdFileTypes.IDEA_WORKSPACE
             || fileType == StdFileTypes.PATCH
-            || fileType == StdFileTypes.UNKNOWN
           ) {
           enabled = false;
         }
