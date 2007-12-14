@@ -195,7 +195,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     myViewsContentManager.addContent(myFramesContent);
 
-    myVariablesPanel = new VariablesPanel(myProject, myStateManager);
+    myVariablesPanel = new VariablesPanel(myProject, myStateManager, this);
     myVariablesPanel.getFrameTree().setAutoVariablesMode(debuggerSettings.AUTO_VARIABLES_MODE);
     myVarsContent = createContent(myVariablesPanel, DebuggerBundle.message("debugger.session.tab.variables.title"),
                                   IconLoader.getIcon("/debugger/value.png"), DebuggerContentInfo.VARIABLES_CONTENT, null);

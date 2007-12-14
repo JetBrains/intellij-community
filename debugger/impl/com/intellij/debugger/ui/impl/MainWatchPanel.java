@@ -4,8 +4,8 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
+import com.intellij.debugger.actions.AddToWatchAction;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -17,6 +17,9 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.InplaceEditor;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDTarget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -68,6 +71,37 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
         editWatchAction.unregisterCustomShortcutSet(watchTree);
       }
     });
+
+    DnDManager.getInstance().registerTarget(new DnDTarget() {
+      public boolean update(final DnDEvent aEvent) {
+        Object object = aEvent.getAttachedObject();
+        if (object == null) return true;
+
+        if (object.getClass().isArray()) {
+          Class<?> type = object.getClass().getComponentType();
+          if (DebuggerTreeNodeImpl.class.isAssignableFrom(type)) {
+            aEvent.setDropPossible(true, "Add to watches");
+            aEvent.setHighlighting(myTree, DnDEvent.DropTargetHighlightingType.RECTANGLE | DnDEvent.DropTargetHighlightingType.TEXT);
+          }
+        }
+
+        return true;
+      }
+
+      public void drop(final DnDEvent aEvent) {
+        addWatchesFrom((DebuggerTreeNodeImpl[])aEvent.getAttachedObject());
+      }
+
+      public void cleanUpOnLeave() {
+      }
+
+      public void updateDraggedImage(final Image image, final Point dropPoint, final Point imageOffset) {
+      }
+    }, myTree);
+  }
+
+  private void addWatchesFrom(final DebuggerTreeNodeImpl[] nodes) {
+    AddToWatchAction.addFromNodes(getContext(), this, nodes);
   }
 
   protected ActionPopupMenu createPopupMenu() {

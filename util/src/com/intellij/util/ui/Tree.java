@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.Patches;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -31,6 +32,8 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 
 public class Tree extends JTree implements Autoscroll  {
 
@@ -144,5 +147,26 @@ public class Tree extends JTree implements Autoscroll  {
 
   public final void setLineStyleAngled(){
     UIUtil.setLineStyleAngled(this);
+  }
+
+  public <T> T[] getSelectedNodes(Class<T> nodeType, @Nullable NodeFilter<T> filter) {
+    TreePath[] paths = getSelectionPaths();
+    if (paths == null) return (T[])Array.newInstance(nodeType, 0);
+
+    ArrayList<T> nodes = new ArrayList<T>();
+    for (int i = 0; i < paths.length; i++) {
+      Object last = paths[i].getLastPathComponent();
+      if (nodeType.isAssignableFrom(last.getClass())) {
+        if (filter != null && !filter.accept((T)last)) continue;
+        nodes.add((T)last);
+      }
+    }
+    T[] result = (T[])Array.newInstance(nodeType, nodes.size());
+    nodes.toArray(result);
+    return result;
+  }
+
+  public static interface NodeFilter<T> {
+    boolean accept(T node);
   }
 }

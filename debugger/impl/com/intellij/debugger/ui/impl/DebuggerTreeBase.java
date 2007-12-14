@@ -7,6 +7,7 @@ package com.intellij.debugger.ui.impl;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.StringTokenizer;
-import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -28,7 +28,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 
-public class DebuggerTreeBase extends Tree {
+public class DebuggerTreeBase extends DnDAwareTree {
   private Project myProject;
   private DebuggerTreeNodeImpl myCurrentTooltipNode;
   private JComponent myCurrentTooltip;

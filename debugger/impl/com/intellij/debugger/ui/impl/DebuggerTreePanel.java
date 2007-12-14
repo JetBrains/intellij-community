@@ -19,7 +19,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements DataProvider {
-  private final DebuggerTree myTree;
+  protected final DebuggerTree myTree;
 
   public DebuggerTreePanel(Project project, DebuggerStateManager stateManager) {
     super(project, stateManager);

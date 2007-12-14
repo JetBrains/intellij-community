@@ -69,7 +69,7 @@ public class AddToWatchAction extends DebuggerAction {
     final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     if(selectedNodes != null && selectedNodes.length > 0) {
-      debuggerContext.getDebugProcess().getManagerThread().invokeLater(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
+      addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
       final Editor editor = e.getData(DataKeys.EDITOR);
@@ -78,6 +78,10 @@ public class AddToWatchAction extends DebuggerAction {
         doAddWatch(watchPanel, editorText, null);
       }
     }
+  }
+
+  public static void addFromNodes(final DebuggerContextImpl debuggerContext, final MainWatchPanel watchPanel, final DebuggerTreeNodeImpl[] selectedNodes) {
+    debuggerContext.getDebugProcess().getManagerThread().invokeLater(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
   }
 
   private static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
