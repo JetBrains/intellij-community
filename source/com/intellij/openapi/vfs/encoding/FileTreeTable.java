@@ -63,10 +63,10 @@ public class FileTreeTable extends TreeTable {
             VirtualFile file = (VirtualFile)userObject;
             Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
             if (charset != null) {
-              setText("Encoding: " + charset);
-              return this;
+              setText(charset.name());
             }
             setEnabled(ChooseFileEncodingAction.isEnabled(myProject, file));
+            return this;
           }
         }
         setEnabled(true);
