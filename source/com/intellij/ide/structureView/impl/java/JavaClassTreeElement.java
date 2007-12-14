@@ -3,7 +3,6 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,8 +27,8 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     List<PsiElement> children = Arrays.asList(aClass.getChildren());
     Collection<PsiElement> ownChildren = new THashSet<PsiElement>(children);
     Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
-    
-    PsiScopesUtil.processScope(aClass, new AddAllMembersProcessor(inherited, aClass), PsiSubstitutor.UNKNOWN, null, aClass);
+
+    aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), PsiSubstitutor.UNKNOWN, null, aClass);
 
     for (PsiElement child : inherited) {
       if (!child.isValid()) continue;

@@ -15,7 +15,6 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
@@ -145,6 +144,7 @@ public class PsiClassImplUtil {
     return byMap.isEmpty() ? null : byMap.get(0);
   }
 
+  @SuppressWarnings({"unchecked"})
   @NotNull private static <T extends PsiMember> List<T> findByMap(PsiClass aClass, String name, boolean checkBases, Class<T> type) {
     if (name == null) return Collections.emptyList();
 
@@ -322,7 +322,7 @@ public class PsiClassImplUtil {
           }
           // Parameters
           final PsiTypeParameterList list = aClass.getTypeParameterList();
-          if (list != null && !PsiScopesUtil.processScope(list, processor, substitutor, last, place)) return false;
+          if (list != null && !list.processDeclarations(processor, substitutor, last, place)) return false;
         }
         if (!(last instanceof PsiReferenceList)) {
           final PsiClass classByName = aClass.findInnerClassByName(nameHint.getName(), false);
@@ -450,7 +450,7 @@ public class PsiClassImplUtil {
       if (last != null && last.getParent() == aClass) {
         // Parameters
         final PsiTypeParameterList list = aClass.getTypeParameterList();
-        if (list != null && !PsiScopesUtil.processScope(list, processor, PsiSubstitutor.EMPTY, last, place)) return false;
+        if (list != null && !list.processDeclarations(processor, PsiSubstitutor.EMPTY, last, place)) return false;
       }
 
       if (!(last instanceof PsiReferenceList) && !(last instanceof PsiModifierList)) {
@@ -505,18 +505,18 @@ public class PsiClassImplUtil {
     PsiManager manager = psiClass.getManager();
     GlobalSearchScope resolveScope = psiClass.getResolveScope();
 
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     if (psiClass.isInterface()) {
-      return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
+      return facade.findClass("java.lang.Object", resolveScope);
     }
     if (psiClass.isEnum()) {
-      return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Enum", resolveScope);
+      return facade.findClass("java.lang.Enum", resolveScope);
     }
 
     if (psiClass instanceof PsiAnonymousClass) {
       PsiClassType baseClassReference = ((PsiAnonymousClass)psiClass).getBaseClassType();
       PsiClass baseClass = baseClassReference.resolve();
-      if (baseClass == null || baseClass.isInterface()) return JavaPsiFacade.getInstance(manager.getProject())
-        .findClass("java.lang.Object", resolveScope);
+      if (baseClass == null || baseClass.isInterface()) return facade.findClass("java.lang.Object", resolveScope);
       return baseClass;
     }
 
@@ -524,10 +524,10 @@ public class PsiClassImplUtil {
 
     final PsiClassType[] referenceElements = psiClass.getExtendsListTypes();
 
-    if (referenceElements.length == 0) return JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope);
+    if (referenceElements.length == 0) return facade.findClass("java.lang.Object", resolveScope);
 
     PsiClass psiResoved = referenceElements[0].resolve();
-    return psiResoved == null ? JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Object", resolveScope) : psiResoved;
+    return psiResoved == null ? facade.findClass("java.lang.Object", resolveScope) : psiResoved;
   }
 
   @NotNull public static PsiClass[] getSupers(PsiClass psiClass) {

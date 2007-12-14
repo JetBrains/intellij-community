@@ -35,7 +35,7 @@ public class PsiScopesUtil {
       if(scope instanceof PsiClass){
         processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, scope);
       }
-      if (!processScope(scope, processor, substitutor, prevParent, entrance)) return false;
+      if (!scope.processDeclarations(processor, substitutor, prevParent, entrance)) return false;
 
       if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)){
         PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();
@@ -52,21 +52,6 @@ public class PsiScopesUtil {
     return true;
   }
 
-  public static boolean processScope(PsiElement scope, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
-    //if(scope instanceof PsiMetaOwner){
-    //  final PsiMetaOwner owner = (PsiMetaOwner) scope;
-    //  if (!owner.isMetaEnough() && !scope.processDeclarations(processor, substitutor, lastParent, place)) {
-    //    return false;
-    //  }
-    //
-    //  final PsiMetaData data = owner.getMetaData();
-    //  return data == null || data.processDeclarations(scope, processor, substitutor, lastParent, place);
-    //
-    //}
-
-    return scope.processDeclarations(processor, substitutor, lastParent, place);
-  }
-
   public static boolean walkChildrenScopes(PsiElement thisElement, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
     PsiElement child = null;
     if (lastParent != null && lastParent.getParent() == thisElement){
@@ -79,7 +64,7 @@ public class PsiScopesUtil {
     }
 
     while(child != null){
-      if (!processScope(child, processor, substitutor, null, place)) return false;
+      if (!child.processDeclarations(processor, substitutor, null, place)) return false;
       child = child.getPrevSibling();
     }
 
@@ -153,7 +138,7 @@ public class PsiScopesUtil {
         }
       }
 
-      if(target != null) return processScope(target, processor, substitutor, target, ref);
+      if(target != null) return target.processDeclarations(processor, substitutor, target, ref);
     }
     else{
       // simple expression -> trying to resolve variable or method
@@ -185,7 +170,7 @@ public class PsiScopesUtil {
 
             processor.setIsConstructor(true);
             processor.setAccessClass(aClass);
-            processScope(aClass, processor, PsiSubstitutor.EMPTY, null, call);
+            aClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, call);
 
             if (dummyImplicitConstructor){
               processDummyConstructor(processor, aClass);
@@ -283,7 +268,7 @@ public class PsiScopesUtil {
       processor.setAccessClass(aClass);
       processor.setArgumentList(newExpr.getArgumentList());
       processor.obtainTypeArguments(newExpr);
-      processScope(aClass, processor, result.getSubstitutor(), null, call);
+      aClass.processDeclarations(processor, result.getSubstitutor(), null, call);
 
       if (dummyImplicitConstructor){
         processDummyConstructor(processor, aClass);
@@ -337,7 +322,7 @@ public class PsiScopesUtil {
 
     processor.setIsConstructor(false);
     processor.setName(methodCall.getMethodExpression().getReferenceName());
-    return processScope(resolve, processor, qualifierResult.getSubstitutor(), methodCall, methodCall);
+    return resolve.processDeclarations(processor, qualifierResult.getSubstitutor(), methodCall, methodCall);
   }
 
   private static void processDummyConstructor(MethodsProcessor processor, PsiClass aClass) {

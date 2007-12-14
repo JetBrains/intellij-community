@@ -7,7 +7,6 @@ import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.List;
@@ -38,16 +37,16 @@ public class MembersGetter implements ContextGetter{
 
       if (element instanceof PsiClass) {
         psiClass = (PsiClass)context;
-        PsiScopesUtil.processScope(psiClass, processor, PsiSubstitutor.EMPTY, null, context);
+        psiClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, context);
       }
       else if (element instanceof PsiType) {
         psiClass = PsiUtil.resolveClassInType((PsiType)element);
         if (psiClass != null) {
-          PsiScopesUtil.processScope(psiClass, processor, PsiSubstitutor.EMPTY, null, context);
+          psiClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, context);
         }
       }
       else {
-        PsiScopesUtil.processScope((PsiElement)element, processor, PsiSubstitutor.EMPTY, null, context);
+        ((PsiElement)element).processDeclarations(processor, PsiSubstitutor.EMPTY, null, context);
       }
     }
 

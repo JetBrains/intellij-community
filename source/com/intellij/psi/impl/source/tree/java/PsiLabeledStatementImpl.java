@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +79,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     if (lastParent != null && lastParent.getParent() != this){
       PsiElement[] children = getChildren();
       for (PsiElement aChildren : children) {
-        if (!PsiScopesUtil.processScope(aChildren, processor, substitutor, null, place)) {
+        if (!aChildren.processDeclarations(processor, substitutor, null, place)) {
           return false;
         }
       }

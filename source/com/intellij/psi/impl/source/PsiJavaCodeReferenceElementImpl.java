@@ -378,7 +378,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
         final String className = classNameElement.getText();
 
         final ClassResolverProcessor processor = new ClassResolverProcessor(className, this);
-        PsiScopesUtil.processScope(result.getElement(), processor, result.getSubstitutor(), this, this);
+        result.getElement().processDeclarations(processor, result.getSubstitutor(), this, this);
         return processor.getResult();
       }
       case CLASS_NAME_KIND: {
@@ -749,14 +749,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
              final PsiType type = newExpr.getQualifier().getType();
              final PsiClass aClass = PsiUtil.resolveClassInType(type);
              if (aClass != null) {
-               PsiScopesUtil.processScope(
-                 aClass,
-                 new FilterScopeProcessor(new AndFilter(new ClassFilter(PsiClass.class), new ModifierFilter(PsiModifier.STATIC, false)),
-                                          processor),
-                 PsiSubstitutor.EMPTY,
-                 null,
-                 this
-               );
+               aClass.processDeclarations(new FilterScopeProcessor(new AndFilter(new ClassFilter(PsiClass.class), new ModifierFilter(PsiModifier.STATIC, false)),
+                                                     processor), PsiSubstitutor.EMPTY, null, this);
              }
              //          else{
              //            throw new RuntimeException("Qualified new is not allowed for primitives");

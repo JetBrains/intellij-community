@@ -3,15 +3,14 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +77,7 @@ public abstract class GenericReference extends CachingReference {
   public void processVariants(final PsiScopeProcessor processor){
     final PsiElement context = getContext();
     if(context != null){
-      PsiScopesUtil.processScope(context, processor, PsiSubstitutor.EMPTY, getElement(), getElement());
+      context.processDeclarations(processor, PsiSubstitutor.EMPTY, getElement(), getElement());
     }
     else if(getContextReference() == null && myProvider != null){
       myProvider.handleEmptyContext(processor, getElement());

@@ -73,16 +73,12 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return false;
   }
 
-  private XmlElementDecl getElement(String elementName) {
-    return (XmlElementDecl)buildDeclarationMap().get(elementName).getDeclaration();
-  }
-
-
   public XmlElementDescriptor[] getElements() {
-    return buildDeclarationMap().values().toArray(XmlElementDescriptor.EMPTY_ARRAY);
+    final Collection<XmlElementDescriptor> delcarations = buildDeclarationMap().values();
+    return delcarations.toArray(new XmlElementDescriptor[delcarations.size()]);
   }
 
-  private final Map<String,XmlElementDescriptor> buildDeclarationMap() {
+  private Map<String,XmlElementDescriptor> buildDeclarationMap() {
     return myCachedDeclsCache.get(this).getValue();
   }
 

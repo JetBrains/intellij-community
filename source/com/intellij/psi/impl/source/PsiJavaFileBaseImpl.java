@@ -23,7 +23,6 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
@@ -332,7 +331,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       String packageName = getPackageName();
       PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(packageName);
       if (aPackage != null){
-        if (!PsiScopesUtil.processScope(aPackage, processor, substitutor, null, place)) {
+        if (!aPackage.processDeclarations(processor, substitutor, null, place)) {
           return false;
         }
       }
@@ -408,7 +407,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private static boolean processOnDemandTarget (PsiElement target, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement place) {
     if (target instanceof PsiPackage) {
-      if (!PsiScopesUtil.processScope(target, processor, substitutor, null, place)) {
+      if (!target.processDeclarations(processor, substitutor, null, place)) {
         return false;
       }
     }
