@@ -1,5 +1,6 @@
 package com.intellij.psi.scope.conflictResolvers;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -189,7 +190,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return false;
       }
     }
-
+    if (!Comparing.equal(method1.getReturnType(), method2.getReturnType())) return false;
     return true;
   }
 

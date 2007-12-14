@@ -147,7 +147,7 @@ public class PsiSuperMethodImplUtil {
         }
         else if (isSuperMethod(aClass, existing, hierarchicalMethodSignature)) {
           mergeSupers(existing, hierarchicalMethodSignature);
-        }
+        }                                                                 
         // just drop an invalid method declaration there - to highlight accordingly
         else if (!result.containsKey(superSignature)) {
           result.put(superSignature, hierarchicalMethodSignature);
