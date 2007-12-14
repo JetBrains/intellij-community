@@ -76,7 +76,7 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
     super(new BorderLayout(0, 0));
 
     GRADIENT_C1 = getBackground();
-    GRADIENT_C2 = new Color(GRADIENT_C1.getRed() - 0x18, GRADIENT_C1.getGreen() - 0x18, GRADIENT_C1.getBlue() - 0x18);
+    GRADIENT_C2 = new Color(Math.max(0, GRADIENT_C1.getRed() - 0x18), Math.max(0, GRADIENT_C1.getGreen() - 0x18), Math.max(0, GRADIENT_C1.getBlue() - 0x18));
     
     myProject = project;
     myEditor = editor;
