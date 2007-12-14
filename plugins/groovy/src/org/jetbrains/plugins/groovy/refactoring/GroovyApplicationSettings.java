@@ -40,7 +40,7 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
 
-  private boolean myJsSupportEnabled = false;
+  transient private boolean myJsSupportEnabled = false;
 
   public GroovyApplicationSettings getState() {
     return this;
