@@ -435,7 +435,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return myScalarConverters.get(method);
   }
 
-  protected final T getChildDescription() {
+  public final T getChildDescription() {
     return myChildDescription;
   }
 

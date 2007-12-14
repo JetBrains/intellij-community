@@ -156,7 +156,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
-        return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS;
+        return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
       }
     };
     myPsiManager.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work

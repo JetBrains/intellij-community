@@ -73,18 +73,14 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
   public XmlElementDescriptor getElementDescriptor(final XmlTag childTag) {
     final DomElement domElement = myManager.getDomElement(childTag);
     if (domElement == null) return null;
+
     final DomElement parent = domElement.getParent();
     if (parent == null) return new DomElementXmlDescriptor(domElement);
-    final DomGenericInfo domGenericInfo = parent.getGenericInfo();
-    DomChildrenDescription description = domGenericInfo.getCollectionChildDescription(childTag.getName());
 
-    if (description == null) {
-      description = domGenericInfo.getFixedChildDescription(childTag.getName());
-    }
+    AbstractDomChildrenDescription description = domElement.getChildDescription();
+    if (!(description instanceof DomChildrenDescription)) return null;
 
-    if (description == null) return null;
-
-    return new DomElementXmlDescriptor(description, myManager);
+    return new DomElementXmlDescriptor((DomChildrenDescription)description, myManager);
   }
 
   public XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context) {

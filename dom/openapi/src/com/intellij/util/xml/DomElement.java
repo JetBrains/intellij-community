@@ -19,6 +19,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,8 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
 
   @NotNull
   Type getDomElementType();
+
+  AbstractDomChildrenDescription getChildDescription();
 
   @NotNull
   DomNameStrategy getNameStrategy();

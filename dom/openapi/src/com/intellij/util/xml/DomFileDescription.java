@@ -101,6 +101,8 @@ public class DomFileDescription<T> {
           return function.fun(tag);
         }
       }
+    } else {
+      return Collections.singletonList(namespaceKey);
     }
     return Collections.emptyList();
   }

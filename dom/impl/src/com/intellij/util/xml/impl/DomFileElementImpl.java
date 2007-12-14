@@ -177,6 +177,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return getClass();
   }
 
+  @NotNull
+  public AbstractDomChildrenDescription getChildDescription() {
+    throw new UnsupportedOperationException("Method getChildDescription is not yet implemented in " + getClass().getName());
+  }
+
   public DomNameStrategy getNameStrategy() {
     return getRootHandler().getNameStrategy();
   }
