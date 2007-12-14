@@ -16,7 +16,24 @@
 
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.NonNls;
+
 public abstract class UserDataCache<T, Owner extends UserDataHolder, S> extends FieldCache<T,Owner,Key<T>,S> {
+
+  private final Key<T> myKey;
+
+  protected UserDataCache() {
+    myKey = null;
+  }
+
+  public UserDataCache(@NonNls String keyName) {
+    myKey = new Key<T>(keyName);
+  }
+
+  public T get(final Owner owner, final S parameter) {
+    return get(myKey, owner, parameter);
+  }
+
   protected final T getValue(final Owner owner, final Key<T> key) {
     return owner.getUserData(key);
   }
