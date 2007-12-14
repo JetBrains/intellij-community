@@ -1,7 +1,6 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -11,6 +10,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.reflect.Type;
@@ -19,35 +19,29 @@ import java.lang.reflect.TypeVariable;
 /**
  * @author nik
  */
-public class XBreakpointImpl<T extends XBreakpointProperties> implements XBreakpoint<T> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.xdebugger.impl.breakpoints.XBreakpointImpl");
-  private XBreakpointType<T> myType;
-  private T myProperties;
-  private BreakpointState myState;
+public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> implements XBreakpoint<T> {
+  private final XBreakpointType<T> myType;
+  private final @Nullable T myProperties;
+  private final S myState;
 
-  public XBreakpointImpl(final XBreakpointType<T> type, final T properties) {
-    myState = new BreakpointState();
-    myState.setEnabled(true);
-    myState.setTypeId(type.getId());
+  public XBreakpointBase(final XBreakpointType<T> type, final @Nullable T properties, final S state) {
+    myState = state;
     myType = type;
     myProperties = properties;
   }
 
-  public XBreakpointImpl(final XBreakpointType<T> type, BreakpointState breakpointState) {
+  protected XBreakpointBase(final XBreakpointType<T> type, S breakpointState) {
     myState = breakpointState;
     myType = type;
-    Class<T> propertiesClass = myType.getPropertiesClass();
-    try {
-      myProperties = propertiesClass.newInstance();
+    myProperties = type.createProperties();
+    if (myProperties != null) {
+      Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), getStateClass(myProperties.getClass()));
+      myProperties.loadState(state);
     }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-    myProperties.loadState(XmlSerializer.deserialize(myState.getPropertiesElement(), getStateClass()));
   }
 
-  private Class getStateClass() {
-    Type type = resolveVariable(PersistentStateComponent.class.getTypeParameters()[0], myProperties.getClass());
+  private static Class getStateClass(final Class<? extends XBreakpointProperties> propertiesClass) {
+    Type type = resolveVariable(PersistentStateComponent.class.getTypeParameters()[0], propertiesClass);
     return ReflectionUtil.getRawType(type);
   }
 
@@ -78,7 +72,7 @@ public class XBreakpointImpl<T extends XBreakpointProperties> implements XBreakp
     return true;
   }
 
-  @NotNull
+  @Nullable
   public T getProperties() {
     return myProperties;
   }
@@ -93,8 +87,9 @@ public class XBreakpointImpl<T extends XBreakpointProperties> implements XBreakp
     return myType;
   }
 
-  public BreakpointState getState() {
-    myState.setPropertiesElement(XmlSerializer.serialize(myProperties.getState()));
+  public S getState() {
+    Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState()) : null;
+    myState.setPropertiesElement(propertiesElement);
     return myState;
   }
 
@@ -103,6 +98,14 @@ public class XBreakpointImpl<T extends XBreakpointProperties> implements XBreakp
     private boolean myEnabled;
     private String myTypeId;
     private Element myPropertiesElement;
+
+    public BreakpointState() {
+    }
+
+    public BreakpointState(final boolean enabled, final String typeId) {
+      myEnabled = enabled;
+      myTypeId = typeId;
+    }
 
     @Attribute("enabled")
     public boolean isEnabled() {
@@ -129,6 +132,10 @@ public class XBreakpointImpl<T extends XBreakpointProperties> implements XBreakp
 
     public void setPropertiesElement(final Element propertiesElement) {
       myPropertiesElement = propertiesElement;
+    }
+
+    public <T extends XBreakpointProperties> XBreakpointBase<T,?> createBreakpoint(@NotNull XBreakpointType<T> type) {
+      return new XBreakpointBase<T, BreakpointState>(type, this);
     }
   }
 }

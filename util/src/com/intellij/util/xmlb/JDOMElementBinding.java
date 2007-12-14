@@ -35,6 +35,9 @@ class JDOMElementBinding implements Binding {
 
   public Object serialize(Object o, Object context) {
     Object value = myAccessor.read(o);
+    if (value == null) {
+      return context;
+    }
     if (value instanceof Element) {
       Element targetElement;
       targetElement = (Element)((Element)value).clone();

@@ -3,10 +3,8 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.breakpoints.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -16,26 +14,36 @@ import java.util.List;
  * @author nik
  */
 public class XBreakpointManagerImpl implements XBreakpointManager, PersistentStateComponent<XBreakpointManagerImpl.BreakpointManagerState> {
-  private List<XBreakpointImpl<?>> myBreakpoints = new ArrayList<XBreakpointImpl<?>>();
+  private List<XBreakpointBase<?,?>> myBreakpoints = new ArrayList<XBreakpointBase<?,?>>();
 
-  public <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(final XBreakpointType<T> type, final T properties) {
-    XBreakpointImpl<T> breakpoint = new XBreakpointImpl<T>(type, properties);
+  @NotNull
+  public <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(final XBreakpointType<T> type, final @Nullable T properties) {
+    XBreakpointBase<T, ?> breakpoint = new XBreakpointBase<T, XBreakpointBase.BreakpointState>(type, properties, new XBreakpointBase.BreakpointState());
     myBreakpoints.add(breakpoint);
     return breakpoint;
   }
 
-  public void removeBreakpoint(final XBreakpoint<?> breakpoint) {
+  @NotNull
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XBreakpointType<T> type, @NotNull final String fileUrl,
+                                                                            final int line, @Nullable final T properties) {
+    XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<T>(type, fileUrl, line, properties);
+    myBreakpoints.add(breakpoint);
+    return breakpoint;
+  }
+
+  public void removeBreakpoint(@NotNull final XBreakpoint<?> breakpoint) {
     //noinspection SuspiciousMethodCalls
     myBreakpoints.remove(breakpoint);
   }
 
+  @NotNull
   public XBreakpoint[] getBreakpoints() {
     return myBreakpoints.toArray(new XBreakpoint[myBreakpoints.size()]);
   }
 
   public BreakpointManagerState getState() {
     BreakpointManagerState state = new BreakpointManagerState();
-    for (XBreakpointImpl breakpoint : myBreakpoints) {
+    for (XBreakpointBase breakpoint : myBreakpoints) {
       state.getBreakpoints().add(breakpoint.getState());
     }
     return state;
@@ -43,8 +51,8 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   public void loadState(final BreakpointManagerState state) {
     myBreakpoints.clear();
-    for (XBreakpointImpl.BreakpointState breakpointState : state.getBreakpoints()) {
-      XBreakpointImpl breakpoint = createBreakpoint(breakpointState);
+    for (XBreakpointBase.BreakpointState breakpointState : state.getBreakpoints()) {
+      XBreakpointBase breakpoint = createBreakpoint(breakpointState);
       if (breakpoint != null) {
         myBreakpoints.add(breakpoint);
       }
@@ -52,22 +60,23 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @Nullable
-  private static XBreakpointImpl createBreakpoint(final XBreakpointImpl.BreakpointState breakpointState) {
-    XBreakpointType type = XBreakpointType.findType(breakpointState.getTypeId());
-    if (type == null) return null;
-    return new XBreakpointImpl(type, breakpointState);
+  private static XBreakpointBase<?,?> createBreakpoint(final XBreakpointBase.BreakpointState breakpointState) {
+    XBreakpointType<?> type = XBreakpointType.findType(breakpointState.getTypeId());
+    if (type == null) return null;                    
+    return breakpointState.createBreakpoint(type);
   }
 
+
   public static class BreakpointManagerState {
-    private List<XBreakpointImpl.BreakpointState> myBreakpoints = new ArrayList<XBreakpointImpl.BreakpointState>();
+    private List<XBreakpointBase.BreakpointState> myBreakpoints = new ArrayList<XBreakpointBase.BreakpointState>();
 
     @Tag("breakpoints")
-    @AbstractCollection(surroundWithTag = false)
-    public List<XBreakpointImpl.BreakpointState> getBreakpoints() {
+    @AbstractCollection(surroundWithTag = false, elementTypes = {XBreakpointBase.BreakpointState.class, XLineBreakpointImpl.LineBreakpointState.class})
+    public List<XBreakpointBase.BreakpointState> getBreakpoints() {
       return myBreakpoints;
     }
 
-    public void setBreakpoints(final List<XBreakpointImpl.BreakpointState> breakpoints) {
+    public void setBreakpoints(final List<XBreakpointBase.BreakpointState> breakpoints) {
       myBreakpoints = breakpoints;
     }
   }

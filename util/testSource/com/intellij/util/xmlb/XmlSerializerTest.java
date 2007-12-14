@@ -805,6 +805,11 @@ public class XmlSerializerTest extends TestCase {
                               "    <b />\n" +
                               "  </actions>\n" +
                               "</BeanWithJDOMElement>", null);
+
+    element.actions = null;
+    assertSerializer(element, "<BeanWithJDOMElement>\n" +
+                              "  <option name=\"STRING_V\" value=\"a\" />\n" +
+                              "</BeanWithJDOMElement>", null);
   }
 
   public void testDeserializeJDOMElementField() throws Exception {
@@ -848,6 +853,15 @@ public class XmlSerializerTest extends TestCase {
     assertEquals(1, bean.actions[1].getChildren().size());
 
     assertSerializer(bean, text, null);
+
+    bean.actions = null;
+    String newText = "<BeanWithJDOMElementArray>\n" +
+                     "  <option name=\"STRING_V\" value=\"bye\" />\n" +
+                     "</BeanWithJDOMElementArray>";
+    doSerializerTest(newText, bean);
+
+    bean.actions = new Element[0];
+    doSerializerTest(newText, bean);
   }
 
   public static class BeanWithTextAnnotation {
