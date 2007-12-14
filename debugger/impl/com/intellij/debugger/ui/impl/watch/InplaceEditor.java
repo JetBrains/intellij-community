@@ -175,7 +175,13 @@ public abstract class InplaceEditor implements AWTEventListener{
       }
     });
     final Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-    defaultToolkit.addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK);
+    SwingUtilities.invokeLater(new Runnable() {
+      public void run() {
+        if (!isShown()) return;
+        defaultToolkit.addAWTEventListener(InplaceEditor.this, AWTEvent.MOUSE_EVENT_MASK);
+      }
+    });
+
     myRemoveActions.add(new Runnable() {
       public void run() {
         defaultToolkit.removeAWTEventListener(InplaceEditor.this);
