@@ -1212,13 +1212,13 @@ public final class PsiUtil {
     if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel(((PsiDirectory)element));
     final PsiFile file = element.getContainingFile();
     if (file == null) {
-      return JavaPsiFacade.getInstance(element.getManager().getProject()).getEffectiveLanguageLevel();
+      return JavaPsiFacade.getInstance(element.getProject()).getEffectiveLanguageLevel();
     }
 
     if (!(file instanceof PsiJavaFile)) {
       final PsiElement context = file.getContext();
       if (context != null) return getLanguageLevel(context);
-      return JavaPsiFacade.getInstance(element.getManager().getProject()).getEffectiveLanguageLevel();
+      return JavaPsiFacade.getInstance(element.getProject()).getEffectiveLanguageLevel();
     }
     return ((PsiJavaFile)file).getLanguageLevel();
   }

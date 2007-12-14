@@ -78,7 +78,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       else {
         PsiPackage aPackage = null;
         if (file instanceof PsiJavaFile) {
-          aPackage = JavaPsiFacade.getInstance(element.getManager().getProject()).findPackage(((PsiJavaFile)file).getPackageName());
+          aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
         }
 
         if (aPackage == null) {

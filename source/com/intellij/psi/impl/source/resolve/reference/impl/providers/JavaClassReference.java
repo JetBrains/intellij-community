@@ -211,7 +211,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   public Object[] getVariants() {
     PsiElement context = getContext();
     if (context == null) {
-      context = JavaPsiFacade.getInstance(getElement().getManager().getProject()).findPackage("");
+      context = JavaPsiFacade.getInstance(getElement().getProject()).findPackage("");
     }
     if (context instanceof PsiPackage) {
       final String[] extendClasses = JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());

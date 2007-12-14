@@ -28,7 +28,7 @@ public class PsiPackageReference extends PsiReferenceBase<PsiElement>  implement
 
   @Nullable
   private PsiPackage getPsiPackage() {
-    return myIndex == 0 ? JavaPsiFacade.getInstance(getElement().getManager().getProject()).findPackage("") : myReferenceSet.getReference(myIndex - 1).resolve();
+    return myIndex == 0 ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : myReferenceSet.getReference(myIndex - 1).resolve();
   }
 
   public boolean isSoft() {
