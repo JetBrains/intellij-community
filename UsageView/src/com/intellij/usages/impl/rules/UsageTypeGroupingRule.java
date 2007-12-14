@@ -97,7 +97,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
         if (p instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
           final PsiMethod calledMethod = callExpression.resolveMethod();
-          if (qualifier != null && qualifier instanceof PsiThisExpression) {
+          if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
             if (haveCommonSuperMethod(containerMethod, calledMethod)) {
               boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
 
