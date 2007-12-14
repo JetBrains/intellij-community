@@ -17,6 +17,8 @@ package com.intellij.usages;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -28,9 +30,15 @@ import javax.swing.*;
  * To change this template use File | Settings | File Templates.
  */
 public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
+  @Nullable
   Icon getIcon(boolean isOpen);
+
+  @NotNull
   String getText(UsageView view);
+
+  @Nullable
   FileStatus getFileStatus();
+
   boolean isValid();
   void update();
 }

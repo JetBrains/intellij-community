@@ -17,13 +17,10 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiMatcherImpl;
 import com.intellij.psi.util.PsiMatchers;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -418,34 +415,13 @@ public class HighlightControlFlowUtil {
       final PsiParameter parameter = (PsiParameter)variable;
       final Boolean isReassigned = parameterIsReassigned.get(parameter);
       if (isReassigned != null) return isReassigned.booleanValue();
-      boolean isAssigned = isAssigned(parameter);
+      boolean isAssigned = PsiUtil.isAssigned(parameter);
       parameterIsReassigned.put(parameter, Boolean.valueOf(isAssigned));
       return isAssigned;
     }
     else {
       return false;
     }
-  }
-
-  private static boolean isAssigned(final PsiParameter parameter) {
-    class MyProcessor implements Processor<PsiReference> {
-      boolean myIsWriteRefFound = false;
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (element instanceof PsiReferenceExpression) {
-          myIsWriteRefFound |= PsiUtil.isAccessedForWriting((PsiExpression)element);
-        }
-        return !myIsWriteRefFound;
-      }
-
-      public boolean isWriteRefFound() {
-        return myIsWriteRefFound;
-      }
-    }
-
-    MyProcessor processor = new MyProcessor();
-    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
-    return processor.isWriteRefFound();
   }
 
 

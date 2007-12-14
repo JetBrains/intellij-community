@@ -30,6 +30,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -94,6 +95,7 @@ public class FileGroupingRule implements UsageGroupingRule {
       return myIcon;
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myPresentableName;
     }

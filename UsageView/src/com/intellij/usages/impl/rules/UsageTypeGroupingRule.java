@@ -19,19 +19,24 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.usages.ReadWriteAccessUsage;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 /**
  * Created by IntelliJ IDEA.
  * User: max
- * Date: Dec 17, 2004                                                                        m n m
+ * Date: Dec 17, 2004
  * Time: 9:34:53 PM
  * To change this template use File | Settings | File Templates.
  */
@@ -56,11 +61,15 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  private UsageType getUsageType(PsiElement element) {
+  @Nullable
+  private static UsageType getUsageType(PsiElement element) {
     if (element == null) return null;
 
     UsageType classUsageType = getClassUsageType(element);
     if (classUsageType != null) return classUsageType;
+
+    UsageType methodUsageType = getMethodUsageType(element);
+    if (methodUsageType != null) return methodUsageType;
 
     if (element instanceof PsiLiteralExpression) {return UsageType.LITERAL_USAGE; }
 
@@ -77,7 +86,72 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
     return null;
   }
 
-  private UsageType getClassUsageType(PsiElement element) {
+  @Nullable
+  private static UsageType getMethodUsageType(PsiElement element) {
+    if (element instanceof PsiReferenceExpression) {
+      final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      if (containerMethod != null) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+        final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+        final PsiElement p = referenceExpression.getParent();
+        if (p instanceof PsiMethodCallExpression) {
+          final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)p;
+          final PsiMethod calledMethod = callExpression.resolveMethod();
+          if (qualifier != null && qualifier instanceof PsiThisExpression) {
+            if (haveCommonSuperMethod(containerMethod, calledMethod)) {
+              boolean parametersDelegated = parametersDelegated(containerMethod, callExpression);
+
+              if (qualifier instanceof PsiSuperExpression) {
+                return parametersDelegated ? UsageType.DELEGATE_TO_SUPER : UsageType.DELEGATE_TO_SUPER_PARAMETERS_CHANGED;
+              }
+              else {
+                return parametersDelegated ? UsageType.DELEGATE_TO_ANOTHER_INSTANCE : UsageType.DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED;
+              }
+            }
+          }
+          else if (calledMethod == containerMethod) {
+            return UsageType.RECURSION;
+          }
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  private static boolean parametersDelegated(final PsiMethod method, final PsiMethodCallExpression call) {
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final PsiExpression[] arguments = call.getArgumentList().getExpressions();
+    if (parameters.length != arguments.length) return false;
+
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      PsiExpression argument = arguments[i];
+
+      if (!(argument instanceof PsiReferenceExpression)) return false;
+      if (!((PsiReferenceExpression)argument).isReferenceTo(parameter)) return false;
+    }
+
+    for (PsiParameter parameter : parameters) {
+      if (PsiUtil.isAssigned(parameter)) return false;
+    }
+
+    return true;
+  }
+
+  private static boolean haveCommonSuperMethod(PsiMethod m1, PsiMethod m2) {
+    HashSet<PsiMethod> s1 = new HashSet<PsiMethod>(Arrays.asList(m1.findDeepestSuperMethods()));
+    s1.add(m1);
+
+    HashSet<PsiMethod> s2 = new HashSet<PsiMethod>(Arrays.asList(m2.findDeepestSuperMethods()));
+    s2.add(m2);
+    
+    s1.retainAll(s2);
+    return !s1.isEmpty();
+  }
+
+  @Nullable
+  private static UsageType getClassUsageType(PsiElement element) {
 
     if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) != null) return UsageType.CLASS_IMPORT;
     PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(element, PsiReferenceList.class);
@@ -141,7 +215,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
 
 
   private class UsageTypeGroup implements UsageGroup {
-    private UsageType myUsageType;
+    private final UsageType myUsageType;
 
     public void update() {
     }
@@ -154,6 +228,7 @@ public class UsageTypeGroupingRule implements UsageGroupingRule {
       return null;
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myUsageType.toString();
     }

@@ -32,6 +32,7 @@ import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -109,6 +110,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
       return (PsiMethod)myMethodPointer.getElement();
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myName;
     }

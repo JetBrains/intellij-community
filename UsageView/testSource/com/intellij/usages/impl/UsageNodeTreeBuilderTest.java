@@ -123,6 +123,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
     }
 
     public Icon getIcon(boolean isOpen) { return null; }
+    @NotNull
     public String getText(UsageView view) { return String.valueOf(myPower); }
 
     public FileStatus getFileStatus() {
@@ -160,6 +161,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
   private static class OddEvenGroupingRule implements UsageGroupingRule {
     private static final UsageGroup EVEN = new UsageGroup() {
       public Icon getIcon(boolean isOpen) { return null; }
+      @NotNull
       public String getText(UsageView view) { return "Even"; }
 
       public void update() {
@@ -186,6 +188,7 @@ public class UsageNodeTreeBuilderTest extends TestCase {
 
     private static final UsageGroup ODD = new UsageGroup() {
       public Icon getIcon(boolean isOpen) { return null; }
+      @NotNull
       public String getText(UsageView view) { return "Odd"; }
 
       public void update() {

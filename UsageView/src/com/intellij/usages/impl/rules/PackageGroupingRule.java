@@ -31,6 +31,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.Icons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,6 +86,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
       return isOpen? myOpenIcon: myClosedIcon;
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myPackage.getQualifiedName();
     }
@@ -148,6 +150,7 @@ public class PackageGroupingRule implements UsageGroupingRule {
       return isOpen ? Icons.DIRECTORY_OPEN_ICON : Icons.DIRECTORY_CLOSED_ICON;
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myDir.getPresentableUrl();
     }

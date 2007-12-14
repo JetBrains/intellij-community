@@ -16,12 +16,13 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -32,6 +33,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class CodeUsageGroup implements UsageGroup {
     public static final UsageGroup INSTANCE = new CodeUsageGroup();
 
+    @NotNull
     public String getText(UsageView view) {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getCodeUsagesString();
     }
@@ -59,6 +61,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
   private static class NonCodeUsageGroup implements UsageGroup {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
+    @NotNull
     public String getText(UsageView view) {
       return view == null ? UsageViewBundle.message("node.group.code.usages") : view.getPresentation().getNonCodeUsagesString();
     }

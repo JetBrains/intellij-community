@@ -30,6 +30,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -69,6 +70,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return LIBRARY_ICON;
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myEntry.getPresentableName();
     }
@@ -138,6 +140,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
       return myModule.getModuleType().getNodeIcon(isOpen);
     }
 
+    @NotNull
     public String getText(UsageView view) {
       return myModule.getName();
     }

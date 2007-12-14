@@ -40,6 +40,12 @@ public class UsageType {
 
   public static final UsageType UNCLASSIFIED = new UsageType(UsageViewBundle.message("usage.type.unclassified"));
 
+  public static final UsageType RECURSION = new UsageType("Recursion");
+  public static final UsageType DELEGATE_TO_SUPER = new UsageType("Delegate to super method");
+  public static final UsageType DELEGATE_TO_SUPER_PARAMETERS_CHANGED = new UsageType("Delegate to super method, parameters changed");
+  public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE = new UsageType("Delegate to another instance method");
+  public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED = new UsageType("Delegate to another instance method, parameters changed");
+
   private final String myName;
 
   public UsageType(String name) {

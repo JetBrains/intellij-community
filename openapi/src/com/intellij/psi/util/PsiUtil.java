@@ -36,9 +36,12 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1045,6 +1048,27 @@ public final class PsiUtil {
 
   public static boolean isInsideJavadocComment(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true, true) != null;
+  }
+
+  public static boolean isAssigned(final PsiParameter parameter) {
+    class MyProcessor implements Processor<PsiReference> {
+      boolean myIsWriteRefFound = false;
+      public boolean process(PsiReference reference) {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiReferenceExpression) {
+          myIsWriteRefFound |= isAccessedForWriting((PsiExpression)element);
+        }
+        return !myIsWriteRefFound;
+      }
+
+      public boolean isWriteRefFound() {
+        return myIsWriteRefFound;
+      }
+    }
+
+    MyProcessor processor = new MyProcessor();
+    ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), true).forEach(processor);
+    return processor.isWriteRefFound();
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
