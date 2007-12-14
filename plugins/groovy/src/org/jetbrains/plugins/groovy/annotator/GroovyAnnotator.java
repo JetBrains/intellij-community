@@ -723,9 +723,17 @@ public class GroovyAnnotator implements Annotator {
 
   private boolean isNeedsAddDynPropertiesAnnotation(GrReferenceExpression referenceExpression) {
     String dynamicValueTypeDefinitionText = findDynamicValueTypeDefinitionText(referenceExpression);
-    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(referenceExpression.getContainingFile().getVirtualFile());
+    final PsiFile containingFile = referenceExpression.getContainingFile();
 
-    //todo [dimaskin]  fix NPE!!!
+    VirtualFile file;
+    if (containingFile != null) {
+      file = containingFile.getVirtualFile();
+      if (file == null) return false;
+    } else return false;
+
+    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
+
+    if (module == null) return false;
     DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinitionText, module.getName());
     final String dynPropElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(dynamicProperty);
 
@@ -733,9 +741,17 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void addDynPropertyAnnotation(Annotation annotation, GrReferenceExpression referenceExpression) {
-    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(referenceExpression.getContainingFile().getVirtualFile());
+    final PsiFile containingFile = referenceExpression.getContainingFile();
+    VirtualFile file;
+    if (containingFile != null) {
+      file = containingFile.getVirtualFile();
+      if (file == null) return;
+    } else return;
+
+    Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
     String dynamicValueTypeDefinitionText = findDynamicValueTypeDefinitionText(referenceExpression);
 
+    if (module == null) return;
     DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinitionText, module.getName());
     annotation.registerFix(new DynamicPropertyIntention(dynamicProperty));
   }
