@@ -7,6 +7,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,8 @@ import java.util.*;
  * Date: 23.11.2007
  */
 public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManagerImpl");
+
   private final Project myProject;
   private Map<Module, File> myPathsToXmls;
 
@@ -64,9 +67,10 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
   @NotNull
   private String findOrCreateProjectDynamicDir() {
+    final String url = getProject().getPresentableUrl();
     final String projectDynPath = findOrCreateDynamicDirectory() + File.separatorChar +
         DYNAMIC_PROPERTIES_PROJECT + "_" + getProject().getName() + "_" +
-        getProject().getPresentableUrl().hashCode();
+        (url != null ? url : getProject().getName()).hashCode();
 
     return findOrCreateDir(projectDynPath);
   }
@@ -124,10 +128,12 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     }
 
     FileWriter writer = null;
+    final File filePath = myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName));
     try {
-      writer = new FileWriter(myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName)));
+      writer = new FileWriter(filePath);
       JDOMUtil.writeElement(rootElement, writer, "\n");
     } catch (IOException e) {
+      LOG.error("File " + filePath + " cannot be written.");
     } finally {
       try {
         if (writer != null) {
@@ -135,6 +141,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
           writer.close();
         }
       } catch (IOException e) {
+        LOG.error("FileWriter for file " + filePath + " cannot be close.");
       }
     }
 
@@ -181,7 +188,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     final Element dynPropTypeElement = findDynamicPropertyTypeElement(document.getRootElement(), typeQualifiedName);
     if (dynPropTypeElement == null) return new String[0];
 
-    final List propertiesOfType = dynPropTypeElement.getContent(DynamicPropertyXMLElement.createPropertyNameTagFilter());
+    final List propertiesOfType = dynPropTypeElement.getContent(DynamicElementFiltersFactory.createPropertyNameTagFilter());
     List<String> result = new ArrayList<String>();
     for (Object o : propertiesOfType) {
       result.add(((Element) o).getText());
@@ -192,7 +199,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
   @Nullable
   private Element findDynamicPropertyTypeElement(Element rootElement, final String typeQualifiedName) {
-    final List definedProperties = rootElement.getContent(DynamicPropertyXMLElement.createConcreatePropertyTagFilter(typeQualifiedName));
+    final List definedProperties = rootElement.getContent(DynamicElementFiltersFactory.createConcreatePropertyTagFilter(typeQualifiedName));
 
     if (definedProperties == null || definedProperties.size() == 0 || definedProperties.size() > 1) return null;
     return ((Element) definedProperties.get(0));
@@ -203,7 +210,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     Element definedTypeDef = findDynamicPropertyTypeElement(rootElement, typeQualifiedName);
     if (definedTypeDef == null) return null;
 
-    final List definedPropertiesInTypeDef = definedTypeDef.getContent(DynamicPropertyXMLElement.createConcreatePropertyNameTagFilter(propertyName));
+    final List definedPropertiesInTypeDef = definedTypeDef.getContent(DynamicElementFiltersFactory.createConcreatePropertyNameTagFilter(propertyName));
     if (definedPropertiesInTypeDef == null || definedPropertiesInTypeDef.size() == 0) {
       return null;
     }
