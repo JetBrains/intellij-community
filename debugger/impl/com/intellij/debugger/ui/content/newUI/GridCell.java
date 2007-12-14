@@ -271,6 +271,10 @@ public class GridCell implements Disposable {
         myContext.getContentManager().removeFromSelection(each);
       }
     }
+
+    for (Content each : myMinimizedContents) {
+      myContext.getContentManager().removeFromSelection(each);
+    }
   }
 
   public void minimize(Content[] contents) {
@@ -279,6 +283,8 @@ public class GridCell implements Disposable {
     for (final Content each : contents) {
       myMinimizedContents.add(each);
       remove(each);
+      boolean isShowing = myTabs.getRootPane() != null;
+      updateSelection(isShowing);
       myContainer.minimize(each, new CellTransform.Restore() {
         public ActionCallback restoreInGrid() {
           return restore(each);
@@ -396,6 +402,7 @@ public class GridCell implements Disposable {
   private ActionCallback restore(Content content) {
     myMinimizedContents.remove(content);
     add(content);
+    updateSelection(myTabs.getRootPane() != null);
     return new ActionCallback.Done();
   }
 
