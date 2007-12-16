@@ -163,12 +163,12 @@ public class PsiForStatementImpl extends CompositePsiElement implements PsiForSt
     }
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null || lastParent.getParent() != this)
       // Parent element should not see our vars
       return true;
 
-    return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+    return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
   }
 }

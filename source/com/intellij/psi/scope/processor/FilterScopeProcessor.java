@@ -2,6 +2,7 @@ package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -49,12 +50,12 @@ public class FilterScopeProcessor<T> extends BaseScopeProcessor{
     }
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor){
+  public boolean execute(PsiElement element, ResolveState state){
     if (myFilter.isAcceptable(element, myCurrentDeclarationHolder)){
       if(myProcessor != null){
-        return myProcessor.execute(element, substitutor);
+        return myProcessor.execute(element, state);
       }
-      add(element, substitutor);
+      add(element, state.get(PsiSubstitutor.KEY));
     }
     return true;
   }

@@ -108,7 +108,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     if (hint == null || hint.shouldProcess(PsiPackage.class) || hint.shouldProcess(PsiClass.class)) {
       final List<PsiElement> cachedPackages = getDefaultPackages(position);
       for (final PsiElement psiPackage : cachedPackages) {
-        if (!processor.execute(psiPackage, PsiSubstitutor.EMPTY)) return;
+        if (!processor.execute(psiPackage, ResolveState.initial())) return;
       }
     }
   }
@@ -119,7 +119,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       final List<PsiElement> psiPackages = new ArrayList<PsiElement>();
       final PsiManager manager = position.getManager();
       final BaseScopeProcessor processor = new BaseScopeProcessor() {
-        public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+        public boolean execute(PsiElement element, ResolveState state) {
           psiPackages.add(element);
           return true;
         }
@@ -128,12 +128,12 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
       if (StringUtil.isNotEmpty(defPackageName)) {
         final PsiPackage defaultPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(defPackageName);
         if (defaultPackage != null) {
-          defaultPackage.processDeclarations(processor, PsiSubstitutor.EMPTY, position, position);
+          defaultPackage.processDeclarations(processor, ResolveState.initial(), position, position);
         }
       }
       final PsiPackage rootPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage("");
       if (rootPackage != null) {
-        rootPackage.processDeclarations(processor, PsiSubstitutor.EMPTY, position, position);
+        rootPackage.processDeclarations(processor, ResolveState.initial(), position, position);
       }
       if (myPackagesEraser == null) {
         myPackagesEraser = new Runnable() {

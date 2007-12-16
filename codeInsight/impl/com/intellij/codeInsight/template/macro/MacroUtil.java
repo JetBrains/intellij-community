@@ -143,13 +143,13 @@ public class MacroUtil {
   @NotNull public static PsiVariable[] getVariablesVisibleAt(final PsiElement place, String prefix) {
     final List<PsiVariable> list = new ArrayList<PsiVariable>();
     VariablesProcessor varproc = new VariablesProcessor(prefix, true, list){
-      public boolean execute(PsiElement pe, PsiSubstitutor substitutor) {
+      public boolean execute(PsiElement pe, ResolveState state) {
         if (pe instanceof PsiVariable) {
           //exclude variables that are initialized in 'place'
           final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
           if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;
         }
-        return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, place, null) || super.execute(pe, substitutor);
+        return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, place, null) || super.execute(pe, state);
       }
     };
     PsiScopesUtil.treeWalkUp(varproc, place, null);

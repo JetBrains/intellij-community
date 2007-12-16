@@ -119,18 +119,18 @@ public class PsiImplUtil {
     return processor.getResults().toArray();
   }
 
-  public static boolean processDeclarationsInMethod(PsiMethod method, PsiScopeProcessor processor, PsiSubstitutor substitutor,
+  public static boolean processDeclarationsInMethod(PsiMethod method, PsiScopeProcessor processor, ResolveState state,
                                                     PsiElement lastParent, PsiElement place) {
     final ElementClassHint hint = processor.getHint(ElementClassHint.class);
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, method);
     if (hint == null || hint.shouldProcess(PsiClass.class)) {
       final PsiTypeParameterList list = method.getTypeParameterList();
-      if (list != null && !list.processDeclarations(processor, substitutor, null, place)) return false;
+      if (list != null && !list.processDeclarations(processor, state, null, place)) return false;
     }
     if (lastParent instanceof PsiCodeBlock) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {
-        if (!processor.execute(parameter, substitutor)) return false;
+        if (!processor.execute(parameter, state)) return false;
       }
     }
 

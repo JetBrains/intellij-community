@@ -77,7 +77,7 @@ public abstract class GenericReference extends CachingReference {
   public void processVariants(final PsiScopeProcessor processor){
     final PsiElement context = getContext();
     if(context != null){
-      context.processDeclarations(processor, PsiSubstitutor.EMPTY, getElement(), getElement());
+      context.processDeclarations(processor, ResolveState.initial(), getElement(), getElement());
     }
     else if(getContextReference() == null && myProvider != null){
       myProvider.handleEmptyContext(processor, getElement());

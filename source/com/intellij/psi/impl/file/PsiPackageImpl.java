@@ -402,7 +402,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     GlobalSearchScope scope = place.getResolveScope();
@@ -417,14 +417,14 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
         final PsiClass aClass = findClassByName(nameHint.getName(), scope);
         if (aClass != null &&
             (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null))) {
-          if (!processor.execute(aClass, substitutor)) return false;
+          if (!processor.execute(aClass, state)) return false;
         }
       }
       else {
         PsiClass[] classes = getClasses(scope);
         for (PsiClass aClass : classes) {
           if (!isPlacePhysical || JavaPsiFacade.getInstance(getProject()).getResolveHelper().isAccessible(aClass, place, null)) {
-            if (!processor.execute(aClass, substitutor)) {
+            if (!processor.execute(aClass, state)) {
               return false;
             }
           }
@@ -434,7 +434,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
           final Iterator<PsiClass> migrationClasses = migration.getMigrationClasses(getQualifiedName());
           while (migrationClasses.hasNext()) {
             PsiClass psiClass = migrationClasses.next();
-            if (!processor.execute(psiClass, substitutor)) {
+            if (!processor.execute(psiClass, state)) {
               return false;
             }
           }
@@ -446,7 +446,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
       if (nameHint != null) {
         PsiPackage aPackage = findSubPackageByName(nameHint.getName(), scope);
         if (aPackage != null) {
-          if (!processor.execute(aPackage, substitutor)) return false;
+          if (!processor.execute(aPackage, state)) return false;
         }
       }
       else {
@@ -457,7 +457,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
           if (!JavaPsiFacade.getInstance(getManager().getProject()).getNameHelper().isIdentifier(packageName, PsiUtil.getLanguageLevel(this))) {
             continue;
           }
-          if (!processor.execute(pack, substitutor)) {
+          if (!processor.execute(pack, state)) {
             return false;
           }
         }
@@ -466,7 +466,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
           final Iterator<PsiPackage> migrationClasses = migration.getMigrationPackages(getQualifiedName());
           while (migrationClasses.hasNext()) {
             PsiPackage psiPackage = migrationClasses.next();
-            if (!processor.execute(psiPackage, substitutor)) {
+            if (!processor.execute(psiPackage, state)) {
               return false;
             }
           }

@@ -2,9 +2,9 @@ package com.intellij.psi.impl.source.html;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.*;
@@ -32,7 +32,7 @@ public class ScriptSupportUtil {
     element.putUserData(CachedScriptTagsKey,null);
   }
 
-  public static boolean processDeclarations(XmlFile element, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public static boolean processDeclarations(XmlFile element, PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
     XmlTag[] myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
 
     if (myCachedScriptTags == null) {
@@ -70,7 +70,7 @@ public class ScriptSupportUtil {
       for (XmlTag tag : myCachedScriptTags) {
         final XmlTagChild[] children = tag.getValue().getChildren();
         for (XmlTagChild child : children) {
-          if (!child.processDeclarations(processor, substitutor, null, place)) return false;
+          if (!child.processDeclarations(processor, state, null, place)) return false;
         }
 
         if(tag.getAttributeValue("src") != null) {
@@ -86,7 +86,7 @@ public class ScriptSupportUtil {
                 final PsiElement psiElement = references[references.length - 1].resolve();
 
                 if (psiElement instanceof PsiFile && psiElement.isValid()) {
-                  if(!psiElement.processDeclarations(processor, substitutor, null, place))
+                  if(!psiElement.processDeclarations(processor, state, null, place))
                     return false;
                 }
               }

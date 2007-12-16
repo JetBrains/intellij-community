@@ -79,18 +79,18 @@ public class PsiDeclarationStatementImpl extends CompositePsiElement implements 
     return "PsiDeclarationStatement";
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     PsiElement[] decls = getDeclaredElements();
     for (PsiElement decl : decls) {
       if (decl != lastParent) {
-        if (!processor.execute(decl, substitutor)) return false;
+        if (!processor.execute(decl, state)) return false;
       }
       else {
         final ElementClassHint hint = processor.getHint(ElementClassHint.class);
         if (lastParent instanceof PsiClass) {
           if (hint == null || hint.shouldProcess(PsiClass.class)) {
-            processor.execute(lastParent, substitutor);
+            processor.execute(lastParent, state);
           }
         }
       }

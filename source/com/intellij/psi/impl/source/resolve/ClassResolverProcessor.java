@@ -75,7 +75,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState state) {
     if (element instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)element;
       final String name = aClass.getName();
@@ -105,7 +105,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
         boolean accessible = myPlace == null || checkAccessibility(aClass);
         myHasAccessibleCandidate |= accessible;
         myHasInaccessibleCandidate |= !accessible;
-        myCandidates.add(new ClassCandidateInfo(aClass, substitutor, !accessible, myCurrentFileContext));
+        myCandidates.add(new ClassCandidateInfo(aClass, state.get(PsiSubstitutor.KEY), !accessible, myCurrentFileContext));
         myResult = null;
         return !accessible;
       }

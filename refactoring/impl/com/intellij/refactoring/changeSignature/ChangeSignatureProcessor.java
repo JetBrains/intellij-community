@@ -891,14 +891,14 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(list.getProject()).getResolveHelper();
       final PsiType type = info.getTypeWrapper().getType(myChangeInfo.getMethod(), myManager);
       final VariablesProcessor processor = new VariablesProcessor(false) {
-              protected boolean check(PsiVariable var, PsiSubstitutor substitutor) {
+              protected boolean check(PsiVariable var, ResolveState state) {
                 if (var instanceof PsiField && !resolveHelper.isAccessible((PsiField)var, list, null)) return false;
-                final PsiType varType = substitutor.substitute(var.getType());
+                final PsiType varType = state.get(PsiSubstitutor.KEY).substitute(var.getType());
                 return type.isAssignableFrom(varType);
               }
 
-              public boolean execute(PsiElement pe, PsiSubstitutor substitutor) {
-                super.execute(pe, substitutor);
+              public boolean execute(PsiElement pe, ResolveState state) {
+                super.execute(pe, state);
                 return size() < 2;
               }
             };

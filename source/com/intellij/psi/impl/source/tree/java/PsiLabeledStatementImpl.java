@@ -75,11 +75,11 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     return "PsiLabeledStatement";
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent != null && lastParent.getParent() != this){
       PsiElement[] children = getChildren();
       for (PsiElement aChildren : children) {
-        if (!aChildren.processDeclarations(processor, substitutor, null, place)) {
+        if (!aChildren.processDeclarations(processor, state, null, place)) {
           return false;
         }
       }

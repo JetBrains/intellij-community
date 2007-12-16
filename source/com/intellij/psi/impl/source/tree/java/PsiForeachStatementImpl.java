@@ -108,7 +108,7 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
     return "PsiForeachStatement";
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null || lastParent.getParent() != this)
       // Parent element should not see our vars
@@ -116,10 +116,10 @@ public class PsiForeachStatementImpl extends CompositePsiElement implements PsiF
 
     final PsiParameter iterationParameter = getIterationParameter();
     if (iterationParameter != null) {
-      return processor.execute(iterationParameter, substitutor);
+      return processor.execute(iterationParameter, state);
     }
 
-    return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+    return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

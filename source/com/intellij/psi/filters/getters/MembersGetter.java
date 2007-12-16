@@ -37,16 +37,16 @@ public class MembersGetter implements ContextGetter{
 
       if (element instanceof PsiClass) {
         psiClass = (PsiClass)context;
-        psiClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, context);
+        psiClass.processDeclarations(processor, ResolveState.initial(), null, context);
       }
       else if (element instanceof PsiType) {
         psiClass = PsiUtil.resolveClassInType((PsiType)element);
         if (psiClass != null) {
-          psiClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, context);
+          psiClass.processDeclarations(processor, ResolveState.initial(), null, context);
         }
       }
       else {
-        ((PsiElement)element).processDeclarations(processor, PsiSubstitutor.EMPTY, null, context);
+        ((PsiElement)element).processDeclarations(processor, ResolveState.initial(), null, context);
       }
     }
 

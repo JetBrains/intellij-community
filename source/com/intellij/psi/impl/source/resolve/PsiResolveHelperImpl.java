@@ -61,12 +61,13 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       processor = new MethodResolverProcessor(aClass, argumentList, place);
     }
 
+    ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
     for (PsiMethod constructor : aClass.getConstructors()) {
-      if (!processor.execute(constructor, substitutor)) break;
+      if (!processor.execute(constructor, state)) break;
     }
 
     return processor.getResult();
-    }
+  }
 
   public PsiClass resolveReferencedClass(String referenceText, PsiElement context) {
     final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();

@@ -87,9 +87,9 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return "PsiClassInitializer";
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
-    return lastParent == null || PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+    return lastParent == null || PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
   }
 
   public Icon getElementIcon(int flags) {

@@ -105,8 +105,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         processor.handleEvent(PsiScopeProcessor.Event.START_STATIC, null);
       }
       processorToUse = new PsiScopeProcessor() {
-        public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-          return !(element instanceof PsiClass || element instanceof PsiPackage) || processor.execute(element, substitutor);
+        public boolean execute(PsiElement element, ResolveState state) {
+          return !(element instanceof PsiClass || element instanceof PsiPackage) || processor.execute(element, state);
         }
 
         public <V> V getHint(Class<V> hintClass) {
@@ -345,7 +345,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         }
 
         final ClassResolverProcessor processor = new ClassResolverProcessor(getCanonicalText(), psiElement);
-        containingFile.processDeclarations(processor, PsiSubstitutor.EMPTY, null, psiElement);
+        containingFile.processDeclarations(processor, ResolveState.initial(), null, psiElement);
 
         if (processor.getResult().length == 1) {
           final JavaResolveResult javaResolveResult = processor.getResult()[0];

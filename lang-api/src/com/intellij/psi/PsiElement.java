@@ -420,15 +420,14 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * for processing to the specified scope processor.
    *
    * @param processor   the processor receiving the declarations.
-   * @param substitutor the class providing the mapping between type parameters and their values.
-   * @param lastParent  the child of this element which was processed during the previous
+   * @param state
+   *@param lastParent  the child of this element which was processed during the previous
    *                    step of the tree up walk (declarations under this element do not need
    *                    to be processed again)
-   * @param place       the original element from which the tree up walk was initiated.
-   * @return true if the declaration processing should continue or false if it should be stopped.
+   * @param place       the original element from which the tree up walk was initiated. @return true if the declaration processing should continue or false if it should be stopped.
    */
   boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                              @NotNull PsiSubstitutor substitutor,
+                              @NotNull ResolveState state,
                               @Nullable PsiElement lastParent,
                               @NotNull PsiElement place);
 

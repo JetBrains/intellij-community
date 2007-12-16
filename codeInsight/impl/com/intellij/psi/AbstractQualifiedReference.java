@@ -69,7 +69,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     }
 
     final PsiElement psiElement = qualifier.resolve();
-    return psiElement == null || psiElement.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+    return psiElement == null || psiElement.processDeclarations(processor, ResolveState.initial(), null, this);
   }
 
   protected boolean processUnqualifiedVariants(final PsiScopeProcessor processor) {
@@ -220,7 +220,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     private boolean myFound = false;
     private final Set<ResolveResult> myResults = new LinkedHashSet<ResolveResult>();
 
-    public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
+    public boolean execute(final PsiElement element, final ResolveState state) {
       if (isFound()) return false;
       process(element);
       return true;

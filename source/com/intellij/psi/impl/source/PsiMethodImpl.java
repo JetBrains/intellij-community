@@ -352,8 +352,8 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
     return "PsiMethod:" + getName();
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    return PsiImplUtil.processDeclarationsInMethod(this, processor, substitutor, lastParent, place);
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    return PsiImplUtil.processDeclarationsInMethod(this, processor, state, lastParent, place);
 
   }
 

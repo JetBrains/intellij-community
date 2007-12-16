@@ -36,7 +36,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor implement
     super.handleEvent(event, associated);
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-    return !myStopAcceptingCandidates && super.execute(element, substitutor);
+  public boolean execute(PsiElement element, ResolveState state) {
+    return !myStopAcceptingCandidates && super.execute(element, state);
   }
 }

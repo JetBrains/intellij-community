@@ -75,7 +75,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
       final Set<String> classesSet = new THashSet<String>();
       final Ref<Boolean> conflict = new Ref<Boolean>(Boolean.FALSE);
       PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
-        public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+        public boolean execute(PsiElement element, ResolveState state) {
           if (element instanceof PsiLocalVariable) {
             final PsiLocalVariable variable = (PsiLocalVariable)element;
             final String name = variable.getName();
@@ -96,7 +96,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
           }
           return !conflict.get();
         }
-      }, PsiSubstitutor.EMPTY, this, this);
+      }, ResolveState.initial(), this, this);
 
       myClassesSet = set1 = classesSet;
       myVariablesSet = set2 = localsSet;
@@ -180,7 +180,7 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
   }
 
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null) {
       // Parent element should not see our vars
@@ -195,14 +195,14 @@ public class PsiCodeBlockImpl extends CompositePsiElement implements PsiCodeBloc
       final ElementClassHint elementClassHint = processor.getHint(ElementClassHint.class);
       final String name = hint.getName();
       if ((elementClassHint == null || elementClassHint.shouldProcess(PsiClass.class)) && classesSet.contains(name)) {
-        return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+        return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
       }
       if ((elementClassHint == null || elementClassHint.shouldProcess(PsiVariable.class)) && variablesSet.contains(name)) {
-        return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+        return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
       }
     }
     else {
-      return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+      return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
     }
     return true;
   }

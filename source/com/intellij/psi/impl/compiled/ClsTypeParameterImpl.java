@@ -160,8 +160,8 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
     return null;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public String getName() {

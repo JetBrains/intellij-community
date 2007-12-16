@@ -16,7 +16,7 @@
 package com.intellij.psi.scope;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 
 public interface PsiScopeProcessor {
   enum Event {
@@ -31,7 +31,7 @@ public interface PsiScopeProcessor {
   /**
    * @return false to stop processing.
    */
-  boolean execute(PsiElement element, PsiSubstitutor substitutor);
+  boolean execute(PsiElement element, ResolveState state);
   <T> T getHint(Class<T> hintClass);
   void handleEvent(Event event, Object associated);
 }

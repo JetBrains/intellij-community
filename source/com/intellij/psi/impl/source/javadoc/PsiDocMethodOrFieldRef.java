@@ -101,13 +101,13 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
   public static PsiVariable[] getAllVariables(PsiElement scope, PsiElement place) {
     final List<PsiVariable> result = new SmartList<PsiVariable>();
-    scope.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiVariable.class), result), PsiSubstitutor.UNKNOWN, null, place);
+    scope.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiVariable.class), result), ResolveState.initial(), null, place);
     return result.toArray(new PsiVariable[result.size()]);
   }
 
   public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
     final List<PsiMethod> result = new SmartList<PsiMethod>();
-    scope.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiMethod.class), result), PsiSubstitutor.UNKNOWN, null, place);
+    scope.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiMethod.class), result), ResolveState.initial(), null, place);
     return result.toArray(new PsiMethod[result.size()]);
   }
 

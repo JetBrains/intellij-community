@@ -2,12 +2,12 @@ package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.util.SmartList;
 import com.intellij.util.ReflectionCache;
+import com.intellij.util.SmartList;
 
 import java.util.List;
 
@@ -27,18 +27,18 @@ public abstract class VariablesProcessor extends BaseScopeProcessor implements E
     myResultList = list;
   }
 
-  protected abstract boolean check(PsiVariable var, PsiSubstitutor substitutor);
+  protected abstract boolean check(PsiVariable var, ResolveState state);
 
   public boolean shouldProcess(Class elementClass) {
     return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
   }
 
   /** Always return true since we wanna get all vars in scope */
-  public boolean execute(PsiElement pe, PsiSubstitutor substitutor){
+  public boolean execute(PsiElement pe, ResolveState state){
     if(pe instanceof PsiVariable){
       final PsiVariable pvar = (PsiVariable)pe;
       if(!myStaticSensitiveFlag || !myStaticScopeFlag || pvar.hasModifierProperty(PsiModifier.STATIC)){
-        if(check(pvar, substitutor)){
+        if(check(pvar, state)){
           myResultList.add(pvar);
         }
       }

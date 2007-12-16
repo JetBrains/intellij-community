@@ -251,8 +251,8 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       final PsiElement target = ((PsiJavaCodeReferenceElement)qualifier).resolve();
       if (!(target instanceof PsiClass)) return JavaResolveResult.EMPTY_ARRAY;
       final ArrayList<JavaResolveResult> results = new ArrayList<JavaResolveResult>();
-      target.processDeclarations(referenceElement.new MyScopeProcessor(results),
-                                 PsiSubstitutor.EMPTY, referenceElement, referenceElement);
+      target
+        .processDeclarations(referenceElement.new MyScopeProcessor(results), ResolveState.initial(), referenceElement, referenceElement);
       if (results.size() <= 1) {
         return results.toArray(new JavaResolveResult[results.size()]);
       }
@@ -274,7 +274,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       myResults = results;
     }
 
-    public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+    public boolean execute(PsiElement element, ResolveState state) {
       if (element instanceof PsiMember
           && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
         myResults.add(new OurResolveResult((PsiMember)element));

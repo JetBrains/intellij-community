@@ -218,7 +218,7 @@ public class I18nUtil {
 
   private static void addAvailableMethodsOfType(final PsiClassType type, final PsiLiteralExpression context, final Collection<String> result) {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
-      public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+      public boolean execute(PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
           PsiType returnType = method.getReturnType();

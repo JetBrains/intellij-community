@@ -97,11 +97,11 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
     return getFileType() == StdFileTypes.XHTML || getFileType() == StdFileTypes.HTML;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    if (!super.processDeclarations(processor, substitutor, lastParent, place)) return false;
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
     if (isWebFileType())
-      return ScriptSupportUtil.processDeclarations(this, processor, substitutor, lastParent, place);
+      return ScriptSupportUtil.processDeclarations(this, processor, state, lastParent, place);
 
     return true;
   }

@@ -78,13 +78,13 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     }
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     final PsiSwitchStatement switchStatement = getEnclosingSwitchStatement();
     if (switchStatement != null) {
       final PsiExpression expression = switchStatement.getExpression();
       if (expression != null && expression.getType() instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)expression.getType()).resolve();
-        if(aClass != null) aClass.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiEnumConstant.class), processor), substitutor, this, place);
+        if(aClass != null) aClass.processDeclarations(new FilterScopeProcessor(new ClassFilter(PsiEnumConstant.class), processor), state, this, place);
       }
     }
     return true;

@@ -80,7 +80,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     }
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor){
+  public boolean execute(PsiElement element, ResolveState state){
     if(!(element instanceof PsiClass) && element instanceof PsiModifierListOwner){
       PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
       if(myStatic){
@@ -113,8 +113,8 @@ public class CompletionProcessor extends BaseScopeProcessor
       final String name = PsiUtil.getName(element);
       if(name != null && myContext.prefixMatches(name)
          && myFilter.isClassAcceptable(element.getClass())
-         && myFilter.isAcceptable(new CandidateInfo(element, substitutor), myElement))
-        add(new CompletionElement(myQualifierType, element, substitutor));
+         && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement))
+        add(new CompletionElement(myQualifierType, element, state.get(PsiSubstitutor.KEY)));
     }
     return true;
   }

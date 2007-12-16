@@ -154,7 +154,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     return true;

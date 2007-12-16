@@ -160,7 +160,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     if (lastParent instanceof PsiExpressionList) return true;
@@ -168,7 +168,7 @@ public class PsiAnonymousClassImpl extends PsiClassImpl implements PsiAnonymousC
         && lastParent == getBaseClassReference()) {
       return true;
     }
-    return super.processDeclarations(processor, substitutor, lastParent, place);
+    return super.processDeclarations(processor, state, lastParent, place);
   }
 
   public void treeElementSubTreeChanged() {

@@ -94,7 +94,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
@@ -104,9 +104,9 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
 
     final PsiParameter catchParameter = getParameter();
     if (catchParameter != null) {
-      return processor.execute(catchParameter, substitutor);
+      return processor.execute(catchParameter, state);
     }
 
-    return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+    return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
   }
 }

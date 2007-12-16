@@ -29,13 +29,13 @@ public class PsiScopesUtil {
   public static boolean treeWalkUp(@NotNull PsiScopeProcessor processor, @NotNull PsiElement entrance, @Nullable PsiElement maxScope) {
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
-    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+    ResolveState state = ResolveState.initial();
 
     while(scope != null){
       if(scope instanceof PsiClass){
         processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, scope);
       }
-      if (!scope.processDeclarations(processor, substitutor, prevParent, entrance)) return false;
+      if (!scope.processDeclarations(processor, state, prevParent, entrance)) return false;
 
       if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)){
         PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();
@@ -52,7 +52,7 @@ public class PsiScopesUtil {
     return true;
   }
 
-  public static boolean walkChildrenScopes(PsiElement thisElement, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place) {
+  public static boolean walkChildrenScopes(PsiElement thisElement, PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
     PsiElement child = null;
     if (lastParent != null && lastParent.getParent() == thisElement){
       child = lastParent.getPrevSibling();
@@ -64,7 +64,7 @@ public class PsiScopesUtil {
     }
 
     while(child != null){
-      if (!child.processDeclarations(processor, substitutor, null, place)) return false;
+      if (!child.processDeclarations(processor, state, null, place)) return false;
       child = child.getPrevSibling();
     }
 
@@ -138,7 +138,7 @@ public class PsiScopesUtil {
         }
       }
 
-      if(target != null) return target.processDeclarations(processor, substitutor, target, ref);
+      if(target != null) return target.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, substitutor), target, ref);
     }
     else{
       // simple expression -> trying to resolve variable or method
@@ -170,7 +170,7 @@ public class PsiScopesUtil {
 
             processor.setIsConstructor(true);
             processor.setAccessClass(aClass);
-            aClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, call);
+            aClass.processDeclarations(processor, ResolveState.initial(), null, call);
 
             if (dummyImplicitConstructor){
               processDummyConstructor(processor, aClass);
@@ -199,8 +199,9 @@ public class PsiScopesUtil {
               processor.setIsConstructor(true);
               processor.setAccessClass(null);
               final PsiMethod[] constructors = superClass.getConstructors();
+              ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
               for (PsiMethod constructor : constructors) {
-                if (!processor.execute(constructor, substitutor)) return;
+                if (!processor.execute(constructor, state)) return;
               }
 
               if (dummyImplicitConstructor) processDummyConstructor(processor, superClass);
@@ -268,7 +269,7 @@ public class PsiScopesUtil {
       processor.setAccessClass(aClass);
       processor.setArgumentList(newExpr.getArgumentList());
       processor.obtainTypeArguments(newExpr);
-      aClass.processDeclarations(processor, result.getSubstitutor(), null, call);
+      aClass.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, result.getSubstitutor()), null, call);
 
       if (dummyImplicitConstructor){
         processDummyConstructor(processor, aClass);
@@ -322,7 +323,7 @@ public class PsiScopesUtil {
 
     processor.setIsConstructor(false);
     processor.setName(methodCall.getMethodExpression().getReferenceName());
-    return resolve.processDeclarations(processor, qualifierResult.getSubstitutor(), methodCall, methodCall);
+    return resolve.processDeclarations(processor, ResolveState.initial().put(PsiSubstitutor.KEY, qualifierResult.getSubstitutor()), methodCall, methodCall);
   }
 
   private static void processDummyConstructor(MethodsProcessor processor, PsiClass aClass) {

@@ -31,7 +31,7 @@ public class AddAllMembersProcessor extends BaseScopeProcessor {
     myFilter = filter;
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState state) {
     PsiMember member = (PsiMember)element;
     if (!isInteresting(element)) return true;
     if (myPsiClass.isInterface() && isObjectMember(element)) return true;

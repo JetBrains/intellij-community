@@ -145,7 +145,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
@@ -158,7 +158,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
         if (qNameImported != null) {
           PsiClass imported = JavaPsiFacade.getInstance(myManager.getProject()).findClass(qNameImported, getResolveScope());
           if (imported != null) {
-            if (!processor.execute(imported, substitutor)) return false;
+            if (!processor.execute(imported, state)) return false;
           }
         }
       }
@@ -166,13 +166,13 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
         for (String qNameImported : myPseudoImports.values()) {
           PsiClass aClass = JavaPsiFacade.getInstance(myManager.getProject()).findClass(qNameImported, getResolveScope());
           if (aClass != null) {
-            if (!processor.execute(aClass, substitutor)) return false;
+            if (!processor.execute(aClass, state)) return false;
           }
         }
       }
 
       if (myContext == null) {
-        return ResolveUtil.processImplicitlyImportedPackages(processor, substitutor, place, getManager());
+        return ResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager());
       }
     }
 
@@ -188,7 +188,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
         return true;
       }
 
-      return PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place);
+      return PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place);
     }
   }
 

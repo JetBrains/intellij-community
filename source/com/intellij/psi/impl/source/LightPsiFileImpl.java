@@ -16,8 +16,8 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -216,7 +216,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     return true;

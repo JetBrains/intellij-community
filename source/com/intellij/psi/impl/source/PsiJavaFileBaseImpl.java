@@ -256,7 +256,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       myDelegate.handleEvent(event, associated);
     }
 
-    public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+    public boolean execute(PsiElement element, ResolveState state) {
       if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) {
         if (myNameToFilter != null &&
             (!(element instanceof PsiNamedElement) || !myNameToFilter.equals(((PsiNamedElement)element).getName()))) {
@@ -266,7 +266,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           final String name = ((PsiNamedElement)element).getName();
           if (myHiddenNames.contains(name)) return true;
         }
-        return myDelegate.execute(element, substitutor);
+        return myDelegate.execute(element, state);
       }
       else {
         return true;
@@ -274,8 +274,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place){
-    if(!processDeclarationsNoGuess(processor, substitutor, lastParent, place)){
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place){
+    if(!processDeclarationsNoGuess(processor, state, lastParent, place)){
       if(processor instanceof ClassResolverProcessor){
         final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
         if(isPhysical()){
@@ -287,7 +287,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
-  private boolean processDeclarationsNoGuess(PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement lastParent, PsiElement place){
+  private boolean processDeclarationsNoGuess(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place){
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
     final NameHint nameHint = processor.getHint(NameHint.class);
@@ -304,7 +304,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
       final PsiClass[] classes = getClasses();
       for (PsiClass aClass : classes) {
-        if (!processor.execute(aClass, substitutor)) return false;
+        if (!processor.execute(aClass, state)) return false;
       }
 
       PsiImportList importList = getImportList();
@@ -321,7 +321,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           PsiElement resolved = statement.resolve();
           if (resolved instanceof PsiClass) {
             processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, statement);
-            if (!processor.execute(resolved, substitutor)) return false;
+            if (!processor.execute(resolved, state)) return false;
           }
         }
       }
@@ -331,7 +331,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       String packageName = getPackageName();
       PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(packageName);
       if (aPackage != null){
-        if (!aPackage.processDeclarations(processor, substitutor, null, place)) {
+        if (!aPackage.processDeclarations(processor, state, null, place)) {
           return false;
         }
       }
@@ -342,7 +342,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           PsiElement resolved = statement.resolve();
           if (resolved != null) {
             processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, statement);
-            processOnDemandTarget(resolved, processor, substitutor, place);
+            processOnDemandTarget(resolved, processor, state, place);
           }
         }
       }
@@ -351,7 +351,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if(classHint == null || classHint.shouldProcess(PsiPackage.class)){
       final PsiPackage rootPackage = JavaPsiFacade.getInstance(getManager().getProject()).findPackage("");
       processor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, rootPackage);
-      if(rootPackage != null) rootPackage.processDeclarations(processor, substitutor, null, place);
+      if(rootPackage != null) rootPackage.processDeclarations(processor, state, null, place);
     }
 
     // todo[dsl] class processing
@@ -368,7 +368,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           if (targetElement != null) {
             staticImportProcessor.setNameToFilter(referenceName);
             staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-            final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
+            final boolean result = targetElement.processDeclarations(staticImportProcessor, state, lastParent, place);
             if (!result) return false;
           }
         }
@@ -381,7 +381,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           if (targetElement != null) {
             staticImportProcessor.setNameToFilter(null);
             staticImportProcessor.handleEvent(PsiScopeProcessor.Event.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-            final boolean result = targetElement.processDeclarations(staticImportProcessor, substitutor, lastParent, place);
+            final boolean result = targetElement.processDeclarations(staticImportProcessor, state, lastParent, place);
             if (!result) return false;
           }
         }
@@ -397,7 +397,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       for (PsiJavaCodeReferenceElement aImplicitlyImported : implicitlyImported) {
         PsiElement resolved = aImplicitlyImported.resolve();
         if (resolved != null) {
-          processOnDemandTarget(resolved, processor, substitutor, place);
+          processOnDemandTarget(resolved, processor, state, place);
         }
       }
     }
@@ -405,7 +405,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
-  private static boolean processOnDemandTarget (PsiElement target, PsiScopeProcessor processor, PsiSubstitutor substitutor, PsiElement place) {
+  private static boolean processOnDemandTarget (PsiElement target, PsiScopeProcessor processor, ResolveState substitutor, PsiElement place) {
     if (target instanceof PsiPackage) {
       if (!target.processDeclarations(processor, substitutor, null, place)) {
         return false;

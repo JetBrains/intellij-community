@@ -1070,10 +1070,10 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public PsiElement getScope() {

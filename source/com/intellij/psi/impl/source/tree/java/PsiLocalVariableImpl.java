@@ -238,17 +238,17 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
     }
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent == null) return true;
     if (lastParent.getContext() instanceof DummyHolder) {
-      return processor.execute(this, substitutor);
+      return processor.execute(this, state);
     }
 
     if (lastParent.getParent() != this) return true;
     final ASTNode lastParentTree = SourceTreeToPsiMap.psiElementToTree(lastParent);
 
     return getChildRole(lastParentTree) != ChildRole.INITIALIZER ||
-           processor.execute(this, substitutor);
+           processor.execute(this, state);
   }
 
   public ItemPresentation getPresentation() {

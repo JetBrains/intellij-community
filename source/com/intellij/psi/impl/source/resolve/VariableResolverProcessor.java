@@ -70,12 +70,12 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
     return ReflectionCache.isAssignable(PsiVariable.class, elementClass);
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
+  public boolean execute(PsiElement element, ResolveState state) {
     if (!(element instanceof PsiField) && (myName == null || PsiUtil.checkName(element, myName, myPlace))) {
-      super.execute(element, substitutor);
+      super.execute(element, state);
       return myResults.isEmpty();
     }
 
-    return super.execute(element, substitutor);
+    return super.execute(element, state);
   }
 }

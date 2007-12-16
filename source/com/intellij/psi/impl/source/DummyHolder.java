@@ -99,7 +99,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     return !myPseudoImports.isEmpty();
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.class);
     if (classHint == null || classHint.shouldProcess(PsiClass.class)) {
       final NameHint nameHint = processor.getHint(NameHint.class);
@@ -108,16 +108,16 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
       if (name != null) {
         PsiClass imported = myPseudoImports.get(name);
         if (imported != null) {
-          if (!processor.execute(imported, substitutor)) return false;
+          if (!processor.execute(imported, state)) return false;
         }
       } else {
         for (PsiClass aClass : myPseudoImports.values()) {
-          if (!processor.execute(aClass, substitutor)) return false;
+          if (!processor.execute(aClass, state)) return false;
         }
       }
 
       if (myContext == null) {
-        if (!ResolveUtil.processImplicitlyImportedPackages(processor, substitutor, place, getManager())) return false;
+        if (!ResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager())) return false;
       }
     }
     return true;

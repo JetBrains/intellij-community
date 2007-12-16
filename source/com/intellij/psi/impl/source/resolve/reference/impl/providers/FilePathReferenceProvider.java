@@ -46,8 +46,8 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         throws ProcessorRegistry.IncompatibleReferenceTypeException {
         final PsiScopeProcessor baseProcessor = super.createProcessor(result, allowedClasses, resolvers);
         return new PsiScopeProcessor() {
-          public boolean execute(PsiElement element, PsiSubstitutor substitutor) {
-            return !isPsiElementAccepted(element, substitutor) || baseProcessor.execute(element, substitutor);
+          public boolean execute(PsiElement element, ResolveState state) {
+            return !isPsiElementAccepted(element, state) || baseProcessor.execute(element, state);
           }
 
           public <T> T getHint(Class<T> hintClass) {
@@ -63,7 +63,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
 
   }
 
-  protected boolean isPsiElementAccepted(PsiElement element, PsiSubstitutor substitutor) {
+  protected boolean isPsiElementAccepted(PsiElement element, ResolveState state) {
     return !(element instanceof PsiJavaFile && element instanceof PsiCompiledElement);
   }
 

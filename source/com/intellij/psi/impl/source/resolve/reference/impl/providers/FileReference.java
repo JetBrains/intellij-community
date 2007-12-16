@@ -119,7 +119,7 @@ public class FileReference
         final String decoded = decode(text);
         if (decoded != null) {
           processVariants(context, new BaseScopeProcessor() {
-            public boolean execute(final PsiElement element, final PsiSubstitutor substitutor) {
+            public boolean execute(final PsiElement element, final ResolveState state) {
               final String name = ((PsiNamedElement)element).getName();
               if (name != null) {
                 if (myFileReferenceSet.isCaseSensitive() ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0) {
@@ -222,7 +222,7 @@ public class FileReference
             }
           }
         }
-        return processor.execute(element, PsiSubstitutor.EMPTY);
+        return processor.execute(element, ResolveState.initial());
       }
     };
   }

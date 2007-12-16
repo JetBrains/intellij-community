@@ -777,17 +777,17 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     if (lastParent == null) return true;
 
-    if (!PsiScopesUtil.walkChildrenScopes(this, processor, substitutor, lastParent, place)) return false;
+    if (!PsiScopesUtil.walkChildrenScopes(this, processor, state, lastParent, place)) return false;
 
     final PsiParameter[] parameters = getParameterList().getParameters();
     for (PsiParameter parameter : parameters) {
-      if (!processor.execute(parameter, substitutor)) return false;
+      if (!processor.execute(parameter, state)) return false;
     }
 
     return true;

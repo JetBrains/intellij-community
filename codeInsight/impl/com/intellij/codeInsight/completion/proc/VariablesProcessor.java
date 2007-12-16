@@ -10,7 +10,7 @@ package com.intellij.codeInsight.completion.proc;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiVariable;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.util.ReflectionCache;
@@ -46,7 +46,7 @@ public class VariablesProcessor
   }
 
   /** Always return true since we wanna get all vars in scope */
-  public boolean execute(PsiElement pe, PsiSubstitutor substitutor){
+  public boolean execute(PsiElement pe, ResolveState state){
     if(pe instanceof PsiVariable){
       final PsiVariable pvar = (PsiVariable)pe;
       final String pvar_name = pvar.getName();

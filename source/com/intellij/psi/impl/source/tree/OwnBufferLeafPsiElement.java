@@ -155,7 +155,7 @@ public class OwnBufferLeafPsiElement extends CharTableBasedLeafElementImpl imple
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     return true;

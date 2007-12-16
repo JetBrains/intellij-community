@@ -77,7 +77,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull PsiSubstitutor substitutor,
+                                     @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
     return true;

@@ -663,7 +663,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     return "PsiClass:" + getName();
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (isEnum()) {
       String name = getName();
       if (name != null) {
@@ -679,12 +679,12 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
           final ElementClassHint classHint = processor.getHint(ElementClassHint.class);
           if (nameHint == null || VALUES_METHOD.equals(nameHint.getName())) {
             if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
-              if (!processor.execute(myValuesMethod, PsiSubstitutor.EMPTY)) return false;
+              if (!processor.execute(myValuesMethod, ResolveState.initial())) return false;
             }
           }
           if (nameHint == null || VALUE_OF_METHOD.equals(nameHint.getName())) {
             if (classHint == null || classHint.shouldProcess(PsiMethod.class)) {
-              if (!processor.execute(myValueOfMethod, PsiSubstitutor.EMPTY)) return false;
+              if (!processor.execute(myValueOfMethod, ResolveState.initial())) return false;
             }
           }
         }
@@ -694,7 +694,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
     }
 
-    return PsiClassImplUtil.processDeclarationsInClass(this, processor, substitutor, new HashSet<PsiClass>(), lastParent, place, false);
+    return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, new HashSet<PsiClass>(), lastParent, place, false);
   }
 
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException{

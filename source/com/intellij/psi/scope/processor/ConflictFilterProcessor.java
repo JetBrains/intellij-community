@@ -3,6 +3,7 @@ package com.intellij.psi.scope.processor;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.NameHint;
@@ -33,13 +34,13 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     myPlace = place;
   }
 
-  public boolean execute(PsiElement element, PsiSubstitutor substitutor){
+  public boolean execute(PsiElement element, ResolveState state){
     if(myCachedResult != null && myCachedResult.length == 1 && myCachedResult[0].isAccessible()) {
       return false;
     }
 
     if(myName == null || PsiUtil.checkName(element, myName, myPlace)){
-      return super.execute(element, substitutor);
+      return super.execute(element, state);
     }
     return true;
   }

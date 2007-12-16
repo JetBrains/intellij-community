@@ -28,7 +28,7 @@ public class JavaClassTreeElement extends JavaClassTreeElementBase<PsiClass> {
     Collection<PsiElement> ownChildren = new THashSet<PsiElement>(children);
     Collection<PsiElement> inherited = new LinkedHashSet<PsiElement>(children);
 
-    aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), PsiSubstitutor.UNKNOWN, null, aClass);
+    aClass.processDeclarations(new AddAllMembersProcessor(inherited, aClass), ResolveState.initial(), null, aClass);
 
     for (PsiElement child : inherited) {
       if (!child.isValid()) continue;
