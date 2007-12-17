@@ -52,7 +52,7 @@ public class GrTypeParameterImpl extends GroovyPsiElementImpl implements GrTypeP
   @Nullable
   @NonNls
   public String getQualifiedName() {
-    return getName();
+    return null;
   }
 
   public boolean isInterface() {
