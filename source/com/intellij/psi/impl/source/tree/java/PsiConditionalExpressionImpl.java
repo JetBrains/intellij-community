@@ -7,11 +7,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiConditionalExpressionImpl extends CompositePsiElement implements PsiConditionalExpression {
+public class PsiConditionalExpressionImpl extends CompositePsiElement implements PsiConditionalExpression, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiConditionalExpressionImpl");
 
   public PsiConditionalExpressionImpl() {

@@ -4,6 +4,6 @@ import com.intellij.psi.impl.source.tree.FileElement;
 
 public class CodeFragmentElement extends FileElement {
   public CodeFragmentElement() {
-    super(CODE_FRAGMENT);
+    super(Constants.CODE_FRAGMENT);
   }
 }

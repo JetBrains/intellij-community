@@ -7,6 +7,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -18,7 +20,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag {
+public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlineDocTag, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiInlineDocTagImpl");
 
   private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
@@ -47,7 +49,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
   }
 
   public PsiElement[] getDataElements() {
-    return getChildrenAsPsiElements(VALUE_BIT_SET, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   public PsiDocTagValue getValueElement() {

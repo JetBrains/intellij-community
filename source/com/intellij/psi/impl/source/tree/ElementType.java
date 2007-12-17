@@ -5,7 +5,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -63,7 +63,7 @@ public interface ElementType extends
   TokenSet STATEMENT_BIT_SET = TokenSet.orSet(JAVA_STATEMENT_BIT_SET, JSP_SYNTHETIC_STATEMENTS);
 
   TokenSet TYPES_BIT_SET = TokenSet.create(TYPE);
-  Constants.PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new Constants.PsiElementArrayConstructor<PsiTypeElement>() {
+  PsiElementArrayConstructor<PsiTypeElement> PSI_TYPE_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeElement>() {
     public PsiTypeElement[] newPsiElementArray(int length) {
       return length > 0 ? new PsiTypeElement[length] : PsiTypeElement.EMPTY_ARRAY;
     }

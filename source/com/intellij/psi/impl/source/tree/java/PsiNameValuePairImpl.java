@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.util.MethodSignature;
@@ -24,7 +25,7 @@ import java.util.List;
  */
 
 //Retrieves method reference from this pair, do NOT reuse!!!
-public class PsiNameValuePairImpl extends CompositePsiElement implements PsiNameValuePair {
+public class PsiNameValuePairImpl extends CompositePsiElement implements PsiNameValuePair, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl");
   private volatile String myCachedName = null;
   private volatile PsiIdentifier myCachedNameIdentifier = null;

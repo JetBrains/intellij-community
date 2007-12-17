@@ -7,6 +7,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -19,7 +21,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
+public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Constants {
 
   private static final TokenSet VALUE_BIT_SET = TokenSet.create(new IElementType[]{
     JAVA_CODE_REFERENCE,
@@ -48,7 +50,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag {
   }
 
   public PsiElement[] getDataElements() {
-    return getChildrenAsPsiElements(VALUE_BIT_SET, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(VALUE_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   public String getName() {

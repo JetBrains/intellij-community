@@ -5,6 +5,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * Adds or removes comma
  * @author ven
  */
-public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement {
+public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement implements Constants {
   private TokenSet myTypesOfElements;
 
 

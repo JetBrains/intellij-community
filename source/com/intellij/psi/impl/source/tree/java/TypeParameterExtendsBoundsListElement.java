@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *  @author dsl
  */
-public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement {
+public class TypeParameterExtendsBoundsListElement extends RepositoryTreeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.TypeParameterExtendsBoundsListElement");
 
   public TypeParameterExtendsBoundsListElement() {

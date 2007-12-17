@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost {
+public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost, Constants {
   @NonNls private static final String QUOT = "&quot;";
   @NonNls private static final String HEXPREFIX = "0x";
   @NonNls private static final String HEXPREFIX2 = "0X";

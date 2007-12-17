@@ -13,7 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedSoftReference;
 import org.jetbrains.annotations.NotNull;
              
-public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
+public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
   private volatile PsiType myCachedType = null;
   private volatile PatchedSoftReference<PsiType> myCachedDetachedType = null;

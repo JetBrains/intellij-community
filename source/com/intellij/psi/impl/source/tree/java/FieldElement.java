@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ public class FieldElement extends RepositoryTreeElement{
    private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.FieldElement");
 
   public FieldElement() {
-    super(FIELD);
+    super(Constants.FIELD);
   }
 
   public int getTextOffset() {

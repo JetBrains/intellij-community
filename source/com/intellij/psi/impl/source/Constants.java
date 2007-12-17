@@ -5,15 +5,6 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface Constants extends ElementType {
-  interface PsiElementArrayConstructor<T extends PsiElement> {
-    T[] newPsiElementArray(int length);
-  }
-
-  PsiElementArrayConstructor<PsiElement> PSI_ELEMENT_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiElement>() {
-    public PsiElement[] newPsiElementArray(int length) {
-      return length != 0 ? new PsiElement[length] : PsiElement.EMPTY_ARRAY;
-    }
-  };
 
   PsiElementArrayConstructor<PsiClass> PSI_CLASS_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiClass>() {
     public PsiClass[] newPsiElementArray(int length) {

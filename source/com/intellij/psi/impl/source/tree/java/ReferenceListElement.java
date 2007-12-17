@@ -2,11 +2,12 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ReferenceListElement extends RepositoryTreeElement{
+public abstract class ReferenceListElement extends RepositoryTreeElement implements Constants {
   public ReferenceListElement(IElementType type) {
     super(type);
   }

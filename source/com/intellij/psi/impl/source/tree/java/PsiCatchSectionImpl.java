@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatchSection {
+public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatchSection, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiCatchSectionImpl");
 
   public PsiCatchSectionImpl() {

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author mike
  */
-public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDocTagValue {
+public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDocTagValue, Constants {
   public PsiDocMethodOrFieldRef() {
     super(DOC_METHOD_OR_FIELD_REF);
   }

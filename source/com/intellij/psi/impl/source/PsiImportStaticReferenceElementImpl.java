@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author dsl
  */
-public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement {
+public class PsiImportStaticReferenceElementImpl extends CompositePsiElement implements PsiImportStaticReferenceElement, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiImportStaticReferenceElementImpl");
   private volatile String myCanonicalText;
 

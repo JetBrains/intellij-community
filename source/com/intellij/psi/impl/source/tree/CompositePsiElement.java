@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -33,7 +34,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   @NotNull
   public PsiElement[] getChildren() {
-    return getChildrenAsPsiElements(null, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(null, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   public PsiElement getFirstChild() {

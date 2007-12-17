@@ -1,16 +1,20 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.lang.ASTNode;
 
 public class ParameterElement extends RepositoryTreeElement{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.ParameterElement");
 
   public ParameterElement() {
-    super(PARAMETER);
+    super(Constants.PARAMETER);
   }
 
   protected ParameterElement(IElementType type) {

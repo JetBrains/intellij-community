@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -85,7 +86,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     if (node == null) return null;
     ASTNode name = node.getTreeNext();
 
-    if (name != null && name.getElementType() == WHITE_SPACE) {
+    if (name != null && name.getElementType() == Constants.WHITE_SPACE) {
       name = name.getTreeNext();
     }
 

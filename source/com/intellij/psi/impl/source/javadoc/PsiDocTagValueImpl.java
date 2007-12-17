@@ -4,6 +4,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiDocTagValueImpl extends CompositePsiElement implements PsiDocTagValue {
   public PsiDocTagValueImpl() {
-    super(DOC_TAG_VALUE_TOKEN);
+    super(Constants.DOC_TAG_VALUE_TOKEN);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

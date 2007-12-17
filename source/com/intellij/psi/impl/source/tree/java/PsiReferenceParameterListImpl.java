@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  *  @author dsl
  */
-public class PsiReferenceParameterListImpl extends CompositePsiElement implements PsiReferenceParameterList{
+public class PsiReferenceParameterListImpl extends CompositePsiElement implements PsiReferenceParameterList, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiReferenceParameterListImpl");
 
   public PsiReferenceParameterListImpl() {

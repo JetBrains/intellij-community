@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -22,7 +23,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
   private volatile PsiReference myCachedReference;
 
   public PsiDocParamRef() {
-    super(DOC_PARAMETER_REF);
+    super(Constants.DOC_PARAMETER_REF);
   }
 
   public void clearCaches() {

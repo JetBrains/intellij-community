@@ -6,6 +6,7 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiBlockStatement;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -15,7 +16,7 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiBlockStatementImpl");
 
   public PsiBlockStatementImpl() {
-    super(BLOCK_STATEMENT);
+    super(Constants.BLOCK_STATEMENT);
   }
 
   @NotNull
@@ -30,13 +31,13 @@ public class PsiBlockStatementImpl extends CompositePsiElement implements PsiBlo
         return null;
 
       case ChildRole.BLOCK:
-        return TreeUtil.findChild(this, CODE_BLOCK);
+        return TreeUtil.findChild(this, Constants.CODE_BLOCK);
     }
   }
 
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
-    if (child.getElementType() == CODE_BLOCK) {
+    if (child.getElementType() == Constants.CODE_BLOCK) {
       return ChildRole.BLOCK;
     }
     else {

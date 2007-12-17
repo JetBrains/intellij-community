@@ -1,16 +1,17 @@
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.tree.IElementType;
 
 /**
  * @author dsl
  */
-public class EnumConstantElement extends RepositoryTreeElement {
+public class EnumConstantElement extends RepositoryTreeElement implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.EnumConstantElement");
   public EnumConstantElement() {
     super(ENUM_CONSTANT);

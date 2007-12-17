@@ -2,7 +2,9 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -10,14 +12,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement {
+public class PsiDeclarationStatementImpl extends CompositePsiElement implements PsiDeclarationStatement, Constants {
   public PsiDeclarationStatementImpl() {
     super(DECLARATION_STATEMENT);
   }
 
   @NotNull
   public PsiElement[] getDeclaredElements() {
-    return getChildrenAsPsiElements(DECLARED_ELEMENT_BIT_SET, PSI_ELEMENT_ARRAY_CONSTRUCTOR);
+    return getChildrenAsPsiElements(DECLARED_ELEMENT_BIT_SET, PsiElementArrayConstructor.PSI_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   private static final TokenSet DECLARED_ELEMENT_BIT_SET = TokenSet.create(new IElementType[]{LOCAL_VARIABLE, CLASS});
