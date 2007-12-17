@@ -23,6 +23,7 @@ import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.light.LightTypeElement;
@@ -281,7 +282,7 @@ public class ChangeUtil {
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
           final PsiManagerEx psiManager = (PsiManagerEx) manager;
-          RepositoryManager repositoryManager = psiManager.getRepositoryManager();
+          RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
           final PsiFile file = (PsiFile)changedFile.getPsi();
 
           if (file.isPhysical()) {

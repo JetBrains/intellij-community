@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -551,7 +552,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS;
       }
     };
-    myPsiManager.setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+
+    JavaPsiFacadeEx.getInstanceEx(project).setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
 
     final long start = System.currentTimeMillis();
 //    ProfilingUtil.startCPUProfiling();
@@ -559,7 +561,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     duration.set(System.currentTimeMillis() - start);
 //    ProfilingUtil.captureCPUSnapshot("testing");
 
-    myPsiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    JavaPsiFacadeEx.getInstanceEx(project).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     data.checkResult(infos, myEditor.getDocument().getText());
   }

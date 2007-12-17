@@ -31,8 +31,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.cache.impl.*;
+import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
@@ -69,8 +70,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final FileManager myFileManager;
   private final PsiSearchHelperImpl mySearchHelper;
   private final CacheManager myCacheManager;
-  private final RepositoryManager myRepositoryManager;
-  private final RepositoryElementsManager myRepositoryElementsManager;
   private final PsiModificationTrackerImpl myModificationTracker;
   private final ResolveCache myResolveCache;
   private final CachedValuesManager myCachedValuesManager;
@@ -119,11 +118,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                         FileDocumentManager fileDocumentManager) {
     myProject = project;
 
-    if (psiManagerConfiguration.REPOSITORY_ENABLED) {
-      myRepositoryManager = new RepositoryManagerImpl(this);
-    } else {
-      myRepositoryManager = new EmptyRepository.MyRepositoryManagerImpl();
-    }
 
     boolean isProjectDefault = project.isDefault();
 
@@ -134,11 +128,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
     if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
       cacheManager.addCacheManager(new CacheManagerImpl(this));
-      myRepositoryElementsManager = new RepositoryElementsManager(this);
     }
     else {
       cacheManager.addCacheManager(new EmptyRepository.CacheManagerImpl());
-      myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(this);
     }
     final CacheManager[] managers = myProject.getComponents(CacheManager.class);
     for (CacheManager manager : managers) {
@@ -175,7 +167,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public void disposeComponent() {
     myFileManager.dispose();
     myCacheManager.dispose();
-    myRepositoryManager.dispose();
 
     ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
     if (externalResourceManager != null) {
@@ -188,11 +179,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myIsDisposed;
   }
 
-
   public void dropResolveCaches() {
     myResolveCache.clearCache();
     ControlFlowFactory.getInstance(myProject).clearCache();
-    ((RepositoryIndexImpl)myRepositoryManager.getIndex()).resetIndexCaches();
   }
 
   public boolean isInProject(@NotNull PsiElement element) {
@@ -318,8 +307,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       FileSystemSynchronizer synchronizer = startupManager.getFileSystemSynchronizer();
 
       if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
-        synchronizer.registerCacheUpdater(myRepositoryManager.getCacheUpdater());
-
         CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
         for (CacheUpdater updater : updaters) {
           synchronizer.registerCacheUpdater(updater);
@@ -329,9 +316,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
-    // Find something to ensure there's no changed files waiting to be processed in repository indicies.
-    myRepositoryManager.updateAll();
-
     myAssertOnFileLoadingFilter = filter;
   }
 
@@ -346,17 +330,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public FileManager getFileManager() {
     return myFileManager;
-  }
-
-  public RepositoryManager getRepositoryManager() {
-    if (myIsDisposed) {
-      LOG.error("Project is already disposed.");
-    }
-    return myRepositoryManager;
-  }
-
-  public RepositoryElementsManager getRepositoryElementsManager() {
-    return myRepositoryElementsManager;
   }
 
   public CacheManager getCacheManager() {

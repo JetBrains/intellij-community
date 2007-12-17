@@ -2,6 +2,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.RepositoryPsiElement;
@@ -50,11 +51,11 @@ public abstract class ClsRepositoryPsiElement extends ClsElementImpl implements 
   }
 
   protected RepositoryManager getRepositoryManager() {
-    return myManager.getRepositoryManager();
+    return JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryManager();
   }
 
   protected RepositoryElementsManager getRepositoryElementsManager() {
-    return myManager.getRepositoryElementsManager();
+    return JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryElementsManager();
   }
 
 }

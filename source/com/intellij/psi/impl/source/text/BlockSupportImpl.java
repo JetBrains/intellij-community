@@ -16,10 +16,7 @@ import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -260,7 +257,7 @@ public class BlockSupportImpl extends BlockSupport {
   static void replaceFileElement(final PsiFileImpl fileImpl, final FileElement fileElement,
                                          final FileElement newFileElement,
                                          final PsiManagerEx manager) {
-    final RepositoryManager repositoryManager = manager.getRepositoryManager();
+    final RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(manager.getProject()).getRepositoryManager();
     final int oldLength = fileElement.getTextLength();
     sendPsiBeforeEvent(fileImpl);
     if (repositoryManager != null) repositoryManager.beforeChildAddedOrRemoved(fileImpl, fileElement);

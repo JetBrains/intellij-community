@@ -6,6 +6,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
@@ -31,8 +32,9 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiMember, Annota
 
     PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
 
-    RepositoryManager repositoryManager = psiManager.getRepositoryManager();
-    RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
+    RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
+    RepositoryElementsManager repositoryElementsManager =
+      JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryElementsManager();
 
     RepositoryIndex repositoryIndex = repositoryManager.getIndex();
     final SearchScope useScope = p.getScope();

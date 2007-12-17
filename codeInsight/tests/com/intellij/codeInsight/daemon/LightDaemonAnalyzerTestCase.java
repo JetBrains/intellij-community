@@ -10,7 +10,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -25,7 +24,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   }
 
   protected void doTestConfiguredFile(boolean checkWarnings, boolean checkInfos) {
-    ((PsiManagerImpl) getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     ExpectedHighlightingData expectedData = new ExpectedHighlightingData(getEditor().getDocument(),checkWarnings, checkInfos);
 
@@ -37,11 +36,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
         return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS;
       }
     };
-    ((PsiManagerImpl) getPsiManager()).setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
+    getJavaFacade().setAssertOnFileLoadingFilter(javaFilesFilter); // check repository work
 
     Collection<HighlightInfo> infos = doHighlighting();
 
-    ((PsiManagerImpl) getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    getJavaFacade().setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
 
     expectedData.checkResult(infos, getEditor().getDocument().getText());
   }

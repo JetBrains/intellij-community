@@ -4,13 +4,14 @@
 package com.intellij.psi.impl.source.text;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.pom.PomManager;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
-import com.intellij.pom.PomManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -31,7 +32,7 @@ public class ASTDiffBuilder implements DiffTreeChangeBuilder<ASTNode, ASTNode> {
     myFile = fileImpl;
     myIsPhysicalScope = fileImpl.isPhysical();
     myPsiManager = (PsiManagerEx)fileImpl.getManager();
-    myRepositoryManager = myPsiManager.getRepositoryManager();
+    myRepositoryManager = JavaPsiFacadeEx.getInstanceEx(myPsiManager.getProject()).getRepositoryManager();
     myEvent = new TreeChangeEventImpl(PomManager.getModel(fileImpl.getProject()).getModelAspect(TreeAspect.class), fileImpl.getTreeElement());
   }
 

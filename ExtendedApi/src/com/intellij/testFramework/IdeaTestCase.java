@@ -39,10 +39,10 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -134,8 +134,8 @@ import java.util.HashSet;
     return PsiManager.getInstance(myProject);
   }
 
-  public final JavaPsiFacade getJavaFacade() {
-    return JavaPsiFacade.getInstance(myProject);
+  public final JavaPsiFacadeEx getJavaFacade() {
+    return JavaPsiFacadeEx.getInstanceEx(myProject);
   }
 
   public Module getModule() {

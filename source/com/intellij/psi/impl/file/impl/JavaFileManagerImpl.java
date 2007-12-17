@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.RepositoryElementsManager;
@@ -117,13 +118,13 @@ public class JavaFileManagerImpl implements JavaFileManager {
   }
 
   public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-      RepositoryManager repositoryManager = myManager.getRepositoryManager();
+    RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryManager();
       long[] classIds = repositoryManager.getIndex().getClassesByQualifiedName(qName, null);
       if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
 
       ArrayList<PsiClass> result = new ArrayList<PsiClass>();
       for (long classId : classIds) {
-        PsiClass aClass = (PsiClass)myManager.getRepositoryElementsManager().findOrCreatePsiElementById(classId);
+        PsiClass aClass = (PsiClass)JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryElementsManager().findOrCreatePsiElementById(classId);
 
         final String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
@@ -270,13 +271,14 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClass(String qName, GlobalSearchScope scope) {
-    RepositoryManager repositoryManager = myManager.getRepositoryManager();
+    RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryManager();
     RepositoryIndex index = repositoryManager.getIndex();
     VirtualFileFilter rootFilter = null;//index.rootFilterBySearchScope(scope);
     long[] classIds = index.getClassesByQualifiedName(qName, rootFilter);
     if (classIds.length == 0) return null;
 
-    RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
+    RepositoryElementsManager repositoryElementsManager =
+      JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryElementsManager();
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
     for (long classId : classIds) {

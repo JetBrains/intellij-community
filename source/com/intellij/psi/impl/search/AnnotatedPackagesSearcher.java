@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.cache.RepositoryIndex;
@@ -33,8 +34,9 @@ public class AnnotatedPackagesSearcher implements QueryExecutor<PsiPackage, Anno
 
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(annClass.getProject());
 
-    RepositoryManager repositoryManager = psiManager.getRepositoryManager();
-    RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
+    RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
+    RepositoryElementsManager repositoryElementsManager =
+      JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryElementsManager();
 
     RepositoryIndex repositoryIndex = repositoryManager.getIndex();
     final SearchScope useScope = p.getScope();

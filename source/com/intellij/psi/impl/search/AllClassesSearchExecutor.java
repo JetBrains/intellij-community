@@ -11,7 +11,9 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -36,8 +38,8 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
   private static boolean processAllClassesInGlobalScope(final GlobalSearchScope searchScope, final Processor<PsiClass> processor, final Project project) {
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-
-    psiManager.getRepositoryManager().updateAll();
+    final RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
+    repositoryManager.updateAll();
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
     return fileIndex.iterateContent(new ContentIterator() {
@@ -47,11 +49,11 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
             if (!fileOrDir.isDirectory() && searchScope.contains(fileOrDir)) {
               final PsiFile psiFile = psiManager.findFile(fileOrDir);
               if (psiFile instanceof PsiJavaFile) {
-                long fileId = psiManager.getRepositoryManager().getFileId(fileOrDir);
+                long fileId = repositoryManager.getFileId(fileOrDir);
                 if (fileId >= 0) {
-                  long[] allClasses = psiManager.getRepositoryManager().getFileView().getAllClasses(fileId);
+                  long[] allClasses = repositoryManager.getFileView().getAllClasses(fileId);
                   for (long allClass : allClasses) {
-                    PsiClass psiClass = (PsiClass)psiManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
+                    PsiClass psiClass = (PsiClass)JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
                     if (!processor.process(psiClass)) return false;
                   }
                 }
