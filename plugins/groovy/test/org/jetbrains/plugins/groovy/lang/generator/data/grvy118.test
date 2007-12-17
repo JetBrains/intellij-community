@@ -13,7 +13,7 @@ public abstract class A extends groovy.lang.GroovyObjectSupport {
 }
 ---
 public class B extends A {
-  public void myMethod() {
+  public java.lang.Object myMethod() {
     return ;
   }
 }
