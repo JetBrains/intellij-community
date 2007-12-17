@@ -29,8 +29,6 @@ public interface PomModel extends UserDataHolder {
                       PomModelAspect aspect,
                       Set<PomModelAspect> dependencies);
 
-  PomProject getRoot();
-
   void addModelListener(PomModelListener listener);
   void addModelListener(PomModelListener listener, Disposable parentDisposable);
   void removeModelListener(PomModelListener listener);

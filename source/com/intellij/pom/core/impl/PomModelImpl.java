@@ -77,10 +77,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     myPomProject = new PomProjectImpl(this, project);
   }
 
-  public PomProject getRoot() {
-    return myPomProject;
-  }
-
   public <T extends PomModelAspect> T getModelAspect(Class<T> aClass) {
     //noinspection unchecked
     return (T)myAspects.get(aClass);
