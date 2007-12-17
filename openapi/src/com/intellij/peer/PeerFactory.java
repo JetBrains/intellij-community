@@ -58,6 +58,7 @@ public abstract class PeerFactory {
 
   public abstract ProcessProxyFactory getProcessProxyFactory();
 
+  @Deprecated
   public abstract PackageSetFactory getPackageSetFactory();
 
   public abstract UIHelper getUIHelper();

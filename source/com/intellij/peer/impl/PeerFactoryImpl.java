@@ -42,7 +42,6 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
-import com.intellij.psi.search.scope.packageSet.PackageSetFactoryImpl;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.TextComponent;
@@ -70,7 +69,6 @@ import java.awt.*;
 import java.net.InetAddress;
 
 public class PeerFactoryImpl extends PeerFactory {
-  private PackageSetFactory myPackageSetFactory;
   private final UIHelper myUIHelper = new MyUIHelper();
   private final ErrorViewFactory myErrorViewFactory = new ErrorViewFactoryImpl();
   private final FileSystemTreeFactoryImpl myFileSystemTreeFactory = new FileSystemTreeFactoryImpl();
@@ -88,10 +86,7 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public PackageSetFactory getPackageSetFactory() {
-    if (myPackageSetFactory == null) {
-      myPackageSetFactory = new PackageSetFactoryImpl();
-    }
-    return myPackageSetFactory;
+    return PackageSetFactory.getInstance();
   }
 
   public UIHelper getUIHelper() {

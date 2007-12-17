@@ -15,13 +15,13 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NonNls;
 
 public abstract class PackageSetFactory {
   public abstract PackageSet compile(@NonNls String text) throws ParsingException;
 
   public static PackageSetFactory getInstance() {
-    return PeerFactory.getInstance().getPackageSetFactory();
+    return ServiceManager.getService(PackageSetFactory.class);
   }
 }
