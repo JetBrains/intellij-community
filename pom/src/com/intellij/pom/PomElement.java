@@ -16,16 +16,9 @@
 package com.intellij.pom;
 
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.util.Processor;
 
 public interface PomElement extends UserDataHolder, Presentable, Navigatable {
   PomModel getModel();
-  
-  void accept(PomElementVisitor visitor);
-
-  PomElement getParentElement(Class<? extends PomElement> type, boolean returnSelf);
-
-  boolean processReferences(Processor<PomReference> processor);
 
   long getModificationStamp();
   boolean isValid();
