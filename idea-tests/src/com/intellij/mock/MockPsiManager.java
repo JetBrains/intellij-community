@@ -12,9 +12,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.CachedValuesManagerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
@@ -225,14 +227,6 @@ public class MockPsiManager extends PsiManagerEx {
 
   public boolean isBatchFilesProcessingMode() {
     return false;
-  }
-
-  public RepositoryManager getRepositoryManager() {
-    return new MockRepositoryManager();
-  }
-
-  public RepositoryElementsManager getRepositoryElementsManager() {
-    throw new UnsupportedOperationException("Method getRepositoryElementsManager is not yet implemented in " + getClass().getName());
   }
 
   public boolean isAssertOnFileLoading(VirtualFile file) {
