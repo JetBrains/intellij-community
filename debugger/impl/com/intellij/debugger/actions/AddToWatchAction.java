@@ -84,7 +84,7 @@ public class AddToWatchAction extends DebuggerAction {
     debuggerContext.getDebugProcess().getManagerThread().invokeLater(new AddToWatchesCommand(debuggerContext, selectedNodes, watchPanel));
   }
 
-  private static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
+  public static void doAddWatch(final MainWatchPanel watchPanel, final TextWithImports expression, final NodeDescriptorImpl descriptor) {
     final WatchDebuggerTree watchTree = watchPanel.getWatchTree();
     final DebuggerTreeNodeImpl node = watchTree.addWatch(expression);
     if (descriptor != null) {

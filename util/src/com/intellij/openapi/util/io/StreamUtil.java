@@ -95,6 +95,10 @@ public class StreamUtil {
     return chars;
   }
 
+  public static String readTextFrom(Reader reader) throws IOException {
+    return new String(readText(reader));
+  }
+
   private static char[] readText(Reader reader) throws IOException {
     CharArrayWriter writer = new CharArrayWriter();
 

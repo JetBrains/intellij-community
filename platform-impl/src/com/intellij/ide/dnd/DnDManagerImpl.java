@@ -13,9 +13,12 @@ import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.GeometryUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -131,31 +134,51 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     cleanup();
   }
 
-  private void updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction) {
+  private DnDEventImpl updateCurrentEvent(Component aComponentOverDragging, Point aPoint, int nativeAction, @Nullable DataFlavor[] flavors, @Nullable Transferable transferable) {
     LOG.debug("updateCurrentEvent: " + aComponentOverDragging);
-    if (myCurrentDragContext == null) return;
-    if (myCurrentEvent == null) return;
 
-    myCurrentEvent.updateAction(getDnDActionForPlatformAction(nativeAction));
-    myCurrentEvent.setPoint(aPoint);
-    myCurrentEvent.setHandlerComponent(aComponentOverDragging);
+    DragSourceContext currentDragContext = myCurrentDragContext;
+    DnDEventImpl currentEvent = myCurrentEvent;
 
-    boolean samePoint = myCurrentEvent.getPoint().equals(myLastProcessedPoint);
-    boolean sameComponent = myCurrentEvent.getCurrentOverComponent().equals(myLastProcessedOverComponent);
+    if (myCurrentEvent == null) {
+      if (aComponentOverDragging instanceof JComponent) {
+        JComponent jComp = (JComponent)aComponentOverDragging;
+        DnDTarget target = getTarget(jComp);
+        if (target instanceof DnDNativeTarget) {
+          DnDEventImpl event = (DnDEventImpl)jComp.getClientProperty(DnDNativeTarget.EVENT_KEY);
+          if (event == null) {
+            DnDNativeTarget.EventInfo info = new DnDNativeTarget.EventInfo(flavors, transferable);
+            event = new DnDEventImpl(this, DnDAction.COPY, info, aPoint);
+            jComp.putClientProperty(DnDNativeTarget.EVENT_KEY, event);
+          }
+
+          currentEvent = event;
+        }
+      }
+    }
+
+    if (currentEvent == null) return currentEvent;
+
+    currentEvent.updateAction(getDnDActionForPlatformAction(nativeAction));
+    currentEvent.setPoint(aPoint);
+    currentEvent.setHandlerComponent(aComponentOverDragging);
+
+    boolean samePoint = currentEvent.getPoint().equals(myLastProcessedPoint);
+    boolean sameComponent = currentEvent.getCurrentOverComponent().equals(myLastProcessedOverComponent);
     boolean sameAction = (nativeAction == myLastProcessedAction);
 
     LOG.debug("updateCurrentEvent: point:" + aPoint);
     LOG.debug("updateCurrentEvent: action:" + nativeAction);
 
     if (samePoint && sameComponent && sameAction) {
-      return;
+      return currentEvent;
     }
 
     DnDTarget target = getTarget(aComponentOverDragging);
     DnDTarget immediateTarget = target;
     Component eachParent = aComponentOverDragging;
 
-    final Pair<Image, Point> pair = myCurrentEvent.getUserData(DRAGGED_IMAGE_KEY);
+    final Pair<Image, Point> pair = currentEvent.getUserData(DRAGGED_IMAGE_KEY);
     if (pair != null) {
       target.updateDraggedImage(pair.first, aPoint, pair.second);
     }
@@ -163,11 +186,11 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     LOG.debug("updateCurrentEvent: action:" + nativeAction);
 
     while (true) {
-      boolean canGoToParent = update(target);
+      boolean canGoToParent = update(target, currentEvent);
 
-      if (myCurrentEvent.isDropPossible()) {
-        if (myCurrentEvent.wasDelegated()) {
-          target = myCurrentEvent.getDelegatedTarget();
+      if (currentEvent.isDropPossible()) {
+        if (currentEvent.wasDelegated()) {
+          target = currentEvent.getDelegatedTarget();
         }
         break;
       }
@@ -187,37 +210,37 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     LOG.debug("updateCurrentEvent: target:" + target);
     LOG.debug("updateCurrentEvent: immediateTarget:" + immediateTarget);
 
-    if (!myCurrentEvent.isDropPossible() && !immediateTarget.equals(target)) {
-      update(immediateTarget);
+    if (!currentEvent.isDropPossible() && !immediateTarget.equals(target)) {
+      update(immediateTarget, currentEvent);
     }
 
     updateCursor();
 
-    final Container current = (Container)myCurrentEvent.getCurrentOverComponent();
-    final Point point = myCurrentEvent.getPointOn(getLayeredPane(current));
+    final Container current = (Container)currentEvent.getCurrentOverComponent();
+    final Point point = currentEvent.getPointOn(getLayeredPane(current));
     Rectangle inPlaceRect = new Rectangle(point.x - 5, point.y - 5, 5, 5);
 
-    if (!myCurrentEvent.equals(myLastProcessedEvent)) {
+    if (!currentEvent.equals(myLastProcessedEvent)) {
       hideCurrentHighlighter();
     }
 
     final DnDTarget processedTarget = getLastProcessedTarget();
     boolean sameTarget = processedTarget != null && processedTarget.equals(target);
     if (sameTarget) {
-      if (myCurrentEvent.isDropPossible()) {
-        if (!myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
+      if (currentEvent.isDropPossible()) {
+        if (!myLastProcessedPoint.equals(currentEvent.getPoint())) {
           if (!Highlighters.isVisibleExcept(TEXT | ERROR_TEXT)) {
             hideCurrentHighlighter();
             restartTimer();
-            queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
+            queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
           }
         }
       }
       else {
-        if (myLastProcessedPoint == null || myCurrentEvent == null || !myLastProcessedPoint.equals(myCurrentEvent.getPoint())) {
+        if (myLastProcessedPoint == null || currentEvent == null || !myLastProcessedPoint.equals(currentEvent.getPoint())) {
           hideCurrentHighlighter();
           restartTimer();
-          queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
+          queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
         }
       }
     }
@@ -226,22 +249,26 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       if (processedTarget != null) {
         processedTarget.cleanUpOnLeave();
       }
-      myCurrentEvent.clearDropHandler();
+      currentEvent.clearDropHandler();
       restartTimer();
 
-      if (!myCurrentEvent.isDropPossible()) {
-        queueTooltip(myCurrentEvent, getLayeredPane(current), inPlaceRect);
+      if (!currentEvent.isDropPossible()) {
+        queueTooltip(currentEvent, getLayeredPane(current), inPlaceRect);
       }
     }
 
     myLastProcessedTarget = new WeakReference<DnDTarget>(target);
-    myLastProcessedPoint = myCurrentEvent.getPoint();
-    myLastProcessedOverComponent = myCurrentEvent.getCurrentOverComponent();
-    myLastProcessedAction = myCurrentEvent.getAction().getActionId();
-    myLastProcessedEvent = (DnDEvent)myCurrentEvent.clone();
+    myLastProcessedPoint = currentEvent.getPoint();
+    myLastProcessedOverComponent = currentEvent.getCurrentOverComponent();
+    myLastProcessedAction = currentEvent.getAction().getActionId();
+    myLastProcessedEvent = (DnDEvent)currentEvent.clone();
+
+    return currentEvent;
   }
 
   private void updateCursor() {
+    if (myCurrentDragContext == null) return;
+
     Cursor cursor;
     if (myCurrentEvent.isDropPossible()) {
       cursor = myCurrentEvent.getCursor();
@@ -261,16 +288,16 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     myTooltipTimer.restart();
   }
 
-  private boolean update(DnDTarget target) {
+  private boolean update(DnDTarget target, DnDEvent currentEvent) {
     LOG.debug("update target:" + target);
 
-    myCurrentEvent.clearDelegatedTarget();
-    final boolean canGoToParent = target.update(myCurrentEvent);
+    currentEvent.clearDelegatedTarget();
+    final boolean canGoToParent = target.update(currentEvent);
 
 
     String message;
-    if (isMessageProvided(myCurrentEvent)) {
-      message = myCurrentEvent.getExpectedDropResult();
+    if (isMessageProvided(currentEvent)) {
+      message = currentEvent.getExpectedDropResult();
     }
     else {
       message = "";
@@ -571,14 +598,15 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     public void drop(final DropTargetDropEvent dtde) {
       try {
         final Component component = dtde.getDropTargetContext().getComponent();
-        updateCurrentEvent(component, dtde.getLocation(), dtde.getDropAction());
 
-        final DnDEventImpl event = myCurrentEvent;
+        DnDEventImpl event =
+          updateCurrentEvent(component, dtde.getLocation(), dtde.getDropAction(), dtde.getCurrentDataFlavors(), dtde.getTransferable());
+
         if (event != null && event.isDropPossible()) {
           dtde.acceptDrop(dtde.getDropAction());
 
           // do not wrap this into WriteAction!
-          doDrop(component);
+          doDrop(component, event);
 
           if (event.shouldRemoveHighlightings()) {
             hideCurrentHighlighter();
@@ -598,29 +626,42 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       }
     }
 
-    private void doDrop(Component component) {
-      if (myCurrentEvent.canHandleDrop()) {
-        myCurrentEvent.handleDrop();
+    private void doDrop(Component component, DnDEventImpl currentEvent) {
+      if (currentEvent.canHandleDrop()) {
+        currentEvent.handleDrop();
       }
       else {
-        getTarget(component).drop(myCurrentEvent);
+        getTarget(component).drop(currentEvent);
       }
+
+      cleanTargetComponent(component);
+
+      myCurrentDragContext = null;
+      currentEvent = null;
     }
 
     public void dragOver(DropTargetDragEvent dtde) {
-      updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction());
+      updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(), dtde.getCurrentDataFlavors(), dtde.getTransferable());
     }
 
     public void dragExit(DropTargetEvent dte) {
       onDragExit();
+
+      cleanTargetComponent(dte.getDropTargetContext().getComponent());
+    }
+
+    private void cleanTargetComponent(final Component c) {
+      DnDTarget target = getTarget(c);
+      if (target instanceof DnDNativeTarget && c instanceof JComponent) {
+        ((JComponent)c).putClientProperty(DnDNativeTarget.EVENT_KEY, null);
+      }
     }
 
     public void dragEnter(DropTargetDragEvent dtde) {
-
     }
 
     public void dropActionChanged(DropTargetDragEvent dtde) {
-      updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction());
+      updateCurrentEvent(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), dtde.getDropAction(), dtde.getCurrentDataFlavors(), dtde.getTransferable());
     }
   }
 
@@ -635,6 +676,8 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     }
     hideCurrentHighlighter();
     myHightlighterShowRequest = null;
+    myCurrentDragContext = null;
+    myCurrentEvent = null;
   }
 
   private Application getApplication() {
