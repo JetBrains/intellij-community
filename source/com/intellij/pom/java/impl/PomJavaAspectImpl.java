@@ -40,7 +40,6 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.java.PomJavaAspect;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.pom.java.PomPackage;
 import com.intellij.pom.java.events.JavaTreeChanged;
 import com.intellij.pom.java.events.PomJavaAspectChangeSet;
@@ -71,21 +70,6 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
 
   public PsiManager getPsiManager() {
     return myPsiManager;
-  }
-
-  public PomMemberOwner findClass(String fqn, PomScope scope) {
-    //TODO scope conversion
-    return JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(fqn, null).getPom();
-  }
-
-  public PomMemberOwner[] findClasses(String fqn, PomScope scope) {
-    //TODO scope conversion
-    PsiClass[] psis = JavaPsiFacade.getInstance(myProject).findClasses(fqn, null);
-    PomMemberOwner[] poms = new PomMemberOwner[psis.length];
-    for (int i = 0; i < poms.length; i++) {
-      poms[i] = psis[i].getPom();
-    }
-    return poms;
   }
 
   public PomPackage findPackage(String fqn) {

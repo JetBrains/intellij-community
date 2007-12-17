@@ -18,7 +18,6 @@ package com.intellij.pom.java;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.PomScope;
 
 public abstract class PomJavaAspect implements PomModelAspect {
   public static PomJavaAspect getInstance(Project project) {
@@ -30,9 +29,6 @@ public abstract class PomJavaAspect implements PomModelAspect {
   }
 
   public abstract PomPackage getRootPackage();
-
-  public abstract PomMemberOwner findClass(String fqn, PomScope scope);
-  public abstract PomMemberOwner[] findClasses(String fqn, PomScope scope);
 
   public abstract PomPackage findPackage(String fqn);
 
