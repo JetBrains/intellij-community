@@ -72,7 +72,6 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
     return true;
   }
 
-  @Nullable
   public T getProperties() {
     return myProperties;
   }

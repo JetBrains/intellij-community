@@ -1,7 +1,6 @@
 package com.intellij.xdebugger.breakpoints;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -21,6 +20,5 @@ public interface XBreakpoint<T extends XBreakpointProperties> {
   @NotNull
   XBreakpointType getType();
 
-  @Nullable 
   T getProperties();
 }

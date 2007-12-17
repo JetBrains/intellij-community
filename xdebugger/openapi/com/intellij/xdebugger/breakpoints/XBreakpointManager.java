@@ -1,7 +1,10 @@
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author nik
@@ -16,7 +19,20 @@ public interface XBreakpointManager {
   
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
-  @NotNull 
-  XBreakpoint[] getBreakpoints();
 
+  @NotNull 
+  XBreakpoint<?>[] getAllBreakpoints();
+
+  @NotNull <T extends XBreakpointProperties>
+  Collection<? extends XBreakpoint<T>> getBreakpoints(@NotNull XBreakpointType<T> type);
+
+
+  <T extends XBreakpointProperties>
+  void addBreakpointListener(@NotNull XBreakpointType<T> type, @NotNull XBreakpointListener<T> listener);
+
+  <T extends XBreakpointProperties>
+  void removeBreakpointListener(@NotNull XBreakpointType<T> type, @NotNull XBreakpointListener<T> listener);
+
+  <T extends XBreakpointProperties>
+  void addBreakpointListener(@NotNull XBreakpointType<T> type, @NotNull XBreakpointListener<T> listener, Disposable parentDisposable);
 }

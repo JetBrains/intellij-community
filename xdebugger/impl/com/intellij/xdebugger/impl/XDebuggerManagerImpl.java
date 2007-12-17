@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NonNls;
@@ -30,6 +30,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public XDebuggerManagerImpl(final Project project) {
     myProject = project;
+    myBreakpointManager = new XBreakpointManagerImpl();
   }
 
   @NotNull
@@ -66,11 +67,14 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   public static class XDebuggerState {
     private XBreakpointManagerImpl.BreakpointManagerState myBreakpointManagerState;
 
+    public XDebuggerState() {
+    }
+
     public XDebuggerState(final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
       myBreakpointManagerState = breakpointManagerState;
     }
 
-    @Tag("breakpoint-manager")
+    @Property(surroundWithTag = false)
     public XBreakpointManagerImpl.BreakpointManagerState getBreakpointManagerState() {
       return myBreakpointManagerState;
     }
