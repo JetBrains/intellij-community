@@ -39,7 +39,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="plugins-management" />
+    <orderEntry type="module" module-name="plugins-management" exported="" />
     <orderEntry type="library" name="picocontainer" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module-library">
