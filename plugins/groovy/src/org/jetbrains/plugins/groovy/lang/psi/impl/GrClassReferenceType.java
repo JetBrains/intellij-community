@@ -119,6 +119,7 @@ public class GrClassReferenceType extends PsiClassType {
   public String getCanonicalText() {
     PsiClass resolved = resolve();
     if (resolved == null) return null;
+    if (resolved instanceof PsiTypeParameter) return ((PsiTypeParameter) resolved).getName();
     final String qName = resolved.getQualifiedName();
     if (isRaw()) return qName;
 
