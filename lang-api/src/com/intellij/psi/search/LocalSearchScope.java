@@ -53,7 +53,7 @@ public class LocalSearchScope extends SearchScope {
   public LocalSearchScope(final PsiElement[] scope, final String displayName, final boolean ignoreInjectedPsi) {
     myIgnoreInjectedPsi = ignoreInjectedPsi;
     myDisplayName = displayName;
-    Set<PsiElement> localScope = new HashSet<PsiElement>(scope.length);
+    Set<PsiElement> localScope = new LinkedHashSet<PsiElement>(scope.length);
 
     for (final PsiElement element : scope) {
       LOG.assertTrue(element.getContainingFile() != null);
