@@ -28,7 +28,6 @@ public class ImporterPreferencesConfigurable implements Configurable {
   private ElementsChooser<String> projectChooser;
   private ElementsChooser<String> profileChooser;
 
-  private List<String> myOriginalProjects;
   private List<String> myOriginalProfiles;
 
   public ImporterPreferencesConfigurable(final MavenImporterPreferences importerPreferences,
@@ -37,8 +36,6 @@ public class ImporterPreferencesConfigurable implements Configurable {
     myImporterPreferences = importerPreferences;
     myImporterState = importerState;
     myProjectsState = projectsState;
-
-    myOriginalProjects = myImporterState.getMemorizedProjects();
     myOriginalProfiles = myImporterState.getMemorizedProfiles();
   }
 
@@ -69,13 +66,11 @@ public class ImporterPreferencesConfigurable implements Configurable {
 
   public boolean isModified() {
     return preferencesForm.isModified(myImporterPreferences) ||
-           !IdeaAPIHelper.equalAsSets(myOriginalProjects, projectChooser.getMarkedElements()) ||
            !IdeaAPIHelper.equalAsSets(myOriginalProfiles, profileChooser.getMarkedElements());
   }
 
   public void apply() throws ConfigurationException {
     preferencesForm.getData(myImporterPreferences);
-    myImporterState.memorizeProjects(projectChooser.getMarkedElements());
     myImporterState.memorizeProfiles(profileChooser.getMarkedElements());
   }
 
@@ -85,9 +80,7 @@ public class ImporterPreferencesConfigurable implements Configurable {
     final Collection<VirtualFile> files =
       collectVisibleProjects(myProjectsState, new TreeSet<VirtualFile>(ProjectUtil.ourProjectDirComparator));
 
-    IdeaAPIHelper.addElements(projectChooser, collectPaths(files, new ArrayList<String>()), myOriginalProjects);
     IdeaAPIHelper.addElements(profileChooser, collectProfiles(myProjectsState, files, new TreeSet<String>()), myOriginalProfiles);
-
   }
 
   public void disposeUIResources() {

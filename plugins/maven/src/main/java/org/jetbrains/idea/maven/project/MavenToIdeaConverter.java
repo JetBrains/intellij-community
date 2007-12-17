@@ -55,9 +55,8 @@ public class MavenToIdeaConverter {
                              MavenProjectModel projectModel,
                              Collection<String> profiles,
                              MavenToIdeaMapping mapping,
-                             MavenImporterPreferences prefs,
-                             boolean markSynthetic) {
-    MavenToIdeaConverter c = new MavenToIdeaConverter(moduleModel, projectModel, mapping, profiles, prefs, markSynthetic);
+                             MavenImporterPreferences prefs) {
+    MavenToIdeaConverter c = new MavenToIdeaConverter(moduleModel, projectModel, mapping, profiles, prefs);
     c.convert();
   }
 
@@ -65,14 +64,12 @@ public class MavenToIdeaConverter {
                                MavenProjectModel projectModel,
                                MavenToIdeaMapping mapping,
                                Collection<String> profiles,
-                               MavenImporterPreferences preferences,
-                               boolean markSynthetic) {
+                               MavenImporterPreferences preferences) {
     myModuleModel = model;
     myProjectModel = projectModel;
     myMapping = mapping;
     myProfiles = profiles;
     myPrefs = preferences;
-    myMarkSynthetic = markSynthetic;
     myIgnorePattern = Pattern.compile(Strings.translateMasks(preferences.getIgnoredDependencies()));
   }
 
@@ -103,7 +100,6 @@ public class MavenToIdeaConverter {
 
     convertRootModel(module, mavenProject);
     configureFacets(module, mavenProject, profiles);
-    SyntheticModuleUtil.setSynthetic(module, myMarkSynthetic && !node.isLinked());
   }
 
   private void convertRootModel(Module module, MavenProject mavenProject) {

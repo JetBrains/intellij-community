@@ -19,7 +19,7 @@ public class SynchronizeWithMavenAction extends AnAction {
     Project project = e.getData(PlatformDataKeys.PROJECT);
 
     try {
-      new MavenImportProcessor(project).synchronize(true);
+      new MavenImportProcessor(project).synchronize();
     }
     catch (MavenException ex) {
       project.getComponent(MavenImporter.class).displayImportErrors(ex);

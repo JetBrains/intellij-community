@@ -16,8 +16,6 @@ import java.awt.event.ActionListener;
 public class ImporterPreferencesForm {
 
   private JPanel panel;
-  private JRadioButton myRegularModulesButton;
-  private JRadioButton myTemporaryModulesButton;
   private JCheckBox myModuleDirCheckBox;
   private TextFieldWithBrowseButton myModuleDirControl;
   private JCheckBox myLookForNestedCheckBox;
@@ -37,8 +35,6 @@ public class ImporterPreferencesForm {
         enableControls();
       }
     };
-    myRegularModulesButton.addActionListener(listener);
-    myTemporaryModulesButton.addActionListener(listener);
     myModuleDirCheckBox.addActionListener(listener);
 
     myModuleDirControl.addBrowseFolderListener(ProjectBundle.message("maven.import.title.module.dir"), "", null,
@@ -69,7 +65,6 @@ public class ImporterPreferencesForm {
   }
 
   public void getData(final MavenImporterPreferences data) {
-    data.setUseTemporaryModules(myTemporaryModulesButton.isSelected());
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
     data.setLookForNested(myLookForNestedCheckBox.isSelected());
@@ -78,9 +73,6 @@ public class ImporterPreferencesForm {
   }
 
   public void setData(final MavenImporterPreferences data) {
-    myRegularModulesButton.setSelected(!data.isUseTemporaryModules());
-    myTemporaryModulesButton.setSelected(data.isUseTemporaryModules());
-
     myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     myModuleDirControl.setText(data.getDedicatedModuleDir());
 

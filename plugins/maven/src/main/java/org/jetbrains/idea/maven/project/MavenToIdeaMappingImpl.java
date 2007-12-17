@@ -39,13 +39,13 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
   @NonNls private static final String IML_EXT = ".iml";
 
-  public MavenToIdeaMappingImpl(MavenProjectModel mavenProjectModel, String moduleDir, Project project, boolean obsoleteSyntheticModules) {
+  public MavenToIdeaMappingImpl(MavenProjectModel mavenProjectModel, String moduleDir, Project project) {
     resolveModuleNames(mavenProjectModel);
 
     resolveModulePaths(mavenProjectModel, moduleDir);
 
     if (project != null) {
-      mapToExistingModules(mavenProjectModel, project, obsoleteSyntheticModules);
+      mapToExistingModules(mavenProjectModel, project);
     }
   }
 
@@ -101,14 +101,9 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
     });
   }
 
-  private void mapToExistingModules(final MavenProjectModel mavenProjectModel,
-                                    final Project project,
-                                    final boolean obsoleteSyntheticModules) {
+  private void mapToExistingModules(final MavenProjectModel mavenProjectModel, final Project project) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       nameToModule.put(module.getName(), module);
-      if (obsoleteSyntheticModules && SyntheticModuleUtil.isSynthetic(module)) {
-        obsoleteModules.add(module);
-      }
     }
 
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {

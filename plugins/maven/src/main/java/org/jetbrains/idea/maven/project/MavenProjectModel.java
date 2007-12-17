@@ -18,19 +18,19 @@ public class MavenProjectModel {
   @NotNull
   private final List<Node> rootProjects = new ArrayList<Node>();
 
-  public MavenProjectModel(Map<VirtualFile, Module> filesToRefresh,
-                           Collection<VirtualFile> importRoots,
+  public MavenProjectModel(Collection<VirtualFile> filesToImport,
+                           Map<VirtualFile, Module> existingModules,
                            Collection<String> profiles,
                            MavenProjectReader projectReader,
                            Progress p) throws MavenException, CanceledException {
 
     Map<VirtualFile, Module> fileToModule = new HashMap<VirtualFile, Module>();
 
-    for (Map.Entry<VirtualFile, Module> entry : filesToRefresh.entrySet()) {
+    for (Map.Entry<VirtualFile, Module> entry : existingModules.entrySet()) {
       fileToModule.put(entry.getKey(), entry.getValue());
     }
 
-    for (VirtualFile file : importRoots) {
+    for (VirtualFile file : filesToImport) {
       fileToModule.put(file, null);
     }
 

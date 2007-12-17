@@ -72,18 +72,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   public void commit(final Project project) {
-    myImportProcessor.commit(project, myProfiles, getImporterPreferences().isUseTemporaryModules());
+    myImportProcessor.commit(project, myProfiles);
 
     final MavenImporterState importerState = project.getComponent(MavenImporter.class).getState();
-    if (getImporterPreferences().isUseTemporaryModules()) {
-      // visit topmost non-linked projects
-      myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorRoot() {
-        public void visit(MavenProjectModel.Node node) {
-          importerState.memorizeProject(node.getPath());
-        }
-      });
-    }
-
     if (!myProfiles.isEmpty()) {
       for (String profile : myProfiles) {
         importerState.memorizeProfile(profile);
@@ -184,7 +175,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   private void createImportProcessor(Progress p) throws MavenException, CanceledException {
     myImportProcessor = new MavenImportProcessor(getProject(), getCoreState(), getImporterPreferences(), getArtifactPreferences());
-    myImportProcessor.createMavenProjectModel(new HashMap<VirtualFile, Module>(), myFiles, myProfiles, p);
+    myImportProcessor.createMavenProjectModel(myFiles, new HashMap<VirtualFile, Module>(), myProfiles, p);
   }
 
   public List<MavenProjectModel.Node> getList() {
@@ -199,7 +190,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     for (MavenProjectModel.Node node : myImportProcessor.getMavenProjectModel().getRootProjects()) {
       node.setIncluded(nodes.contains(node));
     }
-    myImportProcessor.createMavenToIdeaMapping(false);
+    myImportProcessor.createMavenToIdeaMapping();
     checkDuplicates();
   }
 

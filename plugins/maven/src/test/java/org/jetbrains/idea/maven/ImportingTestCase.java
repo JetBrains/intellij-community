@@ -369,10 +369,10 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       List<String> profilesList = Arrays.asList(profiles);
 
       MavenImportProcessor p = new MavenImportProcessor(myProject);
-      p.createMavenProjectModel(new HashMap<VirtualFile, Module>(), files, profilesList, new Progress());
-      p.createMavenToIdeaMapping(false);
+      p.createMavenProjectModel(files, new HashMap<VirtualFile, Module>(), profilesList, new Progress());
+      p.createMavenToIdeaMapping();
       p.resolve(myProject, profilesList);
-      p.commit(myProject, profilesList, false);
+      p.commit(myProject, profilesList);
       projectModel = p.getMavenProjectModel();
     }
     catch (CanceledException e) {

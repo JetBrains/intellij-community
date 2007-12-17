@@ -9,20 +9,11 @@ import java.util.List;
  * @author Vladislav.Kaznacheev
  */
 public class MavenImporterPreferences implements Cloneable {
-  private boolean useTemporaryModules = false;
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
   private List<String> myIgnoredDependencies = new ArrayList<String>();
-
-  public boolean isUseTemporaryModules() {
-    return useTemporaryModules;
-  }
-
-  public void setUseTemporaryModules(boolean temporary) {
-    useTemporaryModules = temporary;
-  }
 
   @NotNull
   public String getDedicatedModuleDir() {
@@ -63,7 +54,6 @@ public class MavenImporterPreferences implements Cloneable {
 
     final MavenImporterPreferences that = (MavenImporterPreferences)o;
 
-    if (useTemporaryModules != that.useTemporaryModules) return false;
     if (createModuleGroups != that.createModuleGroups) return false;
     if (lookForNested != that.lookForNested) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
@@ -77,8 +67,7 @@ public class MavenImporterPreferences implements Cloneable {
 
   public int hashCode() {
     int result;
-    result = (useTemporaryModules ? 1 : 0);
-    result = 31 * result + dedicatedModuleDir.hashCode();
+    result = dedicatedModuleDir.hashCode();
     result = 31 * result + (lookForNested ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
