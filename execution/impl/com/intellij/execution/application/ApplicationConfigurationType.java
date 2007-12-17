@@ -55,8 +55,8 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     return null;
   }
 
-  public boolean isConfigurationByElement(final RunConfiguration configuration, final Project project, final PsiElement element) {
-    final PsiClass aClass = getMainClass(element);
+  public boolean isConfigurationByLocation(final RunConfiguration configuration, final Location location) {
+    final PsiClass aClass = getMainClass(location.getPsiElement());
     if (aClass == null) {
       return false;
     }

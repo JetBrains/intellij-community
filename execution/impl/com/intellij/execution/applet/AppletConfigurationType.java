@@ -65,8 +65,8 @@ public class AppletConfigurationType implements LocatableConfigurationType {
     return settings;
   }
 
-  public boolean isConfigurationByElement(final RunConfiguration configuration, final Project project, final PsiElement element) {
-    final PsiClass aClass = getAppletClass(element, PsiManager.getInstance(project));
+  public boolean isConfigurationByLocation(final RunConfiguration configuration, Location location) {
+    final PsiClass aClass = getAppletClass(location.getPsiElement(), PsiManager.getInstance(location.getProject()));
     return aClass != null &&
            Comparing.equal(ExecutionUtil.getRuntimeQualifiedName(aClass), ((AppletConfiguration)configuration).MAIN_CLASS_NAME);
   }

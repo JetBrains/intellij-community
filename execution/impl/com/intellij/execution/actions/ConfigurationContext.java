@@ -95,7 +95,7 @@ public class ConfigurationContext {
       final LocatableConfigurationType factoryLocatable = (LocatableConfigurationType)type;
       final RunnerAndConfigurationSettingsImpl[] configurations = getRunManager().getConfigurationSettings(type);
       for (final RunnerAndConfigurationSettingsImpl existingConfiguration : configurations) {
-        if (factoryLocatable.isConfigurationByElement(existingConfiguration.getConfiguration(), getProject(), myLocation.getPsiElement())) {
+        if (factoryLocatable.isConfigurationByLocation(existingConfiguration.getConfiguration(), myLocation)) {
           return existingConfiguration;
         }
       }
