@@ -558,4 +558,9 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     final RowIcon baseIcon = createLayeredIcon(Icons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isFieldEquivalentTo(this, another);
+  }
 }

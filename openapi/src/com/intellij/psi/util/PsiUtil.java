@@ -288,6 +288,10 @@ public final class PsiUtil {
       public Icon getIcon(int flags) {
         return null;
       }
+
+      public boolean isEquivalentTo(final PsiElement another) {
+        return this == another;
+      }
   };
 
   private PsiUtil() {}

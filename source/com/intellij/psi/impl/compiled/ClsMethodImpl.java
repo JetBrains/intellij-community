@@ -883,4 +883,9 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+  }
 }

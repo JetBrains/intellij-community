@@ -407,5 +407,9 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     SharedImplUtil.setInitializer(this, initializer);
   }
 
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isFieldEquivalentTo(this, another);
+  }
 }
 

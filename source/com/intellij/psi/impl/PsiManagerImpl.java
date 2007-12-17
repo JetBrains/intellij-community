@@ -45,10 +45,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -362,71 +359,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     if (element1 == null || element2 == null) {
       return false;
     }
-    if (element1.equals(element2)) return true;
-    if (element1 instanceof PsiDirectory || element2 instanceof PsiDirectory) {
-      return false;
-    }
-    if (element1 instanceof PsiClass) {
-      if (!(element2 instanceof PsiClass)) return false;
-      String name1 = ((PsiClass)element1).getName();
-      if (name1 == null) return false;
-      String name2 = ((PsiClass)element2).getName();
-      if (name2 == null) return false;
-      if (name1.hashCode() != name2.hashCode()) return false;
-      if (!name1.equals(name2)) return false;
-      String qName1 = ((PsiClass)element1).getQualifiedName();
-      String qName2 = ((PsiClass)element2).getQualifiedName();
-      if (qName1 == null || qName2 == null) {
-        //noinspection StringEquality
-        if (qName1 != qName2) return false;
 
-        if (element1 instanceof PsiTypeParameter && element2 instanceof PsiTypeParameter) {
-          PsiTypeParameter p1 = (PsiTypeParameter)element1;
-          PsiTypeParameter p2 = (PsiTypeParameter)element2;
+    if (element1.equals(element2) || element1.isEquivalentTo(element2)) return true;
 
-          return p1.getIndex() == p2.getIndex() &&
-                 areElementsEquivalent(p1.getOwner(), p2.getOwner());
-
-        }
-        else {
-          return false;
-        }
-      }
-      return qName1.hashCode() == qName2.hashCode() && qName1.equals(qName2);
-    }
-    if (element1 instanceof PsiField) {
-      if (!(element2 instanceof PsiField)) return false;
-      String name1 = ((PsiField)element1).getName();
-      if (name1 == null) return false;
-      String name2 = ((PsiField)element2).getName();
-      if (!name1.equals(name2)) return false;
-      PsiClass aClass1 = ((PsiField)element1).getContainingClass();
-      PsiClass aClass2 = ((PsiField)element2).getContainingClass();
-      return aClass1 != null && aClass2 != null && areElementsEquivalent(aClass1, aClass2);
-    }
-    if (element1 instanceof PsiMethod) {
-      if (!(element2 instanceof PsiMethod)) return false;
-      PsiMethod method1 = (PsiMethod)element1;
-      PsiMethod method2 = (PsiMethod)element2;
-      String name1 = method1.getName();
-      String name2 = method2.getName();
-      if (!name1.equals(name2)) return false;
-      PsiClass aClass1 = method1.getContainingClass();
-      PsiClass aClass2 = method2.getContainingClass();
-      return aClass1 != null && aClass2 != null && areElementsEquivalent(aClass1, aClass2) &&
-             MethodSignatureUtil.areSignaturesEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
-    }
-
-    if (element1 instanceof XmlTag && element2 instanceof XmlTag) {
-      if (!element1.isPhysical() && !element2.isPhysical()) return element1.getText().equals(element2.getText());
-    }
-
-    if (element1 instanceof XmlElementDecl && element2 instanceof XmlElementDecl) {
-      if (!element1.isPhysical()) element1 = element1.getOriginalElement();
-      if (!element2.isPhysical()) element2 = element2.getOriginalElement();
-      return element1 == element2;
-    }
-
+    // TODO: Get rid of dependency on JspImplicitVariable
     if (element1 instanceof JspImplicitVariable) {
       if (element2 instanceof JspImplicitVariable) {
         final JspImplicitVariable implicitVariable = (JspImplicitVariable)element1;
@@ -447,6 +383,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
         return true;
       }
     }
+
     return false;
   }
 

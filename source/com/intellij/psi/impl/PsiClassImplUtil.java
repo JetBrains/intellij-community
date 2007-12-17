@@ -747,4 +747,56 @@ public class PsiClassImplUtil {
     }
     return PsiClassType.EMPTY_ARRAY;
   }
+
+  public static boolean isClassEquivalentTo(PsiClass aClass, PsiElement another) {
+    if (!(another instanceof PsiClass)) return false;
+    String name1 = aClass.getName();
+    if (name1 == null) return false;
+    String name2 = ((PsiClass)another).getName();
+    if (name2 == null) return false;
+    if (name1.hashCode() != name2.hashCode()) return false;
+    if (!name1.equals(name2)) return false;
+    String qName1 = aClass.getQualifiedName();
+    String qName2 = ((PsiClass)another).getQualifiedName();
+    if (qName1 == null || qName2 == null) {
+      //noinspection StringEquality
+      if (qName1 != qName2) return false;
+
+      if (aClass instanceof PsiTypeParameter && another instanceof PsiTypeParameter) {
+        PsiTypeParameter p1 = (PsiTypeParameter)aClass;
+        PsiTypeParameter p2 = (PsiTypeParameter)another;
+
+        return p1.getIndex() == p2.getIndex() &&
+               aClass.getManager().areElementsEquivalent(p1.getOwner(), p2.getOwner());
+
+      }
+      else {
+        return false;
+      }
+    }
+    return qName1.hashCode() == qName2.hashCode() && qName1.equals(qName2);
+  }
+
+  public static boolean isFieldEquivalentTo(PsiField field, PsiElement another) {
+    if (!(another instanceof PsiField)) return false;
+    String name1 = field.getName();
+    if (name1 == null) return false;
+    String name2 = ((PsiField)another).getName();
+    if (!name1.equals(name2)) return false;
+    PsiClass aClass1 = field.getContainingClass();
+    PsiClass aClass2 = ((PsiField)another).getContainingClass();
+    return aClass1 != null && aClass2 != null && field.getManager().areElementsEquivalent(aClass1, aClass2);
+  }
+
+  public static boolean isMethodEquivalentTo(PsiMethod method, PsiElement another) {
+    if (!(another instanceof PsiMethod)) return false;
+    PsiMethod method2 = (PsiMethod)another;
+    String name1 = method.getName();
+    String name2 = method2.getName();
+    if (!name1.equals(name2)) return false;
+    PsiClass aClass1 = method.getContainingClass();
+    PsiClass aClass2 = method2.getContainingClass();
+    return aClass1 != null && aClass2 != null && method.getManager().areElementsEquivalent(aClass1, aClass2) &&
+           MethodSignatureUtil.areSignaturesEqual(method.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY));
+  }
 }

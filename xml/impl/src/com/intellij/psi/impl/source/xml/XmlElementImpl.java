@@ -25,6 +25,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,4 +110,16 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
     return GlobalSearchScope.allScope(getManager().getProject());
   }
 
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    PsiElement element1 = this;
+    PsiElement element2 = another;
+
+    // TODO: seem to be only necessary for tag dirs equivalens checking.
+    if (element1 instanceof XmlTag && element2 instanceof XmlTag) {
+      if (!element1.isPhysical() && !element2.isPhysical()) return element1.getText().equals(element2.getText());
+    }
+
+    return false;
+  }
 }

@@ -478,4 +478,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * toString() should never be presented to the user.
    */
   @NonNls String toString();
+
+  boolean isEquivalentTo(PsiElement another);
 }

@@ -827,5 +827,10 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
 }
 

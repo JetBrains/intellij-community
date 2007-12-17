@@ -2,6 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -166,5 +167,10 @@ public class LightMethod extends LightElement implements PsiMethod {
     Icon methodIcon = hasModifierProperty(PsiModifier.ABSTRACT) ? Icons.ABSTRACT_METHOD_ICON : Icons.METHOD_ICON;
     RowIcon baseIcon = createLayeredIcon(methodIcon, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isMethodEquivalentTo(this, another);
   }
 }

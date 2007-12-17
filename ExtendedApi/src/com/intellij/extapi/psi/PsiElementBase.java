@@ -231,4 +231,8 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement, 
     }
     return child;
   }
+
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
+  }  
 }

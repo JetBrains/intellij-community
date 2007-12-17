@@ -206,5 +206,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
       new Throwable("Element invalidated:" + this).printStackTrace();
     }
   }
+  
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
+  }
 }
 

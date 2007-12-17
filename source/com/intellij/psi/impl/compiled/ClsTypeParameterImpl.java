@@ -347,4 +347,9 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   public Icon getElementIcon(final int flags) {
     return PsiClassImplUtil.getClassIcon(flags, this);
   }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
 }

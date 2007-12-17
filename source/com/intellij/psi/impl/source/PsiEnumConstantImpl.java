@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.cache.FieldView;
@@ -304,5 +305,10 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
+  }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    return PsiClassImplUtil.isFieldEquivalentTo(this, another);
   }
 }

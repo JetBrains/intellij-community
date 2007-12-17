@@ -135,4 +135,8 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
   public FileStatus getFileStatus() {
     return FileStatus.NOT_CHANGED;
   }
+
+  public boolean isEquivalentTo(final PsiElement another) {
+    return this == another;
+  }  
 }

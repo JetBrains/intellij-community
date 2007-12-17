@@ -110,4 +110,15 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
     return getNameFromEntityRef(this, XmlElementType.XML_ELEMENT_DECL_START);
   }
+
+  @Override
+  public boolean isEquivalentTo(final PsiElement another) {
+    if (!(another instanceof XmlElementDecl)) return false;
+    PsiElement element1 = this;
+    PsiElement element2 = another;
+    if (!element1.isPhysical()) element1 = element1.getOriginalElement();
+    if (!element2.isPhysical()) element2 = element2.getOriginalElement();
+
+    return element1 == element2;
+  }
 }
