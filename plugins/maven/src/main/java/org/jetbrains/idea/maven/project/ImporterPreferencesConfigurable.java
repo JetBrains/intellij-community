@@ -38,8 +38,8 @@ public class ImporterPreferencesConfigurable implements Configurable {
     myImporterState = importerState;
     myProjectsState = projectsState;
 
-    myOriginalProjects = myImporterState.getRememberedProjects();
-    myOriginalProfiles = myImporterState.getRememberedProfiles();
+    myOriginalProjects = myImporterState.getMemorizedProjects();
+    myOriginalProfiles = myImporterState.getMemorizedProfiles();
   }
 
   private void createUIComponents() {
@@ -75,8 +75,8 @@ public class ImporterPreferencesConfigurable implements Configurable {
 
   public void apply() throws ConfigurationException {
     preferencesForm.getData(myImporterPreferences);
-    myImporterState.rememberProjects(projectChooser.getMarkedElements());
-    myImporterState.rememberProfiles(profileChooser.getMarkedElements());
+    myImporterState.memorizeProjects(projectChooser.getMarkedElements());
+    myImporterState.memorizeProfiles(profileChooser.getMarkedElements());
   }
 
   public void reset() {

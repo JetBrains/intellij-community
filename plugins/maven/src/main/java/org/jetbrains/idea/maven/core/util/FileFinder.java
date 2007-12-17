@@ -9,26 +9,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 public class FileFinder {
-  public static Collection<VirtualFile> findFilesByPaths(final Collection<String> paths, final Collection<String> notFound) {
-    final ArrayList<VirtualFile> found = new ArrayList<VirtualFile>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (String path : paths) {
-          VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-          if (file != null) {
-            found.add(file);
-          }
-          else {
-            notFound.add(path);
-          }
-        }
-      }
-    });
+  public static List<VirtualFile> findFilesByPaths(List<String> paths, List<String> notFound) {
+    List<VirtualFile> found = new ArrayList<VirtualFile>();
+
+    for (String path : paths) {
+      VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+
+      if (f != null) found.add(f);
+      else notFound.add(path);
+    }
     return found;
   }
 

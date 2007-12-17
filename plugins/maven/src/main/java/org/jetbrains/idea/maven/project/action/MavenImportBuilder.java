@@ -79,14 +79,14 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       // visit topmost non-linked projects
       myImportProcessor.getMavenProjectModel().visit(new MavenProjectModel.MavenProjectVisitorRoot() {
         public void visit(MavenProjectModel.Node node) {
-          importerState.rememberProject(node.getPath());
+          importerState.memorizeProject(node.getPath());
         }
       });
     }
 
     if (!myProfiles.isEmpty()) {
       for (String profile : myProfiles) {
-        importerState.rememberProfile(profile);
+        importerState.memorizeProfile(profile);
       }
 
       final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);

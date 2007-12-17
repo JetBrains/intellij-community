@@ -113,18 +113,21 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
     mavenProjectModel.visit(new MavenProjectModel.MavenProjectVisitorPlain() {
       public void visit(MavenProjectModel.Node node) {
-        Module module = node.getLinkedModule() != null ? node.getLinkedModule() : nameToModule.get(projectToModuleName.get(node));
-        if (module != null) {
-          if (FileUtil.toSystemIndependentName(module.getModuleFilePath())
-            .equalsIgnoreCase(FileUtil.toSystemIndependentName(getModuleFilePath(node)))) {
-            projectToModule.put(node, module);
-            obsoleteModules.remove(module);
-          }
-          else {
-//            projectToModuleConflict.put(node, module);
-            obsoleteModules.add(module);
-            node.unlinkModule();
-          }
+        Module module = node.getLinkedModule() != null
+                        ? node.getLinkedModule()
+                        : nameToModule.get(projectToModuleName.get(node));
+        if (module == null) return;
+
+        String modulePath = FileUtil.toSystemIndependentName(module.getModuleFilePath());
+        String nodePath = FileUtil.toSystemIndependentName(getModuleFilePath(node));
+
+        if (modulePath.equalsIgnoreCase(nodePath)) {
+          projectToModule.put(node, module);
+          obsoleteModules.remove(module);
+        }
+        else {
+          obsoleteModules.add(module);
+          node.unlinkModule();
         }
       }
     });

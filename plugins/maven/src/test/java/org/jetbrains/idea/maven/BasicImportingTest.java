@@ -51,7 +51,7 @@ public class BasicImportingTest extends ImportingTestCase {
   }
 
   public void testProjectWithEnvironmentENVProperty() throws IOException {
-    String ideaJDK = FileUtil.toSystemIndependentName(System.getenv("IDEA_JDK"));
+    String envDir = FileUtil.toSystemIndependentName(System.getenv("TEMP"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -63,14 +63,14 @@ public class BasicImportingTest extends ImportingTestCase {
                   "    <artifactId>direct-system-dependency</artifactId>" +
                   "    <version>1.0</version>" +
                   "    <scope>system</scope>" +
-                  "    <systemPath>${env.IDEA_JDK}/lib/tools.jar</systemPath>" +
+                  "    <systemPath>${env.TEMP}/lib/tools.jar</systemPath>" +
                   "  </dependency>" +
                   "</dependencies>");
 
     assertModules("project");
     assertModuleLibDep("project",
                        "direct-system-dependency:direct-system-dependency:1.0",
-                       "jar://" + ideaJDK + "/lib/tools.jar!/");
+                       "jar://" + envDir + "/lib/tools.jar!/");
   }
 
   public void testModulesWithSlashesRegularAndBack() throws IOException {
