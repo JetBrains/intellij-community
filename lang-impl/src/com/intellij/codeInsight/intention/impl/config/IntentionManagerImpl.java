@@ -1,15 +1,11 @@
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.*;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddRuntimeExceptionToThrowsAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveRedundantElseAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.*;
+import com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
@@ -44,35 +40,6 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
-    String[] CONTROL_FLOW_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.control.flow")};
-    registerIntentionAndMetaData(new SplitIfAction(), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new InvertIfConditionAction(), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new RemoveRedundantElseAction(), CONTROL_FLOW_CATEGORY);
-    registerIntentionAndMetaData(new AddNotNullAnnotationFix(), CONTROL_FLOW_CATEGORY, "AddAnnotationFix");
-    registerIntentionAndMetaData(new AddNullableAnnotationFix(), CONTROL_FLOW_CATEGORY, "AddAnnotationFix");
-    registerIntentionAndMetaData(new DeannotateIntentionAction(), CONTROL_FLOW_CATEGORY);
-
-    String[] DECLARATION_CATEGORY = new String[]{CodeInsightBundle.message("intentions.category.declaration")};
-    registerIntentionAndMetaData(new CreateFieldFromParameterAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new AssignFieldFromParameterAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new CreateLocalVarFromInstanceofAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new CreateSubclassAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new ImplementAbstractMethodAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new SplitDeclarationAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new MoveInitializerToConstructorAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new MoveFieldAssignmentToInitializerAction(), DECLARATION_CATEGORY);
-    registerIntentionAndMetaData(new AddRuntimeExceptionToThrowsAction(), DECLARATION_CATEGORY);
-
-    registerIntentionAndMetaData(new SimplifyBooleanExpressionAction(), CodeInsightBundle.message("intentions.category.boolean"));
-    registerIntentionAndMetaData(new ConcatenationToMessageFormatAction(), CodeInsightBundle.message("intentions.category.i18n"));
-
-    registerIntentionAndMetaData(new MakeTypeGenericAction(), CodeInsightBundle.message("intentions.category.declaration"));
-    registerIntentionAndMetaData(new AddOverrideAnnotationAction(), CodeInsightBundle.message("intentions.category.declaration"));
-
-    registerIntentionAndMetaData(new AddOnDemandStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
-    registerIntentionAndMetaData(new AddSingleMemberStaticImportAction(), CodeInsightBundle.message("intentions.category.imports"));
-
-    
     addAction(new EditFoldingOptionsAction());
     addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
 
@@ -94,7 +61,7 @@ public class IntentionManagerImpl extends IntentionManager {
       final Class<?> aClass = Class.forName(extension.className, true, classLoader);
       final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
       if (descriptionDirectoryName != null) {
-        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.className, descriptionDirectoryName);
+        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories(), descriptionDirectoryName);
       }
       else {
         registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories());
