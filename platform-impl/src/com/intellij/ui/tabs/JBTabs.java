@@ -35,6 +35,8 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
+import java.awt.image.BufferedImage;
+import java.awt.image.VolatileImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -101,6 +103,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   private Animator myAnimator;
   private static final String DEFERRED_REMOVE_FLAG = "JBTabs.deferredRemove";
   private List<TabInfo> myAllTabs;
+  private boolean myPaintBlocked;
+  private BufferedImage myImage;
 
   public JBTabs(@Nullable Project project, ActionManager actionManager, Disposable parent) {
     myProject = project;
@@ -640,6 +644,23 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     });
   }
 
+  public void setPaintBlocked(boolean blocked) {
+    if (blocked && !myPaintBlocked) {
+      myImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+      final Graphics2D g = myImage.createGraphics();
+      super.paint(g);
+      g.dispose();
+    }
+
+    myPaintBlocked = blocked;
+
+    if (!myPaintBlocked) {
+      myImage.flush();
+      myImage = null;
+      repaint();
+    }
+  }
+
   private class Toolbar extends JPanel {
     public Toolbar(TabInfo info) {
       setLayout(new BorderLayout());
@@ -1104,6 +1125,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     return myVisibleInfos.size() > 0;
   }
 
+
+  public void paint(final Graphics g) {
+    if (myPaintBlocked) {
+      g.drawImage(myImage, 0, 0, getWidth(), getHeight(), null);
+      return;
+    }
+
+    super.paint(g);
+  }
 
   protected void paintChildren(final Graphics g) {
     super.paintChildren(g);
@@ -2009,6 +2039,15 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     south.add(hide1);
 
 
+    final JCheckBox block = new JCheckBox("Block", false);
+    block.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        tabs.setPaintBlocked(!block.isSelected());
+      }
+    });
+    south.add(block);
+
+
     final JButton refire = new JButton("Re-fire attraction");
     refire.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -2042,6 +2081,8 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
     frame.setBounds(200, 200, 800, 400);
     frame.show();
+
+
   }
 
 

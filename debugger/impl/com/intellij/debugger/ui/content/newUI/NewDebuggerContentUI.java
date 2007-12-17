@@ -610,4 +610,20 @@ public class NewDebuggerContentUI
     return result;
   }
 
+  public void validate(final Content content, final ActionCallback.Runnable toRestore) {
+      final TabInfo current = myTabs.getSelectedInfo();
+      myTabs.setPaintBlocked(true);
+
+      select(content, false).doWhenDone(new Runnable() {
+        public void run() {
+          myTabs.validate();
+          toRestore.run().doWhenDone(new Runnable() {
+            public void run() {
+              myTabs.select(current, true);
+              myTabs.setPaintBlocked(false);
+            }
+          });
+        }
+      });
+  }
 }

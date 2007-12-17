@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
@@ -299,12 +301,39 @@ public class GridCell implements Disposable {
     final DimensionService dimService = DimensionService.getInstance();
     Point storedLocation = dimService.getLocation(getDimensionKey(), myContext.getProject());
     Dimension storedSize = dimService.getSize(getDimensionKey(), myContext.getProject());
-    if (storedLocation == null) {
-      storedLocation = myTabs.getLocationOnScreen();
-      storedSize = myTabs.getSize();
+
+    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(myContext.getProject());
+    final Rectangle targetBounds = frame.suggestChildFrameBounds();
+
+
+    if (storedLocation != null && storedSize != null) {
+      targetBounds.setLocation(storedLocation);
+      targetBounds.setSize(storedSize);
     }
 
-    detachTo(storedLocation, storedSize, false);
+    if (!myTabs.isShowing() && (storedLocation == null || storedSize == null)) {
+      if (myContents.size() > 0) {
+        myContext.validate(myContents.getKeys().iterator().next(), new ActionCallback.Runnable() {
+          public ActionCallback run() {
+            if (!myTabs.isShowing()) {
+              detachTo(targetBounds.getLocation(), targetBounds.getSize(), false);
+            } else {
+              detachForShowingTabs();
+            }
+
+            return new ActionCallback.Done();
+          }
+        });
+
+        return;
+      }
+    }
+
+    detachTo(targetBounds.getLocation(), targetBounds.getSize(), false);
+  }
+
+  private void detachForShowingTabs() {
+    detachTo(myTabs.getLocationOnScreen(), myTabs.getSize(), false);
   }
 
   private void detachTo(Point screenPoint, Dimension size, boolean dragging) {

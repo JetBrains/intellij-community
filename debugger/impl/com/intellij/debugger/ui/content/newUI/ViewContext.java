@@ -46,4 +46,6 @@ public interface ViewContext extends Disposable {
 
   void setStateIsBeingRestored(boolean state, final Object requestor);
 
+  void validate(Content content, ActionCallback.Runnable toRestore);
+
 }
