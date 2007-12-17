@@ -72,55 +72,67 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return new THashSet<FilePath>(myDirtyDirectoriesRecursively);
   }
 
-  public synchronized void addDirtyDirRecursively(FilePath newcomer) {
-    myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
+  public synchronized void addDirtyDirRecursively(final FilePath newcomer) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        synchronized (VcsDirtyScopeImpl.this) {
+          myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
 
-    for (Iterator<FilePath> it = myDirtyFiles.iterator(); it.hasNext();) {
-      FilePath oldBoy = it.next();
-      if (oldBoy.isUnder(newcomer, false)) {
-        it.remove();
-      }
-    }
+          for (Iterator<FilePath> it = myDirtyFiles.iterator(); it.hasNext();) {
+            FilePath oldBoy = it.next();
+            if (oldBoy.isUnder(newcomer, false)) {
+              it.remove();
+            }
+          }
 
-    for (Iterator<FilePath> it = myDirtyDirectoriesRecursively.iterator(); it.hasNext();) {
-      FilePath oldBoy = it.next();
-      if (newcomer.isUnder(oldBoy, false)) {
-        return;
-      }
+          for (Iterator<FilePath> it = myDirtyDirectoriesRecursively.iterator(); it.hasNext();) {
+            FilePath oldBoy = it.next();
+            if (newcomer.isUnder(oldBoy, false)) {
+              return;
+            }
 
-      if (oldBoy.isUnder(newcomer, false)) {
-        it.remove();
+            if (oldBoy.isUnder(newcomer, false)) {
+              it.remove();
+            }
+          }
+          myDirtyDirectoriesRecursively.add(newcomer);
+        }
       }
-    }
-    myDirtyDirectoriesRecursively.add(newcomer);
+    });
   }
 
-  public synchronized void addDirtyFile(FilePath newcomer) {
-    myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
+  public void addDirtyFile(final FilePath newcomer) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        synchronized (VcsDirtyScopeImpl.this) {
+          myAffectedContentRoots.add(myVcsManager.getVcsRootFor(newcomer));
 
-    for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
-      if (newcomer.isUnder(oldBoy, false)) {
-        return;
-      }
-    }
+          for (FilePath oldBoy : myDirtyDirectoriesRecursively) {
+            if (newcomer.isUnder(oldBoy, false)) {
+              return;
+            }
+          }
 
-    if (newcomer.isDirectory()) {
-      final List<FilePath> files = new ArrayList<FilePath>(myDirtyFiles);
-      for (FilePath oldBoy : files) {
-        if (!oldBoy.isDirectory() && oldBoy.getVirtualFileParent() == newcomer.getVirtualFile()) {
-          myDirtyFiles.remove(oldBoy);
+          if (newcomer.isDirectory()) {
+            final List<FilePath> files = new ArrayList<FilePath>(myDirtyFiles);
+            for (FilePath oldBoy : files) {
+              if (!oldBoy.isDirectory() && oldBoy.getVirtualFileParent() == newcomer.getVirtualFile()) {
+                myDirtyFiles.remove(oldBoy);
+              }
+            }
+          }
+          else {
+            for (FilePath oldBoy : myDirtyFiles) {
+              if (oldBoy.isDirectory() && newcomer.getVirtualFileParent() == oldBoy.getVirtualFile()) {
+                return;
+              }
+            }
+          }
+
+          myDirtyFiles.add(newcomer);
         }
       }
-    }
-    else {
-      for (FilePath oldBoy : myDirtyFiles) {
-        if (oldBoy.isDirectory() && newcomer.getVirtualFileParent() == oldBoy.getVirtualFile()) {
-          return;
-        }
-      }
-    }
-
-    myDirtyFiles.add(newcomer);
+    });
   }
 
   public synchronized void iterate(final Processor<FilePath> iterator) {
