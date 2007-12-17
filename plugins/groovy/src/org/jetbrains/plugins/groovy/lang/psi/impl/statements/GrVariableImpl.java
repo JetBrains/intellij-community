@@ -61,7 +61,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   @NotNull
   public PsiType getType() {
     PsiType type = getDeclaredType();
-    return type != null ? type : getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", getResolveScope());
+    return type != null ? type : TypesUtil.getJavaLangObject(this);
   }
 
   @Nullable

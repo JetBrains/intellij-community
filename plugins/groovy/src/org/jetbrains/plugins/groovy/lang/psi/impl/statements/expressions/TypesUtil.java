@@ -214,4 +214,8 @@ public class TypesUtil {
 
     return null;
   }
+
+  public static PsiClassType getJavaLangObject(PsiElement context) {
+    return context.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", context.getResolveScope());
+  }
 }

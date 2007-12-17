@@ -29,6 +29,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.*;
 
@@ -79,7 +80,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
           if (myIsSetter) {
             PsiType type = myProperty.getDeclaredType();
             if (type == null) {
-              type = getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", myProperty.getResolveScope());
+              type = TypesUtil.getJavaLangObject(myProperty);
             }
             return new LightParameter[]{new LightParameter(manager, "p", null, type, AccessorMethod.this)};
           }

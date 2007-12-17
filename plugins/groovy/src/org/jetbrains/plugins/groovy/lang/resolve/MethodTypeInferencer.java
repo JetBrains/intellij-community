@@ -19,9 +19,9 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class MethodTypeInferencer implements Computable<PsiType> {
       }
     }
 
-    if (isObject) return myBlock.getManager().getElementFactory().createTypeByFQClassName("java.lang.Object", myBlock.getResolveScope());
+    if (isObject) return TypesUtil.getJavaLangObject(myBlock);
     
     return result;
   }

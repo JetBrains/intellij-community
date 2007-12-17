@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -570,17 +571,21 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (method == null) return;
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
-    /************* type and name **********/
-    String qualifiedTypeName = getTypeText(method.getReturnType());
-
     PsiModifierList modifierList = method.getModifierList();
 
     text.append("\n");
     text.append("  ");
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
 
-    //append qualified type name
-    text.append(qualifiedTypeName);
+    //append return type
+    PsiType retType;
+    if (method instanceof GrMethod) {
+      retType = ((GrMethod) method).getDeclaredReturnType();
+      if (retType == null) retType = TypesUtil.getJavaLangObject(method);
+    }
+    else retType = method.getReturnType();
+
+    text.append(getTypeText(retType));
     text.append(" ");
 
     //append method name
@@ -613,7 +618,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("{\n");
       text.append("    return ");
 
-      text.append(getDefaultValueText(qualifiedTypeName));
+      text.append(getDefaultValueText(getTypeText(method.getReturnType())));
 
       text.append(";");
 
