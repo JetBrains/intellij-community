@@ -6,7 +6,6 @@ package com.intellij.psi.jsp;
 import com.intellij.lang.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.jsp.IJspElementType;
@@ -21,9 +20,8 @@ public interface JspElementType extends JspTokenType {
 
   IChameleonElementType JSP_EL_HOLDER = new IChameleonElementType("EL_HOLDER", IELElementType.EL_LANGUAGE){
     public ASTNode parseContents(ASTNode chameleon) {
-      final PeerFactory factory = PeerFactory.getInstance();
       final Project project = chameleon.getTreeParent().getPsi().getProject();
-      final PsiBuilder builder = factory.createBuilder(chameleon, getLanguage(), chameleon.getText(), project);
+      final PsiBuilder builder = PsiBuilderFactory.getInstance(project).createBuilder(chameleon, getLanguage(), chameleon.getText());
       final PsiParser parser = LanguageParserDefinitions.INSTANCE.forLanguage(getLanguage()).createParser(project);
 
       builder.putUserData(ourContextNodeKey, chameleon.getTreeParent());

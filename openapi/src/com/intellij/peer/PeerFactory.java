@@ -50,7 +50,10 @@ public abstract class PeerFactory {
     return ServiceManager.getService(PeerFactory.class);
   }
 
+  @Deprecated
   public abstract FileStatusFactory getFileStatusFactory();
+
+  @Deprecated
   public abstract DialogWrapperPeerFactory getDialogWrapperPeerFactory();
 
   public abstract ProcessProxyFactory getProcessProxyFactory();
@@ -61,24 +64,30 @@ public abstract class PeerFactory {
 
   public abstract ErrorViewFactory getErrorViewFactory();
 
+  @Deprecated
   public abstract ContentFactory getContentFactory();
 
   public abstract FileSystemTreeFactory getFileSystemTreeFactory();
 
+  @Deprecated
   public abstract DiffRequestFactory getDiffRequestFactory();
 
+  @Deprecated
   public abstract VcsContextFactory getVcsContextFactory();
 
   public abstract StructureViewFactory getStructureViewFactory();
 
+  @Deprecated
   public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project);
 
+  @Deprecated
   public abstract PsiBuilder createBuilder(ASTNode tree, Lexer lexer, Language lang, CharSequence seq, final Project project);
 
   public abstract XmlRpcServer createRpcServer();
 
   public abstract WebServer createWebServer(int port, InetAddress addr, XmlRpcServer xmlrpc);
 
+  @Deprecated
   public abstract EditorHighlighter createEditorHighlighter(SyntaxHighlighter syntaxHighlighter, EditorColorsScheme colors);
 
   public abstract ProjectJdk createProjectJdk(String name, final String version, final String homePath, SdkType sdkType);

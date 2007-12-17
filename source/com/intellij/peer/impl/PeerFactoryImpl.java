@@ -13,7 +13,7 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
@@ -256,11 +256,11 @@ public class PeerFactoryImpl extends PeerFactory {
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {
-    return new PsiBuilderImpl(lang, null, tree, project, seq);
+    return PsiBuilderFactory.getInstance(project).createBuilder(tree, lang, seq);
   }
 
   public PsiBuilder createBuilder(final ASTNode tree, final Lexer lexer, final Language lang, final CharSequence seq, final Project project) {
-    return new PsiBuilderImpl(lang, lexer, tree, project, seq);
+    return PsiBuilderFactory.getInstance(project).createBuilder(tree, lexer, lang, seq);
   }
 
   public XmlRpcServer createRpcServer() {
