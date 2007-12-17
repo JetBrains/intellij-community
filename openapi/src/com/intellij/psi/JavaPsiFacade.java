@@ -18,6 +18,9 @@ public abstract class JavaPsiFacade {
     return ServiceManager.getService(project, JavaPsiFacade.class);
   }
 
+  static {
+    ResolveState.defaultsTo(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY);
+  }
 
   /**
    * Searches the project and all its libraries for a class with the specified full-qualified

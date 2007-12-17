@@ -10,18 +10,19 @@ import java.util.Map;
 
 public class ResolveState {
   private Map<Object, Object> myValues = null;
-  private static final ResolveState ourInitialState = new ResolveState();
+  private static final ResolveState ourInitialState;
 
   static {
-    ResolveState.defaultsTo(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY);
-  }  
+    ourInitialState = new ResolveState();
+    ourInitialState.myValues = new THashMap<Object, Object>();
+  }
 
   public static ResolveState initial() {
     return ourInitialState;
   }
 
   public static <T> void defaultsTo(Key<T> key, T value) {
-    initial().put(key, value);
+    ourInitialState.myValues.put(key, value);
   }
 
   public <T> ResolveState put(Key<T> key, T value) {
