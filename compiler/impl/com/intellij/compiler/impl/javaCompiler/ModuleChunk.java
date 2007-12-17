@@ -247,7 +247,7 @@ public class ModuleChunk extends Chunk<Module> {
   //the check for equal language levels is done elsewhere
   public LanguageLevel getLanguageLevel() {
     final Module module = getModules()[0];
-    final LanguageLevel level = module.getLanguageLevel();
+    final LanguageLevel level = ModuleRootManager.getInstance(module).getLanguageLevel();
     return level == null? ProjectRootManagerEx.getInstanceEx(module.getProject()).getLanguageLevel() : level;
   }
 }

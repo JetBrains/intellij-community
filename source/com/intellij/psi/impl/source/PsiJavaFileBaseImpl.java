@@ -5,6 +5,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -479,7 +480,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = index.getModuleForFile(virtualFile);
     if (module != null) {
-      return module.getEffectiveLanguageLevel();
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     if (sourceRoot != null) {

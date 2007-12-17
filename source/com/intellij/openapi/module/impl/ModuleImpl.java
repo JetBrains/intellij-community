@@ -21,7 +21,6 @@ import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
@@ -299,19 +298,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       }
       return myModuleRuntimeClasspathScope;
     }
-  }
-
-  @NotNull
-  public LanguageLevel getEffectiveLanguageLevel() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    LanguageLevel level = getLanguageLevel();
-    if (level != null) return level;
-    return JavaPsiFacade.getInstance(myProject).getEffectiveLanguageLevel();
-  }
-  
-  @Nullable
-  public LanguageLevel getLanguageLevel() {
-    return ((ModuleRootManagerImpl)ModuleRootManager.getInstance(this)).getLanguageLevel();
   }
 
   public void clearScopesCache() {

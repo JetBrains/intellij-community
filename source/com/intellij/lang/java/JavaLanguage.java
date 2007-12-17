@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,7 @@ public class JavaLanguage extends Language {
         if (project != null && virtualFile != null) {
           final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile);
           if (module != null) {
-            languageLevel = module.getEffectiveLanguageLevel();
+            languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
           } else {
             languageLevel = LanguageLevel.HIGHEST;
           }
