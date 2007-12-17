@@ -25,19 +25,19 @@ import java.util.Set;
 /**
  * @author peter
  */
-public abstract class FactoryMap<T,V> {
+public abstract class FactoryMap<K,V> {
   static final Object NULL = new Object();
-  protected final Map<T,V> myMap = createMap();
+  protected final Map<K,V> myMap = createMap();
 
-  protected Map<T, V> createMap() {
-    return new THashMap<T, V>();
+  protected Map<K, V> createMap() {
+    return new THashMap<K, V>();
   }
 
   @Nullable
-  protected abstract V create(T key);
+  protected abstract V create(K key);
   
   @Nullable
-  public final V get(T key) {
+  public V get(K key) {
     V v = myMap.get(getKey(key));
     if (v == null) {
       v = create(key);
@@ -46,26 +46,26 @@ public abstract class FactoryMap<T,V> {
     return v == NULL ? null : v;
   }
 
-  private static <T> T getKey(final T key) {
-    return key == null ? (T)NULL : key;
+  private static <K> K getKey(final K key) {
+    return key == null ? (K)NULL : key;
   }
 
-  public final boolean containsKey(T key) {
+  public final boolean containsKey(K key) {
     return myMap.containsKey(getKey(key));
   }
 
-  public void put(T key, V value) {
+  public void put(K key, V value) {
     myMap.put(key, value);
   }
 
-  public void removeEntry(T key) {
+  public void removeEntry(K key) {
     myMap.remove(key);
   }
 
-  public Set<T> keySet() {
-    final Set<T> ts = myMap.keySet();
+  public Set<K> keySet() {
+    final Set<K> ts = myMap.keySet();
     if (ts.contains(NULL)) {
-      final HashSet<T> hashSet = new HashSet<T>(ts);
+      final HashSet<K> hashSet = new HashSet<K>(ts);
       hashSet.remove(NULL);
       hashSet.add(null);
       return hashSet;
