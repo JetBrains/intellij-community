@@ -131,10 +131,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     if (psiManagerConfiguration.REPOSITORY_ENABLED) {
       myRepositoryManager = new RepositoryManagerImpl(psiManager);
-      myRepositoryElementsManager = new RepositoryElementsManager(psiManager);
+      myRepositoryElementsManager = new RepositoryElementsManager(psiManager, myRepositoryManager);
     } else {
       myRepositoryManager = new EmptyRepository.MyRepositoryManagerImpl();
-      myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(psiManager);
+      myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(psiManager, myRepositoryManager);
     }
 
     Disposer.register(project, this);
