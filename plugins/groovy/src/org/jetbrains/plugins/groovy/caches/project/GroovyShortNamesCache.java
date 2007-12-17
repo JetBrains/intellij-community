@@ -18,16 +18,13 @@ package org.jetbrains.plugins.groovy.caches.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.caches.module.GroovyModuleCache;
+import org.jetbrains.plugins.groovy.caches.GroovyFilesCache;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,10 +54,10 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
     GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      GroovyModuleCache caches = manager.getModuleFilesCache(module);
-      acc.addAll(caches.getAllFileNames());
+      GroovyFilesCache cache = manager.getModuleFilesCache(module);
+      acc.addAll(cache.getAllFileNames());
     }
-    return acc.toArray(new String[0]);
+    return acc.toArray(new String[acc.size()]);
   }
 
   @NotNull
@@ -69,10 +66,10 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
     GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      GroovyModuleCache caches = manager.getModuleFilesCache(module);
+      GroovyFilesCache caches = manager.getModuleFilesCache(module);
       acc.addAll(Arrays.asList(caches.getClassesByShortClassName(name)));
     }
-    return acc.toArray(PsiClass.EMPTY_ARRAY);
+    return acc.toArray(new PsiClass[acc.size()]);
   }
 
   @NotNull
@@ -81,8 +78,8 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
     GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      GroovyModuleCache caches = manager.getModuleFilesCache(module);
-      acc.addAll(caches.getAllClassShortNames());
+      GroovyFilesCache cache = manager.getModuleFilesCache(module);
+      acc.addAll(cache.getAllClassShortNames());
     }
     return acc.toArray(new String[0]);
   }
@@ -93,8 +90,8 @@ class GroovyShortNamesCache implements PsiShortNamesCache {
     GroovyCachesManager manager = GroovyCachesManager.getInstance(myProject);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      GroovyModuleCache caches = manager.getModuleFilesCache(module);
-      acc.addAll(caches.getAllClassShortNames());
+      GroovyFilesCache cache = manager.getModuleFilesCache(module);
+      acc.addAll(cache.getAllClassShortNames());
     }
     dest.addAll(acc);
   }
