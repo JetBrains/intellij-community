@@ -24,9 +24,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.PomModel;
-import com.intellij.pom.PomModule;
-import com.intellij.pom.core.impl.PomModuleImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -53,8 +50,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private GlobalSearchScope myModuleScope = null;
 
   @NonNls private static final String MODULE_LAYER = "module-components";
-  @NotNull private PomModule myPomModule;
-  @NotNull private PomModel myPomModel;
   @NonNls private static final String OPTION_WORKSPACE = "workspace";
   @NonNls public static final String ELEMENT_TYPE = "type";
 
@@ -68,11 +63,10 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   private ModuleRuntimeClasspathScope myModuleRuntimeClasspathScope;
   public static final Object MODULE_RENAMING_REQUESTOR = new Object();
 
-  public ModuleImpl(String filePath, Project project, PomModel pomModel) {
+  public ModuleImpl(String filePath, Project project) {
     super(project);
 
     myProject = project;
-    myPomModel =  pomModel;
 
     init(filePath);
   }
@@ -90,8 +84,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
   }
 
   private void init(String filePath) {
-    myPomModule = new PomModuleImpl(myPomModel, this);
-
     getStateStore().setModuleFilePath(filePath);
 
     myVirtualFileListener = new MyVirtualFileListener();
@@ -162,8 +154,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
     disposeComponents();
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
     Extensions.disposeArea(this);
-    myPomModel = null;
-    myPomModule = null;
     super.dispose();
   }
 
@@ -243,11 +233,6 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
 
   public String getOptionValue(@NotNull String optionName) {
     return getStateStore().getOptionValue(optionName);
-  }
-
-  @NotNull
-  public PomModule getPom() {
-    return myPomModule;
   }
 
   public GlobalSearchScope getModuleScope() {

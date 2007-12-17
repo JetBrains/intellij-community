@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.PomModule;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -119,13 +118,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @return the value of the custom option, or null if no value has been set.
    */
   @Nullable String getOptionValue(@NotNull String optionName);
-
-  /**                                             
-   * Returns the {@link com.intellij.pom.PomModule} representation of this module.
-   *
-   * @return the POM module instance.
-   */
-  @NotNull PomModule getPom();
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.

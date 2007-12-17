@@ -652,7 +652,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
 
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject, myPomModel);
+        module = new ModuleImpl(filePath, myProject);
         module.setModuleType(moduleType);
         if (options != null) {
           for ( Map.Entry<String,String> option : options.entrySet()) {
@@ -715,7 +715,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       }
       ModuleImpl module = getModuleByFilePath(filePath);
       if (module == null) {
-        module = new ModuleImpl(filePath, myProject, myPomModel);
+        module = new ModuleImpl(filePath, myProject);
         module.getStateStore().load();
         module.loadModuleComponents();
         initModule(module, true);
