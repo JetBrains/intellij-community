@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
@@ -145,7 +146,8 @@ public class TestNGRunnableState extends JavaCommandLineState
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
     Module module = config.getConfigurationModule().getModule();
-    LanguageLevel effectiveLanguageLevel = module == null ? ProjectRootManagerEx.getInstanceEx(project).getLanguageLevel() : module.getEffectiveLanguageLevel();
+    LanguageLevel effectiveLanguageLevel = module == null ? ProjectRootManagerEx.getInstanceEx(project).getLanguageLevel() : LanguageLevelUtil
+      .getEffectiveLanguageLevel(module);
     boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
 
     LOGGER.info("Language level is " + effectiveLanguageLevel.toString());

@@ -1,6 +1,7 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
@@ -378,7 +379,7 @@ public class BasicImportingTest extends ImportingTestCase {
                   "  </plugins>" +
                   "</build>");
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, getModule("project").getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_1_4, ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
   }
 
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() throws Exception {
@@ -387,7 +388,7 @@ public class BasicImportingTest extends ImportingTestCase {
                   "<version>1</version>");
 
     assertModules("project");
-    assertNull(getModule("project").getLanguageLevel());
+    assertNull(ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
   }
 
   public void testLanguageLevelWhenConfigurationIsNotSpecified() throws Exception {
@@ -404,7 +405,7 @@ public class BasicImportingTest extends ImportingTestCase {
                   "  </plugins>" +
                   "</build>");
     assertModules("project");
-    assertNull(getModule("project").getLanguageLevel());
+    assertNull(ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
   }
 
   public void testLanguageLevelWhenSourseLanguageLevelIsNotSpecified() throws Exception {
@@ -423,7 +424,7 @@ public class BasicImportingTest extends ImportingTestCase {
                   "  </plugins>" +
                   "</build>");
     assertModules("project");
-    assertNull(getModule("project").getLanguageLevel());
+    assertNull(ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
   }
 
   public void testProjectWithBuiltExtension() throws Exception {
