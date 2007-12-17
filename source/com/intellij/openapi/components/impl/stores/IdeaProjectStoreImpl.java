@@ -6,7 +6,6 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.convertors.Convertor01;
@@ -58,16 +57,10 @@ public class IdeaProjectStoreImpl extends ProjectStoreImpl {
   }
 
   private Module[] getPersistentModules() {
-    final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    if (moduleManager instanceof ModuleManagerImpl) {
-      return ((ModuleManagerImpl)moduleManager).getPersistentModules();
-    }
-    else if (moduleManager == null) {
-      return Module.EMPTY_ARRAY;
-    }
-    else {
-      return moduleManager.getModules();
-    }
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    if (moduleManager == null) return Module.EMPTY_ARRAY;
+
+    return moduleManager.getModules();
   }
 
   protected SaveSessionImpl createSaveSession() throws StateStorage.StateStorageException {
