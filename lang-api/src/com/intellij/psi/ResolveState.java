@@ -12,6 +12,10 @@ public class ResolveState {
   private Map<Object, Object> myValues = null;
   private static final ResolveState ourInitialState = new ResolveState();
 
+  static {
+    ResolveState.defaultsTo(PsiSubstitutor.KEY, PsiSubstitutor.EMPTY);
+  }  
+
   public static ResolveState initial() {
     return ourInitialState;
   }
