@@ -1,13 +1,6 @@
 package org.jetbrains.idea.maven.runner.executor;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenDataKeys;
-import org.jetbrains.idea.maven.core.util.MavenEnv;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
 import java.util.*;
@@ -97,17 +90,5 @@ public class MavenRunnerParameters implements Cloneable{
   @Nullable
   public MavenRunnerParameters clone () {
     return new MavenRunnerParameters(this);
-  }
-
-  @Nullable
-  public static MavenRunnerParameters createBuildParameters(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    final List<String> goals = MavenDataKeys.MAVEN_GOALS_KEY.getData(dataContext);
-    if (project != null && virtualFile != null && MavenEnv.POM_FILE.equals(virtualFile.getName()) && goals != null) {
-      return new MavenRunnerParameters(virtualFile.getPath(), goals,
-                                      project.getComponent(MavenProjectsState.class).getProfiles(virtualFile));
-    }
-    return null;
   }
 }

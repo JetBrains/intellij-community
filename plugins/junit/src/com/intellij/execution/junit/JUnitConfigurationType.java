@@ -16,13 +16,15 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.LocatableConfigurationType;
+import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiElement;
 
 import javax.swing.*;
 
@@ -65,10 +67,10 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
     return null;
   }
 
-  public boolean isConfigurationByElement(final RunConfiguration configuration, final Project project, final PsiElement element) {
+  public boolean isConfigurationByLocation(final RunConfiguration configuration, final Location location) {
     final JUnitConfiguration unitConfiguration = (JUnitConfiguration)configuration;
     final TestObject testObject = unitConfiguration.getTestObject();
-    return testObject != null && testObject.isConfiguredByElement(unitConfiguration, element);
+    return testObject != null && testObject.isConfiguredByElement(unitConfiguration, location.getPsiElement());
   }
 
   public String getComponentName() {

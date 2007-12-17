@@ -16,7 +16,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.refactoring.RefactoringFactory;
@@ -150,14 +149,14 @@ public class ConfigurationsTest {
 
     //class config
     configuration.setClassConfiguration(psiClass);
-    Assert.assertTrue(type.isConfigurationByElement(configuration, project, psiClass));
-    final PsiMethod testMethod = findTestMethod(psiClass);
-    Assert.assertFalse(type.isConfigurationByElement(configuration, project, testMethod));
+    PsiMethod testMethod = findTestMethod(psiClass);
+    Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
+    Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
 
     //method config
     configuration.setMethodConfiguration(new PsiLocation<PsiMethod>(project, testMethod));
-    Assert.assertTrue(type.isConfigurationByElement(configuration, project, testMethod));
-    Assert.assertFalse(type.isConfigurationByElement(configuration, project, psiClass));
+    Assert.assertTrue(type.isConfigurationByLocation(configuration, new PsiLocation(project, testMethod)));
+    Assert.assertFalse(type.isConfigurationByLocation(configuration, new PsiLocation(project, psiClass)));
   }
 
   @Test
@@ -169,7 +168,9 @@ public class ConfigurationsTest {
     assert config != null;
     final RunConfiguration runConfiguration = config.getConfiguration();
     Assert.assertTrue(runConfiguration instanceof TestNGConfiguration);
-    Assert.assertTrue(((TestNGConfigurationType)runConfiguration.getType()).isConfigurationByElement(runConfiguration, project, psiClass));
+
+    TestNGConfigurationType t = (TestNGConfigurationType)runConfiguration.getType();
+    Assert.assertTrue(t.isConfigurationByLocation(runConfiguration, new PsiLocation(project, psiClass)));
   }
 
   private PsiClass findTestClass(final Project project) {

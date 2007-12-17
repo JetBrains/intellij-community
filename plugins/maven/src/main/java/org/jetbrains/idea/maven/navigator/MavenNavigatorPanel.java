@@ -1,5 +1,6 @@
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.Location;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,15 +18,14 @@ import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
+import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+
 class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private final Project myProject;
@@ -91,92 +91,114 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (dataId.equals(PlatformDataKeys.HELP_ID.getName())) {
-      return "reference.toolWindows.mavenProjects";
-    }
+    if (dataId.equals(PlatformDataKeys.HELP_ID.getName())) return "reference.toolWindows.mavenProjects";
 
-    if (dataId.equals(PlatformDataKeys.PROJECT.getName())) {
-      return myProject;
-    }
-    if (dataId.equals(DataKeys.NAVIGATABLE_ARRAY.getName())) {
-      final List<Navigatable> navigatables = new ArrayList<Navigatable>();
-      for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
-        final Navigatable navigatable = pomNode.getNavigatable();
-        if (navigatable != null) {
-          navigatables.add(navigatable);
-        }
-      }
-      return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
-    }
-    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE.getName())) {
-      final PomTreeStructure.PomNode pomNode = getContextPomNode();
-      if (pomNode == null) return null;
+    if (dataId.equals(PlatformDataKeys.PROJECT.getName())) return myProject;
+
+    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE.getName())) return extractVirtualFile();
+    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) return extractVirtualFiles();
+
+    if (dataId.equals(Location.LOCATION)) return extractLocation();
+    if (dataId.equals(DataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
+
+    if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) return extractGoals();
+    if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) return extractProfiles();
+    if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) return extractMavenIds();
+
+    return null;
+  }
+
+  private VirtualFile extractVirtualFile() {
+    final PomTreeStructure.PomNode pomNode = getContextPomNode();
+    if (pomNode == null) return null;
+    VirtualFile file = pomNode.getFile();
+    if (file == null || !file.isValid()) return null;
+    return file;
+  }
+
+  private Object extractVirtualFiles() {
+    final List<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
       VirtualFile file = pomNode.getFile();
-      if (file == null || !file.isValid()) return null;
-      return file;
-    }
-    if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) {
-      final List<VirtualFile> files = new ArrayList<VirtualFile>();
-      for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
-        VirtualFile file = pomNode.getFile();
-        if (file.isValid()) {
-          files.add(file);
-        }
-      }
-      return files.isEmpty() ? null : files.toArray(new VirtualFile[files.size()]);
-    }
-    if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) {
-      final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
-      if (pomNode != null) {
-        final MavenProject mavenProject = myProjectsState.getMavenProject(pomNode.getFile());
-        if (mavenProject != null) {
-          final String goal = mavenProject.getBuild().getDefaultGoal();
-          if (!StringUtil.isEmptyOrSpaces(goal)) {
-            return Collections.singletonList(goal);
-          }
-        }
-      }
-      else {
-        final List<PomTreeStructure.GoalNode> nodes = getSelectedNodes(PomTreeStructure.GoalNode.class);
-        if (PomTreeStructure.getCommonParent(nodes) == null) {
-          return null;
-        }
-        final List<String> goals = new ArrayList<String>();
-        for (PomTreeStructure.GoalNode node : nodes) {
-          goals.add(node.getGoal());
-        }
-        Collections.sort(goals, myGoalOrderComparator);
-        return goals;
+      if (file.isValid()) {
+        files.add(file);
       }
     }
-    if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) {
-      final List<PomTreeStructure.ProfileNode> nodes = getSelectedNodes(PomTreeStructure.ProfileNode.class);
+    return files.isEmpty() ? null : files.toArray(new VirtualFile[files.size()]);
+  }
+
+  private Object extractLocation() {
+    VirtualFile file = extractVirtualFile();
+    List<String> goals = extractGoals();
+    if (file == null || goals == null) return null;
+
+    return new MavenGoalLocation(myProject, file, extractGoals());
+  }
+
+  private Object extractNavigatables() {
+    final List<Navigatable> navigatables = new ArrayList<Navigatable>();
+    for (PomTreeStructure.PomNode pomNode : getSelectedPomNodes()) {
+      final Navigatable navigatable = pomNode.getNavigatable();
+      if (navigatable != null) {
+        navigatables.add(navigatable);
+      }
+    }
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+  }
+
+  private List<String> extractGoals() {
+    final PomTreeStructure.PomNode pomNode = getSelectedPomNode();
+    if (pomNode != null) {
+      final MavenProject mavenProject = myProjectsState.getMavenProject(pomNode.getFile());
+      if (mavenProject != null) {
+        final String goal = mavenProject.getBuild().getDefaultGoal();
+        if (!StringUtil.isEmptyOrSpaces(goal)) {
+          return Collections.singletonList(goal);
+        }
+      }
+    }
+    else {
+      final List<PomTreeStructure.GoalNode> nodes = getSelectedNodes(PomTreeStructure.GoalNode.class);
       if (PomTreeStructure.getCommonParent(nodes) == null) {
         return null;
       }
-      final List<String> profiles = new ArrayList<String>();
-      for (PomTreeStructure.ProfileNode node : nodes) {
-        profiles.add(node.getProfile());
+      final List<String> goals = new ArrayList<String>();
+      for (PomTreeStructure.GoalNode node : nodes) {
+        goals.add(node.getGoal());
       }
-      return profiles;
-    }
-    if (dataId.equals(MavenDataKeys.MAVEN_IDS.getName())) {
-      final List<PomTreeStructure.PluginNode> nodes = getSelectedNodes(PomTreeStructure.PluginNode.class);
-      if (PomTreeStructure.getCommonParent(nodes) == null) {
-        return null;
-      }
-      final List<MavenId> ids = new ArrayList<MavenId>();
-      for (PomTreeStructure.PluginNode node : nodes) {
-        if (node.isDetachable()) {
-          ids.add(node.getId());
-        }
-        else {
-          return null;
-        }
-      }
-      return ids;
+      Collections.sort(goals, myGoalOrderComparator);
+      return goals;
     }
     return null;
+  }
+
+  private Object extractProfiles() {
+    final List<PomTreeStructure.ProfileNode> nodes = getSelectedNodes(PomTreeStructure.ProfileNode.class);
+    if (PomTreeStructure.getCommonParent(nodes) == null) {
+      return null;
+    }
+    final List<String> profiles = new ArrayList<String>();
+    for (PomTreeStructure.ProfileNode node : nodes) {
+      profiles.add(node.getProfile());
+    }
+    return profiles;
+  }
+
+  private Object extractMavenIds() {
+    final List<PomTreeStructure.PluginNode> nodes = getSelectedNodes(PomTreeStructure.PluginNode.class);
+    if (PomTreeStructure.getCommonParent(nodes) == null) {
+      return null;
+    }
+    final List<MavenId> ids = new ArrayList<MavenId>();
+    for (PomTreeStructure.PluginNode node : nodes) {
+      if (node.isDetachable()) {
+        ids.add(node.getId());
+      }
+      else {
+        return null;
+      }
+    }
+    return ids;
   }
 
   private <T extends SimpleNode> List<T> getSelectedNodes(final Class<T> aClass) {
@@ -215,4 +237,5 @@ class MavenNavigatorPanel extends JPanel implements DataProvider {
     Integer order = standardGoalOrder.get(goal);
     return order != null ? order.intValue() : standardGoalOrder.size();
   }
+
 }

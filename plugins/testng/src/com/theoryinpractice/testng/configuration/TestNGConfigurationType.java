@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.psi.PsiElement;
 import com.theoryinpractice.testng.model.TestData;
 
 import javax.swing.*;
@@ -47,13 +46,13 @@ public class TestNGConfigurationType implements LocatableConfigurationType
       return null;
     }
 
-    public boolean isConfigurationByElement(RunConfiguration runConfiguration, Project project, PsiElement element) {
+    public boolean isConfigurationByLocation(RunConfiguration runConfiguration, Location location) {
         TestNGConfiguration config = (TestNGConfiguration) runConfiguration;
         TestData testobject = config.getPersistantData();
         if (testobject == null)
             return false;
         else
-            return testobject.isConfiguredByElement(element);
+            return testobject.isConfiguredByElement(location.getPsiElement());
     }
 
     public String getDisplayName() {

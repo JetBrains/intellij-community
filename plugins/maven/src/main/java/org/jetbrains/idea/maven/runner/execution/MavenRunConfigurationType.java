@@ -7,14 +7,12 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +22,12 @@ import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author Vladislav.Kaznacheev
  */
 public class MavenRunConfigurationType implements LocatableConfigurationType {
-
   private final ConfigurationFactory myFactory;
   private static final Icon ICON = IconLoader.getIcon("/images/phase.png");
   private static final int MAX_NAME_LENGTH = 40;
@@ -73,12 +71,7 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
   public void disposeComponent() {
   }
 
-  private static MavenRunnerParameters createBuildParameters() {
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
-    return dataContext != null ? MavenRunnerParameters.createBuildParameters(dataContext) : null;
-  }
-
-  public static String generateName(final Project project, final MavenRunnerParameters runnerParameters) {
+  public static String generateName(Project project, MavenRunnerParameters runnerParameters) {
     StringBuilder stringBuilder = new StringBuilder();
 
     final String name = getMavenProjectName(project, runnerParameters);
@@ -125,21 +118,30 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
     return null;
   }
 
-  public RunnerAndConfigurationSettings createConfigurationByLocation(Location location) {
-    final MavenRunnerParameters runnerParameters = createBuildParameters();
-    if (runnerParameters == null) {
-      return null;
-    }
+  public RunnerAndConfigurationSettings createConfigurationByLocation(Location l) {
+    final MavenRunnerParameters runnerParameters = createBuildParameters(l);
+    if (runnerParameters == null) return null;
 
-    final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(location.getProject())
-      .createConfiguration(generateName(location.getProject(), runnerParameters), myFactory);
+    final RunnerAndConfigurationSettingsImpl settings = RunManagerEx.getInstanceEx(l.getProject())
+      .createConfiguration(generateName(l.getProject(), runnerParameters), myFactory);
     MavenRunConfiguration runConfiguration = (MavenRunConfiguration)settings.getConfiguration();
     runConfiguration.setRunnerParameters(runnerParameters);
     return settings;
   }
 
-  public boolean isConfigurationByElement(RunConfiguration configuration, Project project, PsiElement element) {
+  public boolean isConfigurationByLocation(RunConfiguration configuration, Location location) {
     return configuration instanceof MavenRunConfiguration &&
-           ((MavenRunConfiguration)configuration).getRunnerParameters().equals(createBuildParameters());
+           ((MavenRunConfiguration)configuration).getRunnerParameters().equals(createBuildParameters(location));
   }
+
+  private static MavenRunnerParameters createBuildParameters(Location l) {
+    if (!(l instanceof MavenGoalLocation)) return null;
+
+    VirtualFile f = ((PsiFile)l.getPsiElement()).getVirtualFile();
+    List<String> goals = ((MavenGoalLocation)l).getGoals();
+    Collection<String> profiles = l.getProject().getComponent(MavenProjectsState.class).getProfiles(f);
+
+    return new MavenRunnerParameters(f.getPath(), goals, profiles);
+  }
+
 }
