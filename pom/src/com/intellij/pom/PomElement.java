@@ -22,7 +22,7 @@ public interface PomElement extends UserDataHolder, Presentable, Navigatable {
   PomModel getModel();
   
   void accept(PomElementVisitor visitor);
-  void acceptChildren(PomElementVisitor visitor);
+
   PomElement getParentElement(Class<? extends PomElement> type, boolean returnSelf);
 
   boolean processReferences(Processor<PomReference> processor);
