@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.meta.PsiMetaOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -325,14 +324,6 @@ public interface PsiClass
    * @return true if the class is an inheritor, false otherwise
    */
   boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass);
-                                                     
-  /**
-   * Returns the {@link com.intellij.pom.java.PomMemberOwner} representation of the class.
-   *
-   * @return the POM representation.
-   */
-  @Nullable
-  PomMemberOwner getPom();
 
   /**
    * For an inner class, returns its containing class.

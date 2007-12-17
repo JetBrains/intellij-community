@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.FieldView;
@@ -221,11 +220,6 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         return hasInitializer();
       }
     }
-  }
-
-  public PomField getPom() {
-    //TODO:
-    return null;
   }
 
   public Icon getElementIcon(final int flags) {

@@ -35,63 +35,34 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.*;
+import com.intellij.pom.PomElement;
+import com.intellij.pom.PomManager;
+import com.intellij.pom.PomModel;
+import com.intellij.pom.PomModelAspect;
 import com.intellij.pom.event.PomModelEvent;
-import com.intellij.pom.impl.PomTransactionBase;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.pom.java.PomJavaAspect;
-import com.intellij.pom.java.PomPackage;
 import com.intellij.pom.java.events.JavaTreeChanged;
 import com.intellij.pom.java.events.PomJavaAspectChangeSet;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
+import java.util.Collections;
 
 public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.java.impl.PomJavaAspectImpl");
   private final Project myProject;
   private final PsiManager myPsiManager;
-  private PomPackage myRootPackage;
-  private Map<String, PomPackageImpl> myPackageMap = new HashMap<String, PomPackageImpl>();
 
   public PomJavaAspectImpl(Project project, PsiManager psiManager, TreeAspect treeAspect) {
     myProject = project;
     myPsiManager = psiManager;
-    myRootPackage = new PomPackageImpl("", null, this);
     PomManager.getModel(project).registerAspect(PomJavaAspect.class, this, Collections.singleton((PomModelAspect)treeAspect));
-  }
-
-  public PomPackage getRootPackage() {
-    return myRootPackage;
   }
 
   public PsiManager getPsiManager() {
     return myPsiManager;
-  }
-
-  public PomPackage findPackage(String fqn) {
-    if (fqn == null || fqn.length() == 0) return myRootPackage;
-    PomPackageImpl pomPackage = myPackageMap.get(fqn);
-    if (pomPackage == null) {
-      final String name;
-      final String prefix;
-      int idx = fqn.lastIndexOf('.');
-      if (idx < 0) {
-        name = fqn;
-        prefix = null;
-      }
-      else {
-        prefix = fqn.substring(0, idx);
-        name = fqn.substring(idx + 1);
-      }
-
-      pomPackage = new PomPackageImpl(name, (PomPackageImpl)findPackage(prefix), this);
-      myPackageMap.put(fqn, pomPackage);
-    }
-    return pomPackage;
   }
 
   public LanguageLevel getLanguageLevel() {
@@ -113,15 +84,6 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   public void disposeComponent() {
   }
 
-  public PomPackage[] getSubPackages(PomPackageImpl pomPackage) {
-    List<PomPackage> subs = new ArrayList<PomPackage>();
-    for (Iterator<PomPackageImpl> iterator = myPackageMap.values().iterator(); iterator.hasNext();) {
-      PomPackageImpl aPackage = iterator.next();
-      if (aPackage.getParentPackage() == pomPackage) subs.add(aPackage);
-    }
-    return subs.toArray(new PomPackage[subs.size()]);
-  }
-
   public void update(PomModelEvent event) {
     final PomModel model = PomManager.getModel(myProject);
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(model.getModelAspect(TreeAspect.class));
@@ -140,26 +102,6 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   public PomElement getMorph(PomElement element) {
     //TODO
     return null;
-  }
-
-  private void firePomEvent(final PsiFile file) {
-    if (isJavaFile(file)) {
-      final PomModel model = PomManager.getModel(myProject);
-      try {
-        PomManager.getModel(myProject).runTransaction(new PomTransactionBase(file, this) {
-          public PomModelEvent runInner() {
-            final PomModelEvent event = new PomModelEvent(model);
-            final PomJavaAspectChangeSet set = new PomJavaAspectChangeSet(model, file);
-            set.addChange(new JavaTreeChanged(file));
-            event.registerChangeSet(PomJavaAspectImpl.this, set);
-            return event;
-          }
-        });
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   private boolean isJavaFile(final PsiFile file) {

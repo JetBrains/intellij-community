@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
@@ -125,11 +124,6 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
 
   public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
-  }
-
-  public PomMemberOwner getPom() {
-    //TODO:
-    return null;
   }
 
   CompositeElement getMirrorTreeElement() {

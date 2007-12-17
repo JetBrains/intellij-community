@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.light;
 
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -137,11 +136,6 @@ public class LightMethod extends LightElement implements PsiMethod {
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
     return myMethod.findDeepestSuperMethods();
-  }
-
-  public PomMethod getPom() {
-    //TODO:
-    return null;
   }
 
   public String getText() {

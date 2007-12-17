@@ -43,7 +43,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
-import com.intellij.pom.PomProject;
 import com.intellij.pom.PomTransaction;
 import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
@@ -67,14 +66,14 @@ import java.util.*;
 
 public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.pom.core.impl.PomModelImpl");
-  private final PomProject myPomProject;
+  private final Project myProject;
   private Map<Class<? extends PomModelAspect>, PomModelAspect> myAspects = new HashMap<Class<? extends PomModelAspect>, PomModelAspect>();
   private Map<PomModelAspect, List<PomModelAspect>> myIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private Map<PomModelAspect, List<PomModelAspect>> myInvertedIncidence = new HashMap<PomModelAspect, List<PomModelAspect>>();
   private final Collection<PomModelListener> myListeners = new ArrayList<PomModelListener>();
 
   public PomModelImpl(Project project) {
-    myPomProject = new PomProjectImpl(this, project);
+    myProject = project;
   }
 
   public <T extends PomModelAspect> T getModelAspect(Class<T> aClass) {
@@ -228,7 +227,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   private void commitTransaction(final PomTransaction transaction) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myPomProject.getPsiProject());
+    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     Document document = null;
     final PsiFile containingFileByTree = getContainingFileByTree(transaction.getChangeScope());
@@ -244,7 +243,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   private void startTransaction(final PomTransaction transaction) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if(progressIndicator != null) progressIndicator.startNonCancelableSection();
-    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myPomProject.getPsiProject());
+    final PsiDocumentManagerImpl manager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
     sendPsiBeforeEvent(transaction.getChangeScope());

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import org.jetbrains.annotations.NonNls;
@@ -160,13 +159,6 @@ public interface PsiMethod extends PsiMember, PsiNamedElement, PsiModifierListOw
   @Nullable PsiMethod findDeepestSuperMethod();
 
   @NotNull PsiMethod[] findDeepestSuperMethods();
-
-  /**
-   * Returns the {@link com.intellij.pom.java.PomMethod} representation of the method.
-   *
-   * @return the POM representation.
-   */
-  PomMethod getPom();
 
   @NotNull PsiModifierList getModifierList();
 

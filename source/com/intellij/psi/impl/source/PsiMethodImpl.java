@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.PomMethod;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.MethodView;
@@ -136,11 +135,6 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   @NotNull
   public PsiMethod[] findDeepestSuperMethods() {
     return PsiSuperMethodImplUtil.findDeepestSuperMethods(this);
-  }
-
-  public PomMethod getPom() {
-    //TODO:
-    return null;
   }
 
   @NotNull

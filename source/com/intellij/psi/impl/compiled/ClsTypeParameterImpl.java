@@ -2,7 +2,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.pom.java.PomMemberOwner;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -149,11 +148,6 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
 
   public boolean isInheritor(PsiClass baseClass, boolean checkDeep) {
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
-  }
-
-  public PomMemberOwner getPom() {
-    //TODO:
-    return null;
   }
 
   public PsiIdentifier getNameIdentifier() {

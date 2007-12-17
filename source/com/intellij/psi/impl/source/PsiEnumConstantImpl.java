@@ -4,7 +4,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -232,11 +231,6 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
 
   public PsiMethod resolveConstructor() {
     return resolveMethod();
-  }
-
-  public PomField getPom() {
-    //TODO:
-    return null;
   }
 
   public Icon getElementIcon(final int flags) {

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.FieldView;
@@ -546,11 +545,6 @@ public class ClsFieldImpl extends ClsRepositoryPsiElement implements PsiField, P
     }
 
     return myAnnotations;
-  }
-
-  public PomField getPom() {
-    //TODO:
-    return null;
   }
 
   public ItemPresentation getPresentation() {
