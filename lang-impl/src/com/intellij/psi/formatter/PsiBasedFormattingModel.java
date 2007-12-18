@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter;
 
-import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;

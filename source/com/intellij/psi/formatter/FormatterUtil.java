@@ -29,17 +29,14 @@
  * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
  *
  */
-package com.intellij.codeFormatting.general;
+package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.codeStyle.Helper;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -49,20 +46,10 @@ import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 public class FormatterUtil {
-  public static String getWhiteSpaceBefore(ASTNode element) {
-    ASTNode wsCandidate = getWsCandidate(element);
-    final StringBuilder result = new StringBuilder();
-    while (wsCandidate != null && isSpaceTextElement(wsCandidate)) {
-      result.append(wsCandidate.getText());
-      final ASTNode newValue = getWsCandidate(wsCandidate);
-      if (wsCandidate.getStartOffset() == newValue.getStartOffset()) break;
-      wsCandidate = newValue;
-    }
-    return result.toString();
+  private FormatterUtil() {
   }
 
   public static ASTNode getWsCandidate(ASTNode element) {
@@ -260,13 +247,6 @@ public class FormatterUtil {
     return null;
   }
 
-  public static ASTNode shiftTokenIndent(final Project project,
-                                         final FileType fileType,
-                                         final TreeElement leafElement,
-                                         final int currentTokenPosShift) {
-    return new Helper(fileType, project).shiftIndentInside(leafElement, currentTokenPosShift);
-  }
-
   public static ASTNode getLeafNonSpaceBefore(final ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
@@ -290,33 +270,6 @@ public class FormatterUtil {
 
   }
 
-  public static ASTNode getElementBefore(final ASTNode element, final IElementType type) {
-    if (element == null) return null;
-    ASTNode treePrev = element.getTreePrev();
-    if (treePrev != null) {
-      ASTNode candidate = getLastChildOf(treePrev);
-      if (candidate != null && candidate.getElementType() == type) {
-        return candidate;
-      }
-      else if (candidate != null && candidate.getTextLength() != 0) {
-        return null;
-      }
-      else {
-        return getElementBefore(candidate, type);
-      }
-    }
-    else {
-      final ASTNode treeParent = element.getTreeParent();
-
-      if (treeParent == null || treeParent.getTreeParent() == null) {
-        return null;
-      }
-      else {
-        return getElementBefore(treeParent, type);
-      }
-    }
-  }
-
   public static boolean isIncompleted(final ASTNode treeNode) {
     ASTNode lastChild = treeNode.getLastChildNode();
     while (lastChild != null && lastChild.getElementType() == ElementType.WHITE_SPACE) {
@@ -325,21 +278,6 @@ public class FormatterUtil {
     if (lastChild == null) return false;
     if (lastChild.getElementType() == ElementType.ERROR_ELEMENT) return true;
     return isIncompleted(lastChild);
-  }
-
-  public static boolean isAfterIncompleted(final ASTNode child) {
-    ASTNode current = child.getTreePrev();
-    while (current != null) {
-      if (current.getElementType() == ElementType.ERROR_ELEMENT) return true;
-      if (current.getElementType() == ElementType.EMPTY_EXPRESSION) return true;
-      if (current.getElementType() == ElementType.WHITE_SPACE || current.getTextLength() == 0) {
-        current = current.getTreePrev();
-      }
-      else {
-        return false;
-      }
-    }
-    return false;
   }
 
   public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace, final TextRange textRange) {
@@ -378,44 +316,7 @@ public class FormatterUtil {
     }
   }
 
-  public static boolean join(final ASTNode node1, final ASTNode node2) {
-    if (node1 == null || node2 == null) return false;
-
-    if (node1.getElementType() == XmlElementType.XML_TEXT && node2.getElementType() == XmlElementType.XML_TEXT) {
-      joinXmlTexts(node1, node2);
-      return true;
-    }
-
-    if (node1.getTreeParent().getElementType() == XmlElementType.XML_TEXT && node2.getTreeParent().getElementType() == XmlElementType.XML_TEXT) {
-      joinXmlTexts(node1.getTreeParent(), node2.getTreeParent());
-      return true;
-    }
-
-    else if (node1.getTreeParent().getElementType() == XmlElementType.XML_TEXT && node2.getElementType() == XmlElementType.XML_TEXT) {
-      joinXmlTexts(node1.getTreeParent(), node2);
-      return true;
-    }
-
-    else if (node2.getTreeParent().getElementType() == XmlElementType.XML_TEXT && node2.getElementType() == XmlElementType.XML_TEXT) {
-      joinXmlTexts(node1, node2.getTreeParent());
-      return true;
-    }
-
-    return false;
-  }
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeFormatting.general.FormatterUtil");
-  private static void joinXmlTexts(ASTNode node1, ASTNode node2) {
-    final XmlText text1 = ((XmlText)node1.getPsi());
-    final XmlText text2 = ((XmlText)node2.getPsi());
-
-    try {
-      text1.insertText(text2.getValue(), text1.getValue().length());
-      delete(node2);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormatterUtil");
 
   public static boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node.getElementType() == ElementType.WHITE_SPACE) return true;
@@ -439,14 +340,4 @@ public class FormatterUtil {
     return true;
   }
 
-  private static boolean containsWhiteSpacesOnly(final String text) {
-    for (int i = 0; i < text.length() ; i++){
-      final char c = text.charAt(i);
-      if (c == ' ') continue;
-      if (c == '\t') continue;
-      if (c == '\n') continue;
-      return false;
-    }
-    return true;
-  }
 }

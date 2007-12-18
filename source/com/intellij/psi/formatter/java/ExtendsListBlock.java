@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.Alignment;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;

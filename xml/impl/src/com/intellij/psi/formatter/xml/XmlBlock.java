@@ -1,6 +1,6 @@
 package com.intellij.psi.formatter.xml;
 
-import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;

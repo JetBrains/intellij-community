@@ -5,7 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.codeFormatting.general.FormatterUtil;
+import com.intellij.psi.formatter.FormatterUtil;
 
 import java.util.ArrayList;
 import java.util.List;
