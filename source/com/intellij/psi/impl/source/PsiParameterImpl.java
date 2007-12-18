@@ -78,7 +78,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     final CompositeElement treeElement = getTreeElement();
     if (treeElement != null) {
       myCachedType = null;
-      return SharedImplUtil.getType(this);
+      return JavaSharedImplUtil.getType(this);
     }
     else {
       if (myCachedType != null) {
@@ -126,7 +126,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
 
   public void normalizeDeclaration() throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
-    SharedImplUtil.normalizeBrackets(this);
+    JavaSharedImplUtil.normalizeBrackets(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

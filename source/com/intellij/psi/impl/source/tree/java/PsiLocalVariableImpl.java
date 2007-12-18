@@ -60,7 +60,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
-    SharedImplUtil.setInitializer(this, initializer);
+    JavaSharedImplUtil.setInitializer(this, initializer);
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -70,7 +70,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @NotNull
   public final PsiType getType() {
-    return SharedImplUtil.getType(this);
+    return JavaSharedImplUtil.getType(this);
   }
 
   @NotNull
@@ -165,7 +165,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       }
     }
 
-    SharedImplUtil.normalizeBrackets(this);
+    JavaSharedImplUtil.normalizeBrackets(this);
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {

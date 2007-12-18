@@ -12,8 +12,8 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
+import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
@@ -647,7 +647,7 @@ public class RecordUtil {
     if (typeElement == null) return variable.getType();
     
     PsiIdentifier nameIdentifier = variable.getNameIdentifier();
-    return SharedImplUtil.getType(typeElement, nameIdentifier, null);
+    return JavaSharedImplUtil.getType(typeElement, nameIdentifier, null);
   }
 
   @Nullable
@@ -659,6 +659,6 @@ public class RecordUtil {
     PsiTypeElement typeElement = method.getReturnTypeElement();
     if (typeElement == null) return null;
     PsiParameterList parameterList = method.getParameterList();
-    return SharedImplUtil.getType(typeElement, parameterList, null);
+    return JavaSharedImplUtil.getType(typeElement, parameterList, null);
   }
 }

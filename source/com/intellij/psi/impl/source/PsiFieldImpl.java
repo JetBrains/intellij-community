@@ -133,7 +133,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     }
     else {
       myCachedType = null;
-      return SharedImplUtil.getType(this);
+      return JavaSharedImplUtil.getType(this);
     }
   }
 
@@ -372,7 +372,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
       field = nextField;
     }
 
-    SharedImplUtil.normalizeBrackets(this);
+    JavaSharedImplUtil.normalizeBrackets(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor){
@@ -404,7 +404,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
-    SharedImplUtil.setInitializer(this, initializer);
+    JavaSharedImplUtil.setInitializer(this, initializer);
   }
 
   @Override
