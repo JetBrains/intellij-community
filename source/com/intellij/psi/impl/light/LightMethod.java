@@ -1,8 +1,10 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
@@ -172,5 +174,10 @@ public class LightMethod extends LightElement implements PsiMethod {
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }

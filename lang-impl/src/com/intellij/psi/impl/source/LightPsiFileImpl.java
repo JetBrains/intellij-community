@@ -228,7 +228,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   @NotNull
   public SearchScope getUseScope() {
-    return getManager().getSearchHelper().getUseScope(this);
+    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
   }
 
   // Default implementation just to make sure it compiles.

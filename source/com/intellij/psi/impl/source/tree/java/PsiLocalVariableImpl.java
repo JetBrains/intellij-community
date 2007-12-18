@@ -19,6 +19,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.RowIcon;
@@ -286,7 +287,14 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
       }
     }
 
-    return super.getUseScope();
+    final GlobalSearchScope maximalUseScope = getManager().getFileManager().getUseScope(this);
+    PsiElement parentElement = getParent();
+    if (parentElement instanceof PsiDeclarationStatement) {
+      return new LocalSearchScope(parentElement.getParent());
+    }
+    else {
+      return maximalUseScope;
+    }
   }
 
   public Icon getElementIcon(final int flags) {

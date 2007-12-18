@@ -102,7 +102,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
 
   @NotNull
   public SearchScope getUseScope() {
-    return getManager().getSearchHelper().getUseScope(this);
+    return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
   }
 
   public void navigate(boolean requestFocus) {

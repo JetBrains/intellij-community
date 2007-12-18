@@ -4,6 +4,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.MethodView;
 import com.intellij.psi.impl.cache.RepositoryManager;
@@ -887,5 +888,10 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }

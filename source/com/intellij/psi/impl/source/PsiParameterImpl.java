@@ -3,6 +3,8 @@ package com.intellij.psi.impl.source;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -217,5 +219,10 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   public Icon getElementIcon(final int flags) {
     final RowIcon baseIcon = createLayeredIcon(Icons.PARAMETER_ICON, 0);
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return new LocalSearchScope(getDeclarationScope());
   }
 }

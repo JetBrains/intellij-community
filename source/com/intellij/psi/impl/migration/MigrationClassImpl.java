@@ -8,6 +8,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -265,5 +266,10 @@ public class MigrationClassImpl extends LightElement implements PsiClass{
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiClassImplUtil.getClassUseScope(this);
   }
 }

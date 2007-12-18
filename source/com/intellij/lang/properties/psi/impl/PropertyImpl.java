@@ -11,6 +11,8 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -254,5 +256,11 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
     }
     if (text.length() == 0) return null;
     return text.toString();
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    // property ref can occur in any file
+    return GlobalSearchScope.allScope(getProject());
   }
 }

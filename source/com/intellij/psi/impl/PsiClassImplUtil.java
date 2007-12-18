@@ -16,6 +16,9 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.IncorrectOperationException;
@@ -263,6 +266,47 @@ public class PsiClassImplUtil {
     Icon symbolIcon = ElementPresentationUtil.getClassBaseIcon(aClass);
     RowIcon baseIcon = ElementBase.createLayeredIcon(symbolIcon, ElementPresentationUtil.getFlags(aClass, isLocked));
     return ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
+  }
+
+  public static SearchScope getClassUseScope(final PsiClass aClass) {
+    final GlobalSearchScope maximalUseScope = ((PsiManagerEx) aClass.getManager()).getFileManager().getUseScope(aClass);
+    if (aClass instanceof PsiAnonymousClass) {
+      return new LocalSearchScope(aClass);
+    }
+    PsiFile file = aClass.getContainingFile();
+    if (PsiUtil.isInJspFile(file)) return maximalUseScope;
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+      return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
+      return containingClass != null ? containingClass.getUseScope() : maximalUseScope;
+    }
+    else if (aClass.hasModifierProperty(PsiModifier.PRIVATE) || aClass instanceof PsiTypeParameter) {
+      PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
+      return new LocalSearchScope(topClass == null ? aClass.getContainingFile() : topClass);
+    }
+    else {
+      PsiPackage aPackage = null;
+      if (file instanceof PsiJavaFile) {
+        aPackage = JavaPsiFacade.getInstance(aClass.getProject()).findPackage(((PsiJavaFile)file).getPackageName());
+      }
+
+      if (aPackage == null) {
+        PsiDirectory dir = file.getContainingDirectory();
+        if (dir != null) {
+          aPackage = JavaDirectoryService.getInstance().getPackage(dir);
+        }
+      }
+
+      if (aPackage != null) {
+        SearchScope scope = PackageScope.packageScope(aPackage, false);
+        scope = scope.intersectWith(maximalUseScope);
+        return scope;
+      }
+
+      return new LocalSearchScope(file);
+    }
   }
 
   private static class ByNameCachedValueProvider implements CachedValueProvider<Map> {

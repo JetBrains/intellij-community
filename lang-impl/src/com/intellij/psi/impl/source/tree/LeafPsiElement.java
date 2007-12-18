@@ -184,7 +184,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
 
   @NotNull
   public SearchScope getUseScope() {
-    return getManager().getSearchHelper().getUseScope(this);
+    return getManager().getFileManager().getUseScope(this);
   }
 
   @NotNull

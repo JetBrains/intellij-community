@@ -218,7 +218,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
 
   @NotNull
   public SearchScope getUseScope() {
-    return getManager().getSearchHelper().getUseScope(this);
+    return getManager().getFileManager().getUseScope(this);
   }
 
   public ItemPresentation getPresentation() {

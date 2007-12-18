@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.ClassView;
 import com.intellij.psi.impl.meta.MetaRegistry;
@@ -1152,5 +1153,10 @@ public class ClsClassImpl extends ClsRepositoryPsiElement implements PsiClass, C
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiClassImplUtil.getClassUseScope(this);
   }
 }

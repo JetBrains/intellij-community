@@ -30,6 +30,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
@@ -831,6 +832,11 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiClassImplUtil.getClassUseScope(this);
   }
 }
 

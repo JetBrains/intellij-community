@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
@@ -410,6 +411,11 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }
 

@@ -3,6 +3,7 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
@@ -351,5 +352,10 @@ public class ClsTypeParameterImpl extends ClsElementImpl implements PsiTypeParam
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiClassImplUtil.getClassUseScope(this);
   }
 }

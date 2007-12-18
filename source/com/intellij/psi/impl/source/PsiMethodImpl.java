@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.MethodView;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -389,6 +390,11 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   @Override
   public boolean isEquivalentTo(final PsiElement another) {
     return PsiClassImplUtil.isMethodEquivalentTo(this, another);
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return PsiImplUtil.getMemberUseScope(this);
   }
 }
 

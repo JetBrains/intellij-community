@@ -17,7 +17,11 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -257,5 +261,42 @@ public class PsiImplUtil {
     }
 
     return type;
+  }
+
+  @NotNull
+  public static SearchScope getMemberUseScope(final PsiMember member) {
+    final PsiManagerEx psiManager = (PsiManagerEx)member.getManager();
+    final GlobalSearchScope maximalUseScope = psiManager.getFileManager().getUseScope(member);
+    PsiFile file = member.getContainingFile();
+    if (PsiUtil.isInJspFile(file)) return maximalUseScope;
+
+    PsiClass aClass = member.getContainingClass();
+    if (aClass instanceof PsiAnonymousClass) {
+      //member from anonymous class can be called from outside the class
+      PsiElement methodCallExpr = PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
+      return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
+    }
+
+    if (member.hasModifierProperty(PsiModifier.PUBLIC)) {
+      return aClass != null ? aClass.getUseScope() : maximalUseScope;
+    }
+    else if (member.hasModifierProperty(PsiModifier.PROTECTED)) {
+      return aClass != null ? aClass.getUseScope() : maximalUseScope;
+    }
+    else if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
+      PsiClass topClass = PsiUtil.getTopLevelClass(member);
+      return topClass != null ? new LocalSearchScope(topClass) : new LocalSearchScope(file);
+    }
+    else {
+      PsiPackage aPackage = file instanceof PsiJavaFile ? JavaPsiFacade.getInstance(psiManager.getProject())
+        .findPackage(((PsiJavaFile)file).getPackageName()) : null;
+      if (aPackage != null) {
+        SearchScope scope = PackageScope.packageScope(aPackage, false);
+        scope = scope.intersectWith(maximalUseScope);
+        return scope;
+      }
+
+      return maximalUseScope;
+    }
   }
 }

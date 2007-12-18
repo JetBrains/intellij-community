@@ -3,6 +3,8 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -95,5 +97,10 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     SharedPsiElementImplUtil.setName(getLabelIdentifier(), name);
     return this;
+  }
+
+  @NotNull
+  public SearchScope getUseScope() {
+    return new LocalSearchScope(this);
   }
 }
