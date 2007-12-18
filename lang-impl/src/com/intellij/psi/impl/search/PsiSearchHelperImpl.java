@@ -19,9 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.*;
-import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.search.searches.IndexPatternSearch;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
@@ -41,13 +39,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   private static final TodoItem[] EMPTY_TODO_ITEMS = new TodoItem[0];
 
   static {
-    ReferencesSearch.INSTANCE.registerExecutor(new CachesBasedRefSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new PsiAnnotationMethodReferencesSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new ConstructorReferencesSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new SimpleAccessorReferenceSearcher());
-    ReferencesSearch.INSTANCE.registerExecutor(new PropertyReferenceViaLastWordSearcher());
-    AllClassesSearch.INSTANCE.registerExecutor(new AllClassesSearchExecutor());
-
     IndexPatternSearch.INDEX_PATTERN_SEARCH_INSTANCE = new IndexPatternSearchImpl();
   }
 
