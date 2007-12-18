@@ -4,14 +4,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.*;
 
 /**
  *
  */
-public class ChameleonTransforming implements Constants {
+public class ChameleonTransforming {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.source.parsing.ChameleonTransforming");
 
   public static ASTNode transform(LeafElement leaf) {
