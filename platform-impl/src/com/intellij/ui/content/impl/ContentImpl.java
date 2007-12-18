@@ -40,6 +40,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private AlertIcon myAlertIcon;
 
   private boolean myAlerting = false;
+  private JComponent myActionsContextComponent;
 
   public ContentImpl(JComponent component, String displayName, boolean isPinnable) {
     myComponent = component;
@@ -181,9 +182,14 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myCloseable = closeable;
   }
 
-  public void setActions(final ActionGroup actions, String place) {
+  public void setActions(final ActionGroup actions, String place, @Nullable JComponent contextComponent) {
     myActions = actions;
     myPlace = place;
+    myActionsContextComponent = contextComponent;
+  }
+
+  public JComponent getActionsContextComponent() {
+    return myActionsContextComponent;
   }
 
   public ActionGroup getActions() {

@@ -161,7 +161,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     addAction(watchesGroup, DebuggerActions.NEW_WATCH);
     addAction(watchesGroup, DebuggerActions.ADD_TO_WATCH);
     addAction(watchesGroup, DebuggerActions.REMOVE_WATCH);
-    myWatchesContent.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
+    myWatchesContent.setActions(watchesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myWatchPanel.getTree());
 
     myViewsContentManager.addContent(myWatchesContent);
 
@@ -191,7 +191,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     }
 
 
-    myFramesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR);
+    myFramesContent.setActions(framesGroup, ActionPlaces.DEBUGGER_TOOLBAR, myFramesPanel.getFramesList());
 
     myViewsContentManager.addContent(myFramesContent);
 
@@ -203,7 +203,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     addAction(varsGroup, DebuggerActions.EVALUATE_EXPRESSION);
     varsGroup.add(new WatchLastMethodReturnValueAction());
     varsGroup.add(new AutoVarsSwitchAction());
-    myVarsContent.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR);
+    myVarsContent.setActions(varsGroup, ActionPlaces.DEBUGGER_TOOLBAR, myVariablesPanel.getTree());
     myViewsContentManager.addContent(myVarsContent);
 
     myViewsContentManager.addContentManagerListener(new ContentManagerAdapter() {
@@ -274,7 +274,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
       }
     }
 
-    content.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR);
+    content.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
     Content[] contents = myViewsContentManager.getContents();
     final Content[] selected = myViewsContentManager.getSelectedContents();

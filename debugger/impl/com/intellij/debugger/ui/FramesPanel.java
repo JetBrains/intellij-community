@@ -452,4 +452,8 @@ public class FramesPanel extends UpdatableDebuggerView {
   public OccurenceNavigator getOccurenceNavigator() {
     return myFramesList;
   }
+
+  public FramesList getFramesList() {
+    return myFramesList;
+  }
 }

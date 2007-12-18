@@ -150,7 +150,8 @@ public class GridCell implements Disposable {
       .setText(content.getDisplayName())
       .setActions(content.getActions(), content.getPlace())
       .setObject(content)
-      .setPreferredFocusableComponent(content.getPreferredFocusableComponent());
+      .setPreferredFocusableComponent(content.getPreferredFocusableComponent())
+      .setActionsContextComponent(content.getActionsContextComponent());
 
     myContents.remove(content);
     myContents.put(content, tabInfo);

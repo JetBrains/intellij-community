@@ -269,7 +269,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
   }
 
   private void updateCursor() {
-    if (myCurrentDragContext == null) return;
+    if (myCurrentDragContext == null || myCurrentEvent == null) return;
 
     Cursor cursor;
     if (myCurrentEvent.isDropPossible()) {
@@ -679,8 +679,6 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     }
     hideCurrentHighlighter();
     myHightlighterShowRequest = null;
-    myCurrentDragContext = null;
-    myCurrentEvent = null;
   }
 
   private Application getApplication() {

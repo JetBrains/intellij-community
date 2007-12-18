@@ -36,7 +36,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
-import java.awt.image.VolatileImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -670,8 +669,10 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
 
       if (group != null) {
         final String place = info.getPlace();
+        ActionToolbar toolbar = myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myHorizontalSide);
+        toolbar.setTargetComponent(info.getActionsContextComponent());
         final JComponent actionToolbar =
-          myActionManager.createActionToolbar(place != null ? place : ActionPlaces.UNKNOWN, group, myHorizontalSide).getComponent();
+          toolbar.getComponent();
         add(actionToolbar, BorderLayout.CENTER);
       }
 
@@ -1113,7 +1114,18 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
       }
     }
 
+    config.setAntialiasing(false);
+    if (isSideComponentVertical()) {
+      JComponent toolbarComp = myInfo2Toolbar.get(mySelectedInfo);
+      if (toolbarComp != null) {
+        Rectangle toolBounds = toolbarComp.getBounds();
+        g2d.setColor(CaptionPanel.CNT_ACTIVE_COLOR);
+        g.drawLine((int)toolBounds.getMaxX(), toolBounds.y, (int)toolBounds.getMaxX(), (int)toolBounds.getMaxY() - 1);
+      }
+    }
+    
     config.restore();
+
   }
 
   private boolean isStealthModeEffective() {

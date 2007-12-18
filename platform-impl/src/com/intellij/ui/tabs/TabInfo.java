@@ -42,6 +42,7 @@ public final class TabInfo {
   private int myBlinkCount;
   private boolean myAlertRequested;
   private boolean myHidden;
+  private JComponent myActionsContextComponent;
 
   public TabInfo(final JComponent component) {
     myComponent = component;
@@ -103,6 +104,15 @@ public final class TabInfo {
     myPlace = place;
     myChangeSupport.firePropertyChange(ACTION_GROUP, old, myGroup);
     return this;
+  }
+
+  public TabInfo setActionsContextComponent(JComponent c) {
+    myActionsContextComponent = c;
+    return this;
+  }
+
+  public JComponent getActionsContextComponent() {
+    return myActionsContextComponent;
   }
 
   public TabInfo setObject(final Object object) {

@@ -67,9 +67,10 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
     myTree.dispose();
   }
 
+
   protected abstract ActionPopupMenu createPopupMenu();
 
-  protected DebuggerTree getTree() {
+  public final DebuggerTree getTree() {
     return myTree;
   }
 

@@ -86,9 +86,11 @@ public interface Content extends UserDataHolder, ComponentContainer {
   boolean isCloseable();
   void setCloseable(boolean closeable);
 
-  void setActions(ActionGroup actions, String place);
+  void setActions(ActionGroup actions, String place, @Nullable JComponent contextComponent);
+
   ActionGroup getActions();
   String getPlace();
+  JComponent getActionsContextComponent();
 
   void setAlertIcon(@Nullable AlertIcon icon);
   @Nullable AlertIcon getAlertIcon();
