@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrComman
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrThrowStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 
 import java.util.Arrays;
 
@@ -95,13 +96,7 @@ public class GroovyInsertHandler extends DefaultInsertHandler {
     if (elementAt == null) return false;
     GrExpression expr = PsiTreeUtil.getParentOfType(elementAt, GrExpression.class);
     if (expr == null) return false;
-    PsiElement parent = expr.getParent();
-    return !(parent instanceof GrExpression) && //todo make psi method for this
-        !(parent instanceof GrArgumentList) &&
-        !(parent instanceof GrNamedArgument) &&
-        !(parent instanceof GrThrowStatement) &&
-        !(parent instanceof GrCommandArgumentList) &&
-        !(parent instanceof GrVariable);
+    return expr.getParent() instanceof GrControlFlowOwner;
   }
 
   private void handleOverwrite(final int offset, final Document document) {
