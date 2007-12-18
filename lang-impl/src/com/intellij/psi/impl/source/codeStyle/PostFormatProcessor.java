@@ -15,10 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.openapi.util.TextRange;
 
 public interface PostFormatProcessor {
   PsiElement processElement(PsiElement source, CodeStyleSettings settings);
