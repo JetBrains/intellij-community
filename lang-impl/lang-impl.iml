@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="UsageView" />
     <orderEntryProperties />
   </component>
 </module>
