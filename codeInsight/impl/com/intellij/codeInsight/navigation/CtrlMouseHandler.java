@@ -367,11 +367,16 @@ public class CtrlMouseHandler implements ProjectComponent {
 
   @Nullable
   private static PsiElement resolve(final PsiReference ref) {
-    PsiElement resolvedElement;
+    PsiElement resolvedElement = null;
 
     if (ref instanceof PsiPolyVariantReference) {
       final ResolveResult[] psiElements = ((PsiPolyVariantReference)ref).multiResolve(false);
-      resolvedElement = psiElements.length > 0 ? psiElements[0].getElement() : null;
+      if (psiElements.length > 0) {
+        final ResolveResult resolveResult = psiElements[0];
+        if (resolveResult != null) {
+          resolvedElement = resolveResult.getElement();
+        }
+      }
     }
     else {
       resolvedElement = ref.resolve();
