@@ -4,15 +4,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nullable;
 
 class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
@@ -20,17 +17,8 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     "#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
   private E myElement;
-  private ElementInfo myElementInfo;
+  private SmartPointerElementInfo myElementInfo;
   private final Project myProject;
-
-  private static interface ElementInfo {
-    Document getDocumentToSynchronize();
-
-    void documentAndPsiInSync();
-
-    @Nullable
-    PsiElement restoreElement();
-  }
 
   public SmartPsiElementPointerImpl(Project project, E element) {
     myProject = project;
@@ -91,52 +79,20 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @Nullable
-  private ElementInfo createElementInfo() {
+  private SmartPointerElementInfo createElementInfo() {
     if (myElement instanceof PsiCompiledElement) return null;
 
     if (myElement.getContainingFile() == null) return null;
-
-    if (myElement instanceof ImplicitVariable){
-      return new ImplicitVariableInfo((ImplicitVariable)myElement);
-    }
-    if (myElement instanceof PsiImportList) {
-      return new ImportListInfo((PsiJavaFile)myElement.getContainingFile());
-    }
-
     if (!myElement.isPhysical()) return null;
 
-    PsiElement anchor = getAnchor(myElement);
-    if (anchor != null) {
-      return new AnchorElementInfo(anchor);
+    for(SmartPointerElementInfoFactory factory: Extensions.getExtensions(SmartPointerElementInfoFactory.EP_NAME)) {
+      final SmartPointerElementInfo result = factory.createElementInfo(myElement);
+      if (result != null) {
+        return result;
+      }
     }
-    else {
-      return new SelfElementInfo(myElement);
-    }
-  }
 
-  @Nullable
-  private static PsiElement getAnchor(PsiElement element) {
-    LOG.assertTrue(element.isValid());
-    PsiElement anchor = null;
-    if (element instanceof PsiClass) {
-      if (element instanceof PsiAnonymousClass) {
-        anchor = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceNameElement();
-      }
-      else {
-        anchor = ((PsiClass)element).getNameIdentifier();
-      }
-    }
-    else if (element instanceof PsiMethod) {
-      anchor = ((PsiMethod)element).getNameIdentifier();
-    }
-    else if (element instanceof PsiVariable) {
-      anchor = ((PsiVariable)element).getNameIdentifier();
-    }
-    else if (element instanceof XmlTag) {
-      anchor = XmlTagUtil.getStartTagNameElement((XmlTag)element);
-    }
-    if (anchor != null && !anchor.isPhysical()) return null;
-    return anchor;
+    return new SelfElementInfo(myElement);
   }
 
   private static boolean areElementKindEqual(PsiElement element1, PsiElement element2) {
@@ -161,7 +117,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
   }
 
-  private static class SelfElementInfo implements ElementInfo {
+  private static class SelfElementInfo implements SmartPointerElementInfo {
     protected final PsiFile myFile;
     private final RangeMarker myMarker;
     private int mySyncStartOffset;
@@ -231,120 +187,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
       if (range.getEndOffset() == mySyncEndOffset) return anchor;
       return null;
-    }
-  }
-
-  private static class AnchorElementInfo implements ElementInfo {
-    protected final PsiFile myFile;
-    private final RangeMarker myMarker;
-    private int mySyncStartOffset;
-    private int mySyncEndOffset;
-    private boolean mySyncMarkerIsValid;
-
-    public AnchorElementInfo(PsiElement anchor) {
-      LOG.assertTrue(anchor.isPhysical());
-      myFile = anchor.getContainingFile();
-      TextRange range = anchor.getTextRange();
-
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myFile.getProject());
-      Document document = documentManager.getDocument(myFile);
-      LOG.assertTrue(!documentManager.isUncommited(document));
-      myMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
-
-      mySyncStartOffset = range.getStartOffset();
-      mySyncEndOffset = range.getEndOffset();
-      mySyncMarkerIsValid = true;
-    }
-
-    public Document getDocumentToSynchronize() {
-      return myMarker.getDocument();
-    }
-
-    public void documentAndPsiInSync() {
-      if (!myMarker.isValid()) {
-        mySyncMarkerIsValid = false;
-        return;
-      }
-
-      mySyncStartOffset = myMarker.getStartOffset();
-      mySyncEndOffset = myMarker.getEndOffset();
-    }
-
-    @Nullable
-    public PsiElement restoreElement() {
-      if (!mySyncMarkerIsValid) return null;
-      if (!myFile.isValid()) return null;
-
-      PsiElement anchor = myFile.findElementAt(mySyncStartOffset);
-      if (anchor == null) return null;
-
-      TextRange range = anchor.getTextRange();
-      if (range.getStartOffset() != mySyncStartOffset || range.getEndOffset() != mySyncEndOffset) return null;
-
-      if (anchor instanceof PsiIdentifier) {
-        PsiElement parent = anchor.getParent();
-        if (parent instanceof PsiJavaCodeReferenceElement) { // anonymous class, type
-          parent = parent.getParent();
-        }
-
-        if (!anchor.equals(getAnchor(parent))) return null;
-
-        return parent;
-      }
-      else if (anchor instanceof XmlToken) {
-        XmlToken token = (XmlToken)anchor;
-
-        if (token.getTokenType() == XmlTokenType.XML_NAME) {
-          return token.getParent();
-        }
-        else {
-          return null;
-        }
-      }
-      else {
-        return null;
-      }
-    }
-  }
-
-  private static class ImportListInfo implements ElementInfo {
-    private final PsiJavaFile myFile;
-
-    public ImportListInfo(PsiJavaFile file) {
-      myFile = file;
-    }
-
-    public PsiElement restoreElement() {
-      if (!myFile.isValid()) return null;
-      return myFile.getImportList();
-    }
-
-    public Document getDocumentToSynchronize() {
-      return null;
-    }
-
-    public void documentAndPsiInSync() {
-    }
-  }
-
-  private static class ImplicitVariableInfo implements ElementInfo {
-    private final ImplicitVariable myVar;
-
-    public ImplicitVariableInfo(ImplicitVariable var) {
-      myVar = var;
-    }
-
-    public PsiElement restoreElement() {
-      PsiIdentifier psiIdentifier = myVar.getNameIdentifier();
-      if (psiIdentifier == null || psiIdentifier.isValid()) return myVar;
-      return null;
-    }
-
-    public Document getDocumentToSynchronize() {
-      return null;
-    }
-
-    public void documentAndPsiInSync() {
     }
   }
 }
