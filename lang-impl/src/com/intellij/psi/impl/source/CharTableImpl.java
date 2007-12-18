@@ -1,12 +1,9 @@
 package com.intellij.psi.impl.source;
 
-import com.intellij.psi.PsiKeyword;
 import com.intellij.util.CharTable;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
-
-import java.lang.reflect.Field;
 
 /**
  * @author max
@@ -72,10 +69,6 @@ public class CharTableImpl implements CharTable {
   }
 
   static {
-    for(Field field: PsiKeyword.class.getFields()) {
-      CharTableImpl.staticIntern(field.getName().toLowerCase());
-    }
-
     CharTableImpl.staticIntern("==" );
     CharTableImpl.staticIntern("!=" );
     CharTableImpl.staticIntern("||" );
