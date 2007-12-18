@@ -13,19 +13,18 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl;
+package org.jetbrains.plugins.groovy.lang.psi.util;
 
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 
 import javax.swing.*;
@@ -33,15 +32,15 @@ import javax.swing.*;
 /**
  * @author ilyas
  */
-public class GspImplicitVariable extends LightVariableBase implements GrImplicitVariable, ItemPresentation, NavigationItem {
+public class GrImplicitVariable extends LightVariableBase implements org.jetbrains.plugins.groovy.lang.psi.api.statements.GrImplicitVariable, ItemPresentation, NavigationItem {
 
-  public GspImplicitVariable(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
+  public GrImplicitVariable(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, type, writable, scope);
   }
 
-  public GspImplicitVariable(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement scope) {
+  public GrImplicitVariable(PsiManager manager, @NonNls String name, @NonNls String type, PsiElement scope) {
     this(manager, null, manager.getElementFactory().createTypeByFQClassName(type, manager.getProject().getAllScope()), false, scope);
-    myNameIdentifier = new GspLightIdentifier(myManager, name);
+    myNameIdentifier = new GrLightIdentifier(myManager, name);
   }
 
 
@@ -55,7 +54,7 @@ public class GspImplicitVariable extends LightVariableBase implements GrImplicit
 
 
   public String toString() {
-    return "Gsp implicit variable";
+    return "Specific implicit variable";
   }
 
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
@@ -81,8 +80,8 @@ public class GspImplicitVariable extends LightVariableBase implements GrImplicit
     return null;
   }
 
-  protected class GspLightIdentifier extends LightIdentifier {
-    public GspLightIdentifier(PsiManager manager, String name) {
+  protected class GrLightIdentifier extends LightIdentifier {
+    public GrLightIdentifier(PsiManager manager, String name) {
       super(manager, name);
     }
   }
