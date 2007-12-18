@@ -32,7 +32,7 @@ import javax.swing.*;
 /**
  * @author ilyas
  */
-public class GrImplicitVariable extends LightVariableBase implements org.jetbrains.plugins.groovy.lang.psi.api.statements.GrImplicitVariable, ItemPresentation, NavigationItem {
+public class GrImplicitVariable extends LightVariableBase implements ItemPresentation, NavigationItem, ImplicitVariable {
 
   public GrImplicitVariable(PsiManager manager, PsiIdentifier nameIdentifier, @NotNull PsiType type, boolean writable, PsiElement scope) {
     super(manager, nameIdentifier, type, writable, scope);
