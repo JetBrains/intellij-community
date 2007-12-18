@@ -42,7 +42,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.jsp.JspImplicitVariable;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -360,28 +359,11 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       return false;
     }
 
-    if (element1.equals(element2) || element1.isEquivalentTo(element2)) return true;
-
-    // TODO: Get rid of dependency on JspImplicitVariable
-    if (element1 instanceof JspImplicitVariable) {
-      if (element2 instanceof JspImplicitVariable) {
-        final JspImplicitVariable implicitVariable = (JspImplicitVariable)element1;
-        final JspImplicitVariable implicitVariable2 = (JspImplicitVariable)element2;
-
-        final String name = implicitVariable.getName();
-        return name != null &&
-               name.equals(implicitVariable2.getName()) &&
-               areElementsEquivalent(
-                 implicitVariable.getDeclaration(),
-                 implicitVariable2.getDeclaration()
-               );
-      } else if (areElementsEquivalent(((JspImplicitVariable)element1).getDeclaration(), element2)) {
-        return true;
-      }
-    } else if (element2 instanceof JspImplicitVariable) {
-      if (areElementsEquivalent(((JspImplicitVariable)element2).getDeclaration(), element1)) {
-        return true;
-      }
+    if (element1.equals(element2) ||
+        element1.isEquivalentTo(element2) ||
+        element2.isEquivalentTo(element1)
+       ) {
+      return true;
     }
 
     return false;
