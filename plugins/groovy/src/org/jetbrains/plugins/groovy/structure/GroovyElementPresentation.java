@@ -36,7 +36,7 @@ public class GroovyElementPresentation {
 //      presentableText.append("(");
 //      for (int i = 0; i < parameters.length; i++) {
 //        if (i > 0) presentableText.append(", ");
-//        presentableText.append(parameters[i].getType().getPresentableText());
+//        presentableText.append(parameters[i].getContainingClass().getPresentableText());
 //      }
 //      presentableText.append(")");
 //
@@ -44,7 +44,7 @@ public class GroovyElementPresentation {
 //
 //      if (returnType != null) {
 //        presentableText.append(":");
-//        presentableText.append(returnType.getType().getPresentableText());
+//        presentableText.append(returnType.getContainingClass().getPresentableText());
 //      }
 //    }
 //*/

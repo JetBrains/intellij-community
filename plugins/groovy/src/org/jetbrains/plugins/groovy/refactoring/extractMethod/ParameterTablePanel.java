@@ -95,7 +95,7 @@ public class ParameterTablePanel extends JPanel {
 //      final TypeSelectorManager manager = new TypeSelectorManagerImpl(myProject, myParameterInfos[i].getType(), occurrences, areTypesDirected());
       PsiType type = myParameterInfos[i].getType();
       myParameterTypeSelectors[i] = new TypeSelector(type != null ? type : PsiType.getJavaLangObject(manager, scope));
-//      myParameterInfos[i].setType(myParameterTypeSelectors[i].getSelectedType());
+//      myParameterInfos[i].setTypeName(myParameterTypeSelectors[i].getSelectedType());
     }
 
     myTypeRendererCombo = new JComboBox(myParameterInfos);

@@ -162,9 +162,7 @@ public class GroovyAnnotator implements Annotator {
 
     final VirtualFile sourceRootForFile = projectFileIndex.getSourceRootForFile(virtualFile);
     assert sourceRootForFile != null;
-
     assert virtualFile.getPath().startsWith(sourceRootForFile.getPath());
-    final int length = sourceRootForFile.getPath().length();
 
     final VirtualFile containingDirectory = virtualFile.getParent();
     assert containingDirectory != null;
@@ -324,7 +322,6 @@ public class GroovyAnnotator implements Annotator {
 
     //script methods
     boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
-    boolean isMethodStatic = modifiersList.hasExplicitModifier(PsiModifier.STATIC);
     if (grMethod.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
@@ -696,15 +693,14 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private String findDynamicValueTypeDefinitionText(GrReferenceExpression refExpr) {
-    String dynamicValueTypeDefinitionText = null;
-
+  private PsiClass findDynamicValueContainingClass(GrReferenceExpression refExpr) {
+    final PsiClass psiClass;
     if (refExpr.isQualified()) {
       GrExpression qualifier = refExpr.getQualifierExpression();
       PsiType type = qualifier.getType();
-      if (type != null) {
-        dynamicValueTypeDefinitionText = type.getCanonicalText();
-      }
+      if (!(type instanceof PsiClassType)) return null;
+
+      psiClass = ((PsiClassType) type).resolve();
     } else {
       PsiElement refParent = refExpr.getParent();
 
@@ -713,16 +709,13 @@ public class GroovyAnnotator implements Annotator {
       }
 
       if (refParent == null) return null;
-      PsiClass scriptClass = ((GroovyFileBase) refParent).getScriptClass();
-      if (scriptClass != null) {
-        dynamicValueTypeDefinitionText = scriptClass.getQualifiedName();
-      }
+      psiClass = ((GroovyFileBase) refParent).getScriptClass();
     }
-    return dynamicValueTypeDefinitionText;
+    return psiClass;
   }
 
   private boolean isNeedsAddDynPropertiesAnnotation(GrReferenceExpression referenceExpression) {
-    String dynamicValueTypeDefinitionText = findDynamicValueTypeDefinitionText(referenceExpression);
+    PsiClass dynamicValueTypeDefinition = findDynamicValueContainingClass(referenceExpression);
     final PsiFile containingFile = referenceExpression.getContainingFile();
 
     VirtualFile file;
@@ -734,7 +727,7 @@ public class GroovyAnnotator implements Annotator {
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
 
     if (module == null) return false;
-    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinitionText, module.getName());
+    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
     final String dynPropElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(dynamicProperty);
 
     return dynPropElement == null;
@@ -749,10 +742,10 @@ public class GroovyAnnotator implements Annotator {
     } else return;
 
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
-    String dynamicValueTypeDefinitionText = findDynamicValueTypeDefinitionText(referenceExpression);
+    PsiClass dynamicValueTypeDefinition = findDynamicValueContainingClass(referenceExpression);
 
     if (module == null) return;
-    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinitionText, module.getName());
+    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
     annotation.registerFix(new DynamicPropertyIntention(dynamicProperty));
   }
 

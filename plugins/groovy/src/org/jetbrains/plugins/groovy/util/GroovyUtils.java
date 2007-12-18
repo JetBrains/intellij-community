@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -113,6 +115,24 @@ public abstract class GroovyUtils {
     List<E> result = new ArrayList<E>();
     for (List<E> list : lists) {
       result.addAll(list);
+    }
+
+    return result;
+  }
+  
+  /*
+   * Finds all super calss recursively
+   */
+  public static Set<PsiClass> findAllSupers (PsiClass psiClass){
+    final PsiClassType[] psiClassTypes = psiClass.getSuperTypes();
+    Set<PsiClass> result = new HashSet<PsiClass>();
+
+    for (PsiClassType superType : psiClassTypes) {
+      final PsiClass aClass = superType.resolve();
+      if (aClass == null) return new HashSet<PsiClass>();
+
+      result.add(aClass);
+      result.addAll(findAllSupers(aClass));
     }
 
     return result;

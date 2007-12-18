@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -36,9 +36,10 @@ public class DynamicPropertyIntention implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    final DynamicPropertiesManager dynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
+//    final DynamicPropertiesManager dynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
 
-    dynamicPropertiesManager.addDynamicProperty(myDynProperty);
+    final DynamicPropertyDialog dialog = new DynamicPropertyDialog(project, myDynProperty);
+    dialog.show();
   }
 
   public boolean startInWriteAction() {
