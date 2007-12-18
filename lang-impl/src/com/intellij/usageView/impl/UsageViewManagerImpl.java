@@ -9,7 +9,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.UsageView;
@@ -79,7 +78,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
         myFindContentManager.removeContent(contentToDelete, true);
       }
     }
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(component, contentName, isLockable);
+    Content content = ContentFactory.SERVICE.getInstance().createContent(component, contentName, isLockable);
     content.setTabName(tabName);
     content.setToolwindowTitle(toolwindowTitle);
     content.putUserData(contentKey, Boolean.TRUE);
