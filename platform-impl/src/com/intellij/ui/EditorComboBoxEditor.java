@@ -4,12 +4,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Combobox items are Documents for this combobox
