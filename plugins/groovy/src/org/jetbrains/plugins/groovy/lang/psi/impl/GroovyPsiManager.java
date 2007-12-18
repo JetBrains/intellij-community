@@ -69,9 +69,6 @@ public class GroovyPsiManager implements ProjectComponent {
 
   private static final String SYNTHETIC_CLASS_TEXT = "class __ARRAY__ { public int length }";
 
-  private String myGroovyJarUrl = null;
-  private long myGroovyJarTimeStamp = -1;
-
   public GroovyPsiManager(Project project) {
     myProject = project;
 
@@ -115,7 +112,6 @@ public class GroovyPsiManager implements ProjectComponent {
 
   public void buildGDK() {
     if (myProject.isDisposed()) return;
-    if (checkUpToDate()) return;
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
@@ -127,23 +123,6 @@ public class GroovyPsiManager implements ProjectComponent {
     buildGDKImpl();
 
     if (indicator != null) indicator.popState();
-  }
-
-  private boolean checkUpToDate() {
-    PsiClass defaultMethodsClass = PsiManager.getInstance(myProject).findClass(DEFAULT_METHODS_QNAME, GlobalSearchScope.allScope(myProject));
-    if (defaultMethodsClass != null) {
-      final VirtualFile vFile = defaultMethodsClass.getContainingFile().getVirtualFile();
-      if(vFile == null || vFile.getFileSystem() != JarFileSystem.getInstance()) return false;
-      final VirtualFile vRoot = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
-      if(vRoot == null) return false;
-      final String url = vFile.getUrl();
-      final long timeStamp = vFile.getTimeStamp();
-      if (url.equals(myGroovyJarUrl) && timeStamp == myGroovyJarTimeStamp) return true;
-      myGroovyJarUrl = url;
-      myGroovyJarTimeStamp = timeStamp;
-    }
-
-    return false;
   }
 
   private void buildGDKImpl() {
@@ -310,9 +289,7 @@ public class GroovyPsiManager implements ProjectComponent {
     if (myRebuildGdkPending) {
       synchronized (this) {
         if (myRebuildGdkPending) {
-          if (!checkUpToDate()) {
-            buildGDKImpl();
-          }
+          buildGDKImpl();
           myRebuildGdkPending = false;
         }
       }
