@@ -20,17 +20,18 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.plugins.grails.addins.js.JavaScriptIntegrationSettings;
 
 /**
  * @author ilyas
  */
 
 @State(
-  name = "GroovyApplicationSettings",
-  storages = {
+    name = "GroovyApplicationSettings",
+    storages = {
     @Storage(
-      id ="groovy_config",
-      file = "$APP_CONFIG$/groovy_config.xml"
+        id = "groovy_config",
+        file = "$APP_CONFIG$/groovy_config.xml"
     )}
 )
 public class GroovyApplicationSettings implements PersistentStateComponent<GroovyApplicationSettings> {
@@ -55,10 +56,10 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   }
 
   public boolean isJsSupportEnabled() {
-      return myJsSupportEnabled;
+    return ServiceManager.getService(JavaScriptIntegrationSettings.class) != null && myJsSupportEnabled;
   }
 
   public void setJsSupportEnabled(final boolean jsSupportEnabled) {
-      myJsSupportEnabled = jsSupportEnabled;
+    myJsSupportEnabled = jsSupportEnabled;
   }
 }
