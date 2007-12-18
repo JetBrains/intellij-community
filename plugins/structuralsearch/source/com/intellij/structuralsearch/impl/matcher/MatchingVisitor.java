@@ -413,7 +413,7 @@ public class MatchingVisitor {
       if (!patternNodes.hasNext()) {
         // match found
 
-        dispathMatched(matchedNodes, matchContext.getResult());
+        dispatchMatched(matchedNodes, matchContext.getResult());
 
         patternNodes.reset();
         matchedNodes.clear();
@@ -435,7 +435,7 @@ public class MatchingVisitor {
     matchContext.setCurrentContextNode(saveCurrentContextNode);
   }
 
-  private void dispathMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
+  private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
     if(!matchContext.getOptions().isResultIsContextMatch() && doDispatch(result, result)) return;
 
     // There is no substitutions so show the context
