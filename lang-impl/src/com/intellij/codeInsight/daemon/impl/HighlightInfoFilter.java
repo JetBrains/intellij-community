@@ -2,8 +2,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface HighlightInfoFilter {
   HighlightInfoFilter[] EMPTY_ARRAY = new HighlightInfoFilter[0];

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 
 /**
  * @author cdr
