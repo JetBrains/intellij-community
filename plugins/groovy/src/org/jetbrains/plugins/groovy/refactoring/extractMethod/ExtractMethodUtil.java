@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -51,6 +52,7 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -136,6 +138,17 @@ public class ExtractMethodUtil {
     return ResolveUtil.resolveProperty(statements[0], varName) == null;
   }
 
+  private static boolean containVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
+    GroovyPsiElement element = ResolveUtil.resolveProperty(statements[0], varName);
+    if (element == null) return false;
+    for (GrStatement statement : statements) {
+      if (statement.getTextRange().contains(element.getTextRange())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   static void renameParameterOccurrences(GrMethod method, ExtractMethodInfoHelper helper) throws IncorrectOperationException {
     GrOpenBlock block = method.getBlock();
     if (block == null) return;
@@ -204,7 +217,8 @@ public class ExtractMethodUtil {
     }
 
     if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
-        !mustAddVariableDeclaration(helper.getStatements(), outputName)) {
+        !mustAddVariableDeclaration(helper.getStatements(), outputName) &&
+        !containVariableDeclaration(helper.getStatements(), outputName)) {
       GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type, false);
       buffer.append(decl.getText()).append("\n");
     }
@@ -426,6 +440,10 @@ public class ExtractMethodUtil {
     assert visibility != null && visibility.length() > 0;
     visibility = visibility.equals(PsiModifier.PUBLIC) ? "" : visibility + " ";
     return visibility + (helper.isStatic() ? "static " : "");
+  }
+
+  static boolean isReturnStatement(GrStatement statement, Collection<GrReturnStatement> returnStatements){
+    return false;
   }
 
 }

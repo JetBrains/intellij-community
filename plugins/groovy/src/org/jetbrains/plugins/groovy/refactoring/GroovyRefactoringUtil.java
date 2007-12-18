@@ -27,8 +27,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
@@ -388,11 +388,15 @@ public abstract class GroovyRefactoringUtil {
     return (testForSuper && expr.isSuperCall()) || (testForThis && expr.isThisCall());
   }
 
-  public static Collection<GrReturnStatement> findReturnStatements(GrMethod method) {
+  public static Collection<GrReturnStatement> findReturnStatements(PsiElement element) {
     ArrayList<GrReturnStatement> vector = new ArrayList<GrReturnStatement>();
-    GrOpenBlock block = method.getBlock();
-    if (block != null) {
-      addReturnStatements(vector, block);
+    if (element instanceof GrMethod) {
+      GrOpenBlock block = ((GrMethod) element).getBlock();
+      if (block != null) {
+        addReturnStatements(vector, block);
+      }
+    } else {
+      addReturnStatements(vector, element);
     }
     return vector;
   }

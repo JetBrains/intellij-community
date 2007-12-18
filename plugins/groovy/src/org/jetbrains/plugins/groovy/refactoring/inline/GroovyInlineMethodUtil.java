@@ -29,8 +29,8 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -48,8 +48,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author ilyas
@@ -199,7 +199,7 @@ public abstract class GroovyInlineMethodUtil {
     return !(checked && returnStatements.isEmpty());
   }
 
-  private static boolean checkTailIfStatement(GrIfStatement ifStatement, Collection<GrReturnStatement> returnStatements) {
+  public static boolean checkTailIfStatement(GrIfStatement ifStatement, Collection<GrReturnStatement> returnStatements) {
     GrStatement thenBranch = ifStatement.getThenBranch();
     GrStatement elseBranch = ifStatement.getElseBranch();
     if (elseBranch == null) return false;

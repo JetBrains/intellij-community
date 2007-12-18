@@ -16,8 +16,8 @@
 package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -46,6 +47,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+
+import java.util.ArrayList;
 
 /**
  * @author ilyas
@@ -128,15 +131,25 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
-    // get information about variables in selected block
+    // collect information about return statements in selected statement set
+    ArrayList<GrReturnStatement> returnStatements = new ArrayList<GrReturnStatement>();
+    for (GrStatement statement : statements) {
+      returnStatements.addAll(GroovyRefactoringUtil.findReturnStatements(statement));
+    }
+
+    // collect information about variables in selected block
     FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(statements[0], statements[statements.length - 1]);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
-    if (outputInfos.length > 1) {
+    if (outputInfos.length > 1 ||
+        outputInfos.length == 1 && returnStatements.size() > 0) {
       String message = GroovyRefactoringBundle.message("multiple.output.values");
       showErrorMessage(message, project);
       return false;
     }
+
+    // must be replaced by return statement
+    boolean isReturnStatement = ExtractMethodUtil.isReturnStatement(statements[statements.length - 1], returnStatements);
 
     VariableInfo outputInfo = outputInfos.length == 0 ? null : outputInfos[0];
     boolean canBeStatic = ExtractMethodUtil.canBeStatic(statements[0]);

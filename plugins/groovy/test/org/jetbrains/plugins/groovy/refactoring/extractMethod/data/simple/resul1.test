@@ -1,0 +1,20 @@
+def cond = true
+
+<begin>boolean result
+if (cond) result = true
+else result = false<end>
+
+println result
+-----
+def cond = true
+
+result = <caret>testMethod(cond)
+
+println result
+
+private boolean testMethod(boolean cond) {
+  boolean result
+  if (cond) result = true
+  else result = false
+  return result
+}
