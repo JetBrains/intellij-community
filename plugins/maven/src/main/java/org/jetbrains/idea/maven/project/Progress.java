@@ -32,7 +32,7 @@ public class Progress {
     if (myIndicator != null) myIndicator.setFraction(value);
   }
 
-  public void check() throws CanceledException {
+  public void checkCanceled() throws CanceledException {
     if (myIndicator != null && myIndicator.isCanceled()) throw new CanceledException();
   }
 

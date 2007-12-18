@@ -46,7 +46,7 @@ public class ImporterPreferencesConfigurable implements Configurable {
 
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("maven.tab.import");
+    return ProjectBundle.message("maven.import");
   }
 
   @Nullable

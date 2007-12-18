@@ -23,27 +23,27 @@ public class MavenProjectModel {
                            Collection<String> profiles,
                            MavenProjectReader projectReader,
                            Progress p) throws MavenException, CanceledException {
-
-    Map<VirtualFile, Module> fileToModule = new HashMap<VirtualFile, Module>();
+    Map<VirtualFile, Module> allFilesToImport = new HashMap<VirtualFile, Module>();
 
     for (Map.Entry<VirtualFile, Module> entry : existingModules.entrySet()) {
-      fileToModule.put(entry.getKey(), entry.getValue());
+      allFilesToImport.put(entry.getKey(), entry.getValue());
     }
 
     for (VirtualFile file : filesToImport) {
-      fileToModule.put(file, null);
+      allFilesToImport.put(file, null);
     }
 
-    while (fileToModule.size() != 0) {
-      p.check();
+    while (allFilesToImport.size() != 0) {
+      p.checkCanceled();
 
+      VirtualFile nextFile = allFilesToImport.keySet().iterator().next();
       MavenProjectModel.Node node = createMavenTree(projectReader,
-                                                    fileToModule.keySet().iterator().next(),
+                                                    nextFile,
+                                                    allFilesToImport,
                                                     profiles,
-                                                    fileToModule,
                                                     true,
                                                     p);
-      if (node != null) rootProjects.add(node);
+      rootProjects.add(node);
     }
   }
 
@@ -52,48 +52,46 @@ public class MavenProjectModel {
     return rootProjects;
   }
 
-  @Nullable
-  private Node createMavenTree(MavenProjectReader projectReader,
-                               @NotNull VirtualFile pomFile,
-                               Collection<String> profiles,
+  private Node createMavenTree(MavenProjectReader reader,
+                               VirtualFile pomFile,
                                Map<VirtualFile, Module> unprocessedFiles,
+                               Collection<String> profiles,
                                boolean isExistingModuleTree,
                                Progress p) throws MavenException, CanceledException {
     Module existingModule = unprocessedFiles.get(pomFile);
     unprocessedFiles.remove(pomFile);
 
-    p.check();
+    p.checkCanceled();
     p.setText(ProjectBundle.message("maven.reading.pom", FileUtil.toSystemDependentName(pomFile.getPath())));
 
-    MavenProject mavenProject = projectReader.readBare(pomFile.getPath());
+    MavenProject mavenProject = reader.readBare(pomFile.getPath());
 
     if (existingModule == null) isExistingModuleTree = false;
     if (!isExistingModuleTree) existingModule = null;
 
     Node node = new Node(pomFile, mavenProject, existingModule);
 
-    createChildNodes(projectReader,
+    createChildNodes(reader,
                      pomFile,
-                     profiles,
                      unprocessedFiles,
-                     isExistingModuleTree,
-                     p,
+                     profiles,
                      mavenProject,
-                     node);
+                     node,
+                     isExistingModuleTree,
+                     p);
     return node;
   }
 
-  private void createChildNodes(MavenProjectReader projectReader,
+  private void createChildNodes(MavenProjectReader reader,
                                 VirtualFile pomFile,
+                                Map<VirtualFile, Module> unprocessedFiles,
                                 Collection<String> profiles,
-                                Map<VirtualFile,
-                                Module> unprocessedFiles,
-                                boolean isExistingModuleTree,
-                                Progress p,
                                 MavenProject mavenProject,
-                                Node node) throws MavenException, CanceledException {
+                                Node parentNode,
+                                boolean isExistingModuleTree,
+                                Progress p) throws MavenException, CanceledException {
     for (String modulePath : ProjectUtil.collectRelativeModulePaths(mavenProject, profiles, new HashSet<String>())) {
-      p.check();
+      p.checkCanceled();
 
       VirtualFile childFile = getMavenModuleFile(pomFile, modulePath);
 
@@ -105,16 +103,16 @@ public class MavenProjectModel {
       Node existingRoot = findExistingRoot(childFile);
       if (existingRoot != null) {
         rootProjects.remove(existingRoot);
-        node.mavenModules.add(existingRoot);
+        parentNode.mavenModules.add(existingRoot);
       }
-      else if (!isExistingModuleTree || unprocessedFiles.containsKey(childFile)) {
-        Node module = createMavenTree(projectReader,
+      else {
+        Node module = createMavenTree(reader,
                                       childFile,
-                                      profiles,
                                       unprocessedFiles,
+                                      profiles,
                                       isExistingModuleTree,
                                       p);
-        node.mavenModules.add(module);
+        parentNode.mavenModules.add(module);
       }
     }
   }
@@ -154,7 +152,7 @@ public class MavenProjectModel {
     visit(new MavenProjectVisitorPlain() {
       public void visit(Node node) {
         try {
-          p.check();
+          p.checkCanceled();
           p.setText(ProjectBundle.message("maven.resolving", FileUtil.toSystemDependentName(node.getPath())));
 
           node.resolve(projectReader, profiles);
@@ -196,7 +194,6 @@ public class MavenProjectModel {
   }
 
   public static class Node {
-
     @NotNull private final VirtualFile pomFile;
     @NotNull private MavenProject mavenProject;
     private Module linkedModule;

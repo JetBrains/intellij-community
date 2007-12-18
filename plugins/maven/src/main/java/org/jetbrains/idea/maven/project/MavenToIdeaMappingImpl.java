@@ -18,22 +18,17 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
   final private Map<MavenId, String> projectIdToModuleName = new HashMap<MavenId, String>();
 
-  final private Map<String, Set<MavenProjectModel.Node>> nameToProject = new HashMap<String, Set<MavenProjectModel.Node>>();
+  final private Set<String> projectNames = new HashSet<String>();
 
   final private Map<MavenProjectModel.Node, String> projectToModuleName = new HashMap<MavenProjectModel.Node, String>();
 
   final private Map<MavenProjectModel.Node, String> projectToModulePath = new HashMap<MavenProjectModel.Node, String>();
-
-  final private Set<String> duplicateImportedNames = new HashSet<String>();
 
   final private Map<String, Module> nameToModule = new HashMap<String, Module>();
 
   final private Map<String, String> libraryNameToModuleName = new HashMap<String, String>();
 
   final private Map<MavenProjectModel.Node, Module> projectToModule = new HashMap<MavenProjectModel.Node, Module>();
-
-  //final private Map<MavenProjectModel.Node, Module> projectToModuleConflict =
-  //  new HashMap<MavenProjectModel.Node, Module>();
 
   final private Set<Module> obsoleteModules = new HashSet<Module>();
 
@@ -64,15 +59,7 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
         libraryNameToModuleName.put(getLibraryName(id), name);
 
-        Set<MavenProjectModel.Node> projects = nameToProject.get(name);
-        if (projects == null) {
-          projects = new HashSet<MavenProjectModel.Node>();
-          nameToProject.put(name, projects);
-        }
-        else {
-          duplicateImportedNames.add(name);
-        }
-        projects.add(node);
+        projectNames.add(name);
       }
     });
   }
@@ -127,6 +114,11 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
       }
     });
 
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      if (projectNames.contains(module.getName())) continue;
+      obsoleteModules.add(module);
+    }
+
     for (Module obsoleteModule : obsoleteModules) {
       nameToModule.remove(obsoleteModule.getName());
     }
@@ -148,9 +140,9 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
   }
 
   public String getModuleName(MavenId id) {
-    final String moduleName = projectIdToModuleName.get(id);
-    return nameToModule.get(moduleName) != null
-           || nameToProject.get(moduleName) != null ? moduleName : null;
+    String name = projectIdToModuleName.get(id);
+    if (nameToModule.containsKey(name) || projectNames.contains(name)) return name;
+    return null;
   }
 
   public Collection<MavenId> getMappedToModules() {
@@ -167,10 +159,6 @@ public class MavenToIdeaMappingImpl implements MavenToIdeaMapping {
 
   public String getModuleFilePath(MavenProjectModel.Node node) {
     return projectToModulePath.get(node);
-  }
-
-  public Collection<String> getDuplicateNames() {
-    return duplicateImportedNames;
   }
 
   public Collection<Module> getObsoleteModules() {

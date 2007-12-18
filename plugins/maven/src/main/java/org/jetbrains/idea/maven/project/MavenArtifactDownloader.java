@@ -111,19 +111,19 @@ public class MavenArtifactDownloader {
     final MavenProjectsState projectsState = project.getComponent(MavenProjectsState.class);
     final Map<MavenId, Set<ArtifactRepository>> libraryArtifacts = collectLibraryArtifacts(projectsState, mavenProjects.keySet(), mappedToModules);
 
-    myProgress.check();
+    myProgress.checkCanceled();
 
     if (isEnabled(myPreferences.getDownloadSources(), demand)) {
       download(libraryArtifacts, MavenToIdeaConverter.SOURCES_CLASSIFIER);
     }
 
-    myProgress.check();
+    myProgress.checkCanceled();
 
     if (isEnabled(myPreferences.getDownloadJavadoc(), demand)) {
       download(libraryArtifacts, MavenToIdeaConverter.JAVADOC_CLASSIFIER);
     }
 
-    myProgress.check();
+    myProgress.checkCanceled();
 
     if (isEnabled(myPreferences.getDownloadPlugins(), demand)) {
       final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(mavenProjects);
@@ -132,7 +132,7 @@ public class MavenArtifactDownloader {
       projectsState.updateAllFiles();
     }
 
-    myProgress.check();
+    myProgress.checkCanceled();
 
     if (isEnabled(myPreferences.getGenerateSources(), demand)) {
       generateSources(project, createGenerateCommand(mavenProjects));
@@ -191,7 +191,7 @@ public class MavenArtifactDownloader {
     myProgress.setText(ProjectBundle.message("maven.progress.downloading", classifier));
     int step = 0;
     for (Map.Entry<MavenId, Set<ArtifactRepository>> entry : libraryArtifacts.entrySet()) {
-      myProgress.check();
+      myProgress.checkCanceled();
 
       final MavenId id = entry.getKey();
 
@@ -225,7 +225,7 @@ public class MavenArtifactDownloader {
     for (Map.Entry<Plugin, MavenProject> entry : plugins.entrySet()) {
       final Plugin plugin = entry.getKey();
 
-      myProgress.check();
+      myProgress.checkCanceled();
       myProgress.setFraction(((double)step++) / plugins.size());
       myProgress.setText2(plugin.getKey());
 

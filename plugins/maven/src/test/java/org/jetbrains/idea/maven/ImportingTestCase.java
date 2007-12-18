@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -79,6 +81,12 @@ public abstract class ImportingTestCase extends IdeaTestCase {
 
   @Override
   protected void setUpModule() {
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    Messages.setTestDialog(TestDialog.DEFAULT);
+    super.tearDown();
   }
 
   protected String getProjectPath() {

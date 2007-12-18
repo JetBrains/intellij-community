@@ -133,7 +133,7 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   private List<String> collectProfiles(Collection<VirtualFile> files) throws MavenException {
     final SortedSet<String> profiles = new TreeSet<String>();
 
-    final MavenEmbedder embedder = MavenImportProcessor.createEmbedder(getCoreState());
+    final MavenEmbedder embedder = getCoreState().createEmbedder();
     final MavenProjectReader reader = new MavenProjectReader(embedder);
     for (VirtualFile file : files) {
       ProjectUtil.collectProfileIds(reader.readBare(file.getPath()), profiles);
@@ -174,7 +174,11 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
   }
 
   private void createImportProcessor(Progress p) throws MavenException, CanceledException {
-    myImportProcessor = new MavenImportProcessor(getProject(), getCoreState(), getImporterPreferences(), getArtifactPreferences());
+    myImportProcessor = new MavenImportProcessor(getProject(),
+                                                 getCoreState(),
+                                                 getImporterPreferences(),
+                                                 getArtifactPreferences());
+
     myImportProcessor.createMavenProjectModel(myFiles, new HashMap<VirtualFile, Module>(), myProfiles, p);
   }
 
@@ -191,18 +195,6 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
       node.setIncluded(nodes.contains(node));
     }
     myImportProcessor.createMavenToIdeaMapping();
-    checkDuplicates();
-  }
-
-  private void checkDuplicates() throws ConfigurationException {
-    final Collection<String> duplicates = myImportProcessor.getMavenToIdeaMapping().getDuplicateNames();
-    if (!duplicates.isEmpty()) {
-      StringBuilder builder = new StringBuilder(ProjectBundle.message("maven.import.duplicate.modules"));
-      for (String duplicate : duplicates) {
-        builder.append("\n").append(duplicate);
-      }
-      throw new ConfigurationException(builder.toString());
-    }
   }
 
   public boolean isOpenProjectSettingsAfter() {

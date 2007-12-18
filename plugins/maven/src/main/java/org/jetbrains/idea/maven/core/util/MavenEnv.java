@@ -1,10 +1,9 @@
 package org.jetbrains.idea.maven.core.util;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.embedder.*;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenException;
 
@@ -151,7 +150,6 @@ public class MavenEnv {
     return Arrays.asList(standardGoals);
   }
 
-  @NotNull
   public static MavenEmbedder createEmbedder(String mavenHome, File localRepo, String userSettings, ClassLoader classLoader)
     throws MavenException {
 
