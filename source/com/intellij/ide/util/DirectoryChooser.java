@@ -124,6 +124,7 @@ public class DirectoryChooser extends DialogWrapper {
     }
   }
 
+  @Nullable
   private static String concat(String[] strings, int headLimit, int tailLimit) {
     if (strings.length <= headLimit + tailLimit) return null;
     StringBuffer buffer = new StringBuffer();
@@ -163,6 +164,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     public int getIndex() { return myIndex; }
 
+    @Nullable
     public String execute() {
       while (true) {
         String commonHead = getCommonFragment(myIndex);
@@ -176,6 +178,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     protected abstract void append(String fragment, StringBuffer buffer);
 
+    @Nullable
     private String getCommonFragment(int count) {
       String commonFragment = null;
       for (String[] path : myPaths) {
@@ -317,6 +320,7 @@ public class DirectoryChooser extends DialogWrapper {
     setOKActionEnabled(myView.getSelectedItem() != null);
   }
 
+  @Nullable
   public PsiDirectory getSelectedDirectory() {
     ItemWrapper wrapper = myView.getSelectedItem();
     if (wrapper == null) return null;

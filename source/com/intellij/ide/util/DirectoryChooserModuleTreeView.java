@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,6 +17,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Icons;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.Nullable;
@@ -52,17 +52,18 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setCellRenderer(new MyTreeCellRenderer());
-    new TreeSpeedSearch(myTree) {
-      public boolean isMatchingElement(Object element, String pattern) {
-        if (element instanceof TreePath) {
-          final Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
-          if (userObject instanceof Module) {
-            return StringUtil.startsWithIgnoreCase(((Module)userObject).getName(), pattern);
-          }
+    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      public String convert(final TreePath o) {
+        final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
+        if (userObject instanceof Module) {
+          return ((Module)userObject).getName();
         }
-        return false;
+        else {
+          if (userObject == null) return "";
+          return userObject.toString();
+        }
       }
-    };
+    }, true);
   }
 
   public void clearItems() {
