@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -44,8 +43,8 @@ import java.util.*;
  * @author ven
  */
 public class GroovyScriptClass extends LightElement implements PsiClass{
-  private final String myQualifiedName;
-  private final String myName;
+  private String myQualifiedName;
+  private String myName;
   private GroovyFile myFile;
   private PsiMethod myMainMethod;
   private PsiMethod myRunMethod;
@@ -57,11 +56,15 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
     myFile = file;
     myMainMethod = new GroovyScriptMethod(this, MAIN_METHOD_TEXT);
     myRunMethod = new GroovyScriptMethod(this, RUN_METHOD_TEXT);
+    cachesNames();
+  }
+
+  private void cachesNames() {
     String name = myFile.getName();
     assert name != null;
     int i = name.indexOf('.');
     myName = i > 0 ? name.substring(0, i) : name;
-    String packageName = file.getPackageName();
+    String packageName = myFile.getPackageName();
     myQualifiedName = packageName.length() > 0 ? packageName + "." + myName : myName;
   }
 
@@ -284,6 +287,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     myFile.setName(name + "." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension());
+    cachesNames();
     return this;
   }
 
