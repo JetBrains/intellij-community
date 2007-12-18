@@ -18,6 +18,7 @@ package com.intellij.ide.dnd;
 import com.intellij.openapi.components.ServiceManager;
 
 import javax.swing.*;
+import java.awt.*;
 
 public abstract class DnDManager {
   public static DnDManager getInstance() {
@@ -35,4 +36,6 @@ public abstract class DnDManager {
   public abstract void registerTarget(DnDTarget target, JComponent component);
 
   public abstract void unregisterTarget(DnDTarget target, JComponent component);
+  
+  public abstract Component getLastDropHandler();
 }

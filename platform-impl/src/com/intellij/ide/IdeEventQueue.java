@@ -3,6 +3,8 @@ package com.intellij.ide;
 
 import com.intellij.Patches;
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -396,6 +398,11 @@ public class IdeEventQueue extends EventQueue {
 
 
   private void _dispatchEvent(final AWTEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
+      ((DnDManagerImpl)DnDManager.getInstance()).setLastDropHandler(null);
+    }
+
+
     myEventCount++;
     if (!myPopupManager.isPopupActive()) {
 

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.*;
+import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -3857,6 +3858,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     protected void exportDone(final JComponent source, Transferable data, int action) {
       if (data == null) return;
+
+      final Component last = DnDManager.getInstance().getLastDropHandler();
+
+      if (last != null && !(last instanceof EditorComponentImpl)) return;
 
       if (action == MOVE && !getEditor(source).isViewer() && getEditor(source).getDocument().isWritable()) {
         CommandProcessor.getInstance().executeCommand(((EditorImpl)getEditor(source)).myProject, new Runnable() {

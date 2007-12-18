@@ -62,6 +62,8 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
 
   private Application myApp;
 
+  private WeakReference<Component> myLastDropHandler;
+
   public DnDManagerImpl(final Application app) {
     myApp = app;
     myTooltipTimer.start();
@@ -635,6 +637,7 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
       }
 
       cleanTargetComponent(component);
+      setLastDropHandler(component);
 
       myCurrentDragContext = null;
       currentEvent = null;
@@ -684,4 +687,15 @@ public class DnDManagerImpl extends DnDManager implements DnDEvent.DropTargetHig
     return myApp;
   }
 
+  public void setLastDropHandler(Component c) {
+    if (c == null) {
+      myLastDropHandler = null;
+    } else {
+      myLastDropHandler = new WeakReference<Component>(c);
+    }
+  }
+
+  public Component getLastDropHandler() {
+    return myLastDropHandler != null ? myLastDropHandler.get() : null;
+  }
 }
