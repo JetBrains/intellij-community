@@ -8,9 +8,6 @@ import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.j2ee.extResources.ExternalResourceListener;
 import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.lang.ant.config.AntConfigurationListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -77,7 +74,6 @@ public class DaemonListeners {
   private final AnActionListener myAnActionListener = new MyAnActionListener();
   private final PropertyChangeListener myTodoListener = new MyTodoListener();
   private final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
-  private final AntConfigurationListener myAntConfigurationListener = new MyAntConfigurationListener();
   private final EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
   private final EditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
@@ -203,10 +199,6 @@ public class DaemonListeners {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(myVirtualFileListener);
 
-    if (myProject.hasComponent(AntConfiguration.class)) {
-      AntConfiguration.getInstance(myProject).addAntConfigurationListener(myAntConfigurationListener);
-    }
-
     myErrorStripeHandler = new ErrorStripeHandler(myProject);
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(myErrorStripeHandler);
 
@@ -241,10 +233,6 @@ public class DaemonListeners {
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
     ExternalResourceManagerEx.getInstanceEx().removeExternalResourceListener(myExternalResourceListener);
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
-
-    if (myProject.hasComponent(AntConfiguration.class)) {
-      AntConfiguration.getInstance(myProject).removeAntConfigurationListener(myAntConfigurationListener);
-    }
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
     myEditorTracker.removeEditorTrackerListener(myEditorTrackerListener);
@@ -362,24 +350,6 @@ public class DaemonListeners {
 
   private class MyExternalResourceListener implements ExternalResourceListener {
     public void externalResourceChanged() {
-      myDaemonCodeAnalyzer.restart();
-    }
-  }
-
-  private class MyAntConfigurationListener implements AntConfigurationListener {
-    public void configurationLoaded() {
-      myDaemonCodeAnalyzer.restart();
-    }
-
-    public void buildFileChanged(final AntBuildFile buildFile) {
-      myDaemonCodeAnalyzer.restart();
-    }
-
-    public void buildFileAdded(final AntBuildFile buildFile) {
-      myDaemonCodeAnalyzer.restart();
-    }
-
-    public void buildFileRemoved(final AntBuildFile buildFile) {
       myDaemonCodeAnalyzer.restart();
     }
   }
