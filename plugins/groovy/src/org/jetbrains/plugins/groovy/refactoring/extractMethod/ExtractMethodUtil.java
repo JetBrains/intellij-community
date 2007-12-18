@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineMethodUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,9 +72,11 @@ public class ExtractMethodUtil {
     PsiType type = helper.getOutputType();
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
-    if (name == null || type == PsiType.VOID) return callExpression;
+    if ((name == null || type == PsiType.VOID) && !helper.isReturnStatement()) return callExpression;
     GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
-    if (mustAddVariableDeclaration(statements, name)) {
+    if (helper.isReturnStatement()){
+      return  factory.createStatementFromText("return " + callExpression.getText());
+    } else if (name != null && mustAddVariableDeclaration(statements, name)) {
       return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type, false);
     } else {
       return factory.createExpressionFromText(name + "= " + callExpression.getText());
@@ -333,39 +336,6 @@ public class ExtractMethodUtil {
         !(statements[0].getParent() instanceof GrVariableDeclarationOwner && statements[0] instanceof GrAssignmentExpression);
   }
 
-  // Get declaration of variable to which method call expression will be assigned
-  private static GroovyPsiElement getVariableDeclaration(@NotNull GrStatement[] statements, @NotNull String varName) {
-    GroovyPsiElement variable = null;
-    for (GrStatement statement : statements) {
-      variable = getInnerVariableDeclaration(statement, varName);
-      if (variable != null) break;
-    }
-    return variable;
-  }
-
-  private static GroovyPsiElement getInnerVariableDeclaration(@NotNull PsiElement element, @NotNull String name) {
-    if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression expr = (GrReferenceExpression) element;
-      if (name.equals(expr.getName())) {
-        PsiReference ref = expr.getReference();
-        if (ref != null) {
-          PsiElement resolved = ref.resolve();
-          if ((resolved instanceof GrVariable || resolved instanceof GrReferenceExpression) && !(resolved instanceof GrField)) {
-            return ((GroovyPsiElement) resolved);
-          }
-        }
-        return null;
-      } else {
-        return null;
-      }
-    }
-    for (PsiElement child : element.getChildren()) {
-      GroovyPsiElement res = getInnerVariableDeclaration(child, name);
-      if (res != null) return res;
-    }
-    return null;
-  }
-
   static GrMethodCallExpression createMethodCallByHelper(@NotNull String name, ExtractMethodInfoHelper helper) {
     StringBuffer buffer = new StringBuffer();
     buffer.append(name).append("(");
@@ -443,6 +413,12 @@ public class ExtractMethodUtil {
   }
 
   static boolean isReturnStatement(GrStatement statement, Collection<GrReturnStatement> returnStatements){
+    if (statement instanceof GrReturnStatement) return true;
+    if (statement instanceof GrIfStatement) {
+      boolean checked = GroovyInlineMethodUtil.checkTailIfStatement(((GrIfStatement) statement), returnStatements);
+      return checked & returnStatements.size() == 0;
+
+    }
     return false;
   }
 

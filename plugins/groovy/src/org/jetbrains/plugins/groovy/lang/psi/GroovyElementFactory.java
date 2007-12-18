@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
@@ -40,10 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.MethodArgument;
-import org.jetbrains.plugins.groovy.refactoring.extractMethod.ExtractMethodUtil;
-import org.jetbrains.plugins.groovy.refactoring.extractMethod.ExtractMethodInfoHelper;
-import org.jetbrains.plugins.groovy.refactoring.extractMethod.ExtractMethodUtil.*;
 
 /**
  * @author dimaskin
@@ -68,6 +63,8 @@ public abstract class GroovyElementFactory {
   public abstract PsiElement createLineTerminator();
 
   public abstract GrArgumentList createExpressionArgumentList(GrExpression... expressions);
+
+  public abstract GrStatement createStatementFromText(String text);
 
   public abstract GrBlockStatement createBlockStatement(GrStatement... statements);
 

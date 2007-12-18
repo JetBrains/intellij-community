@@ -1,0 +1,27 @@
+static def foo(int i, int j, int k) {
+    def v
+    println(i + j - k)
+    v = 42
+    <begin>if (i > 42) {
+        println("preved!")
+    } else {
+        return v + j
+    }<end>
+    return v
+}
+-----
+static def foo(int i, int j, int k) {
+    def v
+    println(i + j - k)
+    v = 42
+    <caret>testMethod(i, j, v)
+    return v
+}
+
+private static def testMethod(int i, int j, int v) {
+  if (i > 42) {
+    println("preved!")
+  } else {
+    return v + j
+  }
+}

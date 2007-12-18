@@ -17,10 +17,8 @@ package org.jetbrains.plugins.groovy.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 
 import java.util.Collection;
@@ -47,6 +45,7 @@ public class ExtractMethodInfoHelper {
   private final PsiType myOutputType;
   private final GrMethodOwner myOwner;
   private final boolean myIsStatic;
+  private final boolean myIsReturnStatement;
   private boolean mySpecifyType;
   private final PsiElement[] myInnerElements;
   private String myVisibility;
@@ -57,11 +56,14 @@ public class ExtractMethodInfoHelper {
                                  VariableInfo outputInfo,
                                  PsiElement[] innerElements,
                                  GrStatement[] statements,
-                                 GrMethodOwner owner, boolean isStatic) {
+                                 GrMethodOwner owner,
+                                 boolean isStatic,
+                                 boolean isReturnStatement) {
     myInnerElements = innerElements;
     myStatements = statements;
     myOwner = owner;
     myIsStatic = isStatic;
+    myIsReturnStatement = isReturnStatement;
     myVisibility = PsiModifier.PRIVATE;
     assert myStatements.length > 0;
     myProject = myStatements[0].getProject();
@@ -202,5 +204,9 @@ public class ExtractMethodInfoHelper {
 
   public GrMethodOwner getOwner() {
     return myOwner;
+  }
+
+  public boolean isReturnStatement() {
+    return myIsReturnStatement;
   }
 }
