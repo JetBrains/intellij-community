@@ -550,7 +550,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public void fullyQualify(PsiClass targetClass) {
-    SourceUtil.fullyQualifyReference(this, targetClass);
+    JavaSourceUtil.fullyQualifyReference(this, targetClass);
   }
 
   public boolean isQualified() {

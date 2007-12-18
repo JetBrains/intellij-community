@@ -3,16 +3,10 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.DummyHolder;
-import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
@@ -22,8 +16,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  *
  */
-public class SourceUtil implements Constants {
+public class SourceUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.SourceUtil");
+
+  private SourceUtil() {
+  }
 
   public static int toBuffer(ASTNode element, char[] buffer, int offset) {
     return toBuffer(element, buffer, offset, null);
@@ -78,43 +75,6 @@ public class SourceUtil implements Constants {
     // TODO remove explicit caches drop since this should be ok iff we will use ChangeUtil for the modification 
     TreeUtil.clearCaches(TreeUtil.getFileElement(newChild));
     return newChild;
-  }
-
-  public static void fullyQualifyReference(CompositeElement reference, PsiClass targetClass) {
-    if (((SourceJavaCodeReference)reference).isQualified()) { // qualifed reference
-      final PsiClass parentClass = targetClass.getContainingClass();
-      if (parentClass == null) return;
-      final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
-      if (qualifier instanceof SourceJavaCodeReference) {
-        ((SourceJavaCodeReference)qualifier).fullyQualify(parentClass);
-      }
-    }
-    else { // unqualified reference, need to qualify with package name
-      final String qName = targetClass.getQualifiedName();
-      if (qName == null) {
-        return; // todo: local classes?
-      }
-      final int i = qName.lastIndexOf('.');
-      if (i > 0) {
-        final String prefix = qName.substring(0, i);
-        PsiManager manager = reference.getManager();
-
-        final CharTable table = SharedImplUtil.findCharTableByTree(reference);
-        final CompositeElement qualifier;
-        if (reference instanceof PsiReferenceExpression) {
-          qualifier = ExpressionParsing.parseExpressionText(manager, prefix, 0, prefix.length(), table);
-        }
-        else {
-          qualifier = Parsing.parseJavaCodeReferenceText(manager, prefix, table);
-        }
-        if (qualifier != null) {
-          final CharTable systemCharTab = SharedImplUtil.findCharTableByTree(qualifier);
-          final LeafElement dot = Factory.createSingleLeafElement(DOT, ".", 0, 1, systemCharTab, SharedImplUtil.getManagerByTree(qualifier));
-          TreeUtil.insertAfter(qualifier, dot);
-          reference.addInternal(qualifier, dot, null, Boolean.FALSE);
-        }
-      }
-    }
   }
 
   public static void dequalifyImpl(@NotNull CompositeElement reference) {

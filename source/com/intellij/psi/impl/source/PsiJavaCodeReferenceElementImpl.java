@@ -643,7 +643,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       LOG.error("Wrong kind " + kind);
       return;
     }
-    SourceUtil.fullyQualifyReference(this, targetClass);
+    JavaSourceUtil.fullyQualifyReference(this, targetClass);
   }
 
   public boolean isQualified() {
