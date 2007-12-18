@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.jetbrains.annotations.Nullable;
 
 public class SourceTreeToPsiMap {

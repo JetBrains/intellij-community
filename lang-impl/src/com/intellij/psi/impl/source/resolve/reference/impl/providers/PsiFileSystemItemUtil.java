@@ -3,10 +3,10 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 

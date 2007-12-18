@@ -1,15 +1,14 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.scope.PsiScopeProcessor;
-
-import java.util.Map;
-import java.util.HashMap;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.

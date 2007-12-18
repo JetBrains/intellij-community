@@ -4,12 +4,9 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
@@ -17,7 +14,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.xml.util.*;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +36,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
     ourNamespacesWithoutNameReference.add( XmlUtil.STRUTS_LOGIC_URI );
     for(String s: XmlUtil.JSTL_CORE_URIS) ourNamespacesWithoutNameReference.add( s );
     ourNamespacesWithoutNameReference.add( "http://struts.apache.org/tags-tiles" );
-    for(String s: MetaRegistry.SCHEMA_URIS) ourNamespacesWithoutNameReference.add( s );
+    for(String s: XmlUtil.SCHEMA_URIS) ourNamespacesWithoutNameReference.add( s );
   }
 
   public String[] getIdForAttributeNames() {

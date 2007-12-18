@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
 

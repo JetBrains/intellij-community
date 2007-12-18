@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
@@ -67,6 +66,7 @@ public class XmlUtil {
   @NonNls public static final String XML_SCHEMA_URI = "http://www.w3.org/2001/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI2 = "http://www.w3.org/1999/XMLSchema";
   @NonNls public static final String XML_SCHEMA_URI3 = "http://www.w3.org/2000/10/XMLSchema";
+  public static final String[] SCHEMA_URIS = {XML_SCHEMA_URI, XML_SCHEMA_URI2, XML_SCHEMA_URI3};
   @NonNls public static final String XML_SCHEMA_INSTANCE_URI = "http://www.w3.org/2001/XMLSchema-instance";
 
   @NonNls public static final String XSLT_URI = "http://www.w3.org/1999/XSL/Transform";
@@ -120,7 +120,7 @@ public class XmlUtil {
   public static final @NonNls String JSTL_CORE_FACELET_URI = "com.sun.facelets.tag.jstl.core.JstlCoreLibrary";
   @NonNls public static final String TARGET_NAMESPACE_ATTR_NAME = "targetNamespace";
   public static final @NonNls String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
-  public static final List<String> ourSchemaUrisList = Arrays.asList(MetaRegistry.SCHEMA_URIS);
+  public static final List<String> ourSchemaUrisList = Arrays.asList(XmlUtil.SCHEMA_URIS);
   private static final ThreadLocal<String> XML_FILE_IN_PROGRESS = new ThreadLocal<String>();
 
 

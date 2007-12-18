@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.psi.search.searches.IndexPatternSearch;
-import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.IndexPatternProvider;
+import com.intellij.psi.search.searches.IndexPatternSearch;
 
 /**
  * @author yole

@@ -1,15 +1,15 @@
 package com.intellij.psi.impl.file;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PsiFileImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiFileImplUtil");

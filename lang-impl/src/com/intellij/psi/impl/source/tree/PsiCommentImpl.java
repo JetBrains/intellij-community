@@ -1,15 +1,15 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.pom.Navigatable;
+import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.CommentLiteralEscaper;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import com.intellij.ide.util.EditSourceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -4,10 +4,10 @@
 
 package com.intellij.psi.impl.source.resolve.reference;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev

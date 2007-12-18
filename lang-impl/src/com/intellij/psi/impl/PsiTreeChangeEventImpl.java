@@ -1,6 +1,9 @@
 package com.intellij.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiTreeChangeEvent;
 
 public class PsiTreeChangeEventImpl extends PsiTreeChangeEvent{
   private int myCode;

@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import org.jetbrains.annotations.NotNull;
 

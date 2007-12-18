@@ -5,9 +5,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.encoding.HtmlHttpEquivEncod
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.JspEncodingInAttributeReferenceProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider;
 import com.intellij.codeInspection.i18n.I18nUtil;
-import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,6 @@ import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
-import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
@@ -221,7 +220,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
       schemaReferencesProvider.getCandidateAttributeNamesForSchemaReferences(),
       new ScopeFilter(
         new ParentElementFilter(
-          new NamespaceFilter(MetaRegistry.SCHEMA_URIS), 2
+          new NamespaceFilter(XmlUtil.SCHEMA_URIS), 2
         )
       ),
       schemaReferencesProvider
@@ -244,7 +243,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
       new ScopeFilter(
         new ParentElementFilter(
           new AndFilter(
-            new NamespaceFilter(MetaRegistry.SCHEMA_URIS),
+            new NamespaceFilter(XmlUtil.SCHEMA_URIS),
             new AndFilter(
               new ClassFilter(XmlTag.class),
               new TextFilter("import","include","redefine")

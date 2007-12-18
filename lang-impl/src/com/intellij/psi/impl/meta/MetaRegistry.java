@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.meta;
 
-import com.intellij.jsp.impl.RelaxedHtmlFromSchemaNSDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -8,19 +7,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.filters.*;
-import com.intellij.psi.filters.position.NamespaceFilter;
-import com.intellij.psi.filters.position.TargetNamespaceFilter;
+import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.xml.*;
-import com.intellij.xml.impl.schema.NamedObjectDescriptor;
-import com.intellij.xml.impl.schema.SchemaNSDescriptor;
-import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
-import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -36,101 +27,6 @@ import java.util.List;
 public class MetaRegistry extends MetaDataRegistrar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.meta.MetaRegistry");
   private static final List<MyBinding> ourBindings = new ArrayList<MyBinding>();
-
-  public static final String[] SCHEMA_URIS = { XmlUtil.XML_SCHEMA_URI, XmlUtil.XML_SCHEMA_URI2, XmlUtil.XML_SCHEMA_URI3 };
-
-  static {
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new NamespaceFilter(SCHEMA_URIS),
-              new ClassFilter(XmlDocument.class)
-          ),
-          SchemaNSDescriptor.class
-      );
-
-      addMetadataBinding(
-          new AndFilter(
-            new ClassFilter(XmlTag.class),
-            new NamespaceFilter(SCHEMA_URIS),
-           new TextFilter("schema")
-          ),
-          SchemaNSDescriptor.class
-      );
-    }
-    {
-      addMetadataBinding(
-          new OrFilter(
-              new AndFilter(
-                  new ContentFilter(
-                    new OrFilter(
-                      new ClassFilter(XmlElementDecl.class),
-                      new ClassFilter(XmlConditionalSection.class),
-                      new ClassFilter(XmlEntityRef.class)
-                    )
-                  ),
-                  new ClassFilter(XmlDocument.class)
-              ),
-              new ClassFilter(XmlMarkupDecl.class)
-          ),
-          com.intellij.xml.impl.dtd.XmlNSDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(new AndFilter(
-          new ClassFilter(XmlTag.class),
-          new NamespaceFilter(SCHEMA_URIS),
-          new TextFilter("element")
-      ),
-                         XmlElementDescriptorImpl.class);
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new NamespaceFilter(SCHEMA_URIS),
-              new TextFilter("attribute")
-          ),
-          XmlAttributeDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new ClassFilter(XmlElementDecl.class),
-          com.intellij.xml.impl.dtd.XmlElementDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new ClassFilter(XmlAttributeDecl.class),
-          com.intellij.xml.impl.dtd.XmlAttributeDescriptorImpl.class
-      );
-    }
-
-    {
-      addMetadataBinding(
-          new AndFilter(
-              new ClassFilter(XmlDocument.class),
-              new TargetNamespaceFilter(XmlUtil.XHTML_URI),
-              new NamespaceFilter(SCHEMA_URIS)),
-          RelaxedHtmlFromSchemaNSDescriptor.class
-      );
-    }
-
-    {
-      addMetadataBinding(new AndFilter(
-          new ClassFilter(XmlTag.class),
-          new NamespaceFilter(SCHEMA_URIS),
-          new TextFilter("complexType","simpleType", "group","attributeGroup")
-      ),
-                         NamedObjectDescriptor.class);
-    }
-
-  }
 
   private static final Key<CachedValue<PsiMetaData>> META_DATA_KEY = Key.create("META DATA KEY");
 

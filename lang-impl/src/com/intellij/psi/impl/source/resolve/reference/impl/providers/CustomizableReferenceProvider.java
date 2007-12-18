@@ -1,8 +1,8 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
