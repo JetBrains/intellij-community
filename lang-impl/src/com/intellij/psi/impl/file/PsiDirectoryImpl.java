@@ -532,12 +532,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitDirectory(this);
-    }
-    else {
-      visitor.visitElement(this);
-    }
+    visitor.visitDirectory(this);
   }
 
   public String toString() {
