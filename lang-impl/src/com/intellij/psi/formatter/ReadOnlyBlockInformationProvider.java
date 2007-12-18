@@ -1,4 +1,4 @@
-package com.intellij.psi.formatter.xml;
+package com.intellij.psi.formatter;
 
 import com.intellij.formatting.Block;
 
