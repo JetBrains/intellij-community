@@ -94,9 +94,10 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
       removeEntryFromHashTable(index);
       myCache[index].hash_next = myFirstFree;
       myFirstFree = index;
-      fireListenersAboutDeletion(index);
+      final V deletedVal = myCache[index].value;
       myCache[index].key = null;
       myCache[index].value = null;
+      fireListenersAboutDeletion(key, deletedVal);
     }
   }
 
@@ -117,6 +118,19 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
   // Some AbstractMap functions finished
 
   final public void cacheObject(K key, V x) {
+    final int existingIndex = searchForCacheEntry(key);
+    if (existingIndex != 0) {
+      final CacheEntry<K, V> cacheEntry = myCache[existingIndex];
+      final V deletedVal = cacheEntry.value; 
+      cacheEntry.value = x;
+      add2Top(existingIndex);
+      fireListenersAboutDeletion(key, deletedVal);
+      return;
+    }
+
+    K deletedKey = null;
+    V deletedValue = null;
+
     int index = myFirstFree;
     if (myCount < myCache.length - 1) {
       if (index == 0) {
@@ -133,13 +147,21 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
     else {
       index = myBack;
       removeEntryFromHashTable(index);
-      fireListenersAboutDeletion(index);
+
+      final CacheEntry<K, V> cacheEntry = myCache[index];
+      deletedKey = cacheEntry.key;
+      deletedValue = cacheEntry.value;
+      
       myCache[myBack = myCache[index].prev].next = 0;
     }
     myCache[index].key = key;
     myCache[index].value = x;
     addEntry2HashTable(index);
     add2Top(index);
+    
+    if (deletedKey != null) {
+      fireListenersAboutDeletion(deletedKey, deletedValue);
+    }
   }
 
   final public V tryKey(K key) {
@@ -313,11 +335,10 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
     }
   }
 
-  private void fireListenersAboutDeletion(int index) {
+  private void fireListenersAboutDeletion(final K key, final V value) {
     if (myListeners != null) {
-      final CacheEntry cacheEntry = myCache[index];
       for (DeletedPairsListener myListener : myListeners) {
-        myListener.objectRemoved(cacheEntry.key, cacheEntry.value);
+        myListener.objectRemoved(key, value);
       }
     }
   }
