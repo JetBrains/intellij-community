@@ -17,6 +17,7 @@ import java.util.List;
 public class ChangeFileEncodingGroup extends ActionGroup{
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+    if (e == null) return EMPTY_ARRAY;
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     Collection<Charset> charsets = EncodingManager.getInstance().getFavorites();
     List<AnAction> children = new ArrayList<AnAction>();
@@ -48,6 +49,5 @@ public class ChangeFileEncodingGroup extends ActionGroup{
         EncodingManager.getInstance().setEncoding(myVirtualFile, charset);
       }
     }
-
   }
 }
