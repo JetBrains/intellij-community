@@ -573,9 +573,11 @@ public class InjectedLanguageUtil {
                                          @NotNull PsiLanguageInjectionHost host,
                                          @NotNull TextRange rangeInsideHost) {
         ProperTextRange.assertProperRange(rangeInsideHost);
-        if (!host.getTextRange().contains(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()))) {
+        TextRange hostTextRange = host.getTextRange();
+        if (!hostTextRange.contains(rangeInsideHost.shiftRight(hostTextRange.getStartOffset()))) {
           clear();
-          throw new IllegalArgumentException("rangeInsideHost must lie within host text range. rangeInsideHost:"+rangeInsideHost+"; host textRange:"+host.getTextRange());
+          throw new IllegalArgumentException("rangeInsideHost must lie within host text range. rangeInsideHost:"+rangeInsideHost+"; host textRange:"+
+                                             hostTextRange);
         }
         if (myLanguage == null) {
           clear();
@@ -598,17 +600,21 @@ public class InjectedLanguageUtil {
         escapers.add(textEscaper);
         isOneLineEditor |= textEscaper.isOneLine();
         TextRange relevantRange = textEscaper.getRelevantTextRange().intersection(rangeInsideHost);
-        if (relevantRange == null) return this;
         int startOffset = outChars.length();
-        boolean result = textEscaper.decode(relevantRange, outChars);
-        if (!result) {
-          // if there are invalid chars, adjust the range
-          int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
-          relevantRange = relevantRange.intersection(new TextRange(0, offsetInHost));
+        if (relevantRange == null) {
+          relevantRange = TextRange.from(textEscaper.getRelevantTextRange().getStartOffset(), 0);
+        }
+        else {
+          boolean result = textEscaper.decode(relevantRange, outChars);
+          if (!result) {
+            // if there are invalid chars, adjust the range
+            int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - startOffset, rangeInsideHost);
+            relevantRange = relevantRange.intersection(new TextRange(0, offsetInHost));
+          }
         }
         outChars.append(suffix);
         int endOffset = outChars.length();
-        TextRange relevantRangeInHost = relevantRange.shiftRight(host.getTextRange().getStartOffset());
+        TextRange relevantRangeInHost = relevantRange.shiftRight(hostTextRange.getStartOffset());
         relevantRangesInHostDocument.add(relevantRangeInHost);
         RangeMarker relevantMarker = myHostDocument.createRangeMarker(relevantRangeInHost);
         relevantMarker.setGreedyToLeft(true);
@@ -641,10 +647,10 @@ public class InjectedLanguageUtil {
           final ASTNode parsedNode = psiFile.getNode();
           assert parsedNode instanceof FileElement : parsedNode;
 
-          assert outChars.toString().equals(parsedNode.getText()) : outChars + "\n---\n" + parsedNode.getText() + "\n---\n";
           String documentText = documentWindow.getText();
+          assert outChars.toString().equals(parsedNode.getText()) : "Before patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
           patchLeafs(parsedNode, escapers, shreds);
-          assert parsedNode.getText().equals(documentText) : documentText + "\n---\n" + parsedNode.getText() + "\n---\n";
+          assert parsedNode.getText().equals(documentText) : "After patch: doc:\n" + documentText + "\n---PSI:\n" + parsedNode.getText() + "\n---chars:\n"+outChars;
 
           parsedNode.putUserData(TreeElement.MANAGER_KEY, (PsiManagerEx)myPsiManager);
           virtualFile.setContent(null, documentWindow.getText(), false);
