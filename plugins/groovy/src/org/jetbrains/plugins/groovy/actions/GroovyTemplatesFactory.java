@@ -34,7 +34,6 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
   public static final String[] TEMPLATES = {
       "GroovyClass.groovy",
       "GroovyScript.groovy",
-      "GrailsDomainClass.groovy",
       "GrailsTests.groovy",
   };
 
