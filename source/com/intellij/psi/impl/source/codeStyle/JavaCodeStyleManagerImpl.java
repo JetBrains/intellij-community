@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -876,7 +877,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo, PsiElement place, boolean lookForward) {
     final String[] names = baseNameInfo.names;
-    Set<String> uniqueNames = new com.intellij.util.containers.HashSet<String>(names.length);
+    Set<String> uniqueNames = new HashSet<String>(names.length);
     for (String name : names) {
       uniqueNames.add(suggestUniqueVariableName(name, place, lookForward));
     }
