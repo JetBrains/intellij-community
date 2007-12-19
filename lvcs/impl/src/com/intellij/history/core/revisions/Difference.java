@@ -1,19 +1,15 @@
 package com.intellij.history.core.revisions;
 
 import com.intellij.history.core.tree.Entry;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.io.File;
-
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public class Difference {
   private boolean myIsFile;
@@ -53,7 +49,7 @@ public class Difference {
       @Nullable
       public String getContent() throws VcsException {
         if (e.isDirectory()) return null;
-        return new String(e.getContent().getBytes());
+        return e.getContent().getString();
       }
 
       @NotNull

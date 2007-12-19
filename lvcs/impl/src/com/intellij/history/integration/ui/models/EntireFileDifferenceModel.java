@@ -40,6 +40,6 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   private String getContentOf(Entry e) {
-    return new String(e.getContent().getBytes());
+    return e.getContent().getString();
   }
 }

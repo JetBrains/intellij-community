@@ -64,7 +64,7 @@ public class SelectionCalculator {
   private String getRevisionContent(Revision r) {
     Content c = r.getEntry().getContent();
     if (!c.isAvailable()) throw new ContentIsUnavailableException();
-    return new String(c.getBytes());
+    return c.getString();
   }
 
   private static class ContentIsUnavailableException extends RuntimeException {
