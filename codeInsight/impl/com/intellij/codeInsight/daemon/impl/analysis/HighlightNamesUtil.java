@@ -221,9 +221,12 @@ public class HighlightNamesUtil {
       return textRange.getStartOffset();
     }
     ASTNode node = lastAnnotation.getNode();
-    do {
-      node = TreeUtil.nextLeaf(node);
-    } while (node != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(node.getElementType()));
+    if (node != null) {
+      do {
+        node = TreeUtil.nextLeaf(node);
+      }
+      while (node != null && JavaTokenType.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(node.getElementType()));
+    }
     if (node != null) return node.getTextRange().getStartOffset();
     return textRange.getStartOffset();
   }
