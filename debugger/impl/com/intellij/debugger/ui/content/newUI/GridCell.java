@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -375,7 +374,6 @@ public class GridCell implements Disposable {
       .setMovable(true)
       .setRequestFocus(true)
       .setResizable(true)
-      .setCancelButton(new MinimizeButton("Back"))
       .setDimensionServiceKey(myContext.getProject(), getDimensionKey(), true)
       .setCancelOnOtherWindowOpen(false)
       .setCancelOnClickOutside(false)

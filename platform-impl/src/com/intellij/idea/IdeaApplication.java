@@ -52,6 +52,8 @@ public class IdeaApplication {
       new CommandLineApplication(isInternal, false, Main.isHeadless(args), "componentSets/IdeaComponents");
     }
     else {
+      System.setProperty("sun.awt.noerasebackground","true");
+
       @NonNls final String componentsDescriptor = System.getProperty("idea.platform") != null
                                                   ? "componentSets/PlatformComponents"
                                                   : "componentSets/IdeaComponents";

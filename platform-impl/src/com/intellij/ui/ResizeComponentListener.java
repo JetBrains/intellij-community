@@ -7,7 +7,6 @@ package com.intellij.ui;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +41,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
         if (!SystemInfo.isMac) {
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
-        UIUtil.setEnabled(myComponent, false, true);
       }
     }
   }
@@ -68,7 +66,6 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       if (!SystemInfo.isMac) {
         myComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
       }
-      UIUtil.setEnabled(myComponent, true, true);
       popupWindow.validate();
       popupWindow.repaint();
       popupWindow.setCursor(Cursor.getDefaultCursor());
