@@ -437,11 +437,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       final Application application = ApplicationManager.getApplication();
       application.invokeLater(new Runnable() {
         public void run() {
-          application.runWriteAction(new Runnable(){
-            public void run() {
-              application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(Collections.singletonList(new VFilePropertyChangeEvent(this, VirtualFile.this, PROP_ENCODING, old, charset, false)));
-            }
-          });
+          if (isValid() && !application.isDisposed()) {
+            application.runWriteAction(new Runnable(){
+              public void run() {
+                application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(Collections.singletonList(new VFilePropertyChangeEvent(this, VirtualFile.this, PROP_ENCODING, old, charset, false)));
+              }
+            });
+          }
         }
       });
     }
