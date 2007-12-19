@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
@@ -150,6 +151,10 @@ public final class UpdateChecker {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
         public void run() {
           try {
+            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+            if (progressIndicator != null) {
+              progressIndicator.setText(pluginUrl);
+            }
             final PluginDownloader uploader = new PluginDownloader(pluginId, pluginUrl, pluginVersion);
             if (uploader.prepareToInstall()) {
               downloaded.add(uploader);
@@ -159,7 +164,7 @@ public final class UpdateChecker {
             LOG.info(e);
           }
         }
-      }, IdeBundle.message("update.uploading.plugin.progress.title", pluginUrl), true, null);
+      }, IdeBundle.message("update.uploading.plugin.progress.title"), true, null);
     }
     return success;
   }
