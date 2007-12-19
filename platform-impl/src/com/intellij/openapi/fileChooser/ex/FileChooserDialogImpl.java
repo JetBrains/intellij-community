@@ -64,7 +64,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private boolean myTreeIsUpdating;
 
   public static DataKey<FileChooserDialogImpl> KEY = DataKey.create("FileChooserDialog");
-  public static DataKey<FileSystemTreeImpl> FILE_SYSTEM_TREE = DataKey.create("FileSystemTree");
 
   public FileChooserDialogImpl(FileChooserDescriptor chooserDescriptor, Project project) {
     super(project, true);
@@ -357,7 +356,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       } else if (KEY.getName().equals(dataId)) {
         return FileChooserDialogImpl.this;
       }
-      else if (FILE_SYSTEM_TREE.getName().equals(dataId)) {
+      else if (FileSystemTree.DATA_KEY.getName().equals(dataId)) {
         return myFileSystemTree;
       }
       return myChooserDescriptor.getUserData(dataId);

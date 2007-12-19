@@ -11,8 +11,8 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.NewFolderAction;
-import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileChooser.impl.FileTreeBuilder;
 import com.intellij.openapi.project.Project;
@@ -254,7 +254,7 @@ public class ContentEntryTreeEditor {
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (dataId.equals(FileChooserDialogImpl.FILE_SYSTEM_TREE.getName())) {
+      if (dataId.equals(FileSystemTree.DATA_KEY.getName())) {
         return myFileSystemTree;
       }
       return null;

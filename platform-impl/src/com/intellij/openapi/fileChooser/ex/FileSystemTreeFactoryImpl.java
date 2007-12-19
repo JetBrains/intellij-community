@@ -31,16 +31,15 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
-import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
-import com.intellij.openapi.fileChooser.FileSystemTree;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.actions.GotoHomeAction;
-import com.intellij.openapi.fileChooser.actions.GotoProjectDirectory;
-import com.intellij.openapi.fileChooser.actions.NewFolderAction;
-import com.intellij.openapi.fileChooser.actions.FileDeleteAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.ide.actions.SynchronizeAction;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileSystemTree;
+import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
+import com.intellij.openapi.project.Project;
 
 public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
   public FileSystemTree createFileSystemTree(Project project, FileChooserDescriptor fileChooserDescriptor) {
@@ -49,14 +48,15 @@ public class FileSystemTreeFactoryImpl implements FileSystemTreeFactory{
 
   public DefaultActionGroup createDefaultFileSystemActions(FileSystemTree fileSystemTree) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new GotoHomeAction());
-    group.add(new GotoProjectDirectory());
+    final ActionManager actionManager = ActionManager.getInstance();
+    group.add(actionManager.getAction("FileChooser.GotoHome"));
+    group.add(actionManager.getAction("FileChooser.GotoProject"));
     group.addSeparator();
-    group.add(new NewFolderAction());
-    group.add(new FileDeleteAction());
+    group.add(actionManager.getAction("FileChooser.NewFolder"));
+    group.add(actionManager.getAction("FileChooser.Delete"));
     group.addSeparator();
     SynchronizeAction action1 = new SynchronizeAction();
-    AnAction original = ActionManager.getInstance().getAction(IdeActions.ACTION_SYNCHRONIZE);
+    AnAction original = actionManager.getAction(IdeActions.ACTION_SYNCHRONIZE);
     action1.copyFrom(original);
     action1.registerCustomShortcutSet(original.getShortcutSet(), fileSystemTree.getTree());
     group.add(action1);

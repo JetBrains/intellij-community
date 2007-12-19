@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -73,7 +73,7 @@ public abstract class SelectLocationStep extends WizardStep {
   }
 
   protected JComponent createComponent() {
-    JPanel result = new JPanel(new BorderLayout());
+    JPanel result = new MyPanel();
     result.add(myFileSystemToolBar.getComponent(), BorderLayout.NORTH);
     result.add(ScrollPaneFactory.createScrollPane(myFileSystemTree.getTree()), BorderLayout.CENTER);
     return result;
@@ -120,5 +120,20 @@ public abstract class SelectLocationStep extends WizardStep {
 
   public Component getPreferredFocusedComponent() {
     return myFileSystemTree.getTree();
+  }
+
+  private class MyPanel extends JPanel implements TypeSafeDataProvider {
+    private MyPanel() {
+      super(new BorderLayout());
+    }
+
+    public void calcData(final DataKey key, final DataSink sink) {
+      if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+        sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree.getSelectedFiles());
+      }
+      else if (key == FileSystemTree.DATA_KEY) {
+        sink.put(FileSystemTree.DATA_KEY, myFileSystemTree);
+      }
+    }
   }
 }
