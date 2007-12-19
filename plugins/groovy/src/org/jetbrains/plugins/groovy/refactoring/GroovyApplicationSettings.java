@@ -15,13 +15,14 @@
 
 package org.jetbrains.plugins.groovy.refactoring;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.plugins.grails.addins.js.JavaScriptIntegrationSettings;
 
 /**
  * @author ilyas
