@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.Parsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -70,7 +70,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   public PsiClass resolveReferencedClass(String referenceText, PsiElement context) {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     CompositeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
     TreeUtil.addChildren(holderElement, ref);
@@ -79,7 +79,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
   }
 
   public PsiVariable resolveReferencedVariable(String referenceText, PsiElement context) {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement ref = Parsing.parseJavaCodeReferenceText(myManager, referenceText, holderElement.getCharTable());
     if (ref == null) return null;
     TreeUtil.addChildren(holderElement, ref);

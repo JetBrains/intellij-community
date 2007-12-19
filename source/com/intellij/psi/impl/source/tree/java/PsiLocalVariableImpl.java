@@ -5,7 +5,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -242,7 +242,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
     if (lastParent == null) return true;
-    if (lastParent.getContext() instanceof DummyHolder) {
+    if (lastParent.getContext() instanceof JavaDummyHolder) {
       return processor.execute(this, state);
     }
 

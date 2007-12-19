@@ -15,7 +15,7 @@ import com.intellij.pom.xml.impl.XmlAspectChangeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagChildAddImpl;
 import com.intellij.pom.xml.impl.events.XmlTextChangedImpl;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -396,7 +396,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         PsiElement childElement = findElementAt(physicalOffset);
 
         if (childElement != null && childElement.getNode().getElementType() == XmlTokenType.XML_DATA_CHARACTERS) {
-          FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
+          FileElement holder = new JavaDummyHolder(getManager(), null).getTreeElement();
 
           int splitOffset = physicalOffset - childElement.getStartOffsetInParent();
           myRight = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
@@ -430,7 +430,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         }
         else {
           final PsiFile containingFile = xmlTag.getContainingFile();
-          final FileElement holder = new DummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
+          final FileElement holder = new JavaDummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
           final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
           CodeEditUtil.setNodeGenerated(rightText, true);
 

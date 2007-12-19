@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.CodeFragmentElement;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -224,7 +224,7 @@ public class BlockSupportImpl extends BlockSupport {
 
   private static void makeFullParse(ASTNode parent, CharSequence newFileText, int textLength, final PsiFileImpl fileImpl, FileType fileType) {
     if (parent instanceof CodeFragmentElement) {
-      final FileElement holderElement = new DummyHolder(fileImpl.getManager(), null).getTreeElement();
+      final FileElement holderElement = new JavaDummyHolder(fileImpl.getManager(), null).getTreeElement();
       TreeUtil.addChildren(holderElement, fileImpl.createContentLeafElement(newFileText, 0, textLength, holderElement.getCharTable()));
       parent.replaceAllChildrenToChildrenOf(holderElement);
     }

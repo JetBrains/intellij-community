@@ -49,7 +49,7 @@ public class Factory implements Constants, XmlElementType {
 
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, PsiFile originalFile) {
     final LeafElement newElement;
-    final DummyHolder dummyHolder = new DummyHolder(manager, table, type.getLanguage());
+    final JavaDummyHolder dummyHolder = new JavaDummyHolder(manager, table, type.getLanguage());
     dummyHolder.setOriginalFile(originalFile);
     dummyHolder.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, PsiUtil.getLanguageLevel(originalFile));
     final FileElement holderElement = dummyHolder.getTreeElement();
@@ -66,7 +66,7 @@ public class Factory implements Constants, XmlElementType {
 
   public static LeafElement createSingleLeafElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table, PsiManager manager, boolean generatedFlag) {
     final LeafElement newElement;
-    final FileElement holderElement = new DummyHolder(manager, table, type.getLanguage()).getTreeElementNoLock();
+    final FileElement holderElement = new JavaDummyHolder(manager, table, type.getLanguage()).getTreeElementNoLock();
     newElement = Factory.createLeafElement(type, buffer, startOffset, endOffset, holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     if(generatedFlag) CodeEditUtil.setNodeGenerated(newElement, true);
@@ -504,7 +504,7 @@ public class Factory implements Constants, XmlElementType {
   public static CompositeElement createCompositeElement(final IElementType type,
                                                         final CharTable charTableByTree,
                                                         final PsiManager manager) {
-    final FileElement treeElement = new DummyHolder(manager, null, charTableByTree).getTreeElement();
+    final FileElement treeElement = new JavaDummyHolder(manager, null, charTableByTree).getTreeElement();
     final CompositeElement composite = createCompositeElement(type);
     TreeUtil.addChildren(treeElement, composite);
     return composite;

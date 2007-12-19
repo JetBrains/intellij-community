@@ -12,7 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.DeclarationParsing;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
@@ -43,7 +43,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiAnnotation createAnnotationFromText(@NotNull String annotationText, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     CompositeElement annotationElement =
     getJavaParsingContext(holderElement).getDeclarationParsing().parseAnnotationFromText(myManager, annotationText, getLanguageLevel(context));
     if (annotationElement == null || annotationElement.getElementType() != JavaElementType.ANNOTATION) {
@@ -62,7 +62,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, null).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, null).getTreeElement();
     final LeafElement newElement = Factory.createLeafElement(
       TokenType.WHITE_SPACE,
       text,
@@ -105,7 +105,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiField createFieldFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, JavaPsiFacade
       .getInstance(myManager.getProject()).getEffectiveLanguageLevel(), text,
                                                                                                          DeclarationParsing.Context.CLASS_CONTEXT);
@@ -127,7 +127,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiMethod createMethodFromText(@NotNull String text, PsiElement context, LanguageLevel level) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement, level).getDeclarationParsing().parseDeclarationText(myManager, level, text,
                                                                                                                 DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != JavaElementType.METHOD) {
@@ -144,7 +144,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiParameter createParameterFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     CompositeElement param = getJavaParsingContext(holderElement).getDeclarationParsing().parseParameterText(text);
     if (param == null) {
       throw new IncorrectOperationException("Incorrect parameter \"" + text + "\".");
@@ -161,7 +161,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   protected PsiType createTypeInner(final String text, final PsiElement context, boolean markAsCopy) throws IncorrectOperationException {
     PsiPrimitiveType primitiveType = ourPrimitiveTypesMap.get(text);
     if (primitiveType != null) return primitiveType;
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     CompositeElement typeElement = Parsing.parseTypeText(myManager, text, 0, text.length(), holderElement.getCharTable());
     if (typeElement == null) {
       throw new IncorrectOperationException("Incorrect type \"" + text + "\"");
@@ -179,7 +179,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiCodeBlock createCodeBlockFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     CompositeElement treeElement = getJavaParsingContext(holderElement).getStatementParsing().parseCodeBlockText(myManager, text);
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect code block \"" + text + "\".");
@@ -190,7 +190,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiStatement createStatementFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement treeHolder = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement treeHolder = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement treeElement = getJavaParsingContext(treeHolder).getStatementParsing().parseStatementText(text);
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect statement \"" + text + "\".");
@@ -201,7 +201,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiExpression createExpressionFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement treeHolder = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement treeHolder = new JavaDummyHolder(myManager, context).getTreeElement();
     final CompositeElement treeElement = ExpressionParsing.parseExpressionText(myManager, text, 0,
                                                                                text.length(), treeHolder.getCharTable());
     if (treeElement == null) {
@@ -222,7 +222,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiTypeParameter createTypeParameterFromText(@NotNull String text, PsiElement context)
     throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement treeElement = getJavaParsingContext(holderElement).getDeclarationParsing().parseTypeParameterText(text);
     if (treeElement == null) {
       throw new IncorrectOperationException("Incorrect type parameter \"" + text + "\"");
@@ -241,7 +241,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
           throw new IncorrectOperationException("Incorrect comment \"" + text + "\".");
         }
         PsiComment comment = (PsiComment)aChildren;
-        new DummyHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
+        new JavaDummyHolder(myManager, (TreeElement)SourceTreeToPsiMap.psiElementToTree(comment), context);
         return comment;
       }
     }
@@ -250,7 +250,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public PsiEnumConstant createEnumConstantFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseEnumConstantText(text);
     if (decl == null || decl.getElementType() != JavaElementType.ENUM_CONSTANT) {
       throw new IncorrectOperationException("Incorrect enum constant text \"" + text + "\".");
@@ -268,7 +268,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     buffer.append(exceptionType.getCanonicalText());
     buffer.append(" ").append(exceptionName).append("){}");
     String catchSectionText = buffer.toString();
-    final FileElement holderElement = new DummyHolder(myManager, context).getTreeElement();
+    final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
     TreeElement catchSection = getJavaParsingContext(holderElement).getStatementParsing().parseCatchSectionText(catchSectionText);
     LOG.assertTrue(catchSection != null && catchSection.getElementType() == JavaElementType.CATCH_SECTION);
     TreeUtil.addChildren(holderElement, catchSection);

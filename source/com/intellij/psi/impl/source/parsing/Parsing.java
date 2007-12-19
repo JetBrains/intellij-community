@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
@@ -44,7 +44,7 @@ public class Parsing implements Constants{
 
     JavaParsingContext context = new JavaParsingContext(table, JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true);
-    final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
+    final FileElement dummyRoot = new JavaDummyHolder(manager, null, table).getTreeElement();
     if (ref == null) {
       if (!eatAll) return null;
     } else {
@@ -163,7 +163,7 @@ public class Parsing implements Constants{
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
     if (type == null) return null;
     if (lexer.getTokenType() != null) return null;
-    final FileElement dummyRoot = new DummyHolder(manager, null, table).getTreeElement();
+    final FileElement dummyRoot = new JavaDummyHolder(manager, null, table).getTreeElement();
     TreeUtil.addChildren(dummyRoot, type);
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, startOffset, endOffset, -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
@@ -265,7 +265,7 @@ public class Parsing implements Constants{
     else filterLexer.start(buffer, startOffset, endOffset, state);
     final JavaParsingContext context = new JavaParsingContext(table,
                                                               JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
-    final FileElement dummyRoot = new DummyHolder(manager, null, context.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = new JavaDummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement root = context.getStatementParsing().parseType(filterLexer);
 
     if (root != null) {

@@ -7,7 +7,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
@@ -152,7 +152,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
       try{
         PsiTypeParameter typeParameter = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createTypeParameterFromText(text, this);
         myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
-        new DummyHolder(myManager, myParsedFromRepository, getParent());
+        new JavaDummyHolder(myManager, myParsedFromRepository, getParent());
       }
       catch(IncorrectOperationException e){
         LOG.error(e);

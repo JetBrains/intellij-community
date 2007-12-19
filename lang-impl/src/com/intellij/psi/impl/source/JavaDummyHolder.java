@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 
-public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
+public class JavaDummyHolder extends PsiFileImpl implements PsiImportHolder {
   private PsiElement myContext;
   private CharTable myTable = null;
   private final LinkedHashMap<String, PsiClass> myPseudoImports = new LinkedHashMap<String, PsiClass>();
@@ -27,16 +27,16 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
 
   private FileElement myFileElement = null;
 
-  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
+  public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     this(manager, contentElement, context, SharedImplUtil.findCharTableByTree(contentElement));
   }
 
-  public DummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
+  public JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
     this(manager, null, null, table);
     myExplicitlyValid = Boolean.valueOf(validity);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, PsiElement context) {
+  public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
     super(DUMMY_HOLDER, DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
@@ -45,7 +45,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     }
   }
 
-  public DummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
+  public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
     this(manager, context);
     myContext = context;
     myTable = table;
@@ -55,12 +55,12 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     }
   }
 
-  public DummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
+  public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
     this(manager, context);
     myTable = table;
   }
 
-  public DummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
+  public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
     this(manager, null, table);
     myLanguage = language;
   }
@@ -132,8 +132,8 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
   }
 
   public boolean isSamePackage(PsiElement other) {
-    if (other instanceof DummyHolder) {
-      final PsiElement otherContext = ((DummyHolder)other).myContext;
+    if (other instanceof JavaDummyHolder) {
+      final PsiElement otherContext = ((JavaDummyHolder)other).myContext;
       if (myContext == null) return otherContext == null;
       return JavaPsiFacade.getInstance(myContext.getProject()).arePackagesTheSame(myContext, otherContext);
     }
@@ -192,7 +192,7 @@ public class DummyHolder extends PsiFileImpl implements PsiImportHolder {
     final PsiFileImpl psiFile = (PsiFileImpl)cloneImpl(myFileElement);
     final DummyHolderViewProvider dummyHolderViewProvider = new DummyHolderViewProvider(getManager());
     myViewProvider = dummyHolderViewProvider;
-    dummyHolderViewProvider.setDummyHolder((DummyHolder)psiFile);
+    dummyHolderViewProvider.setDummyHolder((JavaDummyHolder)psiFile);
     final FileElement treeClone = (FileElement)calcTreeElement().clone();
     psiFile.myTreeElementPointer = treeClone; // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
     if(isPhysical()) psiFile.myOriginalFile = this;

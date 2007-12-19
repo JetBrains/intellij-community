@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -378,7 +378,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
-    FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
+    FileElement holder = new JavaDummyHolder(getManager(), null).getTreeElement();
     final LeafElement leaf = Factory.createLeafElement(leafType, leafText, 0, leafText.length(), holder.getCharTable());
     CodeEditUtil.setNodeGenerated(leaf, true);
     TreeUtil.addChildren(holder, leaf);

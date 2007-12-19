@@ -259,7 +259,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
         try{
           String initializerText = getInitializerText();
           if (initializerText == null) return null;
-          final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
+          final FileElement holderElement = new JavaDummyHolder(myManager, this).getTreeElement();
           CompositeElement exprElement = ExpressionParsing.parseExpressionText(myManager, initializerText, 0, initializerText.length(), holderElement.getCharTable());
           TreeUtil.addChildren(holderElement, exprElement);
           initializer = (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprElement);

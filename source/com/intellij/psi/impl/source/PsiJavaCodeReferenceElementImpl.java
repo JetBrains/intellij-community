@@ -348,7 +348,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
       case CLASS_IN_QUALIFIED_NEW_KIND: {
         PsiElement parent = getParent();
-        if (parent instanceof DummyHolder) {
+        if (parent instanceof JavaDummyHolder) {
           parent = parent.getContext();
         }
 

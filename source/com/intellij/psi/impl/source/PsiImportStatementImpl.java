@@ -51,7 +51,7 @@ public class PsiImportStatementImpl extends PsiImportStatementBaseImpl implement
           refElement = (PsiJavaCodeReferenceElementImpl)treeElement.findChildByRole(ChildRole.IMPORT_REFERENCE);
         }
         else{
-          final FileElement holderElement = new DummyHolder(myManager, this).getTreeElement();
+          final FileElement holderElement = new JavaDummyHolder(myManager, this).getTreeElement();
           final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
           if (refText == null) return null;
           refElement = (PsiJavaCodeReferenceElementImpl) Parsing.parseJavaCodeReferenceText(myManager, refText, holderElement.getCharTable());

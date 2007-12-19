@@ -24,7 +24,7 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
@@ -383,8 +383,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
     final PsiFile file = ResolveUtil.getContextFile(element);
-    if (file instanceof DummyHolder) {
-      return ((DummyHolder) file).isInPackage(aPackage);
+    if (file instanceof JavaDummyHolder) {
+      return ((JavaDummyHolder) file).isInPackage(aPackage);
     }
     if (file instanceof PsiJavaFile) {
       final String packageName = ((PsiJavaFile) file).getPackageName();
@@ -397,10 +397,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     PsiFile file1 = ResolveUtil.getContextFile(element1);
     PsiFile file2 = ResolveUtil.getContextFile(element2);
     if (Comparing.equal(file1, file2)) return true;
-    if (file1 instanceof DummyHolder && file2 instanceof DummyHolder) return true;
-    if (file1 instanceof DummyHolder || file2 instanceof DummyHolder) {
-      DummyHolder dummyHolder = (DummyHolder) (file1 instanceof DummyHolder ? file1 : file2);
-      PsiElement other = file1 instanceof DummyHolder ? file2 : file1;
+    if (file1 instanceof JavaDummyHolder && file2 instanceof JavaDummyHolder) return true;
+    if (file1 instanceof JavaDummyHolder || file2 instanceof JavaDummyHolder) {
+      JavaDummyHolder dummyHolder = (JavaDummyHolder) (file1 instanceof JavaDummyHolder ? file1 : file2);
+      PsiElement other = file1 instanceof JavaDummyHolder ? file2 : file1;
       return dummyHolder.isSamePackage(other);
     }
     if (!(file1 instanceof PsiJavaFile)) return false;

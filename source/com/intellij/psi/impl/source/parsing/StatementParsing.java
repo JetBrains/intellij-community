@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IChameleonElementType;
@@ -57,7 +57,7 @@ public class StatementParsing extends Parsing {
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
-    final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     CompositeElement block = Factory.createCompositeElement(CODE_BLOCK);
     TreeUtil.addChildren(dummyRoot, block);
     parseCodeBlockDeep(block, filterLexer, true);
@@ -80,7 +80,7 @@ public class StatementParsing extends Parsing {
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
-    final FileElement dummyRoot = new DummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
     parseStatements(dummyRoot, filterLexer, RBRACE_IS_ERROR);
 
     ParseUtil.insertMissingTokens(dummyRoot,

@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source.xml.behavior;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
-import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -14,7 +14,7 @@ import com.intellij.util.CharTable;
 public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable charTableByTree) {
     if(!toCode(displayText)) return super.encodeXmlTextContents(displayText, text, charTableByTree);
-    final FileElement dummyParent = new DummyHolder(text.getManager(), null, charTableByTree).getTreeElement();
+    final FileElement dummyParent = new JavaDummyHolder(text.getManager(), null, charTableByTree).getTreeElement();
     int sectionStartOffset = 0;
     int offset = 0;
     while (offset < displayText.length()) {
