@@ -15,19 +15,26 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.Patches;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.Patches;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.nio.CharBuffer;
-import java.nio.ByteBuffer;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * <p>Utility class to guess the encoding of a given byte array.
@@ -82,6 +89,12 @@ public class CharsetToolkit {
   public static final byte[] UTF16LE_BOM = new byte[]{-1, -2, };
   public static final byte[] UTF16BE_BOM = new byte[]{-2, -1, };
   @NonNls public static final String FILE_ENCODING_PROPERTY = "file.encoding";
+
+  @NonNls private static final Map<String, byte[]> CHARSET_TO_BOM = new THashMap<String,byte[]>();
+  static {
+    CHARSET_TO_BOM.put("UTF-16LE", UTF16LE_BOM);
+    CHARSET_TO_BOM.put("UTF-16BE", UTF16BE_BOM);
+  }
 
   /**
    * Constructor of the <code>CharsetToolkit</code> utility class.
@@ -474,6 +487,11 @@ public class CharsetToolkit {
       return UTF16BE_BOM.length;
     }
     return 0;
+  }
+
+  @Nullable
+  public static byte[] getBom(@NotNull Charset charset) {
+    return CHARSET_TO_BOM.get(charset.name());
   }
 
   public static Charset forName(String name) {

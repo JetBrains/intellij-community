@@ -1124,15 +1124,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
       else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
-        assertThread();
-        final VirtualFile file = e.getFile();
-        if (isFileOpen(file)) {
-          updateFileIcon(file);
-          if (file.equals(getSelectedFiles()[0])) { // update "write" status
-            final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-            LOG.assertTrue(statusBar != null);
-            statusBar.somethingChanged();
-          }
+        updateIconAndStatusbar(e);
+      }
+      else if (VirtualFile.PROP_ENCODING.equals(e.getPropertyName())) {
+        updateIconAndStatusbar(e);
+      }
+    }
+
+    private void updateIconAndStatusbar(final VirtualFilePropertyEvent e) {
+      assertThread();
+      final VirtualFile file = e.getFile();
+      if (isFileOpen(file)) {
+        updateFileIcon(file);
+        if (file.equals(getSelectedFiles()[0])) { // update "write" status
+          final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+          LOG.assertTrue(statusBar != null);
+          statusBar.somethingChanged();
         }
       }
     }

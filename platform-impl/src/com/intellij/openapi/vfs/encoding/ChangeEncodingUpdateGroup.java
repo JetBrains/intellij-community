@@ -49,8 +49,12 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
       else if (FileDocumentManager.getInstance().isFileModified(virtualFile)) {
         pattern = "Save ''{0}''-encoded file in";
       }
-      else {
+      else if (virtualFile.getBOM() == null) {
         pattern = "Change encoding from ''{0}'' to";
+      }
+      else {
+        pattern = "Encoding: {0}";
+        enabled = false;
       }
       if (charset == null) charset = virtualFile.getCharset();
       text = MessageFormat.format(pattern, charset.toString());

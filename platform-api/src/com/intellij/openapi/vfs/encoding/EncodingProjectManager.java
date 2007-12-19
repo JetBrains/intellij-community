@@ -63,6 +63,7 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
       String url = fileElement.getAttributeValue("url");
       String charsetName = fileElement.getAttributeValue("charset");
       Charset charset = CharsetToolkit.forName(charsetName);
+      if (charset == null) continue;
       VirtualFile file = url.equals("PROJECT") ? null : VirtualFileManager.getInstance().findFileByUrl(url);
       if (file != null || url.equals("PROJECT")) {
         myMapping.put(file, charset);
@@ -109,7 +110,6 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
   private static void saveOrReload(final VirtualFile virtualFileOrDir, final Charset charset) {
     if (virtualFileOrDir != null && !virtualFileOrDir.isDirectory()) {
       virtualFileOrDir.setCharset(charset);
-      virtualFileOrDir.setBOM(null);
       FileDocumentManager documentManager = FileDocumentManager.getInstance();
       if (documentManager.isFileModified(virtualFileOrDir)) {
         Document document = documentManager.getDocument(virtualFileOrDir);
@@ -150,6 +150,7 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
     myMapping.putAll(map);
     for (VirtualFile virtualFile : map.keySet()) {
       Charset charset = map.get(virtualFile);
+      assert charset != null;
       saveOrReload(virtualFile, charset);
     }
   }

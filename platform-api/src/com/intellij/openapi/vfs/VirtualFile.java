@@ -16,6 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Collections;
 
 /**
  * Represents a file in <code>{@link VirtualFileSystem}</code>. A particular file is represented by the same
@@ -115,6 +118,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFilePropertyEvent#getPropertyName
    */
   @NonNls public static final String PROP_NAME = "name";
+
+  /**
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the encoding of a
+   * {@link VirtualFile} changes.
+   *
+   * @see VirtualFileListener#propertyChanged
+   * @see VirtualFilePropertyEvent#getPropertyName
+   */
+  @NonNls public static final String PROP_ENCODING = "encoding";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the write permission of a
@@ -417,7 +429,22 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setCharset(final Charset charset) {
+    final Charset old = getUserData(CHARSET_KEY);
     putUserData(CHARSET_KEY, charset);
+    setBOM(charset == null ? null : CharsetToolkit.getBom(charset));
+
+    if (old != null && !old.equals(charset)) { //do not send on detect
+      final Application application = ApplicationManager.getApplication();
+      application.invokeLater(new Runnable() {
+        public void run() {
+          application.runWriteAction(new Runnable(){
+            public void run() {
+              application.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES).after(Collections.singletonList(new VFilePropertyChangeEvent(this, VirtualFile.this, PROP_ENCODING, old, charset, false)));
+            }
+          });
+        }
+      });
+    }
   }
 
   protected boolean isCharsetSet() {

@@ -6,9 +6,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.ex.StatusBarEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,10 +60,6 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     Map<VirtualFile,Charset> result = myTreeView.getValues();
     EncodingProjectManager.getInstance(myProject).setMapping(result);
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null) {
-      ((StatusBarEx)statusBar).somethingChanged();
-    }
   }
 
   public void reset() {

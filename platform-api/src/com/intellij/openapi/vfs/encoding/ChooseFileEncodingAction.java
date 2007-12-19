@@ -73,6 +73,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
             || fileType == StdFileTypes.IDEA_PROJECT
             || fileType == StdFileTypes.IDEA_WORKSPACE
             || fileType == StdFileTypes.PATCH
+            || fileType == StdFileTypes.PROPERTIES
           ) {
           enabled = false;
         }
@@ -86,7 +87,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) return null;
       String text = document.getText();
-      return ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
+      Charset charset = ((LanguageFileType)fileType).extractCharsetFromFileContent(project, virtualFile, text);
+      if (charset != null) {
+        return charset;
+      }
     }
     return null;
   }
