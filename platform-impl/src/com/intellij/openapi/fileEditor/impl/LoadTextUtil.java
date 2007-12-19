@@ -174,6 +174,7 @@ public final class LoadTextUtil {
   }
 
   private static boolean isSupported(Charset charset, String str) {
+    if (!charset.canEncode()) return false;
     ByteBuffer out = charset.encode(str);
     CharBuffer buffer = charset.decode(out);
     return str.equals(buffer.toString());
