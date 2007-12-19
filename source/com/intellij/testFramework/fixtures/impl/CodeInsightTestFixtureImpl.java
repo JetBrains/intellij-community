@@ -29,6 +29,7 @@ import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -38,6 +39,9 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -74,6 +78,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -102,6 +107,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private final TempDirTestFixture myTempDirFixture = new TempDirTextFixtureImpl();
   private final IdeaProjectTestFixture myProjectFixture;
+  private final Set<VirtualFile> myAddedClasses = new THashSet<VirtualFile>();
   @NonNls private static final String XXX = "XXX";
 
   public CodeInsightTestFixtureImpl(IdeaProjectTestFixture projectFixture) {
@@ -120,8 +126,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myTempDirFixture;
   }
 
+  public String copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
+    FileUtil.copy(new File(sourceFilePath), new File(getTempDirPath() + "/" + targetPath));
+    return targetPath;
+  }
+
+  public String copyFileToProject(@NonNls final String sourceFilePath) throws IOException {
+    return copyFileToProject(sourceFilePath, StringUtil.getShortName(StringUtil.getShortName(sourceFilePath, '\\'), '/'));
+  }
+
   public void enableInspections(LocalInspectionTool... inspections) {
     myInspections = inspections;
+    if (isInitialized()) {
+      configureInspections(myInspections);
+    }
+  }
+
+  private boolean isInitialized() {
+    return myPsiManager != null;
   }
 
   public void enableInspections(final Class<? extends LocalInspectionTool>... inspections) {
@@ -135,8 +157,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         throw new RuntimeException("Cannot instantiate " + clazz);
       }
     }
-    myInspections = tools.toArray(new LocalInspectionTool[tools.size()]);
-
+    enableInspections(tools.toArray(new LocalInspectionTool[tools.size()]));
   }
 
   public void disableInspections(LocalInspectionTool... inspections) {
@@ -354,6 +375,33 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return result.get();
   }
 
+  public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
+    final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
+    final String qName = aClass.getQualifiedName();
+    assert qName != null;
+
+    final VirtualFile root = ModuleRootManager.getInstance(myProjectFixture.getModule()).getSourceRoots()[0];
+    final VirtualFile dir = VfsUtil.createDirectories(root.getPath() + "/" + StringUtil.getPackageName(qName).replace('.', '/'));
+    final VirtualFile virtualFile = dir.createChildData(this, StringUtil.getShortName(qName) + ".java");
+    VfsUtil.saveText(virtualFile, classText);
+    myAddedClasses.add(virtualFile);
+    return ((PsiJavaFile)getPsiManager().findFile(virtualFile)).getClasses()[0];
+  }
+
+  public <T> void registerExtension(final ExtensionsArea area, final ExtensionPointName<T> epName, final T extension) {
+    final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(epName);
+    extensionPoint.registerExtension(extension);
+    disposeOnTearDown(new Disposable() {
+      public void dispose() {
+        extensionPoint.unregisterExtension(extension);
+      }
+    });
+  }
+
+  public PsiManager getPsiManager() {
+    return myPsiManager;
+  }
+
   public void checkResultByFile(final String filePath) throws Throwable {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
 
@@ -386,6 +434,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       FileUtil.copyDir(new File(testDataPath), new File(getTempDirPath()), false);
     }
     myProjectFixture.setUp();
+    myTempDirFixture.setUp();
     myPsiManager = (PsiManagerImpl)PsiManager.getInstance(getProject());
     configureInspections(myInspections == null ? new LocalInspectionTool[0] : myInspections);
   }
@@ -548,6 +597,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     myPsiManager.getCacheManager().getFilesWithWord(XXX, UsageSearchContext.IN_COMMENTS, GlobalSearchScope.allScope(project), true);
     VirtualFileFilter javaFilesFilter = new VirtualFileFilter() {
       public boolean accept(VirtualFile file) {
+        if (myAddedClasses.contains(file)) return false;
+
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
         return fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS;
       }

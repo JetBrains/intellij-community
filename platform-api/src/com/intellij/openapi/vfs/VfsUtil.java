@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -600,24 +601,26 @@ public class VfsUtil {
     return name == null || name.length() == 0 || "/".equals(name) || "\\".equals(name);
   }
 
-  public static void createDirectories(final String dir) throws IOException {
+  public static VirtualFile createDirectories(final String dir) throws IOException {
     final String path = FileUtil.toSystemIndependentName(dir);
     final Ref<IOException> err = new Ref<IOException>();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
+    VirtualFile result = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
+      public VirtualFile compute() {
         try {
-          createDirectoryIfMissing(path);
+          return createDirectoryIfMissing(path);
         }
         catch (IOException e) {
           err.set(e);
+          return null;
         }
       }
     });
     if (!err.isNull()) throw err.get();
+    return result;
   }
 
   @Nullable
-  private static VirtualFile createDirectoryIfMissing(final String dir) throws IOException {
+  public static VirtualFile createDirectoryIfMissing(final String dir) throws IOException {
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir);
     if (file == null) {
       int pos = dir.lastIndexOf('/');

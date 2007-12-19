@@ -23,13 +23,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.io.IOException;
 
 /**
  *
@@ -62,6 +65,10 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   String getTempDirPath();
 
   TempDirTestFixture getTempDirFixture();
+
+  String copyFileToProject(@NonNls String sourceFilePath, @NonNls String targetPath) throws IOException;
+
+  String copyFileToProject(@NonNls String sourceFilePath) throws IOException;
 
   /**
    * Enables inspections for highlighting tests.
@@ -136,7 +143,7 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   PsiReference getReferenceAtCaretPositionWithAssertion(@NonNls String filePath) throws Throwable;
 
   /**
-   * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents. 
+   * Collects available intentions in the whole file or at caret position if {@link #CARET_MARKER} presents.
    *
    * @param filePaths the first file is tested only; the others are just copied along with the first.
    * @return available intentions.
@@ -205,4 +212,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
    */
   @Nullable
   GutterIconRenderer findGutter(@NonNls String filePath) throws Throwable;
+
+  PsiClass addClass(@NotNull @NonNls final String classText) throws IOException;
+
+  PsiManager getPsiManager();
 }

@@ -49,4 +49,5 @@ public interface ModuleFixtureBuilder<T extends ModuleFixture> {
 
   T getFixture();
 
+  void addSourceContentRoot(String path);
 }

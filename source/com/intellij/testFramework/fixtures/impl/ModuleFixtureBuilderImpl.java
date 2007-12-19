@@ -77,6 +77,11 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
     return myModuleFixture;
   }
 
+  public void addSourceContentRoot(final String path) {
+    addContentRoot(path);
+    addSourceRoot(path);
+  }
+
   protected abstract T instantiateFixture();
 
   Module buildModule() {
