@@ -987,7 +987,7 @@ public class RefactoringUtil {
       }
     }
     if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
       if (aPackage != null) element = aPackage;
     }
 
@@ -1002,6 +1002,9 @@ public class RefactoringUtil {
     }
     else if (element instanceof XmlAttribute) {
       return ((XmlAttribute)element).getValue();
+    }
+    else if (element instanceof XmlAttributeValue) {
+      return ((XmlAttributeValue)element).getValue();
     }
     else if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
