@@ -10,11 +10,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +29,6 @@ import java.util.Map;
  */
 public class MethodBodyChecker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.defaultFileTemplateUsage.MethodBodyChecker");
-
-  // return type canonical name + superMethodName + file template name -> method template
-  private static PsiClassType OBJECT_TYPE;
-
-  private MethodBodyChecker() {
-  }
 
   @Nullable
   private static PsiMethod getTemplateMethod(PsiType returnType, List<HierarchicalMethodSignature> superSignatures, final PsiClass aClass) {
@@ -67,8 +62,7 @@ public class MethodBodyChecker {
   private static Map<String, PsiMethod> getTemplatesCache(Project project) {
     Map<String, PsiMethod> cache = project.getUserData(CACHE_IN_PROJECT_KEY);
     if (cache == null) {
-      cache = new THashMap<String, PsiMethod>();
-      project.putUserData(CACHE_IN_PROJECT_KEY, cache);
+      cache = ((UserDataHolderEx)project).putUserDataIfAbsent(CACHE_IN_PROJECT_KEY, new ConcurrentHashMap<String, PsiMethod>());
     }
     return cache;
   }
