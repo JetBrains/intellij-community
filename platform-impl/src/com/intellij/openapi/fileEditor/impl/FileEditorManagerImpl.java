@@ -1131,7 +1131,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           if (file.equals(getSelectedFiles()[0])) { // update "write" status
             final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
             LOG.assertTrue(statusBar != null);
-            statusBar.setWriteStatus(!file.isWritable());
+            statusBar.somethingChanged();
           }
         }
       }

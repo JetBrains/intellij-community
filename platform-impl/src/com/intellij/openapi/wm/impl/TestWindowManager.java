@@ -5,9 +5,11 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.impl.status.StatusBarPatch;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,29 +48,32 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   private static final class DummyStatusBar implements StatusBarEx {
     public final void setInfo(final String s) {}
 
-    public void fireNotificationPopup(JComponent content, final Color backgroundColor) {
+    public void addFileStatusComponent(final StatusBarPatch component) {
+
+    }
+
+    public void removeFileStatusComponent(final StatusBarPatch component) {
+
+    }
+
+    public void somethingChanged() {
+
+    }
+
+    public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
     }
 
     public final String getInfo() {
       return null;
     }
 
-    public final void setPosition(final String s) {}
-
-    public final void setStatus(final String s) {}
-
-    public final void setStatusEnabled(final boolean enabled) {}
-
-    public final void setWriteStatus(final boolean locked) {}
-
     public final void clear() {}
 
-    public void addCustomIndicationComponent(JComponent c) {}
+    public void addCustomIndicationComponent(@NotNull JComponent c) {}
 
-    public void removeCustomIndicationComponent(final JComponent c) {
+    public void removeCustomIndicationComponent(@NotNull final JComponent c) {
     }
 
-    public final void updateFileStatusComponents() {}
     public void addFileStatusComponent(final JComponent component, final Runnable onStatusChange) {}
     public void removeFileStatusComponent(final JComponent component) {}
 
@@ -89,6 +94,10 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
     }
 
     public void setProcessWindowOpen(final boolean open) {
+    }
+
+    public void update(final Editor editor) {
+
     }
   }
 

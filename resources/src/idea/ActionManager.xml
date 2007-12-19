@@ -607,7 +607,7 @@
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
     </group>
 
-    <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncoding">
+    <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncodingAction">
       <add-to-group group-id="ChangeFileEncodingGroup" anchor="last"/>
     </action>
 

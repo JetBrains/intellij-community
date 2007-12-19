@@ -13,12 +13,12 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +26,10 @@ import javax.swing.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Arrays;
 
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
@@ -93,17 +93,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
 
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
-    Collections.sort(favorites);
-
-    group.add(new ClearThisFileEncodingAction(myVirtualFile));
-    fillCharsetActions(group, myVirtualFile, favorites);
-
-    DefaultActionGroup more = new DefaultActionGroup("more", true);
-    group.add(more);
-    fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
-    return group;
+    return createGroup(true);
   }
 
   private void fillCharsetActions(DefaultActionGroup group, final VirtualFile virtualFile, List<Charset> charsets) {
@@ -145,5 +135,21 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
       return null;
     }
   };
-  abstract protected void chosen(VirtualFile virtualFile, Charset charset);
+  protected abstract void chosen(VirtualFile virtualFile, Charset charset);
+
+  public DefaultActionGroup createGroup(boolean showClear) {
+    DefaultActionGroup group = new DefaultActionGroup();
+    List<Charset> favorites = new ArrayList<Charset>(EncodingManager.getInstance().getFavorites());
+    Collections.sort(favorites);
+
+    if (showClear) {
+      group.add(new ClearThisFileEncodingAction(myVirtualFile));
+    }
+    fillCharsetActions(group, myVirtualFile, favorites);
+
+    DefaultActionGroup more = new DefaultActionGroup("more", true);
+    group.add(more);
+    fillCharsetActions(more, myVirtualFile, Arrays.asList(CharsetToolkit.getAvailableCharsets()));
+    return group;
+  }
 }

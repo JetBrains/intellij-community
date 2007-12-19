@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HectorComponent;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -19,7 +20,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.StatusBarInformer;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
@@ -30,7 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class TogglePopupHintsPanel extends JPanel {
+public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
   private static final Icon INSPECTIONS_ICON = IconLoader.getIcon("/objectBrowser/showGlobalInspections.png");
   private static final Icon INSPECTIONS_OFF_ICON = IconLoader.getIcon("/general/inspectionsOff.png");
   private static final Icon EMPTY_ICON = new EmptyIcon(INSPECTIONS_ICON.getIconWidth(), INSPECTIONS_ICON.getIconHeight());
@@ -42,7 +42,7 @@ public class TogglePopupHintsPanel extends JPanel {
   private JLabel myInspectionProfileLabel = new JLabel();
   private int myMinLength;
 
-  public TogglePopupHintsPanel() {
+  public TogglePopupHintsPanel(final StatusBarImpl statusBar) {
     super(new GridBagLayout());
     myHectorLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {
@@ -79,28 +79,26 @@ public class TogglePopupHintsPanel extends JPanel {
     for (Project project : openProjects) {
       FileEditorManager.getInstance(project).addFileEditorManagerListener(myFileEditorManagerListener);
     }
-    add(myHectorLabel,
-        new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-    add(myInspectionProfileLabel,
-        new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 3), 0, 0));
+    add(myHectorLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+    add(myInspectionProfileLabel, new GridBagConstraints(1, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 3, 0, 3), 0, 0));
 
-    new StatusBarInformer(myHectorLabel, null) {
-      protected String getText() {
-        updateStatus();
-        final String text = myHectorLabel.getToolTipText();
-        setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
-        return text;
-      }
-    };
+    StatusBarTooltipper.install(this, myHectorLabel, statusBar);
+    StatusBarTooltipper.install(this, myInspectionProfileLabel, statusBar);
+  }
 
-    new StatusBarInformer(myInspectionProfileLabel, null) {
-      protected String getText() {
-        updateStatus();
-        final String text = myInspectionProfileLabel.getToolTipText();
-        setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
-        return text;
-      }
-    };
+  public JComponent getComponent() {
+    return this;
+  }
+
+  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+    updateStatus();
+    String text = componentSelected == null ? null : componentSelected.getToolTipText();
+    setCursor(Cursor.getPredefinedCursor(text == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
+    return text;
+  }
+
+  public void clear() {
+
   }
 
   public void updateStatus() {

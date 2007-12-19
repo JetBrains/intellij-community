@@ -2,27 +2,17 @@ package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.StatusBar;
-
-import javax.swing.*;
+import com.intellij.openapi.wm.impl.status.StatusBarPatch;
+import com.intellij.openapi.editor.Editor;
 
 public interface StatusBarEx extends StatusBar{
   String getInfo();
 
-  void setPosition(String s);
-
-  void setStatus(String s);
-
-  void setStatusEnabled(boolean enabled);
-
-  void setWriteStatus(boolean locked);
-
   void clear();
 
-  void addFileStatusComponent(JComponent component, final Runnable onStatusChange);
+  void addFileStatusComponent(StatusBarPatch component);
 
-  void updateFileStatusComponents();
-
-  void removeFileStatusComponent(final JComponent component);
+  void removeFileStatusComponent(StatusBarPatch component);
 
   void cleanupCustomComponents();
 
@@ -31,4 +21,7 @@ public interface StatusBarEx extends StatusBar{
   boolean isProcessWindowOpen();
 
   void setProcessWindowOpen(boolean open);
+
+  void update(final Editor editor);
+  void somethingChanged();
 }

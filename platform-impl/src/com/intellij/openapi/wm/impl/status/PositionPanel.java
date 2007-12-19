@@ -8,16 +8,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.StatusBarInformer;
 import com.intellij.ui.UIBundle;
 
+import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 //Made public for Fabrique
-public class PositionPanel extends TextPanel {
-  public PositionPanel() {
-    super(new String[]{"#########"},false);
+public class PositionPanel extends TextPanel implements StatusBarPatch {
+  public PositionPanel(StatusBarImpl statusBar) {
+    super(false, "#########");
 
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
@@ -42,25 +42,31 @@ public class PositionPanel extends TextPanel {
       }
     });
 
-    new StatusBarInformer(this, null) {
-      protected String getText() {
-        final Editor editor = getEditor();
-        return editor == null ? null : UIBundle.message("go.to.line.command.double.click"); 
-      }
-    };
+    StatusBarTooltipper.install(this, statusBar);
   }
 
-  private Editor getEditor() {
-    final Project project = getProject();
-    if (project == null) return null;
-    return getEditor(project);
+  public JComponent getComponent() {
+    return this;
+  }
+  
+  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+    if (selected != null) {
+      setText(selected.getCaretModel().getLogicalPosition().line + 1 + ":" + (selected.getCaretModel().getLogicalPosition().column + 1));
+      return UIBundle.message("go.to.line.command.double.click");
+    }
+    clear();
+    return null;
   }
 
-  private Editor getEditor(final Project project) {
+  public void clear() {
+    setText("");
+  }
+
+  private static Editor getEditor(final Project project) {
     return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
   private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(PositionPanel.this));
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 }

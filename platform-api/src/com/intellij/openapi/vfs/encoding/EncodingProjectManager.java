@@ -103,6 +103,10 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
     else {
       myMapping.put(virtualFileOrDir, charset);
     }
+    saveOrReload(virtualFileOrDir, charset);
+  }
+
+  private static void saveOrReload(final VirtualFile virtualFileOrDir, final Charset charset) {
     if (virtualFileOrDir != null && !virtualFileOrDir.isDirectory()) {
       virtualFileOrDir.setCharset(charset);
       virtualFileOrDir.setBOM(null);
@@ -144,5 +148,9 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
     //}
     myMapping.clear();
     myMapping.putAll(map);
+    for (VirtualFile virtualFile : map.keySet()) {
+      Charset charset = map.get(virtualFile);
+      saveOrReload(virtualFile, charset);
+    }
   }
 }

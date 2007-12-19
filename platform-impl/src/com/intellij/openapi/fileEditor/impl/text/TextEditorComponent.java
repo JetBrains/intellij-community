@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.UIBundle;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -240,19 +239,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
   private void updateStatusBar(){
     final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
     final Editor editor = getEditor();
-    if (editor.isColumnMode()) {
-      statusBar.setStatus(UIBundle.message("status.bar.column.status.text"));
-    } else {
-      statusBar.setStatus(editor.isInsertMode() ? UIBundle.message("status.bar.insert.status.text")
-                          : UIBundle.message("status.bar.overwrite.status.text"));
-    }
-    boolean isWritable = editor.getDocument().isWritable();
-    statusBar.setStatusEnabled(isWritable);
-    statusBar.setWriteStatus(!isWritable);
-    statusBar.setPosition(editor.getCaretModel().getLogicalPosition().line + 1 +
-      ":" + (editor.getCaretModel().getLogicalPosition().column + 1)
-    );
-    statusBar.updateFileStatusComponents();
+    statusBar.update(editor);
   }
 
   @Nullable

@@ -97,7 +97,6 @@ public class FileTreeTable extends TreeTable {
         delegate = new EditorDelegate() {
             public void setValue(Object value) {
               myModel.setValueAt(value, new DefaultMutableTreeNode(myVirtualFile), -1);
-              //comboComponent.revalidate();
             }
 
 	    public Object getCellEditorValue() {

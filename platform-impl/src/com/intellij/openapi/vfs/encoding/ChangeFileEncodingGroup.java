@@ -39,11 +39,7 @@ public class ChangeFileEncodingGroup extends ActionGroup{
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final DefaultActionGroup group = new DefaultActionGroup();
       Charset[] charsets = CharsetToolkit.getAvailableCharsets();
-      for (Charset charset : charsets) {
-        group.add(new ChangeFileEncodingTo(myVirtualFile, charset));
-      }
 
       ChooseEncodingDialog dialog = new ChooseEncodingDialog(charsets, myVirtualFile.getCharset(), myVirtualFile);
       dialog.show();
@@ -51,12 +47,6 @@ public class ChangeFileEncodingGroup extends ActionGroup{
       if (dialog.isOK() && charset != null) {
         EncodingManager.getInstance().setEncoding(myVirtualFile, charset);
       }
-
-      //final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, e.getDataContext(),
-      //                                                                            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
-      //                                                                            null,
-      //                                                                            30);
-      //popup.showInBestPositionFor(e.getDataContext());
     }
 
   }

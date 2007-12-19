@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.wm;
 
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -23,14 +26,14 @@ public interface StatusBar {
    * Set status bar text
    * @param s text to be shown in the status bar
    */
-  void setInfo(String s);
+  void setInfo(@Nullable String s);
 
   /**
    * Add arbitrary component indicating something related to status in the status bar. The component shall be
    * small enough to keep visual status bar appearance metaphor.
    * @param c - custom component to be added to the status bar.
    */
-  void addCustomIndicationComponent(JComponent c);
+  void addCustomIndicationComponent(@NotNull JComponent c);
 
   /**
    * Shows animated notification popup.
@@ -38,9 +41,9 @@ public interface StatusBar {
    * @param backgroundColor background color for the notification. Be sure use light colors since bright onces
    * look noisy. See {@link com.intellij.ui.LightColors} for convinient colors
    */
-  void fireNotificationPopup(JComponent content, final Color backgroundColor);
+  void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor);
 
-  void removeCustomIndicationComponent(final JComponent c);
+  void removeCustomIndicationComponent(@NotNull JComponent c);
 
   void startRefreshIndication(String tooltipText);
 

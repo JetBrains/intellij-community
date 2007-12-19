@@ -6,8 +6,9 @@ package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.wm.impl.status.StatusBarPatch;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -21,10 +22,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
-public class IdeMessagePanel extends JPanel implements MessagePoolListener {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.diagnostic.IdeMessagePanel");
-
+public class IdeMessagePanel extends JPanel implements MessagePoolListener, StatusBarPatch {
   private IconPane myIdeFatal;
 
   private IconPane[] myIcons;
@@ -45,7 +43,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
       }
     });
 
-    myIdeFatal.setVerticalAlignment(JLabel.CENTER);
+    myIdeFatal.setVerticalAlignment(SwingConstants.CENTER);
 
     myIcons = new IconPane[]{myIdeFatal};
     add(myIdeFatal, BorderLayout.CENTER);
@@ -55,6 +53,18 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
 
     JobScheduler.getScheduler().scheduleAtFixedRate(new Blinker(), (long)1, (long)1, TimeUnit.SECONDS);
     updateFatalErrorsIcon();
+  }
+
+  public JComponent getComponent() {
+    return this;
+  }
+
+  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+    return null;
+  }
+
+  public void clear() {
+
   }
 
   private void openFatals() {
@@ -141,11 +151,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
     final Window window = getActiveModalWindow();
     if (window == null) return false;
 
-    if (myDialog != null) {
-      return myDialog.getWindow() != window;
-    }
+    return myDialog == null || myDialog.getWindow() != window;
 
-    return true;
   }
 
   private static Window getActiveModalWindow() {
@@ -161,10 +168,11 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
   }
 
   private void updateFatalErrorsIcon() {
-    if (myMessagePool.getFatalErrors(true, true).size() == 0) {
+    if (myMessagePool.getFatalErrors(true, true).isEmpty()) {
       myNotificationPopupAlreadyShown = false;
       myIdeFatal.deactivate();
-    } else {
+    }
+    else {
       myIdeFatal.activate(INTERNAL_ERROR_NOTICE, true);
       if (!myNotificationPopupAlreadyShown) {
         SwingUtilities.invokeLater(new Runnable() {
@@ -197,7 +205,6 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener {
   }
 
   private class IconPane extends JLabel {
-
     private IconWrapper myIcon;
     private String myEmptyText;
     private boolean myIsActive;

@@ -2,62 +2,60 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.TaskInfo;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class StatusBarImpl extends JPanel implements StatusBarEx {
-
-  protected final TextPanel myInfoPanel = new TextPanel(new String[]{"#"},true);
-  protected final PositionPanel myPositionPanel = new PositionPanel();
-  protected final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel(this);
-  protected final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
-  protected final TextPanel myStatusPanel = new TextPanel(new String[]{UIBundle.message("status.bar.insert.status.text"),
-    UIBundle.message("status.bar.overwrite.status.text")},false);
-  protected final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
+  private final PositionPanel myPositionPanel = new PositionPanel(this);
+  private final ToggleReadOnlyAttributePanel myToggleReadOnlyAttributePanel = new ToggleReadOnlyAttributePanel(this);
+  private final EncodingPanel myEncodingPanel = new EncodingPanel(this);
+  private final MemoryUsagePanel myMemoryUsagePanel = new MemoryUsagePanel();
+  private final InsertOverwritePanel myInsertOverwritePanel = new InsertOverwritePanel();
+  private final IdeMessagePanel myMessagePanel = new IdeMessagePanel(MessagePool.getInstance());
   private final JPanel myCustomIndicationsPanel = new JPanel(new GridBagLayout());
-  protected String myInfo = "";
-  private final Icon myLockedIcon = IconLoader.getIcon("/nodes/lockedSingle.png");
-  private final Icon myUnlockedIcon = myLockedIcon != null ? new EmptyIcon(myLockedIcon.getIconWidth(), myLockedIcon.getIconHeight()) : null;
+  private String myInfo = "";
 
-  protected final MyUISettingsListener myUISettingsListener;
-  protected InfoAndProgressPanel myInfoAndProgressPanel;
+  private final MyUISettingsListener myUISettingsListener;
+  private InfoAndProgressPanel myInfoAndProgressPanel;
 
   private UISettings myUISettings;
   private AsyncProcessIcon myRefreshIcon;
   private EmptyIcon myEmptyRefreshIcon;
-  private JPanel myFileStatusPanel = new JPanel(new GridBagLayout());
-  private final Map<JComponent, Runnable> myFileStatusComponents = new HashMap<JComponent, Runnable>();
+  private final List<StatusBarPatch> myFileStatusComponents = new ArrayList<StatusBarPatch>();
+  private final List<StatusBarPatch> myPatches = new ArrayList<StatusBarPatch>();
+  private JPanel myPatchesPanel;
 
   public StatusBarImpl(UISettings uiSettings) {
-    super();
     myUISettings = uiSettings;
     constructUI();
 
     myUISettingsListener=new MyUISettingsListener();
+
   }
 
-  protected void constructUI() {
+  private void constructUI() {
     setLayout(new BorderLayout());
     setOpaque(true);
-
-    final Border lineBorder = new SeparatorBorder.Left();
-    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
-    final Border separatorLeft = BorderFactory.createCompoundBorder(emptyBorder, lineBorder);
 
     final JPanel refreshPanel = new JPanel(new BorderLayout());
 
@@ -72,60 +70,70 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     add(refreshPanel, BorderLayout.WEST);
     setRefreshVisible(false);
 
-    myInfoPanel.setBorder(emptyBorder);
-    myInfoPanel.setOpaque(false);
-
     myInfoAndProgressPanel = new InfoAndProgressPanel(this);
 
-    add(myInfoAndProgressPanel, BorderLayout.CENTER);
+    myPatchesPanel = new JPanel(new GridBagLayout());
+    myPatchesPanel.setOpaque(false);
+    add(myPatchesPanel, BorderLayout.CENTER);
+    setBorder(new EmptyBorder(2, 0, 1, 0));
+
+    recreatePatches();
+  }
+
+  private void recreatePatches() {
+    myPatchesPanel.removeAll();
+    myPatches.clear();
+
+    addPatch(myInfoAndProgressPanel, false);
+
+    addPatch(myPositionPanel, true);
+    addPatch(myToggleReadOnlyAttributePanel, true);
+    addPatch(myInsertOverwritePanel, true);
+    addPatch(myEncodingPanel, true);
+    for (int i = 0; i < myFileStatusComponents.size(); i++) {
+      StatusBarPatch component = myFileStatusComponents.get(i);
+      addPatch(component, i==0);
+    }
+
+    addPatch(new StatusBarPatch() {
+      public JComponent getComponent() {
+        return myCustomIndicationsPanel;
+      }
+
+      public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+        return componentSelected == null ? null : componentSelected.getToolTipText();
+      }
+
+      public void clear() {
+
+      }
+    }, true);
+
+    addPatch(myMessagePanel, false);
+    addPatch(myMemoryUsagePanel, true);
 
     final GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
-
-    JPanel rightPanel = new JPanel(new GridBagLayout());
-    rightPanel.setOpaque(false);
-
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
-    gbConstraints.weightx = 0;
     gbConstraints.weighty = 1;
-
-    myPositionPanel.setBorder(separatorLeft);
-    myPositionPanel.setOpaque(false);
-    rightPanel.add(myPositionPanel, gbConstraints);
-
-    myToggleReadOnlyAttributePanel.setBorder(separatorLeft);
-    myToggleReadOnlyAttributePanel.setOpaque(false);
-    setWriteStatus(false);
-    rightPanel.add(myToggleReadOnlyAttributePanel, gbConstraints);
-
-    myStatusPanel.setBorder(separatorLeft);
-    myStatusPanel.setOpaque(false);
-    rightPanel.add(myStatusPanel, gbConstraints);
-
-    myFileStatusPanel.setBorder(separatorLeft);
-    myFileStatusPanel.setOpaque(false);
-    myFileStatusPanel.setVisible(false);
-    rightPanel.add(myFileStatusPanel, gbConstraints);
-
-    myCustomIndicationsPanel.setVisible(false); // Will become visible when any of indications really adds.
-    myCustomIndicationsPanel.setBorder(separatorLeft);
-    myCustomIndicationsPanel.setOpaque(false);
-    rightPanel.add(myCustomIndicationsPanel, gbConstraints);
-
-    myMessagePanel.setOpaque(false);
-    myMemoryUsagePanel.setBorder(separatorLeft);
-    rightPanel.add(myMessagePanel, gbConstraints);
-
-    myMemoryUsagePanel.setBorder(separatorLeft);
-
-    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.gridx = 0;
+    gbConstraints.gridy = 0;
+    gbConstraints.gridwidth = 1;
+    gbConstraints.gridheight = 1;
     gbConstraints.anchor = GridBagConstraints.WEST;
-    rightPanel.add(myMemoryUsagePanel, gbConstraints);
 
-    add(rightPanel, BorderLayout.EAST);
-
-    setBorder(new EmptyBorder(2, 0, 1, 0));
+    for (int i = 0; i < myPatches.size(); i++) {
+      StatusBarPatch patch = myPatches.get(i);
+      JComponent component = patch.getComponent();
+      if (i == myPatches.size() - 1) {
+        gbConstraints.fill = GridBagConstraints.VERTICAL;
+        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+      }
+      myPatchesPanel.add(component, gbConstraints);
+      gbConstraints.fill = GridBagConstraints.VERTICAL;
+      gbConstraints.weightx = 0;
+      gbConstraints.gridx++;
+    }
   }
 
   private void setRefreshVisible(final boolean visible) {
@@ -143,6 +151,30 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public void setProcessWindowOpen(final boolean open) {
     myInfoAndProgressPanel.setProcessWindowOpen(open);
+  }
+
+  public void update(final Editor editor) {
+    for (StatusBarPatch patch : myPatches) {
+      patch.updateStatusBar(editor, null);
+    }
+  }
+
+  public void somethingChanged() {
+    update(getEditor());
+  }
+
+  Editor getEditor() {
+    final Project project = getProject();
+    if (project == null) return null;
+    return getEditor(project);
+  }
+
+  private static Editor getEditor(final Project project) {
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
+  }
+
+  private Project getProject() {
+    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public boolean isProcessWindowOpen() {
@@ -176,15 +208,15 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     super.removeNotify();
   }
 
-  public final void setInfo(String s) {
+  public final void setInfo(@Nullable String s) {
     myInfo = s;
     if (s == null){
       s = " ";
     }
-    myInfoPanel.setText(s);
+    myInfoAndProgressPanel.setText(s);
   }
 
-  public void fireNotificationPopup(JComponent content, final Color backgroundColor) {
+  public void fireNotificationPopup(@NotNull JComponent content, final Color backgroundColor) {
     new NotificationPopup(this, content, backgroundColor);
   }
 
@@ -192,21 +224,7 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     return myInfo;
   }
 
-  public final void setPosition(String s) {
-    if (s == null){
-      s = " ";
-    }
-    myPositionPanel.setText(s);
-  }
-
-  public final void setStatus(String s) {
-    if (s == null){
-      s = " ";
-    }
-    myStatusPanel.setText(s);
-  }
-
-  public final void addCustomIndicationComponent(JComponent c) {
+  public final void addCustomIndicationComponent(@NotNull JComponent c) {
     final GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 0;
@@ -217,54 +235,30 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
     myCustomIndicationsPanel.add(c, gbConstraints);
   }
 
-  public void removeCustomIndicationComponent(final JComponent component) {
+  public void removeCustomIndicationComponent(@NotNull final JComponent component) {
     myCustomIndicationsPanel.remove(component);
     if (myCustomIndicationsPanel.getComponentCount() == 0) {
       myCustomIndicationsPanel.setVisible(false);
     }
   }
 
-  public final void setStatusEnabled(final boolean enabled) {
-    myStatusPanel.setEnabled(enabled);
-  }
-
-  public final void setWriteStatus(final boolean locked) {
-    myToggleReadOnlyAttributePanel.setIcon(
-      locked ? myLockedIcon : myUnlockedIcon
-    );
-  }
-
   /**
    * Clears all sections in status bar
    */
   public final void clear(){
-    setStatus(null);
-    setStatusEnabled(false);
-    setWriteStatus(false);
-    setPosition(null);
-    updateFileStatusComponents();
-  }
-
-  public void addFileStatusComponent(final JComponent component, final Runnable update) {
-    myFileStatusPanel.add(component, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 1, GridBagConstraints.WEST,
-                                                           GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0, 0));
-    myFileStatusPanel.setVisible(true);
-    myFileStatusComponents.put(component, update);
-  }
-
-  public final void updateFileStatusComponents() {
-    for (JComponent component : myFileStatusComponents.keySet()) {
-      final Runnable update = myFileStatusComponents.get(component);
-      if (update != null) update.run();
+    for (StatusBarPatch patch : myPatches) {
+      patch.clear();
     }
   }
 
-  public void removeFileStatusComponent(final JComponent component) {
+  public void addFileStatusComponent(StatusBarPatch component) {
+    myFileStatusComponents.add(component);
+    recreatePatches();
+  }
+
+  public void removeFileStatusComponent(StatusBarPatch component) {
     myFileStatusComponents.remove(component);
-    myFileStatusPanel.remove(component);
-    if (myFileStatusPanel.getComponentCount() == 0) {
-      myFileStatusPanel.setVisible(false);
-    }
+    recreatePatches();
   }
 
   public void cleanupCustomComponents() {
@@ -343,5 +337,19 @@ public class StatusBarImpl extends JPanel implements StatusBarEx {
 
   public void stopRefreshIndication() {
     setRefreshVisible(false);
+  }
+
+  private void addPatch(StatusBarPatch panel, boolean separator) {
+    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
+    final Border separatorLeft = BorderFactory.createCompoundBorder(emptyBorder, new SeparatorBorder.Left());
+    myPatches.add(panel);
+    JComponent component = panel.getComponent();
+    if (separator) {
+      component.setBorder(separatorLeft);
+    }
+    else {
+      component.setBorder(emptyBorder);
+    }
+    component.setOpaque(false);
   }
 }

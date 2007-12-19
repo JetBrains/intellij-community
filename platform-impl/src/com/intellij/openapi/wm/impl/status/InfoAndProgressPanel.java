@@ -2,10 +2,10 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.ui.StatusBarInformer;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.Wrapper;
@@ -17,6 +17,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -26,10 +27,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InfoAndProgressPanel extends JPanel {
-
-  StatusBarImpl myStatusBar;
+public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
   private ProcessPopup myPopup;
+  private final TextPanel myInfoPanel = new TextPanel(true);
 
   private final ArrayList<ProgressIndicatorEx> myOriginals = new ArrayList<ProgressIndicatorEx>();
   private ArrayList<TaskInfo> myInfos = new ArrayList<TaskInfo>();
@@ -42,19 +42,18 @@ public class InfoAndProgressPanel extends JPanel {
   private Alarm myQueryAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private boolean myShouldClosePopupAndOnProcessFinish;
-  private final EmptyBorder myEmptyBorder;
   private final CompoundBorder myCompoundBorder;
 
   public InfoAndProgressPanel(final StatusBarImpl statusBar) {
-    myStatusBar = statusBar;
     setOpaque(false);
+    final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
+    myInfoPanel.setBorder(emptyBorder);
+    myInfoPanel.setOpaque(false);
 
-    myEmptyBorder = new EmptyBorder(0, 3, 0, 2);
     myCompoundBorder = BorderFactory.createCompoundBorder(new StatusBarImpl.SeparatorBorder.Left(), new EmptyBorder(0, 2, 0, 2));
 
     myProgressIcon = new AsyncProcessIcon("Background process");
     myProgressIcon.setOpaque(true);
-    myProgressIcon.setToolTipText(ActionsBundle.message("action.ShowProcessWindow.text"));
     new BaseButtonBehavior(myProgressIcon) {
       protected void execute(final MouseEvent e) {
         triggerPopupShowing();
@@ -62,7 +61,7 @@ public class InfoAndProgressPanel extends JPanel {
     };
     myProgressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-    new StatusBarInformer(myProgressIcon, ActionsBundle.message("action.ShowProcessWindow.double.click"), myStatusBar);
+    StatusBarTooltipper.install(this, myProgressIcon, statusBar);
 
     myUpdateQueue = new MergingUpdateQueue("Progress indicator", 250, true, null);
     myPopup = new ProcessPopup(this);
@@ -70,9 +69,21 @@ public class InfoAndProgressPanel extends JPanel {
     restoreEmptyStatus();
   }
 
+  public JComponent getComponent() {
+    return this;
+  }
+
+  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+    return ActionsBundle.message("action.ShowProcessWindow.double.click");
+  }
+
+  public void clear() {
+
+  }
+
   public void addProgress(final ProgressIndicatorEx original, TaskInfo info) {
     synchronized (myOriginals) {
-      final boolean veryFirst = myOriginals.size() == 0;
+      final boolean veryFirst = myOriginals.isEmpty();
 
       myOriginals.add(original);
       myInfos.add(info);
@@ -144,12 +155,13 @@ public class InfoAndProgressPanel extends JPanel {
   }
 
   private void openProcessPopup() {
-    synchronized(myOriginals) {
+    synchronized (myOriginals) {
       if (myPopup.isShowing()) return;
-      if (myOriginals.size() > 0) {
+      if (!myOriginals.isEmpty()) {
         myShouldClosePopupAndOnProcessFinish = true;
         buildInProcessCount();
-      } else {
+      }
+      else {
         myShouldClosePopupAndOnProcessFinish = false;
         restoreEmptyStatus();
       }
@@ -164,7 +176,7 @@ public class InfoAndProgressPanel extends JPanel {
       if (myOriginals.size() == 1) {
         buildInInlineIndicator(createInlineDelegate(myInfos.get(0), myOriginals.get(0), true));
       }
-      else if (myOriginals.size() == 0) {
+      else if (myOriginals.isEmpty()) {
         restoreEmptyStatus();
       }
       else {
@@ -194,7 +206,7 @@ public class InfoAndProgressPanel extends JPanel {
     myProgressIcon.setBorder(myCompoundBorder);
     progressCountPanel.add(myProgressIcon, BorderLayout.WEST);
 
-    add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
+    add(myInfoPanel, BorderLayout.CENTER);
 
     progressCountPanel.setBorder(new EmptyBorder(0, 0, 0, 4));
     add(progressCountPanel, BorderLayout.EAST);
@@ -206,7 +218,7 @@ public class InfoAndProgressPanel extends JPanel {
   private void buildInInlineIndicator(final InlineProgressIndicator inline) {
     removeAll();
     setLayout(new InlineLayout());
-    add(myStatusBar.myInfoPanel);
+    add(myInfoPanel);
 
     final JPanel inlinePanel = new JPanel(new BorderLayout());
 
@@ -220,8 +232,12 @@ public class InfoAndProgressPanel extends JPanel {
 
     add(inlinePanel);
 
-    myStatusBar.myInfoPanel.revalidate();
-    myStatusBar.myInfoPanel.repaint();
+    myInfoPanel.revalidate();
+    myInfoPanel.repaint();
+  }
+
+  public void setText(final String text) {
+    myInfoPanel.setText(text);
   }
 
   private static class InlineLayout extends AbstractLayoutManager {
@@ -288,12 +304,12 @@ public class InfoAndProgressPanel extends JPanel {
   private void restoreEmptyStatus() {
     removeAll();
     setLayout(new BorderLayout());
-    add(myStatusBar.myInfoPanel, BorderLayout.CENTER);
+    add(myInfoPanel, BorderLayout.CENTER);
     myProgressIcon.setBorder(myCompoundBorder);
     add(myProgressIcon, BorderLayout.EAST);
     myProgressIcon.suspend();
-    myStatusBar.myInfoPanel.revalidate();
-    myStatusBar.myInfoPanel.repaint();
+    myInfoPanel.revalidate();
+    myInfoPanel.repaint();
   }
 
   public boolean isProcessWindowOpen() {

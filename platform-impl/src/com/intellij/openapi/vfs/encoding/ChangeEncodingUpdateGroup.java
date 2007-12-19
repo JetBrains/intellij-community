@@ -3,9 +3,10 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 
@@ -30,7 +31,14 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
         virtualFile = ((OpenFileDescriptor)navigatable).getFile();
       }
     }
+    Pair<String, Boolean> result = update(virtualFile, project);
+    e.getPresentation().setText(result.getFirst());
+    e.getPresentation().setEnabled(result.getSecond());
+  }
+
+  public static Pair<String,Boolean> update(final VirtualFile virtualFile, final Project project) {
     boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(project, virtualFile);
+    String text;
     if (enabled) {
       String pattern;
       Charset charset = ChooseFileEncodingAction.encodingFromContent(project, virtualFile);
@@ -45,11 +53,12 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
         pattern = "Change encoding from ''{0}'' to";
       }
       if (charset == null) charset = virtualFile.getCharset();
-      e.getPresentation().setText(MessageFormat.format(pattern, charset.toString()));
+      text = MessageFormat.format(pattern, charset.toString());
     }
     else {
-      e.getPresentation().setText("Encoding");
+      text = "Encoding";
     }
-    e.getPresentation().setEnabled(enabled);
+
+    return Pair.create(text, enabled);
   }
 }

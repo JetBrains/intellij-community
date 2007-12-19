@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -17,8 +18,7 @@ import java.awt.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-//Made public for Fabrique
-public class MemoryUsagePanel extends JPanel {
+class MemoryUsagePanel extends JPanel implements StatusBarPatch{
   private static final int MEGABYTE = 1024 * 1024;
   private static final Color ourColorFree = new Color(240, 240, 240);
   private static final Color ourColorUsed = new Color(112, 135, 214);
@@ -42,6 +42,18 @@ public class MemoryUsagePanel extends JPanel {
     add(button, SystemInfo.isMac ? BorderLayout.WEST : BorderLayout.EAST);
 
     updateUI();
+  }
+
+  public JComponent getComponent() {
+    return this;
+  }
+  
+  public String updateStatusBar(final Editor selected, final JComponent componentSelected) {
+    return null;
+  }
+
+  public void clear() {
+
   }
 
   /**

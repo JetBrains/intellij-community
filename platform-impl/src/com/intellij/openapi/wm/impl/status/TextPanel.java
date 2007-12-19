@@ -14,7 +14,7 @@ public class TextPanel extends JLabel {
   private String myText;
   private final String[] myPossibleStrings;
 
-  public TextPanel(final String[] possibleStrings, final boolean shouldShowTooltip) {
+  public TextPanel(final boolean shouldShowTooltip, final String... possibleStrings) {
     myText = "";
     myPossibleStrings = possibleStrings;
 
@@ -28,7 +28,7 @@ public class TextPanel extends JLabel {
 
     final String[] lines = SplittingUtil.splitText(text, fontMetrics, widthLimit, ' ');
 
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
       final String line = lines[i];
       if (i > 0) {
