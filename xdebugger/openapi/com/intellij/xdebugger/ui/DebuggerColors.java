@@ -1,7 +1,7 @@
 /**
  * @author Yura Cangea
  */
-package com.intellij.debugger.settings;
+package com.intellij.xdebugger.ui;
 
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;

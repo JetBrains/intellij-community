@@ -4,7 +4,7 @@
  */
 package com.intellij.debugger.ui.impl;
 
-import com.intellij.debugger.settings.DebuggerColors;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueMarkup;
 import com.intellij.openapi.editor.colors.EditorColorsManager;

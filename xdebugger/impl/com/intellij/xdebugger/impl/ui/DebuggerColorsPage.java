@@ -1,9 +1,8 @@
 /*
  * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.debugger.settings;
+package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -12,6 +11,8 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ import java.util.Map;
 public class DebuggerColorsPage implements ColorSettingsPage {
   @NotNull
   public String getDisplayName() {
-    return DebuggerBundle.message("debugger.configurable.display.name");
+    return XDebuggerBundle.message("xdebugger.colors.page.name");
   }
 
   @Nullable

@@ -1,10 +1,12 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -23,16 +25,19 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
   private final XBreakpointType<T> myType;
   private final @Nullable T myProperties;
   private final S myState;
+  protected final Project myProject;
 
-  public XBreakpointBase(final XBreakpointType<T> type, final @Nullable T properties, final S state) {
+  public XBreakpointBase(final XBreakpointType<T> type, final Project project, final @Nullable T properties, final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
+    myProject = project;
   }
 
-  protected XBreakpointBase(final XBreakpointType<T> type, S breakpointState) {
+  protected XBreakpointBase(final XBreakpointType<T> type, final Project project, S breakpointState) {
     myState = breakpointState;
     myType = type;
+    myProject = project;
     myProperties = type.createProperties();
     if (myProperties != null) {
       Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), getStateClass(myProperties.getClass()));
@@ -60,6 +65,10 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
     return type;
   }
 
+  public XSourcePosition getSourcePosition() {
+    return null;
+  }
+
   public boolean isEnabled() {
     return myState.isEnabled();
   }
@@ -72,6 +81,7 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
     return true;
   }
 
+  @Nullable 
   public T getProperties() {
     return myProperties;
   }
@@ -90,6 +100,9 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
     Element propertiesElement = myProperties != null ? XmlSerializer.serialize(myProperties.getState()) : null;
     myState.setPropertiesElement(propertiesElement);
     return myState;
+  }
+
+  public void dispose() {
   }
 
   @Tag("breakpoint")
@@ -133,8 +146,8 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
       myPropertiesElement = propertiesElement;
     }
 
-    public <T extends XBreakpointProperties> XBreakpointBase<T,?> createBreakpoint(@NotNull XBreakpointType<T> type) {
-      return new XBreakpointBase<T, BreakpointState>(type, this);
+    public <T extends XBreakpointProperties> XBreakpointBase<T,?> createBreakpoint(@NotNull XBreakpointType<T> type, final Project project) {
+      return new XBreakpointBase<T, BreakpointState>(type, project, this);
     }
   }
 }

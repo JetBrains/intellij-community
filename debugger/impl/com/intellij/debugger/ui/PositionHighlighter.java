@@ -11,7 +11,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.settings.DebuggerColors;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;

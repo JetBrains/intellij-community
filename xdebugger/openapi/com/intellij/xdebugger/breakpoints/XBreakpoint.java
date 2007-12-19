@@ -1,6 +1,8 @@
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -21,4 +23,7 @@ public interface XBreakpoint<T extends XBreakpointProperties> {
   XBreakpointType getType();
 
   T getProperties();
+
+  @Nullable
+  XSourcePosition getSourcePosition();
 }

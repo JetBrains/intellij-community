@@ -1,5 +1,8 @@
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author nik
  */
@@ -9,4 +12,6 @@ public interface XLineBreakpoint<T extends XBreakpointProperties> extends XBreak
 
   String getFileUrl();
 
+  @NotNull
+  XSourcePosition getSourcePosition();
 }

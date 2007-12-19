@@ -30,7 +30,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public XDebuggerManagerImpl(final Project project) {
     myProject = project;
-    myBreakpointManager = new XBreakpointManagerImpl();
+    myBreakpointManager = new XBreakpointManagerImpl(myProject);
   }
 
   @NotNull
@@ -54,6 +54,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   }
 
   public void disposeComponent() {
+    myBreakpointManager.dispose();
   }
 
   public XDebuggerState getState() {

@@ -10,7 +10,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.settings.DebuggerColors;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;

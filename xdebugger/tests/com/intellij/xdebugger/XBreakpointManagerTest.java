@@ -5,8 +5,14 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.mock.MockProject;
+import com.intellij.mock.MockEditorFactory;
+import com.intellij.mock.MockVirtualFileManager;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.MutablePicoContainer;
 
 /**
  * @author nik
@@ -16,7 +22,11 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myBreakpointManager = new XBreakpointManagerImpl();
+    MockProject project = disposeOnTearDown(new MockProject());
+    MutablePicoContainer container = getApplication().getPicoContainer();
+    registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
+    registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
+    myBreakpointManager = new XBreakpointManagerImpl(project);
   }
 
   public void testAddRemove() throws Exception {
