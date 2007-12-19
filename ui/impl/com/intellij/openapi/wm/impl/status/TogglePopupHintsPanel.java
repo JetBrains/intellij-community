@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.ui.ErrorOptionsConfigurable;
 import com.intellij.psi.PsiFile;
@@ -42,7 +43,7 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
   private JLabel myInspectionProfileLabel = new JLabel();
   private int myMinLength;
 
-  public TogglePopupHintsPanel(final StatusBarImpl statusBar) {
+  public TogglePopupHintsPanel(final StatusBar statusBar) {
     super(new GridBagLayout());
     myHectorLabel.addMouseListener(new MouseAdapter() {
       public void mouseClicked(MouseEvent e) {

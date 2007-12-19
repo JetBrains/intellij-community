@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -44,7 +45,7 @@ public class InfoAndProgressPanel extends JPanel implements StatusBarPatch {
   private boolean myShouldClosePopupAndOnProcessFinish;
   private final CompoundBorder myCompoundBorder;
 
-  public InfoAndProgressPanel(final StatusBarImpl statusBar) {
+  public InfoAndProgressPanel(final StatusBar statusBar) {
     setOpaque(false);
     final Border emptyBorder = BorderFactory.createEmptyBorder(0, 2, 0, 2);
     myInfoPanel.setBorder(emptyBorder);

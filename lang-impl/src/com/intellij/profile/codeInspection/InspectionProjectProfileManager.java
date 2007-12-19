@@ -29,7 +29,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.status.TogglePopupHintsPanel;
-import com.intellij.openapi.wm.impl.status.StatusBarImpl;
 import com.intellij.profile.DefaultProjectProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.psi.PsiElement;
@@ -169,7 +168,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
 
   public void projectOpened() {
     myStatusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-    myTogglePopupHintsPanel = new TogglePopupHintsPanel((StatusBarImpl)myStatusBar);
+    myTogglePopupHintsPanel = new TogglePopupHintsPanel(myStatusBar);
     myStatusBar.addFileStatusComponent(myTogglePopupHintsPanel);
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable(){
       public void run() {

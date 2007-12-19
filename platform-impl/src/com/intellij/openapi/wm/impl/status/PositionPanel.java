@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.UIBundle;
 
 import javax.swing.*;
@@ -16,7 +17,7 @@ import java.awt.event.MouseEvent;
 
 //Made public for Fabrique
 public class PositionPanel extends TextPanel implements StatusBarPatch {
-  public PositionPanel(StatusBarImpl statusBar) {
+  public PositionPanel(StatusBar statusBar) {
     super(false, "#########");
 
     addMouseListener(new MouseAdapter() {

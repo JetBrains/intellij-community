@@ -30,7 +30,7 @@ public class ToggleReadOnlyAttributePanel extends JLabel implements StatusBarPat
       }
     });
     setIconTextGap(0);
-    StatusBarTooltipper.install(this, (StatusBarImpl)statusBar);
+    StatusBarTooltipper.install(this, statusBar);
   }
   public JComponent getComponent() {
     return this;

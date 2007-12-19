@@ -87,6 +87,7 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
   private void mouseClicked(final MouseEvent e, final StatusBarImpl statusBar) {
     VirtualFile virtualFile = getSelectedFile(getEditor());
     if (virtualFile == null) return;
+    if (!isEnabled()) return;
 
     ChooseFileEncodingAction changeAction = new ChooseFileEncodingAction(virtualFile, getProject()) {
       protected void chosen(final VirtualFile virtualFile, final Charset charset) {
