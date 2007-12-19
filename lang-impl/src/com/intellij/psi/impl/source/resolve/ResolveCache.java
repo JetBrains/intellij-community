@@ -3,17 +3,17 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.Reference;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -25,6 +25,7 @@ public class ResolveCache {
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP = Key.create("ResolveCache.RESOLVE_MAP");
   private static final Key<MapPair<PsiPolyVariantReference, Reference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
+  private static final Key<List<Thread>> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
 
   private final ConcurrentWeakHashMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
@@ -163,49 +164,48 @@ public class ResolveCache {
     return resolve(ref, resolver, myResolveMaps, needToPreventRecursion, incompleteCode);
   }
 
-  private static final Key<Thread[]> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
   private static boolean lockElement(PsiReference ref) {
-    PsiElement elt = ref.getElement();
+    synchronized (IS_BEING_RESOLVED_KEY) {
+      PsiElement elt = ref.getElement();
 
-    final Thread currentThread = Thread.currentThread();
-    while (true) {
-      Thread[] lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
-      Thread[] newThreads;
+      List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
+      final Thread currentThread = Thread.currentThread();
       if (lockingThreads == null) {
-        newThreads = new Thread[1];
-        newThreads[0] = currentThread;
-        if (((UserDataHolderEx)elt).putUserDataIfAbsent(IS_BEING_RESOLVED_KEY, newThreads) == newThreads) {
-          break;
-        }
+        lockingThreads = new SmartList<Thread>();
+        elt.putUserData(IS_BEING_RESOLVED_KEY, lockingThreads);
       }
       else {
-        if (ArrayUtil.find(lockingThreads, currentThread) != -1) return false;
-        newThreads = ArrayUtil.append(lockingThreads, currentThread);
-        if (((UserDataHolderEx)elt).replace(IS_BEING_RESOLVED_KEY, lockingThreads, newThreads)) {
-          break;
-        }
+        if (lockingThreads.contains(currentThread)) return false;
       }
+      lockingThreads.add(currentThread);
     }
     return true;
   }
 
   private static void unlockElement(PsiReference ref) {
-    PsiElement elt = ref.getElement();
-    final Thread currentThread = Thread.currentThread();
-    while (true) {
-      Thread[] lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
-      Thread[] newThreads;
-      if (lockingThreads.length == 1) {
-        newThreads = null;
-      }
-      else {
-        newThreads = ArrayUtil.remove(lockingThreads, currentThread);
-      }
-      if (((UserDataHolderEx)elt).replace(IS_BEING_RESOLVED_KEY, lockingThreads, newThreads)) {
-        break;
+    synchronized (IS_BEING_RESOLVED_KEY) {
+      PsiElement elt = ref.getElement();
+
+      List<Thread> lockingThreads = elt.getUserData(IS_BEING_RESOLVED_KEY);
+      if (lockingThreads == null) return;
+      final Thread currentThread = Thread.currentThread();
+      lockingThreads.remove(currentThread);
+      if (lockingThreads.isEmpty()) {
+        elt.putUserData(IS_BEING_RESOLVED_KEY, null);
       }
     }
   }
+
+  //for Visual Fabrique
+  public void clearResolveCaches(PsiReference ref) {
+    myClearCount.incrementAndGet();
+    final boolean physical = ref.getElement().isPhysical();
+    if (ref instanceof PsiPolyVariantReference) {
+      cache((PsiPolyVariantReference)ref, null, myPolyVariantResolveMaps, physical, false, myClearCount.intValue());
+      cache((PsiPolyVariantReference)ref, null, myPolyVariantResolveMaps, physical, true, myClearCount.intValue());
+    }
+  }
+
 
   private static int getIndex(boolean physical, boolean ic){
     return (physical ? 0 : 1) << 1 | (ic ? 1 : 0);
