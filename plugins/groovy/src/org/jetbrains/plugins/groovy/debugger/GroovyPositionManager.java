@@ -197,7 +197,7 @@ public class GroovyPositionManager implements PositionManager {
     Query<VirtualFile> query = directoryIndex.getDirectoriesByPackageName(packageName, true);
     String fileNameWithoutExtension = dotIndex > 0 ? qName.substring(dotIndex + 1) : qName;
     final Set<String> fileNames = new HashSet<String>();
-    for (final String extention : GroovyLoader.GROOVY_EXTENTIONS) {
+    for (final String extention : GroovyLoader.GROOVY_EXTENSIONS) {
       fileNames.add(fileNameWithoutExtension + "." + extention);
     }
 

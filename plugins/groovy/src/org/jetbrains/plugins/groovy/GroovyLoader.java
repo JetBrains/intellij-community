@@ -60,25 +60,25 @@ import java.util.Set;
 public class GroovyLoader implements ApplicationComponent {
 
   @NotNull
-  public static final String GROOVY_EXTENTION = "groovy";
+  public static final String GROOVY_EXTENSION = "groovy";
 
   @NotNull
-  public static final String GVY_EXTENTION = "gvy";
+  public static final String GVY_EXTENSION = "gvy";
 
   @NotNull
-  public static final String GY_EXTENTION = "gy";
+  public static final String GY_EXTENSION = "gy";
 
   @NotNull
-  public static final String GROOVY_SCRIPT_EXTENTION = "gsh";
+  public static final String GROOVY_SCRIPT_EXTENSION = "gsh";
 
   @NotNull
-  public static final Set<String> GROOVY_EXTENTIONS = new HashSet<String>();
+  public static final Set<String> GROOVY_EXTENSIONS = new HashSet<String>();
 
   static {
-    GROOVY_EXTENTIONS.add(GROOVY_EXTENTION);
-    GROOVY_EXTENTIONS.add(GVY_EXTENTION);
-    GROOVY_EXTENTIONS.add(GY_EXTENTION);
-    GROOVY_EXTENTIONS.add(GROOVY_SCRIPT_EXTENTION);
+    GROOVY_EXTENSIONS.add(GROOVY_EXTENSION);
+    GROOVY_EXTENSIONS.add(GVY_EXTENSION);
+    GROOVY_EXTENSIONS.add(GY_EXTENSION);
+    GROOVY_EXTENSIONS.add(GROOVY_SCRIPT_EXTENSION);
   }
 
   public GroovyLoader() {
@@ -92,7 +92,7 @@ public class GroovyLoader implements ApplicationComponent {
     ApplicationManager.getApplication().runWriteAction(
         new Runnable() {
           public void run() {
-            FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENTIONS.toArray(new String[GROOVY_EXTENTIONS.size()]));
+            FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENSIONS.toArray(new String[GROOVY_EXTENSIONS.size()]));
           }
         }
     );
