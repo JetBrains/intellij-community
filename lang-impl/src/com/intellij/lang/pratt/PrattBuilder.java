@@ -5,10 +5,10 @@
 package com.intellij.lang.pratt;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +19,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PrattBuilder {
   private final PsiBuilder myBuilder;
-  private PsiBuilder.Marker myPrevMarker;
   private final Stack<PrattTokenType> myStack = new Stack<PrattTokenType>();
+  private final Stack<Pair<PsiBuilder.Marker,IElementType>> myMarkers = new Stack<Pair<PsiBuilder.Marker, IElementType>>();
 
   public PrattBuilder(final PsiBuilder builder) {
     myBuilder = builder;
@@ -30,23 +30,47 @@ public class PrattBuilder {
     return ((PsiBuilderImpl) myBuilder).getLexer();
   }
 
-  @NotNull
-  public PsiBuilder.Marker markBefore() {
-    final PsiBuilder.Marker marker = myPrevMarker;
-    myPrevMarker = myPrevMarker.precede();
-    return marker;
+  public void startElement(IElementType type) {
+    startElement();
+    setCurrentElementType(type);
   }
 
-  @Nullable
-  public IElementType parseOption(int rightPriority) {
-    final PsiBuilder.Marker marker = mark();
-    final IElementType type = parse(rightPriority);
-    if (type == null) {
-      marker.rollbackTo();
+  public void startElement() {
+    myMarkers.push(new Pair<PsiBuilder.Marker, IElementType>(myBuilder.mark(), null));
+  }
+
+  public void setCurrentElementType(@Nullable IElementType type) {
+    myMarkers.push(new Pair<PsiBuilder.Marker, IElementType>(myMarkers.pop().first, type));
+  }
+
+  @Nullable public IElementType getCurrentElementType() {
+    return myMarkers.peek().second;
+  }
+
+  public void rollbackToElementStart() {
+    myMarkers.pop().first.rollbackTo();
+  }
+
+  public void finishElement(@Nullable IElementType type) {
+    setCurrentElementType(type);
+    finishElement();
+  }
+
+  public void precedeElement() {
+    final Pair<PsiBuilder.Marker, IElementType> pair = myMarkers.pop();
+    myMarkers.push(new Pair<PsiBuilder.Marker, IElementType>(pair.first.precede(), null));
+    myMarkers.push(pair);
+  }
+
+  public void finishElement() {
+    final Pair<PsiBuilder.Marker, IElementType> pair = myMarkers.pop();
+    final PsiBuilder.Marker marker = pair.first;
+    final IElementType type = pair.second;
+    if (type != null) {
+      marker.done(type);
     } else {
       marker.drop();
     }
-    return type;
   }
 
   @Nullable
@@ -56,85 +80,50 @@ public class PrattBuilder {
 
   @Nullable
   public IElementType parse(int rightPriority, @Nullable String expectedMessage) {
-    IElementType tokenType = getTokenType();
-    if (tokenType == null) return null;
-
-    if (!(tokenType instanceof PrattTokenType) || ((PrattTokenType)tokenType).getPriority() <= rightPriority) {
+    if (isEof()) {
       error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.token"));
       return null;
     }
 
-    final Nud nud = ((PrattTokenType)tokenType).getNud();
-    if (nud == null) {
+    if (cannotBeParsed(rightPriority)) {
       error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.token"));
       return null;
     }
 
-    PsiBuilder.Marker marker = myBuilder.mark();
+    int startStack = myMarkers.size();
+    startElement();
+    while (!isEof()) {
+      int startOffset = myBuilder.getCurrentOffset();
+      PrattTokenType tokenType = (PrattTokenType)getTokenType();
+      assert tokenType != null;
 
-    ParseResult left;
-    IElementType result;
-
-    final PsiBuilder.Marker oldMarker = myPrevMarker;
-    myPrevMarker = myBuilder.mark();
-    myStack.push((PrattTokenType)tokenType);
-    try {
-      myBuilder.advanceLexer();
-      left = nud.parsePrefix(this);
-      result = left.getDoneType();
-    }
-    finally {
-      myStack.pop();
-      myPrevMarker.drop();
-      myPrevMarker = oldMarker;
-    }
-
-    if (left.getErrorMessage() != null) {
-      marker.rollbackTo();
-      myBuilder.error(left.getErrorMessage());
-      return null;
-    }
-
-    while (myStack.isEmpty() || !left.isStop()) {
-      tokenType = myBuilder.getTokenType();
-      if (!(tokenType instanceof PrattTokenType) || rightPriority >= ((PrattTokenType)tokenType).getPriority()) break;
-
-      final Led led = ((PrattTokenType)tokenType).getLed();
-      if (led == null) break;
-
-      myPrevMarker = myBuilder.mark();
-      myStack.push((PrattTokenType)tokenType);
+      myStack.push(tokenType);
       try {
-        myBuilder.advanceLexer();
-
-        left = led.parseInfix(result, this);
-
-        if (result != null && left.getDoneType() != null) {
-          final PsiBuilder.Marker marker1 = marker.precede();
-          marker.doneBefore(result, myPrevMarker);
-          marker = marker1;
-          result = left.getDoneType();
-        }
+        if (!tokenType.getParser().parseToken(this)) break;
       }
       finally {
-        if (left.getErrorMessage() != null) {
-          myPrevMarker.rollbackTo();
-          myBuilder.error(left.getErrorMessage());
-        }
-
         myStack.pop();
-        myPrevMarker.drop();
-        myPrevMarker = oldMarker;
       }
 
-    }
-    if (result != null) {
-      marker.done(result);
-    } else {
-      marker.drop();
+      assert startOffset < myBuilder.getCurrentOffset() : "Endless loop on " + getTokenType();
+
+      if (cannotBeParsed(rightPriority)) break;
     }
 
+    IElementType result = null;
+    do {
+      final IElementType currentType = getCurrentElementType();
+      if (currentType != null) {
+        result = currentType;
+      }
+      finishElement();
+    } while (myMarkers.size() > startStack);
     return result;
+  }
+
+  private boolean cannotBeParsed(final int rightPriority) {
+    final IElementType tokenType = getTokenType();
+    return !(tokenType instanceof PrattTokenType) || ((PrattTokenType)tokenType).getPriority() <= rightPriority;
   }
 
   public boolean assertToken(final PrattTokenType type) {
@@ -181,7 +170,9 @@ public class PrattBuilder {
   }
 
   public void error(final String errorText) {
+    final PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.error(errorText);
+    marker.drop();
   }
 
 
@@ -196,10 +187,6 @@ public class PrattBuilder {
   @Nullable
   public IElementType getTokenType() {
     return myBuilder.getTokenType();
-  }
-
-  public ASTNode getTreeBuilt() {
-    return myBuilder.getTreeBuilt().getFirstChildNode();
   }
 
   /**

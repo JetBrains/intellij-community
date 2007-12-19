@@ -5,7 +5,9 @@
 package com.intellij.lang.pratt;
 
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -28,5 +30,17 @@ public class PrattParsingUtil {
       builder.advance();
     }
     return !builder.isEof();
+  }
+
+  @Nullable
+  public static IElementType parseOption(final PrattBuilder builder, int rightPriority) {
+    builder.startElement();
+    final IElementType type = builder.parse(rightPriority);
+    if (type == null) {
+      builder.rollbackToElementStart();
+    } else {
+      builder.finishElement();
+    }
+    return type;
   }
 }

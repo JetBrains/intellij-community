@@ -9,21 +9,25 @@ import com.intellij.psi.PsiBundle;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
 public class PrattTokenType extends IElementType {
-  protected Nud myNud;
-  protected Led myLed;
+  protected TokenParser myParser;
   private final int myPriority;
 
   public PrattTokenType(@NotNull final String tokenName,
                           @Nullable final Language language, final int priority, @Nullable final Nud nud, @Nullable final Led led) {
-    super(tokenName, language);
+    this(tokenName, language, priority, new DefaultTokenParser(nud, led));
+  }
+
+  public PrattTokenType(@NotNull @NonNls final String debugName,
+                        @Nullable final Language language, final int priority, final TokenParser parser) {
+    super(debugName, language);
     myPriority = priority;
-    myNud = nud;
-    myLed = led;
+    myParser = parser;
   }
 
   public PrattTokenType(@NotNull final String tokenName,
@@ -49,13 +53,7 @@ public class PrattTokenType extends IElementType {
     return myPriority;
   }
 
-  @Nullable public Led getLed() {
-    return myLed;
+  public TokenParser getParser() {
+    return myParser;
   }
-
-  @Nullable
-  public Nud getNud() {
-    return myNud;
-  }
-
 }
