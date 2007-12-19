@@ -78,21 +78,8 @@ public class FileTreeTable extends TreeTable {
       }
     });
 
-    JComboBox valuesCombo = new JComboBox();
-    valuesCombo.setRenderer(new DefaultListCellRenderer(){
-      public Component getListCellRendererComponent(final JList list,
-                                                    final Object value,
-                                                    final int index, final boolean isSelected, final boolean cellHasFocus) {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        String text =((Charset)value).name();
-        setText(text);
-        return component;
-      }
-    });
-
     valueColumn.setCellEditor(new DefaultCellEditor(new JComboBox()){
       private VirtualFile myVirtualFile;
-
       {
         delegate = new EditorDelegate() {
             public void setValue(Object value) {
@@ -117,17 +104,16 @@ public class FileTreeTable extends TreeTable {
             }
           }
         };
-        final JComponent comboComponent = changeAction.createCustomComponent(changeAction.getTemplatePresentation());
+        Presentation templatePresentation = changeAction.getTemplatePresentation();
+        final JComponent comboComponent = changeAction.createCustomComponent(templatePresentation);
 
         DataContext dataContext = SimpleDataContext.getSimpleContext(DataConstants.VIRTUAL_FILE, myVirtualFile, SimpleDataContext.getProjectContext(myProject));
-        AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, changeAction.getTemplatePresentation(), ActionManager.getInstance(), 0);
+        AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
         changeAction.update(event);
         editorComponent = comboComponent;
 
         Charset charset = (Charset)myModel.getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
-        if (charset != null) {
-          changeAction.getTemplatePresentation().setText(charset.name());
-        }
+        templatePresentation.setText(charset == null ? "" : charset.name());
         comboComponent.revalidate();
 
         return editorComponent;
@@ -314,7 +300,7 @@ public class FileTreeTable extends TreeTable {
       if (userObject instanceof Project) return;
       VirtualFile file = (VirtualFile)userObject;
       Charset charset = (Charset)aValue;
-      if (charset == ChooseFileEncodingAction.NO_ENCODING) {
+      if (charset == ChooseFileEncodingAction.NO_ENCODING || charset == null) {
         myCurrentMapping.remove(file);
       }
       else {
