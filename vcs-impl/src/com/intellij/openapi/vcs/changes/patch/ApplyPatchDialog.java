@@ -235,7 +235,9 @@ public class ApplyPatchDialog extends DialogWrapper {
     final String fileName = myFileNameField.getText().replace(File.separatorChar, '/');
     final VirtualFile patchFile = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
+        final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileName);
+        if (file != null) file.refresh(false, false);
+        return file;
       }
     });
     if (patchFile == null) {
