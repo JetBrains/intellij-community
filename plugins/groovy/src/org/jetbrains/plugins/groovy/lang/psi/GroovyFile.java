@@ -35,7 +35,7 @@ public interface GroovyFile extends GroovyFileBase, GrMethodOwner {
 
   GrPackageDefinition getPackageDefinition();
 
-  void setPackageDefinition(String packageName);
+  void setPackageName(String packageName);
 
   GrMethod addMethod(@NotNull GrMethod method) throws IncorrectOperationException;
 }

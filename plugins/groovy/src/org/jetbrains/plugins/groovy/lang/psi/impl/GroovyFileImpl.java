@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -241,7 +242,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     return myScriptClass;
   }
 
-  public void setPackageDefinition(String packageName) {
+  public void setPackageName(String packageName) {
     final ASTNode fileNode = getNode();
     assert fileNode != null;
     final GrPackageDefinition currentPackage = getPackageDefinition();
