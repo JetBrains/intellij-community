@@ -35,7 +35,6 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
       "GroovyClass.groovy",
       "GroovyScript.groovy",
       "GrailsDomainClass.groovy",
-      "GrailsController.groovy",
       "GrailsTests.groovy",
   };
 
