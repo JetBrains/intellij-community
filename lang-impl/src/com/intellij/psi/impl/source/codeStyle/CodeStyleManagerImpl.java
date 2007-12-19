@@ -246,7 +246,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (element == null && offset != file.getTextLength()) {
       return offset;
     }
-    if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+    if (element instanceof PsiComment && insideElement(element, offset)) {
       return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
@@ -315,7 +315,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (element == null && offset != file.getTextLength()) {
       return offset;
     }
-    if (element != null && !(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+    if (element instanceof PsiComment && insideElement(element, offset)) {
       return CharArrayUtil.shiftForward(file.getViewProvider().getContents(), offset, " \t");
     }
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
@@ -370,7 +370,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     {
       return null;
     }
-    if (!(element instanceof PsiWhiteSpace) && insideElement(element, offset)) {
+    if (element instanceof PsiComment && insideElement(element, offset)) {
       return null;
     }
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
