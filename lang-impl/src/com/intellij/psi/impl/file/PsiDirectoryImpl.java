@@ -332,7 +332,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       VirtualFile copyVFile;
       if (parent.getFileSystem() == vFile.getFileSystem()) {
         copyVFile = vFile.copy(this, parent, newName);
-      } else {
+      }
+      else {
         copyVFile = VfsUtil.copyFile(this, vFile, parent, newName);
       }
       final PsiFile copyPsi = myManager.findFile(copyVFile);

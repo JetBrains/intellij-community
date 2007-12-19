@@ -78,7 +78,8 @@ public class EncodingManager implements ApplicationComponent {
 
   public void restoreEncoding(final VirtualFile virtualFile, final Charset charsetBefore) {
     Charset actual = getEncoding(virtualFile, true);
-    if (Comparing.equal(actual, charsetBefore)) return;
-    setEncoding(virtualFile, charsetBefore);
+    if (!Comparing.equal(actual, charsetBefore)) {
+      setEncoding(virtualFile, charsetBefore);
+    }
   }
 }
