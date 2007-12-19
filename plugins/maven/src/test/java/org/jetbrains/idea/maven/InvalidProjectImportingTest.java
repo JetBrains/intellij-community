@@ -26,7 +26,6 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
                           "   <extension>" +
                           "     <groupId>group</groupId>" +
                           "     <artifactId>bla-bla-bla</artifactId>" +
-                          "     <version>1</version>" +
                           "    </extension>" +
                           "  </extensions>" +
                           "</build>");

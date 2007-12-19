@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.text.SimpleDateFormat;
 
 public abstract class ImportingTestCase extends IdeaTestCase {
   private File dir;
@@ -402,8 +403,8 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     }
   }
 
-  protected void putArtefactInLocalRepository(String groupId, String artefactId, String version, String timestamp, String build) {
-    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata>" +
+  protected void putArtifactInLocalRepository(String groupId, String artefactId, String version, String timestamp, String build) {
+    String rawXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata>" +
                  "  <groupId>%s</groupId>" +
                  "  <artifactId>%s</artifactId>" +
                  "  <version>%s</version>" +
@@ -412,14 +413,22 @@ public abstract class ImportingTestCase extends IdeaTestCase {
                  "      <timestamp>%s</timestamp>" +
                  "      <buildNumber>%s</buildNumber>" +
                  "    </snapshot>" +
-                 "    <lastUpdated>00000000000000</lastUpdated>" +
+                 "    <lastUpdated>0000000000000</lastUpdated>" +
                  "  </versioning>" +
                  "</metadata>";
 
-    String formatted = String.format(xml, groupId, artefactId, version, timestamp, build);
-    String name = groupId + "/" + artefactId + "/" + version + "/maven-metadata-internal.xml";
+    String xml = String.format(rawXml, groupId, artefactId, version, timestamp, build);
 
-    writeFile(new File(repoDir, name), formatted);
+    String currentDate = new SimpleDateFormat("yyyy-MM-dd HH\\:mm\\:ss +0300").format(new Date());
+    String prop = "internal.maven-metadata-internal.xml.lastUpdated=" + currentDate;
+
+    String dir = groupId + "/" + artefactId + "/" + version + "/";
+
+    String xmlName = dir + "/maven-metadata-internal.xml";
+    String propName = dir + "/resolver-status.properties";
+
+    writeFile(new File(repoDir, xmlName), xml);
+    writeFile(new File(repoDir, propName), prop);
   }
 
   private void writeFile(File f, String string) {

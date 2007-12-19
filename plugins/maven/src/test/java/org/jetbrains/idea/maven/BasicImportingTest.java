@@ -296,6 +296,11 @@ public class BasicImportingTest extends ImportingTestCase {
   }
 
   public void testSnapshotDependencyToLibrary() throws Exception {
+    // this test indicates changes in maven embedder.
+    // if it fails, then it is possible that either repository layout was changed
+    // (that we assume in putArtifactInLocalRepository method),
+    // or the logic of SNAPSHOT artifact resolution was changed. 
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -315,7 +320,7 @@ public class BasicImportingTest extends ImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    putArtefactInLocalRepository("someGroup", "someArtifact", "1-SNAPSHOT", "20000101120000", "1");
+    putArtifactInLocalRepository("someGroup", "someArtifact", "1-SNAPSHOT", "20000101120000", "1");
     importProject();
 
     assertModules("project");
@@ -356,7 +361,7 @@ public class BasicImportingTest extends ImportingTestCase {
                           "<artifactId>m2</artifactId>" +
                           "<version>1-SNAPSHOT</version>");
 
-    putArtefactInLocalRepository("test", "m2", "1-SNAPSHOT", "20000101120000", "2");
+    putArtifactInLocalRepository("test", "m2", "1-SNAPSHOT", "20000101120000", "2");
     importProject();
 
     assertModules("project", "m1", "m2");
