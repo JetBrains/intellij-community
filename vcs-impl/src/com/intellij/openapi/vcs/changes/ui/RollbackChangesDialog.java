@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       AbstractVcs vcs = (AbstractVcs)affectedVcs.toArray()[0];
       final RollbackEnvironment rollbackEnvironment = vcs.getRollbackEnvironment();
       if (rollbackEnvironment != null) {
-        final String rollbackOperationName = rollbackEnvironment.getRollbackOperationName();
+        final String rollbackOperationName = rollbackEnvironment.getRollbackOperationName().replace(Character.toString(UIUtil.MNEMONIC), "");
         setTitle(VcsBundle.message("changes.action.rollback.custom.title", rollbackOperationName).replace("_", ""));
         setOKButtonText(rollbackOperationName);
       }
