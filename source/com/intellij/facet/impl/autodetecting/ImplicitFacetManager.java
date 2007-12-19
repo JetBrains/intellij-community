@@ -207,10 +207,15 @@ public class ImplicitFacetManager implements Disposable {
       return;
     }
 
-    facet.setImplicit(false);
+    markExplicit(facet);
     onImplicitFacetChanged();
     ModulesConfigurator.showFacetSettingsDialog(facet, null);
     onImplicitFacetChanged();
+  }
+
+  public void markExplicit(final Facet facet) {
+    facet.setImplicit(false);
+    myAutodetectingManager.fireImplicitFacetAccepted(facet);
   }
 
   public void disableDetectionInFile(final ImplicitFacetInfo implicitFacet) {
@@ -235,7 +240,7 @@ public class ImplicitFacetManager implements Disposable {
   }
 
   public void skipImplicitFacet(final Facet facet) {
-    facet.setImplicit(false);
+    markExplicit(facet);
     onImplicitFacetChanged();
   }
 
@@ -250,7 +255,7 @@ public class ImplicitFacetManager implements Disposable {
   private class MyProjectWideFacetListener<F extends Facet<C>, C extends FacetConfiguration> extends ProjectWideFacetAdapter<F> {
     public void facetConfigurationChanged(final F facet) {
       if (facet.isImplicit()) {
-        facet.setImplicit(false);
+        markExplicit(facet);
         onImplicitFacetChanged();
       }
     }

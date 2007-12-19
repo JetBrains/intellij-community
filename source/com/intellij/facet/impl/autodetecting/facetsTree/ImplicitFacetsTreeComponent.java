@@ -87,7 +87,7 @@ public class ImplicitFacetsTreeComponent {
     for (DetectedFacetsTree.FacetNode facetNode : facetNodes) {
       ImplicitFacetInfo implicitFacetInfo = ((FacetNodeImpl)facetNode).getImplicitFacetInfo();
       if (accept && facetNode.isChecked()) {
-        implicitFacetInfo.getFacet().setImplicit(false);
+        myImplicitFacetManager.markExplicit(implicitFacetInfo.getFacet());
       }
       else {
         myImplicitFacetManager.disableDetectionInFile(implicitFacetInfo);

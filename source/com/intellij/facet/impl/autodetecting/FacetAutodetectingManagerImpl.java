@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.ide.impl.convert.ProjectFileVersion;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.EventListener;
 
 /**
  * @author nik
@@ -62,7 +64,7 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
   private MergingUpdateQueue myMergingUpdateQueue;
   private ImplicitFacetManager myImplicitFacetManager;
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo = new DisabledAutodetectionInfo();
-
+  private EventDispatcher<ImplicitFacetListener> myImplicitFacetDispatcher = EventDispatcher.create(ImplicitFacetListener.class);
 
   public FacetAutodetectingManagerImpl(final Project project, PsiManager psiManager, FacetPointersManager facetPointersManager) {
     myProject = project;
@@ -272,6 +274,18 @@ public class FacetAutodetectingManagerImpl extends FacetAutodetectingManager imp
 
   public void disableAutodetectionInFiles(@NotNull final FacetType type, @NotNull final Module module, @NotNull final String... fileUrls) {
     getState().addDisabled(type.getStringId(), module.getName(), fileUrls);
+  }
+
+  public void addImplicitFacetListener(@NotNull ImplicitFacetListener listener) {
+    myImplicitFacetDispatcher.addListener(listener);
+  }
+
+  public void fireImplicitFacetAccepted(final @NotNull Facet facet) {
+    myImplicitFacetDispatcher.getMulticaster().implicitFacetAccepted(facet);
+  }
+
+  public interface ImplicitFacetListener extends EventListener {
+    void implicitFacetAccepted(@NotNull Facet facet);
   }
 
   private class FacetOnTheFlyDetectorRegistryImpl<C extends FacetConfiguration, F extends Facet<C>> implements FacetOnTheFlyDetectorRegistry<C> {
