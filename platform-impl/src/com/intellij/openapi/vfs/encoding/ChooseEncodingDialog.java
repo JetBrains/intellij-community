@@ -46,7 +46,7 @@ public class ChooseEncodingDialog extends DialogWrapper {
                                                     final int index, final boolean isSelected, final boolean cellHasFocus) {
         Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         Charset charset = (Charset)value;
-        setText(charset.name());
+        setText(charset.displayName());
         return component;
       }
     });

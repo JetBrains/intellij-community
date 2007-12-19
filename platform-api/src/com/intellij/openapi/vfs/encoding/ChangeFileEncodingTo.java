@@ -17,7 +17,7 @@ class ChangeFileEncodingTo extends AnAction {
 
   ChangeFileEncodingTo(@Nullable VirtualFile file, @NotNull Charset charset) {
     super(charset.toString(),  "Change " + (file == null ? "default" : "file '"+file.getName()+"'") +
-                               " encoding to '"+charset.name()+"'.", null);
+                               " encoding to '"+charset.displayName()+"'.", null);
     myFile = file;
     myCharset = charset;
   }

@@ -48,7 +48,7 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
       text = result.getFirst();
       enabled = result.getSecond();
       if (file != null) {
-        setText(file.getCharset().name());
+        setText(file.getCharset().displayName());
       }
     }
     else {

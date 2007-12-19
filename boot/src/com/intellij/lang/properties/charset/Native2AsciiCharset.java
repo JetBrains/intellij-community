@@ -27,6 +27,10 @@ public class Native2AsciiCharset extends Charset {
     myBaseCharset = baseCharset == null ? Charset.forName(DEAFULT_ENCODING_NAME) : baseCharset;
   }
 
+  public String displayName() {
+    return getBaseCharset().displayName();
+  }
+
   public boolean contains(Charset cs) {
     return false;
   }

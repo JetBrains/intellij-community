@@ -55,7 +55,7 @@ public class FileTreeTable extends TreeTable {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         Charset t = (Charset)value;
         if (t != null) {
-          setText(t.name());
+          setText(t.displayName());
         }
         else {
           Object userObject = table.getModel().getValueAt(row, 0);
@@ -64,7 +64,7 @@ public class FileTreeTable extends TreeTable {
             Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
             boolean enabled = ChooseFileEncodingAction.isEnabled(myProject, file);
             if (charset != null) {
-              setText(charset.name());
+              setText(charset.displayName());
             }
             else if (!enabled) {
               setText("N/A");
@@ -113,7 +113,7 @@ public class FileTreeTable extends TreeTable {
         editorComponent = comboComponent;
 
         Charset charset = (Charset)myModel.getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
-        templatePresentation.setText(charset == null ? "" : charset.name());
+        templatePresentation.setText(charset == null ? "" : charset.displayName());
         comboComponent.revalidate();
 
         return editorComponent;
