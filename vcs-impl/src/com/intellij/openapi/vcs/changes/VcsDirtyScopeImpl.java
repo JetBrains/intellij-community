@@ -72,7 +72,7 @@ public class VcsDirtyScopeImpl extends VcsDirtyScope {
     return new THashSet<FilePath>(myDirtyDirectoriesRecursively);
   }
 
-  public synchronized void addDirtyDirRecursively(final FilePath newcomer) {
+  public void addDirtyDirRecursively(final FilePath newcomer) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
         synchronized (VcsDirtyScopeImpl.this) {
