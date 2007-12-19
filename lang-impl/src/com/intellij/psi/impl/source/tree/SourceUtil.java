@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -52,7 +52,7 @@ public class SourceUtil {
 
     TreeElement dummyExpr = (TreeElement)newChild.clone();
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(newChild);
-    new JavaDummyHolder(manager, parenthExpr, null, charTableByTree);
+    new DummyHolder(manager, parenthExpr, null, charTableByTree);
     parenthExpr.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
     TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
     TreeUtil.addChildren(parenthExpr, dummyExpr);

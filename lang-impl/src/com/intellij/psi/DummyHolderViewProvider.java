@@ -10,7 +10,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.testFramework.LightVirtualFile;
@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 public class DummyHolderViewProvider extends UserDataHolderBase implements FileViewProvider{
-  private JavaDummyHolder myHolder;
+  private DummyHolder myHolder;
   private PsiManager myManager;
   private final long myModificationStamp;
   private final LightVirtualFile myLightVirtualFile = new LightVirtualFile("DummyHolder");
@@ -96,7 +96,7 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
   public void rootChanged(PsiFile psiFile) {
   }
 
-  public void setDummyHolder(final JavaDummyHolder dummyHolder) {
+  public void setDummyHolder(final DummyHolder dummyHolder) {
     myHolder = dummyHolder;
     //myLightVirtualFile.setContent(null, getContents(), false);
   }
