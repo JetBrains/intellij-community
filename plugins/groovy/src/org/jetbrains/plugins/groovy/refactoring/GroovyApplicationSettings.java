@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.plugins.grails.addins.js.JavaScriptIntegrationSettings;
 
 /**
@@ -41,7 +42,8 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   public Boolean EXTRACT_METHOD_SPECIFY_TYPE = null;
   public String EXTRACT_METHOD_VISIBILITY = null;
 
-  transient private boolean myJsSupportEnabled = false;
+  @Transient
+  private boolean myJsSupportEnabled = false;
 
   public GroovyApplicationSettings getState() {
     return this;
@@ -56,7 +58,7 @@ public class GroovyApplicationSettings implements PersistentStateComponent<Groov
   }
 
   public boolean isJsSupportEnabled() {
-    return ServiceManager.getService(JavaScriptIntegrationSettings.class) != null && myJsSupportEnabled;
+    return myJsSupportEnabled;
   }
 
   public void setJsSupportEnabled(final boolean jsSupportEnabled) {
