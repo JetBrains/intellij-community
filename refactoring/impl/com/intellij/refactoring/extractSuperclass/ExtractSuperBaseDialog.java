@@ -4,7 +4,10 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
@@ -170,7 +173,7 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
                 if (aPackage != null) {
                   final PsiDirectory[] directories = aPackage.getDirectories(mySourceClass.getResolveScope());
                   if (directories.length >= 1) {
-                    myTargetDirectory = directories[0];
+                    myTargetDirectory = getDirUnderSameSourceRoot(directories);
                   }
                 }
                 myTargetDirectory
@@ -204,7 +207,23 @@ public abstract class ExtractSuperBaseDialog extends RefactoringDialog {
       setJavaDocPolicySetting(getJavaDocPolicy());
       closeOKAction();
     }
-  
+
+  private PsiDirectory getDirUnderSameSourceRoot(final PsiDirectory[] directories) {
+    final VirtualFile sourceFile = mySourceClass.getContainingFile().getVirtualFile();
+    if (sourceFile != null) {
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(sourceFile);
+      if (sourceRoot != null) {
+        for(PsiDirectory dir: directories) {
+          if (fileIndex.getSourceRootForFile(dir.getVirtualFile()) == sourceRoot) {
+            return dir;
+          }
+        }
+      }
+    }
+    return directories[0];
+  }
+
   protected abstract String getJavaDocPanelName();
 
   protected abstract String getExtractedSuperNameNotSpecifiedKey();
