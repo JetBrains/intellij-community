@@ -250,8 +250,8 @@ public class MoveClassesOrPackagesUtil {
       newClass = aClass;
       if (!newDirectory.equals(file.getContainingDirectory())) {
         aClass.getManager().moveFile(file, newDirectory);
-        if (file instanceof PsiJavaFile && newPackage != null) {
-          setPackageStatement((PsiJavaFile)file, newPackage);
+        if (file instanceof PsiClassOwner && newPackage != null) {
+          ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
         }
       }
     }
@@ -278,25 +278,6 @@ public class MoveClassesOrPackagesUtil {
           super.visitReferenceElement(reference);
         }
       });
-    }
-  }
-
-  private static void setPackageStatement(final PsiJavaFile javaFile, @NotNull final PsiPackage newPackage) throws IncorrectOperationException {
-    PsiManager manager = javaFile.getManager();
-    PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-    String packageName = newPackage.getQualifiedName();
-    if (packageStatement != null) {
-      if (packageName.length() > 0) {
-        packageStatement.getPackageReference().bindToElement(newPackage);
-      }
-      else {
-        packageStatement.delete();
-      }
-    }
-    else {
-      if (packageName.length() > 0) {
-        javaFile.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createPackageStatement(packageName));
-      }
     }
   }
 

@@ -192,6 +192,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     }
   }
 
+  public void setPackageName(final String packageName) throws IncorrectOperationException {
+    throw new IncorrectOperationException("Cannot set package name for compiled files");
+  }
+
   public PsiImportList getImportList() {
     return null;
   }

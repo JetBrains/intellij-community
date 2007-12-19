@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
+import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author ven
@@ -27,4 +28,14 @@ public interface PsiClassOwner {
    */
   @NotNull
   PsiClass[] getClasses();
+
+  /**
+   * Returns the name of the package to which the file belongs.
+   *
+   * @return the name specified in the package statement, or an empty string for a JSP page or
+   * file which has no package statement.
+   */
+  String getPackageName();
+
+  void setPackageName(String packageName) throws IncorrectOperationException;
 }
