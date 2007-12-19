@@ -19,36 +19,34 @@ import java.util.HashMap;
 import java.util.Map;
 
 class RootModelAdapter {
-
-  private final ModifiableRootModel modifiableRootModel;
-
-  private LibraryTable.ModifiableModel libraryTableModel;
+  private final ModifiableRootModel myRootModel;
+  private LibraryTable.ModifiableModel myLibraryTable;
 
   public RootModelAdapter(Module module) {
-    modifiableRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+    myRootModel = ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
   public void init(String root) {
-    for (ContentEntry contentEntry : modifiableRootModel.getContentEntries()) {
-      modifiableRootModel.removeContentEntry(contentEntry);
+    for (ContentEntry contentEntry : myRootModel.getContentEntries()) {
+      myRootModel.removeContentEntry(contentEntry);
     }
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);
     if (virtualFile != null) {
-      modifiableRootModel.addContentEntry(virtualFile);
+      myRootModel.addContentEntry(virtualFile);
     }
 
-    modifiableRootModel.inheritJdk(); // TODO should be able to import
-    modifiableRootModel.setExcludeOutput(true);
+    myRootModel.inheritJdk(); // TODO should be able to import
+    myRootModel.setExcludeOutput(true);
 
-    for (OrderEntry entry : modifiableRootModel.getOrderEntries()) {
+    for (OrderEntry entry : myRootModel.getOrderEntries()) {
       if (!(entry instanceof ModuleSourceOrderEntry) && !(entry instanceof JdkOrderEntry)) {
-        modifiableRootModel.removeOrderEntry(entry);
+        myRootModel.removeOrderEntry(entry);
       }
     }
   }
 
   public void resetRoots() {
-    for (ContentEntry contentEntry : modifiableRootModel.getContentEntries()) {
+    for (ContentEntry contentEntry : myRootModel.getContentEntries()) {
       for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
         if (!sourceFolder.isSynthetic()) {
           contentEntry.removeSourceFolder(sourceFolder);
@@ -63,22 +61,22 @@ class RootModelAdapter {
   }
 
   public void commit() {
-    if (libraryTableModel != null && libraryTableModel.isChanged()) {
-      libraryTableModel.commit();
+    if (myLibraryTable != null && myLibraryTable.isChanged()) {
+      myLibraryTable.commit();
     }
-    if (modifiableRootModel.isChanged()) {
-      modifiableRootModel.commit();
+    if (myRootModel.isChanged()) {
+      myRootModel.commit();
     }
     else {
-      modifiableRootModel.dispose();
+      myRootModel.dispose();
     }
   }
 
   private LibraryTable.ModifiableModel getLibraryModel() {
-    if (libraryTableModel == null) {
-      libraryTableModel = modifiableRootModel.getModuleLibraryTable().getModifiableModel();
+    if (myLibraryTable == null) {
+      myLibraryTable = myRootModel.getModuleLibraryTable().getModifiableModel();
     }
-    return libraryTableModel;
+    return myLibraryTable;
   }
 
   public void addSourceDir(String path, boolean testSource) {
@@ -92,13 +90,13 @@ class RootModelAdapter {
   }
 
   public void useProjectOutput() {
-    modifiableRootModel.inheritCompilerOutputPath(true);
+    myRootModel.inheritCompilerOutputPath(true);
   }
 
   public void useModuleOutput(String production, String test) {
-    modifiableRootModel.inheritCompilerOutputPath(false);
-    modifiableRootModel.setCompilerOutputPath(toUrl(production).getUrl());
-    modifiableRootModel.setCompilerOutputPathForTests(toUrl(test).getUrl());
+    myRootModel.inheritCompilerOutputPath(false);
+    myRootModel.setCompilerOutputPath(toUrl(production).getUrl());
+    myRootModel.setCompilerOutputPathForTests(toUrl(test).getUrl());
   }
 
   private Url toUrl(String path) {
@@ -107,10 +105,10 @@ class RootModelAdapter {
 
   ContentEntry findOrCreateContentRoot(Url url) {
     try {
-      for (ContentEntry e : modifiableRootModel.getContentEntries()) {
+      for (ContentEntry e : myRootModel.getContentEntries()) {
         if (FileUtil.isAncestor(new File(e.getUrl()), new File(url.getUrl()), false)) return e;
       }
-      return modifiableRootModel.addContentEntry(url.getUrl());
+      return myRootModel.addContentEntry(url.getUrl());
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -122,10 +120,10 @@ class RootModelAdapter {
 
     ModuleOrderEntry e;
     if (m != null) {
-      e = modifiableRootModel.addModuleOrderEntry(m);
+      e = myRootModel.addModuleOrderEntry(m);
     }
     else {
-      e = modifiableRootModel.addInvalidModuleEntry(moduleName);
+      e = myRootModel.addInvalidModuleEntry(moduleName);
     }
 
     e.setExported(true);
@@ -133,18 +131,35 @@ class RootModelAdapter {
 
   @Nullable
   private Module findModuleByName(String moduleName) {
-    ModuleManager mm = ModuleManager.getInstance(modifiableRootModel.getModule().getProject());
+    ModuleManager mm = ModuleManager.getInstance(myRootModel.getModule().getProject());
     return mm.findModuleByName(moduleName);
   }
 
-  void createModuleLibrary(String libraryName, String urlClasses, String urlSources, String urlJavadoc) {
+  void createModuleLibrary(String libraryName,
+                           String urlClasses,
+                           String urlSources,
+                           String urlJavadoc,
+                           boolean exportable) {
     final Library library = getLibraryModel().createLibrary(libraryName);
     final Library.ModifiableModel libraryModel = library.getModifiableModel();
     setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
     setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
     setUrl(libraryModel, urlJavadoc, OrderRootType.JAVADOC);
-    setExported(modifiableRootModel, library);
+
+    if (exportable) setExported(myRootModel, library);
     libraryModel.commit();
+  }
+
+  private void setExported(ModuleRootModel m, final Library library) {
+    m.processOrder(new RootPolicy<Object>() {
+      @Override
+      public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
+        if (!library.equals(e.getLibrary())) return null;
+
+        e.setExported(true);
+        return null;
+      }
+    }, null);
   }
 
   Map<String, String> getModuleLibraries() {
@@ -179,19 +194,8 @@ class RootModelAdapter {
     }
   }
 
-  private static void setExported(ModuleRootModel moduleRootModel, final Library library) {
-    for (OrderEntry orderEntry : moduleRootModel.getOrderEntries()) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
-        if (library.equals(libraryOrderEntry.getLibrary())) {
-          libraryOrderEntry.setExported(true);
-        }
-      }
-    }
-  }
-
   void resolveModuleDependencies(Map<String, String> libraryNameToModule) {
-    OrderEntry[] entries = modifiableRootModel.getOrderEntries();
+    OrderEntry[] entries = myRootModel.getOrderEntries();
     boolean dirty = false;
     for (int i = 0; i != entries.length; i++) {
       if (entries[i] instanceof LibraryOrderEntry) {
@@ -200,20 +204,20 @@ class RootModelAdapter {
           final String moduleName = libraryNameToModule.get(libraryOrderEntry.getLibraryName());
           if (moduleName != null) {
             dirty = true;
-            modifiableRootModel.removeOrderEntry(libraryOrderEntry);
-            entries[i] = modifiableRootModel.addInvalidModuleEntry(moduleName);
+            myRootModel.removeOrderEntry(libraryOrderEntry);
+            entries[i] = myRootModel.addInvalidModuleEntry(moduleName);
           }
         }
       }
     }
     if (dirty) {
-      modifiableRootModel.rearrangeOrderEntries(entries);
+      myRootModel.rearrangeOrderEntries(entries);
     }
   }
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     try {
-      modifiableRootModel.setLanguageLevel(languageLevel);
+      myRootModel.setLanguageLevel(languageLevel);
     }
     catch (IllegalArgumentException e) {
       //bad value was stored

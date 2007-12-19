@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -29,9 +28,7 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author Vladislav.Kaznacheev
- */
+
 public class MavenToIdeaConverter {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenToIdeaConverter");
 
@@ -266,7 +263,7 @@ public class MavenToIdeaConverter {
   }
 
   private void configDependencies(RootModelAdapter m, MavenProject p) {
-    for (Artifact artifact : extractDependencies(p)) {
+    for (Artifact artifact : ProjectUtil.extractDependencies(p)) {
       MavenId id = new MavenId(artifact);
 
       if (isIgnored(id)) continue;
@@ -277,10 +274,12 @@ public class MavenToIdeaConverter {
       }
       else {
         String artifactPath = artifact.getFile().getPath();
+        boolean isExportable = ProjectUtil.isExpartableDependency(artifact);
         m.createModuleLibrary(myMapping.getLibraryName(id),
                               getUrl(artifactPath, null),
                               getUrl(artifactPath, SOURCES_CLASSIFIER),
-                              getUrl(artifactPath, JAVADOC_CLASSIFIER));
+                              getUrl(artifactPath, JAVADOC_CLASSIFIER),
+                              isExportable);
       }
     }
   }
@@ -294,34 +293,6 @@ public class MavenToIdeaConverter {
     // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
     MavenId baseVersionId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getBaseVersion());
     return myMapping.getModuleName(baseVersionId);
-  }
-
-  private List<Artifact> extractDependencies(MavenProject mavenProject) {
-    Map<String, Artifact> projectIdToArtifact = new TreeMap<String, Artifact>();
-
-    for (Artifact artifact : (Collection<Artifact>)mavenProject.getArtifacts()) {
-      if (isSupportedArtifact(artifact)) {
-        String projectId = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getClassifier();
-
-        Artifact existing = projectIdToArtifact.get(projectId);
-        if (existing == null ||
-            new DefaultArtifactVersion(existing.getVersion()).compareTo(new DefaultArtifactVersion(artifact.getVersion())) < 0) {
-          projectIdToArtifact.put(projectId, artifact);
-        }
-      }
-    }
-    return new ArrayList<Artifact>(projectIdToArtifact.values());
-  }
-
-  private boolean isSupportedArtifact(Artifact a) {
-    String t = a.getType();
-    return t.equalsIgnoreCase(JAR_TYPE) ||
-           t.equalsIgnoreCase("test-jar") ||
-           t.equalsIgnoreCase("ejb") ||
-           t.equalsIgnoreCase("ear") ||
-           t.equalsIgnoreCase("sar") ||
-           t.equalsIgnoreCase("war") ||
-           t.equalsIgnoreCase("ejb-client");
   }
 
   private static LanguageLevel getLanguageLevel(final String level) {

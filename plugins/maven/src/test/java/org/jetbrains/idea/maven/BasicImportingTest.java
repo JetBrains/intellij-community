@@ -28,6 +28,48 @@ public class BasicImportingTest extends ImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
+  public void testOnlyCompileAndRuntimeDependenciesAreExported() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>compile</artifactId>" +
+                  "    <scope>compile</scope>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>runtime</artifactId>" +
+                  "    <scope>runtime</scope>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>test</artifactId>" +
+                  "    <scope>test</scope>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>provided</artifactId>" +
+                  "    <scope>provided</scope>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>test</groupId>" +
+                  "    <artifactId>system</artifactId>" +
+                  "    <scope>system</scope>" +
+                  "    <systemPath>${java.home}/lib/tools.jar</systemPath>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertExportedModuleLibDeps("project", "test:compile:1", "test:runtime:1");
+  }
+
   public void testProjectWithEnvironmentProperty() throws IOException {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 
@@ -378,8 +420,9 @@ public class BasicImportingTest extends ImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
+
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_1_4, ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForProject());
   }
 
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() throws Exception {
@@ -388,7 +431,7 @@ public class BasicImportingTest extends ImportingTestCase {
                   "<version>1</version>");
 
     assertModules("project");
-    assertNull(ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
+    assertNull(getLanguageLevelForProject());
   }
 
   public void testLanguageLevelWhenConfigurationIsNotSpecified() throws Exception {
@@ -404,8 +447,9 @@ public class BasicImportingTest extends ImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
+
     assertModules("project");
-    assertNull(ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
+    assertNull(getLanguageLevelForProject());
   }
 
   public void testLanguageLevelWhenSourseLanguageLevelIsNotSpecified() throws Exception {
@@ -423,8 +467,13 @@ public class BasicImportingTest extends ImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
+
     assertModules("project");
-    assertNull(ModuleRootManager.getInstance(getModule("project")).getLanguageLevel());
+    assertNull(getLanguageLevelForProject());
+  }
+
+  private LanguageLevel getLanguageLevelForProject() {
+    return ModuleRootManager.getInstance(getModule("project")).getLanguageLevel();
   }
 
   public void testProjectWithBuiltExtension() throws Exception {
