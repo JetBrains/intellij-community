@@ -90,6 +90,7 @@ public class SelectWordHandler extends EditorActionHandler {
 
     while (element instanceof PsiWhiteSpace) {
       while (element.getNextSibling() == null) {
+        if (element instanceof PsiFile) return;
         final PsiElement parent = element.getParent();
         final PsiElement[] children = parent.getChildren();
 
