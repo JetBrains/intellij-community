@@ -151,8 +151,10 @@ public class Tab {
         break;
       case left:
         setLeftDetached(detached);
+        break;
       case right:
         setRightDetached(detached);
+        break;
     }
   }
 

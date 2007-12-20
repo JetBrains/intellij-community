@@ -347,6 +347,7 @@ public class GridCell implements Disposable {
     myRestoreFromDetach.add(myContainer.detach(contents));
     myRestoreFromDetach.add(new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
+        myTabs.updateTabActions();
         ensureVisible();
         return new ActionCallback.Done();
       }
@@ -358,6 +359,8 @@ public class GridCell implements Disposable {
     myPopup.show(myContext.getContentManager().getComponent());
 
     myContext.saveUiState();
+
+    myTabs.updateTabActions();
   }
 
   private void ensureVisible() {
@@ -388,6 +391,9 @@ public class GridCell implements Disposable {
           myRestoreFromDetach.restoreInGrid();
           myRestoreFromDetach = null;
           myContext.saveUiState();
+          myTabs.updateTabActions();
+          myTabs.layout();
+          myTabs.repaint();
           return Boolean.TRUE;
         }
       });

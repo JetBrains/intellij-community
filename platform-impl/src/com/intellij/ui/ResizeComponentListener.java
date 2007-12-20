@@ -38,7 +38,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       if (myDirection == Cursor.DEFAULT_CURSOR){
         myStartPoint = null;
       } else {
-        if (!SystemInfo.isMac) {
+        if (isToShowBorder()) {
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
       }
@@ -63,7 +63,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   private void endOperation() {
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow != null) {
-      if (!SystemInfo.isMac) {
+      if (isToShowBorder()) {
         myComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
       }
       popupWindow.validate();
@@ -73,6 +73,11 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     }
     myStartPoint = null;
     myDirection = -1;
+  }
+
+  private boolean isToShowBorder() {
+    //return !SystemInfo.isMac;
+    return false;
   }
 
   private void doResize(final Point point) {
@@ -139,7 +144,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (popupWindow == null) return;
     final int cursor = getDirection(point, popupWindow.getBounds());
     if (cursor != Cursor.DEFAULT_CURSOR){
-      if (!SystemInfo.isMac) {
+      if (isToShowBorder()) {
         if (myStartPoint == null) {
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
@@ -152,7 +157,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   }
 
   private void clearBorder(final Window popupWindow) {
-    if (!SystemInfo.isMac){
+    if (isToShowBorder()){
       myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
       popupWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
@@ -164,14 +169,14 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     final Window popupWindow = SwingUtilities.windowForComponent(myComponent);
     if (popupWindow == null) return;
     if (myStartPoint != null) {
-      if (!SystemInfo.isMac) {
+      if (isToShowBorder()) {
         popupWindow.setCursor(Cursor.getPredefinedCursor(myDirection));
       }
       doResize(point);
       myStartPoint = point;
       e.consume();
     } else {
-      if (!SystemInfo.isMac) {
+      if (isToShowBorder()) {
         final int cursor = getDirection(point, popupWindow.getBounds());
         popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
       }
