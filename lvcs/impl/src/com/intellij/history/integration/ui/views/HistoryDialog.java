@@ -245,24 +245,40 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   private boolean askForProceeding(Reverter r) throws IOException {
     List<String> questions = r.askUserForProceeding();
-    if (!questions.isEmpty()) {
-      String m = questions.get(0) + "\n" + message("message.do.you.want.to.proceed");
-      return myGateway.askForProceeding(m);
+    if (questions.isEmpty()) return true;
+
+    return myGateway.askForProceeding(message("message.do.you.want.to.proceed", formatQuestions(questions)));
+  }
+
+  private String formatQuestions(List<String> questions) {
+    // format into something like this:
+    // 1) message one
+    // message one continued
+    // 2) message two
+    // message one continued
+    // ...
+
+    if (questions.size() == 1) return questions.get(0);
+
+    String result = "";
+    for (int i = 0; i < questions.size(); i++) {
+      result += (i + 1) + ") " + questions.get(i) + "\n";
     }
-    return true;
+    return result.substring(0, result.length() - 1);
   }
 
   private void showRevertErrors(List<String> errors) {
-    String formatted = "";
-    if (errors.size() == 1) {
-      formatted += errors.get(0);
-    }
-    else {
-      for (String e : errors) {
-        formatted += "\n    -" + e;
-      }
-    }
-    myGateway.showError(message("message.can.not.revert.because", formatted));
+    myGateway.showError(message("message.can.not.revert.because", formatErrors(errors)));
+  }
+
+  private String formatErrors(List<String> errors) {
+    if (errors.size() == 1) return errors.get(0);
+
+    String result = "";
+    for (String e : errors) {
+      result += "\n    -" + e;
+    }    
+    return result;
   }
 
   private boolean isCreatePatchEnabled() {
