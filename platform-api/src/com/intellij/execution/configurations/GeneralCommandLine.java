@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,6 +134,7 @@ public class GeneralCommandLine {
     }
   }
 
+  @Nullable
   private String[] getEnvParamsArray() {
     if (myEnvParams == null) {
       return null;
@@ -141,7 +143,18 @@ public class GeneralCommandLine {
     if (myPassParentEnvs) {
       envParams.putAll(System.getenv());
     }
-    envParams.putAll(myEnvParams);
+    for (String envKey : myEnvParams.keySet()) {
+      String val = myEnvParams.get(envKey);
+      String parentValue = envParams.get(envKey);
+      if (parentValue != null) {
+        if (val != null) {
+          val = parentValue + File.pathSeparator + val;
+        } else {
+          val = parentValue;
+        }
+      }
+      envParams.put(envKey, val);
+    }
     final String[] result = new String[envParams.size()];
     int i=0;
     for (final String key : envParams.keySet()) {
