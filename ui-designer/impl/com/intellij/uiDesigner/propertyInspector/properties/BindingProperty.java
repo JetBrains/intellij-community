@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Anton Katilin
@@ -56,8 +57,7 @@ public final class BindingProperty extends Property<RadComponent, String> {
     }
   };
   private final BindingEditor myEditor;
-  @NonNls private static final String PREFIX_HTML = "html";
-  @NonNls private static final String PREFIX_BODY = "body";
+  @NonNls private static final String PREFIX_HTML = "<html>";
 
   public BindingProperty(final Project project){
     super(null, "field name");
@@ -278,18 +278,12 @@ public final class BindingProperty extends Property<RadComponent, String> {
   }
 
   @Nullable
-  public static String suggestBindingFromText(final RadComponent component, final String text) {
+  public static String suggestBindingFromText(final RadComponent component, String text) {
+    if (StringUtil.startsWithIgnoreCase(text, PREFIX_HTML)) {
+      text = Pattern.compile("<.+?>").matcher(text).replaceAll("");
+    }
     ArrayList<String> words = new ArrayList<String>(StringUtil.getWordsIn(text));
     if (words.size() > 0) {
-      if (words.get(0).equalsIgnoreCase(PREFIX_HTML) && words.get(words.size()-1).equalsIgnoreCase(PREFIX_HTML)) {
-        words.remove(0);
-        words.remove(words.size()-1);
-      }
-      if (words.get(0).equalsIgnoreCase(PREFIX_BODY) && words.get(words.size()-1).equalsIgnoreCase(PREFIX_BODY)) {
-        words.remove(0);
-        words.remove(words.size()-1);
-      }
-
       StringBuilder nameBuilder = new StringBuilder(StringUtil.decapitalize(words.get(0)));
       for(int i=1; i<words.size() && i < 4; i++) {
         nameBuilder.append(StringUtil.capitalize(words.get(i)));
