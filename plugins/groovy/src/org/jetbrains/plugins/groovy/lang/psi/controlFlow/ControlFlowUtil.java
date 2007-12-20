@@ -14,9 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import com.intellij.util.containers.HashSet;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author ven
@@ -48,5 +50,41 @@ public class ControlFlowUtil {
     }
     postorder[curr.num()] = --currN;
     return currN;
+  }
+
+  //just a single depth-first traversal, no need for DFA
+  public static Instruction[] getReadsWithoutPriorWrites(Instruction[] flow) {
+    List<Instruction> result = new ArrayList<Instruction>();
+    Set<String> written = new HashSet<String>();
+    boolean[] visited = new boolean[flow.length];
+    for (int i = 0; i < visited.length; i++) visited[i] = false;
+    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
+    for (int i = 0; i < flow.length; i++) {
+      if (!visited[i]) {
+         doVisitForReadsBeforeWrites(flow[i], flow, env, written, result, visited);
+      }
+    }
+
+    return result.toArray(new Instruction[result.size()]);
+  }
+
+  private static void doVisitForReadsBeforeWrites(Instruction curr, Instruction[] flow, CallEnvironment env, Set<String> written, List<Instruction> result, boolean[] visited) {
+    visited[curr.num()] = true;
+
+    if (curr instanceof ReadWriteVariableInstruction) {
+      ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
+      String name = readWriteInsn.getVariableName();
+      if (!readWriteInsn.isWrite() && !written.contains(name)) {
+        result.add(curr);
+      }
+
+      written.add(name); //do not flag read for the second time
+    }
+
+    for (Instruction succ : curr.succ(env)) {
+      if (!visited[succ.num()]) {
+        doVisitForReadsBeforeWrites(succ, flow, env, written, result, visited);
+      }
+    }
   }
 }
