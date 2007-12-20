@@ -2,22 +2,22 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 
 /**
  * @author max
@@ -132,21 +132,11 @@ public class PropertiesFilesManager implements ApplicationComponent {
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
       public void run() {
         Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());
-        /*
-        Editor[] editors = EditorFactory.getInstance().getAllEditors();
-        for (Editor editor : editors) {
-          VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
-          if (virtualFile == null || virtualFile instanceof LightVirtualFile) continue;
-
-          FileType fileType = myFileTypeManager.getFileTypeByFile(virtualFile);
-          if (fileType == StdFileTypes.PROPERTIES) {
-            virtualFile.getFileSystem().forceRefreshFiles(false, virtualFile);
-            filesToRefresh.remove(virtualFile);
-          }
-        }
-        */
         VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
-//        LocalFileSystem.getInstance().forceRefreshFiles(true, virtualFiles);
+        //force to re-detect encoding
+        for (VirtualFile virtualFile : virtualFiles) {
+          virtualFile.setCharset(null);
+        }
         FileDocumentManager.getInstance().reloadFiles(virtualFiles);
       }
     });
