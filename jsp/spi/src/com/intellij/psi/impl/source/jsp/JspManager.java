@@ -30,6 +30,9 @@ public abstract class JspManager {
     return project.getComponent(JspManager.class);
   }
 
+  @Nullable
+  public abstract String getTaglibUri(final @NotNull XmlFile taglibFile);
+
   public abstract String[] getPossibleTldUris(JspFile file);
 
   public abstract String[] getPossibleTldUris(Module module);
