@@ -44,9 +44,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       return;
     }
 
-    PsiManager psiManager = myReferenceExpression.getManager();
-    Project project = psiManager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    Project project = myReferenceExpression.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     PsiFile targetFile = targetClass.getContainingFile();
 
@@ -59,8 +58,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       boolean isInline = false;
       PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
       PsiStatement anchor = getAnchor(expressions);
-      if (anchor instanceof PsiExpressionStatement && ((PsiExpressionStatement) anchor).getExpression() instanceof PsiAssignmentExpression) {
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression) ((PsiExpressionStatement) anchor).getExpression();
+      if (anchor instanceof PsiExpressionStatement && ((PsiExpressionStatement)anchor).getExpression() instanceof PsiAssignmentExpression) {
+        PsiAssignmentExpression assignment = (PsiAssignmentExpression)((PsiExpressionStatement)anchor).getExpression();
         if (assignment.getLExpression().textMatches(myReferenceExpression)) {
           initializer = assignment.getRExpression();
           isInline = true;
@@ -79,7 +78,8 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       }
 
       PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
-      boolean isFinal = CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
+      boolean isFinal =
+        CodeStyleSettingsManager.getSettings(project).GENERATE_FINAL_LOCALS && !CreateFromUsageUtils.isAccessedForWriting(expressions);
       var.getModifierList().setModifierProperty(PsiModifier.FINAL, isFinal);
 
       var = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(var);

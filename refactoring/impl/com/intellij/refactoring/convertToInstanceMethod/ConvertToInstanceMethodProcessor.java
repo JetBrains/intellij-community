@@ -78,8 +78,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected UsageInfo[] findUsages() {
     LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
-    final PsiManager manager = myMethod.getManager();
-    final Project project = manager.getProject();
+    final Project project = myMethod.getProject();
 
     final PsiReference[] methodReferences =
       ReferencesSearch.search(myMethod, GlobalSearchScope.projectScope(project), false).toArray(new PsiReference[0]);

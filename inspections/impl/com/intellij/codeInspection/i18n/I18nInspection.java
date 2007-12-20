@@ -756,10 +756,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (containingClass == null) {
       return false;
     }
-    final PsiManager manager = expression.getManager();
-    final Project project = manager.getProject();
+    final Project project = expression.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass junitAssert = JavaPsiFacade.getInstance(manager.getProject()).findClass("junit.framework.Assert", scope);
+    final PsiClass junitAssert = JavaPsiFacade.getInstance(project).findClass("junit.framework.Assert", scope);
     return junitAssert != null && !containingClass.isInheritor(junitAssert, true);
   }
 
@@ -772,8 +771,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (!(grandparent instanceof PsiNewExpression)) {
       return false;
     }
-    final PsiJavaCodeReferenceElement reference =
-      ((PsiNewExpression)grandparent).getClassReference();
+    final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)grandparent).getClassReference();
     if (reference == null) {
       return false;
     }
@@ -782,10 +780,9 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
     final PsiClass aClass = (PsiClass)referent;
-    final PsiManager manager = expression.getManager();
-    final Project project = manager.getProject();
+    final Project project = expression.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass throwable = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Throwable", scope);
+    final PsiClass throwable = JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope);
     return throwable != null && aClass.isInheritor(throwable, true);
   }
 

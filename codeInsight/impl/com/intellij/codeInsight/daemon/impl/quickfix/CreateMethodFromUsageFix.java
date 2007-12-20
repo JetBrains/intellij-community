@@ -97,17 +97,13 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (targetClass == null) return;
     PsiMethodCallExpression expression = getMethodCall();
     if (expression == null) return;
-    PsiManager psiManager = expression.getManager();
-    final Project project = psiManager.getProject();
+    final Project project = expression.getProject();
     PsiReferenceExpression ref = expression.getMethodExpression();
 
     if (isValidElement(expression)) return;
 
     PsiClass parentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(expression,
-      PsiMethod.class,
-      PsiField.class,
-      PsiClassInitializer.class);
+    PsiMember enclosingContext = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiField.class, PsiClassInitializer.class);
 
 
     final PsiFile targetFile = targetClass.getContainingFile();
@@ -115,7 +111,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     String methodName = ref.getReferenceName();
 
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
       PsiMethod method = factory.createMethod(methodName, PsiType.VOID);
 
@@ -162,11 +158,12 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       PsiMethodCallExpression methodCall = getMethodCall();
       if (methodCall == null) return;
       PsiExpressionList argumentList = methodCall.getArgumentList();
-      
+
       final PsiSubstitutor substitutor = getTargetSubstitutor(methodCall);
       CreateFromUsageUtils.setupMethodParameters(method, builder, argumentList, substitutor);
       final ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(methodCall, true);
-      new GuessTypeParameters(factory).setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
+      new GuessTypeParameters(factory)
+        .setupTypeElement(method.getReturnTypeElement(), expectedTypes, substitutor, builder, context, targetClass);
       builder.setEndVariableAfter(targetClass.isInterface() ? method : body.getLBrace());
       method = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(method);
       if (method == null) return;
@@ -204,7 +201,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
       else {
         startTemplate(newEditor, template, project);
       }
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
