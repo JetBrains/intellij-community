@@ -28,16 +28,16 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    PsiManager psiManager = myConstructorCall.getManager();
-    final Project project = psiManager.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final Project project = myConstructorCall.getProject();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     try {
       PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());
 
       final PsiFile file = targetClass.getContainingFile();
       TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
-      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
+      CreateFromUsageUtils
+        .setupMethodParameters(constructor, templateBuilder, myConstructorCall.getArgumentList(), getTargetSubstitutor(myConstructorCall));
       CreateClassFromNewFix.setupSuperCall(targetClass, constructor, templateBuilder);
 
       constructor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(constructor);

@@ -37,17 +37,15 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
       return;
     }
 
-    PsiManager psiManager = myReferenceExpression.getManager();
-    Project project = psiManager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    Project project = myReferenceExpression.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
 
     PsiMember enclosingContext = null;
     PsiClass parentClass;
     do {
-      enclosingContext = PsiTreeUtil.getParentOfType(
-        enclosingContext == null ? myReferenceExpression : enclosingContext,
-        PsiMethod.class, PsiField.class, PsiClassInitializer.class);
+      enclosingContext = PsiTreeUtil.getParentOfType(enclosingContext == null ? myReferenceExpression : enclosingContext, PsiMethod.class,
+                                                     PsiField.class, PsiClassInitializer.class);
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
     while (parentClass instanceof PsiAnonymousClass);
@@ -87,7 +85,8 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
       TemplateBuilder builder = new TemplateBuilder(field);
       PsiElement context = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiClass.class, PsiMethod.class);
-      new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression), builder, context, targetClass);
+      new GuessTypeParameters(factory).setupTypeElement(field.getTypeElement(), expectedTypes, getTargetSubstitutor(myReferenceExpression),
+                                                        builder, context, targetClass);
 
       if (createConstantField()) {
         builder.replaceElement(field.getInitializer(), new EmptyExpression());
