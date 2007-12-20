@@ -133,7 +133,7 @@ public class NewDebuggerContentUI
     myManager.addContentManagerListener(new ContentManagerListener() {
       public void contentAdded(final ContentManagerEvent event) {
         getGridFor(event.getContent(), true).add(event.getContent(), false);
-        updateTabsUI();
+        updateTabsUI(false);
 
         event.getContent().addPropertyChangeListener(NewDebuggerContentUI.this);
       }
@@ -146,7 +146,7 @@ public class NewDebuggerContentUI
           grid.remove(event.getContent());
           removeGridIfNeeded(grid);
         }
-        updateTabsUI();
+        updateTabsUI(false);
       }
 
       public void contentRemoveQuery(final ContentManagerEvent event) {
@@ -221,13 +221,13 @@ public class NewDebuggerContentUI
     myTabs.repaint();
   }
 
-  private void updateTabsUI() {
-    myTabs.updateTabActions();
-
+  private void updateTabsUI(final boolean validateNow) {
     java.util.List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
       updateTabUI(each);
     }
+
+    myTabs.updateTabActions(validateNow);
   }
 
   private void updateTabUI(TabInfo tab) {
@@ -524,12 +524,12 @@ public class NewDebuggerContentUI
       }
     }
 
-    updateTabsUI();
+    updateTabsUI(true);
 
     return new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
         showHiddenTabs();
-        updateTabsUI();
+        updateTabsUI(true);
         return new ActionCallback.Done();
       }
     };

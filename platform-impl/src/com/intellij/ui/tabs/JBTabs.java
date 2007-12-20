@@ -215,12 +215,17 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
   }
 
   public void run() {
-    updateTabActions();
+    updateTabActions(false);
   }
 
-  public void updateTabActions() {
+  public void updateTabActions(final boolean validateNow) {
     for (TabLabel label : myInfo2Label.values()) {
       label.updateTabActions();
+    }
+
+    if (validateNow) {
+      validate();
+      paintImmediately(0, 0, getWidth(), getHeight());
     }
   }
 
@@ -370,7 +375,7 @@ public class JBTabs extends JComponent implements PropertyChangeListener, TimerL
     mySelectedInfo = getSelectedInfo();
     removeDeferred(updateContainer(forcedRelayout));
     updateListeners();
-    updateTabActions();
+    updateTabActions(false);
   }
 
   private boolean isMyChildIsFocusedNow() {

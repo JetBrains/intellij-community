@@ -266,7 +266,6 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     attachNotificationTo(content);
 
     final DefaultActionGroup consoleActions = new DefaultActionGroup();
-    addAction(consoleActions, DebuggerActions.EXPORT_THREADS);
     if (myConsole instanceof ConsoleView) {
       AnAction[] actions = ((ConsoleView)myConsole).createUpDownStacktraceActions();
       for (AnAction goaction : actions) {
@@ -387,12 +386,14 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
 
     group.addSeparator();
+    addAction(group, DebuggerActions.EXPORT_THREADS);
+    group.addSeparator();
+
     addActionToGroup(group, DebuggerActions.LAYOUT);
 
     group.addSeparator();
 
     group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
-
     group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
