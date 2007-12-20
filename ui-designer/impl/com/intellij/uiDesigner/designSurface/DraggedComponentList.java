@@ -2,11 +2,11 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.uiDesigner.FormEditingUtil;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.core.GridConstraints;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,6 +15,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
@@ -44,6 +45,11 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
   private int myDragDeltaX = 0;
   private int myDragDeltaY = 0;
   private boolean myHasDragDelta = false;
+
+  private DraggedComponentList(Collection<RadComponent> selection) {
+    mySelection = new ArrayList<RadComponent>(selection);
+    fillOriginalConstraints();
+  }
 
   private DraggedComponentList(final GuiEditor editor, final Point pnt) {
     // Store selected components
@@ -78,18 +84,7 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
         }
       }
     }
-
-    // Store original constraints and parents. This information is required
-    // to restore initial state if drag is canceled.
-    myOriginalConstraints = new GridConstraints[mySelection.size()];
-    myOriginalBounds = new Rectangle[mySelection.size()];
-    myOriginalParents = new RadContainer[mySelection.size()];
-    for (int i1 = 0; i1 < mySelection.size(); i1++) {
-      final RadComponent component = mySelection.get(i1);
-      myOriginalConstraints[i1] = component.getConstraints().store();
-      myOriginalBounds[i1] = component.getBounds();
-      myOriginalParents[i1] = component.getParent();
-    }
+    fillOriginalConstraints();
 
     if (componentUnderMouseIndex >= 0) {
       componentUnderMouse = mySelection.get(componentUnderMouseIndex);
@@ -121,8 +116,26 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     }
   }
 
+  private void fillOriginalConstraints() {
+    // Store original constraints and parents. This information is required
+    // to restore initial state if drag is canceled.
+    myOriginalConstraints = new GridConstraints[mySelection.size()];
+    myOriginalBounds = new Rectangle[mySelection.size()];
+    myOriginalParents = new RadContainer[mySelection.size()];
+    for (int i1 = 0; i1 < mySelection.size(); i1++) {
+      final RadComponent component = mySelection.get(i1);
+      myOriginalConstraints[i1] = component.getConstraints().store();
+      myOriginalBounds[i1] = component.getBounds();
+      myOriginalParents[i1] = component.getParent();
+    }
+  }
+
   public static DraggedComponentList pickupSelection(final GuiEditor editor, @Nullable Point pnt) {
     return new DraggedComponentList(editor, pnt);
+  }
+
+  public static DraggedComponentList withComponent(RadComponent c) {
+    return new DraggedComponentList(Collections.singletonList(c));
   }
 
   @Nullable
