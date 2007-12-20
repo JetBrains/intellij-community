@@ -237,7 +237,7 @@ public class JavaDocUtil {
       boolean spaceAfterComma = styleSettings.SPACE_AFTER_COMMA;
       for (int i = 0; i < parms.length; i++) {
         PsiParameter parm = parms[i];
-        String typeText = parm.getType().getCanonicalText();
+        String typeText = TypeConversionUtil.erasure(parm.getType()).getCanonicalText();
         buffer.append(typeText);
         if (i < parms.length - 1) {
           if (spaceBeforeComma) {
