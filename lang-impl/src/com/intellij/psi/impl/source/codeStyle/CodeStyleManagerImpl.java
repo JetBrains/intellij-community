@@ -399,7 +399,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     {
       return "";
     }
+
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(doc);
+    if (file == null) return "";
+
     return getLineIndent(file, offset);
   }
 
