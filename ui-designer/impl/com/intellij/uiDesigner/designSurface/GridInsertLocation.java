@@ -95,7 +95,9 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
   @Override public boolean canDrop(ComponentDragObject dragObject) {
-    if (isInsertInsideComponent()) {
+    Rectangle rc = getDragObjectDimensions(dragObject);
+    int size = isRowInsert() ? rc.width : rc.height;
+    if (isInsertInsideComponent(size)) {
       LOG.debug("GridInsertLocation.canDrop()=false because insert inside component");
       return false;
     }
@@ -126,26 +128,28 @@ public class GridInsertLocation extends GridDropLocation {
     return true;
   }
 
-  private boolean isInsertInsideComponent() {
+  private boolean isInsertInsideComponent(final int size) {
     int endColumn = getInsertCell();
     if (isInsertAfter()) endColumn++;
     int row = getOppositeCell();
 
-    for(int col = 0; col<endColumn; col++) {
-      RadComponent component;
-      if (isColumnInsert()) {
-        component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), row, col);
-      }
-      else {
-        component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), col, row);
-      }
+    for(int r=row; r<row+size; r++) {
+      for(int col = 0; col<endColumn; col++) {
+        RadComponent component;
+        if (isColumnInsert()) {
+          component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), r, col);
+        }
+        else {
+          component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), col, r);
+        }
 
-      if (component != null) {
-        GridConstraints constraints = component.getConstraints();
-        final boolean isRow = !isColumnInsert();
-        if (constraints.getCell(isRow) + constraints.getSpan(isRow) > endColumn &&
-            constraints.getSpan(isRow) > 1) {
-          return true;
+        if (component != null) {
+          GridConstraints constraints = component.getConstraints();
+          final boolean isRow = !isColumnInsert();
+          if (constraints.getCell(isRow) + constraints.getSpan(isRow) > endColumn &&
+              constraints.getSpan(isRow) > 1) {
+            return true;
+          }
         }
       }
     }

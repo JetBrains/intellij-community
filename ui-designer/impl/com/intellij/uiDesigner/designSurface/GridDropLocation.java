@@ -106,6 +106,18 @@ public class GridDropLocation implements ComponentDropLocation {
       return null;
     }
 
+    Rectangle rc = getDragObjectDimensions(dragObject);
+
+    if (rc.x < 0 || rc.y < 0 ||
+        rc.y + rc.height > getContainer().getGridRowCount() || rc.x + rc.width > getContainer().getGridColumnCount()) {
+      LOG.debug("no feedback rect because insert range is outside grid: firstRow=" + rc.y +
+                ", firstCol=" + rc.x + ", lastRow=" + (rc.y+rc.height-1) + ", lastCol=" + (rc.x+rc.width-1));
+      return null;
+    }
+    return new Rectangle(rc.x, rc.y, rc.width-1, rc.height-1);
+  }
+
+  protected Rectangle getDragObjectDimensions(final ComponentDragObject dragObject) {
     int firstRow = getRow();
     int lastRow = getRow();
     int firstCol = getColumn();
@@ -118,14 +130,7 @@ public class GridDropLocation implements ComponentDropLocation {
       lastRow = Math.max(lastRow, getRow() + relRow + dragObject.getRowSpan(i) - 1);
       lastCol = Math.max(lastCol, getColumn() + relCol + dragObject.getColSpan(i) - 1);
     }
-
-    if (firstRow < 0 || firstCol < 0 ||
-        lastRow >= getContainer().getGridRowCount() || lastCol >= getContainer().getGridColumnCount()) {
-      LOG.debug("no feedback rect because insert range is outside grid: firstRow=" + firstRow +
-                ", firstCol=" + firstCol + ", lastRow=" + lastRow + ", lastCol=" + lastCol);
-      return null;
-    }
-    return new Rectangle(firstCol, firstRow, lastCol-firstCol, lastRow-firstRow);
+    return new Rectangle(firstCol, firstRow, lastCol-firstCol+1, lastRow-firstRow+1);
   }
 
   @Nullable

@@ -73,13 +73,31 @@ public class GridInsertLocationTest extends TestCase {
     assertEquals(3, c.getConstraints().getColSpan());
   }
 
+  public void testInsertInsideBigComponent() {
+    myContainer.setLayout(new GridLayoutManager(2, 2));
+    insertComponent(0, 0, 1, 1);
+    insertComponent(1, 0, 1, 2);
+
+    setComponentDimensions(myDropComponent, 0, 0, 2, 1);
+    GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
+    assertFalse(location.canDrop(DraggedComponentList.withComponent(myDropComponent)));
+  }
+
   private RadComponent insertComponent(int row, int column, int rowSpan, int colSpan) {
     final RadAtomicComponent c = new RadAtomicComponent(null, JLabel.class, "1");
+    setComponentDimensions(c, row, column, rowSpan, colSpan);
+    myContainer.addComponent(c);
+    return c;
+  }
+
+  private static void setComponentDimensions(final RadComponent c,
+                                             final int row,
+                                             final int column,
+                                             final int rowSpan,
+                                             final int colSpan) {
     c.getConstraints().restore(new GridConstraints(row, column, rowSpan, colSpan, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_GROW,
                                                    null, null, null));
-    myContainer.addComponent(c);
-    return c;
   }
 
   private void doDrop(final GridInsertLocation location) {
