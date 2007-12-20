@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescriptor {
   public String validateValue(XmlElement context, String value) {
-    if (isFixed() && getDefaultValue() != null) {
+    if (isFixed()) {
       String defaultValue = getDefaultValue();
 
-      if (!defaultValue.equals(value)) {
+      if (defaultValue != null && !defaultValue.equals(value)) {
         return XmlErrorMessages.message("attribute.should.have.fixed.value", getName(), defaultValue);
       }
     }
@@ -30,9 +30,7 @@ public abstract class BasicXmlAttributeDescriptor implements XmlAttributeDescrip
       String[] values = getEnumeratedValues(context);
       boolean valueWasFound = false;
 
-      for (int i = 0; i < values.length; i++) {
-        String enumValue = values[i];
-
+      for (String enumValue : values) {
         if (enumValue.equals(value)) {
           valueWasFound = true;
           break;
