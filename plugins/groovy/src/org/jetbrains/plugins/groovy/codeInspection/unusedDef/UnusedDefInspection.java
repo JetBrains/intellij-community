@@ -16,18 +16,15 @@ package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import gnu.trove.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
@@ -39,11 +36,11 @@ import java.util.ArrayList;
 /**
  & @author ven
  */
-public class UnusedDefInspection extends LocalInspectionTool {
+public class UnusedDefInspection extends GroovyLocalInspectionBase {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroovyInspectionBundle.message("unused.assignment");
+    return GroovyInspectionBundle.message("groovy.dfa.issues");
   }
 
   @Nls
@@ -59,28 +56,7 @@ public class UnusedDefInspection extends LocalInspectionTool {
   }
 
 
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean isOnTheFly) {
-    return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
-      public void visitClosure(GrClosableBlock closure) {
-        check(closure, problemsHolder);
-
-      }
-
-      public void visitMethod(GrMethod method) {
-        final GrOpenBlock block = method.getBlock();
-        if (block != null) {
-          check(block, problemsHolder);
-        }
-      }
-
-      public void visitFile(GroovyFileBase file) {
-        check(file, problemsHolder);
-      }
-    });
-  }
-
-  private void check(GrControlFlowOwner owner, final ProblemsHolder problemsHolder) {
+  protected void check(GrControlFlowOwner owner, final ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance(flow);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
+import org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection;
 
 /**
  * @author ilyas
@@ -28,7 +29,8 @@ public class GroovyInspectionProvider implements InspectionToolProvider, Applica
   public Class[] getInspectionClasses() {
     return new Class[] {
         SecondUnsafeCallInspection.class,
-        UnusedDefInspection.class
+        UnusedDefInspection.class,
+        UnassignedVariableAccessInspection.class
     };
   }
 

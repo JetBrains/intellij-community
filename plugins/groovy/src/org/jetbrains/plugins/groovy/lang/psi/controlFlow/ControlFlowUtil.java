@@ -53,8 +53,8 @@ public class ControlFlowUtil {
   }
 
   //just a single depth-first traversal, no need for DFA
-  public static Instruction[] getReadsWithoutPriorWrites(Instruction[] flow) {
-    List<Instruction> result = new ArrayList<Instruction>();
+  public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow) {
+    List<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     Set<String> written = new HashSet<String>();
     boolean[] visited = new boolean[flow.length];
     for (int i = 0; i < visited.length; i++) visited[i] = false;
@@ -65,17 +65,17 @@ public class ControlFlowUtil {
       }
     }
 
-    return result.toArray(new Instruction[result.size()]);
+    return result.toArray(new ReadWriteVariableInstruction[result.size()]);
   }
 
-  private static void doVisitForReadsBeforeWrites(Instruction curr, Instruction[] flow, CallEnvironment env, Set<String> written, List<Instruction> result, boolean[] visited) {
+  private static void doVisitForReadsBeforeWrites(Instruction curr, Instruction[] flow, CallEnvironment env, Set<String> written, List<ReadWriteVariableInstruction> result, boolean[] visited) {
     visited[curr.num()] = true;
 
     if (curr instanceof ReadWriteVariableInstruction) {
       ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
       String name = readWriteInsn.getVariableName();
       if (!readWriteInsn.isWrite() && !written.contains(name)) {
-        result.add(curr);
+        result.add(readWriteInsn);
       }
 
       written.add(name); //do not flag read for the second time
