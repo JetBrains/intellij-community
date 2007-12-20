@@ -50,4 +50,14 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
     }
     return myCalculator;
   }
+
+  //@Override
+  //protected ChangeReverter createChangeReverter() {
+  //  return new ChangeReverter(myVcs, myGateway, getRightRevision().getCauseChange()) {
+  //    @Override
+  //    public String askUserForProceed() throws IOException {
+  //      return super.askUserForProceed();
+  //    }
+  //  };
+  //}
 }

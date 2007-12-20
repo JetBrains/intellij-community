@@ -136,7 +136,7 @@ public abstract class HistoryDialogModel {
     return createRevisionReverter();
   }
 
-  private ChangeReverter createChangeReverter() {
+  protected ChangeReverter createChangeReverter() {
     return new ChangeReverter(myVcs, myGateway, getRightRevision().getCauseChange());
   }
 

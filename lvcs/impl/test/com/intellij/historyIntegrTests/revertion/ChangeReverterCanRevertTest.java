@@ -4,6 +4,7 @@ import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
@@ -11,7 +12,7 @@ public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
     root.createChildData(null, "f.java");
 
     Reverter r = createReverter(root, 0);
-    assertNull(r.askUserForProceed());
+    assertTrue(r.askUserForProceeding().isEmpty());
   }
 
   public void testAskingForRevertSubsequentalChanges() throws IOException {
@@ -19,8 +20,10 @@ public class ChangeReverterCanRevertTest extends ChangeReverterTestCase {
     f.setBinaryContent(new byte[1]);
 
     Reverter r = createReverter(f, 1);
-    String question = r.askUserForProceed();
-    assertEquals("There are some changes that have been done after this one.\nThese changes should be reverted too.", question);
+    List<String> questions = r.askUserForProceeding();
+    
+    String expected = "There are some changes that have been done after this one.\nThese changes should be reverted too.";
+    assertEquals(Collections.singletonList(expected), questions);
   }
 
   public void testCanNotRevertRenameIfSomeFilesAlreadyExist() throws IOException {

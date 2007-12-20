@@ -22,8 +22,8 @@ public abstract class Reverter {
     myGateway = gw;
   }
 
-  public String askUserForProceed() throws IOException {
-    return null;
+  public List<String> askUserForProceeding() throws IOException {
+    return Collections.emptyList();
   }
 
   public List<String> checkCanRevert() throws IOException {

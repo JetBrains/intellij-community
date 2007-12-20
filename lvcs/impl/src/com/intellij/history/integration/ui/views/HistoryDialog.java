@@ -228,13 +228,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
   protected void revert(Reverter r) {
     try {
-      String question = r.askUserForProceed();
-      if (question != null) {
-        String m = question + "\n" + message("message.do.you.want.to.proceed");
-        if (!myGateway.askForProceed(m)) {
-          return;
-        }
-      }
+      if (!askForProceeding(r)) return;
 
       List<String> errors = r.checkCanRevert();
       if (!errors.isEmpty()) {
@@ -247,6 +241,15 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
     catch (IOException e) {
       myGateway.showError(message("message.error.during.revert", e));
     }
+  }
+
+  private boolean askForProceeding(Reverter r) throws IOException {
+    List<String> questions = r.askUserForProceeding();
+    if (!questions.isEmpty()) {
+      String m = questions.get(0) + "\n" + message("message.do.you.want.to.proceed");
+      return myGateway.askForProceeding(m);
+    }
+    return true;
   }
 
   private void showRevertErrors(List<String> errors) {

@@ -7,8 +7,8 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ChangeReverter extends Reverter {
   private ILocalVcs myVcs;
@@ -24,8 +24,8 @@ public class ChangeReverter extends Reverter {
   }
 
   @Override
-  public String askUserForProceed() throws IOException {
-    final String[] result = new String[1];
+  public List<String> askUserForProceeding() throws IOException {
+    final List<String> result = new ArrayList<String>();
 
     myVcs.accept(new ChangeVisitor() {
       @Override
@@ -33,12 +33,12 @@ public class ChangeReverter extends Reverter {
         if (isBeforeMyChange(c, false)) stop();
         if (!isInTheChain(c)) return;
 
-        result[0] = LocalHistoryBundle.message("revert.message.should.revert.sequential.changes");
+        result.add(LocalHistoryBundle.message("revert.message.have.sequential.changes"));
         stop();
       }
     });
 
-    return result[0];
+    return result;
   }
 
   @Override

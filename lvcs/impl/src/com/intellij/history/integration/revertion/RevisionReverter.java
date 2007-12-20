@@ -10,6 +10,7 @@ import com.intellij.history.integration.LocalHistoryBundle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 public abstract class RevisionReverter extends Reverter {
   protected Revision myLeftRevision;
@@ -24,11 +25,11 @@ public abstract class RevisionReverter extends Reverter {
   }
 
   @Override
-  public String askUserForProceed() throws IOException {
-    if (myLeftEntry == null) return null;
+  public List<String> askUserForProceeding() throws IOException {
+    if (myLeftEntry == null) return Collections.emptyList();
 
     List<Entry> myEntriesWithBigContent = new ArrayList<Entry>();
-    if (!myLeftEntry.hasUnavailableContent(myEntriesWithBigContent)) return null;
+    if (!myLeftEntry.hasUnavailableContent(myEntriesWithBigContent)) return Collections.emptyList();
 
     String filesList = "";
     for (Entry e : myEntriesWithBigContent) {
@@ -36,7 +37,7 @@ public abstract class RevisionReverter extends Reverter {
       filesList += e.getPath();
     }
 
-    return LocalHistoryBundle.message("revert.message.should.revert.with.big.content", filesList);
+    return Collections.singletonList(LocalHistoryBundle.message("revert.message.some.files.have.unversioned.content", filesList));
   }
 
   @Override

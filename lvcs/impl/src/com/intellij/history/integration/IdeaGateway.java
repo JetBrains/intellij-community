@@ -60,7 +60,7 @@ public class IdeaGateway {
     return ProjectRootManager.getInstance(myProject);
   }
 
-  public boolean askForProceed(String s) {
+  public boolean askForProceeding(String s) {
     return Messages.showYesNoDialog(myProject, s, CommonBundle.getWarningTitle(), Messages.getWarningIcon()) == 0;
   }
 
