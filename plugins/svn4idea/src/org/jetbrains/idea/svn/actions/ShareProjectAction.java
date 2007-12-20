@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
@@ -23,9 +24,8 @@ import java.io.File;
 public class ShareProjectAction extends BasicAction {
 
   protected String getActionName(AbstractVcs vcs) {
-    return "Share Directory...";
+    return SvnBundle.message("share.directory.action");
   }
-
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
@@ -46,7 +46,7 @@ public class ShareProjectAction extends BasicAction {
     }
     boolean enabled = false;
     boolean visible = false;
-    if (files.length == 1) {
+    if (files.length == 1 && files [0].isDirectory()) {
       visible = true;
       if (!SVNWCUtil.isVersionedDirectory(new File(files [0].getPath()))) {
         enabled = true;
@@ -76,7 +76,8 @@ public class ShareProjectAction extends BasicAction {
         public void run() {
           try {
             SVNURL url = SVNURL.parseURIEncoded(parent).appendPath(file.getName(), false);
-            SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url}, "Directory '" + file.getName() +"' created by IntelliJ IDEA");
+            SVNCommitInfo info = activeVcs.createCommitClient().doMkDir(new SVNURL[] {url},
+                                                                        SvnBundle.message("share.directory.commit.message", file.getName()));
             SVNRevision revision = SVNRevision.create(info.getNewRevision());
             activeVcs.createUpdateClient().doCheckout(url, new File(file.getPath()), SVNRevision.UNDEFINED, revision, true);
             activeVcs.createWCClient().doAdd(new File(file.getPath()), true, false, false, true);
@@ -84,11 +85,12 @@ public class ShareProjectAction extends BasicAction {
             error[0] = e;
           }
         }
-      }, "Share Directory", false, project);
+      }, SvnBundle.message("share.directory.title"), false, project);
       if (error[0] != null) {
         throw new VcsException(error[0].getMessage());
       }
-      Messages.showInfoMessage(project, "To complete share operation commit '" + file.getName() + "'.", "Share Directory");
+      Messages.showInfoMessage(project, SvnBundle.message("share.directory.info.message", file.getName()),
+                               SvnBundle.message("share.directory.title"));
     }
 
   }
