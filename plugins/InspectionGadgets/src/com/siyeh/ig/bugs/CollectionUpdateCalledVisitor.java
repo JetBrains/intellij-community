@@ -41,7 +41,7 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor{
         updateNames.add("drainTo");
         updateNames.add("insertElementAt");
         updateNames.add("load");
-        updateNames.add("loadFromXml");
+        updateNames.add("loadFromXML");
         updateNames.add("offer");
         updateNames.add("push");
         updateNames.add("put");
