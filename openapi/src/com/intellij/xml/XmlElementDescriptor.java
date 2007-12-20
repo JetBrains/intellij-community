@@ -18,6 +18,7 @@ package com.intellij.xml;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,12 +27,15 @@ import org.jetbrains.annotations.Nullable;
 public interface XmlElementDescriptor extends PsiMetaData {
   XmlElementDescriptor[] EMPTY_ARRAY = new XmlElementDescriptor[0];
 
+  @NonNls
   String getQualifiedName();
 
   /**
    * Should return either simple or qualified name depending on the schema/DTD properties.
-   * This name should be used in XML documents
+   * This name should be used in XML documents.
+   * @return either simple or qualified name.
    */
+  @NonNls
   String getDefaultName();
 
   //todo: refactor to support full DTD spec
@@ -41,7 +45,7 @@ public interface XmlElementDescriptor extends PsiMetaData {
 
   XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context);
   @Nullable
-  XmlAttributeDescriptor getAttributeDescriptor(String attributeName, final @Nullable XmlTag context);
+  XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, final @Nullable XmlTag context);
   @Nullable
   XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute);
 
