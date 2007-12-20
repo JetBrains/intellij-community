@@ -90,6 +90,10 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return tool.getQuickFixes(selectedRefElements);
   }
 
+  public boolean isContentLoaded() {
+    return false;
+  }
+
   public void appendToolNodeContent(final InspectionNode toolNode, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionTool tool = toolNode.getTool();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(tool);

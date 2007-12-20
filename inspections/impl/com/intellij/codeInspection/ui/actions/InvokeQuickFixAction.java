@@ -5,10 +5,12 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
@@ -40,13 +42,15 @@ public class InvokeQuickFixAction extends AnAction {
 
     //noinspection ConstantConditions
     final @NotNull InspectionTool tool = myView.getTree().getSelectedTool();
-    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(tool, myView.getTree());
-    if (quickFixes == null || quickFixes.length == 0) {
-      e.getPresentation().setEnabled(false);
-      return;
+    final InspectionRVContentProvider provider = myView.getProvider();
+    if (provider.isContentLoaded()) {
+      final QuickFixAction[] quickFixes = provider.getQuickFixes(tool, myView.getTree());
+      if (quickFixes == null || quickFixes.length == 0) {
+        e.getPresentation().setEnabled(false);
+        return;
+      }
+      e.getPresentation().setEnabled(!ActionGroupUtil.isGroupEmpty(getFixes(quickFixes), e));
     }
-
-    e.getPresentation().setEnabled(!ActionGroupUtil.isGroupEmpty(getFixes(quickFixes), e));
   }
 
   private static ActionGroup getFixes(final QuickFixAction[] quickFixes) {
@@ -66,7 +70,12 @@ public class InvokeQuickFixAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final InspectionTool tool = myView.getTree().getSelectedTool();
     assert tool != null;
-    ActionGroup fixes = getFixes(myView.getProvider().getQuickFixes(tool, myView.getTree()));
+    final QuickFixAction[] quickFixes = myView.getProvider().getQuickFixes(tool, myView.getTree());
+    if (quickFixes == null || quickFixes.length == 0) {
+      Messages.showInfoMessage(myView, "There are no applicable quickfixes", "Nothing found to fix");
+      return;
+    }
+    ActionGroup fixes = getFixes(quickFixes);
     DataContext dataContext = e.getDataContext();
     final ListPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(InspectionsBundle.message("inspection.tree.popup.title"),

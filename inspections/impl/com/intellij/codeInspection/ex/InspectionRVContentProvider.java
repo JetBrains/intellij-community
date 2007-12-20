@@ -61,7 +61,9 @@ public abstract class InspectionRVContentProvider {
                                            final InspectionPackageNode pNode,
                                            final boolean canPackageRepeat);
 
-  
+  public boolean isContentLoaded() {
+    return true;
+  }
 
   protected <T> List<InspectionTreeNode> buildTree(final Map<String, Set<T>> packageContents,
                                                    final boolean canPackageRepeat,
