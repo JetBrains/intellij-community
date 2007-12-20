@@ -2,8 +2,6 @@ package com.intellij.history.core.storage;
 
 import com.intellij.util.containers.IntObjectCache;
 
-import java.io.IOException;
-
 public class CachingContentStorage implements IContentStorage {
   public static final int MAX_CACHED_CONTENT_LENGTH = 100 * 1024;
 
@@ -22,13 +20,13 @@ public class CachingContentStorage implements IContentStorage {
     mySubject.close();
   }
 
-  public int store(byte[] content) throws IOException {
+  public int store(byte[] content) throws BrokenStorageException {
     int id = mySubject.store(content);
     cacheContent(content, id);
     return id;
   }
 
-  public byte[] load(int id) throws IOException {
+  public byte[] load(int id) throws BrokenStorageException {
     byte[] result = findInCache(id);
     if (result != null) return result;
 

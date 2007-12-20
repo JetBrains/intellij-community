@@ -1,7 +1,5 @@
 package com.intellij.history.core.storage;
 
-import java.io.IOException;
-
 public class ThreadSafeContentStorage implements IContentStorage {
   private IContentStorage mySubject;
 
@@ -17,11 +15,11 @@ public class ThreadSafeContentStorage implements IContentStorage {
     mySubject.close();
   }
 
-  public synchronized int store(byte[] content) throws IOException {
+  public synchronized int store(byte[] content) throws BrokenStorageException {
     return mySubject.store(content);
   }
 
-  public synchronized byte[] load(int id) throws IOException {
+  public synchronized byte[] load(int id) throws BrokenStorageException {
     return mySubject.load(id);
   }
 

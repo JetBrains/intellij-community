@@ -2,6 +2,7 @@ package com.intellij.historyPerfTests;
 
 import com.intellij.history.core.storage.CompressingContentStorage;
 import com.intellij.history.core.storage.IContentStorage;
+import com.intellij.history.core.storage.BrokenStorageException;
 import com.intellij.history.utils.RunnableAdapter;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -30,7 +31,7 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testDecompression() throws IOException {
+  public void testDecompression() throws Exception {
     s.store(bytesToStore());
 
     assertExecutionTime(330, new RunnableAdapter() {
@@ -71,12 +72,12 @@ public class CompressingContentStorageTest extends PerformanceTestCase {
   class MyContentStorage implements IContentStorage {
     byte[] myContent;
 
-    public int store(byte[] content) throws IOException {
+    public int store(byte[] content) throws BrokenStorageException {
       myContent = content;
       return 0;
     }
 
-    public byte[] load(int id) throws IOException {
+    public byte[] load(int id) throws BrokenStorageException {
       return myContent;
     }
 

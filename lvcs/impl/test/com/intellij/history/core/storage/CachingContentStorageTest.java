@@ -4,8 +4,6 @@ import com.intellij.history.core.LocalVcsTestCase;
 import static org.easymock.EasyMock.*;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class CachingContentStorageTest extends LocalVcsTestCase {
   IContentStorage subject = createMock(IContentStorage.class);
   IContentStorage s = new CachingContentStorage(subject);
@@ -48,7 +46,7 @@ public class CachingContentStorageTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testDoesNotCacheBigContent() throws IOException {
+  public void testDoesNotCacheBigContent() throws Exception {
     byte[] b = new byte[CachingContentStorage.MAX_CACHED_CONTENT_LENGTH + 1];
     expect(subject.load(1)).andReturn(b).times(2);
     replay(subject);

@@ -3,11 +3,14 @@ package com.intellij.history.core.storage;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.diagnostic.Logger;
 
 import java.io.*;
 import java.util.List;
 
 public class Storage {
+  private static final Logger LOG = Logger.getInstance("#" + Storage.class.getName());
+
   private static final int VERSION = 19;
   private static final String BROKEN_MARK_FILE = ".broken";
   private static final String VERSION_FILE = "version";
@@ -165,24 +168,26 @@ public class Storage {
       int id = myContentStorage.store(bytes);
       return new StoredContent(this, id);
     }
-    catch (IOException e) {
-      markAsBroken();
+    catch (BrokenStorageException e) {
+      markAsBroken(e);
       return new UnavailableContent();
     }
   }
 
-  protected byte[] loadContentData(int id) throws IOException {
-    if (isBroken) throw new IOException();
+  protected byte[] loadContentData(int id) throws BrokenStorageException {
+    if (isBroken) throw new BrokenStorageException();
     try {
       return myContentStorage.load(id);
     }
-    catch (IOException e) {
-      markAsBroken();
+    catch (BrokenStorageException e) {
+      markAsBroken(e);
       throw e;
     }
   }
 
-  private void markAsBroken() {
+  private void markAsBroken(BrokenStorageException cause) {
+    LOG.warn("Local History starage is broken. It will be rebuilt on project reopen.", cause);
+
     isBroken = true;
     try {
       new File(myDir, BROKEN_MARK_FILE).createNewFile();

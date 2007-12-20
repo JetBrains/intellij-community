@@ -73,7 +73,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testReadingAfterManyModifications() throws IOException {
+  public void testReadingAfterManyModifications() throws Exception {
     final List<Integer> cc = modifyStorageManyTimes();
 
     assertExecutionTime(30, new RunnableAdapter() {
@@ -84,7 +84,7 @@ public class ContentStorageTest extends PerformanceTestCase {
   }
 
   @Test
-  public void testSizeAfterManyModifications() throws IOException {
+  public void testSizeAfterManyModifications() throws Exception {
     modifyStorageManyTimes();
     s.close();
     long indexLength = new File(file.getPath() + ".rindex").length();
@@ -92,7 +92,7 @@ public class ContentStorageTest extends PerformanceTestCase {
     assertEquals(19, (int)(indexLength + dataLength) / (1024 * 1024));
   }
 
-  private List<Integer> createContentsOfDifferentSize() throws IOException {
+  private List<Integer> createContentsOfDifferentSize() throws Exception {
     List<Integer> result = new ArrayList<Integer>();
     for (int i = 0; i < ITERATIONS_COUNT; i++) {
       result.add(s.store(arrayOfSize(randomSize())));
@@ -106,7 +106,7 @@ public class ContentStorageTest extends PerformanceTestCase {
     return bb;
   }
 
-  private void readContentsRandomly(List<Integer> cc) throws IOException {
+  private void readContentsRandomly(List<Integer> cc) throws Exception {
     for (int i = 0; i < ITERATIONS_COUNT; i++) {
       s.load(randomItem(cc));
     }
@@ -121,7 +121,7 @@ public class ContentStorageTest extends PerformanceTestCase {
     }
   }
 
-  private List<Integer> modifyStorageManyTimes() throws IOException {
+  private List<Integer> modifyStorageManyTimes() throws Exception {
     List<Integer> cc = createContentsOfDifferentSize();
     deleteHalfOfContentsRandomly(cc);
     cc.addAll(createContentsOfDifferentSize());

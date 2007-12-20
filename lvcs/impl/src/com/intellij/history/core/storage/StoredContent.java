@@ -26,12 +26,12 @@ public class StoredContent extends Content {
     try {
       return getBytesUnsafe();
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private byte[] getBytesUnsafe() throws IOException {
+  private byte[] getBytesUnsafe() throws BrokenStorageException {
     return myStorage.loadContentData(myId);
   }
 
@@ -41,7 +41,7 @@ public class StoredContent extends Content {
       getBytesUnsafe();
       return true;
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
       return false;
     }
   }

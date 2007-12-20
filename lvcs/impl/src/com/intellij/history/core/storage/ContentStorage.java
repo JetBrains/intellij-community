@@ -31,7 +31,7 @@ public class ContentStorage implements IContentStorage {
     myStore.dispose();
   }
 
-  public int store(byte[] content) throws IOException {
+  public int store(byte[] content) throws BrokenStorageException {
     try {
       RecordDataOutput r = myStore.createStream();
       r.writeInt(content.length);
@@ -40,12 +40,11 @@ public class ContentStorage implements IContentStorage {
       return r.getRecordId();
     }
     catch (Exception e) {
-      // todo AFTER JDK 1.6 throw new IOException(e);
-      throw new IOException(e.getMessage());
+      throw new BrokenStorageException(e);
     }
   }
 
-  public byte[] load(int id) throws IOException {
+  public byte[] load(int id) throws BrokenStorageException {
     try {
       DataInputStream r = myStore.readStream(id);
       byte[] buffer = new byte[r.readInt()];
@@ -54,8 +53,7 @@ public class ContentStorage implements IContentStorage {
       return buffer;
     }
     catch (Exception e) {
-      // todo AFTER JDK 1.6 throw new IOException(e);
-      throw new IOException(e.getMessage());
+      throw new BrokenStorageException(e);
     }
   }
 

@@ -147,7 +147,7 @@ public class StorageTest extends TempDirTestCase {
       s.loadContentData(c.getId());
       fail();
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
     }
 
     initStorage();
@@ -162,14 +162,14 @@ public class StorageTest extends TempDirTestCase {
     try {
       s.loadContentData(123);
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
     }
 
     try {
       s.loadContentData(c.getId());
       fail();
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
     }
   }
 
@@ -178,7 +178,7 @@ public class StorageTest extends TempDirTestCase {
     try {
       s.loadContentData(123);
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
     }
 
     Content c = s.storeContent(b("abc"));

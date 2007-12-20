@@ -26,7 +26,7 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testCompressionAndDecompression() throws IOException {
+  public void testCompressionAndDecompression() throws Exception {
     final byte[][] compressed = new byte[1][];
     IContentStorage subject = createStoredBytesRecordingMock(compressed);
 
@@ -45,7 +45,7 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
   }
 
   @Test
-  public void testClosingOfInputAndOutputStreams() throws IOException {
+  public void testClosingOfInputAndOutputStreams() throws Exception {
     IContentStorage subject = createStrictMock(IContentStorage.class);
     expect(subject.store((byte[])anyObject())).andReturn(1);
     expect(subject.load(anyInt())).andReturn(new byte[0]);
@@ -84,7 +84,7 @@ public class CompressingContentStorageTest extends LocalVcsTestCase {
     assertTrue(closeCalled[1]);
   }
 
-  private IContentStorage createStoredBytesRecordingMock(final byte[][] compressed) throws IOException {
+  private IContentStorage createStoredBytesRecordingMock(final byte[][] compressed) throws Exception {
     IContentStorage subject = createMock(IContentStorage.class);
 
     expect(subject.store((byte[])anyObject())).andAnswer(new IAnswer<Integer>() {

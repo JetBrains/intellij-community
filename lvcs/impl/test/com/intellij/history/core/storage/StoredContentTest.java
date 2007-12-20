@@ -4,8 +4,6 @@ import com.intellij.history.core.InMemoryStorage;
 import com.intellij.history.core.LocalVcsTestCase;
 import org.junit.Test;
 
-import java.io.IOException;
-
 
 public class StoredContentTest extends LocalVcsTestCase {
   @Test
@@ -23,15 +21,15 @@ public class StoredContentTest extends LocalVcsTestCase {
   public void testUnavailableIfExceptionOccurs() {
     Storage goodStorage = new InMemoryStorage() {
       @Override
-      protected byte[] loadContentData(final int id) throws IOException {
+      protected byte[] loadContentData(final int id) throws BrokenStorageException {
         return new byte[0];
       }
     };
 
     Storage brokenStorage = new InMemoryStorage() {
       @Override
-      protected byte[] loadContentData(int id) throws IOException {
-        throw new IOException();
+      protected byte[] loadContentData(int id) throws BrokenStorageException {
+        throw new BrokenStorageException();
       }
     };
 

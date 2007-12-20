@@ -25,26 +25,36 @@ public class CompressingContentStorage implements IContentStorage {
     mySubject.close();
   }
 
-  public int store(byte[] content) throws IOException {
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
+  public int store(byte[] content) throws BrokenStorageException {
+    try {
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    OutputStream s = createDeflaterOutputStream(output);
-    s.write(content);
-    s.close();
-    myDeflater.reset();
+      OutputStream s = createDeflaterOutputStream(output);
+      s.write(content);
+      s.close();
+      myDeflater.reset();
 
-    return mySubject.store(output.toByteArray());
+      return mySubject.store(output.toByteArray());
+    }
+    catch (IOException e) {
+      throw new BrokenStorageException(e);
+    }
   }
 
-  public byte[] load(int id) throws IOException {
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
+  public byte[] load(int id) throws BrokenStorageException {
+    try {
+      ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-    InputStream s = createInflaterOutputStream(mySubject.load(id));
-    FileUtil.copy(s, output);
-    s.close();
-    myInflater.reset();
+      InputStream s = createInflaterOutputStream(mySubject.load(id));
+      FileUtil.copy(s, output);
+      s.close();
+      myInflater.reset();
 
-    return output.toByteArray();
+      return output.toByteArray();
+    }
+    catch (IOException e) {
+      throw new BrokenStorageException(e);
+    }
   }
 
   protected OutputStream createDeflaterOutputStream(OutputStream output) {

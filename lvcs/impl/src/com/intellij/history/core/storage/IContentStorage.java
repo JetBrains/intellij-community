@@ -1,15 +1,13 @@
 package com.intellij.history.core.storage;
 
-import java.io.IOException;
-
 public interface IContentStorage {
   void save();
 
   void close();
 
-  int store(byte[] content) throws IOException;
+  int store(byte[] content) throws BrokenStorageException;
 
-  byte[] load(int id) throws IOException;
+  byte[] load(int id) throws BrokenStorageException;
 
   void remove(int id);
 

@@ -4,11 +4,11 @@ import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.storage.IContentStorage;
 import com.intellij.history.core.storage.Storage;
+import com.intellij.history.core.storage.BrokenStorageException;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.FormatUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -63,11 +63,11 @@ public class StorageChecker {
     public void close() {
     }
 
-    public int store(byte[] content) throws IOException {
+    public int store(byte[] content) throws BrokenStorageException {
       return 0;
     }
 
-    public byte[] load(int id) throws IOException {
+    public byte[] load(int id) throws BrokenStorageException {
       return new byte[0];
     }
 

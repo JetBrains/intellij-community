@@ -1,10 +1,10 @@
 package com.intellij.history.core;
 
+import com.intellij.history.core.storage.BrokenStorageException;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.core.storage.StoredContent;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,7 +40,7 @@ public class InMemoryStorage extends Storage {
   }
 
   @Override
-  protected byte[] loadContentData(int id) throws IOException {
+  protected byte[] loadContentData(int id) throws BrokenStorageException {
     return myContents.get(id);
   }
 

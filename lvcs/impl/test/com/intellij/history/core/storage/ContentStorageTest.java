@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 
 public class ContentStorageTest extends TempDirTestCase {
   private ContentStorage s;
@@ -76,12 +75,12 @@ public class ContentStorageTest extends TempDirTestCase {
   }
 
   @Test
-  public void testThrowingIOExceptionWhenAskingForInvalidContent() {
+  public void testThrowingExceptionWhenAskingForInvalidContent() {
     try {
       s.load(123);
       fail();
     }
-    catch (IOException e) {
+    catch (BrokenStorageException e) {
     }
   }
 }
