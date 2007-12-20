@@ -26,6 +26,11 @@ public class ProcessNotCreatedException extends ExecutionException {
     myCommandLine = commandLine;
   }
 
+  public ProcessNotCreatedException(final String s, final Throwable cause, final GeneralCommandLine commandLine) {
+    super(s, cause);
+    myCommandLine = commandLine;
+  }
+
   public GeneralCommandLine getCommandLine() {
     return myCommandLine;
   }
