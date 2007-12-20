@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,6 +33,7 @@ public class FileStatusMap {
     myProject = project;
   }
 
+  @Nullable
   static TextRange getDirtyTextRange(Editor editor, int part) {
     Document document = editor.getDocument();
 
@@ -137,6 +139,7 @@ public class FileStatusMap {
    * @param passId
    * @return null for processed file, whole file for untouched or entirely dirty file, PsiElement(usually code block) for dirty region (optimization)
    */
+  @Nullable
   public PsiElement getFileDirtyScope(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -188,12 +191,14 @@ public class FileStatusMap {
     }
   }
 
+  @Nullable
   private static PsiElement combineScopes(PsiElement scope1, PsiElement scope2, Document document, Project project) {
     if (scope1 == null) return scope2;
     if (scope2 == null) return scope1;
-    if (!scope1.isValid() || !scope2.isValid()) return PsiDocumentManager.getInstance(project).getPsiFile(document);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    if (!scope1.isValid() || !scope2.isValid()) return documentManager.getPsiFile(document);
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(scope1, scope2);
-    return commonParent == null || commonParent instanceof PsiDirectory ? PsiDocumentManager.getInstance(project).getPsiFile(document) : commonParent;
+    return commonParent == null || commonParent instanceof PsiDirectory ? documentManager.getPsiFile(document) : commonParent;
   }
 
   @NotNull

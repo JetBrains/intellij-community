@@ -86,6 +86,9 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
     </component>
     <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
+    </component>
+    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory</implementation-class>
     </component>
     <component>

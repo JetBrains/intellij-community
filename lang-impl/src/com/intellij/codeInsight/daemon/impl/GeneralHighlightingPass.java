@@ -4,7 +4,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
@@ -23,12 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -45,17 +41,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.TodoItem;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,8 +56,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass");
-  private static final Icon OVERRIDING_METHOD_ICON = IconLoader.getIcon("/gutter/overridingMethod.png");
-  private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
+  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
+  static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
+  private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
 
   private final PsiFile myFile;
   private final int myStartOffset;
@@ -75,11 +67,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   private volatile Collection<HighlightInfo> myHighlights = Collections.emptyList();
   private final Map<TextRange,Collection<HighlightInfo>> myInjectedPsiHighlights = new THashMap<TextRange, Collection<HighlightInfo>>();
-  private volatile Collection<LineMarkerInfo> myMarkers = Collections.emptyList();
 
-  private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
   protected volatile boolean myHasErrorElement;
-  static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private volatile boolean myErrorFound;
 
   public GeneralHighlightingPass(@NotNull Project project,
@@ -135,7 +124,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
     final HighlightVisitor[] highlightVisitors = createHighlightVisitors();
     final Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
-    final List<LineMarkerInfo> lineMarkers = new ArrayList<LineMarkerInfo>();
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
     try {
@@ -173,11 +161,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
             if (elements.isEmpty()) {
               elements = Collections.singletonList(psiRoot);
             }
-            //LOG.debug("Elements collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
-            //time = System.currentTimeMillis();
-
-            addLineMarkers(elements, lineMarkers);
-            //LOG.debug("Line markers collected for: " + (System.currentTimeMillis() - time) / 1000.0 + "s");
 
             result.addAll(collectHighlights(elements, highlightVisitors));
             result.addAll(highlightTodos());
@@ -208,7 +191,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       releaseHighlightVisitors(highlightVisitors);
     }
     myHighlights = result;
-    myMarkers = lineMarkers;
   }
 
   private void addInjectedPsiHighlights(final List<PsiElement> elements, final RefCountHolder refCountHolder) {
@@ -368,8 +350,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   protected void applyInformationWithProgress() {
     myFile.putUserData(HAS_ERROR_ELEMENT, myHasErrorElement);
 
-    UpdateHighlightersUtil.setLineMarkersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myMarkers, Pass.UPDATE_ALL);
-
     // highlights from both passes should be in the same layer 
     TextRange range = new TextRange(myStartOffset, myEndOffset);
     Collection<HighlightInfo> collection = myInjectedPsiHighlights.get(range);
@@ -385,20 +365,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  public Collection<LineMarkerInfo> queryLineMarkers() {
-    try {
-      if (myFile.getNode() == null) {
-        // binary file? see IDEADEV-2809
-        return Collections.emptyList();
-      }
-      ArrayList<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
-      addLineMarkers(CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), result);
-      return result;
-    }
-    catch (ProcessCanceledException e) {
-      return null;
-    }
-  }
 
   @NotNull
   public Collection<HighlightInfo> getHighlights() {
@@ -496,89 +462,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return list;
   }
 
-  private void addLineMarkers(List<PsiElement> elements, List<LineMarkerInfo> result) throws ProcessCanceledException {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    for (PsiElement element : elements) {
-      ProgressManager.getInstance().checkCanceled();
-
-      LineMarkerInfo info = getLineMarkerInfo(element);
-      if (info != null) {
-        result.add(info);
-      }
-    }
-  }
-
-  @Nullable
-  private LineMarkerInfo getLineMarkerInfo(PsiElement element) {
-    if (element instanceof PsiIdentifier && element.getParent() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element.getParent();
-      int offset = element.getTextRange().getStartOffset();
-      MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      if (superSignature != null) {
-        boolean overrides =
-          method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
-
-        final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
-        final MarkerType type = MarkerType.OVERRIDING_METHOD;
-        Function<PsiElement, String> tooltip = new MethodGutterIconTooltipProvider(type);
-        return new LineMarkerInfo(method, offset, icon, Pass.UPDATE_ALL, tooltip, new GutterNavigationHandlerImpl(type), GutterIconRenderer.Alignment.LEFT);
-      }
-    }
-
-    if (mySettings.SHOW_METHOD_SEPARATORS && element.getFirstChild() == null) {
-      PsiElement element1 = element;
-      boolean isMember = false;
-      while (element1 != null && !(element1 instanceof PsiFile) && element1.getPrevSibling() == null) {
-        element1 = element1.getParent();
-        if (element1 instanceof PsiMember) {
-          isMember = true;
-          break;
-        }
-      }
-      if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
-        boolean drawSeparator = false;
-        int category = getCategory(element1);
-        for (PsiElement child = element1.getPrevSibling(); child != null; child = child.getPrevSibling()) {
-          int category1 = getCategory(child);
-          if (category1 == 0) continue;
-          drawSeparator = category != 1 || category1 != 1;
-          break;
-        }
-
-        if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo(element, element.getTextRange().getStartOffset(), null, Pass.UPDATE_ALL, NullableFunction.NULL, null);
-          EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-          info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
-          info.separatorPlacement = SeparatorPlacement.TOP;
-          return info;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private static int getCategory(PsiElement element) {
-    if (element instanceof PsiField) return 1;
-    if (element instanceof PsiClass || element instanceof PsiClassInitializer) return 2;
-    if (element instanceof PsiMethod) {
-      if (((PsiMethod)element).hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return 1;
-      }
-      String text = element.getText();
-      if (text.indexOf('\n') < 0 && text.indexOf('\r') < 0) {
-        return 1;
-      }
-      else {
-        return 2;
-      }
-    }
-    return 0;
-  }
-
-  private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-
   private void reportErrorsToWolf() {
     if (!myFile.getViewProvider().isPhysical()) return; // e.g. errors in evaluate expression
     Project project = myFile.getProject();
@@ -597,8 +480,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       wolf.weHaveGotProblems(file, problems);
     }
   }
-
-  static final Icon IN_PROGRESS_ICON = IconLoader.getIcon("/general/errorsInProgress.png");
 
   public double getProgress() {
     // do not show progress of visible highlighters update

@@ -1,9 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeHighlighting.*;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -35,9 +32,15 @@ public class VisibleHighlightingPassFactory extends AbstractProjectComponent imp
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
     TextRange textRange = calculateRangeToProcess(editor);
     if (textRange == null) return null;
-    return new GeneralHighlightingPass(file.getProject(), file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), false);
+
+    final TextEditorHighlightingPass general = new GeneralHighlightingPass(file.getProject(), file, editor.getDocument(),
+                                                                           textRange.getStartOffset(), textRange.getEndOffset(), false);
+    final TextEditorHighlightingPass linemarkers = new LineMarkersPass(file.getProject(), file, editor.getDocument(),
+                                                                       textRange.getStartOffset(), textRange.getEndOffset(), false);
+    return new CompositeTextEditorHighlightingPass(file.getProject(),  editor.getDocument(), general, linemarkers);
   }
 
+  @Nullable
   private static TextRange calculateRangeToProcess(Editor editor) {
     TextRange range = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (range == null) return null;

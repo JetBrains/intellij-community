@@ -1,7 +1,7 @@
 package com.intellij.codeEditor.printing;
 
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -89,8 +89,7 @@ public class TextPainter implements Printable {
     final ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        GeneralHighlightingPass action = new GeneralHighlightingPass(project, psiFile, myDocument, 0,
-                                                                     psiFile.getTextLength(), true);
+        LineMarkersPass action = new LineMarkersPass(project, psiFile, myDocument, 0, psiFile.getTextLength(), true);
         Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
         for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
           if (lineMarkerInfo.separatorColor != null) {

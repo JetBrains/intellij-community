@@ -1,7 +1,7 @@
 package com.intellij.codeEditor.printing;
 
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -65,7 +65,7 @@ class HTMLTextPainter {
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
     if (document != null) {
-      GeneralHighlightingPass action = new GeneralHighlightingPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
+      LineMarkersPass action = new LineMarkersPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
       Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
       for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
         if (lineMarkerInfo.separatorColor != null) {
