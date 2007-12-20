@@ -173,6 +173,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return result;
   }
 
+  @Nullable
   public PsiFile getResourceLocation(@NotNull @NonNls final String url, @NotNull final PsiFile baseFile, final String version) {
     final XmlFile schema = XmlSchemaProvider.findSchema(url, baseFile);
     if (schema != null) {

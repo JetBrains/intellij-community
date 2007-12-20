@@ -21,6 +21,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -41,6 +42,7 @@ public abstract class ExternalResourceManager implements ModificationTracker {
 
   public abstract String getResourceLocation(@NonNls String url);
   public abstract String getResourceLocation(@NonNls String url, String version);
+  @Nullable
   public abstract PsiFile getResourceLocation(@NotNull @NonNls String url, @NotNull PsiFile baseFile, String version);
   
   public abstract String[] getResourceUrls(FileType fileType, final boolean includeStandard);
