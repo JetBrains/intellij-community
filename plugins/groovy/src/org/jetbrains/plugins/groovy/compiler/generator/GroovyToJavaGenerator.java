@@ -11,7 +11,9 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -367,8 +369,25 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         continue;
       }
 
-      MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
-      if (methodSignatures.add(signature)) writeMethod(text, method);
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      PsiParameter[] parametersCopy = new PsiParameter[parameters.length];
+      PsiType[] parameterTypes = new PsiType[parameters.length];
+      for (int i = 0; i < parameterTypes.length; i++) {
+        parametersCopy[i] = parameters[i];
+        parameterTypes[i] = parameters[i].getType();
+      }
+
+      for (int i = parameters.length - 1; i >= 0; i--) {
+        MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
+        if (methodSignatures.add(signature)) {
+          writeMethod(text, method, parametersCopy);
+        }
+
+        PsiParameter parameter = parameters[i];
+        if (!(parameter instanceof GrParameter) || !((GrParameter) parameter).isOptional()) break;
+        parameterTypes = ArrayUtil.remove(parameterTypes, parameterTypes.length - 1);
+        parametersCopy = ArrayUtil.remove(parametersCopy, parametersCopy.length - 1);
+      }
 
       wasRunMethodPresent = wasRunMethod(method);
     }
@@ -386,10 +405,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         for (GrVariable variable : variables) {
           if (variable instanceof GrField && ((GrField) variable).isProperty()) {
             PsiMethod getter = ((GrField) variable).getGetter();
-            if (getter != null) writeMethod(text, getter);
+            if (getter != null) writeMethod(text, getter, getter.getParameterList().getParameters());
 
             PsiMethod setter = ((GrField) variable).getSetter();
-            if (setter != null) writeMethod(text, setter);
+            if (setter != null) writeMethod(text, setter, setter.getParameterList().getParameters());
           }
         }
       }
@@ -567,7 +586,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
   }
 
-  private void writeMethod(StringBuffer text, PsiMethod method) {
+  private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
     if (method == null) return;
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
@@ -592,14 +611,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(method.getName());
 
     /************* parameters **********/
-    PsiParameter[] parameterList = method.getParameterList().getParameters();
 
     text.append("(");
 
     //writes parameters
     int i = 0;
-    while (i < parameterList.length) {
-      PsiParameter parameter = parameterList[i];
+    while (i < parameters.length) {
+      PsiParameter parameter = parameters[i];
       if(parameter == null) continue;
 
       if (i > 0) text.append(", ");  //append ','

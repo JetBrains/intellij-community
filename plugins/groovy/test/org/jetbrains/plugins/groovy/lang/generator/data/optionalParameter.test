@@ -1,0 +1,22 @@
+class Test {
+  def foo(h, i = 0, j = 0, k = 0) {}
+}
+-----
+public class Test extends groovy.lang.GroovyObjectSupport {
+  public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j, java.lang.Object k) {
+    return null;
+  }
+
+  public java.lang.Object foo(java.lang.Object h, java.lang.Object i, java.lang.Object j) {
+    return null;
+  }
+
+  public java.lang.Object foo(java.lang.Object h, java.lang.Object i) {
+    return null;
+  }
+
+  public java.lang.Object foo(java.lang.Object h) {
+    return null;
+  }
+}
+---
