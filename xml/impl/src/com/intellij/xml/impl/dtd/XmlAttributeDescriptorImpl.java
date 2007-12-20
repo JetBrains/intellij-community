@@ -84,16 +84,14 @@ public class XmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor impl
   }
 
   public String[] getEnumeratedValues() {
-    List result = new ArrayList();
 
     XmlElement[] values = myDecl.getEnumeratedValues();
-
-    for (int i = 0; i < values.length; i++) {
-      XmlElement value = values[i];
+    List<String> result = new ArrayList<String>();
+    for (XmlElement value : values) {
       result.add(value.getText());
     }
 
-    return (String[])result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   public String getQualifiedName() {
