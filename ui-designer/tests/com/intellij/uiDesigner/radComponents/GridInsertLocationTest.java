@@ -33,9 +33,10 @@ public class GridInsertLocationTest extends TestCase {
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
     DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
     assertTrue(location.canDrop(dcl));
-    location.processDrop(null, new RadComponent[] {myDropComponent}, null, dcl);
+    doDrop(location);
     assertEquals(2, myManager.getGridColumnCount(myContainer));
   }
+
 
   public void testInsertInMiddleOfComponentColumn() {
     myContainer.setLayout(new GridLayoutManager(1, 2));
@@ -55,11 +56,33 @@ public class GridInsertLocationTest extends TestCase {
     assertFalse(location.canDrop(dcl));
   }
 
-  private void insertComponent(int row, int column, int rowSpan, int colSpan) {
+  public void testGrowComponent() {
+    myContainer.setLayout(new GridLayoutManager(2, 2));
+
+    //  *|.       *** .
+    //
+    //  ***   ->  *****
+    insertComponent(0, 0, 1, 1);
+    RadComponent c = insertComponent(1, 0, 1, 2);
+
+    GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
+    DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
+    assertTrue(location.canDrop(dcl));
+    doDrop(location);
+    assertEquals(3, myManager.getGridColumnCount(myContainer));
+    assertEquals(3, c.getConstraints().getColSpan());
+  }
+
+  private RadComponent insertComponent(int row, int column, int rowSpan, int colSpan) {
     final RadAtomicComponent c = new RadAtomicComponent(null, JLabel.class, "1");
     c.getConstraints().restore(new GridConstraints(row, column, rowSpan, colSpan, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                                    GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_GROW,
                                                    null, null, null));
     myContainer.addComponent(c);
+    return c;
+  }
+
+  private void doDrop(final GridInsertLocation location) {
+    location.processDrop(null, new RadComponent[] {myDropComponent}, null, DraggedComponentList.withComponent(myDropComponent));
   }
 }

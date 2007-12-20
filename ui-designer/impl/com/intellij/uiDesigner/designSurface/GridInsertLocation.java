@@ -82,6 +82,18 @@ public class GridInsertLocation extends GridDropLocation {
     return isColumnInsert() || isRowInsert();
   }
 
+  private int getInsertCell() {
+    return isRowInsert() ? myRow : myColumn;
+  }
+
+  private int getOppositeCell() {
+    return isRowInsert() ? myColumn : myRow;
+  }
+
+  private boolean isInsertAfter() {
+    return myMode == GridInsertMode.ColumnAfter || myMode == GridInsertMode.RowAfter;
+  }
+
   @Override public boolean canDrop(ComponentDragObject dragObject) {
     if (isInsertInsideComponent()) {
       LOG.debug("GridInsertLocation.canDrop()=false because insert inside component");
@@ -115,37 +127,27 @@ public class GridInsertLocation extends GridDropLocation {
   }
 
   private boolean isInsertInsideComponent() {
-    if (isColumnInsert()) {
-      int endColumn = (myMode == GridInsertMode.ColumnAfter)
-                      ? getColumn()+1 : getColumn();
-      int row = getRow();
-      for(int col = 0; col<endColumn; col++) {
-        RadComponent component = getContainer().getGridLayoutManager().getComponentAtGrid(getContainer(), row, col);
-        if (component != null) {
-          GridConstraints constraints = component.getConstraints();
-          if (constraints.getColumn() + constraints.getColSpan() > endColumn &&
-              constraints.getColSpan() > 1) {
-            return true;
-          }
+    int endColumn = getInsertCell();
+    if (isInsertAfter()) endColumn++;
+    int row = getOppositeCell();
+
+    for(int col = 0; col<endColumn; col++) {
+      RadComponent component;
+      if (isColumnInsert()) {
+        component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), row, col);
+      }
+      else {
+        component = RadAbstractGridLayoutManager.getComponentAtGrid(getContainer(), col, row);
+      }
+
+      if (component != null) {
+        GridConstraints constraints = component.getConstraints();
+        final boolean isRow = !isColumnInsert();
+        if (constraints.getCell(isRow) + constraints.getSpan(isRow) > endColumn &&
+            constraints.getSpan(isRow) > 1) {
+          return true;
         }
       }
-      return false;
-    }
-    else if (isRowInsert()) {
-      int endRow = (myMode == GridInsertMode.RowAfter)
-                   ? getRow()+1 : getRow();
-      int col = getColumn();
-      for(int row = 0; row<endRow; row++) {
-        RadComponent component = getContainer().getGridLayoutManager().getComponentAtGrid(getContainer(), row, col);
-        if (component != null) {
-          GridConstraints constraints = component.getConstraints();
-          if (constraints.getRow() + constraints.getRowSpan() > endRow &&
-              constraints.getRowSpan() > 1) {
-            return true;
-          }
-        }
-      }
-      return false;
     }
     return false;
   }
