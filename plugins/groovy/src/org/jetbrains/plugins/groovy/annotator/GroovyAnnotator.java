@@ -727,6 +727,7 @@ public class GroovyAnnotator implements Annotator {
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
 
     if (module == null) return false;
+    if (dynamicValueTypeDefinition == null) return false;    
     DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
     final String dynPropElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(dynamicProperty);
 
