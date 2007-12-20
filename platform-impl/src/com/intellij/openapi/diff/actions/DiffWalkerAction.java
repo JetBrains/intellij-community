@@ -10,6 +10,10 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 
 abstract class DiffWalkerAction extends AnAction {
+  protected DiffWalkerAction() {
+    setEnabledInModalContext(true);
+  }
+
   public void actionPerformed(AnActionEvent event) {
     FocusDiffSide side = DiffUtil.getFocusDiffSide(event.getDataContext());
     if (side == null) return;
