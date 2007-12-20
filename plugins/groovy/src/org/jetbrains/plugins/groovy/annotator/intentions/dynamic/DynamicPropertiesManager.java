@@ -2,9 +2,12 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
+
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -46,8 +49,20 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   */
 
   @Nullable
-  public abstract String findConcreateDynamicProperty(DynamicProperty dynamicProperty);
+  public String findConcreateDynamicProperty(DynamicProperty dynamicProperty) {
+    final Set<PsiClass> classes = dynamicProperty.getContainigClassSupers();
+    String result = findConcreateDynamicProperty(dynamicProperty.getModuleName(), dynamicProperty.getContainingClassQualifiedName(), dynamicProperty.getPropertyName());
+
+    if (result != null) return result;
+
+    for (PsiClass aClass : classes) {
+      result = findConcreateDynamicProperty(dynamicProperty.getModuleName(), aClass.getQualifiedName(), dynamicProperty.getPropertyName());
+
+      if (result != null) return result;
+    }
+    return null;
+  }
 
   @Nullable
-  public abstract String[] findDynamicPropertiesForType(String moduleName, final String typeQualifiedName);
+  public abstract String[] findDynamicPropertiesOfClass(String moduleName, final String typeQualifiedName);
 }

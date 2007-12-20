@@ -19,9 +19,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -40,9 +38,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicReferenceUtils;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicPropertyBase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
@@ -50,30 +50,19 @@ import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -693,29 +682,8 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private PsiClass findDynamicValueContainingClass(GrReferenceExpression refExpr) {
-    final PsiClass psiClass;
-    if (refExpr.isQualified()) {
-      GrExpression qualifier = refExpr.getQualifierExpression();
-      PsiType type = qualifier.getType();
-      if (!(type instanceof PsiClassType)) return null;
-
-      psiClass = ((PsiClassType) type).resolve();
-    } else {
-      PsiElement refParent = refExpr.getParent();
-
-      while (refParent != null && !(refParent instanceof GroovyFileBase)) {
-        refParent = refParent.getParent();
-      }
-
-      if (refParent == null) return null;
-      psiClass = ((GroovyFileBase) refParent).getScriptClass();
-    }
-    return psiClass;
-  }
-
   private boolean isNeedsAddDynPropertiesAnnotation(GrReferenceExpression referenceExpression) {
-    PsiClass dynamicValueTypeDefinition = findDynamicValueContainingClass(referenceExpression);
+    PsiClass dynamicValueTypeDefinition = DynamicReferenceUtils.findDynamicValueContainingClass(referenceExpression);
     final PsiFile containingFile = referenceExpression.getContainingFile();
 
     VirtualFile file;
@@ -743,11 +711,12 @@ public class GroovyAnnotator implements Annotator {
     } else return;
 
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
-    PsiClass dynamicValueTypeDefinition = findDynamicValueContainingClass(referenceExpression);
+    PsiClass dynamicValueTypeDefinition = DynamicReferenceUtils.findDynamicValueContainingClass(referenceExpression);
 
     if (module == null) return;
+
     DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
-    annotation.registerFix(new DynamicPropertyIntention(dynamicProperty));
+    annotation.registerFix(new DynamicPropertyIntention(dynamicProperty, referenceExpression));
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {

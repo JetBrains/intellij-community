@@ -1,16 +1,26 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
+import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.*;
-import com.intellij.ui.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiType;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
@@ -32,9 +42,12 @@ public class DynamicPropertyDialog extends DialogWrapper {
   private final Project myProject;
   private final DynamicProperty myDynamicProperty;
   private EventListenerList myListenerList = new EventListenerList();
+  private final GrReferenceExpression myReferenceExpression;
 
-  public DynamicPropertyDialog(Project project, DynamicProperty dynamicProperty) {
+  public DynamicPropertyDialog(Project project, DynamicProperty dynamicProperty, GrReferenceExpression referenceExpression) {
     super(project, true);
+    myReferenceExpression = referenceExpression;
+    setTitle(GroovyInspectionBundle.message("dynamic.property"));
     myProject = project;
     myDynamicProperty = dynamicProperty;
     myDynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
@@ -66,6 +79,8 @@ public class DynamicPropertyDialog extends DialogWrapper {
   private void setUpTypeComboBox() {
     //todo: implement my ComboboxEditor
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
+//    final EditorComboBoxEditor comboEditor = DebuggerExpressionComboBox.
+
 
     myTypeComboBox.setEditor(comboEditor);
     myTypeComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
@@ -92,7 +107,8 @@ public class DynamicPropertyDialog extends DialogWrapper {
       }
     });
 
-    myTypeComboBox.addItem("Object");
+    final TypeItem item = new TypeItem(TypesUtil.createJavaLangObject(myReferenceExpression));
+    myTypeComboBox.getEditor().setItem(item.getPresentableText());
   }
 
   class DataChangedListener implements EventListener {
@@ -109,6 +125,12 @@ public class DynamicPropertyDialog extends DialogWrapper {
   @Nullable
   public String getEnteredTypeName() {
     final Object item = myTypeComboBox.getEditor().getItem();
+
+//    if (item instanceof TypeItem) {
+//      return ((TypeItem) item).getPresentableText();
+//    } else {
+//      return null;
+//    }
 
     if (item instanceof String &&
         ((String) item).length() > 0) {
@@ -141,8 +163,8 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   protected void doOKAction() {
-    myDynamicProperty.setTypeName(getEnteredTypeName());
-    getEnteredContaningClass();
+    myDynamicProperty.setType(getEnteredTypeName());
+    myDynamicProperty.setContainingClass(getEnteredContaningClass().getContainingClass());
     myDynamicPropertiesManager.addDynamicProperty(myDynamicProperty);
 
     super.doOKAction();
@@ -158,6 +180,10 @@ public class DynamicPropertyDialog extends DialogWrapper {
     public String toString() {
       return myContainingClass.getName();
     }
+
+    public PsiClass getContainingClass() {
+      return myContainingClass;
+    }
   }
 
   class TypeItem {
@@ -172,55 +198,8 @@ public class DynamicPropertyDialog extends DialogWrapper {
     }
 
     @NotNull
-    String getPresentableText (){
+    String getPresentableText() {
       return myPsiType.getPresentableText();
     }
   }
-
-//  class DynamicPropertyType extends PsiType {
-//    private final PsiType myType;
-//
-//    DynamicPropertyType(PsiType type) {
-//      myType = type;
-//    }
-//
-//    public String toString() {
-//      return myType.getPresentableText();
-//    }
-//
-//    public String getPresentableText() {
-//      return myType.getPresentableText();
-//    }
-//
-//    @NonNls
-//    public String getCanonicalText() {
-//      return myType.getCanonicalText();
-//    }
-//
-//    public String getInternalCanonicalText() {
-//      return myType.getInternalCanonicalText();
-//    }
-//
-//    public boolean isValid() {
-//      return myType.isValid();
-//    }
-//
-//    public boolean equalsToText(@NonNls String text) {
-//      return myType.equalsToText(text);
-//    }
-//
-//    public <A> A accept(PsiTypeVisitor<A> visitor) {
-//      return myType.accept(visitor);
-//    }
-//
-//    @Nullable
-//    public GlobalSearchScope getResolveScope() {
-//      return myType.getResolveScope();
-//    }
-//
-//    @NotNull
-//    public PsiType[] getSuperTypes() {
-//      return myType.getSuperTypes();
-//    }
-//  }
 }

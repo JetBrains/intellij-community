@@ -80,7 +80,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
           if (myIsSetter) {
             PsiType type = myProperty.getDeclaredType();
             if (type == null) {
-              type = TypesUtil.getJavaLangObject(myProperty);
+              type = TypesUtil.createJavaLangObject(myProperty);
             }
             return new LightParameter[]{new LightParameter(manager, "p", null, type, AccessorMethod.this)};
           }

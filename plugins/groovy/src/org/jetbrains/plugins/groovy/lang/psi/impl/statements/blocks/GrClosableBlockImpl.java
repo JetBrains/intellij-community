@@ -154,7 +154,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         if (scriptClass != null) type = factory.createType(scriptClass);
       }
       if (type == null) {
-        type = TypesUtil.getJavaLangObject(this);
+        type = TypesUtil.createJavaLangObject(this);
       }
 
       myOwner = GroovyElementFactory.getInstance(getProject()).createVariableDeclaration(null, OWNER_NAME, null, type, false).getVariables()[0];

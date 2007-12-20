@@ -61,7 +61,7 @@ public class MethodTypeInferencer implements Computable<PsiType> {
       }
     }
 
-    if (isObject) return TypesUtil.getJavaLangObject(myBlock);
+    if (isObject) return TypesUtil.createJavaLangObject(myBlock);
     
     return result;
   }
