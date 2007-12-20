@@ -40,6 +40,11 @@ public class XmlAttributeValueGetter implements ContextGetter {
       final XmlAttributeDescriptor descriptor = ((XmlAttribute)context).getDescriptor();
 
       if(descriptor != null) {
+        if (descriptor.isFixed()) {
+          final String defaultValue = descriptor.getDefaultValue();
+          return defaultValue == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : new Object[] { defaultValue };
+        }
+
         String[] values = descriptor instanceof BasicXmlAttributeDescriptor ?
                           ((BasicXmlAttributeDescriptor)descriptor).getEnumeratedValues((XmlElement)context):descriptor.getEnumeratedValues();
 
