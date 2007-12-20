@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,7 +7,6 @@ import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -21,13 +19,12 @@ import java.util.Arrays;
 class LineMarkerNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LineMarkerNavigator");
 
-  public static void browse(MouseEvent e, LineMarkerInfo info) {
-    PsiElement element = info.elementRef.get();
-    if (element == null || !element.isValid()) return;
+  private LineMarkerNavigator() {}
 
+  public static void browse(MouseEvent e, PsiElement element, MarkerType type) {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
-      if (info.type == LineMarkerInfo.MarkerType.OVERRIDING_METHOD){
+      if (type == MarkerType.OVERRIDING_METHOD){
         PsiMethod[] superMethods = method.findSuperMethods(false);
         if (superMethods.length == 0) return;
         boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(superMethods);
@@ -35,9 +32,7 @@ class LineMarkerNavigator {
                     DaemonBundle.message("navigation.title.super.method", method.getName()),
                     new MethodCellRenderer(showMethodNames));
       }
-      else if (info.type == LineMarkerInfo.MarkerType.OVERRIDEN_METHOD){
-        PsiManager manager = method.getManager();
-        PsiSearchHelper helper = manager.getSearchHelper();
+      else if (type == MarkerType.OVERRIDEN_METHOD){
         PsiMethod[] overridings = OverridingMethodsSearch.search(method, method.getUseScope(), true).toArray(PsiMethod.EMPTY_ARRAY);
         if (overridings.length == 0) return;
         String title = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
@@ -54,7 +49,7 @@ class LineMarkerNavigator {
     }
     else if (element instanceof PsiClass) {
       PsiClass aClass = (PsiClass)element;
-      if (info.type == LineMarkerInfo.MarkerType.SUBCLASSED_CLASS) {
+      if (type == MarkerType.SUBCLASSED_CLASS) {
         PsiClass[] inheritors = ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).toArray(new PsiClass[0]);
         if (inheritors.length == 0) return;
         String title = aClass.isInterface()

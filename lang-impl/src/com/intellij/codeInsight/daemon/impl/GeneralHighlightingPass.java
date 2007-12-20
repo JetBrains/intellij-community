@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -47,6 +48,8 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.util.Function;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -516,8 +519,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         boolean overrides =
           method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
 
-        return new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDING_METHOD, method, offset,
-                                  overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON);
+        final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
+        final MarkerType type = MarkerType.OVERRIDING_METHOD;
+        Function<PsiElement, String> tooltip = new MethodGutterIconTooltipProvider(type);
+        return new LineMarkerInfo(method, offset, icon, Pass.UPDATE_ALL, tooltip, new GutterNavigationHandlerImpl(type), GutterIconRenderer.Alignment.LEFT);
       }
     }
 
@@ -542,7 +547,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         }
 
         if (drawSeparator) {
-          LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.METHOD_SEPARATOR, element, element.getTextRange().getStartOffset(), null);
+          LineMarkerInfo info = new LineMarkerInfo(element, element.getTextRange().getStartOffset(), null, Pass.UPDATE_ALL, NullableFunction.NULL, null);
           EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
           info.separatorColor = scheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR);
           info.separatorPlacement = SeparatorPlacement.TOP;

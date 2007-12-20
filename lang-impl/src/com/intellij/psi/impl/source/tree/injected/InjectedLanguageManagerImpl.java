@@ -118,7 +118,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
     }
     else {
-      MultiHostInjector adapter = new Concatenation2InjectorAdapter();
+      MultiHostInjector adapter = new Concatenation2InjectorAdapter(this);
       if (myRegisteredConcatenationAdapter.compareAndSet(null, adapter)) {
         registerMultiHostInjector(adapter);
       }
@@ -266,9 +266,15 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return removed;
   }
 
-  private class Concatenation2InjectorAdapter implements MultiHostInjector {
+  private static class Concatenation2InjectorAdapter implements MultiHostInjector {
+    private InjectedLanguageManagerImpl myInjectedLanguageManager;
+
+    public Concatenation2InjectorAdapter(final InjectedLanguageManagerImpl injectedLanguageManager) {
+      myInjectedLanguageManager = injectedLanguageManager;
+    }
+
     public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
-      if (myConcatenationInjectors.isEmpty()) return;
+      if (myInjectedLanguageManager.myConcatenationInjectors.isEmpty()) return;
       PsiElement element = context;
       PsiElement parent = context.getParent();
       while (parent instanceof PsiBinaryExpression) {
@@ -298,7 +304,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     }
 
     void tryInjectors(MultiHostRegistrar registrar, PsiElement... elements) {
-      for (ConcatenationAwareInjector concatenationInjector : myConcatenationInjectors) {
+      for (ConcatenationAwareInjector concatenationInjector : myInjectedLanguageManager.myConcatenationInjectors) {
         concatenationInjector.getLanguagesToInject(registrar, elements);
       }
     }

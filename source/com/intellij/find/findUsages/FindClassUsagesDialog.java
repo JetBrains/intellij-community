@@ -1,4 +1,3 @@
-
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;

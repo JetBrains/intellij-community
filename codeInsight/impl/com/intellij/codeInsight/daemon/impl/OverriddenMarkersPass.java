@@ -1,6 +1,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -18,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashSet;
@@ -97,9 +99,10 @@ ProcessCanceledException {
       final PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
       if (inheritor != null) {
         int offset = aClass.getTextOffset();
-        LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.SUBCLASSED_CLASS, aClass, offset, aClass.isInterface() ?
-IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
-
+        final Icon icon = aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER;
+        final MarkerType type = MarkerType.SUBCLASSED_CLASS;
+        Function<PsiElement, String> tooltip = new ClassGutterIconTooltipProvider(type);
+        LineMarkerInfo info = new LineMarkerInfo(aClass, offset, icon, Pass.UPDATE_OVERRIDEN_MARKERS, tooltip, new GutterNavigationHandlerImpl(type));
         result.add(info);
       }
     }
@@ -131,9 +134,10 @@ IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER);
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
       int offset = method.getTextOffset();
-      LineMarkerInfo info = new LineMarkerInfo(LineMarkerInfo.MarkerType.OVERRIDEN_METHOD, method, offset,
-                                               overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER);
-
+      final Icon icon = overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER;
+      final MarkerType type = MarkerType.OVERRIDEN_METHOD;
+      Function<PsiElement, String> tooltip = new MethodGutterIconTooltipProvider(type);
+      LineMarkerInfo info = new LineMarkerInfo(method, offset, icon, Pass.UPDATE_OVERRIDEN_MARKERS, tooltip, new GutterNavigationHandlerImpl(type));
       result.add(info);
     }
   }

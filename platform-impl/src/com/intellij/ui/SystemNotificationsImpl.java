@@ -24,7 +24,7 @@ public class SystemNotificationsImpl implements SystemNotifications, PersistentS
   private State myState = new State();
 
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfo.isMac || SystemInfo.is64Bit) return;
 
     myState.NOTIFICATIONS.add(notificationName);
     GrowlNotifications.getNofications().notify(myState.NOTIFICATIONS, notificationName, title, text);

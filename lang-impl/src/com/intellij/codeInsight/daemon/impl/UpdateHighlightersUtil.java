@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -237,8 +236,8 @@ public class UpdateHighlightersUtil {
     if (oldMarkers != null) {
       for (LineMarkerInfo info : oldMarkers) {
         RangeHighlighter highlighter = info.highlighter;
-        boolean toRemove = !highlighter.isValid() ||
-                           isLineMarkerInGroup(info.type, group) && startOffset <= highlighter.getStartOffset() && highlighter.getStartOffset() <= endOffset;
+        boolean toRemove = !highlighter.isValid() || info.updatePass == group
+                           && startOffset <= highlighter.getStartOffset() && highlighter.getStartOffset() <= endOffset;
 
         if (toRemove) {
           document.getMarkupModel(project).removeHighlighter(highlighter);
@@ -270,26 +269,6 @@ public class UpdateHighlightersUtil {
     DaemonCodeAnalyzerImpl.setLineMarkers(document, newMarkers, project);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Added line markers:" + markers.size());
-    }
-  }
-
-  private static boolean isLineMarkerInGroup(LineMarkerInfo.MarkerType type, int group) {
-    switch (type) {
-      case OVERRIDEN_METHOD:
-      case SUBCLASSED_CLASS:
-        return group == Pass.UPDATE_OVERRIDEN_MARKERS;
-
-      case OVERRIDING_METHOD:
-        /*
-        return true; // in both groups
-
-        */
-      case METHOD_SEPARATOR:
-        return group == Pass.UPDATE_ALL;
-
-      default:
-        LOG.assertTrue(false);
-        return false;
     }
   }
 
