@@ -80,14 +80,13 @@ class CreateAssertPredicate implements PsiElementPredicate{
 	    return isTestClass(containingClass);
     }
 
-    private static boolean isTestClass(PsiClass aClass){
-        if(aClass == null){
-            return false;
+    private static boolean isTestClass(PsiClass aClass) {
+        if (aClass == null) {
+          return false;
         }
-        final PsiManager psiManager = aClass.getManager();
-        final Project project = psiManager.getProject();
+        final Project project = aClass.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiClass ancestorClass = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("junit.framework.TestCase", scope);
+        final PsiClass ancestorClass = JavaPsiFacade.getInstance(project).findClass("junit.framework.TestCase", scope);
         return InheritanceUtil.isInheritorOrSelf(aClass, ancestorClass, true);
     }
 }
