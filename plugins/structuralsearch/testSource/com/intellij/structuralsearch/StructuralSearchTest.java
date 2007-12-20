@@ -1025,14 +1025,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     );
   }
 
-  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
   public void testParameterlessContructorSearch() {
     final String s143 = "class A { A() {} };\n" +
                         "class B { B(int a) {} };\n" +
                         "class C { C() {} C(int a) {} };\n" +
                         "class D {}\n" +
                         "class E {}";
-    final String s144 = "class 'a { 'd{0,0}:[ script( \"a == d\" ) ]('_b+ '_c+); }";
+    final String s144 = "class '_a { '_d{0,0}:[ script( \"__context__.constructor\" ) ]('_b+ '_c+); }";
     assertEquals(
       "parameterless contructor search",
       3,

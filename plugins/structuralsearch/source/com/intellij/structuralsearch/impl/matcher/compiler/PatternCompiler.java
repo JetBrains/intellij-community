@@ -196,7 +196,7 @@ public class PatternCompiler {
           addPredicate(handler,predicate);
         }
 
-        if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 0) {
+        if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
           predicate = new ScriptPredicate(name, constraint.getScriptCodeConstraint());
           addPredicate(handler,predicate);
         }

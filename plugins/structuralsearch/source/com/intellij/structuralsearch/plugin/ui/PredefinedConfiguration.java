@@ -180,6 +180,12 @@ public class PredefinedConfiguration extends Configuration {
         CLASS_TYPE
       ),
 
+      createSearchTemplateInfo(
+        SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
+        "class 'Class {\n  '_Method{0,0}:[ script( \"__context__.constructor\" ) ]('_ParamType+ '_ParameterName+);\n}",
+        CLASS_TYPE
+      ),
+
       // Generics
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.classes"),"class 'GenericClass<'_TypeParameter+> {} ", GENERICS_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.generic.methods"),"class '_Class {\n  <'_TypeParameter+> '_Type+ 'Method+('_ParameterType* '_ParameterDcl*);\n}", GENERICS_TYPE),

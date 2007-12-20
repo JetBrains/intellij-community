@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="inspections-openapi" />
     <orderEntry type="module" module-name="inspections-impl" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="library" name="Groovy" level="project" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

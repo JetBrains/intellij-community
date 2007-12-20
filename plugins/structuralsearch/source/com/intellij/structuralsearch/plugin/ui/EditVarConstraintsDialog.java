@@ -1,22 +1,23 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -55,7 +56,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private CompletionTextField formalArgType;
   private JTextField customScriptCode;
   private JCheckBox maxoccursUnlimited;
-  private JPanel scriptConstraints;
 
   EditVarConstraintsDialog(Project project,SearchModel _model,List<Variable> _variables, boolean replaceContext, FileType fileType) {
     super(project,false);
@@ -171,8 +171,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     maxoccursUnlimited.addChangeListener(
       new MyChangeListener(maxoccurs)
     );
-
-    scriptConstraints.setVisible(false);
     
     init();
 
@@ -238,7 +236,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setInvertFormalType(invertFormalArgType.isSelected());
     varInfo.setFormalArgTypeWithinHierarchy(formalArgTypeWithinHierarchy.isSelected());
     varInfo.setNameOfFormalArgType(formalArgType.getText());
-    varInfo.setScriptCodeConstraint(customScriptCode.getText());
+    varInfo.setScriptCodeConstraint("\"" + customScriptCode.getText() + "\"");
   }
 
   void copyValuesToUI(Variable var) {
@@ -301,7 +299,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       formalArgTypeWithinHierarchy.setSelected( varInfo.isFormalArgTypeWithinHierarchy() );
       formalArgType.setText( varInfo.getNameOfFormalArgType() );
       doProcessing(formalArgTypeWithinHierarchy,formalArgType);
-      customScriptCode.setText( varInfo.getScriptCodeConstraint() );
+      customScriptCode.setText( StringUtil.stripQuotesAroundValue(varInfo.getScriptCodeConstraint()) );
     }
   }
 
