@@ -66,6 +66,9 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
    */
   TextRange getValueTextRange();
 
+  /**
+   * @return true if the attribute is a namespace declaration (its name equals to <code>xmlns</code> or starts with <code>xmlns:</code>)
+   */
   boolean isNamespaceDeclaration();
 
   @Nullable XmlAttributeDescriptor getDescriptor();
