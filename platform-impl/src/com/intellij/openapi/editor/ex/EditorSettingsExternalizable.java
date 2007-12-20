@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NamedJDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.CharsetSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -94,7 +91,8 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  @NonNls public static final String PROP_NATIVE2ASCII = "native2ascii";
+  @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
+  @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
 
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myOptions, element);
@@ -241,6 +239,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     return copy;
   }
 
+  @NotNull
   public String getComponentName() {
     return "EditorSettings";
   }
@@ -316,7 +315,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setNative2AsciiForPropertiesFiles(boolean value) {
     if (myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES != value) {
       myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES = value;
-      myPropertyChangeSupport.firePropertyChange(PROP_NATIVE2ASCII, !value, value);
+      myPropertyChangeSupport.firePropertyChange(PROP_NATIVE2ASCII_SWITCH, !value, value);
     }
   }
   public String getDefaultPropertiesCharsetName() {
@@ -324,7 +323,11 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   public void setDefaultPropertiesCharsetName(@NonNls final String defaultPropertiesCharsetName) {
+    String old = myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
     myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME = defaultPropertiesCharsetName;
+    if (!Comparing.strEqual(old, defaultPropertiesCharsetName)) {
+      myPropertyChangeSupport.firePropertyChange(PROP_PROPERTIES_FILES_ENCODING, old, defaultPropertiesCharsetName);
+    }
   }
 
   public boolean isVariableInplaceRenameEnabled() {

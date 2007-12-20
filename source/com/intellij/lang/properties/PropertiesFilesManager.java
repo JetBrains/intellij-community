@@ -62,7 +62,9 @@ public class PropertiesFilesManager implements ApplicationComponent {
     };
     EditorSettingsExternalizable.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(final PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(EditorSettingsExternalizable.PROP_NATIVE2ASCII)) {
+        if (EditorSettingsExternalizable.PROP_NATIVE2ASCII_SWITCH.equals(evt.getPropertyName()) ||
+            EditorSettingsExternalizable.PROP_PROPERTIES_FILES_ENCODING.equals(evt.getPropertyName())
+          ) {
           encodingChanged();
         }
       }
