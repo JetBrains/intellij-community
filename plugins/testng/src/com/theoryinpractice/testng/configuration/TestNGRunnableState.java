@@ -23,9 +23,9 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
@@ -175,7 +175,7 @@ public class TestNGRunnableState extends JavaCommandLineState
       LOGGER.info("Adding coverage data from " + fileProvider.getCoverageDataFilePath());
       myCurrentCoverageSuite = coverageDataManager.addCoverageSuite(config.getGeneratedName() + " Coverage Results", fileProvider,
                                                                     config.getCoveragePatterns(), new Date().getTime(),
-                                                                    config.getSuiteToMergeWith());
+                                                                    !config.isMergeDataByDefault());
       LOGGER.info("Added coverage data with name '" + myCurrentCoverageSuite.getPresentableName() + "'");
       config.appendCoverageArgument(javaParameters);
     }
@@ -356,13 +356,6 @@ public class TestNGRunnableState extends JavaCommandLineState
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
       classes.putAll(calculateDependencies(data, true, psiClass));
-      final Set<PsiMethod> testMethods = new HashSet<PsiMethod>();
-      for (PsiMethod method : psiClass.getMethods()) {
-        if (TestNGUtil.hasTest(method)) {
-          testMethods.add(method);
-        }
-      }
-      classes.put(psiClass, testMethods);
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
       PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
@@ -450,11 +443,6 @@ public class TestNGRunnableState extends JavaCommandLineState
     //we build up a list of dependencies
     Map<PsiClass, Collection<PsiMethod>> results = new HashMap<PsiClass, Collection<PsiMethod>>();
     if (classes != null && classes.length > 0) {
-      if (includeClasses) {
-        for (PsiClass c : classes) {
-          results.put(c, new HashSet<PsiMethod>());
-        }
-      }
       Set<String> dependencies = TestNGUtil.getAnnotationValues("dependsOnGroups", classes);
       if (!dependencies.isEmpty()) {
         final Project project = classes[0].getProject();
@@ -464,6 +452,11 @@ public class TestNGRunnableState extends JavaCommandLineState
         Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
         //we now have a list of dependencies, and a list of classes that match those dependencies
         results.putAll(filteredClasses);
+      }
+      if (includeClasses) {
+        for (PsiClass c : classes) {
+          results.put(c, new HashSet<PsiMethod>());
+        }
       }
     }
     return results;
