@@ -83,9 +83,8 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   private static void formatIf(PsiIfStatement ifStatement) throws IncorrectOperationException {
-    PsiManager manager = ifStatement.getManager();
-    Project project = manager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final Project project = ifStatement.getProject();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     PsiElement thenBranch = ifStatement.getThenBranch().copy();
     PsiElement elseBranch = ifStatement.getElseBranch() != null ? ifStatement.getElseBranch().copy() : null;
@@ -93,33 +92,35 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
     final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
 
-    PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", null);
-    codeBlock = (PsiBlockStatement) codeStyle.reformat(codeBlock);
+    PsiBlockStatement codeBlock = (PsiBlockStatement)factory.createStatementFromText("{}", null);
+    codeBlock = (PsiBlockStatement)codeStyle.reformat(codeBlock);
 
     ifStatement.getThenBranch().replace(codeBlock);
     if (elseBranch != null) {
       ifStatement.getElseBranch().replace(codeBlock);
     }
     ifStatement.getCondition().replace(factory.createExpressionFromText("true", null));
-    ifStatement = (PsiIfStatement) codeStyle.reformat(ifStatement);
+    ifStatement = (PsiIfStatement)codeStyle.reformat(ifStatement);
 
     if (!(thenBranch instanceof PsiBlockStatement)) {
-      PsiBlockStatement codeBlock1 = (PsiBlockStatement) ifStatement.getThenBranch().replace(codeBlock);
-      codeBlock1 = (PsiBlockStatement) codeStyle.reformat(codeBlock1);
+      PsiBlockStatement codeBlock1 = (PsiBlockStatement)ifStatement.getThenBranch().replace(codeBlock);
+      codeBlock1 = (PsiBlockStatement)codeStyle.reformat(codeBlock1);
       codeBlock1.getCodeBlock().add(thenBranch);
-    } else {
+    }
+    else {
       ifStatement.getThenBranch().replace(thenBranch);
     }
 
     if (elseBranch != null) {
       if (!(elseBranch instanceof PsiBlockStatement)) {
-        PsiBlockStatement codeBlock1 = (PsiBlockStatement) ifStatement.getElseBranch().replace(codeBlock);
-        codeBlock1 = (PsiBlockStatement) codeStyle.reformat(codeBlock1);
+        PsiBlockStatement codeBlock1 = (PsiBlockStatement)ifStatement.getElseBranch().replace(codeBlock);
+        codeBlock1 = (PsiBlockStatement)codeStyle.reformat(codeBlock1);
         codeBlock1.getCodeBlock().add(elseBranch);
-      } else {
+      }
+      else {
         elseBranch = ifStatement.getElseBranch().replace(elseBranch);
 
-        if (emptyBlock(((PsiBlockStatement) elseBranch).getCodeBlock())) {
+        if (emptyBlock(((PsiBlockStatement)elseBranch).getCodeBlock())) {
           ifStatement.getElseBranch().delete();
         }
       }
