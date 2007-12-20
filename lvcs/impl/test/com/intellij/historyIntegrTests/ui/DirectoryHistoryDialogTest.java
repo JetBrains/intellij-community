@@ -2,9 +2,12 @@ package com.intellij.historyIntegrTests.ui;
 
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
+import com.intellij.history.integration.ui.models.NullRevisionsProgress;
 import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
 import com.intellij.historyIntegrTests.PatchingTestCase;
+import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -13,6 +16,30 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
   public void testDialogWorks() throws IOException {
     DirectoryHistoryDialog d = new DirectoryHistoryDialog(gateway, root);
     d.close(0);
+  }
+
+  public void testFileDifference() throws IOException {
+    VirtualFile f = root.createChildData(null, "f.java");
+    f.setBinaryContent("old".getBytes());
+    f.setBinaryContent("new".getBytes());
+    f.setBinaryContent("current".getBytes());
+
+    HistoryDialogModel m = createModelAndSelectRevisions(1, 2);
+    DirectoryChange c = (DirectoryChange)m.getChanges().get(0);
+
+    DiffContent left = c.getFileDifferenceModel().getLeftDiffContent(new NullRevisionsProgress());
+    DiffContent right = c.getFileDifferenceModel().getRightDiffContent(new NullRevisionsProgress());
+    
+    assertEquals("old", new String(left.getBytes()));
+    assertEquals("new", new String(right.getBytes()));
+
+    m.selectRevisions(0, 1);
+
+    c = (DirectoryChange)m.getChanges().get(0);
+    right = c.getFileDifferenceModel().getRightDiffContent(new NullRevisionsProgress());
+    assertEquals("current", new String(right.getBytes()));
+
+    assertTrue(right instanceof DocumentContent);
   }
 
   public void testRevertion() throws Exception {
@@ -55,7 +82,7 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
     root.createChildData(null, "f2.java");
     root.createChildData(null, "f3.java");
 
-    HistoryDialogModel m = createModelAndSelectRevision(1, 3);
+    HistoryDialogModel m = createModelAndSelectRevisions(1, 3);
     m.createPatch(patchFilePath, false);
     clearRoot();
 
@@ -67,10 +94,10 @@ public class DirectoryHistoryDialogTest extends PatchingTestCase {
   }
 
   private DirectoryHistoryDialogModel createModelAndSelectRevision(int rev) {
-    return createModelAndSelectRevision(rev, rev);
+    return createModelAndSelectRevisions(rev, rev);
   }
 
-  private DirectoryHistoryDialogModel createModelAndSelectRevision(int first, int second) {
+  private DirectoryHistoryDialogModel createModelAndSelectRevisions(int first, int second) {
     DirectoryHistoryDialogModel m = new DirectoryHistoryDialogModel(gateway, getVcs(), root);
     m.selectRevisions(first, second);
     return m;

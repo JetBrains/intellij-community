@@ -3,14 +3,16 @@ package com.intellij.history.integration.ui.models;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Document;
 
 public class EntireFileDifferenceModel extends FileDifferenceModel {
   private Entry myLeft;
   private Entry myRight;
 
-  public EntireFileDifferenceModel(Entry left, Entry right) {
+  public EntireFileDifferenceModel(IdeaGateway gw, Entry left, Entry right, boolean editableRightContent) {
+    super(gw, editableRightContent);
     myLeft = left;
     myRight = right;
   }
@@ -26,17 +28,22 @@ public class EntireFileDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
-    return getDiffContent(gw, ef, myLeft);
+  public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
+    return getDiffContent(myLeft);
   }
 
   @Override
-  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
-    return getDiffContent(gw, ef, myRight);
+  public DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+    return getDiffContent(myRight);
   }
 
-  private SimpleContent getDiffContent(IdeaGateway gw, EditorFactory ef, Entry e) {
-    return createDiffContent(gw, ef, getContentOf(e), e);
+  protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
+    Document d = getDocument();
+    return DocumentContent.fromDocument(getProject(), d);
+  }
+
+  private SimpleContent getDiffContent(Entry e) {
+    return createSimpleDiffContent(getContentOf(e), e);
   }
 
   private String getContentOf(Entry e) {

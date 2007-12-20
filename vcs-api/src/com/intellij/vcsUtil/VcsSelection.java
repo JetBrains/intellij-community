@@ -36,7 +36,7 @@ public class VcsSelection {
     int startOffset = textRange.getStartOffset();
     mySelectionStartLineNumber = document.getLineNumber(startOffset);
     int endOffset = textRange.getEndOffset();
-    mySelectionEndLineNumber = endOffset >= document.getTextLength() ? document.getLineCount() : document.getLineNumber(endOffset);
+    mySelectionEndLineNumber = endOffset >= document.getTextLength() ? document.getLineCount() - 1 : document.getLineNumber(endOffset);
     myActionName = actionName;
   }
 

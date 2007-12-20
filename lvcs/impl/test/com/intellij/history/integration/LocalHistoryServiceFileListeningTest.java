@@ -2,7 +2,6 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.tree.Entry;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTestCase {
@@ -20,17 +19,6 @@ public class LocalHistoryServiceFileListeningTest extends LocalHistoryServiceTes
     assertEquals(123L, e.getTimestamp());
   }
 
-  @Test
-  @Ignore("is this test valuable?")
-  public void testDoesNotListenBeforeStartup() {
-    initWithoutStartup(createLocalVcs());
-
-    VirtualFile f = new TestVirtualFile("file");
-    fileManager.fireFileCreated(f);
-
-    assertFalse(vcs.hasEntry("file"));
-  }
-  
   @Test
   public void testUnsubscribingRefreshUpdatersOnShutdown() {
     assertTrue(fileManager.hasRefreshUpdater());

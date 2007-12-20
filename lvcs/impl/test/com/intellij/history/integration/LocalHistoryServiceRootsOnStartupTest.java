@@ -2,7 +2,6 @@ package com.intellij.history.integration;
 
 import com.intellij.history.core.revisions.Revision;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -87,16 +86,6 @@ public class LocalHistoryServiceRootsOnStartupTest extends LocalHistoryServiceTe
   public void testDoesNotUpdateRootsBeforeStartupActivity() {
     roots.add(new TestVirtualFile("c:/root"));
     initWithoutStartup(createLocalVcs());
-
-    assertFalse(vcs.hasEntry("c:/root"));
-  }
-
-  @Test
-  @Ignore
-  public void testDoesNotTrackRootChangesBeforeStartup() {
-    // todo are we sure?
-    roots.add(new TestVirtualFile("c:/root"));
-    rootManager.updateRoots();
 
     assertFalse(vcs.hasEntry("c:/root"));
   }

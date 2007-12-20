@@ -36,7 +36,12 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
 
   @Override
   public FileDifferenceModel getDifferenceModel() {
-    return new SelectionDifferenceModel(getCalculator(), getLeftRevision(), getRightRevision());
+    return new SelectionDifferenceModel(myGateway,
+                                        getCalculator(),
+                                        getLeftRevision(),
+                                        getRightRevision(),
+                                        myFrom,
+                                        myTo, isCurrentRevisionSelected());
   }
 
   private SelectionCalculator getCalculator() {

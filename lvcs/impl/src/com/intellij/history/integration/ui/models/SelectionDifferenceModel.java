@@ -4,18 +4,30 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.diff.DiffContent;
+import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Document;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
   private SelectionCalculator myCalculator;
   private Revision myLeftRevision;
   private Revision myRightRevision;
+  private int myFrom;
+  private int myTo;
 
-  public SelectionDifferenceModel(SelectionCalculator c, Revision left, Revision right) {
+  public SelectionDifferenceModel(IdeaGateway gw,
+                                  SelectionCalculator c,
+                                  Revision left,
+                                  Revision right,
+                                  int from,
+                                  int to,
+                                  boolean editableRightContent) {
+    super(gw, editableRightContent);
     myCalculator = c;
     myLeftRevision = left;
     myRightRevision = right;
+    myFrom = from;
+    myTo = to;
   }
 
   @Override
@@ -29,17 +41,26 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   @Override
-  public DiffContent getLeftDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
-    return getDiffContent(gw, ef, myLeftRevision, p);
+  public DiffContent getLeftDiffContent(RevisionProcessingProgress p) {
+    return getDiffContent(myLeftRevision, p);
   }
 
   @Override
-  public DiffContent getRightDiffContent(IdeaGateway gw, EditorFactory ef, RevisionProcessingProgress p) {
-    return getDiffContent(gw, ef, myRightRevision, p);
+  public DiffContent getReadOnlyRightDiffContent(RevisionProcessingProgress p) {
+    return getDiffContent(myRightRevision, p);
   }
 
-  private SimpleContent getDiffContent(IdeaGateway gw, EditorFactory ef, Revision r, RevisionProcessingProgress p) {
-    return createDiffContent(gw, ef, getContentOf(r, p), r.getEntry());
+  protected DiffContent getEditableRightDiffContent(RevisionProcessingProgress p) {
+    Document d = getDocument();
+
+    int fromOffset = d.getLineStartOffset(myFrom);
+    int toOffset = d.getLineEndOffset(myTo);
+
+    return FragmentContent.fromRangeMarker(d.createRangeMarker(fromOffset, toOffset), getProject());
+  }
+
+  private SimpleContent getDiffContent(Revision r, RevisionProcessingProgress p) {
+    return createSimpleDiffContent(getContentOf(r, p), r.getEntry());
   }
 
   private String getContentOf(Revision r, RevisionProcessingProgress p) {

@@ -14,7 +14,6 @@ import com.intellij.history.integration.ui.views.table.RevisionsTable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -160,13 +159,11 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends Dialog
 
     processRevisions(new RevisionProcessingTask() {
       public void run(RevisionProcessingProgress p) {
-        EditorFactory ef = EditorFactory.getInstance();
-
         p.processingLeftRevision();
-        DiffContent left = m.getLeftDiffContent(myGateway, ef, p);
+        DiffContent left = m.getLeftDiffContent(p);
 
         p.processingRightRevision();
-        DiffContent right = m.getRightDiffContent(myGateway, ef, p);
+        DiffContent right = m.getRightDiffContent(p);
 
         r.setContents(left, right);
         r.setContentTitles(m.getLeftTitle(), m.getRightTitle());

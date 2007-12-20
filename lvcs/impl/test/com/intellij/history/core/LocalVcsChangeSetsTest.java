@@ -2,7 +2,6 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -18,29 +17,6 @@ public class LocalVcsChangeSetsTest extends LocalVcsTestCase {
 
     vcs.changeFileContent("file", cf("new content"), -1);
     assertEquals(c("new content"), vcs.getEntry("file").getContent());
-  }
-
-  @Test
-  @Ignore("unignore when service states will be completed")
-  public void testStartingChangeSetTwiceThrowsException() {
-    vcs.beginChangeSet();
-    try {
-      vcs.beginChangeSet();
-      fail();
-    }
-    catch (IllegalStateException e) {
-    }
-  }
-
-  @Test
-  @Ignore("unignore when service states will be completed")
-  public void testFinishingChangeSetWithoutStartingItThrowsException() {
-    try {
-      vcs.endChangeSet(null);
-      fail();
-    }
-    catch (IllegalStateException e) {
-    }
   }
 
   @Test

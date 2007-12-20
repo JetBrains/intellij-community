@@ -1,6 +1,6 @@
 package com.intellij.history.integration.ui.models;
 
-public class NullRevisionProcessingProgress implements RevisionProcessingProgress {
+public class NullRevisionsProgress implements RevisionProcessingProgress {
   public void processingLeftRevision() {
   }
 

@@ -20,7 +20,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
 
   @Override
   protected DirectoryChange createChange(Difference d) {
-    return new DirectoryChange(new DirectoryChangeModel(d));
+    return new DirectoryChange(new DirectoryChangeModel(d, myGateway, isCurrentRevisionSelected()));
   }
 
   @Override

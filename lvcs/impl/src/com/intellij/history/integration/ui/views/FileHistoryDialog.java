@@ -3,6 +3,7 @@ package com.intellij.history.integration.ui.views;
 import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.integration.IdeaGateway;
 import static com.intellij.history.integration.LocalHistoryBundle.message;
+import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.openapi.diff.DiffManager;
@@ -38,7 +39,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected FileHistoryDialogModel createModel(ILocalVcs vcs) {
-    return new FileHistoryDialogModel(myGateway, vcs, myFile);
+    return new EntireFileHistoryDialogModel(myGateway, vcs, myFile);
   }
 
   @Override
