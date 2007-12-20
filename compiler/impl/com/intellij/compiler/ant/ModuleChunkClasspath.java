@@ -50,14 +50,16 @@ public class ModuleChunkClasspath extends Path{
             if (url.endsWith(JarFileSystem.JAR_SEPARATOR)) {
               url = url.substring(0, url.length() - JarFileSystem.JAR_SEPARATOR.length());
             }
-            if (compilerOutputPathUrl != null) {
-              if (url.equals(compilerOutputPathUrl)) {
-                continue;
+            if (!generateRuntimeClasspath) {
+              if (compilerOutputPathUrl != null) {
+                if (url.equals(compilerOutputPathUrl)) {
+                  continue;
+                }
               }
-            }
-            if (compilerOutputPathForTestsUrl != null) {
-              if (url.equals(compilerOutputPathForTestsUrl)) {
-                continue;
+              if (compilerOutputPathForTestsUrl != null) {
+                if (url.equals(compilerOutputPathForTestsUrl)) {
+                  continue;
+                }
               }
             }
             final String propertyRef = genOptions.getPropertyRefForUrl(url);
