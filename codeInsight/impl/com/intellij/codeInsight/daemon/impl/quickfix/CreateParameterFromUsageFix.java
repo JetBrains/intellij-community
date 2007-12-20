@@ -50,8 +50,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   protected void invokeImpl(PsiClass targetClass) {
     if (CreateFromUsageUtils.isValidReference(myReferenceExpression, true)) return;
 
-    PsiManager psiManager = myReferenceExpression.getManager();
-    Project project = psiManager.getProject();
+    final Project project = myReferenceExpression.getProject();
 
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     PsiType type = expectedTypes[0];

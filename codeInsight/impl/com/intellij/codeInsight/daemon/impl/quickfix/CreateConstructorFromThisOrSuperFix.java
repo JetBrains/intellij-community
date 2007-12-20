@@ -58,19 +58,19 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
   }
 
   protected void invokeImpl(PsiClass targetClass) {
-    PsiManager psiManager = myMethodCall.getManager();
     final PsiFile callSite = myMethodCall.getContainingFile();
-    final Project project = psiManager.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final Project project = myMethodCall.getProject();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
     try {
       PsiMethod constructor = elementFactory.createConstructor();
-      constructor = (PsiMethod) targetClass.add(constructor);
+      constructor = (PsiMethod)targetClass.add(constructor);
 
       final TemplateBuilder templateBuilder = new TemplateBuilder(constructor);
-      CreateFromUsageUtils.setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(), getTargetSubstitutor(myMethodCall));
+      CreateFromUsageUtils
+        .setupMethodParameters(constructor, templateBuilder, myMethodCall.getArgumentList(), getTargetSubstitutor(myMethodCall));
 
       final PsiFile psiFile = myMethodCall.getContainingFile();
 
@@ -103,14 +103,16 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
                 CreateFromUsageUtils.setupEditor(constructor, editor);
 
                 UndoUtil.markPsiFileForUndo(callSite);
-              } catch (IncorrectOperationException e) {
+              }
+              catch (IncorrectOperationException e) {
                 LOG.error(e);
               }
             }
           });
         }
       });
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
