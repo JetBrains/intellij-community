@@ -129,7 +129,9 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
       final CacheEntry<T> cacheEntry = myCache[existingIndex];
       final T prevValue = cacheEntry.value;
       cacheEntry.value = x;
-      add2Top(existingIndex);
+      if (existingIndex != myTop) {
+        add2Top(existingIndex);
+      }
       fireListenersAboutDeletion(key, prevValue);
       return;
     }

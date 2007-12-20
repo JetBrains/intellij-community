@@ -123,7 +123,9 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
       final CacheEntry<K, V> cacheEntry = myCache[existingIndex];
       final V deletedVal = cacheEntry.value; 
       cacheEntry.value = x;
-      add2Top(existingIndex);
+      if (existingIndex != myTop) {
+        add2Top(existingIndex);
+      }
       fireListenersAboutDeletion(key, deletedVal);
       return;
     }
