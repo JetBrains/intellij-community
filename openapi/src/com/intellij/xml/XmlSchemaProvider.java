@@ -59,4 +59,15 @@ public abstract class XmlSchemaProvider {
 
   @Nullable
   public abstract XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull final PsiFile baseFile);
+
+  /**
+   * Provides specific namespaces for given xml file.
+   * @param file an xml or jsp file.
+   * @param module current module.
+   * @return available namespace uris, or <code>null</code> if the provider did not recognize the file.
+   */
+  @Nullable
+  protected String[] getAvailableNamespaces(final @NotNull XmlFile file, final @NotNull Module module) {
+    return null;
+  }
 }
