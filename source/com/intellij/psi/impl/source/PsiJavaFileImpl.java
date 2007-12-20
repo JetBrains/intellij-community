@@ -4,7 +4,10 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.psi.*;
+import com.intellij.psi.FileViewProvider;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiPackageStatement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,14 +30,11 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   }
 
   public void setPackageName(final String packageName) throws IncorrectOperationException {
-    PsiManager manager = getManager();
     PsiPackageStatement packageStatement = getPackageStatement();
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
     if (packageStatement != null) {
       if (packageName.length() > 0) {
-        PsiJavaCodeReferenceElement packageRef = packageStatement.getPackageReference();
-        PsiJavaCodeReferenceElement newRef =
-          JavaPsiFacade.getInstance(getProject()).getElementFactory().createReferenceElementByFQClassName(packageName, getResolveScope());
-        packageRef.replace(newRef);
+        packageStatement.replace(factory.createPackageStatement(packageName));
       }
       else {
         packageStatement.delete();
@@ -42,7 +42,7 @@ public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
     }
     else {
       if (packageName.length() > 0) {
-        add(JavaPsiFacade.getInstance(getProject()).getElementFactory().createPackageStatement(packageName));
+        add(factory.createPackageStatement(packageName));
       }
     }
   }
