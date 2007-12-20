@@ -8,10 +8,11 @@ import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.*;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
@@ -209,7 +210,7 @@ public class MatchingVisitor {
   }
 
   private boolean checkHierarchy(PsiElement element,PsiElement patternElement) {
-    final Handler handler = matchContext.getPattern().getHandler(patternElement);
+    final MatchingHandler handler = matchContext.getPattern().getHandler(patternElement);
     if (handler instanceof SubstitutionHandler) {
       final SubstitutionHandler handler2 = (SubstitutionHandler)handler;
 
@@ -296,13 +297,13 @@ public class MatchingVisitor {
   }
 
   public boolean shouldAdvanceThePattern(final PsiElement element, PsiElement match) {
-    Handler handler = matchContext.getPattern().getHandler(element);
+    MatchingHandler handler = matchContext.getPattern().getHandler(element);
 
     return handler.shouldAdvanceThePatternFor(element, match);
   }
 
-  public boolean allowsAbsenceOfMatch(final PsiElement element) {
-    Handler handler = matchContext.getPattern().getHandler(element);
+  private boolean allowsAbsenceOfMatch(final PsiElement element) {
+    MatchingHandler handler = matchContext.getPattern().getHandler(element);
 
     if (handler instanceof SubstitutionHandler &&
         ((SubstitutionHandler)handler).getMinOccurs() == 0) {
@@ -344,95 +345,41 @@ public class MatchingVisitor {
    * Descents the tree in depth finding matches
    * @param elements the element for which the sons are looked for match
    */
-  void matchContext(final NodeIterator elements) {
+  public void matchContext(final NodeIterator elements) {
     final CompiledPattern pattern = matchContext.getPattern();
     final NodeIterator patternNodes = pattern.getNodes().clone();
-
-    if (!patternNodes.hasNext()) return;
-
-    List<PsiElement> matchedNodes = null;
-    PsiElement patternElement;
     final MatchResultImpl saveResult = matchContext.hasResult() ? matchContext.getResult():null;
-    final PsiElement saveCurrentContextNode = matchContext.getCurrentContextNode();
-    matchContext.setResult(null);
+    final LinkedList<PsiElement> saveMatchedNodes = matchContext.getMatchedNodes();
 
-    Loop:
-    for(;elements.hasNext();elements.advance()) {
-      final PsiElement element = elements.current();
+    try {
+      matchContext.setResult(null);
+      matchContext.setMatchedNodes(null);
 
-      patternElement = patternNodes.current();
+      if (!patternNodes.hasNext()) return;
+      final MatchingHandler firstMatchingHandler = matchContext.getPattern().getHandler(patternNodes.current());
 
-      final Handler handler = matchContext.getPattern().getHandler(patternElement);
-      matchContext.setCurrentContextNode(element);
+      for(;elements.hasNext();elements.advance()) {
+        final boolean matched =
+          firstMatchingHandler.matchSequentially(patternNodes, elements, matchContext);
 
-      if (!handler.match(patternElement,element,matchContext) &&
-          !allowsAbsenceOfMatch(patternElement)) {
-        if (matchContext.hasResult())
-          matchContext.clearResult();
+        final LinkedList<PsiElement> matchedNodes = matchContext.getMatchedNodes();
 
-        if (matchedNodes!=null && matchedNodes.size()>0) {
-          patternNodes.reset();
-          elements.rewind(matchedNodes.size());
+        if (matched) {
+          dispatchMatched(matchedNodes, matchContext.getResult());
         }
 
-        if (matchContext.getPattern().getStrategy().continueMatching(element)) {
-          matchContext(
-            new FilteringNodeIterator(
-              new ArrayBackedNodeIterator(element.getChildren())
-            )
-          );
-        }
-
-        if (matchedNodes!=null) matchedNodes.clear();
-        continue;
-      }
-
-      if (matchedNodes == null) matchedNodes = new LinkedList<PsiElement>();
-
-      PsiElement elementToAdd = element;
-
-      if (patternElement instanceof PsiComment &&
-          element instanceof PsiMember
-         ) {
-        // psicomment and psidoccomment are placed inside the psimember next to them so
-        // simple topdown matching should do additional "dances" to cover this case.
-        elementToAdd = element.getFirstChild();
-        assert elementToAdd instanceof PsiComment;
-      }
-
-      matchedNodes.add(elementToAdd);
-
-      if (handler.shouldAdvanceThePatternFor(patternElement, element)) {
-        patternNodes.advance();
-      }
-
-      if (!handler.shouldAdvanceTheMatchFor(patternElement, element)) {
-        elements.rewind();
-      }
-
-      if (!patternNodes.hasNext()) {
-        // match found
-
-        dispatchMatched(matchedNodes, matchContext.getResult());
+        matchContext.setMatchedNodes(null);
+        matchContext.setResult(null);
 
         patternNodes.reset();
-        matchedNodes.clear();
-        matchContext.setResult(null);
+        if (matchedNodes != null && matchedNodes.size() > 0 && matched) {
+          elements.rewind();
+        }
       }
-
-      // try to find the pattern in descendants
-      if (matchContext.getOptions().isRecursiveSearch() &&
-          matchContext.getPattern().getStrategy().continueMatching(element)) {
-        matchContext(
-          new FilteringNodeIterator(
-            new ArrayBackedNodeIterator(element.getChildren())
-          )
-        );
-      }
+    } finally {
+      matchContext.setResult(saveResult);
+      matchContext.setMatchedNodes(saveMatchedNodes);
     }
-
-    matchContext.setResult(saveResult);
-    matchContext.setCurrentContextNode(saveCurrentContextNode);
   }
 
   private void dispatchMatched(final List<PsiElement> matchedNodes, MatchResultImpl result) {
@@ -582,7 +529,7 @@ public class MatchingVisitor {
           return false;
         }
       } else if (array2Dims != 0) {
-        regExpPredicate = Handler.getSimpleRegExpPredicate(handler);
+        regExpPredicate = MatchingHandler.getSimpleRegExpPredicate(handler);
 
         if (regExpPredicate != null) {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
@@ -772,8 +719,8 @@ public class MatchingVisitor {
           end,
           matchContext
         );
-      } else if (userData instanceof Handler) {
-        result = ((Handler)userData).match(comment,comment2,matchContext);
+      } else if (userData instanceof MatchingHandler) {
+        result = ((MatchingHandler)userData).match(comment,comment2,matchContext);
       } else {
         result = comment.getText().equals(comment2.getText());
       }
@@ -963,7 +910,7 @@ public class MatchingVisitor {
       final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
 
       if (nameIdentifier!=null) {
-        final Handler handler = matchContext.getPattern().getHandler(nameIdentifier);
+        final MatchingHandler handler = matchContext.getPattern().getHandler(nameIdentifier);
 
         if (handler instanceof SubstitutionHandler) {
           result = ((SubstitutionHandler)handler).handle(((PsiNameValuePair)element).getNameIdentifier(),matchContext);
@@ -1007,7 +954,7 @@ public class MatchingVisitor {
       final PsiExpression qualifier = reference.getQualifierExpression();
 
       final PsiElement nameElement = reference.getReferenceNameElement();
-      Handler _handler = nameElement != null ? matchContext.getPattern().getHandlerSimple(nameElement):null;
+      MatchingHandler _handler = nameElement != null ? matchContext.getPattern().getHandlerSimple(nameElement):null;
       if (!(_handler instanceof SubstitutionHandler)) _handler = matchContext.getPattern().getHandlerSimple(reference);
 
       if(_handler instanceof SubstitutionHandler &&
@@ -1158,7 +1105,7 @@ public class MatchingVisitor {
           result = match(qualifier, elementQualfier);
           if (!result) return;
         } else {
-          Handler handler = matchContext.getPattern().getHandler(qualifier);
+          MatchingHandler handler = matchContext.getPattern().getHandler(qualifier);
           if (!(handler instanceof SubstitutionHandler) ||
               ((SubstitutionHandler)handler).getMinOccurs()!=0) {
             result = false;
@@ -1169,7 +1116,7 @@ public class MatchingVisitor {
 
             if (substitutionHandler.getPredicate()!=null) {
               boolean isnot = false;
-              Handler _predicate = substitutionHandler.getPredicate();
+              MatchPredicate _predicate = substitutionHandler.getPredicate();
               ExprTypePredicate predicate = null;
 
               if (_predicate instanceof NotPredicate) {
@@ -1216,7 +1163,7 @@ public class MatchingVisitor {
     @Override public void visitLiteralExpression(final PsiLiteralExpression const1) {
       final PsiLiteralExpression const2 = (PsiLiteralExpression) element;
 
-      Handler handler = (Handler)const1.getUserData(CompiledPattern.HANDLER_KEY);
+      MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
 
       if (handler instanceof SubstitutionHandler) {
         int offset = 0;
@@ -1263,7 +1210,7 @@ public class MatchingVisitor {
       final PsiForStatement for2 = (PsiForStatement) element;
 
       final PsiStatement initialization = for1.getInitialization();
-      Handler handler = matchContext.getPattern().getHandler(initialization);
+      MatchingHandler handler = matchContext.getPattern().getHandler(initialization);
 
       result = handler.match(initialization, for2.getInitialization(), matchContext) &&
                match(for1.getCondition(),for2.getCondition()) &&
@@ -1415,7 +1362,7 @@ public class MatchingVisitor {
         }
 
         for(int i = 0, j; i < catches1.length; ++i) {
-          Handler handler = matchContext.getPattern().getHandler(catches1[i]);
+          MatchingHandler handler = matchContext.getPattern().getHandler(catches1[i]);
           final PsiElement pinnedNode = handler.getPinnedNode(null);
 
           if (pinnedNode != null) {
@@ -1550,7 +1497,7 @@ public class MatchingVisitor {
       final PsiElement[] children = psiTypeParameter.getChildren();
       final PsiElement[] children2 = parameter.getChildren();
 
-      final Handler handler = matchContext.getPattern().getHandler(children[0]);
+      final MatchingHandler handler = matchContext.getPattern().getHandler(children[0]);
 
       if (handler instanceof SubstitutionHandler) {
         result = ((SubstitutionHandler)handler).handle(children2[0],matchContext);
@@ -1672,7 +1619,7 @@ public class MatchingVisitor {
       }
 
       if (result && isTypedVar) {
-        Handler handler = matchContext.getPattern().getHandler(attribute.getName());
+        MatchingHandler handler = matchContext.getPattern().getHandler(attribute.getName());
         result = ((SubstitutionHandler)handler).handle(another, matchContext);
       }
     }
@@ -1682,7 +1629,7 @@ public class MatchingVisitor {
       final String text = StringUtil.stripQuotesAroundValue( value.getText() );
 
       final boolean isTypedVar = matchContext.getPattern().isTypedVar(text);
-      Handler handler;
+      MatchingHandler handler;
 
       if (isTypedVar && (handler = matchContext.getPattern().getHandler( text )) instanceof SubstitutionHandler) {
         String text2 = another.getText();
@@ -1712,7 +1659,7 @@ public class MatchingVisitor {
       }
 
       if (result && isTypedVar) {
-        Handler handler = matchContext.getPattern().getHandler( tag.getName() );
+        MatchingHandler handler = matchContext.getPattern().getHandler( tag.getName() );
         result = ((SubstitutionHandler)handler).handle(another,matchContext);
       }
     }

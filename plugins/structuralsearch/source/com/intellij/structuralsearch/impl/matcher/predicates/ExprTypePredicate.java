@@ -2,7 +2,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 
@@ -13,7 +13,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
  * Time: 6:37:15 PM
  * To change this template use File | Settings | File Templates.
  */
-public class ExprTypePredicate extends Handler {
+public class ExprTypePredicate extends MatchPredicate {
   private RegExpPredicate delegate;
   private boolean withinHierarchy;
 

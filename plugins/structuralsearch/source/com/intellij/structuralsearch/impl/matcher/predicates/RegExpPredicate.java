@@ -7,8 +7,8 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.MatchUtils;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import org.jetbrains.annotations.NonNls;
 
@@ -19,7 +19,7 @@ import java.util.regex.PatternSyntaxException;
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
  */
-public final class RegExpPredicate extends Handler {
+public final class RegExpPredicate extends MatchPredicate {
   private Pattern pattern;
   private String baseHandlerName;
   private boolean simpleString;

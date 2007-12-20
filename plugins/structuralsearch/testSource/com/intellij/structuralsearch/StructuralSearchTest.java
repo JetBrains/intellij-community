@@ -409,8 +409,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "expr type condition 2",
-      findMatchesCount(complexCode,exprTypePattern2),
-      5
+      5,
+      findMatchesCount(complexCode,exprTypePattern2)
     );
 
     assertEquals(
@@ -2569,7 +2569,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(2,findMatchesCount(s1, s2));
     assertEquals(1,findMatchesCount(s1, s2_2));
+  }
 
+  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
+  public void testWithinPredicate2() {
     String s3 = "class C {\n" +
                 "  void aaa() {\n" +
                 "        LOG.debug(true);\n" +
@@ -2585,6 +2588,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "}";
     String s4 = "LOG.debug('_params*:[!within( \"if('_a) { 'st*; }\" )]);";
 
-    //assertEquals(5,findMatchesCount(s3, s4));
+    assertEquals(5,findMatchesCount(s3, s4));
+  }
+
+  public void testMultiStatementPatternWithTypedVariable() throws Exception {
+    String s = "Integer i;\ni.valueOf();";
+    String s_2 = "Integer i;\nint a = 1;\ni.valueOf();";
+    String s2 = "Integer '_i;\n'_i.valueOf();";
+    String s2_2 = "Integer '_i;\n'_st; '_i.valueOf();";
+    String s2_3 = "Integer '_i;\n'_st*; '_i.valueOf();";
+    
+    assertEquals(1, findMatchesCount(s,s2));
+    assertEquals(1, findMatchesCount(s_2,s2_2));
+    assertEquals(1, findMatchesCount(s_2,s2_3));
+    assertEquals(1, findMatchesCount(s,s2_3));
   }
 }

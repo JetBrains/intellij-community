@@ -6,7 +6,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 /**
  * Handler for statement search
  */
-public class StatementHandler extends Handler {
+public class StatementHandler extends MatchingHandler {
 
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     // filtering is done on SubstituionHandler level

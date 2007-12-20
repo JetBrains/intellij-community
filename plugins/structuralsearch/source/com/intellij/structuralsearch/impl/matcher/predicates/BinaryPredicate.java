@@ -1,18 +1,18 @@
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 
 /**
  * Binary predicate
  */
-public final class BinaryPredicate extends Handler {
-  final Handler first;
-  final Handler second;
-  final boolean or;
+public final class BinaryPredicate extends MatchPredicate {
+  private final MatchPredicate first;
+  private final MatchPredicate second;
+  private final boolean or;
 
-  public BinaryPredicate(Handler first, Handler second, boolean or) {
+  public BinaryPredicate(MatchPredicate first, MatchPredicate second, boolean or) {
     this.first = first;
     this.second = second;
     this.or = or;
@@ -28,11 +28,11 @@ public final class BinaryPredicate extends Handler {
     }
   }
 
-  public Handler getFirst() {
+  public MatchPredicate getFirst() {
     return first;
   }
 
-  public Handler getSecond() {
+  public MatchPredicate getSecond() {
     return second;
   }
 }

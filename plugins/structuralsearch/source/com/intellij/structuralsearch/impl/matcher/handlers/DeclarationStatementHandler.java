@@ -14,8 +14,8 @@ import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterato
  * Time: 12:01:29
  * To change this template use File | Settings | File Templates.
  */
-public class DeclarationStatementHandler extends Handler {
-  private Handler myCommentHandler;
+public class DeclarationStatementHandler extends MatchingHandler {
+  private MatchingHandler myCommentHandler;
 
   public boolean match(PsiElement patternNode,PsiElement matchedNode, MatchContext context) {
     if (patternNode instanceof PsiComment) {
@@ -90,7 +90,7 @@ public class DeclarationStatementHandler extends Handler {
     return super.shouldAdvanceTheMatchFor(patternElement,matchedElement);
   }
 
-  public void setCommentHandler(final Handler commentHandler) {
+  public void setCommentHandler(final MatchingHandler commentHandler) {
     myCommentHandler = commentHandler;
   }
 }

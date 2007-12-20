@@ -140,17 +140,19 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
-  public void removeSon(String typedVar) {
-    if (matches == null) return;
+  public MatchResultImpl removeSon(String typedVar) {
+    if (matches == null) return null;
 
     // @todo this could be performance bottleneck, replace with hash lookup!
-    for(Iterator i=matches.iterator();i.hasNext();) {
+    for(Iterator<MatchResult> i=matches.iterator();i.hasNext();) {
       final MatchResultImpl res = (MatchResultImpl)i.next();
       if (typedVar.equals(res.getName())) {
         i.remove();
-        break;
+        return res;
       }
     }
+
+    return null;
   }
 
   public void addSon(MatchResultImpl result) {
@@ -161,7 +163,7 @@ public final class MatchResultImpl extends MatchResult {
     this.matchImage = matchImage;
   }
 
-  boolean isTarget() {
+  public boolean isTarget() {
     return target;
   }
 

@@ -1,15 +1,12 @@
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
 
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
  */
-public final class SimpleHandler extends Handler {
+public final class SimpleHandler extends MatchingHandler {
   /**
    * Matches given handler node against given value.
    * @param matchedNode for matching

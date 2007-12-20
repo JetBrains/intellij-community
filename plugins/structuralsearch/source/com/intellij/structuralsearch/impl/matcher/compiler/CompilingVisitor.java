@@ -37,8 +37,8 @@ class CompilingVisitor {
   private final MyJavaVisitor myJavaVisitor = new MyJavaVisitor();
   private final PsiElementVisitor myXmlVisitor = new MyXmlVisitor();
 
-  private void setHandler(PsiElement element, Handler handler) {
-    Handler realHandler = context.pattern.getHandlerSimple(element);
+  private void setHandler(PsiElement element, MatchingHandler handler) {
+    MatchingHandler realHandler = context.pattern.getHandlerSimple(element);
 
     if (realHandler instanceof SubstitutionHandler) {
       ((SubstitutionHandler)realHandler).setMatchHandler(handler);
@@ -149,7 +149,7 @@ class CompilingVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   static Pattern substitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
 
-  private @Nullable Handler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
+  private @Nullable MatchingHandler processPatternStringWithFragments(String pattern, OccurenceKind kind) {
     String content;
 
     if (kind == OccurenceKind.LITERAL) {
@@ -182,7 +182,7 @@ class CompilingVisitor {
         processTokenizedName(word,false,kind);
       }
 
-      RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
+      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate( handler );
 
       if (predicate == null || !predicate.isWholeWords())  buf.append("(.*?)");
       else {
@@ -214,7 +214,7 @@ class CompilingVisitor {
     }
 
     if (handlers!=null) {
-      return (hasLiteralContent)?(Handler)new LiteralWithSubstitutionHandler(
+      return (hasLiteralContent)?(MatchingHandler)new LiteralWithSubstitutionHandler(
         buf.toString(),
         handlers
       ):
@@ -250,7 +250,7 @@ class CompilingVisitor {
 
     if (context.pattern.isTypedVar( refname )) {
       SubstitutionHandler handler = (SubstitutionHandler)context.pattern.getHandler( refname );
-      RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
+      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate( handler );
       if (IsNotSuitablePredicate(predicate, handler)) {
         return;
       }
@@ -294,7 +294,7 @@ class CompilingVisitor {
     }
   }
 
-  private static void setFilter(Handler handler, NodeFilter filter) {
+  private static void setFilter(MatchingHandler handler, NodeFilter filter) {
     if (handler.getFilter()!=null &&
         handler.getFilter().getClass()!=filter.getClass()
         ) {
@@ -310,7 +310,7 @@ class CompilingVisitor {
     }
   }
 
-  private static boolean needsSupers(final PsiElement element, final Handler handler) {
+  private static boolean needsSupers(final PsiElement element, final MatchingHandler handler) {
     if (element.getParent() instanceof PsiClass &&
         handler instanceof SubstitutionHandler
         )  {
@@ -340,7 +340,7 @@ class CompilingVisitor {
       super.visitXmlToken(token);
 
       if (token.getParent() instanceof XmlText && context.pattern.isRealTypedVar(token)) {
-        final Handler handler = context.pattern.getHandler(token);
+        final MatchingHandler handler = context.pattern.getHandler(token);
         handler.setFilter(TagValueFilter.getInstance());
 
         final XmlTextHandler parentHandler = new XmlTextHandler();
@@ -350,10 +350,13 @@ class CompilingVisitor {
     }
 
     @Override public void visitXmlTag(XmlTag xmlTag) {
+      ++codeBlockLevel;
       super.visitXmlTag(xmlTag);
+      --codeBlockLevel;
 
-      if (codeBlockLevel==0) {
+      if (codeBlockLevel==1) {
         context.pattern.setStrategy(XmlMatchingStrategy.getInstance());
+        context.pattern.setHandler(xmlTag, new TopLevelMatchingHandler(context.pattern.getHandler(xmlTag)));
       }
     }
   }
@@ -361,7 +364,7 @@ class CompilingVisitor {
 
   private MatchingStrategy findStrategy(PsiElement el) {
     // identify matching strategy
-    final Handler handler = context.pattern.getHandler(el);
+    final MatchingHandler handler = context.pattern.getHandler(el);
 
     //if (handler instanceof SubstitutionHandler) {
     //  final SubstitutionHandler shandler = (SubstitutionHandler) handler;
@@ -441,7 +444,7 @@ class CompilingVisitor {
           ((RegExpPredicate)handler.getPredicate()).setMultiline(true);
         }
 
-        RegExpPredicate predicate = Handler.getSimpleRegExpPredicate( handler );
+        RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate( handler );
         if (!IsNotSuitablePredicate(predicate, handler)) {
           processTokenizedName(predicate.getRegExp(),true, OccurenceKind.COMMENT);
         }
@@ -450,7 +453,7 @@ class CompilingVisitor {
       }
 
       if (!matches) {
-        Handler handler = processPatternStringWithFragments(text, OccurenceKind.COMMENT);
+        MatchingHandler handler = processPatternStringWithFragments(text, OccurenceKind.COMMENT);
         if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY,handler);
       }
     }
@@ -459,7 +462,7 @@ class CompilingVisitor {
       String value = expression.getText();
 
       if (value.length() > 2 && value.charAt(0)=='"' && value.charAt(value.length()-1)=='"') {
-        @Nullable Handler handler = processPatternStringWithFragments(value, OccurenceKind.LITERAL);
+        @Nullable MatchingHandler handler = processPatternStringWithFragments(value, OccurenceKind.LITERAL);
 
         if (handler!=null) {
           expression.putUserData( CompiledPattern.HANDLER_KEY,handler);
@@ -472,7 +475,7 @@ class CompilingVisitor {
       super.visitClassInitializer(initializer);
       PsiStatement[] psiStatements = initializer.getBody().getStatements();
       if (psiStatements.length == 1 && psiStatements[0] instanceof PsiExpressionStatement) {
-        Handler handler = context.pattern.getHandler(psiStatements[0]);
+        MatchingHandler handler = context.pattern.getHandler(psiStatements[0]);
 
         if (handler instanceof SubstitutionHandler) {
           context.pattern.setHandler(initializer, new SubstitutionHandler((SubstitutionHandler)handler));
@@ -482,7 +485,7 @@ class CompilingVisitor {
 
     @Override public void visitField(PsiField psiField) {
       super.visitField(psiField);
-      final Handler handler = context.pattern.getHandler(psiField);
+      final MatchingHandler handler = context.pattern.getHandler(psiField);
 
       if(needsSupers(psiField,handler)) {
         context.pattern.setRequestsSuperFields(true);
@@ -491,7 +494,7 @@ class CompilingVisitor {
 
     @Override public void visitMethod(PsiMethod psiMethod) {
       super.visitMethod(psiMethod);
-      final Handler handler = context.pattern.getHandler(psiMethod);
+      final MatchingHandler handler = context.pattern.getHandler(psiMethod);
 
       if(needsSupers(psiMethod,handler)) {
         context.pattern.setRequestsSuperMethods(true);
@@ -512,7 +515,7 @@ class CompilingVisitor {
           !(referenceParent instanceof PsiExpressionStatement)
          ) {
         // typed var for expression (but not top level)
-        Handler handler = context.pattern.getHandler(reference);
+        MatchingHandler handler = context.pattern.getHandler(reference);
         setFilter( handler, ExpressionFilter.getInstance() );
         typedVarProcessed = true;
       }
@@ -521,7 +524,7 @@ class CompilingVisitor {
         handleReference(reference);
       }
 
-      Handler handler = context.pattern.getHandler(reference);
+      MatchingHandler handler = context.pattern.getHandler(reference);
 
       // We want to merge qname related to class to find it in any form
       final String referencedName = reference.getReferenceName();
@@ -601,7 +604,7 @@ class CompilingVisitor {
             reference.getParameterList().getTypeParameterElements().length > 0
            ) {
           setHandler(psiDeclarationStatement,new TypedSymbolHandler());
-          final Handler handler = context.pattern.getHandler(psiDeclarationStatement);
+          final MatchingHandler handler = context.pattern.getHandler(psiDeclarationStatement);
           // typed symbol
           handler.setFilter(
             TypedSymbolNodeFilter.getInstance()
@@ -622,7 +625,7 @@ class CompilingVisitor {
         }
       }
 
-      final Handler handler = new DeclarationStatementHandler();
+      final MatchingHandler handler = new DeclarationStatementHandler();
       context.pattern.setHandler(psiDeclarationStatement, handler);
       PsiElement previousNonWhiteSpace = psiDeclarationStatement.getPrevSibling();
 
@@ -661,7 +664,7 @@ class CompilingVisitor {
 
     @Override public void visitClass(PsiClass psiClass) {
       super.visitClass(psiClass);
-      final Handler handler = context.pattern.getHandler(psiClass);
+      final MatchingHandler handler = context.pattern.getHandler(psiClass);
 
       if (needsSupers(psiClass,handler))  {
         context.pattern.setRequestsSuperInners(true);
@@ -685,7 +688,7 @@ class CompilingVisitor {
       if (!(expr.getLastChild() instanceof PsiJavaToken)) {
         // search for expression or symbol
         final PsiElement reference = expr.getFirstChild();
-        Handler referenceHandler = context.pattern.getHandler(reference);
+        MatchingHandler referenceHandler = context.pattern.getHandler(reference);
 
         if (referenceHandler instanceof SubstitutionHandler &&
             (reference instanceof PsiReferenceExpression)
@@ -698,12 +701,12 @@ class CompilingVisitor {
 
           setHandler(expr,new SymbolHandler((SubstitutionHandler)referenceHandler));
         } else if (reference instanceof PsiLiteralExpression) {
-          Handler handler = new ExpressionHandler();
+          MatchingHandler handler = new ExpressionHandler();
           setHandler(expr,handler);
           handler.setFilter( ConstantFilter.getInstance() );
         }  else {
           // just expression
-          Handler handler;
+          MatchingHandler handler;
           setHandler(expr,handler = new ExpressionHandler());
 
           handler.setFilter( ExpressionFilter.getInstance() );
@@ -711,7 +714,7 @@ class CompilingVisitor {
       } else if (expr.getExpression() instanceof PsiReferenceExpression &&
                  (context.pattern.isRealTypedVar(expr.getExpression()))) {
         // search for statement
-        final Handler exprHandler = context.pattern.getHandler(expr);
+        final MatchingHandler exprHandler = context.pattern.getHandler(expr);
         if (exprHandler instanceof SubstitutionHandler) {
           SubstitutionHandler handler = (SubstitutionHandler) exprHandler;
           handler.setFilter( new StatementFilter() );
@@ -738,6 +741,8 @@ class CompilingVisitor {
           el.accept(this);
           if (codeBlockLevel==1) {
             MatchingStrategy newstrategy = findStrategy(el);
+            final MatchingHandler matchingHandler = context.pattern.getHandler(el);
+            context.pattern.setHandler(el, new TopLevelMatchingHandler(matchingHandler));
 
             if (strategy == null || (strategy instanceof JavaDocMatchingStrategy)) {
               strategy = newstrategy;

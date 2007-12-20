@@ -6,7 +6,7 @@ import com.intellij.structuralsearch.impl.matcher.MatchContext;
 /**
  * Search handler for symbol search
  */
-public class SymbolHandler extends Handler {
+public class SymbolHandler extends MatchingHandler {
   private SubstitutionHandler handler;
 
   public SymbolHandler(SubstitutionHandler handler) {

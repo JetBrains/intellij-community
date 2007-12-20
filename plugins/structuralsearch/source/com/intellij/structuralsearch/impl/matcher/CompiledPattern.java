@@ -3,7 +3,7 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
@@ -77,7 +77,7 @@ public abstract class CompiledPattern {
   
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
 
-  MatchingStrategy getStrategy() {
+  public MatchingStrategy getStrategy() {
     return strategy;
   }
 
@@ -109,20 +109,20 @@ public abstract class CompiledPattern {
     }
   }
 
-  private HashMap<Object,Handler> handlers = new HashMap<Object,Handler>();
+  private HashMap<Object,MatchingHandler> handlers = new HashMap<Object,MatchingHandler>();
 
-  public Handler getHandlerSimple(PsiElement node) {
+  public MatchingHandler getHandlerSimple(PsiElement node) {
     return handlers.get(node);
   }
 
   private PsiElement last;
-  private Handler lastHandler;
+  private MatchingHandler lastHandler;
 
-  public Handler getHandler(PsiElement node) {
+  public MatchingHandler getHandler(PsiElement node) {
     if (node==last) {
       return lastHandler;
     }
-    Handler handler = handlers.get(node);
+    MatchingHandler handler = handlers.get(node);
 
     if (handler==null) {
       handler = new SimpleHandler();
@@ -135,11 +135,11 @@ public abstract class CompiledPattern {
     return handler;
   }
 
-  public Handler getHandler(String name) {
+  public MatchingHandler getHandler(String name) {
     return handlers.get(name);
   }
 
-  public void setHandler(PsiElement node, Handler handler) {
+  public void setHandler(PsiElement node, MatchingHandler handler) {
     last = null;
     handlers.put(node,handler);
   }
@@ -196,7 +196,7 @@ public abstract class CompiledPattern {
   }
 
   void clearHandlersState() {
-    for (final Handler h : handlers.values()) {
+    for (final MatchingHandler h : handlers.values()) {
       if (h != null) h.reset();
     }
   }

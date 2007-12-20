@@ -14,14 +14,14 @@ import java.util.LinkedList;
 /**
  * Matching handler that manages substitutions matching
  */
-public class SubstitutionHandler extends Handler {
-  private String name;
-  private int maxOccurs;
-  private int minOccurs;
-  private boolean greedy;
+public class SubstitutionHandler extends MatchingHandler {
+  private final String name;
+  private final int maxOccurs;
+  private final int minOccurs;
+  private final boolean greedy;
   private boolean target;
-  private Handler predicate;
-  private Handler matchHandler;
+  private MatchPredicate predicate;
+  private MatchingHandler matchHandler;
   private boolean subtype;
   private boolean strictSubtype;
   // matchedOccurs + 1 = number of item being matched
@@ -59,13 +59,13 @@ public class SubstitutionHandler extends Handler {
     this.subtype = subtype;
   }
 
-  public void setPredicate(Handler handler) {
+  public void setPredicate(MatchPredicate handler) {
     predicate = handler;
   }
 
   // Matcher
 
-  public Handler getPredicate() {
+  public MatchPredicate getPredicate() {
     return predicate;
   }
 
@@ -189,9 +189,9 @@ public class SubstitutionHandler extends Handler {
     if (!validate(match,start,end,context)) { 
       myNestedResult = null;
       
-      if (maxOccurs==1 && minOccurs==1) {
-        if (context.hasResult()) context.getResult().removeSon(name);
-      }
+      //if (maxOccurs==1 && minOccurs==1) {
+      //  if (context.hasResult()) context.getResult().removeSon(name);
+      //}
       // @todo we may fail fast the match by throwing an exception
 
       return false;
@@ -305,112 +305,123 @@ public class SubstitutionHandler extends Handler {
     MatchResultImpl substitution = context.getResult().findSon(name);
 
     if (substitution!=null) {
+      final LinkedList<PsiElement> matchedNodes = context.getMatchedNodes();
+
       if (substitution.hasSons()) {
-        LinkedList sons = (LinkedList) substitution.getMatches();
+        final LinkedList<MatchResult> sons = (LinkedList<MatchResult>) substitution.getMatches();
 
         while(numberOfResults > 0) {
           --numberOfResults;
-          sons.removeLast();
+          final MatchResult matchResult = sons.removeLast();
+          if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
         }
 
         if (sons.size() == 0) {
           context.getResult().removeSon(name);
         }
       } else {
-        context.getResult().removeSon(name);
+        final MatchResultImpl matchResult = context.getResult().removeSon(name);
+        if (matchedNodes != null) matchedNodes.remove(matchResult.getMatch());
       }
     }
   }
 
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
-    matchedOccurs = 0;
+    final int previousMatchedOccurs = matchedOccurs;
 
-    while(nodes2.hasNext() && matchedOccurs < minOccurs) {
-      if (match(nodes.current(),nodes2.current(),context)) {
-        ++matchedOccurs;
-      } else {
-        break;
-      }
-      nodes2.advance();
-    }
+    try {
+      MatchingHandler handler = context.getPattern().getHandler(nodes.current());
+      matchedOccurs = 0;
 
-    if (matchedOccurs!=minOccurs) {
-      // failed even for min occurs
-      removeLastResults(matchedOccurs,context);
-      nodes2.rewind(matchedOccurs);
-      return false;
-    }
-
-    if (greedy) {
-      // go greedily to maxOccurs
-
-      while(nodes2.hasNext() && matchedOccurs < maxOccurs) {
-        if (match(nodes.current(),nodes2.current(),context)) {
+      while(nodes2.hasNext() && matchedOccurs < minOccurs) {
+        if (handler.match(nodes.current(),nodes2.current(),context)) {
           ++matchedOccurs;
         } else {
-          // no more matches could take!
           break;
         }
         nodes2.advance();
       }
 
-      nodes.advance();
-
-      if (nodes.hasNext()) {
-        final Handler nextHandler = context.getPattern().getHandler(nodes.current());
-
-        while(matchedOccurs >= minOccurs) {
-          if (nextHandler.matchSequentially(nodes,nodes2,context)) {
-            totalMatchedOccurs = matchedOccurs;
-            // match found
-            return true;
-          }
-
-          if (matchedOccurs > 0) {
-            nodes2.rewind();
-            removeLastResults(1,context);
-          }
-          --matchedOccurs;
-        }
-
-        if (matchedOccurs > 0) {
-          removeLastResults(matchedOccurs,context);
-        }
-        nodes.rewind();
-        return false;
-      } else {
-        // match found
-        if (!nodes2.hasNext()) {
-          return checkSameOccurencesConstraint();
-        }
+      if (matchedOccurs!=minOccurs) {
+        // failed even for min occurs
         removeLastResults(matchedOccurs,context);
+        nodes2.rewind(matchedOccurs);
         return false;
       }
-    } else {
-      nodes.advance();
 
-      if (nodes.hasNext()) {
-        final Handler nextHandler = context.getPattern().getHandler(nodes.current());
+      if (greedy) {
+        // go greedily to maxOccurs
 
-        while(nodes2.hasNext() && matchedOccurs <= maxOccurs) {
-          if (nextHandler.matchSequentially(nodes,nodes2,context)) {
-            return checkSameOccurencesConstraint();
-          } else if (match(nodes.current(),nodes2.current(),context)) {
-            matchedOccurs++;
+        while(nodes2.hasNext() && matchedOccurs < maxOccurs) {
+          if (handler.match(nodes.current(),nodes2.current(),context)) {
+            ++matchedOccurs;
           } else {
-            nodes.rewind();
-            removeLastResults(matchedOccurs,context);
-            return false;
+            // no more matches could take!
+            break;
           }
           nodes2.advance();
         }
 
-        nodes.rewind();
-        removeLastResults(matchedOccurs,context);
-        return false;
+        nodes.advance();
+
+        if (nodes.hasNext()) {
+          final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+
+          while(matchedOccurs >= minOccurs) {
+            if (nextHandler.matchSequentially(nodes,nodes2,context)) {
+              totalMatchedOccurs = matchedOccurs;
+              // match found
+              return true;
+            }
+
+            if (matchedOccurs > 0) {
+              nodes2.rewind();
+              removeLastResults(1,context);
+            }
+            --matchedOccurs;
+          }
+
+          if (matchedOccurs > 0) {
+            removeLastResults(matchedOccurs,context);
+          }
+          nodes.rewind();
+          return false;
+        } else {
+          // match found
+          if (handler.isMatchSequentiallySucceeded(nodes2)) {
+            return checkSameOccurencesConstraint();
+          }
+          removeLastResults(matchedOccurs,context);
+          return false;
+        }
       } else {
-        return checkSameOccurencesConstraint();
+        nodes.advance();
+
+        if (nodes.hasNext()) {
+          final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
+
+          while(nodes2.hasNext() && matchedOccurs <= maxOccurs) {
+            if (nextHandler.matchSequentially(nodes,nodes2,context)) {
+              return checkSameOccurencesConstraint();
+            } else if (handler.match(nodes.current(),nodes2.current(),context)) {
+              matchedOccurs++;
+            } else {
+              nodes.rewind();
+              removeLastResults(matchedOccurs,context);
+              return false;
+            }
+            nodes2.advance();
+          }
+
+          nodes.rewind();
+          removeLastResults(matchedOccurs,context);
+          return false;
+        } else {
+          return checkSameOccurencesConstraint();
+        }
       }
+    } finally {
+      matchedOccurs = previousMatchedOccurs;
     }
   }
 
@@ -428,11 +439,11 @@ public class SubstitutionHandler extends Handler {
     this.target = target;
   }
 
-  public Handler getMatchHandler() {
+  public MatchingHandler getMatchHandler() {
     return matchHandler;
   }
 
-  public void setMatchHandler(Handler matchHandler) {
+  public void setMatchHandler(MatchingHandler matchHandler) {
     this.matchHandler = matchHandler;
   }
 

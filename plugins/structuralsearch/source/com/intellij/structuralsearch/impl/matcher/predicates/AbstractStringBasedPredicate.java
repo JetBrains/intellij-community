@@ -2,12 +2,12 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 
 /**
  * @author Maxim.Mossienko
  */
-public class AbstractStringBasedPredicate extends Handler {
+public class AbstractStringBasedPredicate extends MatchPredicate {
   protected final String myName;
   protected final String myWithin;
 

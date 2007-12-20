@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
  */
-public abstract class Handler {
+public abstract class MatchingHandler extends MatchPredicate {
   protected NodeFilter filter;
   private PsiElement pinnedElement;
 
@@ -59,12 +59,15 @@ public abstract class Handler {
   }
 
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
-    if (nodes2.hasNext() && match(nodes.current(),nodes2.current(),context)) {
-      nodes2.advance();
+    PsiElement patternElement;
+    MatchingHandler handler;
+    if (nodes2.hasNext() &&
+        (handler = context.getPattern().getHandler(nodes.current())).match(patternElement = nodes.current(),nodes2.current(),context)) {
+      if (shouldAdvanceTheMatchFor(patternElement, nodes2.current())) nodes2.advance();
       nodes.advance();
 
       if (nodes.hasNext()) {
-        final Handler nextHandler = context.getPattern().getHandler(nodes.current());
+        final MatchingHandler nextHandler = context.getPattern().getHandler(nodes.current());
 
         if (nextHandler.matchSequentially(nodes,nodes2,context)) {
           // match was found!
@@ -76,19 +79,23 @@ public abstract class Handler {
         }
       } else {
         // match was found
-        return !nodes2.hasNext();
+        return handler.isMatchSequentiallySucceeded(nodes2);
       }
     }
     return false;
   }
 
-  private static Handler findRegExpPredicate(Handler start) {
+  protected boolean isMatchSequentiallySucceeded(final NodeIterator nodes2) {
+    return !nodes2.hasNext();
+  }
+
+  private static MatchPredicate findRegExpPredicate(MatchPredicate start) {
     if (start==null) return null;
     if (start instanceof RegExpPredicate) return start;
 
     if(start instanceof BinaryPredicate) {
       BinaryPredicate binary = (BinaryPredicate)start;
-      final Handler result = findRegExpPredicate(binary.getFirst());
+      final MatchPredicate result = findRegExpPredicate(binary.getFirst());
       if (result!=null) return result;
 
       return findRegExpPredicate(binary.getSecond());
@@ -117,7 +124,7 @@ public abstract class Handler {
           (!(element instanceof PsiJavaCodeReferenceElement) ||
            !(element.getParent() instanceof PsiAnnotation))
          ) {
-        Handler handler = pattern.getHandlerSimple(element);
+        MatchingHandler handler = pattern.getHandlerSimple(element);
         if (handler instanceof SubstitutionHandler) {
           ((SubstitutionHandler)handler).reset();
         }
@@ -151,7 +158,7 @@ public abstract class Handler {
 
         final PsiElement startMatching = nodes2.current();
         do {
-          final Handler handler = context.getPattern().getHandler(el);
+          final MatchingHandler handler = context.getPattern().getHandler(el);
           final PsiElement element = handler.getPinnedNode(null);
           final PsiElement el2 = element != null ? element:nodes2.current();
 
@@ -210,7 +217,7 @@ public abstract class Handler {
 
     while(nodes.hasNext()) {
       final PsiElement element = nodes.current();
-      final Handler handler = context.getPattern().getHandler( element );
+      final MatchingHandler handler = context.getPattern().getHandler( element );
 
       if (handler instanceof SubstitutionHandler) {
         if (!((SubstitutionHandler)handler).validate(context,SubstitutionHandler.getElementContextByPsi(element))) {

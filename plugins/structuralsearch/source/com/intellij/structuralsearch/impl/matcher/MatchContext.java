@@ -1,8 +1,8 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResultSink;
-import com.intellij.psi.PsiElement;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +17,9 @@ public class MatchContext {
   private CompiledPattern pattern;
   private MatchOptions options;
   private MatchingVisitor matcher;
+
   private PsiElement currentContextNode;
+  private LinkedList<PsiElement> myMatchedNodes;
 
   public void setCurrentContextNode(final PsiElement psiElement) {
     currentContextNode = psiElement;
@@ -25,6 +27,14 @@ public class MatchContext {
 
   public PsiElement getCurrentContextNode() {
     return currentContextNode;
+  }
+
+  public LinkedList<PsiElement> getMatchedNodes() {
+    return myMatchedNodes;
+  }
+
+  public void setMatchedNodes(final LinkedList<PsiElement> matchedNodes) {
+    myMatchedNodes = matchedNodes;
   }
 
   public interface UnmatchedElementsListener {
@@ -92,7 +102,7 @@ public class MatchContext {
     this.pattern = pattern;
   }
 
-  MatchResultSink getSink() {
+  public MatchResultSink getSink() {
     return sink;
   }
 
@@ -105,7 +115,7 @@ public class MatchContext {
     pattern = null;
   }
 
-  void clearResult() {
+  public void clearResult() {
     pattern.clearHandlersState();
     result.clear();
   }

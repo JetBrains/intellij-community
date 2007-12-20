@@ -20,7 +20,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.filters.NodeFilter;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.*;
@@ -122,7 +122,7 @@ public class PatternCompiler {
           handler.setStrictSubtype(true);
         }
 
-        Handler predicate;
+        MatchPredicate predicate;
 
         if (constraint.getRegExp()!=null && constraint.getRegExp().length() > 0) {
           predicate = new RegExpPredicate(
@@ -283,7 +283,7 @@ public class PatternCompiler {
     return result;
   }
 
-  static void addPredicate(SubstitutionHandler handler, Handler predicate) {
+  static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
     if (handler.getPredicate()==null) {
       handler.setPredicate(predicate);
     } else {

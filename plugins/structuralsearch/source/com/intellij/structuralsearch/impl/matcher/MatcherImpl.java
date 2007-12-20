@@ -26,8 +26,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
-import com.intellij.structuralsearch.impl.matcher.handlers.Handler;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
+import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -219,8 +220,12 @@ public class MatcherImpl {
       // testing mode;
       final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
 
-      for (PsiElement element : elements) {
-        match(element);
+      if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(elements[0].getParent())) {
+        visitor.matchContext(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
+      } else {
+        for (PsiElement element : elements) {
+          match(element);
+        }
       }
 
       matchContext.getSink().matchingFinished();
@@ -612,7 +617,7 @@ public class MatcherImpl {
       while (element.getClass() == targetNode.getClass() ||
              (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
             ) {
-        Handler handler = compiledPattern.getHandler(targetNode);
+        MatchingHandler handler = compiledPattern.getHandler(targetNode);
         handler.setPinnedElement(element);
         elementToStartMatching = element;
         element = element.getParent();

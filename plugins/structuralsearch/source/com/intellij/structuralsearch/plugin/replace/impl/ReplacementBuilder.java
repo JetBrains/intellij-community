@@ -176,7 +176,7 @@ final class ReplacementBuilder extends JavaRecursiveElementVisitor {
   }
 
   private int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
-    result.insert(offset+info.startIndex,image);
+    if (image.length() > 0) result.insert(offset+info.startIndex,image);
     offset += image.length();
     return offset;
   }

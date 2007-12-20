@@ -11,7 +11,7 @@ final public class LexicalNodesFilter  implements NodeFilter {
   private boolean careKeyWords;
   private boolean result;
 
-  private final PsiElementVisitor myJavaVisitory = new JavaElementVisitor() {
+  private final PsiElementVisitor myJavaVisitor = new JavaElementVisitor() {
     public void visitReferenceExpression(final PsiReferenceExpression expression) {
     }
 
@@ -63,7 +63,7 @@ final public class LexicalNodesFilter  implements NodeFilter {
   public boolean accepts(PsiElement element) {
     result = false;
     if (element!=null) {
-      element.accept(myJavaVisitory);
+      element.accept(myJavaVisitor);
       element.accept(myXmlVistVisitor);
     }
     return result;

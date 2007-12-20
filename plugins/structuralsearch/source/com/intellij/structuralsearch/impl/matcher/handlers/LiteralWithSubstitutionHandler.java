@@ -15,7 +15,7 @@ import java.util.List;
  * Time: 5:07:33 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LiteralWithSubstitutionHandler extends Handler {
+public class LiteralWithSubstitutionHandler extends MatchingHandler {
   private String matchExpression;
   private Matcher matcher;
   private List<SubstitutionHandler> handlers;

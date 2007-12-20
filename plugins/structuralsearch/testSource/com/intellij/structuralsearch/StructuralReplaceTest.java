@@ -13,7 +13,6 @@ import java.util.Calendar;
  * @by Maxim.Mossienko
  */
 @SuppressWarnings({"ALL"})
-@Bombed(month = Calendar.DECEMBER, day = 16)
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
   public void testReplaceInLiterals() {
     String s1 = "String ID_SPEED = \"Speed\";";
@@ -1950,6 +1949,41 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
     assertEquals(
       expected_4,
+      actualResult
+    );
+  }
+
+  public void testRemovingRedundancy() throws Exception {
+    String s1 = "int a = 1;\n" +
+                "a = 2;\n" +
+                "int b = a;\n" +
+                "b2 = 3;";
+    String s2 = "int 'a = 'i;\n" +
+                "'st*;\n" +
+                "'a = 'c;";
+    String s3 = "$st$;\n" +
+                "$c$ = $i$;";
+
+    String expected = "2 = 1;\nint b = a;\nb2 = 3;";
+
+    actualResult = replacer.testReplace(s1,s2,s3,options);
+
+    assertEquals(
+      expected,
+      actualResult
+    );
+
+    String s2_2 = "int 'a = 'i;\n" +
+                  "'st*;\n" +
+                  "int 'c = 'a;";
+    String s3_2 = "$st$;\n" +
+                  "int $c$ = $i$;";
+    String expected_2 = "a = 2;\nint b = 1;\nb2 = 3;";
+    
+    actualResult = replacer.testReplace(s1,s2_2,s3_2,options);
+
+    assertEquals(
+      expected_2,
       actualResult
     );
   }

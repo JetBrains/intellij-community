@@ -10,7 +10,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
 /**
  * Root of handlers for pattern node matching. Handles simpliest type of the match.
  */
-public final class XmlTextHandler extends Handler {
+public final class XmlTextHandler extends MatchingHandler {
   public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
     final PsiElement psiElement = nodes.current();
 

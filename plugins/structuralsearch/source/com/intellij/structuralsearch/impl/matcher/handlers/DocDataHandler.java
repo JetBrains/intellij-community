@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls;
 /**
  * Handler for doc nodes
  */
-public class DocDataHandler extends Handler {
+public class DocDataHandler extends MatchingHandler {
   @NonNls private static final String P_STR = "^\\s*((?:\\w|_|\\-|\\$)+)\\s*(?:=\\s*\"(.*)\"\\s*)?$";
   private static Pattern p = Pattern.compile(
     P_STR,
