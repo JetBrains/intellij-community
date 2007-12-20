@@ -33,27 +33,21 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
 
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiForeachStatement statement =
-                (PsiForeachStatement)element.getParent();
+        final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
         if (statement == null) {
             return;
         }
-        final PsiManager psiManager = statement.getManager();
-        final Project project = psiManager.getProject();
-        final JavaCodeStyleManager codeStyleManager =
-                JavaCodeStyleManager.getInstance(project);
+        final Project project = statement.getProject();
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;
         }
         @NonNls final StringBuilder newStatement = new StringBuilder();
-        final PsiParameter iterationParameter =
-                statement.getIterationParameter();
+        final PsiParameter iterationParameter = statement.getIterationParameter();
         final PsiType type = iterationParameter.getType();
         final boolean isArray = iteratedValue.getType() instanceof PsiArrayType;
-        final String index =
-                codeStyleManager.suggestUniqueVariableName(
-                        "i", statement, true);
+        final String index = codeStyleManager.suggestUniqueVariableName("i", statement, true);
         newStatement.append("for(int ");
         newStatement.append(index);
         newStatement.append(" = 0;");
@@ -87,8 +81,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
             return;
         }
         if (body instanceof PsiBlockStatement) {
-            final PsiCodeBlock block =
-                    ((PsiBlockStatement)body).getCodeBlock();
+            final PsiCodeBlock block = ((PsiBlockStatement)body).getCodeBlock();
             final PsiElement[] children = block.getChildren();
             for (int i = 1; i < children.length - 1; i++) {
                 //skip the braces

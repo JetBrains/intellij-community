@@ -33,15 +33,12 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
 
     public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
-        final PsiForeachStatement statement =
-                (PsiForeachStatement)element.getParent();
+        final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
         if (statement == null) {
             return;
         }
-        final PsiManager psiManager = statement.getManager();
-        final Project project = psiManager.getProject();
-        final JavaCodeStyleManager codeStyleManager =
-                JavaCodeStyleManager.getInstance(project);
+        final Project project = statement.getProject();
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         final PsiExpression iteratedValue = statement.getIteratedValue();
         if (iteratedValue == null) {
             return;
@@ -49,9 +46,9 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         final PsiType type = iteratedValue.getType();
         final PsiType iteratedValueParameterType;
         if (type instanceof PsiClassType) {
-            final PsiClassType classType = (PsiClassType) type;
+            final PsiClassType classType = (PsiClassType)type;
             final PsiType[] parameterTypes = classType.getParameters();
-            if(parameterTypes.length == 0) {
+            if (parameterTypes.length == 0) {
                 iteratedValueParameterType = null;
             } else {
                 iteratedValueParameterType = parameterTypes[0];
@@ -60,12 +57,9 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
             iteratedValueParameterType = null;
         }
         @NonNls final StringBuilder newStatement = new StringBuilder();
-        final PsiParameter iterationParameter =
-                statement.getIterationParameter();
+        final PsiParameter iterationParameter = statement.getIterationParameter();
         final PsiType parameterType = iterationParameter.getType();
-        final String iterator =
-                codeStyleManager.suggestUniqueVariableName(
-                        "it", statement, true);
+        final String iterator = codeStyleManager.suggestUniqueVariableName("it", statement, true);
         final String typeText = parameterType.getCanonicalText();
         newStatement.append("for(java.util.Iterator");
         if (iteratedValueParameterType == null) {
@@ -85,8 +79,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
         newStatement.append(' ');
         newStatement.append(iterationParameter.getName());
         newStatement.append(" = ");
-        if (iteratedValueParameterType == null &&
-                !"java.lang.Object".equals(typeText)) {
+        if (iteratedValueParameterType == null && !"java.lang.Object".equals(typeText)) {
             newStatement.append('(');
             newStatement.append(typeText);
             newStatement.append(')');
@@ -98,8 +91,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
             return;
         }
         if (body instanceof PsiBlockStatement) {
-            final PsiCodeBlock block =
-                    ((PsiBlockStatement)body).getCodeBlock();
+            final PsiCodeBlock block = ((PsiBlockStatement)body).getCodeBlock();
             final PsiElement[] children = block.getChildren();
             for (int i = 1; i < children.length - 1; i++) {
                 //skip the braces

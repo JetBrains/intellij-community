@@ -60,17 +60,15 @@ public class SynchronizeOnLockInspection extends BaseInspection {
             if (type == null) {
                 return;
             }
-            final PsiManager manager = lockExpression.getManager();
-            final Project project = manager.getProject();
+            final Project project = lockExpression.getProject();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-          final PsiClass javaUtilLockClass =
-            JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.concurrent.locks.Lock", scope);
+            final PsiClass javaUtilLockClass =
+                JavaPsiFacade.getInstance(project).findClass("java.util.concurrent.locks.Lock", scope);
             if (javaUtilLockClass == null) {
                 return;
             }
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-            final PsiClassType javaUtilLockType =
-                    elementFactory.createType(javaUtilLockClass);
+            final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+            final PsiClassType javaUtilLockType = elementFactory.createType(javaUtilLockClass);
             if (!javaUtilLockType.isAssignableFrom(type)) {
                 return;
             }

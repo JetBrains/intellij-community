@@ -153,23 +153,22 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
         }
     }
 
-    public static long computeDefaultSUID(PsiClass psiClass){
-        final PsiManager manager = psiClass.getManager();
-        final Project project = manager.getProject();
+    public static long computeDefaultSUID(PsiClass psiClass) {
+        final Project project = psiClass.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiClass serializable = JavaPsiFacade.getInstance(manager.getProject()).findClass(SERIALIZABLE_CLASS_NAME, scope);
-        if(serializable == null){
+        final PsiClass serializable = JavaPsiFacade.getInstance(project).findClass(SERIALIZABLE_CLASS_NAME, scope);
+        if (serializable == null) {
             // no jdk defined for project.
             return -1L;
         }
 
         final boolean isSerializable = psiClass.isInheritor(serializable, true);
-        if(!isSerializable){
+        if (!isSerializable) {
             return 0L;
         }
 
         final SerialVersionUIDBuilder serialVersionUIDBuilder = new SerialVersionUIDBuilder(psiClass);
-        try{
+        try {
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             final DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
@@ -178,11 +177,10 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
 
             final PsiModifierList classModifierList = psiClass.getModifierList();
             int classModifiers = classModifierList != null ? MemberSignature.calculateModifierBitmap(classModifierList) : 0;
-            final MemberSignature[] methodSignatures =
-                    serialVersionUIDBuilder.getNonPrivateMethodSignatures();
-            if(psiClass.isInterface()){
+            final MemberSignature[] methodSignatures = serialVersionUIDBuilder.getNonPrivateMethodSignatures();
+            if (psiClass.isInterface()) {
                 classModifiers |= Modifier.INTERFACE;
-                if(methodSignatures.length == 0){
+                if (methodSignatures.length == 0) {
                     // interfaces were not marked abstract when they did't have methods in java 1.0
                     // For serialization compatibility the abstract modifier is ignored.
                     classModifiers &= ~Modifier.ABSTRACT;
@@ -192,21 +190,21 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
 
             final PsiClass[] interfaces = psiClass.getInterfaces();
             Arrays.sort(interfaces, INTERFACE_COMPARATOR);
-            for(PsiClass aInterfaces : interfaces){
+            for (PsiClass aInterfaces : interfaces) {
                 final String name = aInterfaces.getQualifiedName();
                 dataOutputStream.writeUTF(name);
             }
 
             final MemberSignature[] fields = serialVersionUIDBuilder.getNonPrivateFields();
             Arrays.sort(fields);
-            for(final MemberSignature field : fields){
+            for (final MemberSignature field : fields) {
                 dataOutputStream.writeUTF(field.getName());
                 dataOutputStream.writeInt(field.getModifiers());
                 dataOutputStream.writeUTF(field.getSignature());
             }
 
             final MemberSignature[] staticInitializers = serialVersionUIDBuilder.getStaticInitializers();
-            for(final MemberSignature staticInitializer : staticInitializers){
+            for (final MemberSignature staticInitializer : staticInitializers) {
                 dataOutputStream.writeUTF(staticInitializer.getName());
                 dataOutputStream.writeInt(staticInitializer.getModifiers());
                 dataOutputStream.writeUTF(staticInitializer.getSignature());
@@ -214,14 +212,14 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
 
             final MemberSignature[] constructors = serialVersionUIDBuilder.getNonPrivateConstructors();
             Arrays.sort(constructors);
-            for(final MemberSignature constructor : constructors){
+            for (final MemberSignature constructor : constructors) {
                 dataOutputStream.writeUTF(constructor.getName());
                 dataOutputStream.writeInt(constructor.getModifiers());
                 dataOutputStream.writeUTF(constructor.getSignature());
             }
 
             Arrays.sort(methodSignatures);
-            for(final MemberSignature methodSignature : methodSignatures){
+            for (final MemberSignature methodSignature : methodSignatures) {
                 dataOutputStream.writeUTF(methodSignature.getName());
                 dataOutputStream.writeInt(methodSignature.getModifiers());
                 dataOutputStream.writeUTF(methodSignature.getSignature());
@@ -232,9 +230,8 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor{
             final MessageDigest digest = MessageDigest.getInstance(algorithm);
             final byte[] digestBytes = digest.digest(byteArrayOutputStream.toByteArray());
             long serialVersionUID = 0L;
-            for(int i = Math.min(digestBytes.length, 8) - 1; i >= 0; i--){
-                serialVersionUID = serialVersionUID << 8 |
-                        digestBytes[i] & 0xFF;
+            for (int i = Math.min(digestBytes.length, 8) - 1; i >= 0; i--) {
+                serialVersionUID = serialVersionUID << 8 | digestBytes[i] & 0xFF;
             }
             return serialVersionUID;
         }

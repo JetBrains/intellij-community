@@ -148,15 +148,14 @@ class CouplingVisitor extends JavaRecursiveElementVisitor {
             return;
         }
         if (!m_includeLibraryClasses) {
-            final PsiManager manager = m_method.getManager();
-            final Project project = manager.getProject();
+            final Project project = m_method.getProject();
             final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
-          final PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(baseTypeName, searchScope);
+            final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(baseTypeName, searchScope);
             if (aClass == null) {
                 return;
             }
             if (LibraryUtil.classIsInLibrary(aClass)) {
-                return;
+               return;
             }
         }
         m_dependencies.add(baseTypeName);

@@ -112,14 +112,9 @@ public class ConstantIfStatementInspection extends BaseInspection {
                     final PsiStatement[] statements = block.getStatements();
                     if (statements.length > 0) {
                         assert containingElement != null;
-                        final PsiElement added =
-                                containingElement.addRangeBefore(statements[0],
-                                        statements[statements.length - 1],
-                                        statement);
-                        final PsiManager manager = statement.getManager();
-                        final Project project = manager.getProject();
-                        final CodeStyleManager codeStyleManager =
-                                CodeStyleManager.getInstance(project);
+                        final PsiElement added = containingElement.addRangeBefore(statements[0], statements[statements.length - 1], statement);
+                        final Project project = statement.getProject();
+                        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
                         codeStyleManager.reformat(added);
                     }
                     statement.delete();

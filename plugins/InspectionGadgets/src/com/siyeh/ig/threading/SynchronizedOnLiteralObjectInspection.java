@@ -71,24 +71,20 @@ public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
         }
 
         public static boolean isNumberOrStringType(PsiExpression expression) {
-            final PsiType type = expression.getType();
-            if (type == null) {
-                return false;
-            }
-            final PsiManager manager = expression.getManager();
-            final Project project = manager.getProject();
-            final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-          final PsiClass javaUtilLockClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Number", scope);
-            if (javaUtilLockClass == null) {
-                return false;
-            }
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-            final PsiClassType javaLangNumberType =
-                    elementFactory.createType(javaUtilLockClass);
-            return type.equalsToText("java.lang.String") ||
-                    type.equalsToText("java.lang.Boolean") ||
-                    type.equalsToText("java.lang.Character") ||
-                    javaLangNumberType.isAssignableFrom(type);
+          final PsiType type = expression.getType();
+          if (type == null) {
+            return false;
+          }
+          final Project project = expression.getProject();
+          final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+          final PsiClass javaUtilLockClass = JavaPsiFacade.getInstance(project).findClass("java.lang.Number", scope);
+          if (javaUtilLockClass == null) {
+            return false;
+          }
+          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          final PsiClassType javaLangNumberType = elementFactory.createType(javaUtilLockClass);
+          return type.equalsToText("java.lang.String") || type.equalsToText("java.lang.Boolean") || type.equalsToText("java.lang.Character") ||
+                 javaLangNumberType.isAssignableFrom(type);
         }
     }
 }
