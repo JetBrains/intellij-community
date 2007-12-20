@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 
@@ -32,7 +33,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends Intention {
         return new ReplaceConcatenationWithStringBufferPredicate();
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         PsiBinaryExpression expression =
                 (PsiBinaryExpression)element;

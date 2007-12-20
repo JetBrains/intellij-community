@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.PsiElement;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ReplaceConcatenationWithStringBufferPredicate

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ipp.concatenation.ConcatenationUtils;
+import com.siyeh.ipp.psiutils.ConcatenationUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantSubexpressionIntention extends MutablyNamedIntention {
@@ -53,7 +53,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
                 ' ' + operationSign.getText() + ' ' + rhs.getText());
     }
 
-    public void processIntention(PsiElement element)
+    public void processIntention(@NotNull PsiElement element)
             throws IncorrectOperationException {
         final PsiManager manager = element.getManager();
       final PsiConstantEvaluationHelper constantEvaluationHelper =
