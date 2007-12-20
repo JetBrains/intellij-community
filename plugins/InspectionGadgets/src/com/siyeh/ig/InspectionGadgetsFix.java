@@ -184,14 +184,13 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         }
     }
 
-    protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement){
+    protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
         final PsiFile containingPsiFile = problemElement.getContainingFile();
-        if(containingPsiFile == null){
-            return false;
+        if (containingPsiFile == null) {
+          return false;
         }
         final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
-        final PsiManager psiManager = problemElement.getManager();
-        final Project project = psiManager.getProject();
+        final Project project = problemElement.getProject();
         final ReadonlyStatusHandler handler =
                 ReadonlyStatusHandler.getInstance(project);
         final ReadonlyStatusHandler.OperationStatus status =
