@@ -108,11 +108,18 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       // remove ALL imports from file
       final GrImportStatement[] oldImports = myFile.getImportStatements();
+
+      // Getting aliased imports
+      GroovyElementFactory factory = GroovyElementFactory.getInstance(myFile.getProject());
+      ArrayList<GrImportStatement> aliased  = new ArrayList<GrImportStatement>();
+      for (GrImportStatement oldImport : oldImports) {
+        if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
+          aliased.add(factory.createImportStatementFromText(oldImport.getText()));
+        }
+      }
       for (GrImportStatement importStatement : oldImports) {
         try {
-          if (!importStatement.isAliasedImport() || !usedImports.contains(importStatement)) {
             myFile.removeImport(importStatement);
-          }
         } catch (IncorrectOperationException e) {
           LOG.error(e);
         }
@@ -121,6 +128,9 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       // Add new import statements
       GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers);
       try {
+        for (GrImportStatement aliasedImport : aliased) {
+          myFile.addImport(aliasedImport);
+        }
         for (GrImportStatement newImport : newImports) {
           myFile.addImport(newImport);
         }
@@ -158,7 +168,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       packageCountMap.forEachEntry(new TObjectIntProcedure<String>() {
         public boolean execute(String s, int i) {
           if (i >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-            result.add(factory.createImportStatementFromText(s, false, true));
+            result.add(factory.createImportStatementFromText(s, false, true, null));
             final PsiPackage aPackage = manager.findPackage(s);
             if (aPackage != null) {
               for (PsiClass clazz : aPackage.getClasses()) {
@@ -173,7 +183,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       classCountMap.forEachEntry(new TObjectIntProcedure<String>() {
         public boolean execute(String s, int i) {
           if (i >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) {
-            result.add(factory.createImportStatementFromText(s, true, true));
+            result.add(factory.createImportStatementFromText(s, true, true, null));
           }
           return true;
         }
@@ -185,13 +195,13 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         if (isClassImplicitlyImported(importedClass) && !onDemandImportedSimpleClassNames.contains(getSimpleName(importedClass)))
           continue;
 
-        result.add(factory.createImportStatementFromText(importedClass, false, false));
+        result.add(factory.createImportStatementFromText(importedClass, false, false, null));
       }
 
       for (String importedMember : staticallyImportedMembers) {
         final String parentName = getParentName(importedMember);
         if (classCountMap.get(parentName) >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
-        result.add(factory.createImportStatementFromText(importedMember, true, false));
+        result.add(factory.createImportStatementFromText(importedMember, true, false, null));
       }
 
       GrImportStatement[] statements = result.toArray(new GrImportStatement[result.size()]);

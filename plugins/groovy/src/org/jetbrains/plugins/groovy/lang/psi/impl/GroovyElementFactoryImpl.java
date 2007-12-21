@@ -343,9 +343,16 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrMethodCallExpression) file.getChildren()[0]);
   }
 
-  public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand) {
-    final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "");
+  public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {
+    final String text = "import " + (isStatic ? "static " : "") + qName + (isOnDemand ? ".*" : "") +
+        (alias != null && alias.length() > 0 ? " as " + alias : "");
 
+    PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
+        text);
+    return ((GrImportStatement) dummyFile.getFirstChild());
+  }
+
+  public GrImportStatement createImportStatementFromText(@NotNull String text) {
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
         text);
     return ((GrImportStatement) dummyFile.getFirstChild());

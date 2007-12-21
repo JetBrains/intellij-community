@@ -174,7 +174,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       // Calculating position
       Project project = aClass.getProject();
       GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-      GrImportStatement importStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false);
+      GrImportStatement importStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false, null);
       PsiElement anchor = getAnchorToInsertImportAfter();
       return (GrImportStatement) addAfter(importStatement, anchor);
     } catch (IncorrectOperationException e) {

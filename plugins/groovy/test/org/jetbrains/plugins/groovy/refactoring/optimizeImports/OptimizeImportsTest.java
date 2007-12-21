@@ -59,6 +59,10 @@ public class OptimizeImportsTest extends IdeaTestCase {
     doTest("newline", "A.groovy");
   }
 
+  public void testAliased() throws Throwable {
+    doTest("aliased", "A.groovy");
+  }
+
   public void testSimpleOptimize() throws Throwable {
     doTest("simpleOptimize", "A.groovy");
   }

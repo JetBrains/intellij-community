@@ -53,9 +53,12 @@ public abstract class GroovyElementFactory {
    * @param qName
    * @param isStatic
    * @param isOnDemand
+   * @param alias
    * @return import statement for given class
    */
-  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand);
+  public abstract GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias);
+
+  public abstract GrImportStatement createImportStatementFromText(String text);
 
   public abstract PsiElement createWhiteSpace();
 
