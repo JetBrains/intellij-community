@@ -26,7 +26,9 @@ public class JavaFoldingBuilder implements FoldingBuilder {
 
   public FoldingDescriptor[] buildFoldRegions(final ASTNode node, final Document document) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
-    assert element instanceof PsiJavaFile;
+    if (!(element instanceof PsiJavaFile)) {
+      return FoldingDescriptor.EMPTY;
+    }
     PsiJavaFile file = (PsiJavaFile) element;
 
     List<FoldingDescriptor> result = new ArrayList<FoldingDescriptor>();
