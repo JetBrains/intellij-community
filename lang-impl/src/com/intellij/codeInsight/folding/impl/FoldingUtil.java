@@ -13,7 +13,7 @@ import java.util.Comparator;
 class FoldingUtil {
 
   public static FoldRegion findFoldRegion(Editor editor, PsiElement element) {
-    TextRange range = FoldingPolicy.getRangeToFold(element);
+    TextRange range = JavaFoldingBuilder.getRangeToFold(element);
     if (range == null) return null;
     return findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
 

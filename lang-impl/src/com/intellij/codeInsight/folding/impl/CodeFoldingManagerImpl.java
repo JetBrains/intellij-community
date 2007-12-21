@@ -192,10 +192,6 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
     EditorFactory.getInstance().getEventMulticaster().removeEditorMouseMotionListener(myMouseMotionListener);
   }
 
-  public FoldRegion findFoldRegion(Editor editor, PsiElement element) {
-    return FoldingUtil.findFoldRegion(editor, element);
-  }
-
   public FoldRegion findFoldRegion(Editor editor, int startOffset, int endOffset) {
     return FoldingUtil.findFoldRegion(editor, startOffset, endOffset);
   }
