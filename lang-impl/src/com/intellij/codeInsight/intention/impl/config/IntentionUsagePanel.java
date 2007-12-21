@@ -7,6 +7,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -58,7 +59,7 @@ class IntentionUsagePanel extends JPanel{
     String text = StringUtil.convertLineSeparators(usageText);
     document.replaceString(0, document.getTextLength(), text);
     final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    myEditor.setHighlighter(HighlighterFactory.createHighlighter(fileType, scheme, null));
+    myEditor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(fileType, scheme, null));
     setupSpots(document);
   }
 

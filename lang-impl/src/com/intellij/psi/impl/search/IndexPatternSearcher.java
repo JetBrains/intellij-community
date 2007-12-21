@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -9,6 +8,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -133,7 +133,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
             commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
           }
 
-          final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(file.getProject(), file.getVirtualFile());
+          final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file.getProject(),
+                                                                                                               file.getVirtualFile());
           lexer = new LexerEditorHighlighterLexer(highlighter);
         }
         else if (file instanceof XmlFile) {
