@@ -19,9 +19,6 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
   @NonNls
   private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/lang/dataFlow/reachingDefs/data/";
 
-  private static final String ourSelectionStartMarker = "<selection>";
-  private static final String ourSelectionEndMarker = "</selection>";
-
   public ReachingDefsTest() {
     super(DATA_PATH);
   }
@@ -38,10 +35,10 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
     final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, text);
     final PsiElement start = file.findElementAt(selStart);
     final PsiElement end = file.findElementAt(selEnd - 1);
-    final PsiElement parent = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
-    assert parent != null;
-    GrStatement firstStatement = getStatement(start, parent);
-    GrStatement lastStatement = getStatement(end, parent);
+    final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
+    assert owner != null;
+    GrStatement firstStatement = getStatement(start, owner);
+    GrStatement lastStatement = getStatement(end, owner);
     final FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement);
     return dumpInfo(fragmentVariableInfos);
   }
@@ -68,17 +65,6 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
     }
 
     return (GrStatement) element;
-  }
-
-  private String withoutText(String text, String toCut) {
-    final int i = text.indexOf(toCut);
-    if (i >= 0) {
-      StringBuilder builder = new StringBuilder();
-      builder.append(text.substring(0, i));
-      builder.append(text.substring(i + toCut.length()));
-      return builder.toString();
-    }
-    return text;
   }
 
   public static Test suite() {

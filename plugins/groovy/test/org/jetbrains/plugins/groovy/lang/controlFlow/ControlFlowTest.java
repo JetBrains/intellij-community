@@ -3,10 +3,14 @@ package org.jetbrains.plugins.groovy.lang.controlFlow;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.testcases.simple.SimpleGroovyFileSetTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * @author ven
@@ -30,9 +34,19 @@ public class ControlFlowTest extends SimpleGroovyFileSetTestCase {
 
 
   public String transform(String testName, String[] data) throws Exception {
-    String methodText = data[0];
-    final GroovyFileBase file = (GroovyFileBase) TestUtils.createPseudoPhysicalFile(myProject, methodText);
-    final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(file, null, null);
+    String text = data[0];
+    int selStart = Math.max(text.indexOf(ourSelectionStartMarker), 0);
+    text = withoutText(text, ourSelectionStartMarker);
+    int selEnd = text.indexOf(ourSelectionEndMarker);
+    if (selEnd < 0) selEnd = text.length();
+    text = withoutText(text, ourSelectionEndMarker);
+    assert (selStart >= 0) && (selStart >= 0) || ((selStart < 0) && (selStart < 0));
+
+    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, text);
+    final PsiElement start = file.findElementAt(selStart);
+    final PsiElement end = file.findElementAt(selEnd - 1);
+    final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
+    final Instruction[] instructions = new ControlFlowBuilder().buildControlFlow(owner, null, null);
     return dumpControlFlow(instructions);
   }
 
