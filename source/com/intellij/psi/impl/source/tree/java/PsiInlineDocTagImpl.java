@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
@@ -103,7 +103,7 @@ public class PsiInlineDocTagImpl extends CompositePsiElement implements PsiInlin
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    SharedPsiElementImplUtil.setName(getNameElement(), name);
+    PsiImplUtil.setName(getNameElement(), name);
     return this;
   }
 }

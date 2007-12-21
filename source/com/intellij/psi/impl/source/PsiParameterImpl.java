@@ -5,10 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.RowIcon;
@@ -66,7 +63,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
+    PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 

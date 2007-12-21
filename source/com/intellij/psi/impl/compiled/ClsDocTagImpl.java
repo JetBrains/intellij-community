@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -132,7 +132,7 @@ class ClsDocTagImpl extends ClsElementImpl implements PsiDocTag {
     }
   }
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
-    SharedPsiElementImplUtil.setName(getNameElement(), name);
+    PsiImplUtil.setName(getNameElement(), name);
     return this;
   }
 }

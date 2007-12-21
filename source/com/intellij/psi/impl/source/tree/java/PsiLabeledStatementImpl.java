@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
@@ -95,7 +95,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    SharedPsiElementImplUtil.setName(getLabelIdentifier(), name);
+    PsiImplUtil.setName(getLabelIdentifier(), name);
     return this;
   }
 

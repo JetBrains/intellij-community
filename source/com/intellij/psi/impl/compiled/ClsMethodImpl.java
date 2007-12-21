@@ -216,7 +216,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
+    PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 

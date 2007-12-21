@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -55,13 +55,13 @@ public class PsiLabelReference implements PsiReference{
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException{
-      myIdentifier = (PsiIdentifier) SharedPsiElementImplUtil.setName(myIdentifier, newElementName);
+      myIdentifier = (PsiIdentifier) PsiImplUtil.setName(myIdentifier, newElementName);
       return myIdentifier;
     }
 
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException{
       if(element instanceof PsiLabeledStatement){
-        myIdentifier = (PsiIdentifier) SharedPsiElementImplUtil.setName(myIdentifier, ((PsiLabeledStatement)element).getName());
+        myIdentifier = (PsiIdentifier) PsiImplUtil.setName(myIdentifier, ((PsiLabeledStatement)element).getName());
         return myIdentifier;
       }
       throw new IncorrectOperationException("Can't bind not to labeled statement");

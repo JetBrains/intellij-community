@@ -701,7 +701,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     String oldName = getName();
     boolean isRenameFile = isRenameFileOnRenaming();
 
-    SharedPsiElementImplUtil.setName(getNameIdentifier(), newName);
+    PsiImplUtil.setName(getNameIdentifier(), newName);
 
     if (isRenameFile) {
       PsiFile file = (PsiFile)getParent();

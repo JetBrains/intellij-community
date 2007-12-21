@@ -160,7 +160,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
-    SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
+    PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 

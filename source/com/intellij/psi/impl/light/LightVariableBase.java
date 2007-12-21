@@ -2,7 +2,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.SharedPsiElementImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -46,7 +46,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException{
-    SharedPsiElementImplUtil.setName(getNameIdentifier(), name);
+    PsiImplUtil.setName(getNameIdentifier(), name);
     return this;
   }
 
