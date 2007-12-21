@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -19,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PrattBuilder {
   private final PsiBuilder myBuilder;
-  private final Stack<PrattTokenType> myStack = new Stack<PrattTokenType>();
-  private final Stack<Pair<PsiBuilder.Marker,IElementType>> myMarkers = new Stack<Pair<PsiBuilder.Marker, IElementType>>();
+  private final Stack<IElementType> myElementTypes = new Stack<IElementType>();
+  private final Stack<PsiBuilder.Marker> myMarkers = new Stack<PsiBuilder.Marker>();
 
   public PrattBuilder(final PsiBuilder builder) {
     myBuilder = builder;
@@ -36,19 +35,23 @@ public class PrattBuilder {
   }
 
   public void startElement() {
-    myMarkers.push(new Pair<PsiBuilder.Marker, IElementType>(myBuilder.mark(), null));
+    myMarkers.push(myBuilder.mark());
+    myElementTypes.push(null);
   }
 
   public void setCurrentElementType(@Nullable IElementType type) {
-    myMarkers.push(new Pair<PsiBuilder.Marker, IElementType>(myMarkers.pop().first, type));
+    myElementTypes.pop();
+    myElementTypes.push(type);
   }
 
-  @Nullable public IElementType getCurrentElementType() {
-    return myMarkers.peek().second;
+  @Nullable
+  public IElementType getCurrentElementType() {
+    return myElementTypes.peek();
   }
 
   public void rollbackToElementStart() {
-    myMarkers.pop().first.rollbackTo();
+    myMarkers.pop().rollbackTo();
+    myElementTypes.pop();
   }
 
   public void finishElement(@Nullable IElementType type) {
@@ -57,15 +60,18 @@ public class PrattBuilder {
   }
 
   public void precedeElement() {
-    final Pair<PsiBuilder.Marker, IElementType> pair = myMarkers.pop();
-    myMarkers.push(new Pair<PsiBuilder.Marker, IElementType>(pair.first.precede(), null));
-    myMarkers.push(pair);
+    final PsiBuilder.Marker marker = myMarkers.pop();
+    myMarkers.push(marker.precede());
+    myMarkers.push(marker);
+
+    final IElementType type = myElementTypes.pop();
+    myElementTypes.push(null);
+    myElementTypes.push(type);
   }
 
   public void finishElement() {
-    final Pair<PsiBuilder.Marker, IElementType> pair = myMarkers.pop();
-    final PsiBuilder.Marker marker = pair.first;
-    final IElementType type = pair.second;
+    final PsiBuilder.Marker marker = myMarkers.pop();
+    final IElementType type = myElementTypes.pop();
     if (type != null) {
       marker.done(type);
     } else {
@@ -97,13 +103,7 @@ public class PrattBuilder {
       PrattTokenType tokenType = (PrattTokenType)getTokenType();
       assert tokenType != null;
 
-      myStack.push(tokenType);
-      try {
-        if (!tokenType.getParser().parseToken(this)) break;
-      }
-      finally {
-        myStack.pop();
-      }
+      if (!tokenType.getParser().parseToken(this)) break;
 
       assert startOffset < myBuilder.getCurrentOffset() : "Endless loop on " + getTokenType();
 
@@ -194,8 +194,8 @@ public class PrattBuilder {
    * @return
    */
   @Nullable
-  public PrattTokenType getStackValue(int depth) {
-    return myStack.size() - 1 < depth ? null : myStack.get(myStack.size() - 1 - depth);
+  public IElementType getCompositeElementType(int depth) {
+    return myElementTypes.size() - 1 < depth ? null : myElementTypes.get(myElementTypes.size() - 1 - depth);
   }
 
   @Nullable
