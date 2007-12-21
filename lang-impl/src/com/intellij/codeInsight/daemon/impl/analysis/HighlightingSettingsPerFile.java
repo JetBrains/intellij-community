@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.WeakHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +38,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     final PsiFile containingFile = root.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     FileHighlighingSetting[] fileHighlighingSettings = myHighlightSettings.get(virtualFile);
-    final int index = PsiUtil.getRootIndex(root);
+    final int index = PsiUtilBase.getRootIndex(root);
 
     if(fileHighlighingSettings == null || fileHighlighingSettings.length <= index) {
       return FileHighlighingSetting.FORCE_HIGHLIGHTING;
@@ -61,7 +61,7 @@ public class HighlightingSettingsPerFile implements JDOMExternalizable, ProjectC
     if (virtualFile == null) return;
     FileHighlighingSetting[] defaults = myHighlightSettings.get(virtualFile);
     if (defaults == null) defaults = getDefaults(containingFile);
-    defaults[PsiUtil.getRootIndex(root)] = setting;
+    defaults[PsiUtilBase.getRootIndex(root)] = setting;
     boolean toRemove = true;
     for (FileHighlighingSetting aDefault : defaults) {
       if (aDefault != FileHighlighingSetting.NONE) toRemove = false;

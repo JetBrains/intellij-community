@@ -53,7 +53,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public final class PsiUtil {
+public final class PsiUtil extends PsiUtilBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
   public static final int ACCESS_LEVEL_PUBLIC = 4;
   public static final int ACCESS_LEVEL_PROTECTED = 3;
@@ -970,20 +970,6 @@ public final class PsiUtil {
     return null;
   }
 
-  public static int getRootIndex(PsiElement root) {
-    ASTNode node = root.getNode();
-    while(node != null && node.getTreeParent() != null) {
-      node = node.getTreeParent();
-    }
-    if(node != null) root = node.getPsi();
-    final PsiFile containingFile = root.getContainingFile();
-    final PsiFile[] psiRoots = containingFile.getPsiRoots();
-    for (int i = 0; i < psiRoots.length; i++) {
-      if(root == psiRoots[i]) return i;
-    }
-    throw new RuntimeException("invalid element");
-  }
-
   public static boolean isJspLanguage(final Language baseLanguage) {
     return baseLanguage == StdLanguages.JSP || baseLanguage == StdLanguages.JSPX;
   }
@@ -1000,24 +986,6 @@ public final class PsiUtil {
   public static JspFile getJspFile(final PsiElement element) {
     final PsiFile psiFile = getTemplateLanguageFile(element);
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;
-  }
-
-  @Nullable
-  public static VirtualFile getVirtualFile(@Nullable PsiElement element) {
-    if (element == null || !element.isValid()) {
-      return null;
-    }
-
-    if (element instanceof PsiFileSystemItem) {
-      return ((PsiFileSystemItem)element).getVirtualFile();
-    }
-
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
-      return null;
-    }
-
-    return containingFile.getVirtualFile();
   }
 
   public static PsiType captureToplevelWildcards(final PsiType type, final PsiElement context) {

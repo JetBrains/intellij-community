@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 public class EditSourceUtil {
   public static Navigatable getDescriptor(final PsiElement element) {
@@ -14,7 +14,7 @@ public class EditSourceUtil {
     }
     final PsiElement navigationElement = element.getNavigationElement();
     final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile(navigationElement);
+    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navigationElement);
     if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }
@@ -26,7 +26,7 @@ public class EditSourceUtil {
       return false;
     }
     final PsiElement navigationElement = element.getNavigationElement();
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile(navigationElement);
+    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navigationElement);
     return virtualFile != null && virtualFile.isValid();
   }
 }
