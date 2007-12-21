@@ -4,16 +4,16 @@
 
 package com.intellij.uiDesigner.designSurface;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.GridChangeUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
-import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadContainer;
-import com.intellij.uiDesigner.radComponents.RadAbstractGridLayoutManager;
-import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -314,37 +314,30 @@ public class GridInsertLocation extends GridDropLocation {
                           final ComponentDragObject dragObject) {
     int row = getRow();
     int col = getColumn();
-    boolean canHGrow = dragObject.isHGrow();
-    boolean canVGrow = dragObject.isVGrow();
-    int insertedCells;
     RadContainer container = getContainer();
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch(myMode) {
-      case RowBefore:
-        insertedCells = container.getGridLayoutManager().insertGridCells(container, row, true, true, canVGrow);
-        checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
-        break;
-
-      case RowAfter:
-        insertedCells = container.getGridLayoutManager().insertGridCells(container, row, true, false, canVGrow);
-        row += insertedCells;
-        checkAdjustConstraints(constraintsToAdjust, true, row, insertedCells);
-        break;
-
-      case ColumnBefore:
-        insertedCells = container.getGridLayoutManager().insertGridCells(container, col, false, true, canHGrow);
-        checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
-        break;
-
-      case ColumnAfter:
-        insertedCells = container.getGridLayoutManager().insertGridCells(container, col, false, false, canHGrow);
-        col += insertedCells;
-        checkAdjustConstraints(constraintsToAdjust, false, col, insertedCells);
-        break;
+    boolean canGrow = isRowInsert() ? dragObject.isVGrow() : dragObject.isHGrow();
+    int cell = isRowInsert() ? getRow() : getColumn();
+    int newCell = insertGridCells(container, cell, canGrow, isRowInsert(), !isInsertAfter(), constraintsToAdjust);
+    if (isRowInsert()) {
+      row = newCell;
     }
+    else {
+      col = newCell;
+    }
+
     if (components.length > 0) {
       dropIntoGrid(container, components, row, col, dragObject);
     }
+  }
+
+  private static int insertGridCells(RadContainer container, int cell, boolean canGrow, boolean isRow, boolean isBefore,
+                                      GridConstraints[] constraintsToAdjust) {
+    int insertedCells = container.getGridLayoutManager().insertGridCells(container, cell, isRow, isBefore, canGrow);
+    if (!isBefore) {
+      cell += insertedCells;
+    }
+    checkAdjustConstraints(constraintsToAdjust, isRow, cell, insertedCells);
+    return cell;
   }
 
   private static void checkAdjustConstraints(@Nullable final GridConstraints[] constraintsToAdjust,
