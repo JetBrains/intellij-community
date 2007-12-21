@@ -44,7 +44,8 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
                                         getLeftRevision(),
                                         getRightRevision(),
                                         myFrom,
-                                        myTo, isCurrentRevisionSelected());
+                                        myTo,
+                                        isCurrentRevisionSelected());
   }
 
   private SelectionCalculator getCalculator() {

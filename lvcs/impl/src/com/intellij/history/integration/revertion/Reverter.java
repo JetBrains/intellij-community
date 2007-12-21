@@ -76,6 +76,7 @@ public abstract class Reverter {
         public void doRun() throws Exception {
           myGateway.saveAllUnsavedDocuments();
           doRevert();
+          myGateway.saveAllUnsavedDocuments();
         }
       });
     }

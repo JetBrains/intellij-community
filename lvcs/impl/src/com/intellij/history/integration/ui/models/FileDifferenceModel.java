@@ -8,7 +8,6 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 
 public abstract class FileDifferenceModel {
   private IdeaGateway myGateway;
@@ -60,7 +59,6 @@ public abstract class FileDifferenceModel {
   }
 
   protected Document getDocument() {
-    VirtualFile f = myGateway.findVirtualFile(getRightEntry().getPath());
-    return myGateway.getDocumentFor(f);
+    return myGateway.getDocumentFor(getRightEntry().getPath());
   }
 }

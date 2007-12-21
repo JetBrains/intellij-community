@@ -1,8 +1,9 @@
 package com.intellij.history.integration;
 
+import com.intellij.CommonBundle;
+import com.intellij.history.Clock;
 import com.intellij.history.core.ContentFactory;
 import com.intellij.history.core.ILocalVcs;
-import com.intellij.history.Clock;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -16,10 +17,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.CommonBundle;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -148,7 +147,8 @@ public class IdeaGateway {
     };
   }
 
-  public Document getDocumentFor(VirtualFile f) {
+  public Document getDocumentFor(String path) {
+    VirtualFile f = findVirtualFile(path);
     return getDocManager().getDocument(f);
   }
 
