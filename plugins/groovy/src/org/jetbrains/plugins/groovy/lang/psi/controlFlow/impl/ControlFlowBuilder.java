@@ -610,7 +610,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   private static boolean hasDeclaredVariable(String name, GrClosableBlock scope, PsiElement place) {
     PsiElement prev = null;
-    while (place != scope) {
+    while (place != null) {
       if (place instanceof GrCodeBlock) {
         GrStatement[] statements = ((GrCodeBlock) place).getStatements();
         for (GrStatement statement : statements) {
@@ -624,8 +624,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
       }
 
-      prev = place;
-      place = place.getParent();
+      if (place == scope) break;
+      else {
+        prev = place;
+        place = place.getParent();
+      }
     }
 
     return false;
