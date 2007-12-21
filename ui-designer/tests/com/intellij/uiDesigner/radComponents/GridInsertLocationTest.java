@@ -31,7 +31,7 @@ public class GridInsertLocationTest extends TestCase {
     insertComponent(0, 0, 1, 1);
 
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
-    DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(myDropComponent);
     assertTrue(location.canDrop(dcl));
     doDrop(location);
     assertEquals(2, myManager.getGridColumnCount(myContainer));
@@ -43,7 +43,7 @@ public class GridInsertLocationTest extends TestCase {
     final RadComponent c = insertComponent(1, 0, 1, 1);
 
     GridInsertLocation location = new GridInsertLocation(myContainer, 1, 0, GridInsertMode.RowBefore);
-    DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(myDropComponent);
     assertTrue(location.canDrop(dcl));
     doDrop(location);
     assertEquals(2, c.getConstraints().getRow());
@@ -54,7 +54,7 @@ public class GridInsertLocationTest extends TestCase {
     insertComponent(0, 0, 1, 2);
 
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
-    DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(myDropComponent);
     assertFalse(location.canDrop(dcl));
   }
 
@@ -63,7 +63,7 @@ public class GridInsertLocationTest extends TestCase {
     insertComponent(0, 0, 2, 1);
 
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.RowAfter);
-    DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(myDropComponent);
     assertFalse(location.canDrop(dcl));
   }
 
@@ -77,7 +77,7 @@ public class GridInsertLocationTest extends TestCase {
     RadComponent c = insertComponent(1, 0, 1, 2);
 
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
-    DraggedComponentList dcl = DraggedComponentList.withComponent(myDropComponent);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(myDropComponent);
     assertTrue(location.canDrop(dcl));
     doDrop(location);
     assertEquals(3, myManager.getGridColumnCount(myContainer));
@@ -91,13 +91,78 @@ public class GridInsertLocationTest extends TestCase {
 
     setComponentDimensions(myDropComponent, 0, 0, 2, 1);
     GridInsertLocation location = new GridInsertLocation(myContainer, 0, 0, GridInsertMode.ColumnAfter);
-    assertFalse(location.canDrop(DraggedComponentList.withComponent(myDropComponent)));
+    assertFalse(location.canDrop(DraggedComponentList.withComponents(myDropComponent)));
+  }
+
+  public void testInsertGrowMultiple() {
+    setGridSize(2, 2);
+
+    // * .
+    //
+    // . *
+
+    insertComponent(0, 0, 1, 1);
+    insertComponent(1, 1, 1, 1);
+
+    // * *
+    // *
+    // * .
+    RadComponent c1 = createComponent(0, 0, 2, 1);
+    RadComponent c2 = createComponent(0, 1, 1, 1);
+
+    GridInsertLocation location = new GridInsertLocation(myContainer, 1, 0, GridInsertMode.RowAfter);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(c1, c2);
+    assertTrue(location.canDrop(dcl));
+    location.processDrop(null, new RadComponent[] {c1, c2}, null, dcl);
+    assertEquals(4, myManager.getGridRowCount(myContainer));
+  }
+
+  public void testInsertGrowSingle() {
+    setGridSize(2, 2);
+
+    // * .
+    //
+    // . *
+
+    insertComponent(0, 0, 1, 1);
+    insertComponent(1, 1, 1, 1);
+
+    setComponentDimensions(myDropComponent, 0, 0, 2, 2);
+    GridInsertLocation location = new GridInsertLocation(myContainer, 1, 0, GridInsertMode.RowAfter);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(myDropComponent);
+    assertTrue(location.canDrop(dcl));
+    doDrop(location);
+    assertEquals(4, myManager.getGridRowCount(myContainer));
+    final RadComponent addedComponent = myContainer.getComponents()[2];
+    assertEquals(2, addedComponent.getConstraints().getRowSpan());
+    assertEquals(2, addedComponent.getConstraints().getColSpan());
+
+  }
+
+  public void testInsertDifferentRows() {
+    setGridSize(2, 1);
+    insertComponent(0, 0, 1, 1);
+    insertComponent(1, 0, 1, 1);
+
+    RadComponent c1 = createComponent(0, 0, 1, 1);
+    RadComponent c2 = createComponent(1, 0, 1, 1);
+
+    GridInsertLocation location = new GridInsertLocation(myContainer, 1, 0, GridInsertMode.RowAfter);
+    DraggedComponentList dcl = DraggedComponentList.withComponents(c1, c2);
+    assertTrue(location.canDrop(dcl));
+    location.processDrop(null, new RadComponent[] {c1, c2}, null, dcl);
+    assertEquals(4, myManager.getGridRowCount(myContainer));
   }
 
   private RadComponent insertComponent(int row, int column, int rowSpan, int colSpan) {
+    RadComponent c = createComponent(row, column, rowSpan, colSpan);
+    myContainer.addComponent(c);
+    return c;
+  }
+
+  private RadComponent createComponent(final int row, final int column, final int rowSpan, final int colSpan) {
     final RadAtomicComponent c = new RadAtomicComponent(null, JLabel.class, "1");
     setComponentDimensions(c, row, column, rowSpan, colSpan);
-    myContainer.addComponent(c);
     return c;
   }
 
@@ -116,6 +181,6 @@ public class GridInsertLocationTest extends TestCase {
   }
 
   private void doDrop(final GridInsertLocation location) {
-    location.processDrop(null, new RadComponent[] {myDropComponent}, null, DraggedComponentList.withComponent(myDropComponent));
+    location.processDrop(null, new RadComponent[] {myDropComponent}, null, DraggedComponentList.withComponents(myDropComponent));
   }
 }

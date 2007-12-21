@@ -84,7 +84,7 @@ public class GridDropLocation implements ComponentDropLocation {
   public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
     Rectangle feedbackRect = null;
     if (getContainer().getLayoutManager().isGrid()) {
-      feedbackRect = getGridFeedbackRect(dragObject);
+      feedbackRect = getGridFeedbackRect(dragObject, false, false);
     }
     if (feedbackRect != null) {
       final JComponent component = getContainer().getDelegee();
@@ -100,21 +100,23 @@ public class GridDropLocation implements ComponentDropLocation {
   }
 
   @Nullable
-  protected Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject) {
+  protected Rectangle getGridFeedbackCellRect(ComponentDragObject dragObject, final boolean ignoreWidth, final boolean ignoreHeight) {
     if (dragObject.getComponentCount() == 0) {
       LOG.debug("no feedback rect because component count=0");
       return null;
     }
 
     Rectangle rc = getDragObjectDimensions(dragObject);
+    int w = ignoreWidth ? 1 : rc.width;
+    int h = ignoreHeight ? 1 : rc.height;
 
     if (rc.x < 0 || rc.y < 0 ||
-        rc.y + rc.height > getContainer().getGridRowCount() || rc.x + rc.width > getContainer().getGridColumnCount()) {
+        rc.y + h > getContainer().getGridRowCount() || rc.x + w > getContainer().getGridColumnCount()) {
       LOG.debug("no feedback rect because insert range is outside grid: firstRow=" + rc.y +
-                ", firstCol=" + rc.x + ", lastRow=" + (rc.y+rc.height-1) + ", lastCol=" + (rc.x+rc.width-1));
+                ", firstCol=" + rc.x + ", lastRow=" + (rc.y+h-1) + ", lastCol=" + (rc.x+w-1));
       return null;
     }
-    return new Rectangle(rc.x, rc.y, rc.width-1, rc.height-1);
+    return new Rectangle(rc.x, rc.y, w-1, h-1);
   }
 
   protected Rectangle getDragObjectDimensions(final ComponentDragObject dragObject) {
@@ -134,11 +136,13 @@ public class GridDropLocation implements ComponentDropLocation {
   }
 
   @Nullable
-  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject) {
-    Rectangle cellRect = getGridFeedbackCellRect(dragObject);
+  protected Rectangle getGridFeedbackRect(ComponentDragObject dragObject, final boolean ignoreWidth, final boolean ignoreHeight) {
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject, ignoreWidth, ignoreHeight);
     if (cellRect == null) return null;
+    int h = ignoreHeight ? 0 : cellRect.height;
+    int w = ignoreWidth ? 0 : cellRect.width;
     return getContainer().getGridLayoutManager().getGridCellRangeRect(getContainer(), cellRect.y, cellRect.x,
-                                                                      cellRect.y+cellRect.height, cellRect.x+cellRect.width);
+                                                                      cellRect.y+h, cellRect.x+w);
   }
 
   public void processDrop(final GuiEditor editor,

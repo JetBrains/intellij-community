@@ -134,8 +134,10 @@ public class DraggedComponentList implements Transferable, ComponentDragObject {
     return new DraggedComponentList(editor, pnt);
   }
 
-  public static DraggedComponentList withComponent(RadComponent c) {
-    return new DraggedComponentList(Collections.singletonList(c));
+  public static DraggedComponentList withComponents(RadComponent... c) {
+    ArrayList<RadComponent> list = new ArrayList<RadComponent>();
+    Collections.addAll(list, c);
+    return new DraggedComponentList(list);
   }
 
   @Nullable

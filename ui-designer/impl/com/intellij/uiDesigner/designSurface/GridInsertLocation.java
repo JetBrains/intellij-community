@@ -102,16 +102,9 @@ public class GridInsertLocation extends GridDropLocation {
       return false;
     }
 
-    if (isColumnInsert() && !isSameCell(dragObject, false)) {
-      LOG.debug("GridInsertLocation.canDrop()=false because column insert and columns are different");
-      return false;
-    }
-    if (isRowInsert() && !isSameCell(dragObject, true)) {
-      LOG.debug("GridInsertLocation.canDrop()=false because column insert and columns are different");
-      return false;
-    }
-
-    return getGridFeedbackRect(dragObject) != null;
+    // TODO[yole]: any other conditions to check here?
+    LOG.debug("GridInsertLocation.canDrop()=true");
+    return true;
   }
 
   private static boolean isSameCell(final ComponentDragObject dragObject, boolean isRow) {
@@ -160,12 +153,12 @@ public class GridInsertLocation extends GridDropLocation {
     final int insertCol = getColumn();
     final int insertRow = getRow();
 
-    Rectangle feedbackRect = getGridFeedbackRect(dragObject);
+    Rectangle feedbackRect = getGridFeedbackRect(dragObject, isColumnInsert(), isRowInsert());
     if (feedbackRect == null) {
       feedbackLayer.removeFeedback();
       return;
     }
-    Rectangle cellRect = getGridFeedbackCellRect(dragObject);
+    Rectangle cellRect = getGridFeedbackCellRect(dragObject, isColumnInsert(), isRowInsert());
     assert cellRect != null;
 
     final RadAbstractGridLayoutManager layoutManager = getContainer().getGridLayoutManager();
@@ -317,7 +310,17 @@ public class GridInsertLocation extends GridDropLocation {
     RadContainer container = getContainer();
     boolean canGrow = isRowInsert() ? dragObject.isVGrow() : dragObject.isHGrow();
     int cell = isRowInsert() ? getRow() : getColumn();
-    int newCell = insertGridCells(container, cell, canGrow, isRowInsert(), !isInsertAfter(), constraintsToAdjust);
+
+    int cellsToInsert = 1;
+    if (components.length > 0) {
+      Rectangle rc = getDragObjectDimensions(dragObject);
+      int size = isRowInsert() ? rc.height : rc.width;
+      if (size > 0) {
+        cellsToInsert = size;
+      }
+    }
+
+    int newCell = insertGridCells(container, cell, cellsToInsert, canGrow, isRowInsert(), !isInsertAfter(), constraintsToAdjust);
     if (isRowInsert()) {
       row = newCell;
     }
@@ -330,9 +333,13 @@ public class GridInsertLocation extends GridDropLocation {
     }
   }
 
-  private static int insertGridCells(RadContainer container, int cell, boolean canGrow, boolean isRow, boolean isBefore,
-                                      GridConstraints[] constraintsToAdjust) {
-    int insertedCells = container.getGridLayoutManager().insertGridCells(container, cell, isRow, isBefore, canGrow);
+  private static int insertGridCells(RadContainer container, int cell, int cellsToInsert, boolean canGrow, boolean isRow, boolean isBefore,
+                                     GridConstraints[] constraintsToAdjust) {
+    int insertedCells = 1;
+    for(int i=0; i<cellsToInsert; i++) {
+      insertedCells = container.getGridLayoutManager().insertGridCells(container, cell, isRow, isBefore, canGrow);
+    }
+    // for insert after, shift only by one cell + possibly one gap cell, not by entire number of insertions
     if (!isBefore) {
       cell += insertedCells;
     }
