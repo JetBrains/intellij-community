@@ -358,13 +358,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
   @Nullable
   private static PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {
-    if(container instanceof PsiWhileStatement) {
-      return ((PsiWhileStatement) container).getBody();
-    } else if(container instanceof PsiForStatement) {
-      return ((PsiForStatement) container).getBody();
-    } else if (container instanceof PsiForeachStatement) {
-      return ((PsiForeachStatement)container).getBody();
-    } else if (container instanceof PsiIfStatement) {
+    if(container instanceof PsiLoopStatement) {
+      return ((PsiLoopStatement) container).getBody();
+    }
+    else if (container instanceof PsiIfStatement) {
       final PsiStatement thenBranch = ((PsiIfStatement)container).getThenBranch();
       if (thenBranch != null && PsiTreeUtil.isAncestor(thenBranch, anchorStatement, false)) {
         return thenBranch;
