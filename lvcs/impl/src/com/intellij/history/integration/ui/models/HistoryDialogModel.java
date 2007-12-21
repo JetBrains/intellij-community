@@ -8,7 +8,6 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.patches.PatchCreator;
 import com.intellij.history.integration.revertion.ChangeReverter;
 import com.intellij.history.integration.revertion.Reverter;
-import com.intellij.history.integration.revertion.RevisionReverter;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -136,11 +135,11 @@ public abstract class HistoryDialogModel {
     return createRevisionReverter();
   }
 
-  protected ChangeReverter createChangeReverter() {
+  protected Reverter createChangeReverter() {
     return new ChangeReverter(myVcs, myGateway, getRightRevision().getCauseChange());
   }
 
-  protected abstract RevisionReverter createRevisionReverter();
+  protected abstract Reverter createRevisionReverter();
 
   public boolean isRevertEnabled() {
     if (myIsChangesSelected) return isCorrectChangeSelection();

@@ -5,6 +5,8 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.revertion.ChangeReverter;
+import com.intellij.history.integration.revertion.Reverter;
+import com.intellij.history.integration.revertion.SelectionReverter;
 import com.intellij.history.integration.ui.models.*;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -12,7 +14,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
-  private SelectionCalculator myCalculator;
+  private SelectionCalculator myCalculatorCache;
   private int myFrom;
   private int myTo;
 
@@ -24,7 +26,7 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
 
   @Override
   protected List<Revision> getRevisionsCache() {
-    myCalculator = null;
+    myCalculatorCache = null;
     return super.getRevisionsCache();
   }
 
@@ -49,10 +51,15 @@ public class SelectionHistoryDialogModel extends FileHistoryDialogModel {
   }
 
   private SelectionCalculator getCalculator() {
-    if (myCalculator == null) {
-      myCalculator = new SelectionCalculator(getRevisions(), myFrom, myTo);
+    if (myCalculatorCache == null) {
+      myCalculatorCache = new SelectionCalculator(getRevisions(), myFrom, myTo);
     }
-    return myCalculator;
+    return myCalculatorCache;
+  }
+
+  @Override
+  protected Reverter createRevisionReverter() {
+    return new SelectionReverter(myVcs, myGateway, getCalculator(), getLeftRevision(), getRightEntry(), myFrom, myTo);
   }
 
   @Override
