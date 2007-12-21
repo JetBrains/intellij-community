@@ -8,7 +8,7 @@ import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
 public class LocalHistoryBundle {
-  private static final String PATH_TO_BUNDLE = "messages.LocalHistoryBundle";
+  private static final String PATH_TO_BUNDLE = "com.intellij.history.integration.LocalHistoryBundle";
   private static Reference<ResourceBundle> ourBundle;
 
   public static String message(@PropertyKey(resourceBundle = PATH_TO_BUNDLE)String key, Object... params) {
