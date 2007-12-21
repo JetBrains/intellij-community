@@ -324,7 +324,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
 
     final ResolveCache resolveCache = manager.getResolveCache();
-    return (JavaResolveResult[])resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
+    final JavaResolveResult[] javaResults = new JavaResolveResult[results.length];
+    for (int i = 0; i < results.length; i++) {
+      javaResults[i] = (JavaResolveResult)results[i];
+    }
+    return javaResults;
   }
 
   private PsiSubstitutor updateSubstitutor(PsiSubstitutor subst, final PsiClass psiClass) {
