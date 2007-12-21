@@ -188,7 +188,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     List<PsiClass> availableClasses = new ArrayList<PsiClass>();
     boolean isAnnotationReference = ref.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
-      if (!isFromNonDefaultPackage(aClass)) continue;
+      if (isFromDefaultPackage(aClass)) continue;
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
       if (!aClass.hasModifierProperty(PsiModifier.PUBLIC)) continue;
       if (CompletionUtil.isInExcludedPackage(aClass)) continue;
@@ -250,7 +250,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return true;
   }
 
-  private static boolean isFromNonDefaultPackage(PsiClass aClass) {
+  private static boolean isFromDefaultPackage(PsiClass aClass) {
     //inner classes from default package _cannot_ be imported
     PsiClass containingClass = aClass.getContainingClass();
     while(containingClass != null) {
@@ -259,7 +259,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     }
     final String qName = aClass.getQualifiedName();
     //default package
-    return qName != null && qName.indexOf('.') > 0;
+    return qName == null || qName.indexOf('.') <= 0;
   }
 
   private static boolean hasUnresolvedImportWhichCanImport(final PsiFile psiFile, final String name) {

@@ -248,7 +248,12 @@ public class DaemonListeners {
     if (activeVcs == null) return true;
     FileStatus status = FileStatusManager.getInstance(project).getStatus(virtualFile);
 
-    return status == FileStatus.MODIFIED || status == FileStatus.ADDED;
+    if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) return true;
+    FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(virtualFile);
+    for (FileEditor editor : editors) {
+      if (editor.isModified()) return true;
+    }
+    return false;
   }
 
   private class MyApplicationListener extends ApplicationAdapter {
