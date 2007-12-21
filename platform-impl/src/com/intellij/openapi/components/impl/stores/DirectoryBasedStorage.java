@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -121,6 +122,10 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       final IFile[] files = myDir.listFiles();
 
       for (IFile file : files) {
+        if (!StringUtil.endsWithIgnoreCase(file.getName(), ".xml")) {
+          //do not load system files like .DS_Store on Mac
+          continue;
+        }
         final Document document = JDOMUtil.loadDocument(file);
         final Element element = document.getRootElement();
         assert element.getName().equals(COMPONENT);
