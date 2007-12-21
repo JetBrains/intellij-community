@@ -2,10 +2,12 @@ package com.intellij.xdebugger;
 
 import com.intellij.testFramework.LiteFixture;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -22,9 +24,13 @@ public abstract class XDebuggerTestCase extends LiteFixture {
     registerExtension(XBreakpointType.EXTENSION_POINT_NAME, MY_SIMPLE_BREAKPOINT_TYPE);
   }
 
-  public static class MyLineBreakpointType extends XBreakpointType<XLineBreakpoint<MyBreakpointProperties>, MyBreakpointProperties> {
+  public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {
     public MyLineBreakpointType() {
       super("testLine", "239");
+    }
+
+    public MyBreakpointProperties createBreakpointProperties(@NotNull final VirtualFile file, final int line) {
+      return null;
     }
 
     public MyBreakpointProperties createProperties() {
@@ -32,7 +38,7 @@ public abstract class XDebuggerTestCase extends LiteFixture {
     }
   }
 
-  public static class MySimpleBreakpointType extends XBreakpointType<XBreakpoint<MyBreakpointProperties>, MyBreakpointProperties> {
+  public static class MySimpleBreakpointType extends XBreakpointType<XBreakpoint<MyBreakpointProperties>,MyBreakpointProperties> {
     public MySimpleBreakpointType() {
       super("test", "239");
     }

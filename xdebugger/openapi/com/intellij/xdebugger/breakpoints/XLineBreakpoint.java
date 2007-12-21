@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface XLineBreakpoint<T extends XBreakpointProperties> extends XBreakpoint<T> {
+public interface XLineBreakpoint<P extends XBreakpointProperties> extends XBreakpoint<P> {
 
   int getLine();
 
@@ -14,4 +14,7 @@ public interface XLineBreakpoint<T extends XBreakpointProperties> extends XBreak
 
   @NotNull
   XSourcePosition getSourcePosition();
+
+  @NotNull
+  XLineBreakpointType<P> getType();
 }

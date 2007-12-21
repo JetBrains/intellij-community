@@ -9,7 +9,7 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public interface XBreakpoint<T extends XBreakpointProperties> {
+public interface XBreakpoint<P extends XBreakpointProperties> {
 
   boolean isEnabled();
   void setEnabled(boolean enabled);
@@ -20,9 +20,9 @@ public interface XBreakpoint<T extends XBreakpointProperties> {
   Icon getIcon();
 
   @NotNull
-  XBreakpointType getType();
+  XBreakpointType<?,P> getType();
 
-  T getProperties();
+  P getProperties();
 
   @Nullable
   XSourcePosition getSourcePosition();

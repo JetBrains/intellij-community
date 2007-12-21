@@ -15,7 +15,7 @@ public interface XBreakpointManager {
   XBreakpoint<T> addBreakpoint(XBreakpointType<XBreakpoint<T>, T> type, @Nullable T properties);
 
   @NotNull <T extends XBreakpointProperties>
-  XLineBreakpoint<T> addLineBreakpoint(XBreakpointType<XLineBreakpoint<T>, T> type, @NotNull String fileUrl, int line, @Nullable T properties);
+  XLineBreakpoint<T> addLineBreakpoint(XLineBreakpointType<T> type, @NotNull String fileUrl, int line, @Nullable T properties);
   
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
@@ -28,11 +28,11 @@ public interface XBreakpointManager {
 
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
-  void addBreakpointListener(@NotNull XBreakpointType<B, P> type, @NotNull XBreakpointListener<B> listener);
+  void addBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener);
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
-  void removeBreakpointListener(@NotNull XBreakpointType<B, P> type, @NotNull XBreakpointListener<B> listener);
+  void removeBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener);
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
-  void addBreakpointListener(@NotNull XBreakpointType<B, P> type, @NotNull XBreakpointListener<B> listener, Disposable parentDisposable);
+  void addBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener, Disposable parentDisposable);
 }

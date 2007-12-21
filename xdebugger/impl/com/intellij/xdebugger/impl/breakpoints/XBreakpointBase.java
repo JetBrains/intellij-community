@@ -92,7 +92,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   @NotNull
-  public XBreakpointType getType() {
+  public XBreakpointType<Self,P> getType() {
     return myType;
   }
 
@@ -106,7 +106,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   @Tag("breakpoint")
-  public static class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
+  public static class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties, T extends XBreakpointType<B,P>> {
     private boolean myEnabled;
     private String myTypeId;
     private Element myPropertiesElement;
@@ -146,8 +146,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       myPropertiesElement = propertiesElement;
     }
 
-    public XBreakpointBase<B,P,?> createBreakpoint(@NotNull XBreakpointType<B,P> type, final Project project) {
-      return new XBreakpointBase<B,P, BreakpointState>(type, project, this);
+    public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull Project project) {
+      return new XBreakpointBase<B, P, BreakpointState<B,P,?>>(type, project, this);
     }
   }
 }

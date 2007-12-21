@@ -14,25 +14,29 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, XLineBreakpointImpl.LineBreakpointState> implements XLineBreakpoint<P> {
+public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, XLineBreakpointImpl.LineBreakpointState<P>> implements XLineBreakpoint<P> {
   private @Nullable RangeHighlighter myHighlighter;
+  private final XLineBreakpointType<P> myType;
 
-  public XLineBreakpointImpl(final XBreakpointType<XLineBreakpoint<P>,P> type, Project project, String url, int line, final @Nullable P properties) {
-    super(type, project, properties, new LineBreakpointState(true, type.getId(), url, line));
+  public XLineBreakpointImpl(final XLineBreakpointType<P> type, Project project, String url, int line, final @Nullable P properties) {
+    super(type, project, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
+    myType = type;
     init();
   }
 
-  private XLineBreakpointImpl(final XBreakpointType<XLineBreakpoint<P>, P> type, Project project, final LineBreakpointState breakpointState) {
+  private XLineBreakpointImpl(final XLineBreakpointType<P> type, Project project, final LineBreakpointState<P> breakpointState) {
     super(type, project, breakpointState);
+    myType = type;
     init();
   }
 
@@ -42,9 +46,14 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     Document document = FileDocumentManager.getInstance().getDocument(file);
 
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    TextAttributes attributes = scheme.getAttributes(/*DebuggerColors.BREAKPOINT_ATTRIBUTES*/null);
+    TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
     myHighlighter = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(getLine(), HighlighterLayer.CARET_ROW + 1, attributes);
+  }
+
+  @NotNull
+  public XLineBreakpointType<P> getType() {
+    return myType;
   }
 
   public int getLine() {
@@ -77,7 +86,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Tag("line-breakpoint")
-  public static class LineBreakpointState<P extends XBreakpointProperties> extends XBreakpointBase.BreakpointState<XLineBreakpoint<P>, P> {
+  public static class LineBreakpointState<P extends XBreakpointProperties> extends XBreakpointBase.BreakpointState<XLineBreakpoint<P>, P, XLineBreakpointType<P>> {
     private String myFileUrl;
     private int myLine;
 
@@ -108,8 +117,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       myLine = line;
     }
 
-    public XBreakpointBase<XLineBreakpoint<P>, P, ?> createBreakpoint(@NotNull final XBreakpointType<XLineBreakpoint<P>, P> type,
-                                                                      final Project project) {
+    public XBreakpointBase<XLineBreakpoint<P>,P, ?> createBreakpoint(@NotNull final XLineBreakpointType<P> type, @NotNull final Project project) {
       return new XLineBreakpointImpl<P>(type, project, this);
     }
   }
