@@ -19,6 +19,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -89,7 +90,7 @@ public class MoveClassesOrPackagesUtil {
     if (searchInStringsAndComments || searchInNonJavaFiles) {
       final String stringToSearch = getStringToSearch(element);
       if (stringToSearch == null) return;
-      RefactoringUtil.UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
+      TextOccurrencesUtil.UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
 
       if (searchInStringsAndComments) {
         RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, results, factory);
@@ -97,14 +98,14 @@ public class MoveClassesOrPackagesUtil {
 
       if (searchInNonJavaFiles) {
         GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
-        RefactoringUtil.addTextOccurences(element, stringToSearch, projectScope, results, factory);
+        TextOccurrencesUtil.addTextOccurences(element, stringToSearch, projectScope, results, factory);
       }
     }
   }
 
-  private static RefactoringUtil.UsageInfoFactory createUsageInfoFactory(final PsiElement element,
+  private static TextOccurrencesUtil.UsageInfoFactory createUsageInfoFactory(final PsiElement element,
                                                                          final String newQName) {
-    return new RefactoringUtil.UsageInfoFactory() {
+    return new TextOccurrencesUtil.UsageInfoFactory() {
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         int start = usage.getTextRange().getStartOffset();
         return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,

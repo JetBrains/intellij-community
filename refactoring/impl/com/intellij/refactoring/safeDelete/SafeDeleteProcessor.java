@@ -30,6 +30,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -782,7 +783,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   };
 
   private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, final UsageInsideDeleted insideElements) {
-    RefactoringUtil.UsageInfoFactory nonCodeUsageFactory = new RefactoringUtil.UsageInfoFactory() {
+    TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new TextOccurrencesUtil.UsageInfoFactory() {
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         if (!insideElements.isInsideDeleted(usage)) {
           return new SafeDeleteReferenceSimpleDeleteUsageInfo(usage, element, startOffset, endOffset, true, false);
@@ -800,7 +801,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     if (mySearchNonJava && (element instanceof PsiClass || element instanceof PsiPackage)) {
       String stringToSearch = RefactoringUtil.getStringToSearch(element, true);
       if (stringToSearch != null) {
-        RefactoringUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
+        TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
       }
     }
   }

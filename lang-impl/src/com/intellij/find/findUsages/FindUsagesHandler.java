@@ -13,7 +13,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -88,7 +88,7 @@ public class FindUsagesHandler {
             return element.getTextRange();
           }
         });
-        RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
+        TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
           public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
             if (elementTextRange != null
                 && usage.getContainingFile() == element.getContainingFile()
@@ -99,7 +99,7 @@ public class FindUsagesHandler {
             return new UsageInfo(usage, startOffset, endOffset, true);
           }
         };
-        RefactoringUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
+        TextOccurrencesUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
       }
     }
   }

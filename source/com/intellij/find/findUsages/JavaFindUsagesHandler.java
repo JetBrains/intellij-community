@@ -35,7 +35,7 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
@@ -334,7 +334,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             return element.getTextRange();
           }
         });
-        RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
+        TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
           public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
             if (elementTextRange != null
                 && usage.getContainingFile() == element.getContainingFile()
@@ -345,7 +345,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
             return new UsageInfo(usage, startOffset, endOffset, true);
           }
         };
-        RefactoringUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
+        TextOccurrencesUtil.processTextOccurences(element, stringToSearch, (GlobalSearchScope)options.searchScope, processor, factory);
       }
     }
   }

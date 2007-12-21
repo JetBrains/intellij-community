@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.Stack;
@@ -223,7 +224,7 @@ public class VariableInplaceRenamer {
     String stringToSearch = RefactoringUtil.getStringToSearch(elementToRename, true);
     List<UsageInfo> usages = new ArrayList<UsageInfo>();
     if (stringToSearch != null) {
-      RefactoringUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new RefactoringUtil.UsageInfoFactory() {
+      RefactoringUtil.addUsagesInStringsAndComments(elementToRename, stringToSearch, usages, new TextOccurrencesUtil.UsageInfoFactory() {
         public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
           return new UsageInfo(usage); //will not need usage
         }

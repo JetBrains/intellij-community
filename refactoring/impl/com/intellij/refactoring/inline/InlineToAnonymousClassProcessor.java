@@ -16,6 +16,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -77,7 +78,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
     if (mySearchInNonJavaFiles) {
       GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-      RefactoringUtil.addTextOccurences(myClass, myClass.getQualifiedName(), projectScope, nonCodeUsages,
+      TextOccurrencesUtil.addTextOccurences(myClass, myClass.getQualifiedName(), projectScope, nonCodeUsages,
                                         new NonCodeUsageInfoFactory(myClass, myClass.getQualifiedName()));
     }
     usages.addAll(nonCodeUsages);

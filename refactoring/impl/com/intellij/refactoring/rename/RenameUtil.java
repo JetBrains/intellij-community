@@ -27,10 +27,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -100,7 +97,7 @@ public class RenameUtil {
       String stringToSearch = RefactoringUtil.getStringToSearch(element, false);
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, false);
-        RefactoringUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
+        TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
         RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
       }
     }
@@ -132,14 +129,14 @@ public class RenameUtil {
   private static void addTextOccurence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
                                        final String stringToSearch,
                                        final String stringToReplace) {
-    RefactoringUtil.UsageInfoFactory factory = new RefactoringUtil.UsageInfoFactory() {
+    TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         TextRange textRange = usage.getTextRange();
         int start = textRange == null ? 0 : textRange.getStartOffset();
         return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element, stringToReplace);
       }
     };
-    RefactoringUtil.addTextOccurences(element, stringToSearch, projectScope, result, factory);
+    TextOccurrencesUtil.addTextOccurences(element, stringToSearch, projectScope, result, factory);
   }
 
 

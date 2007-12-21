@@ -50,7 +50,6 @@ import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -261,19 +260,15 @@ public class RefactoringUtil {
     return replaceIn;
   }
 
-  public static interface UsageInfoFactory {
-    UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset);
-  }
-
   public static void addUsagesInStringsAndComments(PsiElement element,
                                                    @NotNull String stringToSearch,
                                                    List<UsageInfo> results,
-                                                   UsageInfoFactory factory) {
+                                                   TextOccurrencesUtil.UsageInfoFactory factory) {
     addUsagesInStringsAndComments(element, stringToSearch, results, factory, false);
   }
 
   public static void addUsagesInStringsAndComments(final PsiElement element, final String stringToSearch, final List<UsageInfo> results,
-                                                   final UsageInfoFactory factory,
+                                                   final TextOccurrencesUtil.UsageInfoFactory factory,
                                                    final boolean ignoreReferences) {
     PsiManager manager = element.getManager();
     PsiSearchHelper helper = manager.getSearchHelper();
@@ -325,35 +320,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static void addTextOccurences(PsiElement element,
-                                       @NotNull String stringToSearch,
-                                       GlobalSearchScope searchScope,
-                                       final List<UsageInfo> results,
-                                       final UsageInfoFactory factory) {
-    processTextOccurences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
-      public boolean process(UsageInfo t) {
-        results.add(t);
-        return true;
-      }
-    }, factory);
-  }
-
-  public static void processTextOccurences(PsiElement element,
-                                           @NotNull String stringToSearch,
-                                           GlobalSearchScope searchScope,
-                                           final Processor<UsageInfo> processor,
-                                           final UsageInfoFactory factory) {
-    PsiSearchHelper helper = element.getManager().getSearchHelper();
-
-    helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
-      public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
-        UsageInfo usageInfo = factory.createUsageInfo(psiFile, startOffset, endOffset);
-        return usageInfo == null || processor.process(usageInfo);
-      }
-    }, searchScope);
-  }
-
-  private static void processStringOrComment(PsiElement element, String stringToSearch, List<UsageInfo> results, UsageInfoFactory factory,
+  private static void processStringOrComment(PsiElement element, String stringToSearch, List<UsageInfo> results, TextOccurrencesUtil.UsageInfoFactory factory,
                                              final boolean ignoreReferences) {
     String elementText = element.getText();
     for (int index = 0; index < elementText.length(); index++) {

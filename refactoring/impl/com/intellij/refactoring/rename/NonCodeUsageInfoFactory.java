@@ -1,12 +1,12 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class NonCodeUsageInfoFactory implements RefactoringUtil.UsageInfoFactory {
+public class NonCodeUsageInfoFactory implements TextOccurrencesUtil.UsageInfoFactory {
   private final PsiElement myElement;
   private final String myStringToReplace;
 
