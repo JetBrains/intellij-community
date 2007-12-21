@@ -370,23 +370,30 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       }
 
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      PsiParameter[] parametersCopy = new PsiParameter[parameters.length];
-      PsiType[] parameterTypes = new PsiType[parameters.length];
-      for (int i = 0; i < parameterTypes.length; i++) {
-        parametersCopy[i] = parameters[i];
-        parameterTypes[i] = parameters[i].getType();
-      }
-
-      for (int i = parameters.length - 1; i >= 0; i--) {
-        MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
-        if (methodSignatures.add(signature)) {
-          writeMethod(text, method, parametersCopy);
+      if (parameters.length > 0) {
+        PsiParameter[] parametersCopy = new PsiParameter[parameters.length];
+        PsiType[] parameterTypes = new PsiType[parameters.length];
+        for (int i = 0; i < parameterTypes.length; i++) {
+          parametersCopy[i] = parameters[i];
+          parameterTypes[i] = parameters[i].getType();
         }
 
-        PsiParameter parameter = parameters[i];
-        if (!(parameter instanceof GrParameter) || !((GrParameter) parameter).isOptional()) break;
-        parameterTypes = ArrayUtil.remove(parameterTypes, parameterTypes.length - 1);
-        parametersCopy = ArrayUtil.remove(parametersCopy, parametersCopy.length - 1);
+        for (int i = parameters.length - 1; i >= 0; i--) {
+          MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), parameterTypes, method.getTypeParameters(), PsiSubstitutor.EMPTY);
+          if (methodSignatures.add(signature)) {
+            writeMethod(text, method, parametersCopy);
+          }
+
+          PsiParameter parameter = parameters[i];
+          if (!(parameter instanceof GrParameter) || !((GrParameter) parameter).isOptional()) break;
+          parameterTypes = ArrayUtil.remove(parameterTypes, parameterTypes.length - 1);
+          parametersCopy = ArrayUtil.remove(parametersCopy, parametersCopy.length - 1);
+        }
+      } else {
+        MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+        if (methodSignatures.add(signature)) {
+          writeMethod(text, method, parameters);
+        }
       }
 
       wasRunMethodPresent = wasRunMethod(method);
