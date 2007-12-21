@@ -117,7 +117,7 @@ public class GeneralCommandLine {
              : Runtime.getRuntime().exec(commands, getEnvParamsArray());
     }
     catch (IOException e) {
-      throw new ProcessNotCreatedException(e.getMessage(), e.getCause(), this);
+      throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
   }
 
