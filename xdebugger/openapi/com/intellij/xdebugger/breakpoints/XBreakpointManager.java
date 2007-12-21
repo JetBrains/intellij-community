@@ -12,10 +12,10 @@ import java.util.Collection;
 public interface XBreakpointManager {
 
   @NotNull <T extends XBreakpointProperties>
-  XBreakpoint<T> addBreakpoint(XBreakpointType<T> type, @Nullable T properties);
+  XBreakpoint<T> addBreakpoint(XBreakpointType<XBreakpoint<T>, T> type, @Nullable T properties);
 
   @NotNull <T extends XBreakpointProperties>
-  XLineBreakpoint<T> addLineBreakpoint(XBreakpointType<T> type, @NotNull String fileUrl, int line, @Nullable T properties);
+  XLineBreakpoint<T> addLineBreakpoint(XBreakpointType<XLineBreakpoint<T>, T> type, @NotNull String fileUrl, int line, @Nullable T properties);
   
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
@@ -23,16 +23,16 @@ public interface XBreakpointManager {
   @NotNull 
   XBreakpoint<?>[] getAllBreakpoints();
 
-  @NotNull <T extends XBreakpointProperties>
-  Collection<? extends XBreakpoint<T>> getBreakpoints(@NotNull XBreakpointType<T> type);
+  @NotNull <P extends XBreakpointProperties, B extends XBreakpoint<P>>
+  Collection<? extends B> getBreakpoints(@NotNull XBreakpointType<B, P> type);
 
 
-  <T extends XBreakpointProperties>
-  void addBreakpointListener(@NotNull XBreakpointType<T> type, @NotNull XBreakpointListener<T> listener);
+  <B extends XBreakpoint<P>, P extends XBreakpointProperties>
+  void addBreakpointListener(@NotNull XBreakpointType<B, P> type, @NotNull XBreakpointListener<B> listener);
 
-  <T extends XBreakpointProperties>
-  void removeBreakpointListener(@NotNull XBreakpointType<T> type, @NotNull XBreakpointListener<T> listener);
+  <B extends XBreakpoint<P>, P extends XBreakpointProperties>
+  void removeBreakpointListener(@NotNull XBreakpointType<B, P> type, @NotNull XBreakpointListener<B> listener);
 
-  <T extends XBreakpointProperties>
-  void addBreakpointListener(@NotNull XBreakpointType<T> type, @NotNull XBreakpointListener<T> listener, Disposable parentDisposable);
+  <B extends XBreakpoint<P>, P extends XBreakpointProperties>
+  void addBreakpointListener(@NotNull XBreakpointType<B, P> type, @NotNull XBreakpointListener<B> listener, Disposable parentDisposable);
 }

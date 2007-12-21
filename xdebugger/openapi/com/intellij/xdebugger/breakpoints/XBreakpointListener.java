@@ -7,10 +7,10 @@ import java.util.EventListener;
 /**
  * @author nik
  */
-public interface XBreakpointListener<T extends XBreakpointProperties> extends EventListener {
+public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventListener {
 
-  void breakpointAdded(@NotNull XBreakpoint<T> breakpoint);
+  void breakpointAdded(@NotNull B breakpoint);
 
-  void breakpointRemoved(@NotNull XBreakpoint<T> breakpoint);
+  void breakpointRemoved(@NotNull B breakpoint);
 
 }

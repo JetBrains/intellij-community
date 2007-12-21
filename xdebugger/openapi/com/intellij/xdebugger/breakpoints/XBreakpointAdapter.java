@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class XBreakpointAdapter<T extends XBreakpointProperties> implements XBreakpointListener<T>{
-  public void breakpointAdded(@NotNull final XBreakpoint<T> breakpoint) {
+public abstract class XBreakpointAdapter<B extends XBreakpoint<?>> implements XBreakpointListener<B>{
+  public void breakpointAdded(@NotNull final B breakpoint) {
   }
 
-  public void breakpointRemoved(@NotNull final XBreakpoint<T> breakpoint) {
+  public void breakpointRemoved(@NotNull final B breakpoint) {
   }
 }

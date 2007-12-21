@@ -1,12 +1,12 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,15 +23,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-public class XLineBreakpointImpl<T extends XBreakpointProperties> extends XBreakpointBase<T, XLineBreakpointImpl.LineBreakpointState> implements XLineBreakpoint<T> {
+public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, XLineBreakpointImpl.LineBreakpointState> implements XLineBreakpoint<P> {
   private @Nullable RangeHighlighter myHighlighter;
 
-  public XLineBreakpointImpl(final XBreakpointType<T> type, Project project, String url, int line, final @Nullable T properties) {
+  public XLineBreakpointImpl(final XBreakpointType<XLineBreakpoint<P>,P> type, Project project, String url, int line, final @Nullable P properties) {
     super(type, project, properties, new LineBreakpointState(true, type.getId(), url, line));
     init();
   }
 
-  private XLineBreakpointImpl(final XBreakpointType<T> type, Project project, final LineBreakpointState breakpointState) {
+  private XLineBreakpointImpl(final XBreakpointType<XLineBreakpoint<P>, P> type, Project project, final LineBreakpointState breakpointState) {
     super(type, project, breakpointState);
     init();
   }
@@ -77,7 +77,7 @@ public class XLineBreakpointImpl<T extends XBreakpointProperties> extends XBreak
   }
 
   @Tag("line-breakpoint")
-  public static class LineBreakpointState extends XBreakpointBase.BreakpointState {
+  public static class LineBreakpointState<P extends XBreakpointProperties> extends XBreakpointBase.BreakpointState<XLineBreakpoint<P>, P> {
     private String myFileUrl;
     private int myLine;
 
@@ -108,9 +108,9 @@ public class XLineBreakpointImpl<T extends XBreakpointProperties> extends XBreak
       myLine = line;
     }
 
-    public <T extends XBreakpointProperties> XBreakpointBase<T, ?> createBreakpoint(@NotNull final XBreakpointType<T> type,
-                                                                                    final Project project) {
-      return new XLineBreakpointImpl<T>(type, project, this);
+    public XBreakpointBase<XLineBreakpoint<P>, P, ?> createBreakpoint(@NotNull final XBreakpointType<XLineBreakpoint<P>, P> type,
+                                                                      final Project project) {
+      return new XLineBreakpointImpl<P>(type, project, this);
     }
   }
 }

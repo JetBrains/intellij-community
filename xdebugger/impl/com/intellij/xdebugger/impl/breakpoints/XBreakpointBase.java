@@ -21,20 +21,20 @@ import java.lang.reflect.TypeVariable;
 /**
  * @author nik
  */
-public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> implements XBreakpoint<T> {
-  private final XBreakpointType<T> myType;
-  private final @Nullable T myProperties;
+public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> implements XBreakpoint<P> {
+  private final XBreakpointType<Self, P> myType;
+  private final @Nullable P myProperties;
   private final S myState;
   protected final Project myProject;
 
-  public XBreakpointBase(final XBreakpointType<T> type, final Project project, final @Nullable T properties, final S state) {
+  public XBreakpointBase(final XBreakpointType<Self, P> type, final Project project, final @Nullable P properties, final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
     myProject = project;
   }
 
-  protected XBreakpointBase(final XBreakpointType<T> type, final Project project, S breakpointState) {
+  protected XBreakpointBase(final XBreakpointType<Self, P> type, final Project project, S breakpointState) {
     myState = breakpointState;
     myType = type;
     myProject = project;
@@ -82,7 +82,7 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
   }
 
   @Nullable 
-  public T getProperties() {
+  public P getProperties() {
     return myProperties;
   }
 
@@ -106,7 +106,7 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
   }
 
   @Tag("breakpoint")
-  public static class BreakpointState {
+  public static class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
     private boolean myEnabled;
     private String myTypeId;
     private Element myPropertiesElement;
@@ -146,8 +146,8 @@ public class XBreakpointBase<T extends XBreakpointProperties, S extends XBreakpo
       myPropertiesElement = propertiesElement;
     }
 
-    public <T extends XBreakpointProperties> XBreakpointBase<T,?> createBreakpoint(@NotNull XBreakpointType<T> type, final Project project) {
-      return new XBreakpointBase<T, BreakpointState>(type, project, this);
+    public XBreakpointBase<B,P,?> createBreakpoint(@NotNull XBreakpointType<B,P> type, final Project project) {
+      return new XBreakpointBase<B,P, BreakpointState>(type, project, this);
     }
   }
 }

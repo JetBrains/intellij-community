@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.Extensions;
 /**
  * @author nik
  */
-public abstract class XBreakpointType<T extends XBreakpointProperties> {
+public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
   private @NonNls @NotNull String myId;
   private @Nls @NotNull String myTitle;
@@ -21,7 +21,7 @@ public abstract class XBreakpointType<T extends XBreakpointProperties> {
   }
 
   @Nullable
-  public static XBreakpointType<?> findType(@NotNull @NonNls String id) {
+  public static XBreakpointType<?,?> findType(@NotNull @NonNls String id) {
     XBreakpointType[] breakpointTypes = Extensions.getExtensions(EXTENSION_POINT_NAME);
     for (XBreakpointType breakpointType : breakpointTypes) {
       if (id.equals(breakpointType.getId())) {
@@ -32,7 +32,7 @@ public abstract class XBreakpointType<T extends XBreakpointProperties> {
   }
 
   @Nullable 
-  public T createProperties() {
+  public P createProperties() {
     return null;
   }
 

@@ -21,12 +21,14 @@ import java.util.*;
 
 public class MultiValuesMap<Key, Value>{
   private final Map<Key, Collection<Value>> myBaseMap;
+  private final boolean myOrdered;
 
   public MultiValuesMap() {
     this(false);
   }
 
   public MultiValuesMap(boolean ordered) {
+    myOrdered = ordered;
     myBaseMap = ordered ? new LinkedHashMap<Key, Collection<Value>>() : new HashMap<Key, Collection<Value>>();
   }
 
@@ -44,7 +46,7 @@ public class MultiValuesMap<Key, Value>{
 
   public void put(Key key, Value value) {
     if (!myBaseMap.containsKey(key)) {
-      myBaseMap.put(key, new HashSet<Value>());
+      myBaseMap.put(key, myOrdered ? new LinkedHashSet<Value>() : new HashSet<Value>());
     }
 
     myBaseMap.get(key).add(value);
@@ -60,7 +62,7 @@ public class MultiValuesMap<Key, Value>{
   }
 
   public Collection<Value> values() {
-    Set<Value> result = new HashSet<Value>();
+    Set<Value> result = myOrdered ? new LinkedHashSet<Value>() : new HashSet<Value>();
     for (final Collection<Value> values : myBaseMap.values()) {
       result.addAll(values);
     }
