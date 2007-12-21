@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FindMethodUsagesDialog extends FindUsagesDialog {
+public class FindMethodUsagesDialog extends JavaFindUsagesDialog {
   private StateRestoringCheckBox myCbUsages;
   private StateRestoringCheckBox myCbImplementingMethods;
   private StateRestoringCheckBox myCbOverridingMethods;

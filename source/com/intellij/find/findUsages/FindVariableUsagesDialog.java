@@ -6,7 +6,7 @@ import com.intellij.psi.PsiField;
 
 import javax.swing.*;
 
-public class FindVariableUsagesDialog extends FindUsagesDialog {
+public class FindVariableUsagesDialog extends JavaFindUsagesDialog {
 
   public FindVariableUsagesDialog(PsiElement element, Project project, FindUsagesOptions findUsagesOptions,
                                   boolean toShowInNewTab,

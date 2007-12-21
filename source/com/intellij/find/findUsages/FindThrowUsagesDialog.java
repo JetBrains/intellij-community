@@ -10,7 +10,7 @@ import com.intellij.ui.StateRestoringCheckBox;
 import javax.swing.*;
 import java.awt.*;
 
-public class FindThrowUsagesDialog extends FindUsagesDialog {
+public class FindThrowUsagesDialog extends JavaFindUsagesDialog {
   private StateRestoringCheckBox myCbUsages;
   private JComboBox myCbExns;
   private boolean myHasFindWhatPanel;

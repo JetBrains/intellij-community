@@ -5,7 +5,9 @@ import com.intellij.find.FindSettings;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -13,12 +15,12 @@ import com.intellij.usageView.UsageViewUtil;
 
 import javax.swing.*;
 
-public abstract class FindUsagesDialog extends AbstractFindUsagesDialog {
+public abstract class JavaFindUsagesDialog extends AbstractFindUsagesDialog {
   protected final PsiElement myPsiElement;
   private StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable = false;
 
-  protected FindUsagesDialog(PsiElement element,
+  protected JavaFindUsagesDialog(PsiElement element,
                              Project project,
                              FindUsagesOptions findUsagesOptions,
                              boolean toShowInNewTab,
