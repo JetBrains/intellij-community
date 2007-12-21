@@ -3,19 +3,19 @@ package com.intellij.psi.impl.source.resolve;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.ref.Reference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,20 +26,13 @@ public class ResolveCache {
   private static final Key<MapPair<PsiPolyVariantReference, Reference<ResolveResult[]>>> JAVA_RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.JAVA_RESOLVE_MAP_INCOMPLETE");
   private static final Key<MapPair<PsiReference, Reference<PsiElement>>> RESOLVE_MAP_INCOMPLETE = Key.create("ResolveCache.RESOLVE_MAP_INCOMPLETE");
   private static final Key<List<Thread>> IS_BEING_RESOLVED_KEY = Key.create("ResolveCache.IS_BEING_RESOLVED_KEY");
-  private static final Key<MapPair<PsiVariable, Object>> VAR_TO_CONST_VALUE_MAP_KEY = Key.create("ResolveCache.VAR_TO_CONST_VALUE_MAP_KEY");
-
-  private final ConcurrentWeakHashMap<PsiExpression, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<PsiExpression, PsiType>();
-
-  private static final Object NULL = Key.create("NULL");
-
-  private final Map<PsiVariable,Object> myVarToConstValueMap1;
-  private final Map<PsiVariable,Object> myVarToConstValueMap2;
 
   private final Map<PsiPolyVariantReference,Reference<ResolveResult[]>>[] myPolyVariantResolveMaps = new Map[4];
   private final Map<PsiReference,Reference<PsiElement>>[] myResolveMaps = new Map[4];
   private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final PsiManagerEx myManager;
 
+  private final List<Runnable> myRunnablesToRunOnDropCaches = new ArrayList<Runnable>();
 
   public static interface AbstractResolver<Ref extends PsiReference,Result> {
     Result resolve(Ref ref, boolean incompleteCode);
@@ -52,9 +45,6 @@ public class ResolveCache {
 
   public ResolveCache(PsiManagerEx manager) {
     myManager = manager;
-    myVarToConstValueMap1 = getOrCreateWeakMap(VAR_TO_CONST_VALUE_MAP_KEY, true);
-    myVarToConstValueMap2 = getOrCreateWeakMap(VAR_TO_CONST_VALUE_MAP_KEY, false);
-
     myPolyVariantResolveMaps[0] = getOrCreateWeakMap(JAVA_RESOLVE_MAP, true);
     myPolyVariantResolveMaps[1] = getOrCreateWeakMap(JAVA_RESOLVE_MAP_INCOMPLETE, true);
     myResolveMaps[0] = getOrCreateWeakMap(RESOLVE_MAP, true);
@@ -65,37 +55,6 @@ public class ResolveCache {
 
     myResolveMaps[2] = getOrCreateWeakMap(RESOLVE_MAP, false);
     myResolveMaps[3] = getOrCreateWeakMap(RESOLVE_MAP_INCOMPLETE, false);
-
-    manager.registerRunnableToRunOnAnyChange(new Runnable() {
-      public void run() {
-        myCalculatedTypes.clear();
-      }
-    });
-  }
-
-  private static final PsiType NULL_TYPE = new PsiEllipsisType(PsiType.NULL){
-    public boolean isValid() {
-      return true;
-    }
-
-    @NonNls
-    public String getPresentableText() {
-      return "FAKE TYPE";
-    }
-  };
-  public PsiType getType(PsiExpression expr, Function<PsiExpression, PsiType> f) {
-    PsiType type = myCalculatedTypes.get(expr);
-    if (type == null) {
-      type = f.fun(expr);
-      if (type == null) {
-        type = NULL_TYPE;
-      }
-      type = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, expr, type);
-    }
-    if (!type.isValid()) {
-      LOG.error("Type is invalid: " + type);
-    }
-    return type == NULL_TYPE ? null : type;
   }
 
   public void clearCache() {
@@ -110,7 +69,14 @@ public class ResolveCache {
 
     myResolveMaps[2].clear();
     myResolveMaps[3].clear();
-    myCalculatedTypes.clear();
+
+    for (Runnable r : myRunnablesToRunOnDropCaches) {
+      r.run();
+    }
+  }
+
+  public void addRunnableToRunOnDropCaches(Runnable r) {
+    myRunnablesToRunOnDropCaches.add(r);
   }
 
   private <Ref extends PsiReference, Result> Result resolve(Ref ref,
@@ -154,7 +120,7 @@ public class ResolveCache {
                                             boolean needToPreventRecursion,
                                             boolean incompleteCode) {
     ResolveResult[] result = resolve(ref, resolver, myPolyVariantResolveMaps, needToPreventRecursion, incompleteCode);
-    return result == null ? JavaResolveResult.EMPTY_ARRAY : result;
+    return result == null ? ResolveResult.EMPTY_ARRAY : result;
   }
 
   public PsiElement resolveWithCaching(PsiReference ref,
@@ -222,24 +188,6 @@ public class ResolveCache {
 
     int index = getIndex(physical, incompleteCode);
     maps[index].put(ref, new SoftReference<Result>(result));
-  }
-
-  public static interface ConstValueComputer{
-    Object execute(PsiVariable variable, Set<PsiVariable> visitedVars);
-  }
-
-  public Object computeConstantValueWithCaching(PsiVariable variable, ConstValueComputer computer, Set<PsiVariable> visitedVars){
-    boolean physical = variable.isPhysical();
-
-    Object cached = (physical ? myVarToConstValueMap1 : myVarToConstValueMap2).get(variable);
-    if (cached == NULL) return null;
-    if (cached != null) return cached;
-
-    Object result = computer.execute(variable, visitedVars);
-
-    (physical ? myVarToConstValueMap1 : myVarToConstValueMap2).put(variable, result != null ? result : NULL);
-
-    return result;
   }
 
   public <K,V> ConcurrentMap<K,V> getOrCreateWeakMap(final Key<MapPair<K, V>> key, boolean forPhysical) {

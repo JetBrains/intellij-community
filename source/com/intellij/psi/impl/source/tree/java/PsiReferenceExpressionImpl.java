@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.VariableResolverProcessor;
 import com.intellij.psi.impl.source.tree.*;
@@ -281,7 +282,7 @@ public class PsiReferenceExpressionImpl extends CompositePsiElement implements P
   }
 
   public PsiType getType() {
-    return getManager().getResolveCache().getType(this, ourTypeEvaluator);
+    return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
   }
 
   public boolean isReferenceTo(PsiElement element) {

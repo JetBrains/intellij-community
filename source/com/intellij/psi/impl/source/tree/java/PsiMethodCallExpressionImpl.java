@@ -5,10 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -28,7 +29,7 @@ public class PsiMethodCallExpressionImpl extends CompositePsiElement implements 
   }
 
   public PsiType getType() {
-    return getManager().getResolveCache().getType(this, ourTypeEvaluator);
+    return JavaResolveCache.getInstance(getProject()).getType(this, ourTypeEvaluator);
   }
 
   public PsiMethod resolveMethod() {

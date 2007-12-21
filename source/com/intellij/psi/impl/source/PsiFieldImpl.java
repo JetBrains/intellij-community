@@ -4,18 +4,18 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.cache.InitializerTooLongException;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
@@ -228,7 +228,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  private static class OurConstValueComputer implements ResolveCache.ConstValueComputer{
+  private static class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
     private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
 
     public Object execute(PsiVariable variable, Set<PsiVariable> visitedVars) {
@@ -296,7 +296,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   public Object computeConstantValue(Set<PsiVariable> visitedVars) {
     if (!hasModifierProperty(PsiModifier.FINAL)) return null;
 
-    return myManager.getResolveCache().computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);
+    return JavaResolveCache.getInstance(getProject()).computeConstantValueWithCaching(this, OurConstValueComputer.INSTANCE, visitedVars);
   }
 
   private String getInitializerText() throws InitializerTooLongException {
