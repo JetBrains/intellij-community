@@ -133,6 +133,8 @@ public class PropertiesFilesManager implements ApplicationComponent {
       public void run() {
         Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());
         VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
+        FileDocumentManager.getInstance().saveAllDocuments();
+        
         //force to re-detect encoding
         for (VirtualFile virtualFile : virtualFiles) {
           virtualFile.setCharset(null);
