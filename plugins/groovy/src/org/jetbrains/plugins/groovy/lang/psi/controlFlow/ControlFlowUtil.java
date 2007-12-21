@@ -123,14 +123,12 @@ public class ControlFlowUtil {
 
     if (curr instanceof ReadWriteVariableInstruction) {
       ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
-      if (readWriteInsn.isWrite()) {
-        int idx = namesIndex.get(readWriteInsn.getVariableName());
-        TIntHashSet defs = written.get(idx);
-        LOG.assertTrue(defs != null);
-        defs.remove(curr.num());
-        if (defs.isEmpty()) {
-          written.remove(idx);
-        }
+      int idx = namesIndex.get(readWriteInsn.getVariableName());
+      TIntHashSet defs = written.get(idx);
+      LOG.assertTrue(defs != null);
+      defs.remove(curr.num());
+      if (defs.isEmpty()) {
+        written.remove(idx);
       }
     }
   }
