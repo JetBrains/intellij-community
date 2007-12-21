@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,12 +50,13 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
       else if (FileDocumentManager.getInstance().isFileModified(virtualFile)) {
         pattern = "Save ''{0}''-encoded file in";
       }
-      else if (virtualFile.getBOM() == null) {
-        pattern = "Change encoding from ''{0}'' to";
-      }
-      else {
+      //no sense to reload file with UTF-detected chars using other encoding
+      else if (LoadTextUtil.utfCharsetWasDetectedFromBytes(virtualFile)) {
         pattern = "Encoding: {0}";
         enabled = false;
+      }
+      else {
+        pattern = "Change encoding from ''{0}'' to";
       }
       if (charset == null) charset = virtualFile.getCharset();
       text = MessageFormat.format(pattern, charset.toString());

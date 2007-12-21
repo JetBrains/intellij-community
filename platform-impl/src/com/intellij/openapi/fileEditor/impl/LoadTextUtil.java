@@ -90,12 +90,19 @@ public final class LoadTextUtil {
     CharsetSettings settings = CharsetSettings.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing();
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset()) : null;
+    virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, null);
     if (shouldGuess) {
       toolkit.setEnforce8Bit(true);
       Charset charset = toolkit.guessFromBOM();
-      if (charset != null) return charset;
+      if (charset != null) {
+        virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, Boolean.TRUE);
+        return charset;
+      }
       CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
-      if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) return CharsetToolkit.UTF8_CHARSET; //UTF detected, ignore all directives
+      if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
+        virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, Boolean.TRUE);
+        return CharsetToolkit.UTF8_CHARSET; //UTF detected, ignore all directives
+      }
     }
 
     FileType fileType = virtualFile.getFileType();
@@ -241,5 +248,10 @@ public final class LoadTextUtil {
       virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, result.getSecond());
     }
     return result.getFirst();
+  }
+
+  private static final Key<Boolean> UTF_CHARSET_WAS_DETECTED_FROM_BYTES = new Key<Boolean>("UTF_CHARSET_WAS_DETECTED_FROM_BYTES");
+  public static boolean utfCharsetWasDetectedFromBytes(final VirtualFile virtualFile) {
+    return virtualFile.getUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES) != null;
   }
 }

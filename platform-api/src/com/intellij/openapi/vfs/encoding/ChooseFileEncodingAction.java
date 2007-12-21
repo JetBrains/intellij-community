@@ -74,6 +74,10 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
             || fileType == StdFileTypes.IDEA_WORKSPACE
             || fileType == StdFileTypes.PATCH
             || fileType == StdFileTypes.PROPERTIES
+
+            || fileType == StdFileTypes.XML
+            || fileType == StdFileTypes.JSPX
+            || fileType == StdFileTypes.XHTML
           ) {
           enabled = false;
         }

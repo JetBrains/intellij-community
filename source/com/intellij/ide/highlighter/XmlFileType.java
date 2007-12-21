@@ -34,15 +34,10 @@ package com.intellij.ide.highlighter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.nio.charset.Charset;
 
 public class XmlFileType extends XmlLikeFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
@@ -70,16 +65,5 @@ public class XmlFileType extends XmlLikeFileType {
 
   public Icon getIcon() {
     return ICON;
-  }
-
-  public String getCharset(@NotNull VirtualFile file) {
-    String charset = XmlUtil.extractXmlEncodingFromProlog(file);
-    return charset == null ? CharsetToolkit.UTF8 : charset;
-  }
-
-  public Charset extractCharsetFromFileContent(final Project project, @NotNull final VirtualFile file, @NotNull final String content) {
-    String name = XmlUtil.extractXmlEncodingFromProlog(content);
-    Charset charset = CharsetToolkit.forName(name);
-    return charset == null ? CharsetToolkit.UTF8_CHARSET : charset;
   }
 }
