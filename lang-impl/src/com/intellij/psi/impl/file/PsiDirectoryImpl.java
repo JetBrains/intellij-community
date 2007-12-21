@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -9,9 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,18 +16,12 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -338,11 +327,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
       }
       final PsiFile copyPsi = myManager.findFile(copyVFile);
       LOG.assertTrue(copyPsi != null);
-      if (copyPsi instanceof PsiFileImpl) {
-        ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi));
-        PsiUtil.updatePackageStatement(copyPsi);
-        ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(copyPsi));
-      }
+      updateAddedFile(copyPsi);
       return copyPsi;
     }
     catch (IOException e) {
@@ -351,21 +336,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
 
   }
 
-  public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    FileType type = fileTypeManager.getFileTypeByFileName(name);
-    /* [dsl] now it is possible to create a Java file outside source path.
-        if (type == FileType.JAVA) {
-          if (getPackage() == null){
-            throw new IncorrectOperationException("Cannot create java-files outside sourcepath");
-          }
-        }
-        else
-    */
-    if (type == StdFileTypes.CLASS) {
-      throw new IncorrectOperationException("Cannot create class-file");
-    }
+  protected void updateAddedFile(PsiFile copyPsi) throws IncorrectOperationException {
+  }
 
+  public void checkCreateFile(@NotNull String name) throws IncorrectOperationException {
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
       throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
@@ -423,26 +397,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
-        if (newFile instanceof PsiFileImpl) {
-          ChangeUtil.encodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(newFile));
-          PsiUtil.updatePackageStatement(newFile);
-          ChangeUtil.decodeInformation((TreeElement)SourceTreeToPsiMap.psiElementToTree(newFile));
-        }
+        updateAddedFile(newFile);
 
         return newFile;
       }
       catch (IOException e) {
         throw new IncorrectOperationException(e.toString(),e);
-      }
-    }
-    else if (element instanceof PsiClass) {
-      final String name = ((PsiClass)element).getName();
-      if (name != null) {
-        final PsiClass newClass = JavaDirectoryService.getInstance().createClass(this, name);
-        return newClass.replace(element);
-      } else {
-        LOG.error("not implemented");
-        return null;
       }
     }
     else {
@@ -469,14 +429,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
         if (Comparing.strEqual(file.getName(),name)) {
           throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", file.getVirtualFile().getPresentableUrl()));
         }
-      }
-    }
-    else if (element instanceof PsiClass) {
-      if (element.getParent() instanceof PsiFile) {
-        JavaDirectoryServiceImpl.checkCreateClassOrInterface(this, ((PsiClass)element).getName());
-      }
-      else {
-        LOG.error("not implemented");
       }
     }
     else {
@@ -553,10 +505,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory {
   }
 
   public void navigate(boolean requestFocus) {
-    final ProjectView projectView = ProjectView.getInstance(getProject());
-    projectView.changeView(ProjectViewPane.ID);
-    projectView.getProjectViewPaneById(ProjectViewPane.ID).select(this, getVirtualFile(), requestFocus);
-    ToolWindowManager.getInstance(getProject()).getToolWindow(ToolWindowId.PROJECT_VIEW).activate(null);
   }
 
   public FileStatus getFileStatus() {

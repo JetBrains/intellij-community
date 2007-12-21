@@ -25,7 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
-import com.intellij.psi.impl.file.PsiDirectoryImpl;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -402,7 +402,7 @@ public class FileManagerImpl implements FileManager {
       findDirectoryImpl(parent);// need to cache parent directory - used for firing events
     }
 
-    psiDir = new PsiDirectoryImpl(myManager, vFile);
+    psiDir = PsiDirectoryFactory.getInstance(myManager.getProject()).createDirectory(vFile);
     return myVFileToPsiDirMap.cacheOrGet(vFile, psiDir);
   }
 
