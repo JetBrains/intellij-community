@@ -1043,6 +1043,12 @@ public final class PsiUtil extends PsiUtilBase {
     return processor.isWriteRefFound();
   }
 
+  public static void checkIsIdentifier(PsiManager manager, String text) throws IncorrectOperationException{
+    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
+      throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );
+    }
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

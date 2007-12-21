@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +141,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
    * @not_implemented
    */
   public static void checkCreateClassOrInterface(@NotNull PsiDirectory dir, String name) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(dir.getManager(), name);
+    PsiUtil.checkIsIdentifier(dir.getManager(), name);
 
     String fileName = name + "." + StdFileTypes.JAVA.getDefaultExtension();
     dir.checkCreateFile(fileName);

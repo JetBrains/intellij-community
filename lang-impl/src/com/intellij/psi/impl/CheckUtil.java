@@ -9,11 +9,6 @@ import com.intellij.util.IncorrectOperationException;
  *
  */
 public class CheckUtil {
-  public static void checkIsIdentifier(PsiManager manager, String text) throws IncorrectOperationException{
-    if (!JavaPsiFacade.getInstance(manager.getProject()).getNameHelper().isIdentifier(text)){
-      throw new IncorrectOperationException(PsiBundle.message("0.is.not.an.identifier", text) );
-    }
-  }
 
   public static void checkWritable(PsiElement element) throws IncorrectOperationException{
     if (!element.isWritable()){

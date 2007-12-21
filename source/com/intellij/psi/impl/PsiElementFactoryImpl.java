@@ -105,7 +105,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiClass createClass(@NotNull String name) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
+    PsiUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public class " + name + "{ }";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass[] classes = aFile.getClasses();
@@ -117,7 +117,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiClass createInterface(@NotNull String name) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
+    PsiUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public interface " + name + "{ }";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass[] classes = aFile.getClasses();
@@ -128,7 +128,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   }
 
   public PsiClass createEnum(@NotNull final String name) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
+    PsiUtil.checkIsIdentifier(myManager, name);
     @NonNls String text = "public enum " + name + "{ }";
     PsiJavaFile aFile = createDummyJavaFile(text);
     PsiClass[] classes = aFile.getClasses();
@@ -157,7 +157,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiField createField(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
+    PsiUtil.checkIsIdentifier(myManager, name);
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
@@ -174,7 +174,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiMethod createMethod(@NotNull String name, PsiType returnType) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
+    PsiUtil.checkIsIdentifier(myManager, name);
     if (returnType == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
@@ -212,7 +212,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiParameter createParameter(@NotNull String name, @NotNull PsiType type) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, name);
+    PsiUtil.checkIsIdentifier(myManager, name);
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
@@ -482,7 +482,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   public PsiIdentifier createIdentifier(@NotNull String text) throws IncorrectOperationException {
-    CheckUtil.checkIsIdentifier(myManager, text);
+    PsiUtil.checkIsIdentifier(myManager, text);
     return new LightIdentifier(myManager, text);
   }
 
