@@ -7,6 +7,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
@@ -36,17 +37,18 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     }
   };
 
+  @NonNls private static final String[] PROTOCOLS = new String[] {"file", "jar"};
+
   public void addMacroReplacement(String path, String macroName) {
     final String p = quotePath(path);
     final String m = "$" + macroName + "$";
 
     put(p, m);
-    put("file:" + p, "file:" + m);
-    put("file:/" + p, "file:/" + m);
-    put("file://" + p, "file://" + m);
-    put("jar:" + p, "jar:" + m);
-    put("jar:/" + p, "jar:/" + m);
-    put("jar://" + p, "jar://" + m);
+    for (String protocol : PROTOCOLS) {
+      put(protocol + ":" + p, protocol + ":" + m);
+      put(protocol + ":/" + p, protocol + "://" + m);
+      put(protocol + "://" + p, protocol + "://" + m);
+    }
   }
 
   public String substitute(String text, boolean caseSensitive, final Set<String> usedMacros) {
@@ -96,6 +98,20 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private static void logUsage(String macroReplacement, final Set<String> usedMacros) {
     if (usedMacros == null) return;
 
+    int idx = 0;
+    for (String protocol : PROTOCOLS) {
+      if (macroReplacement.startsWith(protocol + "://")) {
+        idx = protocol.length() + 3;
+      }
+      else if (macroReplacement.startsWith(protocol + ":/")) {
+        idx = protocol.length() + 2;
+      }
+      else if (macroReplacement.startsWith(protocol + ":")) {
+        idx = protocol.length() + 1;
+      }
+    }
+
+    macroReplacement = macroReplacement.substring(idx);
     if (macroReplacement.length() >= 2 && macroReplacement.startsWith("$") && macroReplacement.endsWith("$")) {
       macroReplacement = macroReplacement.substring(1, macroReplacement.length() - 1);
     }
