@@ -20,8 +20,8 @@ public class LineMarkersPassFactory extends AbstractProjectComponent implements 
   public LineMarkersPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this,
-                                                                 new int[]{  /*Pass.POPUP_HINTS*/},
-                                                                 new int[]{Pass.UPDATE_FOLDING,Pass.UPDATE_VISIBLE}, false, -1);
+                                                                 new int[]{},
+                                                                 new int[]{Pass.UPDATE_ALL}, false, -1);
   }
 
   @NonNls
