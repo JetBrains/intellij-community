@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
@@ -136,6 +137,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       myRepositoryManager = new EmptyRepository.MyRepositoryManagerImpl();
       myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(psiManager, myRepositoryManager);
     }
+
+    JavaFindUsagesHandler.setupForProject(project);
 
     Disposer.register(project, this);
   }

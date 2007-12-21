@@ -13,8 +13,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.find.FindManager;
+import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.find.findUsages.FindUsagesUtil;
+import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -113,7 +116,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
+  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
@@ -134,7 +137,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
             return ++usagesFound[0] < myMinUsagesNumberToShowDialog;
           }
         };
-        FindUsagesUtil.processUsages(method, processor, options);
+        
+        FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+        FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method);
+        assert handler != null;
+        handler.processElementUsages(method, processor, options);
       }
     };
     String progressTitle = QuickFixBundle.message("searching.for.usages.progress.title");
