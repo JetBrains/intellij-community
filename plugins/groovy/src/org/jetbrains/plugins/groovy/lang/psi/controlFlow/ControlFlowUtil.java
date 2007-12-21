@@ -92,16 +92,14 @@ public class ControlFlowUtil {
                                                   TObjectIntHashMap<String> namesIndex, boolean[] visited) {
 
     if (curr instanceof ReadWriteVariableInstruction) {
-      ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
-      if (readWriteInsn.isWrite()) {
-        int idx = namesIndex.get(readWriteInsn.getVariableName());
-        TIntHashSet defs = written.get(idx);
-        if (defs == null) {
-          defs = new TIntHashSet();
-          written.put(idx, defs);
-        }
-        defs.add(curr.num());
+      ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr; //do not check for isWrite() to prevent multiple warnings
+      int idx = namesIndex.get(readWriteInsn.getVariableName());
+      TIntHashSet defs = written.get(idx);
+      if (defs == null) {
+        defs = new TIntHashSet();
+        written.put(idx, defs);
       }
+      defs.add(curr.num());
     }
 
     visited[curr.num()] = true;
