@@ -37,6 +37,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
@@ -267,6 +268,29 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
         }
 
         XmlFile currentFile = retrieveFile(fileLocation, version);
+        if (currentFile == null) {
+          final XmlDocument document = XmlUtil.getContainingFile(XmlTagImpl.this).getDocument();
+          if (document != null) {
+            final String uri = XmlUtil.getDtdUri(document);
+            if (uri != null) {
+              final XmlFile containingFile = XmlUtil.getContainingFile(document);
+              final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, uri);
+              descriptor = xmlFile == null ? null : (XmlNSDescriptor)xmlFile.getDocument().getMetaData();
+            }
+            if (descriptor != null) {
+              final XmlElementDescriptor elementDescriptor = descriptor.getElementDescriptor(XmlTagImpl.this);
+              if (elementDescriptor != null) {
+                final XmlAttributeDescriptor attributeDescriptor = elementDescriptor.getAttributeDescriptor("xmlns", XmlTagImpl.this);
+                if (attributeDescriptor != null && attributeDescriptor.isFixed()) {
+                  final String defaultValue = attributeDescriptor.getDefaultValue();
+                  if (defaultValue != null && defaultValue.equals(namespace)) {
+                    return new Result<XmlNSDescriptor>(descriptor, descriptor.getDependences(), XmlTagImpl.this, ExternalResourceManager.getInstance());
+                  }
+                }
+              }
+            }
+          }
+        }
         PsiMetaOwner currentOwner = retrieveOwner(currentFile, namespace);
         if (currentOwner != null) {
           descriptor = (XmlNSDescriptor)currentOwner.getMetaData();
