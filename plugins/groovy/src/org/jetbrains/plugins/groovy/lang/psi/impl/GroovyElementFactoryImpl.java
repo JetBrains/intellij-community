@@ -276,9 +276,19 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   @NotNull
-  public PsiElement createLineTerminator() {
+  public PsiElement createLineTerminator(int length) {
+
+    String text = length <= 1 ? "\n" : "";
+    if (length > 1) {
+      StringBuffer buffer = new StringBuffer();
+      for (; length > 0; length--) {
+        buffer.append("\n");
+      }
+      text = buffer.toString();
+    }
+
     PsiFile dummyFile = PsiManager.getInstance(myProject).getElementFactory().createFileFromText(DUMMY + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(),
-        "\n");
+        text);
     PsiElement child = dummyFile.getFirstChild();
     assert child != null;
     return child;

@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -219,6 +218,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     GrImportStatement importStatement = (GrImportStatement) result;
+    PsiElement next = importStatement.getNextSibling();
+    if (next != null){
+      ASTNode node = next.getNode();
+      if (node != null && GroovyTokenTypes.mNLS == node.getElementType()) {
+        GroovyElementFactory factory = GroovyElementFactory.getInstance(statement.getProject());
+        next.replace(factory.createLineTerminator(2));
+      }
+    }
     return importStatement;
   }
 
@@ -276,13 +283,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       PsiElement anchor = children[children.length - 1];
       if (!anchor.getText().matches("\n\n")) {
         GroovyElementFactory factory = GroovyElementFactory.getInstance(getProject());
-        PsiElement separator = factory.createLineTerminator();
+        PsiElement separator = factory.createLineTerminator(1);
         if (anchor.getText().matches("(\\s*\n\\s*)+")) {
           anchor = anchor.replace(separator);
         } else {
           anchor = addAfter(separator, anchor);
         }
-        separator = factory.createLineTerminator();
+        separator = factory.createLineTerminator(1);
         anchor = addAfter(separator, anchor);
       }
       element = addAfter(method, anchor);

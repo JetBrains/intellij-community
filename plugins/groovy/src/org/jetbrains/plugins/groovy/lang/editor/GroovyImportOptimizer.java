@@ -106,17 +106,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         }
       });
 
+      // remove ALL imports from file
       final GrImportStatement[] oldImports = myFile.getImportStatements();
-
-      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers);
-      try {
-        for (GrImportStatement newImport : newImports) {
-          myFile.addImport(newImport);
-        }
-      } catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      
       for (GrImportStatement importStatement : oldImports) {
         try {
           if (!importStatement.isAliasedImport() || !usedImports.contains(importStatement)) {
@@ -126,6 +117,17 @@ public class GroovyImportOptimizer implements ImportOptimizer {
           LOG.error(e);
         }
       }
+
+      // Add new import statements
+      GrImportStatement[] newImports = prepare(importedClasses, staticallyImportedMembers);
+      try {
+        for (GrImportStatement newImport : newImports) {
+          myFile.addImport(newImport);
+        }
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      
     }
 
     private GrImportStatement[] prepare(Set<String> importedClasses, Set<String> staticallyImportedMembers) {

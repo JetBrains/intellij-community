@@ -60,7 +60,7 @@ public abstract class GroovyElementFactory {
   public abstract PsiElement createWhiteSpace();
 
   @NotNull
-  public abstract PsiElement createLineTerminator();
+  public abstract PsiElement createLineTerminator(int length);
 
   public abstract GrArgumentList createExpressionArgumentList(GrExpression... expressions);
 

@@ -137,7 +137,7 @@ public class GroovyOverrideImplementUtil {
               anchor = nextElement.getNode();
             }
 
-            final ASTNode lineTerminator = GroovyElementFactory.getInstance(project).createLineTerminator().getNode();
+            final ASTNode lineTerminator = GroovyElementFactory.getInstance(project).createLineTerminator(1).getNode();
 
             assert lineTerminator != null;
             final ASTNode resultNode = result.getNode();
