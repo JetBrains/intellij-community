@@ -10,6 +10,7 @@ import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -37,37 +38,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class CodeStyleManagerImpl extends CodeStyleManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
   private Project myProject;
-  private final List<PostFormatProcessor> myPostFormatProcessors = new ArrayList<PostFormatProcessor>();
   @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
 
   public CodeStyleManagerImpl(Project project, StatisticsManagerEx statisticsManagerEx) {
     myProject = project;
-
-    myPostFormatProcessors.add(new PostFormatProcessor() {
-      public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
-        return new BraceEnforcer(settings).process(source);
-      }
-
-      public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
-        return new BraceEnforcer(settings).processText(source, rangeToReformat);
-      }
-    });
-
-    myPostFormatProcessors.add(new PostFormatProcessor() {
-      public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
-        return new ImportsFormatter(settings, source.getContainingFile()).process(source);
-      }
-
-      public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
-        return new ImportsFormatter(settings, source.getContainingFile()).processText(source, rangeToReformat);
-      }
-    });
   }
 
   @NotNull
@@ -110,7 +87,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   private PsiElement postProcessElement(final PsiElement formatted) {
     PsiElement result = formatted;
-    for (PostFormatProcessor postFormatProcessor : myPostFormatProcessors) {
+    for (PostFormatProcessor postFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
       result = postFormatProcessor.processElement(result, getSettings());
     }
     return result;
@@ -118,7 +95,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   private void postProcessText(final PsiFile file, final TextRange textRange) {
     TextRange currentRange = textRange;
-    for (final PostFormatProcessor myPostFormatProcessor : myPostFormatProcessors) {
+    for (final PostFormatProcessor myPostFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
       currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings());
     }
   }

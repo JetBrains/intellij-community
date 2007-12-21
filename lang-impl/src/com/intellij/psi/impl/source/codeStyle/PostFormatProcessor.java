@@ -15,12 +15,15 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public interface PostFormatProcessor {
+  ExtensionPointName<PostFormatProcessor> EP_NAME = ExtensionPointName.create("com.intellij.postFormatProcessor");
+
   PsiElement processElement(PsiElement source, CodeStyleSettings settings);
   TextRange processText(PsiFile source, TextRange rangeToReformat,CodeStyleSettings settings);
 }
