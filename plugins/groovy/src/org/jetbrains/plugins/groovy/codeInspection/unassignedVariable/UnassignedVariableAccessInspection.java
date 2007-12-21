@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +66,8 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
       if (element instanceof GroovyPsiElement) {
         String name = read.getVariableName();
         GroovyPsiElement property = ResolveUtil.resolveProperty((GroovyPsiElement) element, name);
-        if (property != null && !(property instanceof PsiParameter) && !(property instanceof PsiField)) {
+        if (property != null && !(property instanceof PsiParameter) && !(property instanceof PsiField) &&
+            PsiTreeUtil.isAncestor(owner, property, false)) {
           problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unassigned.access.tooltip", name, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
       }
