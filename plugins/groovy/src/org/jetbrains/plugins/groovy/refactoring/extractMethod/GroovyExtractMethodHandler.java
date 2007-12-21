@@ -148,10 +148,19 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       return false;
     }
 
+    boolean hasInterruptingStatements = false;
+
+    for (GrStatement statement : statements) {
+      if (hasInterruptingStatements =
+          GroovyRefactoringUtil.hasWrongBreakStatements(statement) ||
+              GroovyRefactoringUtil.haswrongContinueStatements(statement)) {
+        break;
+      }
+    }
     // must be replaced by return statement
     boolean hasReturns = returnStatements.size() > 0;
     boolean isReturnStatement = ExtractMethodUtil.isReturnStatement(statements[statements.length - 1], returnStatements);
-    if (!isReturnStatement && hasReturns) {
+    if (!isReturnStatement && hasReturns || hasInterruptingStatements) {
       String message = GroovyRefactoringBundle.message("refactoring.is.not.supported.when.return.statement.interrupts.the.execution.flow");
       showErrorMessage(message, project);
       return false;

@@ -45,6 +45,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
@@ -409,6 +412,40 @@ public abstract class GroovyRefactoringUtil {
       PsiElement[] children = element.getChildren();
       for (PsiElement child : children) {
         addReturnStatements(vector, child);
+      }
+    }
+  }
+
+  public static boolean hasWrongBreakStatements(PsiElement element) {
+    ArrayList<GrBreakStatement> vector = new ArrayList<GrBreakStatement>();
+    addBreakStatements(element, vector);
+    return !vector.isEmpty();
+  }
+
+  private static void addBreakStatements(PsiElement element, ArrayList<GrBreakStatement> vector) {
+    if (element instanceof GrBreakStatement) {
+      vector.add(((GrBreakStatement) element));
+    } else if (!(element instanceof GrLoopStatement ||
+        element instanceof GrSwitchStatement ||
+        element instanceof GrClosableBlock)) {
+      for (PsiElement psiElement : element.getChildren()) {
+        addBreakStatements(psiElement, vector);
+      }
+    }
+  }
+
+  public static boolean haswrongContinueStatements(PsiElement element) {
+    ArrayList<GrContinueStatement> vector = new ArrayList<GrContinueStatement>();
+    addContinueStatements(element, vector);
+    return !vector.isEmpty();
+  }
+
+  private static void addContinueStatements(PsiElement element, ArrayList<GrContinueStatement> vector) {
+    if (element instanceof GrContinueStatement) {
+      vector.add(((GrContinueStatement) element));
+    } else if (!(element instanceof GrLoopStatement || element instanceof GrClosableBlock)) {
+      for (PsiElement psiElement : element.getChildren()) {
+        addContinueStatements(psiElement, vector);
       }
     }
   }

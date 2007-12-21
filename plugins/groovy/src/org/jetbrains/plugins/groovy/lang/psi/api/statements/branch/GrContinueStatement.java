@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 /**
  * @author ilyas
  */
-public interface GrContinueStatement extends GrStatement {
+public interface GrContinueStatement extends GrFlowInterruptingStatement {
   @Nullable String getLabel();
   @Nullable GrStatement findTarget();
 }
