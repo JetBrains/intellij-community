@@ -849,7 +849,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement resolved = result.getElement();
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
       if (!myHolder.hasErrorResults()) {
-        myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, resolved, myUninitializedVarProblems));
+        myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems));
       }
       PsiVariable variable = (PsiVariable)resolved;
       boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);

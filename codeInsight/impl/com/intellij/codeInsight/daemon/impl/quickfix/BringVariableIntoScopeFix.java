@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -9,8 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * @author ven
@@ -76,7 +81,6 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     LOG.assertTrue(myOutOfScopeVariable != null);
     PsiManager manager = file.getManager();
 
-
     myOutOfScopeVariable.getModifierList().setModifierProperty(PsiModifier.FINAL, false);
     PsiElement commonParent = PsiTreeUtil.findCommonParent(myOutOfScopeVariable, myUnresolvedReference);
     LOG.assertTrue(commonParent != null);
@@ -95,7 +99,8 @@ public class BringVariableIntoScopeFix implements IntentionAction {
       commonParent = commonParent.getParent();
     }
     LOG.assertTrue(commonParent != null);
-    commonParent.addBefore(newDeclaration, child);
+    PsiDeclarationStatement added = (PsiDeclarationStatement)commonParent.addBefore(newDeclaration, child);
+    PsiLocalVariable addedVar = (PsiLocalVariable)added.getDeclaredElements()[0];
     manager.getCodeStyleManager().reformat(commonParent);
 
     //Leave initializer assignment
@@ -119,7 +124,20 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     if (myOutOfScopeVariable.isValid()) {
       myOutOfScopeVariable.delete();
     }
+
+    if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<PsiElement, Collection<PsiReferenceExpression>>()) != null) {
+      initialize(addedVar);
+    }
+
     DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
+  }
+
+  private static void initialize(final PsiLocalVariable variable) throws IncorrectOperationException {
+    PsiType type = variable.getType();
+    String init = PsiTypesUtil.getDefaultValueOfType(type);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiExpression initializer = factory.createExpressionFromText(init, variable);
+    variable.setInitializer(initializer);
   }
 
   public boolean startInWriteAction() {

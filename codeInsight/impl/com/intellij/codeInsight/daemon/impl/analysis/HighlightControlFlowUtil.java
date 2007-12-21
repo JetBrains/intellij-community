@@ -259,10 +259,9 @@ public class HighlightControlFlowUtil {
 
   @Nullable
   public static HighlightInfo checkVariableInitializedBeforeUsage(PsiReferenceExpression expression,
-                                                                  PsiElement element,
+                                                                  PsiVariable variable,
                                                                   Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems) {
-    if (!(element instanceof PsiVariable) || element instanceof ImplicitVariable) return null;
-    PsiVariable variable = (PsiVariable)element;
+    if (variable instanceof ImplicitVariable) return null;
     if (!PsiUtil.isAccessedForReading(expression)) return null;
     final int startOffset = expression.getTextRange().getStartOffset();
     final PsiElement topBlock;
