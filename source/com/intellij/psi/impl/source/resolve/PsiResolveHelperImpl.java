@@ -590,7 +590,6 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     }
 
-    final Pair<PsiType, ConstraintType> result;
     final PsiManager manager = typeParameter.getManager();
     final GlobalSearchScope scope = parent.getResolveScope();
     if (expectedType == null) {
@@ -603,6 +602,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     final Pair<PsiType, ConstraintType> constraint =
       getSubstitutionForTypeParameterConstraint(typeParameter, returnType, expectedType, false, PsiUtil.getLanguageLevel(parent));
 
+    final Pair<PsiType, ConstraintType> result;
     if (constraint == null) {
       final PsiSubstitutor finalSubstitutor = substitutor.put(typeParameter, null);
       PsiType superType = finalSubstitutor.substitute(typeParameter.getSuperTypes()[0]);
@@ -613,8 +613,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       else {
         result = new Pair<PsiType, ConstraintType>(superType, ConstraintType.SUBTYPE);
       }
-    } else {
+    }
+    else {
       PsiType guess = constraint.getFirst();
+      if (guess == null) guess = PsiType.getJavaLangObject(manager, scope);
       if (forCompletion && !(guess instanceof PsiWildcardType)) guess = PsiWildcardType.createExtends(manager, guess);
 
       //The following code is the result of deep thought, do not shit it out before discussing with [ven]
