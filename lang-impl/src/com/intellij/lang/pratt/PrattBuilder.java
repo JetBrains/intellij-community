@@ -65,7 +65,7 @@ public class PrattBuilder {
   @Nullable
   public IElementType parse(int rightPriority, @Nullable String expectedMessage) {
     if (isEof()) {
-      error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.token"));
+      error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.eof"));
       return null;
     }
 
@@ -181,7 +181,11 @@ public class PrattBuilder {
    */
   @Nullable
   public PrattTokenType getParsedToken(int depth) {
-    return myStack.size() - 1 < depth ? null : myStack.get(myStack.size() - 1 - depth);
+    return getNestingLevel() - 1 < depth ? null : myStack.get(getNestingLevel() - 1 - depth);
+  }
+
+  public int getNestingLevel() {
+    return myStack.size();
   }
 
   @Nullable
