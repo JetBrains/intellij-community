@@ -2,6 +2,9 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -10,7 +13,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -18,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +62,7 @@ public class SmartEnterProcessor {
     fixers.add(new SemicolonFixer());
     fixers.add(new MissingArrayInitializerBraceFixer());
     fixers.add(new EnumFieldFixer());
+    fixers.add(new XmlTagFixer());
     //ourFixers.add(new CompletionFixer());
     ourFixers = fixers.toArray(new Fixer[fixers.size()]);
 
@@ -110,7 +114,9 @@ public class SmartEnterProcessor {
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
-        if (StdFileTypes.JAVA.getLanguage().equals(psiElement.getLanguage())) {
+        final Language language = psiElement.getLanguage();
+
+        if (isEnabledForLanguage(language)) {
           for (Fixer fixer : ourFixers) {
             fixer.apply(myEditor, this, psiElement);
             if (myEditor.getUserData(LookupImpl.LOOKUP_IN_EDITOR_KEY) != null) {
@@ -129,6 +135,10 @@ public class SmartEnterProcessor {
     } catch (IncorrectOperationException e) {
       LOG.error(e);
     }
+  }
+
+  private static boolean isEnabledForLanguage(final Language language) {
+    return StdLanguages.JAVA.equals(language) || language instanceof XMLLanguage;
   }
 
   private void moveCaretInsideBracesIfAny() throws IncorrectOperationException {
@@ -287,7 +297,9 @@ public class SmartEnterProcessor {
                                                               PsiStatement.class,
                                                               PsiCodeBlock.class,
                                                               PsiMember.class,
-                                                              PsiComment.class);
+                                                              PsiComment.class,
+                                                              XmlTag.class
+    );
 
     if (statementAtCaret instanceof PsiBlockStatement) return null;
 
@@ -297,7 +309,9 @@ public class SmartEnterProcessor {
       }
     }
 
-    return statementAtCaret instanceof PsiStatement || statementAtCaret instanceof PsiMember
+    return statementAtCaret instanceof PsiStatement ||
+           statementAtCaret instanceof PsiMember ||
+           statementAtCaret instanceof XmlTag
            ? statementAtCaret
            : null;
   }

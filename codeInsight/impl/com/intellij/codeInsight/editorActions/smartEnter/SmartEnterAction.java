@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.text.CharArrayUtil;
 
 /**
@@ -32,7 +33,7 @@ public class SmartEnterAction extends EditorAction {
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       final Document doc = editor.getDocument();
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      if (project == null || doc.getLineCount() < 2) {
+      if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, dataContext);
         return;
       }
@@ -58,7 +59,7 @@ public class SmartEnterAction extends EditorAction {
         return;
       }
 
-      if (!(psiFile instanceof PsiJavaFile)) {
+      if (!isEnabledForFile(psiFile)) {
         plainEnter(editor, dataContext);
         return;
       }
@@ -74,7 +75,11 @@ public class SmartEnterAction extends EditorAction {
       }
     }
 
-    private boolean isInPreceedingBlanks(Editor editor) {
+    private static boolean isEnabledForFile(final PsiFile psiFile) {
+      return psiFile instanceof PsiJavaFile || psiFile instanceof XmlFile;
+    }
+
+    private static boolean isInPreceedingBlanks(Editor editor) {
       int offset = editor.getCaretModel().getOffset();
       final Document doc = editor.getDocument();
       CharSequence chars = doc.getCharsSequence();
