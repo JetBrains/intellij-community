@@ -13,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PrattParsingUtil {
+  private PrattParsingUtil() {
+  }
 
   public static void searchFor(PrattBuilder builder, @NotNull PrattTokenType... types) {
     searchFor(builder, true, types);
@@ -34,12 +36,12 @@ public class PrattParsingUtil {
 
   @Nullable
   public static IElementType parseOption(final PrattBuilder builder, int rightPriority) {
-    builder.startElement();
+    final MutableMarker marker = builder.mark();
     final IElementType type = builder.parse(rightPriority);
     if (type == null) {
-      builder.rollbackToElementStart();
+      marker.rollback();
     } else {
-      builder.finishElement();
+      marker.finish();
     }
     return type;
   }

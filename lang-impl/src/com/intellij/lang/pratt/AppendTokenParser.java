@@ -19,9 +19,9 @@ public abstract class AppendTokenParser implements TokenParser{
   };
 
   public boolean parseToken(final PrattBuilder builder) {
-    builder.startElement();
+    final MutableMarker marker = builder.mark();
     builder.advance();
-    builder.finishElement(parseAppend(builder));
+    marker.finish(parseAppend(builder));
     return true;
   }
 

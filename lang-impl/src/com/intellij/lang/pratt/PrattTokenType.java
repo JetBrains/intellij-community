@@ -19,8 +19,8 @@ public class PrattTokenType extends IElementType {
   private final int myPriority;
 
   public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @Nullable final Nud nud, @Nullable final Led led) {
-    this(tokenName, language, priority, new DefaultTokenParser(nud, led));
+                          @Nullable final Language language, final int priority, @Nullable final PrefixParser prefixParser, @Nullable final ProceedingParser proceedingParser) {
+    this(tokenName, language, priority, new DefaultTokenParser(prefixParser, proceedingParser));
   }
 
   public PrattTokenType(@NotNull @NonNls final String debugName,
@@ -31,13 +31,13 @@ public class PrattTokenType extends IElementType {
   }
 
   public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @Nullable final Nud nud) {
-    this(tokenName, language, priority, nud, null);
+                          @Nullable final Language language, final int priority, @Nullable final PrefixParser prefixParser) {
+    this(tokenName, language, priority, prefixParser, null);
   }
 
   public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @Nullable final Led led) {
-    this(tokenName, language, priority, null, led);
+                          @Nullable final Language language, final int priority, @Nullable final ProceedingParser proceedingParser) {
+    this(tokenName, language, priority, null, proceedingParser);
   }
 
   public PrattTokenType(@NotNull final String tokenName,

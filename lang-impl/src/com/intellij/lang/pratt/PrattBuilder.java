@@ -6,6 +6,8 @@ package com.intellij.lang.pratt;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
@@ -17,9 +19,23 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PrattBuilder {
+  public static final PsiParser PRATT_PARSER = new PsiParser() {
+    @NotNull
+    public ASTNode parse(final IElementType root, final PsiBuilder builder) {
+      builder.setDebugMode(true);
+
+      final PrattBuilder prattBuilder = new PrattBuilder(builder);
+      final MutableMarker marker = prattBuilder.mark();
+      prattBuilder.parse(Integer.MIN_VALUE);
+      while (builder.getTokenType() != null) builder.advanceLexer();
+      marker.finish(root);
+      return builder.getTreeBuilt();
+    }
+  };
+
   private final PsiBuilder myBuilder;
-  private final Stack<IElementType> myElementTypes = new Stack<IElementType>();
-  private final Stack<PsiBuilder.Marker> myMarkers = new Stack<PsiBuilder.Marker>();
+  private final Stack<PrattTokenType> myStack = new Stack<PrattTokenType>();
+  private MutableMarker myStartMarker;
 
   public PrattBuilder(final PsiBuilder builder) {
     myBuilder = builder;
@@ -29,54 +45,16 @@ public class PrattBuilder {
     return ((PsiBuilderImpl) myBuilder).getLexer();
   }
 
-  public void startElement(IElementType type) {
-    startElement();
-    setCurrentElementType(type);
+  public MutableMarker getCurrentMarker() {
+    return myStartMarker;
   }
 
-  public void startElement() {
-    myMarkers.push(myBuilder.mark());
-    myElementTypes.push(null);
+  public MutableMarker mark() {
+    return new MutableMarker(myBuilder.mark());
   }
 
-  public void setCurrentElementType(@Nullable IElementType type) {
-    myElementTypes.pop();
-    myElementTypes.push(type);
-  }
-
-  @Nullable
-  public IElementType getCurrentElementType() {
-    return myElementTypes.peek();
-  }
-
-  public void rollbackToElementStart() {
-    myMarkers.pop().rollbackTo();
-    myElementTypes.pop();
-  }
-
-  public void finishElement(@Nullable IElementType type) {
-    setCurrentElementType(type);
-    finishElement();
-  }
-
-  public void precedeElement() {
-    final PsiBuilder.Marker marker = myMarkers.pop();
-    myMarkers.push(marker.precede());
-    myMarkers.push(marker);
-
-    final IElementType type = myElementTypes.pop();
-    myElementTypes.push(null);
-    myElementTypes.push(type);
-  }
-
-  public void finishElement() {
-    final PsiBuilder.Marker marker = myMarkers.pop();
-    final IElementType type = myElementTypes.pop();
-    if (type != null) {
-      marker.done(type);
-    } else {
-      marker.drop();
-    }
+  public void precedeCurrentMarker() {
+    myStartMarker = myStartMarker.precede();
   }
 
   @Nullable
@@ -96,29 +74,41 @@ public class PrattBuilder {
       return null;
     }
 
-    int startStack = myMarkers.size();
-    startElement();
-    while (!isEof()) {
-      int startOffset = myBuilder.getCurrentOffset();
-      PrattTokenType tokenType = (PrattTokenType)getTokenType();
-      assert tokenType != null;
+    final MutableMarker oldStartMarker = myStartMarker;
+    myStartMarker = mark();
+    try {
+      while (!isEof()) {
+        int startOffset = myBuilder.getCurrentOffset();
+        PrattTokenType tokenType = (PrattTokenType)getTokenType();
+        assert tokenType != null;
 
-      if (!tokenType.getParser().parseToken(this)) break;
+        pushToken(tokenType);
+        try {
+          if (!tokenType.getParser().parseToken(this)) break;
+        }
+        finally {
+          popToken();
+        }
 
-      assert startOffset < myBuilder.getCurrentOffset() : "Endless loop on " + getTokenType();
+        assert startOffset < myBuilder.getCurrentOffset() : "Endless loop on " + getTokenType();
 
-      if (cannotBeParsed(rightPriority)) break;
-    }
-
-    IElementType result = null;
-    do {
-      final IElementType currentType = getCurrentElementType();
-      if (currentType != null) {
-        result = currentType;
+        if (cannotBeParsed(rightPriority)) break;
       }
-      finishElement();
-    } while (myMarkers.size() > startStack);
-    return result;
+
+      myStartMarker.finish();
+      return myStartMarker.getResultType();
+    }
+    finally {
+      myStartMarker = oldStartMarker;
+    }
+  }
+
+  public void popToken() {
+    myStack.pop();
+  }
+
+  public void pushToken(@NotNull final PrattTokenType tokenType) {
+    myStack.push(tokenType);
   }
 
   private boolean cannotBeParsed(final int rightPriority) {
@@ -132,10 +122,6 @@ public class PrattBuilder {
 
   public boolean assertToken(final PrattTokenType type, @NotNull final String errorMessage) {
     return _checkToken(type, errorMessage);
-  }
-
-  public PsiBuilder.Marker mark() {
-    return myBuilder.mark();
   }
 
   public boolean checkToken(final PrattTokenType type) {
@@ -194,8 +180,8 @@ public class PrattBuilder {
    * @return
    */
   @Nullable
-  public IElementType getCompositeElementType(int depth) {
-    return myElementTypes.size() - 1 < depth ? null : myElementTypes.get(myElementTypes.size() - 1 - depth);
+  public PrattTokenType getParsedToken(int depth) {
+    return myStack.size() - 1 < depth ? null : myStack.get(myStack.size() - 1 - depth);
   }
 
   @Nullable
