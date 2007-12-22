@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RefClassImpl extends RefElementImpl implements RefClass {
+public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final HashSet<RefElement> EMPTY_SET = new HashSet<RefElement>(0);
   private static final HashSet<RefClass> EMPTY_CLASS_SET = new HashSet<RefClass>(0);
   private static final ArrayList<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
@@ -46,7 +46,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   private ArrayList<RefMethod> myOverridingMethods;
   private THashSet<RefElement> myInTypeReferences;
   private THashSet<RefElement> myInstanceReferences;
-  private ArrayList<RefElement> myClassExporters;
+  private ArrayList<RefJavaElement> myClassExporters;
 
   RefClassImpl(PsiClass psiClass, RefManager manager) {
     super(psiClass, manager);
@@ -69,9 +69,9 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
         PsiJavaFile psiFile = (PsiJavaFile) psiParent;
         String packageName = psiFile.getPackageName();
         if (!"".equals(packageName)) {
-          ((RefPackageImpl)getRefManager().getPackage(packageName)).add(this);
+          ((RefPackageImpl)getRefJavaManager().getPackage(packageName)).add(this);
         } else {
-          ((RefPackageImpl)getRefManager().getRefProject().getDefaultPackage()).add(this);
+          ((RefPackageImpl)getRefJavaManager().getDefaultPackage()).add(this);
         }
       }
       final Module module = ModuleUtil.findModuleForPsiElement(psiClass);
@@ -103,11 +103,11 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     setUtilityClass(psiMethods.length > 0 || psiFields.length > 0);
 
     for (PsiField psiField : psiFields) {
-      ((RefManagerImpl)getRefManager()).getFieldReference(this, psiField);
+      getRefManager().getReference(psiField);
     }
 
     if (!isApplet()) {
-      final PsiClass servlet = ((RefManagerImpl)getRefManager()).getServlet();
+      final PsiClass servlet = getRefJavaManager().getServlet();
       setServlet(servlet != null && psiClass.isInheritor(servlet, true));
     }
     if (!isApplet() && !isServlet()) {
@@ -118,7 +118,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     }
 
     for (PsiMethod psiMethod : psiMethods) {
-      RefMethod refMethod = ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
+      RefMethod refMethod = (RefMethod)getRefManager().getReference(psiMethod);
 
       if (refMethod != null) {
         if (psiMethod.isConstructor()) {
@@ -155,9 +155,9 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     }
 
 
-    final PsiClass applet = ((RefManagerImpl)getRefManager()).getApplet();
+    final PsiClass applet = getRefJavaManager().getApplet();
     setApplet(applet != null && psiClass.isInheritor(applet, true));
-    ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
+    getRefManager().fireNodeInitialized(this);
   }
 
   private void initializeSuperReferences(PsiClass psiClass) {
@@ -214,34 +214,38 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
 
     if (psiClass != null) {
       for (PsiClassInitializer classInitializer : psiClass.getInitializers()) {
-        ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, classInitializer.getBody());
+        RefJavaUtil.getInstance().addReferences(psiClass, this, classInitializer.getBody());
       }
 
-      ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, psiClass.getModifierList());
+      RefJavaUtil.getInstance().addReferences(psiClass, this, psiClass.getModifierList());
 
       PsiField[] psiFields = psiClass.getFields();
       for (PsiField psiField : psiFields) {
-        ((RefManagerImpl)getRefManager()).getFieldReference(this, psiField);
+        getRefManager().getReference(psiField);
         final PsiExpression initializer = psiField.getInitializer();
         if (initializer != null) {
-          ((RefUtilImpl)RefUtil.getInstance()).addReferences(psiClass, this, initializer);
+          RefJavaUtil.getInstance().addReferences(psiClass, this, initializer);
         }        
       }
 
       PsiMethod[] psiMethods = psiClass.getMethods();
       for (PsiMethod psiMethod : psiMethods) {
-        ((RefManagerImpl)getRefManager()).getMethodReference(this, psiMethod);
+        getRefManager().getReference(psiMethod);
       }
-      ((RefManagerImpl)getRefManager()).fireBuildReferences(this);
+      getRefManager().fireBuildReferences(this);
     }
   }
 
   public void accept(final RefVisitor visitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        visitor.visitClass(RefClassImpl.this);
-      }
-    });
+    if (visitor instanceof RefJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          ((RefJavaVisitor)visitor).visitClass(RefClassImpl.this);
+        }
+      });
+    } else {
+      super.accept(visitor);
+    }
   }
 
   @NotNull
@@ -282,14 +286,14 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     return myInTypeReferences;
   }
 
-  public void addTypeReference(RefElement from) {
+  public void addTypeReference(RefJavaElement from) {
     if (from != null) {
       if (myInTypeReferences == null){
         myInTypeReferences = new THashSet<RefElement>(1);
       }
       myInTypeReferences.add(from);
-      ((RefElementImpl)from).addOutTypeRefernce(this);
-      ((RefManagerImpl)getRefManager()).fireNodeMarkedReferenced(this, from, false, false, false);
+      ((RefJavaElementImpl)from).addOutTypeRefernce(this);
+      getRefManager().fireNodeMarkedReferenced(this, from, false, false, false);
     }
   }
 
@@ -349,7 +353,7 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
   public String getExternalName() {
     final String[] result = new String[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
+      public void run() {//todo synthetic JSP
         final PsiClass psiClass = getElement();
         LOG.assertTrue(psiClass != null);
         result[0] = PsiFormatUtil.getExternalName(psiClass);
@@ -430,13 +434,13 @@ public class RefClassImpl extends RefElementImpl implements RefClass {
     return false;
   }
 
-  public void addClassExporter(RefElement exporter) {
-    if (myClassExporters == null) myClassExporters = new ArrayList<RefElement>(1);
+  public void addClassExporter(RefJavaElement exporter) {
+    if (myClassExporters == null) myClassExporters = new ArrayList<RefJavaElement>(1);
     if (myClassExporters.contains(exporter)) return;
     myClassExporters.add(exporter);
   }
 
-  public List<RefElement> getClassExporters() {
+  public List<RefJavaElement> getClassExporters() {
     return myClassExporters;
   }
 

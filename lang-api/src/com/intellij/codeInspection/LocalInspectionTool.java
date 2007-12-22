@@ -3,8 +3,11 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,5 +64,10 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
         }
       }
     };
+  }
+
+  @Nullable
+  public PsiNamedElement getProblemElement(PsiElement psiElement) {
+    return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class);
   }
 }

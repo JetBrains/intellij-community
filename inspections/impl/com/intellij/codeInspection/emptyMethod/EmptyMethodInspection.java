@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.reference.*;
@@ -42,7 +41,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class EmptyMethodInspection extends GlobalInspectionTool {
+public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.empty.method.display.name");
   @NonNls private static final String SHORT_NAME = "EmptyMethod";
 
@@ -73,7 +72,7 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
       boolean needToDeleteHierarchy = false;
       if (refMethod.isOnlyCallsSuper() && !refMethod.isFinal()) {
         RefMethod refSuper = findSuperWithBody(refMethod);
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         if (refSuper != null && Comparing.strEqual(refMethod.getAccessModifier(), refSuper.getAccessModifier())){
           if (Comparing.strEqual(refSuper.getAccessModifier(), PsiModifier.PROTECTED) //protected modificator gives access to method in another package
               && !Comparing.strEqual(refUtil.getPackageName(refSuper), refUtil.getPackageName(refMethod))) return null;
@@ -171,23 +170,20 @@ public class EmptyMethodInspection extends GlobalInspectionTool {
     return false;
   }
 
-
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
+                                                final ProblemDescriptionsProcessor descriptionsProcessor) {
+     manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefVisitor() {
+        if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(final RefMethod refMethod) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+              context.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
                   if (body == null) return true;
                   if (body.getStatements().length == 0) return true;
-                  if (RefUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
-
-                  problemDescriptionsProcessor.ignoreElement(refMethod);
+                  if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
+                  descriptionsProcessor.ignoreElement(refMethod);
                   return false;
                 }
               });

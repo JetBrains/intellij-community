@@ -84,7 +84,7 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
     }
     final PsiSearchHelper helper = PsiManager.getInstance(globalContext.getProject()).getSearchHelper();
     final AnalysisScope scope = globalContext.getRefManager().getScope();
-    globalContext.getRefManager().iterate(new RefVisitor() {
+    globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
@@ -140,8 +140,9 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
   public void compose(final StringBuffer buf, final RefEntity refEntity, final HTMLComposer composer) {
     if (refEntity instanceof RefMethod) {
       final RefMethod refMethod = (RefMethod)refEntity;
-      composer.appendDerivedMethods(buf, refMethod);
-      composer.appendSuperMethods(buf, refMethod);
+      final HTMLJavaHTMLComposer javaComposer = composer.getExtension(HTMLJavaHTMLComposer.COMPOSER);
+      javaComposer.appendDerivedMethods(buf, refMethod);
+      javaComposer.appendSuperMethods(buf, refMethod);
     }
   }
 

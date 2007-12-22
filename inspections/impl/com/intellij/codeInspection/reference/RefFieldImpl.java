@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class RefFieldImpl extends RefElementImpl implements RefField {
+public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER = 0x40000;
@@ -88,17 +88,21 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
   }
 
   public void accept(final RefVisitor visitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        visitor.visitField(RefFieldImpl.this);
-      }
-    });
+    if (visitor instanceof RefJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          ((RefJavaVisitor)visitor).visitField(RefFieldImpl.this);
+        }
+      });
+    }  else {
+      super.accept(visitor);
+    }
   }
 
   public void buildReferences() {
     PsiField psiField = getElement();
     if (psiField != null) {
-      final RefUtilImpl refUtil = (RefUtilImpl)RefUtil.getInstance();
+      final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       refUtil.addReferences(psiField, this, psiField.getInitializer());
       refUtil.addReferences(psiField, this, psiField.getModifierList());
       if (psiField instanceof PsiEnumConstant) {
@@ -118,7 +122,7 @@ public class RefFieldImpl extends RefElementImpl implements RefField {
         psiType = psiType.getDeepComponentType();
         if (psiType instanceof PsiClassType) {
           PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && refUtil.belongsToScope(psiClass, getRefManager())) {
+          if (psiClass != null && RefUtil.getInstance().belongsToScope(psiClass, getRefManager())) {
               RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiClass);
             if (refClass != null) {
               refClass.addTypeReference(ownerClass);

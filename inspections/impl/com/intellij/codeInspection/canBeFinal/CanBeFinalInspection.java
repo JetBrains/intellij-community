@@ -11,7 +11,6 @@ package com.intellij.codeInspection.canBeFinal;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -28,7 +27,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 
-public class CanBeFinalInspection extends GlobalInspectionTool {
+public class CanBeFinalInspection extends GlobalJavaInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.canBeFinal.CanBeFinalInspection");
 
   public boolean REPORT_CLASSES = false;
@@ -115,8 +114,8 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
                                                 final InspectionManager manager,
                                                 final GlobalInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
-    if (refEntity instanceof RefElement) {
-      final RefElement refElement = (RefElement)refEntity;
+    if (refEntity instanceof RefJavaElement) {
+      final RefJavaElement refElement = (RefJavaElement)refEntity;
       if (refElement instanceof RefParameter) return null;
       if (!refElement.isReferenced()) return null;
       if (refElement.isSyntheticJSP()) return null;
@@ -151,23 +150,22 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
     return null;
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemsProcessor) {
-    for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor problemsProcessor) {
+    for (SmartRefElementPointer entryPoint : manager.getEntryPointsManager().getEntryPoints()) {
       final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         problemsProcessor.ignoreElement(refElement);
       }
     }
-    globalContext.getRefManager().iterate(new RefVisitor() {
+    manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
         if (problemsProcessor.getDescriptions(refEntity) == null) return;
-        refEntity.accept(new RefVisitor() {
+        refEntity.accept(new RefJavaVisitor() {
           @Override public void visitMethod(final RefMethod refMethod) {
             if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
                 !(refMethod instanceof RefImplicitConstructor)) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                   problemsProcessor.ignoreElement(refMethod);
@@ -179,7 +177,7 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
 
           @Override public void visitClass(final RefClass refClass) {
             if (!refClass.isAnonymous()) {
-              globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
+              globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
                 public boolean process(PsiClass inheritor) {
                   ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                   problemsProcessor.ignoreElement(refClass);
@@ -190,7 +188,7 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
           }
 
           @Override public void visitField(final RefField refField) {
-            globalContext.enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
+            globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
               public boolean process(PsiReference psiReference) {
                 PsiElement expression = psiReference.getElement();
                 if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
@@ -252,7 +250,7 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
       final PsiElement element = descriptor.getPsiElement();
       final PsiModifierListOwner psiElement = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
       if (psiElement != null) {
-        RefElement refElement = myManager != null ? myManager.getReference(psiElement) : null;
+        RefJavaElement refElement = (RefJavaElement)(myManager != null ? myManager.getReference(psiElement) : null);
         try {
           if (psiElement instanceof PsiVariable) {
             ((PsiVariable)psiElement).normalizeDeclaration();
@@ -266,7 +264,7 @@ public class CanBeFinalInspection extends GlobalInspectionTool {
         }
 
         if (refElement != null) {
-          RefUtil.getInstance().setIsFinal(refElement, true);
+          RefJavaUtil.getInstance().setIsFinal(refElement, true);
         }
       }
     }

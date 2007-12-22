@@ -3,11 +3,7 @@ package com.intellij.codeInspection.unusedReturnValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
@@ -22,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class UnusedReturnValue extends GlobalInspectionTool {
+public class UnusedReturnValue extends GlobalJavaInspectionTool{
   private MakeVoidQuickFix myQuickFix;
 
   @Nullable
@@ -49,17 +45,16 @@ public class UnusedReturnValue extends GlobalInspectionTool {
   }
 
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor processor) {
+    manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefVisitor() {
+        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(final RefMethod refMethod) {
-              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
+              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
-                  problemDescriptionsProcessor.ignoreElement(refMethod);
+                  processor.ignoreElement(refMethod);
                   return false;
                 }
               });

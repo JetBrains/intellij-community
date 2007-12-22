@@ -1,0 +1,223 @@
+/*
+ * Created by IntelliJ IDEA.
+ * User: max
+ * Date: Oct 21, 2001
+ * Time: 4:28:53 PM
+ * To change template for new class use
+ * Code Style | Class Templates options (Tools | IDE Options).
+ */
+package com.intellij.codeInspection.reference;
+
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+
+public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
+  private static final ArrayList<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
+
+  private static final int IS_ENTRY_MASK = 0x80;
+  private static final int IS_PERMANENT_ENTRY_MASK = 0x100;
+
+
+  private SmartPsiElementPointer myID;
+
+  private ArrayList<RefElement> myOutReferences;
+  private ArrayList<RefElement> myInReferences;
+
+  private String[] mySuppressions = null;
+
+  private boolean myIsDeleted ;
+  private Module myModule;
+  protected static final int IS_REACHABLE_MASK = 0x40;
+
+  protected RefElementImpl(String name, RefElement owner) {
+    super(name, owner.getRefManager());
+    myID = null;
+    myFlags = 0;
+    myModule = ModuleUtil.findModuleForPsiElement(owner.getElement());
+  }
+
+  protected RefElementImpl(PsiFile file, RefManager manager) {
+    super(file.getName(), manager);
+    myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(file);
+    myFlags = 0;
+    myModule = ModuleUtil.findModuleForPsiElement(file);
+  }
+
+  protected RefElementImpl(String name, PsiElement element, RefManager manager) {
+    super(name, manager);
+    myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
+    myFlags = 0;
+    myModule = ModuleUtil.findModuleForPsiElement(element);
+  }
+
+  public boolean isValid() {
+    if (myIsDeleted) return false;
+    final PsiElement element = getElement();
+    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return element != null && element.isPhysical();
+      }
+    }).booleanValue();
+  }
+
+  public RefModule getModule() {
+    return myManager.getRefModule(myModule);
+  }
+
+  public String getExternalName() {
+    return getName();
+  }
+
+  @Nullable
+  public PsiElement getElement() {
+    return myID.getElement();
+  }
+
+  public void accept(final RefVisitor visitor) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      public void run() {
+        visitor.visitElement(RefElementImpl.this);
+      }
+    });
+  }
+
+  public void buildReferences() {
+  }
+
+  public boolean isReachable() {
+    return checkFlag(IS_REACHABLE_MASK);
+  }
+
+  public boolean isReferenced() {
+    return getInReferences().size() > 0;
+  }
+
+  public boolean hasSuspiciousCallers() {
+    for (RefElement refCaller : getInReferences()) {
+      if (((RefElementImpl)refCaller).isSuspicious()) return true;
+    }
+
+    return false;
+  }
+
+  @NotNull
+  public Collection<RefElement> getOutReferences() {
+    if (myOutReferences == null){
+      return EMPTY_REFERNCES_LIST;
+    }
+    return myOutReferences;
+  }
+
+  @NotNull
+  public Collection<RefElement> getInReferences() {
+    if (myInReferences == null){
+      return EMPTY_REFERNCES_LIST;
+    }
+    return myInReferences;
+  }
+
+  public void addInReference(RefElement refElement) {
+    if (!getInReferences().contains(refElement)) {
+      if (myInReferences == null){
+        myInReferences = new ArrayList<RefElement>(1);
+      }
+      myInReferences.add(refElement);
+    }
+  }
+
+  public void addOutReference(RefElement refElement) {
+    if (!getOutReferences().contains(refElement)) {
+      if (myOutReferences == null){
+        myOutReferences = new ArrayList<RefElement>(1);
+      }
+      myOutReferences.add(refElement);
+    }
+  }
+
+  public void setEntry(boolean entry) {
+    setFlag(entry, IS_ENTRY_MASK);
+  }
+
+  public boolean isEntry() {
+    return checkFlag(IS_ENTRY_MASK);
+  }
+
+  public boolean isPermanentEntry() {
+    return checkFlag(IS_PERMANENT_ENTRY_MASK);
+  }
+
+  public void setPermanentEntry(boolean permanentEntry) {
+    setFlag(permanentEntry, IS_PERMANENT_ENTRY_MASK);
+  }
+
+  public boolean isSuspicious() {
+    return !isReachable();
+  }
+
+  public void referenceRemoved() {
+    myIsDeleted = true;
+    if (getOwner() != null) {
+      ((RefEntityImpl)getOwner()).removeChild(this);
+    }
+
+    for (RefElement refCallee : getOutReferences()) {
+      refCallee.getInReferences().remove(this);
+    }
+
+    for (RefElement refCaller : getInReferences()) {
+      refCaller.getOutReferences().remove(this);
+    }
+  }
+
+  @Nullable
+  public URL getURL() {
+    try {
+      final PsiElement element = getElement();
+      if (element == null) return null;
+      final PsiFile containingFile = element.getContainingFile();
+      if (containingFile == null) return null;
+      final VirtualFile virtualFile = containingFile.getVirtualFile();
+      if (virtualFile == null) return null;
+      return new URL(virtualFile.getUrl() + "#" + element.getTextOffset());
+    } catch (MalformedURLException e) {
+      LOG.error(e);
+    }
+
+    return null;
+  }
+
+  protected abstract void initialize();
+
+  public void addSuppression(final String text) {
+    mySuppressions = text.split("[, ]");    
+  }
+
+  public boolean isSuppressed(final String toolId) {
+    if (mySuppressions != null) {
+      for (@NonNls String suppression : mySuppressions) {
+        if (suppression.equals(toolId) || suppression.equals("ALL")){
+          return true;
+        }
+      }
+    }
+    final RefEntity entity = getOwner();
+    return entity instanceof RefElement && ((RefElementImpl)entity).isSuppressed(toolId);
+  }
+}

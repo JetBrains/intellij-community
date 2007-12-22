@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -91,19 +91,19 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = PsiManager.getInstance(project);
     if (docComment == null) {
-      String commentText = "/** @" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
+      String commentText = "/** @" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
       docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText, null);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);
     } else {
-      PsiDocTag noInspectionTag = docComment.findTagByName(GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+      PsiDocTag noInspectionTag = docComment.findTagByName(GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
         final PsiDocTagValue valueElement = noInspectionTag.getValueElement();
-        String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
+        String tagText = "@" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
                          + (valueElement != null ? valueElement.getText() + "," : "")+ myID;
         noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
       } else {
-        String tagText = "@" + GlobalInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
+        String tagText = "@" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
         docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
       }
     }

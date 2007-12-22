@@ -6,8 +6,8 @@ import com.intellij.codeInsight.daemon.impl.RemoveSuppressWarningAction;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManagerImpl;
-import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +54,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
                             final InspectionManager manager,
                             final GlobalInspectionContext globalContext,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
+    globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitClass(RefClass refClass) {
         if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
@@ -102,7 +102,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
 
       private void checkElement(final PsiElement owner) {
-        String idsString = InspectionManagerEx.getSuppressedInspectionIdsIn(owner);
+        String idsString = GlobalJavaInspectionContextImpl.getSuppressedInspectionIdsIn(owner);
         if (idsString != null && idsString.length() != 0) {
           List<String> ids = StringUtil.split(idsString, ",");
           Collection<String> suppressed = suppressedScopes.get(owner);
@@ -178,7 +178,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
             if (!(descriptor instanceof ProblemDescriptor)) continue;
             PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
             if (element == null) continue;
-            PsiElement annotation = InspectionManagerEx.getElementToolSuppressedIn(element, toolId);
+            PsiElement annotation = GlobalJavaInspectionContextImpl.getElementToolSuppressedIn(element, toolId);
             if (annotation != null && PsiTreeUtil.isAncestor(suppressedScope, annotation, false)) {
               hasErrorInsideSuppressedScope = true;
               break;

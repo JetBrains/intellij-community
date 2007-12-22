@@ -9,8 +9,8 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.codeInspection.ex.InspectionTool;
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefElementImpl;
+import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.reference.RefParameter;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.psi.PsiDocCommentOwner;
@@ -23,7 +23,7 @@ public class RefUnreachableFilter extends RefFilter {
     myTool = tool;
   }
 
-  public int getElementProblemCount(RefElement refElement) {
+  public int getElementProblemCount(RefJavaElement refElement) {
     if (refElement instanceof RefParameter) return 0;
     if (refElement.isSyntheticJSP()) return 0;
     final PsiElement element = refElement.getElement();

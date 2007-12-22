@@ -8,6 +8,7 @@
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -21,9 +22,12 @@ import java.util.Set;
 
 public class DeadHTMLComposer extends HTMLComposerImpl {
   private final InspectionTool myTool;
+  private final HTMLJavaHTMLComposer myComposer;
 
   public DeadHTMLComposer(InspectionTool tool) {
+    super();
     myTool = tool;
+    myComposer = getExtension(HTMLJavaHTMLComposer.COMPOSER);
   }
 
   public void compose(final StringBuffer buf, RefEntity refEntity) {
@@ -41,21 +45,20 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         //noinspection HardCodedStringLiteral
         buf.append("<br><br>");
         appendResolution(buf, myTool, refElement);
-
-        refElement.accept(new RefVisitor() {
+        refElement.accept(new RefJavaVisitor() {
           @Override public void visitClass(RefClass aClass) {
             appendClassInstantiations(buf, aClass);
-            appendDerivedClasses(buf, aClass);
-            appendClassExtendsImplements(buf, aClass);
-            appendLibraryMethods(buf, aClass);
-            appendTypeReferences(buf, aClass);
+            myComposer.appendDerivedClasses(buf, aClass);
+            myComposer.appendClassExtendsImplements(buf, aClass);
+            myComposer.appendLibraryMethods(buf, aClass);
+            myComposer.appendTypeReferences(buf, aClass);
           }
 
           @Override public void visitMethod(RefMethod method) {
             appendElementInReferences(buf, method);
             appendElementOutReferences(buf, method);
-            appendDerivedMethods(buf, method);
-            appendSuperMethods(buf, method);
+            myComposer.appendDerivedMethods(buf, method);
+            myComposer.appendSuperMethods(buf, method);
           }
 
           @Override public void visitField(RefField field) {
@@ -71,7 +74,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
-    refElement.accept(new RefVisitor() {
+    refElement.accept(new RefJavaVisitor() {
       @Override public void visitField(RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis"));
@@ -102,7 +105,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         if (refClass.isAnonymous()) {
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis10"));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
-          String classOrInterface = getClassOrInterface(refClass, true);
+          String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, true);
           //noinspection HardCodedStringLiteral
           buf.append("&nbsp;");
 
@@ -138,7 +141,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
       @Override public void visitMethod(RefMethod method) {
         RefClass refClass = method.getOwnerClass();
         if (method.isExternalOverride()) {
-          String classOrInterface = getClassOrInterface(refClass, false);
+          String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis22", classOrInterface));
         } else if (method.isStatic() || method.isConstructor()) {
           int nRefs = method.getInReferences().size();
@@ -177,7 +180,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           if (nOwnRefs == 0 && nSuperRefs == 0 && nDerivedRefs == 0) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis16"));
           } else if (nDerivedRefs > 0 && nSuperRefs == 0 && nOwnRefs == 0) {
-            String classOrInterface = getClassOrInterface(refClass, false);
+            String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
           } else if (((RefMethodImpl)method).isSuspiciousRecursive()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis17"));

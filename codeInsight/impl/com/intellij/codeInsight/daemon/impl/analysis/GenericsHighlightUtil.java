@@ -8,7 +8,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -636,7 +639,11 @@ public class GenericsHighlightUtil {
   }
 
   private static HighlightInfo createUncheckedWarning(PsiElement context, HighlightDisplayKey key, String description, PsiElement elementToHighlight) {
-    if (InspectionManagerEx.inspectionResultSuppressed(context, UncheckedWarningLocalInspection.ID)) return null;
+    final InspectionProfile inspectionProfile =
+      InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile(context);
+    final LocalInspectionTool tool =
+      ((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(UncheckedWarningLocalInspection.SHORT_NAME)).getTool();
+    if (InspectionManagerEx.inspectionResultSuppressed(context, tool)) return null;
     HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, elementToHighlight, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), key);
     return highlightInfo;
@@ -1030,8 +1037,12 @@ public class GenericsHighlightUtil {
   public static HighlightInfo checkUncheckedOverriding (PsiMethod overrider, final List<HierarchicalMethodSignature> superMethodSignatures) {
     if (PsiUtil.getLanguageLevel(overrider).compareTo(LanguageLevel.JDK_1_5) < 0) return null;
     final HighlightDisplayKey key = HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME);
-    if (!InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider).isToolEnabled(key)) return null;
-    if (InspectionManagerEx.inspectionResultSuppressed(overrider, UncheckedWarningLocalInspection.ID)) return null;
+    final InspectionProfile inspectionProfile =
+      InspectionProjectProfileManager.getInstance(overrider.getProject()).getInspectionProfile(overrider);
+    if (!inspectionProfile.isToolEnabled(key)) return null;
+    final LocalInspectionTool tool =
+      ((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(UncheckedWarningLocalInspection.SHORT_NAME)).getTool();
+    if (InspectionManagerEx.inspectionResultSuppressed(overrider, tool)) return null;
     final MethodSignature signature = overrider.getSignature(PsiSubstitutor.EMPTY);
     for (MethodSignatureBackedByPsiMethod superSignature : superMethodSignatures) {
       PsiMethod baseMethod = superSignature.getMethod();

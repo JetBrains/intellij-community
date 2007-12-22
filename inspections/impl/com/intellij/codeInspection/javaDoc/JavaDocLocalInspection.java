@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.reference.RefUtil;
+import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -935,7 +935,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   private boolean isJavaDocRequired(PsiModifierListOwner psiElement) {
-    final RefUtil refUtil = RefUtil.getInstance();
+    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     int actualAccess = getAccessNumber(refUtil.getAccessModifier(psiElement));
     if (psiElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)psiElement;

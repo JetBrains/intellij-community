@@ -48,7 +48,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   }
 
   public void setAccessModifier(String am) {
-    RefUtil.getInstance().setAccessModifier(getOwnerClass(), am);
+    RefJavaUtil.getInstance().setAccessModifier(getOwnerClass(), am);
   }
 
   public PsiModifierListOwner getElement() {

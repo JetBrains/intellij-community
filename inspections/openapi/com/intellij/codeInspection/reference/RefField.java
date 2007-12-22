@@ -23,7 +23,7 @@ import com.intellij.psi.PsiField;
  * @author anna
  * @since 6.0
  */
-public interface RefField extends RefElement {
+public interface RefField extends RefJavaElement {
   /**
    * Checks if the field is used for reading.
    *

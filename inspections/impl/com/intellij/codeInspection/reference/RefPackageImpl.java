@@ -14,8 +14,8 @@ import com.intellij.openapi.application.ApplicationManager;
 public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   private final String myQualifiedName;
 
-  public RefPackageImpl(String name) {
-    super(getPackageSuffix(name));
+  public RefPackageImpl(String name, RefManager refManager) {
+    super(getPackageSuffix(name), refManager);
     myQualifiedName = name;
   }
 
@@ -29,12 +29,16 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
 
-  public void accept(final RefVisitor refVisitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        refVisitor.visitPackage(RefPackageImpl.this);
-      }
-    });
+  public void accept(final RefVisitor visitor) {
+    if (visitor instanceof RefJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          ((RefJavaVisitor)visitor).visitPackage(RefPackageImpl.this);
+        }
+      });
+    } else {
+      super.accept(visitor);
+    }
   }
 
   public String getExternalName() {
@@ -42,7 +46,7 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
   public static RefEntity packageFromFQName(final RefManager manager, final String name) {
-    return manager.getPackage(name);
+    return manager.getExtension(RefJavaManager.MANAGER).getPackage(name);
   }
 
   public boolean isValid() {

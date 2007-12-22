@@ -27,7 +27,7 @@ import java.util.Set;
  * User: anna
  * Date: 27-Dec-2005
  */
-public interface RefClass extends RefElement {
+public interface RefClass extends RefJavaElement {
 
   @NotNull
   HashSet<RefClass> getBaseClasses();

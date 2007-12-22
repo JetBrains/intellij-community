@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author anna
  * @since 6.0
  */
-public interface RefParameter extends RefElement {
+public interface RefParameter extends RefJavaElement {
   /**
    * Checks if the parameter is used for reading.
    *

@@ -4,12 +4,8 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -32,7 +28,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class RedundantThrows extends GlobalInspectionTool {
+public class RedundantThrows extends GlobalJavaInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.unneededThrows.RedundantThrows");
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.throws.display.name");
   private final BidirectionalMap<String, QuickFix> myQuickFixes = new BidirectionalMap<String, QuickFix>();
@@ -106,17 +102,16 @@ public class RedundantThrows extends GlobalInspectionTool {
   }
 
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor processor) {
+    manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefVisitor() {
+        if (processor.getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(final RefMethod refMethod) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
-                  problemDescriptionsProcessor.ignoreElement(refMethod);
+                  processor.ignoreElement(refMethod);
                   return true;
                 }
               });

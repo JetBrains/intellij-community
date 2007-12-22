@@ -3,11 +3,7 @@ package com.intellij.codeInspection.sameReturnValue;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefMethod;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class SameReturnValueInspection extends GlobalInspectionTool {
+public class SameReturnValueInspection extends GlobalJavaInspectionTool {
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext,
                                                 ProblemDescriptionsProcessor processor) {
@@ -44,17 +40,16 @@ public class SameReturnValueInspection extends GlobalInspectionTool {
   }
 
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor processor) {
+    manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement && problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefVisitor() {
+        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
+          refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(final RefMethod refMethod) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalInspectionContextImpl.DerivedMethodsProcessor() {
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
-                  problemDescriptionsProcessor.ignoreElement(refMethod);
+                  processor.ignoreElement(refMethod);
                   return false;
                 }
               });

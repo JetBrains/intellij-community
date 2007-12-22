@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,5 +113,8 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool {
     };
   }
 
+  public PsiNamedElement getProblemElement(final PsiElement psiElement) {
+    return PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class);
+  }
 
 }

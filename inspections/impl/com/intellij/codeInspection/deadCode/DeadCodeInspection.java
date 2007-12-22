@@ -91,7 +91,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public void initialize(@NotNull final GlobalInspectionContextImpl context) {
     super.initialize(context);
-    ((EntryPointsManagerImpl)context.getRefManager().getEntryPointsManager()).setAddNonJavaEntries(ADD_NONJAVA_TO_ENTRIES);
+    ((EntryPointsManagerImpl)getEntryPointsManager()).setAddNonJavaEntries(ADD_NONJAVA_TO_ENTRIES);
   }
 
   private class OptionsPanel extends JPanel {
@@ -280,7 +280,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
-    getRefManager().iterate(new RefVisitor() {
+    getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(final RefEntity refEntity) {
         if (refEntity instanceof RefElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
@@ -288,7 +288,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
           if (element == null) return;
           if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
           if (!refElement.isSuspicious()) return;
-          refElement.accept(new RefVisitor() {
+          refElement.accept(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity elem) {
               if (elem instanceof RefElement) {
                 final RefElement element = (RefElement)elem;
@@ -335,7 +335,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         public void run() {
           final RefFilter filter = new StrictUnreferencedFilter(DeadCodeInspection.this);
           final PsiSearchHelper helper = PsiManager.getInstance(getRefManager().getProject()).getSearchHelper();
-          getRefManager().iterate(new RefVisitor() {
+          getRefManager().iterate(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity refEntity) {
               if (refEntity instanceof RefClass && filter.accepts((RefClass)refEntity)) {
                 findExternalClassReferences((RefClass)refEntity);
@@ -391,7 +391,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       super(tool);
     }
 
-    public int getElementProblemCount(RefElement refElement) {
+    public int getElementProblemCount(RefJavaElement refElement) {
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > -1) return problemCount;
       return refElement.isReferenced() ? 0 : 1;
@@ -403,10 +403,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       super(tool);
     }
 
-    public int getElementProblemCount(final RefElement refElement) {
+    public int getElementProblemCount(final RefJavaElement refElement) {
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > - 1) return problemCount;
-      if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefElementImpl)refElement).isSuspiciousRecursive()) return 1;
+      if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
       return 0;
     }
   }
@@ -416,13 +416,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
     final boolean[] requestAdded = new boolean[]{false};
 
-    getRefManager().iterate(new RefVisitor() {
+    getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (!(refEntity instanceof RefElement)) return;
+        if (!(refEntity instanceof RefJavaElement)) return;
         if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
-        RefElement refElement=(RefElement)refEntity;
+        RefJavaElement refElement= (RefJavaElement)refEntity;
         if (filter.accepts(refElement) && !myProcessedSuspicious.contains(refElement)) {
-          refEntity.accept(new RefVisitor() {
+          refEntity.accept(new RefJavaVisitor() {
             @Override public void visitField(final RefField refField) {
               myProcessedSuspicious.add(refField);
               PsiField psiField = refField.getElement();
@@ -430,7 +430,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
                 getEntryPointsManager().addEntryPoint(refField, false);
               }
               else {
-                getContext().enqueueFieldUsagesProcessor(refField, new GlobalInspectionContextImpl.UsagesProcessor() {
+                getJavaContext().enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getEntryPointsManager().addEntryPoint(refField, false);
                     return false;
@@ -464,14 +464,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
             @Override public void visitClass(final RefClass refClass) {
               myProcessedSuspicious.add(refClass);
               if (!refClass.isAnonymous()) {
-                getContext().enqueueDerivedClassesProcessor(refClass, new GlobalInspectionContextImpl.DerivedClassesProcessor() {
+                getJavaContext().enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
                   public boolean process(PsiClass inheritor) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
                   }
                 });
 
-                getContext().enqueueClassUsagesProcessor(refClass, new GlobalInspectionContextImpl.UsagesProcessor() {
+                getJavaContext().enqueueClassUsagesProcessor(refClass, new GlobalJavaInspectionContext.UsagesProcessor() {
                   public boolean process(PsiReference psiReference) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
@@ -505,7 +505,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   private void enqueueMethodUsages(final RefMethod refMethod) {
     if (refMethod.getSuperMethods().isEmpty()) {
-      getContext().enqueueMethodUsagesProcessor(refMethod, new GlobalInspectionContextImpl.UsagesProcessor() {
+      getJavaContext().enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
         public boolean process(PsiReference psiReference) {
           getEntryPointsManager().addEntryPoint(refMethod, false);
           return false;
@@ -517,6 +517,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         enqueueMethodUsages(refSuper);
       }
     }
+  }
+
+  public GlobalJavaInspectionContext getJavaContext() {
+    return getContext().getExtension(GlobalJavaInspectionContext.CONTEXT);
   }
 
   public RefFilter getFilter() {
@@ -535,10 +539,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   public void exportResults(final Element parentNode) {
     final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
-    getRefManager().iterate(new RefVisitor() {
+    getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (!(refEntity instanceof RefElement)) return;
-        if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefElement)refEntity)) {
+        if (!(refEntity instanceof RefJavaElement)) return;
+        if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
           if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
           Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
           @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
@@ -647,7 +651,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
-        if (myFilter.getElementProblemCount(refElement) == 0) continue;
+        if (myFilter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         psiElements.add(psiElement);
       }
 
@@ -715,7 +719,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       for (RefElement refElement : refElements) {
         PsiElement psiElement = refElement.getElement();
         if (psiElement == null) continue;
-        if (myFilter.getElementProblemCount(refElement) == 0) continue;
+        if (myFilter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         commentOutDead(psiElement);
         RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
       }
@@ -779,17 +783,17 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   }
 
    private EntryPointsManager getEntryPointsManager() {
-          return getContext().getRefManager().getEntryPointsManager();
+          return ((RefManagerImpl)getContext().getRefManager()).getEntryPointsManager();
         }
 
   private void checkForReachables() {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    getRefManager().iterate(new RefVisitor() {
+    getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (refEntity instanceof RefElement) {
-          final RefElementImpl refElement = (RefElementImpl)refEntity;
+        if (refEntity instanceof RefJavaElement) {
+          final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
           if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
@@ -812,7 +816,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     }
   }
 
-  private static class CodeScanner extends RefVisitor {
+  private static class CodeScanner extends RefJavaVisitor {
     private final HashMap<RefClass, HashSet<RefMethod>> myClassIDtoMethods;
     private final HashSet<RefClass> myInstantiatedClasses;
     private int myInstantiatedClassesCount;
@@ -836,13 +840,13 @@ public class DeadCodeInspection extends FilteringInspectionTool {
             ((RefClassImpl)method.getOwnerClass()).setReachable(true);
           }
           myProcessedMethods.add(method);
-          makeContentReachable((RefElementImpl)method);
+          makeContentReachable((RefJavaElementImpl)method);
           makeClassInitializersReachable(method.getOwnerClass());
         }
         else {
           if (isClassInstantiated(method.getOwnerClass())) {
             myProcessedMethods.add(method);
-            makeContentReachable((RefElementImpl)method);
+            makeContentReachable((RefJavaElementImpl)method);
           }
           else {
             addDelayedMethod(method);
@@ -870,7 +874,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     @Override public void visitField(RefField field) {
       // Process class's static intitializers.
       if (!field.isReachable()) {
-        makeContentReachable((RefElementImpl)field);
+        makeContentReachable((RefJavaElementImpl)field);
         makeClassInitializersReachable(field.getOwnerClass());
       }
     }
@@ -890,7 +894,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       }
     }
 
-    private void makeContentReachable(RefElementImpl refElement) {
+    private void makeContentReachable(RefJavaElementImpl refElement) {
       refElement.setReachable(true);
       for (RefElement refCallee : refElement.getOutReferences()) {
         refCallee.accept(this);

@@ -18,7 +18,7 @@ public class UnreferencedFilter extends RefUnreachableFilter {
     super(tool);
   }
 
-  public int getElementProblemCount(RefElement refElement) {
+  public int getElementProblemCount(RefJavaElement refElement) {
     if (refElement instanceof RefParameter) return 0;
     if (refElement.isEntry() || !((RefElementImpl)refElement).isSuspicious() || refElement.isSyntheticJSP()) return 0;
 

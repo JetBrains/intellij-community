@@ -138,7 +138,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     tool.queryExternalUsagesRequests(inspectionManager);
 
     do {
-      globalContext.processSearchRequests();
+      ((GlobalJavaInspectionContextImpl)globalContext.getExtension(GlobalJavaInspectionContextImpl.CONTEXT)).processSearchRequests(globalContext);
     } while (tool.queryExternalUsagesRequests(inspectionManager));
   }
 

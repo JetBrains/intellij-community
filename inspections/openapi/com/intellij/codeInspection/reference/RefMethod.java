@@ -28,7 +28,7 @@ import java.util.Collection;
  * @author anna
  * @since 6.0
  */
-public interface RefMethod extends RefElement{
+public interface RefMethod extends RefJavaElement {
   /**
    * Returns the collection of the direct super methods of this method in the
    * analysis scope.

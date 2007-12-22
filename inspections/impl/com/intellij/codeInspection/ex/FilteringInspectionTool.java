@@ -1,9 +1,9 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefUtil;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.RefJavaElement;
+import com.intellij.codeInspection.reference.RefJavaUtil;
+import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
@@ -27,12 +27,12 @@ public abstract class FilteringInspectionTool extends InspectionTool {
  
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefEntity>>();
-    getContext().getRefManager().iterate(new RefVisitor() {
+    getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
-        if (!(refEntity instanceof RefElement)) return;//dead code doesn't work with refModule | refPackage
-        RefElement refElement = (RefElement) refEntity;
+        if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
+        RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && myIgnoreElements.contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
-          String packageName = RefUtil.getInstance().getPackageName(refEntity);
+          String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
           Set<RefEntity> content = myPackageContents.get(packageName);
           if (content == null) {
             content = new HashSet<RefEntity>();

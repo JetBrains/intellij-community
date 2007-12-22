@@ -8,21 +8,21 @@
  */
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.reference.RefParameter;
 
 public abstract class RefFilter {
   // Default accepts implementation accepts element if one under unaccepted one. Thus it will accept all and only upper level classes.
-  public int getElementProblemCount(RefElement refElement) {
+  public int getElementProblemCount(RefJavaElement refElement) {
     if (refElement instanceof RefParameter) return 0;
     RefEntity refOwner = refElement.getOwner();
-    if (refOwner == null || !(refOwner instanceof RefElement)) return 1;
+    if (refOwner == null || !(refOwner instanceof RefJavaElement)) return 1;
 
-    return 1 - getElementProblemCount((RefElement)refOwner);
+    return 1 - getElementProblemCount((RefJavaElement)refOwner);
   }
 
-  public final boolean accepts(RefElement refElement) {
+  public final boolean accepts(RefJavaElement refElement) {
     return getElementProblemCount(refElement) > 0;
   }
 }

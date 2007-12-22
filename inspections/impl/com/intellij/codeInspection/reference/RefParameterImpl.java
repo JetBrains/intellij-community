@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class RefParameterImpl extends RefElementImpl implements RefParameter {
+public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0x10000;
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final String VALUE_UNDEFINED = "#";
@@ -63,11 +63,15 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
   }
 
   public void accept(final RefVisitor visitor) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        visitor.visitParameter(RefParameterImpl.this);
-      }
-    });
+    if (visitor instanceof RefJavaVisitor) {
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          ((RefJavaVisitor)visitor).visitParameter(RefParameterImpl.this);
+        }
+      });
+    } else {
+      super.accept(visitor);
+    }
   }
 
   public int getIndex() {
@@ -107,7 +111,7 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
   }
 
   protected void initialize() {
-    ((RefManagerImpl)getRefManager()).fireNodeInitialized(this);
+    getRefManager().fireNodeInitialized(this);
   }
 
   public String getExternalName() {
@@ -140,7 +144,7 @@ public class RefParameterImpl extends RefElementImpl implements RefParameter {
         for (PsiParameter parameter : parameters) {
           final String name = parameter.getName();
           if (name != null && name.equals(paramName)) {
-            return manager.getParameterReference(parameter, paramIdx);
+            return manager.getExtension(RefJavaManager.MANAGER).getParameterReference(parameter, paramIdx);
           }
           paramIdx++;
         }
