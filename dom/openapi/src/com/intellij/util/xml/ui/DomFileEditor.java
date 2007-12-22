@@ -184,10 +184,9 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
   public static BasicDomElementComponent createComponentWithCaption(final CommittablePanel committablePanel,
                                                                     final CaptionComponent captionComponent,
                                                                     final DomElement element) {
-    final JComponent component1 = committablePanel.getComponent();
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(captionComponent, BorderLayout.NORTH);
-    panel.add(component1, BorderLayout.CENTER);
+    panel.add(element.isValid() ? committablePanel.getComponent() : new JPanel(), BorderLayout.CENTER);
 
     BasicDomElementComponent component = new BasicDomElementComponent(element) {
       public JComponent getComponent() {
