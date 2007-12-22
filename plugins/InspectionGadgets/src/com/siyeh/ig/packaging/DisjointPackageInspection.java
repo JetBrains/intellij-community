@@ -7,15 +7,15 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -108,8 +108,6 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
     }
 
     private static boolean packageContainsClass(RefPackage aPackage, RefClass aClass) {
-        final RefUtil refUtil = RefUtil.getInstance();
-        final RefPackage packageForClass = refUtil.getPackage(aClass);
-        return aPackage.equals(packageForClass);
+      return aPackage.equals(RefJavaUtil.getPackage(aClass));
     }
 }

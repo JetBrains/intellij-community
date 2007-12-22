@@ -20,7 +20,7 @@ import java.util.Collection;
  * User: anna
  * Date: 06-Jan-2006
  */
-public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionTool {
+public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectionTool {
   private static final Key<Boolean> ALWAYS_INVERTED = Key.create("ALWAYS_INVERTED_METHOD");
 
   @NotNull
@@ -74,30 +74,29 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalInspectionToo
     return false;
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor processor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
+                                                final ProblemDescriptionsProcessor descriptionsProcessor) {
+    manager.iterate(new RefJavaVisitor() {
       @Override public void visitMethod(final RefMethod refMethod) {
-        if (processor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
-          final GlobalInspectionContext.UsagesProcessor usagesProcessor = new GlobalInspectionContext.UsagesProcessor() {
+        if (descriptionsProcessor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
+          final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor = new GlobalJavaInspectionContext.UsagesProcessor() {
             public boolean process(PsiReference psiReference) {
               final PsiElement psiReferenceExpression = psiReference.getElement();
               if (psiReferenceExpression instanceof PsiReferenceExpression &&
                   !isInvertedMethodCall((PsiReferenceExpression) psiReferenceExpression)) {
-                processor.ignoreElement(refMethod);
+                descriptionsProcessor.ignoreElement(refMethod);
               }
               return false;
             }
           };
-          traverseSuperMethods(refMethod, globalContext, usagesProcessor);
+          traverseSuperMethods(refMethod, context, usagesProcessor);
         }
       }
     });
     return false;
   }
 
-  private static void traverseSuperMethods(RefMethod refMethod, GlobalInspectionContext globalContext, GlobalInspectionContext.UsagesProcessor processor){
+  private static void traverseSuperMethods(RefMethod refMethod, GlobalJavaInspectionContext globalContext, GlobalJavaInspectionContext.UsagesProcessor processor){
     final Collection<RefMethod> superMethods = refMethod.getSuperMethods();
     for (RefMethod superMethod : superMethods) {
       traverseSuperMethods(superMethod, globalContext, processor);

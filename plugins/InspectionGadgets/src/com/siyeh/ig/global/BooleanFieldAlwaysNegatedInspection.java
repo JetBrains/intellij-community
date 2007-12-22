@@ -67,18 +67,17 @@ public class BooleanFieldAlwaysNegatedInspection extends BaseGlobalInspection {
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
     }
 
-    public boolean queryExternalUsagesRequests(InspectionManager manager,
-                                               final GlobalInspectionContext globalContext,
-                                               final ProblemDescriptionsProcessor processor) {
-        globalContext.getRefManager().iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
+                                                final ProblemDescriptionsProcessor descriptionsProcessor) {
+        manager.iterate(new RefJavaVisitor() {
             @Override public void visitField(final RefField refField) {
-                if (processor.getDescriptions(refField) != null) { //suspicious field -> need to check external usages
-                    globalContext.enqueueFieldUsagesProcessor(refField, new GlobalInspectionContext.UsagesProcessor() {
+                if (descriptionsProcessor.getDescriptions(refField) != null) { //suspicious field -> need to check external usages
+                  context.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
                         public boolean process(PsiReference psiReference) {
                             final PsiElement psiReferenceExpression = psiReference.getElement();
                             if (psiReferenceExpression instanceof PsiReferenceExpression &&
                                     !isInvertedFieldRead((PsiReferenceExpression) psiReferenceExpression)) {
-                                processor.ignoreElement(refField);
+                                descriptionsProcessor.ignoreElement(refField);
                             }
                             return false;
                         }

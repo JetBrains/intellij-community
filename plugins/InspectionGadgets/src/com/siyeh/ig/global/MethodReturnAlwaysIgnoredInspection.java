@@ -102,28 +102,26 @@ public class MethodReturnAlwaysIgnoredInspection extends BaseGlobalInspection {
         return alwaysIgnored == null || !alwaysIgnored;
     }
 
-    public boolean queryExternalUsagesRequests(InspectionManager manager,
-                                               final GlobalInspectionContext globalContext,
-                                               final ProblemDescriptionsProcessor processor) {
-        final RefManager refManager = globalContext.getRefManager();
-        refManager.iterate(new RefVisitor() {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
+                                                final ProblemDescriptionsProcessor descriptionsProcessor) {
+        manager.iterate(new RefJavaVisitor() {
             @Override public void visitMethod(final RefMethod refMethod) {
                 if (methodReturnUsed(refMethod)) {
                     return;
                 }
-                final GlobalInspectionContext.UsagesProcessor usagesProcessor =
-                        new GlobalInspectionContext.UsagesProcessor() {
+                final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor =
+                        new GlobalJavaInspectionContext.UsagesProcessor() {
                             public boolean process(PsiReference psiReference) {
                                 final PsiElement psiReferenceExpression = psiReference.getElement();
                                 final PsiElement parent = psiReferenceExpression.getParent();
                                 if (parent instanceof PsiMethodCallExpression &&
                                         !isIgnoredMethodCall((PsiCallExpression) parent)) {
-                                    processor.ignoreElement(refMethod);
+                                    descriptionsProcessor.ignoreElement(refMethod);
                                 }
                                 return false;
                             }
                         };
-                globalContext.enqueueMethodUsagesProcessor(refMethod, usagesProcessor);
+              context.enqueueMethodUsagesProcessor(refMethod, usagesProcessor);
             }
         });
         return false;

@@ -7,15 +7,15 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.dependency.DependencyUtils;
 import com.siyeh.ig.psiutils.ClassUtils;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -65,9 +65,8 @@ public class ClassUnconnectedToPackageInspection extends BaseGlobalInspection {
     }
 
     private static boolean inSamePackage(RefClass class1, RefClass class2) {
-        final RefUtil refUtil = RefUtil.getInstance();
-        final RefPackage package1 = refUtil.getPackage(class1);
-        final RefPackage package2= refUtil.getPackage(class2);
+        final RefPackage package1 = RefJavaUtil.getPackage(class1);
+        final RefPackage package2= RefJavaUtil.getPackage(class2);
         if(package1 == null || package2 == null)
         {
             return false;

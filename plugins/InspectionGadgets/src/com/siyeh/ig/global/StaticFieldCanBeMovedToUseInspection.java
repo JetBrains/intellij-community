@@ -24,8 +24,8 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.BaseGlobalInspection;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -58,7 +58,7 @@ public class StaticFieldCanBeMovedToUseInspection extends BaseGlobalInspection {
 
         final RefClass fieldClass = refField.getOwnerClass();
         final Collection<RefElement> inReferences = refField.getInReferences();
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         final Set<RefClass> classesUsed = new HashSet<RefClass>();
         for (RefElement inReference : inReferences) {
             final RefClass referringClass = refUtil.getOwnerClass(inReference);

@@ -16,12 +16,12 @@
 package com.siyeh.ig;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.GlobalInspectionTool;
+import com.intellij.codeInspection.GlobalJavaInspectionTool;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class BaseGlobalInspection extends GlobalInspectionTool {
+public abstract class BaseGlobalInspection extends GlobalJavaInspectionTool {
 
     private String shortName = null;
     @NonNls private static final String INSPECTION = "Inspection";

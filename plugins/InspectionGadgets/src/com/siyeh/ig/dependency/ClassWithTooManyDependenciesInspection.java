@@ -22,8 +22,8 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptionsProcessor;
 import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
@@ -51,7 +51,7 @@ public class ClassWithTooManyDependenciesInspection
             GlobalInspectionContext globalInspectionContext,
             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
         final RefManager refManager = globalInspectionContext.getRefManager();
-        refManager.iterate(new RefVisitor(){
+        refManager.iterate(new RefJavaVisitor(){
 
             @Override public void visitClass(RefClass refClass) {
                 super.visitClass(refClass);

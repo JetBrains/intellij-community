@@ -58,11 +58,11 @@ public class DependencyUtils {
     }
 
     @SuppressWarnings({"MethodWithMultipleLoops"})
-    static void tabulateDependencyClasses(RefElement element,
+    static void tabulateDependencyClasses(RefJavaElement element,
                                           Set<RefClass> dependencies) {
         final Collection<RefElement> references =
                 element.getOutReferences();
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         for (RefElement reference : references) {
             final RefClass refClass = refUtil.getTopLevelClass(reference);
             if (refClass != null) {
@@ -82,8 +82,8 @@ public class DependencyUtils {
             return;
         }
         for (RefEntity child : children) {
-            if (child instanceof RefElement) {
-                tabulateDependencyClasses((RefElement) child, dependencies);
+            if (child instanceof RefJavaElement) {
+                tabulateDependencyClasses((RefJavaElement) child, dependencies);
             }
         }
     }
@@ -131,7 +131,7 @@ public class DependencyUtils {
         final Set<RefClass> newDependents = new HashSet<RefClass>();
         tabulateDependentClasses(refClass, newDependents);
         final Set<RefElement> typeReferences = refClass.getInTypeReferences();
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         for (RefElement typeReference : typeReferences) {
             final RefClass referencingClass =
                     refUtil.getTopLevelClass(typeReference);
@@ -146,7 +146,7 @@ public class DependencyUtils {
     private static void tabulateDependentClasses(RefElement element,
                                                  Set<RefClass> dependents) {
         final Collection<RefElement> references = element.getInReferences();
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         for (RefElement reference : references) {
             final RefClass refClass = refUtil.getTopLevelClass(reference);
             if (refClass != null) {
@@ -218,9 +218,8 @@ public class DependencyUtils {
         if (entity instanceof RefElement) {
             final RefElement element = (RefElement) entity;
             final Collection<RefElement> references = element.getOutReferences();
-            final RefUtil refUtil = RefUtil.getInstance();
             for (RefElement reference : references) {
-                final RefPackage refPackage = refUtil.getPackage(reference);
+                final RefPackage refPackage = RefJavaUtil.getPackage(reference);
                 if (refPackage != null) {
                     dependencies.add(refPackage);
                 }
@@ -256,9 +255,8 @@ public class DependencyUtils {
         if (entity instanceof RefElement) {
             final RefElement element = (RefElement) entity;
             final Collection<RefElement> references = element.getOutReferences();
-            final RefUtil refUtil = RefUtil.getInstance();
             for (RefElement reference : references) {
-                final RefPackage refPackage = refUtil.getPackage(reference);
+                final RefPackage refPackage = RefJavaUtil.getPackage(reference);
                 if (refPackage != null) {
                     dependents.add(refPackage);
                 }

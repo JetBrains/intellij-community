@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.dependency;
 
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefClass;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.openapi.util.Key;
 
 import java.util.*;
@@ -53,7 +56,7 @@ public class InitializationDependencyUtils {
     static void tabulateInitializationDependencyClasses(
             RefElement element, Set<RefClass> dependencies) {
         final Collection<RefElement> references = element.getOutReferences();
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         for (RefElement reference : references) {
             final RefClass refClass = refUtil.getTopLevelClass(reference);
             if (refClass != null) {
@@ -127,7 +130,7 @@ public class InitializationDependencyUtils {
     private static void tabulateInitializationDependentClasses(
             RefElement element, Set<RefClass> dependents) {
         final Collection<RefElement> references = element.getInReferences();
-        final RefUtil refUtil = RefUtil.getInstance();
+        final RefJavaUtil refUtil = RefJavaUtil.getInstance();
         for (RefElement reference : references) {
             final RefClass refClass = refUtil.getTopLevelClass(reference);
             if (refClass != null) {
