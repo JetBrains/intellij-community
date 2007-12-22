@@ -86,7 +86,9 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     Set<VirtualFile> realFiles = new THashSet<VirtualFile>(files.length);
     for (VirtualFile file : files) {
       if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-      realFiles.add(file);
+      if (file != null) {
+        realFiles.add(file);
+      }
     }
     files = realFiles.toArray(new VirtualFile[realFiles.size()]);
 
