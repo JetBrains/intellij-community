@@ -101,6 +101,8 @@ public class GridCell implements Disposable {
         myTabs.addTab(createTabInfoFor(content));
       }
     });
+
+    updateSelection(myTabs.getRootPane() != null);
   }
 
   void remove(Content content) {
@@ -114,6 +116,8 @@ public class GridCell implements Disposable {
         myTabs.removeTab(info, true);
       }
     });
+
+    updateSelection(myTabs.getRootPane() != null);
   }
 
   private void revalidateCell(Runnable contentAction) {
