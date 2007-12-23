@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.highlighting.actions;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
