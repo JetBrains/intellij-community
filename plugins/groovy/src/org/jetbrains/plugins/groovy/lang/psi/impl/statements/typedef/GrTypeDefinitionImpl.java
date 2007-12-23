@@ -33,6 +33,7 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
@@ -388,40 +389,12 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public final PsiClassType[] getSuperTypes() {
-    GrExtendsClause extendsClause = findChildByClass(GrExtendsClause.class);
-    GrCodeReferenceElement[] extendsRefs = GrCodeReferenceElement.EMPTY_ARRAY;
-    GrCodeReferenceElement[] implementsRefs = GrCodeReferenceElement.EMPTY_ARRAY;
-    if (extendsClause != null) {
-      extendsRefs = extendsClause.getReferenceElements();
-    }
+    PsiClassType[] extendsTypes = getExtendsListTypes();
+    PsiClassType[] implementsTypes = getImplementsListTypes();
+    if (extendsTypes.length == 0) return implementsTypes;
+    if (implementsTypes.length == 0) return extendsTypes;
 
-    GrImplementsClause implementsClause = findChildByClass(GrImplementsClause.class);
-    if (implementsClause != null) {
-      implementsRefs = implementsClause.getReferenceElements();
-    }
-
-    int len = implementsRefs.length + extendsRefs.length;
-    if (!isInterface() && extendsRefs.length == 0) {
-      len++;
-    }
-    PsiClassType[] result = new PsiClassType[len];
-
-    int i = 0;
-    if (extendsRefs.length > 0) {
-      for (int j = 0; j < extendsRefs.length; j++) {
-        result[j] = new GrClassReferenceType(extendsRefs[j]);
-      }
-      i = extendsRefs.length;
-    } else if (!isInterface()) {
-      result[0] = getManager().getElementFactory().createTypeByFQClassName(DEFAULT_BASE_CLASS_NAME, getResolveScope());
-      i = 1;
-    }
-
-    for (int j = 0; j < implementsRefs.length; i++, j++) {
-      result[i] = new GrClassReferenceType(implementsRefs[j]);
-    }
-
-    return result;
+    return ArrayUtil.mergeArrays(extendsTypes, implementsTypes, PsiClassType.class);
   }
 
   @NotNull
