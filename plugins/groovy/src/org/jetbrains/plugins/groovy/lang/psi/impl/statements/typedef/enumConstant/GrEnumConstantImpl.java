@@ -69,6 +69,10 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return getType();
   }
 
+  public void setType(@Nullable PsiType type) {
+    throw new RuntimeException("Cannot set type for enum constant");
+  }
+
   @Nullable
   public GrExpression getInitializerGroovy() {
     return null;
