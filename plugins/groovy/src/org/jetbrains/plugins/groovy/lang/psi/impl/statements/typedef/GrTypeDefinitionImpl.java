@@ -328,7 +328,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     if (!isInterface()) {
       return new PsiClassType[]{
-        getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope())
+        getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
       };
     }
 
