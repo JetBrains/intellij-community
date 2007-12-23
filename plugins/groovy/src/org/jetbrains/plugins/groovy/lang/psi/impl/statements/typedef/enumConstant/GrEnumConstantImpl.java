@@ -66,7 +66,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   @Nullable
   public PsiType getTypeGroovy() {
-    return null;
+    return getType();
   }
 
   @Nullable

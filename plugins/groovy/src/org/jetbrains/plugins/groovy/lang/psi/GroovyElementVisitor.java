@@ -19,6 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrEnumDefinitionBodyImpl;
 
 /**
  * @author ven
@@ -293,6 +294,10 @@ public abstract class GroovyElementVisitor {
 
   public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
     visitElement(typeDefinitionBody);
+  }
+
+  public void visitEnumDefinitionBody(GrEnumDefinitionBody enumDefinitionBody) {
+    visitTypeDefinitionBody(enumDefinitionBody);
   }
 
   public void visitIfStatement(GrIfStatement ifStatement) {

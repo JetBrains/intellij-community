@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies;
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.lang.ASTNode;
 
@@ -30,5 +31,9 @@ public class GrEnumDefinitionBodyImpl extends GrTypeDefinitionBodyImpl implement
 
   public GrEnumConstantList getEnumConstantList() {
     return findChildByClass(GrEnumConstantList.class);
+  }
+
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitEnumDefinitionBody(this);
   }
 }
