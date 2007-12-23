@@ -312,23 +312,27 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   public PsiClassType[] getExtendsListTypes() {
     GrExtendsClause extendsClause = getExtendsClause();
 
-    PsiClassType[] result = PsiClassType.EMPTY_ARRAY;
-
     if (extendsClause != null) {
       GrCodeReferenceElement[] extendsRefElements = extendsClause.getReferenceElements();
 
-      result = new PsiClassType[extendsRefElements.length];
 
       if (extendsRefElements.length > 0) {
+        PsiClassType[] result = new PsiClassType[extendsRefElements.length];
         for (int j = 0; j < extendsRefElements.length; j++) {
           result[j] = new GrClassReferenceType(extendsRefElements[j]);
         }
-      } else if (!isInterface()) {
-        result[0] = getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope());
+
+        return result;
       }
     }
 
-    return result;
+    if (!isInterface()) {
+      return new PsiClassType[]{
+        getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObject", getResolveScope())
+      };
+    }
+
+    return PsiClassType.EMPTY_ARRAY;
   }
 
   @NotNull
