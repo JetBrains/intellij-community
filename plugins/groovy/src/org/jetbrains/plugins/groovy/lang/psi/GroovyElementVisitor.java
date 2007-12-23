@@ -52,7 +52,7 @@ public abstract class GroovyElementVisitor {
   }
 
   public void visitEnumConstant(GrEnumConstant enumConstant) {
-    visitElement(enumConstant);
+    visitField(enumConstant);
   }
 
   public void visitImportStatement(GrImportStatement importStatement) {

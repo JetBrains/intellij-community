@@ -22,4 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * @date: 06.04.2007
  */
 public interface GrEnumConstantList extends GroovyPsiElement {
+  GrEnumConstant[] getEnumConstants();
 }

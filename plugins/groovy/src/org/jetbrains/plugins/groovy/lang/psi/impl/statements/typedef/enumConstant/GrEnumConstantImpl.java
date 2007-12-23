@@ -17,16 +17,24 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public class GrEnumConstantImpl extends GroovyPsiElementImpl implements GrEnumConstant {
+public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GrEnumConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -35,7 +43,45 @@ public class GrEnumConstantImpl extends GroovyPsiElementImpl implements GrEnumCo
     return "Enumeration constant";
   }
 
+  public boolean hasModifierProperty(@NonNls @NotNull String property) {
+    if (property.equals(PsiModifier.STATIC)) return true;
+    if (property.equals(PsiModifier.PUBLIC)) return true;
+    if (property.equals(PsiModifier.FINAL)) return true;
+    return false;
+  }
+
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitEnumConstant(this);
+  }
+
+  @Nullable
+  public GrTypeElement getTypeElementGroovy() {
+    return null;
+  }
+
+  @NotNull
+  public PsiType getType() {
+    return getManager().getElementFactory().createType(getContainingClass(), PsiSubstitutor.EMPTY);
+  }
+
+  @Nullable
+  public PsiType getTypeGroovy() {
+    return null;
+  }
+
+  @Nullable
+  public GrExpression getInitializerGroovy() {
+    return null;
+  }
+
+  @NotNull
+  public PsiClass getContainingClass() {
+    PsiElement parent = getParent();
+    assert parent instanceof GrEnumConstantList;
+    return (PsiClass) parent.getParent().getParent();
+  }
+
+  public boolean isProperty() {
+    return false;
   }
 }

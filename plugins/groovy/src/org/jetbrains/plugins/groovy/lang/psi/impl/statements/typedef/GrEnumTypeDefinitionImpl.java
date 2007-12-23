@@ -17,14 +17,28 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 
 /**
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
 public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
+  @NonNls
+  private static final String JAVA_LANG_ENUM = "java.lang.Enum";
+
   public GrEnumTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -33,7 +47,53 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     return "Enumeration definition";
   }
 
+  public GrEnumDefinitionBody getBody() {
+    return (GrEnumDefinitionBody) super.getBody();
+  }
+
   public boolean isEnum() {
     return true;
+  }
+
+  @NotNull
+  public PsiClassType[] getExtendsListTypes() {
+    return new PsiClassType[]{createEnumType()};
+  }
+
+  private PsiClassType createEnumType() {
+    PsiManager manager = getManager();
+    PsiClass enumClass = manager.findClass(JAVA_LANG_ENUM, getResolveScope());
+    PsiElementFactory factory = manager.getElementFactory();
+    if (enumClass != null) {
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      PsiTypeParameter[] typeParameters = enumClass.getTypeParameters();
+      if (typeParameters.length == 1) {
+        substitutor = substitutor.put(typeParameters[0], factory.createType(this));
+      }
+
+      return factory.createType(enumClass, substitutor);
+    }
+    return factory.createTypeByFQClassName(JAVA_LANG_ENUM, getResolveScope());
+  }
+
+  @NotNull
+  public GrField[] getFields() {
+    GrField[] bodyFields = super.getFields();
+    GrEnumConstant[] enumConstants = getEnumConstants();
+    if (bodyFields.length == 0) return enumConstants;
+    if (enumConstants.length == 0) return bodyFields;
+    return ArrayUtil.mergeArrays(bodyFields, enumConstants, GrField.class);
+  }
+
+  public GrEnumConstant[] getEnumConstants() {
+    GrEnumConstantList list = getEnumConstantList();
+    if (list != null) return list.getEnumConstants();
+    return GrEnumConstant.EMPTY_ARRAY;
+  }
+
+  public GrEnumConstantList getEnumConstantList() {
+    GrEnumDefinitionBody enumDefinitionBody = getBody();
+    if (enumDefinitionBody != null) return enumDefinitionBody.getEnumConstantList();
+    return null;
   }
 }

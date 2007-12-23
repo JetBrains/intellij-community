@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
 import org.jetbrains.plugins.groovy.util.TestUtils;
@@ -147,6 +148,11 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
 
   public void testOperatorOverload() throws Exception {
     doTest("operatorOverload/A.groovy");
+  }
+
+  public void testEnumConstant() throws Exception {
+    PsiReference ref = configureByFile("enumConstant/A.groovy");
+    assertTrue(ref.resolve() instanceof GrEnumConstant);
   }
 
   public void testStackOverflow() throws Exception {

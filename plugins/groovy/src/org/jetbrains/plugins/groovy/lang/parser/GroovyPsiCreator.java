@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterL
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrEnumDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
@@ -132,11 +133,11 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(FIELD)) return new GrFieldImpl(node);
 
     //type definitions
-    if (elem.equals(CLASS_DEFINITION) || elem.equals(CLASS_DEFINITION_ERROR)) return new GrClassDefinitionImpl(node);
-    if (elem.equals(INTERFACE_DEFINITION) || elem.equals(INTERFACE_DEFINITION_ERROR))
+    if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);
+    if (elem.equals(INTERFACE_DEFINITION))
       return new GrInterfaceDefinitionImpl(node);
-    if (elem.equals(ENUM_DEFINITION) || elem.equals(ENUM_DEFINITION_ERROR)) return new GrEnumTypeDefinitionImpl(node);
-    if (elem.equals(ANNOTATION_DEFINITION) || elem.equals(ANNOTATION_DEFINITION_ERROR))
+    if (elem.equals(ENUM_DEFINITION)) return new GrEnumTypeDefinitionImpl(node);
+    if (elem.equals(ANNOTATION_DEFINITION))
       return new GrAnnotationTypeDefinitionImpl(node);
     if (elem.equals(DEFAULT_ANNOTATION_MEMBER)) return new GrDefaultAnnotationMemberImpl(node);
 
@@ -149,6 +150,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
 
     //bodies
     if (elem.equals(CLASS_BODY)) return new GrTypeDefinitionBodyImpl(node);
+    if (elem.equals(ENUM_BODY)) return new GrEnumDefinitionBodyImpl(node);
     if (elem.equals(CLOSABLE_BLOCK)) return new GrClosableBlockImpl(node);
     if (elem.equals(OPEN_BLOCK)) return new GrOpenBlockImpl(node);
     if (elem.equals(BLOCK_STATEMENT)) return new GrBlockStatementImpl(node);

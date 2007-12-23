@@ -43,11 +43,11 @@ public class EnumDefinition implements GroovyElementTypes {
     }
 
     if (WRONGWAY.equals(ImplementsClause.parse(builder))) {
-      return ENUM_DEFINITION_ERROR;
+      return ENUM_DEFINITION;
     }
 
     if (WRONGWAY.equals(EnumBlock.parse(builder, name))) {
-      return ENUM_DEFINITION_ERROR;
+      return ENUM_DEFINITION;
     }
 
     return ENUM_DEFINITION;

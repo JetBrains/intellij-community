@@ -54,7 +54,6 @@ public class InterfaceDefinition implements GroovyElementTypes {
 
     if (WRONGWAY.equals(InterfaceBlock.parse(builder, name))) {
       builder.error(GroovyBundle.message("interface.body.expected"));
-      return INTERFACE_DEFINITION_ERROR;
     }
 
     return INTERFACE_DEFINITION;

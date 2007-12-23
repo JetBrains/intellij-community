@@ -16,10 +16,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 06.04.2007
  */
-public interface GrEnumConstant extends GroovyPsiElement {
+public interface GrEnumConstant extends GrField {
+  GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
 }

@@ -126,11 +126,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
 
   GroovyElementType DECLARATION = new GroovyElementType("declaration");
 
-  GroovyElementType CLASS_DEFINITION_ERROR = new GroovyElementType("class definition error");
-  GroovyElementType INTERFACE_DEFINITION_ERROR = new GroovyElementType("interface definition error");
-  GroovyElementType ENUM_DEFINITION_ERROR = new GroovyElementType("enumeration definition error");
-  GroovyElementType ANNOTATION_DEFINITION_ERROR = new GroovyElementType("annotation definition error");
-
   GroovyElementType CLASS_DEFINITION = new GroovyElementType("class definition");
   GroovyElementType INTERFACE_DEFINITION = new GroovyElementType("interface definition");
   GroovyElementType ENUM_DEFINITION = new GroovyElementType("enumeration definition");
@@ -177,6 +172,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType PARAMETER = new GroovyElementType("parameter");
 
   GroovyElementType CLASS_BODY = new GroovyElementType("class block");
+  GroovyElementType ENUM_BODY = new GroovyElementType("enum block");
 
   //statements
   GroovyElementType IF_STATEMENT = new GroovyElementType("if statement");

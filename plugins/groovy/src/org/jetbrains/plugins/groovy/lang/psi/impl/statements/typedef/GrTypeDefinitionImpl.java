@@ -349,7 +349,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @Nullable
-  public PsiClass getSuperClass() {
+  public final PsiClass getSuperClass() {
     final PsiClassType[] superTypes = getSuperTypes();
     if (superTypes.length > 0) {
       return superTypes[0].resolve();
@@ -373,7 +373,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  public PsiClass[] getSupers() {
+  public final PsiClass[] getSupers() {
     PsiClassType[] superTypes = getSuperTypes();
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (PsiClassType superType : superTypes) {
@@ -387,7 +387,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   @NotNull
-  public PsiClassType[] getSuperTypes() {
+  public final PsiClassType[] getSuperTypes() {
     GrExtendsClause extendsClause = findChildByClass(GrExtendsClause.class);
     GrCodeReferenceElement[] extendsRefs = GrCodeReferenceElement.EMPTY_ARRAY;
     GrCodeReferenceElement[] implementsRefs = GrCodeReferenceElement.EMPTY_ARRAY;

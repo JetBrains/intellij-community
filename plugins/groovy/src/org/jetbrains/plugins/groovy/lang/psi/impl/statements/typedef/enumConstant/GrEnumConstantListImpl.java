@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
@@ -37,5 +38,9 @@ public class GrEnumConstantListImpl extends GroovyPsiElementImpl implements GrEn
 
   public String toString() {
     return "Enumeration constants";
+  }
+
+  public GrEnumConstant[] getEnumConstants() {
+    return findChildrenByClass(GrEnumConstant.class);
   }
 }
