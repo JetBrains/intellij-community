@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.codeInsight.editorActions.EnterAfterUnmatchedBraceHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiCodeBlock;
@@ -29,6 +29,6 @@ public class BlockBraceFixer implements Fixer{
   }
 
   private boolean afterUnmatchedBrace(Editor editor, FileType fileType) {
-    return EnterHandler.isAfterUnmatchedLBrace(editor, editor.getCaretModel().getOffset(), fileType);
+    return EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, editor.getCaretModel().getOffset(), fileType);
   }
 }

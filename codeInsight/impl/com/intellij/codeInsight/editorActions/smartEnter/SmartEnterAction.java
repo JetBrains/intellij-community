@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.codeInsight.editorActions.EnterAfterUnmatchedBraceHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -52,7 +52,7 @@ public class SmartEnterAction extends EditorAction {
 
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(doc);
 
-      if (EnterHandler.isAfterUnmatchedLBrace(editor, caretOffset, psiFile.getFileType())) {
+      if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, caretOffset, psiFile.getFileType())) {
         EditorActionHandler enterHandler = EditorActionManager.getInstance().getActionHandler(
             IdeActions.ACTION_EDITOR_ENTER);
         enterHandler.execute(editor, dataContext);

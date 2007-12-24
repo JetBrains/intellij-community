@@ -6,8 +6,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -26,10 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -37,12 +32,9 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -172,55 +164,15 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
     }
 
-    if (settings.INSERT_BRACE_ON_ENTER && isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
-      int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-      if (offset < document.getTextLength()) {
-        char c = text.charAt(offset);
-        if (c != ')' && c != ']' && c != ';' && c != ',' && c != '%' && c != '<') {
-          offset = CharArrayUtil.shiftForwardUntil(text, caretOffset, "\n");
-        }
-      }
-      offset = Math.min(offset, document.getTextLength());
-
-      document.insertString(offset, "\n}");
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-      try {
-        CodeStyleManager.getInstance(project).adjustLineIndent(file, offset + 1);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-      text = document.getCharsSequence();
-      forceIndent = true;
-    }
-
-    if (settings.INSERT_SCRIPTLET_END_ON_ENTER && isAfterUnmatchedScriplet(editor, caretOffset)) {
-      document.insertString(caretOffset, "%>");
-      myOriginalHandler.execute(editor, dataContext);
-      text = document.getCharsSequence();
-      forceIndent = true;
-    }
-
-    if (settings.SMART_INDENT_ON_ENTER) {
-      // special case: enter inside "()" or "{}"
-      if (caretOffset > 0 && caretOffset < text.length() && ((text.charAt(caretOffset - 1) == '(' && text.charAt(caretOffset) == ')') ||
-                                                             (text.charAt(caretOffset - 1) == '{' && text.charAt(caretOffset) == '}'))) {
-        myOriginalHandler.execute(editor, dataContext);
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        try {
-          CodeStyleManager.getInstance(project).adjustLineIndent(file, editor.getCaretModel().getOffset());
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    for(EnterHandlerDelegate delegate: Extensions.getExtensions(EnterHandlerDelegate.EP_NAME)) {
+      EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffset, dataContext, myOriginalHandler);
+      if (result != EnterHandlerDelegate.Result.NotHandled) {
         text = document.getCharsSequence();
+        if (result == EnterHandlerDelegate.Result.HandledAndForceIndent) {
+          forceIndent = true;
+        }
+        break;
       }
-    }
-
-    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset)) {
-      myOriginalHandler.execute(editor, dataContext);
-      text = document.getCharsSequence();
-      forceIndent = true;
     }
 
     boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
@@ -277,37 +229,6 @@ public class EnterHandler extends EditorWriteActionHandler {
     editor.getSelectionModel().removeSelection();
   }
 
-  private static boolean isAfterUnmatchedScriplet(Editor editor, int offset) {
-    CharSequence chars = editor.getDocument().getCharsSequence();
-
-    if (!(offset >= 3 && chars.charAt(offset - 1) == '!' && chars.charAt(offset - 2) == '%' && chars.charAt(offset - 3) == '<') &&
-        !(offset >= 2 && chars.charAt(offset - 1) == '%' && chars.charAt(offset - 2) == '<')) {
-      return false;
-    }
-
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(offset - 2);
-    if (iterator.getTokenType() != JspTokenType.JSP_SCRIPTLET_START
-        && iterator.getTokenType() != JspTokenType.JSP_DECLARATION_START) {
-      return false;
-    }
-
-    iterator = highlighter.createIterator(offset);
-    while (!iterator.atEnd()) {
-      IElementType tokenType = iterator.getTokenType();
-
-      if (tokenType == JspTokenType.JSP_SCRIPTLET_START || tokenType == JspTokenType.JSP_DECLARATION_START) {
-        return true;
-      }
-      if (tokenType == JspTokenType.JSP_SCRIPTLET_END || tokenType == JspTokenType.JSP_DECLARATION_END) {
-        return false;
-      }
-      iterator.advance();
-    }
-
-    return true;
-  }
-
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
     String commentText = comment.getText();
     final String expectedCommentEnd = comment instanceof PsiDocComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
@@ -353,65 +274,6 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
       lexer.advance();
     }
-  }
-
-  public static boolean isAfterUnmatchedLBrace(Editor editor, int offset, FileType fileType) {
-    if (offset == 0) return false;
-    CharSequence chars = editor.getDocument().getCharsSequence();
-    if (chars.charAt(offset - 1) != '{') return false;
-
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
-
-    if (!braceMatcher.isLBraceToken(iterator, chars, fileType) ||
-        !braceMatcher.isStructuralBrace(iterator, chars, fileType)
-        ) {
-      return false;
-    }
-
-    Language language = iterator.getTokenType().getLanguage();
-
-    iterator = highlighter.createIterator(0);
-    int balance = 0;
-    while (!iterator.atEnd()) {
-      IElementType tokenType = iterator.getTokenType();
-      if (tokenType.getLanguage().equals(language)) {
-        if (braceMatcher.isStructuralBrace(iterator, chars, fileType)) {
-          if (braceMatcher.isLBraceToken(iterator, chars, fileType)) {
-            balance++;
-          } else if (braceMatcher.isRBraceToken(iterator, chars, fileType)) {
-            balance--;
-          }
-        }
-      }
-      iterator.advance();
-    }
-    return balance > 0;
-  }
-
-  private static boolean isBetweenXmlTags(Editor editor, int offset) {
-    if (offset == 0) return false;
-    CharSequence chars = editor.getDocument().getCharsSequence();
-    if (chars.charAt(offset - 1) != '>') return false;
-
-    EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    if (iterator.getTokenType() != XmlTokenType.XML_TAG_END) return false;
-    iterator.retreat();
-
-    int retrieveCount = 1;
-    while(!iterator.atEnd()) {
-      final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == XmlTokenType.XML_END_TAG_START) return false;
-      if (tokenType == XmlTokenType.XML_START_TAG_START) break;
-      ++retrieveCount;
-      iterator.retreat();
-    }
-
-    for(int i = 0; i < retrieveCount; ++i) iterator.advance();
-    iterator.advance();
-    return !iterator.atEnd() && iterator.getTokenType() == XmlTokenType.XML_END_TAG_START;
   }
 
   private static class DoEnterAction implements Runnable {

@@ -6,6 +6,7 @@ package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.codeInsight.editorActions.EnterAfterUnmatchedBraceHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -27,7 +28,7 @@ public abstract class BracesTailType extends TailType {
       tailOffset = insertChar(editor, tailOffset, ' ');
     }
     tailOffset = insertChar(editor, tailOffset, '{');
-    if (EnterHandler.isAfterUnmatchedLBrace(editor, tailOffset, StdFileTypes.JAVA)) {
+    if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, tailOffset, StdFileTypes.JAVA)) {
       new EnterHandler(EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)).executeWriteAction(editor,
                                                                                                                             DataManager.getInstance().getDataContext(editor.getContentComponent()));
       return editor.getCaretModel().getOffset();
