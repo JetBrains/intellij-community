@@ -32,10 +32,10 @@ import java.util.Arrays;
 
 public class GotoImplementationHandler implements CodeInsightActionHandler {
   public static final int FLAGS = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                | TargetElementUtil.ELEMENT_NAME_ACCEPTED
-              | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
-              | TargetElementUtil.THIS_ACCEPTED
-              | TargetElementUtil.SUPER_ACCEPTED;
+                                  | TargetElementUtil.ELEMENT_NAME_ACCEPTED
+                                  | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+                                  | TargetElementUtil.THIS_ACCEPTED
+                                  | TargetElementUtil.SUPER_ACCEPTED;
 
   protected interface ResultsFilter {
     boolean acceptClass(PsiClass aClass);

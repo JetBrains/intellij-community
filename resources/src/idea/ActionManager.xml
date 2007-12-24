@@ -259,11 +259,7 @@
     <group id="GoToMenuEx">
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
-      <action id="GotoDefinition" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoDefinitionAction"/>
-      <action id="GotoUsage" internal="true" class="com.intellij.codeInsight.navigation.actions.GotoUsageAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
-      <action id="SmartGotoImplementation" internal="true"
-              class="com.intellij.codeInsight.navigation.actions.SmartGotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <separator/>

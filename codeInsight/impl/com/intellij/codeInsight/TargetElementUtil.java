@@ -29,6 +29,8 @@ public class TargetElementUtil {
   public static final int THROW_STATEMENT_ACCEPTED = 0x800;
   public static final int EXTENDS_IMPLEMENTS_ACCEPTED = 0x1000;
 
+  private TargetElementUtil() {}
+
   public static PsiElement findTargetElement(Editor editor, int flags) {
     int offset = editor.getCaretModel().getOffset();
     return findTargetElement(editor, flags, offset);

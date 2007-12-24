@@ -104,12 +104,13 @@ public class JavaDocManager implements ProjectComponent {
     public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
     }
   };
+  
   private static final int ourFlagsForTargetElements = TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                                                             | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-  | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
-  | TargetElementUtil.NEW_AS_CONSTRUCTOR
-  | TargetElementUtil.THIS_ACCEPTED
-  | TargetElementUtil.SUPER_ACCEPTED;
+                                                       | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+                                                       | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+                                                       | TargetElementUtil.NEW_AS_CONSTRUCTOR
+                                                       | TargetElementUtil.THIS_ACCEPTED
+                                                       | TargetElementUtil.SUPER_ACCEPTED;
 
   public static JavaDocManager getInstance(Project project) {
     return project.getComponent(JavaDocManager.class);

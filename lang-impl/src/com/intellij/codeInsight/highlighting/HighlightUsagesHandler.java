@@ -117,9 +117,8 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
                                                             TargetElementUtil.CATCH_ACCEPTED |
                                                             TargetElementUtil.THROWS_ACCEPTED |
                                                             TargetElementUtil.THROW_ACCEPTED |
-                                                            TargetElementUtil.RETURN_ACCEPTED
-                                                            | TargetElementUtil.EXTENDS_IMPLEMENTS_ACCEPTED
-    );
+                                                            TargetElementUtil.RETURN_ACCEPTED |
+                                                            TargetElementUtil.EXTENDS_IMPLEMENTS_ACCEPTED);
     if (target instanceof PsiCompiledElement) target = ((PsiCompiledElement)target).getMirror();
     return target;
   }
