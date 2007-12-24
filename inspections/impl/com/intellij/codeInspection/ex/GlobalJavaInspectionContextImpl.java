@@ -10,6 +10,7 @@ import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalJavaInspectionContext;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.ide.util.projectWizard.JdkChooserPanel;
 import com.intellij.lang.StdLanguages;
@@ -349,6 +350,16 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         return !processors.isEmpty();
       }
     };
+  }
+
+  public void performPreRunActivities(final List<InspectionProfileEntry> globalTools, final List<InspectionProfileEntry> localTools) {
+    Collections.sort(globalTools, new Comparator<InspectionProfileEntry>() {
+      public int compare(final InspectionProfileEntry o1, final InspectionProfileEntry o2) {
+        if (o1 instanceof DeadCodeInspection) return -1;
+        if (o2 instanceof DeadCodeInspection) return 1;
+        return 0;
+      }
+    });
   }
 
   public void performPostRunActivities(List<InspectionProfileEntry> needRepeatSearchRequest, final GlobalInspectionContext context) {

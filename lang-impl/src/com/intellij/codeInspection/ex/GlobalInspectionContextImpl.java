@@ -10,7 +10,6 @@ import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
@@ -491,12 +490,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void runTools(final List<InspectionProfileEntry> needRepeatSearchRequest, final AnalysisScope scope, final InspectionManager manager) {
-    final HashMap<String, Set<InspectionTool>> usedTools = new HashMap<String, Set<InspectionTool>>();
-    final Map<String, Set<InspectionTool>> localTools = new HashMap<String, Set<InspectionTool>>();
+    final HashMap<String, List<InspectionProfileEntry>> usedTools = new HashMap<String, List<InspectionProfileEntry>>();
+    final Map<String, List<InspectionProfileEntry>> localTools = new HashMap<String, List<InspectionProfileEntry>>();
     initializeTools(scope, usedTools, localTools);
     ((RefManagerImpl)getRefManager()).initializeAnnotators();
-    for (Set<InspectionTool> tools : usedTools.values()) {
-      for (InspectionTool tool : tools) {
+    for (List<InspectionProfileEntry> tools : usedTools.values()) {
+      for (InspectionProfileEntry entry : tools) {
+        final InspectionTool tool = (InspectionTool)entry;
         try {
           if (tool.isGraphNeeded()) {
             ((RefManagerImpl)tool.getRefManager()).findAllDeclarations();
@@ -518,7 +518,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       extension.performPostRunActivities(needRepeatSearchRequest, this);
     }
     if (RUN_GLOBAL_TOOLS_ONLY) return;
-    final Set<InspectionTool> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
+    final List<InspectionProfileEntry> currentProfileLocalTools = localTools.get(getCurrentProfile().getName());
     if (RUN_WITH_EDITOR_PROFILE || currentProfileLocalTools != null && !currentProfileLocalTools.isEmpty()) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
@@ -536,13 +536,13 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           if (virtualFile != null) {
             incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
           }
-          final Set<InspectionTool> tools = localTools.get(profile.getName());
+          final List<InspectionProfileEntry> tools = localTools.get(profile.getName());
           final FileViewProvider viewProvider = psiManager.findViewProvider(virtualFile);
           final com.intellij.openapi.editor.Document document = viewProvider != null ? viewProvider.getDocument() : null;
           if (document == null) return; //do not inspect binary files
           final LocalInspectionsPass pass = new LocalInspectionsPass(file, document, 0, file.getTextLength());
           try {
-            pass.doInspectInBatch((InspectionManagerEx)manager, tools.toArray(new InspectionTool[tools.size()]), myProgressIndicator);
+            pass.doInspectInBatch((InspectionManagerEx)manager, tools.toArray(new InspectionProfileEntry[tools.size()]), myProgressIndicator);
           }
           catch (ProcessCanceledException e) {
             throw e;
@@ -555,7 +555,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  public void initializeTools(AnalysisScope scope, Map<String, Set<InspectionTool>> tools, Map<String, Set<InspectionTool>> localTools) {
+  public void initializeTools(AnalysisScope scope, Map<String, List<InspectionProfileEntry>> tools, Map<String, List<InspectionProfileEntry>> localTools) {
     myJobDescriptors = new ArrayList<JobDescriptor>();
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
     if (RUN_WITH_EDITOR_PROFILE) {
@@ -569,8 +569,8 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     }
   }
 
-  private void initializeTools(final Map<String, Set<InspectionTool>> tools,
-                              final Map<String, Set<InspectionTool>> localTools,
+  private void initializeTools(final Map<String, List<InspectionProfileEntry>> tools,
+                              final Map<String, List<InspectionProfileEntry>> localTools,
                               final InspectionProjectProfileManager profileManager, final InspectionProfile profile) {
     InspectionProfileWrapper inspectionProfile = profileManager.getProfileWrapper(profile.getName());
     if (inspectionProfile == null){
@@ -586,18 +586,12 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
   }
 
   private void processProfileTools(final InspectionProfileWrapper inspectionProfile,
-                                   final Map<String, Set<InspectionTool>> tools,
-                                   final Map<String, Set<InspectionTool>> localTools) {
+                                   final Map<String, List<InspectionProfileEntry>> tools,
+                                   final Map<String, List<InspectionProfileEntry>> localTools) {
     final InspectionProfileEntry[] usedTools = inspectionProfile.getInspectionProfile().getModifiableModel().getInspectionTools();
-    final Set<InspectionTool> profileTools = new TreeSet<InspectionTool>(new Comparator<InspectionTool>() {
-      public int compare(final InspectionTool tool1, final InspectionTool tool2) {
-        if (tool1.getShortName().equals(DeadCodeInspection.SHORT_NAME)) return -1;
-        if (tool2.getShortName().equals(DeadCodeInspection.SHORT_NAME)) return 1;
-        return tool1.getShortName().compareTo(tool2.getShortName());
-      }
-    });
+    final List<InspectionProfileEntry> profileTools = new ArrayList<InspectionProfileEntry>();
     tools.put(inspectionProfile.getName(), profileTools);
-    final HashSet<InspectionTool> localProfileTools = new HashSet<InspectionTool>();
+    final List<InspectionProfileEntry> localProfileTools = new ArrayList<InspectionProfileEntry>();
     localTools.put(inspectionProfile.getName(), localProfileTools);
     for (InspectionProfileEntry entry : usedTools) {
       final InspectionTool tool = (InspectionTool)entry;
@@ -623,6 +617,9 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
           }
         }
       }
+    }
+    for (GlobalInspectionContextExtension extension : myExtensions.values()) {
+      extension.performPreRunActivities(profileTools, localProfileTools);
     }
   }
 

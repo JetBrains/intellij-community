@@ -13,6 +13,8 @@ import java.util.List;
 public interface GlobalInspectionContextExtension<T> {
   Key<T> getID();
 
+  void performPreRunActivities(final List<InspectionProfileEntry> globalTools, final List<InspectionProfileEntry> localTools);
+
   void performPostRunActivities(List<InspectionProfileEntry> inspections, GlobalInspectionContext context);
 
   void cleanup();
