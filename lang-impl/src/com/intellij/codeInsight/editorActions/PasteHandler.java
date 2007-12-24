@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.ide.PasteProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.LanguageFormatting;
@@ -20,10 +19,13 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.datatransfer.DataFlavor;
@@ -32,7 +34,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Map;
 
 public class PasteHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
@@ -115,46 +117,15 @@ public class PasteHandler extends EditorActionHandler {
 
       final CodeInsightSettings settings = CodeInsightSettings.getInstance();
 
-      TextBlockTransferable.ReferenceData[] referenceData = null;
-      if (settings.ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
-        try {
-          referenceData =
-          (TextBlockTransferable.ReferenceData[])content.getTransferData(TextBlockTransferable.ReferenceData.FLAVOR);
-        }
-        catch (UnsupportedFlavorException e) {
-        }
-        catch (IOException e) {
+      final Map<CopyPastePostProcessor, TextBlockTransferableData> extraData = new HashMap<CopyPastePostProcessor, TextBlockTransferableData>();
+      for(CopyPastePostProcessor processor: Extensions.getExtensions(CopyPastePostProcessor.EP_NAME)) {
+        TextBlockTransferableData data = processor.extractTransferableData(content);
+        if (data != null) {
+          extraData.put(processor, data);
         }
       }
 
-      if (referenceData != null) { // copy to prevent changing of original by convertLineSeparators
-        TextBlockTransferable.ReferenceData[] newReferenceData = new TextBlockTransferable.ReferenceData[referenceData.length];
-        for (int i = 0; i < referenceData.length; i++) {
-          newReferenceData[i] = (TextBlockTransferable.ReferenceData)referenceData[i].clone();
-        }
-        referenceData = newReferenceData;
-      }
-
-      TextBlockTransferable.FoldingData[] _foldingData = null;
-      try {
-        _foldingData =
-        (TextBlockTransferable.FoldingData[])content.getTransferData(TextBlockTransferable.FoldingData.FLAVOR);
-      }
-      catch (UnsupportedFlavorException e) {
-      }
-      catch (IOException e) {
-      }
-
-      if (_foldingData != null) { // copy to prevent changing of original by convertLineSeparators
-        TextBlockTransferable.FoldingData[] newFoldingData = new TextBlockTransferable.FoldingData[_foldingData.length];
-        for (int i = 0; i < _foldingData.length; i++) {
-          newFoldingData[i] = (TextBlockTransferable.FoldingData)_foldingData[i].clone();
-        }
-        _foldingData = newFoldingData;
-      }
-      final TextBlockTransferable.FoldingData[] foldingData = _foldingData;
-
-      text = TextBlockTransferable.convertLineSeparators(text, "\n", referenceData, foldingData);
+      text = TextBlockTransferable.convertLineSeparators(text, "\n", extraData.values());
 
       final int col = editor.getCaretModel().getLogicalPosition().column;
       if (editor.getSelectionModel().hasSelection()) {
@@ -205,35 +176,8 @@ public class PasteHandler extends EditorActionHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
 
-      if (foldingData != null && foldingData.length > 0) {
-        final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
-        foldingManager.updateFoldRegions(editor);
-
-        Runnable processor1 = new Runnable() {
-          public void run() {
-            for (TextBlockTransferable.FoldingData data : foldingData) {
-              FoldRegion region = foldingManager.findFoldRegion(editor, data.startOffset + offset, data.endOffset + offset);
-              if (region != null) {
-                region.setExpanded(data.isExpanded);
-              }
-            }
-          }
-        };
-        editor.getFoldingModel().runBatchFoldingOperation(processor1);
-      }
-
-      if (referenceData != null && referenceData.length > 0) {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        final TextBlockTransferable.ReferenceData[] referenceData1 = referenceData;
-        final PsiJavaCodeReferenceElement[] refs = findReferencesToRestore(file, bounds, referenceData1);
-        if (settings.ADD_IMPORTS_ON_PASTE == CodeInsightSettings.ASK) {
-          askReferencesToRestore(project, refs, referenceData1);
-        }
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            restoreReferences(referenceData1, refs);
-          }
-        });
+      for(Map.Entry<CopyPastePostProcessor, TextBlockTransferableData> e: extraData.entrySet()) {
+        e.getKey().processTransferableData(project, editor, bounds, e.getValue());
       }
 
       final int indentOptions1 = indentOptions;
@@ -263,76 +207,6 @@ public class PasteHandler extends EditorActionHandler {
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getSelectionModel().removeSelection();
         editor.putUserData(EditorEx.LAST_PASTED_REGION, new TextRange(bounds.getStartOffset(), bounds.getEndOffset()));
-      }
-    }
-  }
-
-  private static PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
-                                                                       RangeMarker bounds,
-                                                                       TextBlockTransferable.ReferenceData[] referenceData) {
-    PsiManager manager = file.getManager();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    PsiResolveHelper helper = facade.getResolveHelper();
-    PsiJavaCodeReferenceElement[] refs = new PsiJavaCodeReferenceElement[referenceData.length];
-    for (int i = 0; i < referenceData.length; i++) {
-      TextBlockTransferable.ReferenceData data = referenceData[i];
-
-      PsiClass refClass = facade.findClass(data.qClassName, file.getResolveScope());
-      if (refClass == null) continue;
-
-      int startOffset = data.startOffset + bounds.getStartOffset();
-      int endOffset = data.endOffset + bounds.getStartOffset();
-      PsiElement element = file.findElementAt(startOffset);
-
-      if (element instanceof PsiIdentifier && element.getParent() instanceof PsiJavaCodeReferenceElement) {
-        PsiJavaCodeReferenceElement reference = (PsiJavaCodeReferenceElement)element.getParent();
-        TextRange range = reference.getTextRange();
-        if (range.getStartOffset() == startOffset && range.getEndOffset() == endOffset) {
-          if (data.staticMemberName == null) {
-            PsiClass refClass1 = helper.resolveReferencedClass(reference.getText(), reference);
-            if (refClass1 == null || !manager.areElementsEquivalent(refClass, refClass1)) {
-              refs[i] = reference;
-            }
-          } else {
-            if (reference instanceof PsiReferenceExpression) {
-              PsiElement referent = reference.resolve();
-              if (!(referent instanceof PsiNamedElement)
-                  || !data.staticMemberName.equals(((PsiNamedElement)referent).getName())
-                  || !(referent instanceof PsiMember)
-                  || ((PsiMember)referent).getContainingClass() == null
-                  || !data.qClassName.equals(((PsiMember)referent).getContainingClass().getQualifiedName())) {
-                refs[i] = reference;
-              }
-            }
-          }
-        }
-      }
-    }
-    return refs;
-  }
-
-  private static void restoreReferences(TextBlockTransferable.ReferenceData[] referenceData,
-                                        PsiJavaCodeReferenceElement[] refs) {
-    for (int i = 0; i < refs.length; i++) {
-      PsiJavaCodeReferenceElement reference = refs[i];
-      if (reference != null) {
-        try {
-          PsiManager manager = reference.getManager();
-          TextBlockTransferable.ReferenceData refData = referenceData[i];
-          PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(refData.qClassName, reference.getResolveScope());
-          if (refClass != null) {
-            if (refData.staticMemberName == null) {
-              reference.bindToElement(refClass);
-            }
-            else {
-              LOG.assertTrue(reference instanceof PsiReferenceExpression);
-              ((PsiReferenceExpression)reference).bindToElementViaStaticImport(refClass);
-            }
-          }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
       }
     }
   }
@@ -506,72 +380,5 @@ public class PasteHandler extends EditorActionHandler {
         endOffset += newSpace.length() - space.length();
       }
     }
-  }
-
-  private static void askReferencesToRestore(Project project, PsiJavaCodeReferenceElement[] refs,
-                                      TextBlockTransferable.ReferenceData[] referenceData) {
-    PsiManager manager = PsiManager.getInstance(project);
-
-    ArrayList<Object> array = new ArrayList<Object>();
-    Object[] refObjects = new Object[refs.length];
-    for (int i = 0; i < referenceData.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
-      if (ref != null) {
-        LOG.assertTrue(ref.isValid());
-        TextBlockTransferable.ReferenceData data = referenceData[i];
-        PsiClass refClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(data.qClassName, ref.getResolveScope());
-        if (refClass == null) continue;
-
-        Object refObject = refClass;
-        if (data.staticMemberName != null) {
-          //Show static members as Strings
-          refObject = refClass.getQualifiedName() + "." + data.staticMemberName;
-        }
-        refObjects[i] = refObject;
-
-        if (!array.contains(refObject)) {
-          array.add(refObject);
-        }
-      }
-    }
-    if (array.isEmpty()) return;
-
-    Object[] selectedObjects = array.toArray(new Object[array.size()]);
-    Arrays.sort(
-      selectedObjects,
-      new Comparator<Object>() {
-        public int compare(Object o1, Object o2) {
-          String fqName1 = getFQName(o1);
-          String fqName2 = getFQName(o2);
-          return fqName1.compareToIgnoreCase(fqName2);
-        }
-      }
-    );
-
-    RestoreReferencesDialog dialog = new RestoreReferencesDialog(project, selectedObjects);
-    dialog.show();
-    selectedObjects = dialog.getSelectedElements();
-
-    for (int i = 0; i < referenceData.length; i++) {
-      PsiJavaCodeReferenceElement ref = refs[i];
-      if (ref != null) {
-        LOG.assertTrue(ref.isValid());
-        Object refObject = refObjects[i];
-        boolean found = false;
-        for (Object selected : selectedObjects) {
-          if (refObject.equals(selected)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          refs[i] = null;
-        }
-      }
-    }
-  }
-
-  private static String getFQName(Object element) {
-    return element instanceof PsiClass ? ((PsiClass)element).getQualifiedName() : (String)element;
   }
 }
