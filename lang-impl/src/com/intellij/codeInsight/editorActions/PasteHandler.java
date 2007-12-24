@@ -13,23 +13,18 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -181,7 +176,10 @@ public class PasteHandler extends EditorActionHandler {
       catch (IOException e) {
       }
 
-      String newText = escapeIfStringLiteral(project, file, editor, text, rawText);
+      String newText = text;
+      for(PastePreProcessor preProcessor: Extensions.getExtensions(PastePreProcessor.EP_NAME)) {
+        newText = preProcessor.preprocess(project, file, editor, newText, rawText);
+      }
       int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
       text = newText;
 
@@ -267,38 +265,6 @@ public class PasteHandler extends EditorActionHandler {
         editor.putUserData(EditorEx.LAST_PASTED_REGION, new TextRange(bounds.getStartOffset(), bounds.getEndOffset()));
       }
     }
-  }
-
-  private static String escapeIfStringLiteral(final Project project,
-                                              final PsiFile file,
-                                              final Editor editor,
-                                              String text, final RawText rawText) {
-  //  if ("\n".equals(text)) return text;
-    final Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    int caretOffset = editor.getCaretModel().getOffset();
-    PsiElement elementAtCaret = file.findElementAt(caretOffset);
-    if (elementAtCaret instanceof PsiJavaToken && caretOffset > elementAtCaret.getTextOffset()) {
-      final IElementType tokenType = ((PsiJavaToken)elementAtCaret).getTokenType();
-      if (tokenType == JavaTokenType.STRING_LITERAL) {
-        if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
-
-        StringBuilder buffer = new StringBuilder(text.length());
-        CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-        @NonNls String breaker = codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
-        final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
-        for (int i = 0; i < lines.length; i++) {
-          String line = lines[i];
-          buffer.append(StringUtil.escapeStringCharacters(line));
-          if (i != lines.length - 1) buffer.append(breaker);
-        }
-        text = buffer.toString();
-      }
-      else if (tokenType == JavaTokenType.CHARACTER_LITERAL) {
-        if (rawText != null && rawText.rawText != null) return rawText.rawText; // Copied from the string literal. Copy as is.
-      }
-    }
-    return text;
   }
 
   private static PsiJavaCodeReferenceElement[] findReferencesToRestore(PsiFile file,
