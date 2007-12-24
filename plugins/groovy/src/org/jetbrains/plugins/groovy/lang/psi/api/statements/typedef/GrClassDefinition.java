@@ -24,7 +24,7 @@ import com.intellij.util.IncorrectOperationException;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner, GrMethodOwner {
+public interface GrClassDefinition extends GrTypeDefinition, GrTypeParameterListOwner {
 
   GrMethod addMethod (@NotNull GrMethod method) throws IncorrectOperationException;
 
