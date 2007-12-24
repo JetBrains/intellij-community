@@ -5,6 +5,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.editorActions.wordSelection.PlainTextLineSelectioner;
 
 import java.util.List;
 
@@ -18,6 +19,6 @@ public class XmlLineSelectioner extends ExtendWordSelectionHandlerBase {
 
   @Override
   public List<TextRange> select(final PsiElement e, final CharSequence editorText, final int cursorOffset, final Editor editor) {
-    return SelectWordUtil.PlainTextLineSelectioner.selectPlainTextLine(e, editorText, cursorOffset);
+    return PlainTextLineSelectioner.selectPlainTextLine(e, editorText, cursorOffset);
   }
 }

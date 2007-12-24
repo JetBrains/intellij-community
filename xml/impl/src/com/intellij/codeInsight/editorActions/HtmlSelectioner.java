@@ -9,6 +9,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;

@@ -1,8 +1,10 @@
-package com.intellij.codeInsight.editorActions;
+package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 
 import java.util.List;
 import java.util.ArrayList;
