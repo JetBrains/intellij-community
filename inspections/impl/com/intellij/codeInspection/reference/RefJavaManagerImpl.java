@@ -5,6 +5,8 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.EntryPointsManager;
+import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -30,7 +32,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   private THashMap<String, RefPackage> myPackages;
   private final RefManagerImpl myRefManager;
   private PsiElementVisitor myProjectIterator;
-
+  private EntryPointsManager myEntryPointsManager;
 
   public RefJavaManagerImpl(RefManagerImpl manager) {
     myRefManager = manager;
@@ -129,6 +131,10 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   public void cleanup() {
+    if (myEntryPointsManager != null) {
+      myEntryPointsManager.cleanup();
+      myEntryPointsManager = null;
+    }
     myPackages = null;
     myApplet = null;
     myAppMainPattern = null;
@@ -217,6 +223,14 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myProjectIterator = new MyJavaElementVisitor();
     }
     element.accept(myProjectIterator);
+  }
+
+   public EntryPointsManager getEntryPointsManager() {
+    if (myEntryPointsManager == null) {
+      myEntryPointsManager = new EntryPointsManagerImpl();
+      ((EntryPointsManagerImpl)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerImpl.getInstance(myRefManager.getProject()));
+    }
+    return myEntryPointsManager;
   }
 
   private class MyJavaElementVisitor extends JavaElementVisitor {

@@ -63,6 +63,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(s*,\\w+)*)");
 
 
+
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
     if (myClassUsagesRequests == null) myClassUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
     enqueueRequestImpl(refClass, myClassUsagesRequests, p);
@@ -87,6 +88,10 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   public void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p) {
     if (myMethodUsagesRequests == null) myMethodUsagesRequests = new THashMap<PsiElement, List<UsagesProcessor>>();
     enqueueRequestImpl(refMethod, myMethodUsagesRequests, p);
+  }
+
+  public EntryPointsManager getEntryPointsManager(final RefManager manager) {
+    return manager.getExtension(RefJavaManager.MANAGER).getEntryPointsManager();
   }
 
   @SuppressWarnings({"UseOfSystemOutOrSystemErr"})
@@ -352,7 +357,9 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     };
   }
 
-  public void performPreRunActivities(final List<InspectionProfileEntry> globalTools, final List<InspectionProfileEntry> localTools) {
+  public void performPreRunActivities(final List<InspectionProfileEntry> globalTools, final List<InspectionProfileEntry> localTools,
+                                      final GlobalInspectionContext context) {
+    getEntryPointsManager(context.getRefManager()).resolveEntryPoints(context.getRefManager());
     Collections.sort(globalTools, new Comparator<InspectionProfileEntry>() {
       public int compare(final InspectionProfileEntry o1, final InspectionProfileEntry o2) {
         if (o1 instanceof DeadCodeInspection) return -1;
@@ -361,6 +368,8 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       }
     });
   }
+
+
 
   public void performPostRunActivities(List<InspectionProfileEntry> needRepeatSearchRequest, final GlobalInspectionContext context) {
     GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES.setTotalAmount(getRequestCount() * 2);

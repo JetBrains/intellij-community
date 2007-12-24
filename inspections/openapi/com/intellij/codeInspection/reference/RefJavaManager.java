@@ -4,6 +4,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -49,6 +50,8 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   public abstract PsiClass getApplet();
 
   public abstract PsiClass getServlet();
+
+  public abstract EntryPointsManager getEntryPointsManager();
 
   public Language getLanguage() {
     return StdLanguages.JAVA;

@@ -29,6 +29,7 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   @NonNls private static final String VERSION_ATTR = "version";
   @NonNls private static final String ENTRY_POINT_ATTR = "entry_point";
   private boolean myAddNonJavaEntries = true;
+  private boolean myResolved = false;
 
   public EntryPointsManagerImpl() {
     myFQNameToSmartEntryPointRef = new LinkedHashMap(); // To keep the order between readExternal to writeExternal
@@ -72,20 +73,23 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
   }
 
   public void resolveEntryPoints(final RefManager manager) {
-    validateEntryPoints();
+    if (!myResolved) {
+      myResolved = true;
+      validateEntryPoints();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        for (Iterator iterator = myFQNameToSmartEntryPointRef.values().iterator(); iterator.hasNext();) {
-          SmartRefElementPointer entryPoint = (SmartRefElementPointer) iterator.next();
-          if (entryPoint.resolve(manager)) {
-            RefEntity refElement = entryPoint.getRefElement();
-            ((RefElementImpl)refElement).setEntry(true);
-            ((RefElementImpl)refElement).setPermanentEntry(entryPoint.isPersistent());
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (Iterator iterator = myFQNameToSmartEntryPointRef.values().iterator(); iterator.hasNext();) {
+            SmartRefElementPointer entryPoint = (SmartRefElementPointer) iterator.next();
+            if (entryPoint.resolve(manager)) {
+              RefEntity refElement = entryPoint.getRefElement();
+              ((RefElementImpl)refElement).setEntry(true);
+              ((RefElementImpl)refElement).setPermanentEntry(entryPoint.isPersistent());
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   private void purgeTemporaryEntryPoints() {

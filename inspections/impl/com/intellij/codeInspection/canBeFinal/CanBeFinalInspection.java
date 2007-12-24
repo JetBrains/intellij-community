@@ -152,7 +152,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
 
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor problemsProcessor) {
-    for (SmartRefElementPointer entryPoint : manager.getEntryPointsManager().getEntryPoints()) {
+    for (SmartRefElementPointer entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         problemsProcessor.ignoreElement(refElement);

@@ -4,9 +4,11 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefField;
+import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethod;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
@@ -70,6 +72,8 @@ public abstract class GlobalJavaInspectionContext implements GlobalInspectionCon
    * @param p         the processor to pass the usages to.
    */
   public abstract void enqueueMethodUsagesProcessor(RefMethod refMethod, UsagesProcessor p);
+
+  public abstract EntryPointsManager getEntryPointsManager(RefManager manager);
 
   public Key<GlobalJavaInspectionContext> getID() {
     return CONTEXT;

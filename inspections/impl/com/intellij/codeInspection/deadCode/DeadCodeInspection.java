@@ -782,10 +782,6 @@ public class DeadCodeInspection extends FilteringInspectionTool {
 
   }
 
-   private EntryPointsManager getEntryPointsManager() {
-          return ((RefManagerImpl)getContext().getRefManager()).getEntryPointsManager();
-        }
-
   private void checkForReachables() {
     CodeScanner codeScanner = new CodeScanner();
 
@@ -814,6 +810,12 @@ public class DeadCodeInspection extends FilteringInspectionTool {
       codeScanner.cleanInstantiatedClassesCount();
       codeScanner.processDelayedMethods();
     }
+  }
+
+  private EntryPointsManager getEntryPointsManager() {
+    final EntryPointsManager entryPointsManager =
+       getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());
+    return entryPointsManager;
   }
 
   private static class CodeScanner extends RefJavaVisitor {

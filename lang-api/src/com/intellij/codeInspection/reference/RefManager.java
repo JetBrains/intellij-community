@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -89,8 +88,6 @@ public abstract class RefManager {
   public abstract @Nullable RefEntity getReference(String type, String fqName);
 
   public abstract int getLastUsedMask();
-
-  public abstract EntryPointsManager getEntryPointsManager();
 
   public abstract <T> T getExtension(Key<T> key);
 

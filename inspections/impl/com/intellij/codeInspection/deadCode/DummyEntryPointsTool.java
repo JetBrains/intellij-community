@@ -74,8 +74,10 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     }
 
     protected boolean applyFix(RefElement[] refElements) {
+      final EntryPointsManager entryPointsManager =
+        getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());
       for (RefElement refElement : refElements) {
-        getContext().getRefManager().getEntryPointsManager().removeEntryPoint(refElement);
+        entryPointsManager.removeEntryPoint(refElement);
       }
 
       return true;

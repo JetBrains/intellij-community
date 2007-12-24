@@ -318,7 +318,8 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
 
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
-    for (SmartRefElementPointer entryPoint : getEntryPointsManager(manager).getEntryPoints()) {
+    final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
+    for (SmartRefElementPointer entryPoint : entryPointsManager.getEntryPoints()) {
       final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         ignoreElement(processor, refElement);
@@ -361,7 +362,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
                 }
               });
 
-              if (getEntryPointsManager(manager).isAddNonJavaEntries()) {
+              if (entryPointsManager.isAddNonJavaEntries()) {
                 final RefClass ownerClass = refMethod.getOwnerClass();
                 if (refMethod.isConstructor() && ownerClass.getDefaultConstructor() != null) {
                   String qualifiedName = ownerClass.getElement().getQualifiedName();
@@ -370,7 +371,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
                     PsiManager.getInstance(project).getSearchHelper()
                       .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
                         public boolean process(PsiFile file, int startOffset, int endOffset) {
-                          getEntryPointsManager(manager).addEntryPoint(refMethod, false);
+                          entryPointsManager.addEntryPoint(refMethod, false);
                           ignoreElement(processor, refMethod);
                           return false;
                         }
@@ -403,10 +404,6 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       }
     });
     return false;
-  }
-
-  private static EntryPointsManager getEntryPointsManager(final RefManager manager) {
-    return manager.getEntryPointsManager();
   }
 
   private static void ignoreElement(ProblemDescriptionsProcessor processor, RefEntity refElement){

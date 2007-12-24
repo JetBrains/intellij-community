@@ -233,4 +233,11 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   protected RefJavaManager getRefJavaManager() {
     return getRefManager().getExtension(RefJavaManager.MANAGER);
   }
+
+  public void referenceRemoved() {
+    super.referenceRemoved();
+    if (isEntry()) {
+      getRefJavaManager().getEntryPointsManager().removeEntryPoint(this);
+    }
+  }
 }

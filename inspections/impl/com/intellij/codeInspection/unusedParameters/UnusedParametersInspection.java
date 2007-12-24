@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class UnusedParametersInspection extends GlobalInspectionTool {
+public class UnusedParametersInspection extends GlobalJavaInspectionTool {
 
   @Nullable
   public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
@@ -73,18 +73,18 @@ public class UnusedParametersInspection extends GlobalInspectionTool {
     return null;
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager,
-                                             final GlobalInspectionContext globalContext,
-                                             final ProblemDescriptionsProcessor processor) {
-    for (SmartRefElementPointer entryPoint : globalContext.getRefManager().getEntryPointsManager().getEntryPoints()) {
+  protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
+                                                final ProblemDescriptionsProcessor processor) {
+    final Project project = manager.getProject();
+    for (SmartRefElementPointer entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
       final RefEntity refElement = entryPoint.getRefElement();
       if (refElement != null) {
         processor.ignoreElement(refElement);
       }
     }
-    final PsiSearchHelper helper = PsiManager.getInstance(globalContext.getProject()).getSearchHelper();
-    final AnalysisScope scope = globalContext.getRefManager().getScope();
-    globalContext.getRefManager().iterate(new RefJavaVisitor() {
+    final PsiSearchHelper helper = PsiManager.getInstance(project).getSearchHelper();
+    final AnalysisScope scope = manager.getScope();
+    manager.iterate(new RefJavaVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;

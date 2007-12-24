@@ -465,7 +465,6 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
     try {
       psiManager.startBatchFilesProcessingMode();
       refManager.inspectionReadActionStarted();
-      refManager.getEntryPointsManager().resolveEntryPoints(refManager);
       BUILD_GRAPH.setTotalAmount(scope.getFileCount());
       LOCAL_ANALYSIS.setTotalAmount(scope.getFileCount());
       final List<InspectionProfileEntry> needRepeatSearchRequest = new ArrayList<InspectionProfileEntry>();
@@ -619,7 +618,7 @@ public class GlobalInspectionContextImpl implements GlobalInspectionContext {
       }
     }
     for (GlobalInspectionContextExtension extension : myExtensions.values()) {
-      extension.performPreRunActivities(profileTools, localProfileTools);
+      extension.performPreRunActivities(profileTools, localProfileTools, this);
     }
   }
 
