@@ -74,6 +74,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private JBPopup myPopup;
   private JComponent myTargetComponent;
 
+  private boolean myReservePlaceAutoPopupIcon = true;
+
   public ActionToolbarImpl(final String place,
                            final ActionGroup actionGroup,
                            final boolean horizontal,
@@ -279,7 +281,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (actualLayout) {
       myAutoPopupRec = null;
     }
-
+               
     int autoButtonSize = myAutoPopupIcon.getIconWidth();
     boolean full = false;
 
@@ -291,10 +293,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         if (!full) {
           boolean outside;
           if (i < componentCount - 1) {
-            outside = eachX + eachBound.width + autoButtonSize < sizeToFit.width;
+            outside = eachX + eachBound.width + autoButtonSize <= sizeToFit.width;
           }
           else {
-            outside = eachX + eachBound.width < sizeToFit.width;
+            outside = eachX + eachBound.width <= sizeToFit.width;
           }
 
           if (outside) {
@@ -523,7 +525,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
     final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
 
-    if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
+    if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon) {
       if (myOrientation == SwingConstants.HORIZONTAL) {
         dimension.width += myAutoPopupIcon.getIconWidth();
       }
@@ -848,4 +850,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   }
 
 
+  public void setReservePlaceAutoPopupIcon(final boolean reserve) {
+    myReservePlaceAutoPopupIcon = reserve;
+  }
 }

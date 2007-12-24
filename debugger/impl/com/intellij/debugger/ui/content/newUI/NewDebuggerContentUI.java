@@ -9,6 +9,7 @@ import com.intellij.debugger.ui.content.DebuggerContentUIFacade;
 import com.intellij.debugger.ui.content.newUI.actions.RestoreViewAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -19,15 +20,17 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
+import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AwtVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -52,7 +55,7 @@ public class NewDebuggerContentUI
 
   DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
 
-  Map<Grid, DefaultActionGroup> myMinimizedViewActions = new HashMap<Grid, DefaultActionGroup>();
+  DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
   Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
 
   boolean myUiLastStateWasRestored;
@@ -161,7 +164,6 @@ public class NewDebuggerContentUI
     if (grid.isEmpty()) {
       myTabs.removeTab(grid);
       myToolbarPlaceholders.remove(grid);
-      myMinimizedViewActions.remove(grid);
       Disposer.dispose(grid);
     }
   }
@@ -175,23 +177,60 @@ public class NewDebuggerContentUI
 
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
-    NonOpaquePanel toolbar = new NonOpaquePanel(new BorderLayout());
-    toolbar
-      .add(myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent(), BorderLayout.WEST);
 
-    NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
-
-    Wrapper placeholder = new Wrapper();
-    myToolbarPlaceholders.put(grid, placeholder);
-    wrapper.add(placeholder, BorderLayout.EAST);
-    toolbar.add(wrapper, BorderLayout.CENTER);
+    final JComponent left = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent();
+    Wrapper minimizedToolbarPlaceholder = new Wrapper();
+    myToolbarPlaceholders.put(grid, minimizedToolbarPlaceholder);
+    final JComponent right = minimizedToolbarPlaceholder;
 
 
-    if (!myMinimizedViewActions.containsKey(grid)) {
-      myMinimizedViewActions.put(grid, new DefaultActionGroup());
-    }
+    NonOpaquePanel sideComponent = new NonOpaquePanel(new AbstractLayoutManager() {
+      public Dimension preferredLayoutSize(final Container parent) {
 
-    tab.setSideComponent(toolbar);
+        Dimension size = new Dimension();
+        Dimension leftSize = left.getPreferredSize();
+        Dimension rightSize = right.getPreferredSize();
+
+        size.width = leftSize.width + rightSize.width;
+        size.height = Math.max(leftSize.height, rightSize.height);
+
+        return size;
+      }
+
+      public void layoutContainer(final Container parent) {
+        Dimension size = parent.getSize();
+        Dimension prefSize = parent.getPreferredSize();
+        if (prefSize.width <= size.width) {
+          left.setBounds(0, 0, left.getPreferredSize().width, parent.getHeight());
+          Dimension rightSize = right.getPreferredSize();
+          right.setBounds(parent.getWidth() - rightSize.width, 0, rightSize.width, parent.getHeight());
+        } else {
+          Dimension leftMinSize = left.getMinimumSize();
+          Dimension rightMinSize = right.getMinimumSize();
+
+          int delta = (prefSize.width - size.width) / 2;
+
+          left.setBounds(0, 0, left.getPreferredSize().width - delta, parent.getHeight());
+          int rightX = (int)left.getBounds().getMaxX();
+          int rightWidth = size.width - rightX;
+          if (rightWidth < rightMinSize.width) {
+            Dimension leftSize = left.getSize();
+            int diffToRightMin = rightMinSize.width - rightWidth;
+            if (leftSize.width - diffToRightMin >= leftMinSize.width) {
+              leftSize.width = leftSize.width - diffToRightMin;
+              left.setSize(leftSize);
+            }
+          }
+
+          right.setBounds((int)left.getBounds().getMaxX(), 0, parent.getWidth() - left.getWidth(), parent.getHeight());
+        }
+      }
+    });
+
+    tab.setSideComponent(sideComponent);
+
+    sideComponent.add(left);
+    sideComponent.add(right);
 
     tab.setTabLabelActions((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
 
@@ -209,11 +248,11 @@ public class NewDebuggerContentUI
   }
 
   private void rebuildMinimizedActions() {
-    for (Grid eachGrid : myMinimizedViewActions.keySet()) {
-      DefaultActionGroup eachGroup = myMinimizedViewActions.get(eachGrid);
-      Wrapper eachPlaceholder = myToolbarPlaceholders.get(eachGrid);
-
-      JComponent minimized = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, eachGroup, true).getComponent();
+    for (Grid each : myToolbarPlaceholders.keySet()) {
+      Wrapper eachPlaceholder = myToolbarPlaceholders.get(each);
+      ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
+      ((ActionToolbarImpl)tb).setReservePlaceAutoPopupIcon(false);
+      JComponent minimized = tb.getComponent();
       eachPlaceholder.setContent(minimized);
     }
 
@@ -486,7 +525,7 @@ public class NewDebuggerContentUI
     final Ref<AnAction> restoreAction = new Ref<AnAction>();
     restoreAction.set(new RestoreViewAction(content, new CellTransform.Restore() {
       public ActionCallback restoreInGrid() {
-        myMinimizedViewActions.get(getGridFor(content, false)).remove(restoreAction.get());
+        myMinimizedViewActions.remove(restoreAction.get());
         return restore.restoreInGrid().doWhenDone(new Runnable() {
           public void run() {
             saveUiState();
@@ -497,8 +536,7 @@ public class NewDebuggerContentUI
       }
     }));
 
-    Grid grid = getGridFor(content, false);
-    myMinimizedViewActions.get(grid).add(restoreAction.get());
+    myMinimizedViewActions.add(restoreAction.get());
 
     saveUiState();
     rebuildMinimizedActions();
