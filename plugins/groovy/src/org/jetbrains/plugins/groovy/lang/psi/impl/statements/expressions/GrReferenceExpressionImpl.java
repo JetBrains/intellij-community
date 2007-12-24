@@ -19,12 +19,14 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.*;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -32,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -49,6 +52,8 @@ import java.util.Collections;
  * @author ilyas
  */
 public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements GrReferenceExpression {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl");
+
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -207,11 +212,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         result = method.getParameterList().getParameters()[0].getType();
       } else {
-        if (method instanceof AccessorMethod) {
-          result = ((AccessorMethod) method).getReturnTypeGroovy();
+        if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName()) &&
+            "getClass".equals(method.getName())) {
+          result = getTypeForObjectGetClass(manager, method);
         } else {
-          result = method.getReturnType();
+          if (method instanceof AccessorMethod) {
+            result = ((AccessorMethod) method).getReturnTypeGroovy();
+          } else {
+            result = method.getReturnType();
+          }
         }
+
       }
     } else if (resolved instanceof GrReferenceExpression) {
       PsiElement parent = resolved.getParent();
@@ -241,6 +252,39 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     } else {
       return ResolveUtil.getListTypeForSpreadOperator(this, result);
     }
+  }
+
+  private PsiType getTypeForObjectGetClass(PsiManager manager, PsiMethod method) {
+    PsiType type = method.getReturnType();
+    if (type instanceof PsiClassType) {
+      PsiClass clazz = ((PsiClassType) type).resolve();
+      if (clazz != null &&
+          "java.lang.Class".equals(clazz.getQualifiedName())) {
+        PsiTypeParameter[] typeParameters = clazz.getTypeParameters();
+        if (typeParameters.length == 1) {
+          PsiClass qualifierClass = null;
+          GrExpression qualifier = getQualifierExpression();
+          if (qualifier != null) {
+            PsiType qualifierType = qualifier.getType();
+            if (qualifierType instanceof PsiClassType) {
+              qualifierClass = ((PsiClassType) qualifierType).resolve();
+            }
+          } else {
+            PsiNamedElement context = PsiTreeUtil.getParentOfType(this, PsiClass.class, GroovyFile.class);
+            if (context instanceof PsiClass) qualifierClass = (PsiClass) context;
+            else if (context instanceof GroovyFile) qualifierClass = ((GroovyFile) context).getScriptClass();
+          }
+
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+          if (qualifierClass != null) {
+            PsiType t = manager.getElementFactory().createType(qualifierClass);
+            substitutor = substitutor.put(typeParameters[0], t);
+          }
+          return manager.getElementFactory().createType(clazz, substitutor);
+        }
+      }
+    }
+    return type;
   }
 
   private static final class OurTypesCalculator implements Function<GrReferenceExpressionImpl, PsiType> {
