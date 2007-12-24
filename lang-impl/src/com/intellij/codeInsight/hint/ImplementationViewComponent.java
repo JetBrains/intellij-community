@@ -32,7 +32,6 @@
 package com.intellij.codeInsight.hint;
  
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.javadoc.JavaDocInfoComponent;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
@@ -316,7 +315,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private void updateLabels() {
     //TODO: Move from JavaDoc to somewhere more appropriate place.
-    JavaDocInfoComponent.customizeElementLabel(myElements[myIndex], myLocationLabel);
+    ElementLocationUtil.customizeElementLabel(myElements[myIndex], myLocationLabel);
     //noinspection AutoBoxing
     myCountLabel.setText(CodeInsightBundle.message("n.of.m", myIndex + 1, myElements.length));
   }
