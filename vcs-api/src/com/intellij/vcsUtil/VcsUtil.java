@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -103,7 +104,7 @@ public class VcsUtil {
    * File is considered to be a valid vcs file if it resides under the content
    * root controlled by the given vcs.
    */
-  public static boolean isFileForVcs(VirtualFile file, Project project, AbstractVcs host) {
+  public static boolean isFileForVcs(@NotNull VirtualFile file, Project project, AbstractVcs host) {
     return getVcsFor(project, file) == host;
   }
 
@@ -137,7 +138,7 @@ public class VcsUtil {
   }
 
   @Nullable
-  public static AbstractVcs getVcsFor(final Project project, final VirtualFile file) {
+  public static AbstractVcs getVcsFor(final Project project, @NotNull final VirtualFile file) {
     final AbstractVcs[] vcss = new AbstractVcs[1];
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {

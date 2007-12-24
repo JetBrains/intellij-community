@@ -75,7 +75,7 @@ public abstract class ProjectLevelVcsManager {
    *         it belongs to is not under version control.
    */
   @Nullable
-  public abstract AbstractVcs getVcsFor(VirtualFile file);
+  public abstract AbstractVcs getVcsFor(@NotNull VirtualFile file);
 
   /**
    * Returns the VCS managing the specified file path.

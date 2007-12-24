@@ -276,7 +276,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Nullable
-  public AbstractVcs getVcsFor(VirtualFile file) {
+  public AbstractVcs getVcsFor(@NotNull VirtualFile file) {
     String vcsName = myDirectoryMappingList.getVcsFor(file);
     if (vcsName == null || vcsName.length() == 0) {
       return null;
