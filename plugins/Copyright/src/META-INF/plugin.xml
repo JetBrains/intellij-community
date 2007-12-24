@@ -38,14 +38,14 @@
     </project-components>
 
     <actions>
-        <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..." description="Generate/Update the copyright notice." icon="/copyright18x18.png">
+        <action id="UpdateCopyright" class="com.maddyhome.idea.copyright.actions.UpdateCopyrightAction" text="Update Copyright..." description="Generate/Update the copyright notice." icon="/resources/copyright18x18.png">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
-        <action id="GenerateCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Copyright" description="Generate/Update the copyright notice." icon="/copyright18x18.png">
+        <action id="GenerateCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Copyright" description="Generate/Update the copyright notice." icon="/resources/copyright18x18.png">
             <add-to-group group-id="GenerateGroup" anchor="last"/>
         </action>
-        <action id="UpdateFileCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Update Copyright" description="Generate/Update the copyright notice." icon="/copyright18x18.png">
+        <action id="UpdateFileCopyright" class="com.maddyhome.idea.copyright.actions.GenerateCopyrightAction" text="Update Copyright" description="Generate/Update the copyright notice." icon="/resources/copyright18x18.png">
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </action>
     </actions>
