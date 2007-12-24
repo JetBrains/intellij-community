@@ -20,6 +20,7 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 
 public interface NavigationItem extends Navigatable {
+  NavigationItem[] EMPTY_NAVIGATION_ITEM_ARRAY = new NavigationItem[0];
   @Nullable
   String getName();
   @Nullable
