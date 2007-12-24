@@ -22,7 +22,7 @@ public class SequenceIterator<T> implements Iterator<T> {
   private Iterator[] myIterators;
   private int myCurrentIndex;
 
-  public SequenceIterator(Iterator[] iterators){
+  public SequenceIterator(Iterator... iterators){
     myIterators = new Iterator[iterators.length];
     for (int i = 0; i < iterators.length; i++){
       Iterator iterator = iterators[i];
