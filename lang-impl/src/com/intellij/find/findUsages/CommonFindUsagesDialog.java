@@ -26,6 +26,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile,
           FindUsagesUtil.isSearchForTextOccurencesAvailable(element, isSingleFile), !isSingleFile && !element.getManager().isInProject(element));
     myPsiElement = element;
+    init();
   }
 
   protected JPanel createFindWhatPanel() {
