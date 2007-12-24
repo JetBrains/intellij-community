@@ -38,6 +38,10 @@ public class GrAnnotationTypeDefinitionImpl extends GrTypeDefinitionImpl impleme
     return true;
   }
 
+  protected String[] getExtendsNames() {
+    return new String[] {"Annotation"};
+  }
+
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return new PsiClassType[]{createAnnotationType()};

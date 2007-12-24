@@ -148,6 +148,35 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return findChildByClass(GrImplementsClause.class);
   }
 
+  public final String[] getSuperClassNames() {
+    return ArrayUtil.mergeArrays(getExtendsNames(), getImplementsNames(), String.class);
+  }
+
+  protected String[] getImplementsNames() {
+    GrImplementsClause implementsClause = getImplementsClause();
+    GrCodeReferenceElement[] implementsRefs = implementsClause != null ? implementsClause.getReferenceElements() : GrCodeReferenceElement.EMPTY_ARRAY;
+    ArrayList<String> implementsNames = new ArrayList<String>(implementsRefs.length);
+    for (GrCodeReferenceElement ref : implementsRefs) {
+      String name = ref.getReferenceName();
+      if (name != null) implementsNames.add(name);
+    }
+
+    String[] a2 = implementsNames.toArray(new String[implementsNames.size()]);
+    return a2;
+  }
+
+  protected String[] getExtendsNames() {
+    GrExtendsClause extendsClause = getExtendsClause();
+    GrCodeReferenceElement[] extendsRefs = extendsClause != null ? extendsClause.getReferenceElements() : GrCodeReferenceElement.EMPTY_ARRAY;
+    ArrayList<String> extendsNames = new ArrayList<String>(extendsRefs.length);
+    for (GrCodeReferenceElement ref : extendsRefs) {
+      String name = ref.getReferenceName();
+      if (name != null) extendsNames.add(name);
+    }
+    String[] a1 = extendsNames.toArray(new String[extendsNames.size()]);
+    return a1;
+  }
+
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
     PsiElement result = findChildByType(GroovyElementTypes.mIDENT);

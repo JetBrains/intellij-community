@@ -22,14 +22,10 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 
 /**
  * @autor: Dmitry.Krasilschikov
@@ -38,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements GrEnumTypeDefinition {
   @NonNls
   private static final String JAVA_LANG_ENUM = "java.lang.Enum";
+  private static final String ENUM_SIMPLE_NAME = "Enum";
 
   public GrEnumTypeDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -58,6 +55,10 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
     return new PsiClassType[]{createEnumType()};
+  }
+
+  protected String[] getExtendsNames() {
+    return new String[] {ENUM_SIMPLE_NAME};
   }
 
   private PsiClassType createEnumType() {

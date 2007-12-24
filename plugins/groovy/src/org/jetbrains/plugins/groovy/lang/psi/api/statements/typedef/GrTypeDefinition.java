@@ -59,4 +59,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   @Nullable
   GrImplementsClause getImplementsClause();
+
+  String[] getSuperClassNames();
 }
