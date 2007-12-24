@@ -212,7 +212,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
       if (PropertyUtil.isSimplePropertySetter(method) && !method.getName().equals(getReferenceName())) {
         result = method.getParameterList().getParameters()[0].getType();
       } else {
-        if ("java.lang.Object".equals(method.getContainingClass().getQualifiedName()) &&
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && "java.lang.Object".equals(containingClass.getQualifiedName()) &&
             "getClass".equals(method.getName())) {
           result = getTypeForObjectGetClass(manager, method);
         } else {

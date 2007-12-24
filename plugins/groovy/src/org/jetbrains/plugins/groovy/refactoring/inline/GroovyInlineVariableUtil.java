@@ -109,7 +109,7 @@ public class GroovyInlineVariableUtil {
   static InlineHandler.Settings inlineLocalVariableSettings(final GrVariable variable, Editor editor) {
     final String localName = variable.getName();
     final Project project = variable.getProject();
-    final Collection<PsiReference> refs = ReferencesSearch.search(variable, GlobalSearchScope.projectScope(variable.getProject()), false).findAll();
+    final Collection<PsiReference> refs = ReferencesSearch.search(variable).findAll();
     ArrayList<PsiElement> exprs = new ArrayList<PsiElement>();
     for (PsiReference ref : refs) {
       exprs.add(ref.getElement());
