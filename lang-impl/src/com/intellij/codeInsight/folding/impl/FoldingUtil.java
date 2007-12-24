@@ -4,21 +4,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
 class FoldingUtil {
+  private FoldingUtil() {}
 
-  public static FoldRegion findFoldRegion(Editor editor, PsiElement element) {
-    TextRange range = JavaFoldingBuilder.getRangeToFold(element);
-    if (range == null) return null;
-    return findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
-
-  }
-
+  @Nullable
   public static FoldRegion findFoldRegion(Editor editor, int startOffset, int endOffset) {
     FoldRegion[] foldRegions = ((FoldingModelEx)editor.getFoldingModel()).getAllFoldRegionsIncludingInvalid();
     for (FoldRegion region : foldRegions) {
@@ -56,10 +51,8 @@ class FoldingUtil {
     FoldRegion[] regions = list.toArray(new FoldRegion[list.size()]);
     Arrays.sort(
       regions,
-      new Comparator() {
-        public int compare(Object o1, Object o2) {
-          FoldRegion region1 = (FoldRegion)o1;
-          FoldRegion region2 = (FoldRegion)o2;
+      new Comparator<FoldRegion>() {
+        public int compare(FoldRegion region1, FoldRegion region2) {
           return region2.getStartOffset() - region1.getStartOffset();
         }
       }

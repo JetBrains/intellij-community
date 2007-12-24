@@ -1,5 +1,9 @@
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.folding.FoldingBuilder;
+import com.intellij.lang.folding.FoldingDescriptor;
+import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -77,15 +81,24 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
 
   void setToEditor(Editor editor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
-    if (PsiManager.getInstance(myProject).isDisposed()) return;
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    if (psiManager.isDisposed()) return;
 
+    final PsiFile psiFile = psiManager.findFile(myFile);
+    if (psiFile == null) return;
+
+    Map<PsiElement, TextRange> ranges = null;
     for(int i = 0; i < myPsiElementsOrRangeMarkers.size(); i++){
       Object o = myPsiElementsOrRangeMarkers.get(i);
       if (o instanceof PsiElement){
         PsiElement element = (PsiElement)o;
         if (!element.isValid()) continue;
-        FoldRegion region = FoldingUtil.findFoldRegion(editor, element);
-        if (region != null){
+        if (ranges == null) ranges = buildRanges(editor, psiFile);
+        TextRange range = ranges.get(element);
+        if (range == null) continue;
+        
+        FoldRegion region = FoldingUtil.findFoldRegion(editor, range.getStartOffset(), range.getEndOffset());
+        if (region != null) {
           boolean state = myExpandedStates.get(i).booleanValue();
           region.setExpanded(state);
         }
@@ -108,6 +121,20 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
         LOG.error("o = " + o);
       }
     }
+  }
+
+  private static Map<PsiElement, TextRange> buildRanges(final Editor editor, final PsiFile psiFile) {
+    final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
+    final FoldingDescriptor[] descriptors = foldingBuilder.buildFoldRegions(psiFile.getNode(), editor.getDocument());
+    Map<PsiElement, TextRange> ranges = new HashMap<PsiElement, TextRange>();
+    for (FoldingDescriptor descriptor : descriptors) {
+      final ASTNode ast = descriptor.getElement();
+      final PsiElement psi = ast.getPsi();
+      if (psi != null) {
+        ranges.put(psi, descriptor.getRange());
+      }
+    }
+    return ranges;
   }
 
   public void clear() {

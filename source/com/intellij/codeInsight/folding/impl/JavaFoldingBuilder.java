@@ -17,6 +17,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -205,6 +206,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     return false;
   }
 
+  @Nullable
   public static TextRange getRangeToFold(PsiElement element) {
     if (element instanceof PsiMethod) {
       if (element instanceof JspHolderMethod) return null;
@@ -261,6 +263,7 @@ public class JavaFoldingBuilder implements FoldingBuilder {
     return null;
   }
 
+  @Nullable
   private static TextRange getFileHeader(PsiJavaFile file) {
     PsiElement first = file.getFirstChild();
     if (first instanceof PsiWhiteSpace) first = first.getNextSibling();
@@ -292,6 +295,8 @@ public class JavaFoldingBuilder implements FoldingBuilder {
           PsiElement nextChild = children[j];
           if (nextChild instanceof PsiModifier) break;
         }
+
+        //noinspection AssignmentToForLoopParameter
         i = j;
       }
     }

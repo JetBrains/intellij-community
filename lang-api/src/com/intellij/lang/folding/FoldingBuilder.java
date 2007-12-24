@@ -16,6 +16,7 @@
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 
 /**
@@ -23,7 +24,7 @@ import com.intellij.openapi.editor.Document;
  * by the plugin.
  *
  * @author max
- * @see com.intellij.lang.Language#getFoldingBuilder()
+ * @see LanguageFolding#forLanguage(Language)
  */
 
 public interface FoldingBuilder {
