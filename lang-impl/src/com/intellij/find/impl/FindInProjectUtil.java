@@ -4,7 +4,7 @@ import com.intellij.find.*;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -64,7 +64,7 @@ public class FindInProjectUtil {
   private FindInProjectUtil() {}
 
   public static void setDirectoryName(FindModel model, DataContext dataContext) {
-    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
     String directoryName = null;
 
@@ -72,7 +72,7 @@ public class FindInProjectUtil {
       directoryName = ((PsiDirectory)psiElement).getVirtualFile().getPresentableUrl();
     }
     else {
-      final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+      final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
       if (psiFile != null) {
         PsiDirectory psiDirectory = psiFile.getContainingDirectory();
         if (psiDirectory != null) {
@@ -86,7 +86,7 @@ public class FindInProjectUtil {
       directoryName = directories.length == 1 ? directories[0].getVirtualFile().getPresentableUrl():null;
     }
 
-    Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
+    Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     if (module != null) {
       model.setModuleName(module.getName());
     }

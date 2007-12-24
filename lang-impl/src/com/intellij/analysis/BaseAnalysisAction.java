@@ -34,16 +34,16 @@ public abstract class BaseAnalysisAction extends AnAction {
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null || DataKeys.PSI_FILE.getData(event.getDataContext()) != null);
+      getInspectionScope(event.getDataContext()) != null || LangDataKeys.PSI_FILE.getData(event.getDataContext()) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final Module module = e.getData(DataKeys.MODULE);
+    final Module module = e.getData(LangDataKeys.MODULE);
     if (project != null) {
       AnalysisScope scope;
-      PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
+      PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
       if (psiFile != null) {
         scope = new AnalysisScope(psiFile);
       }
@@ -124,21 +124,21 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(projectContext);
     }
 
-    Module moduleContext = DataKeys.MODULE_CONTEXT.getData(dataContext);
+    Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     if (moduleContext != null) {
       return new AnalysisScope(moduleContext);
     }
 
-    Module [] modulesArray = DataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     if (modulesArray != null) {
       return new AnalysisScope(modulesArray);
     }
-    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
       return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile) : null;
     }
 
-    PsiElement psiTarget = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;

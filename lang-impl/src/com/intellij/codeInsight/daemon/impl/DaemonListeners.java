@@ -347,7 +347,7 @@ public class DaemonListeners {
     }
 
     public void beforeEditorTyping(char c, DataContext dataContext) {
-      if (DataKeys.PSI_FILE.getData(dataContext) == null) return; //no need to stop daemon if something happened in the console
+      if (LangDataKeys.PSI_FILE.getData(dataContext) == null) return; //no need to stop daemon if something happened in the console
 
       stopDaemon(true);
     }

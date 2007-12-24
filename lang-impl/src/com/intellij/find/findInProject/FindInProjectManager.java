@@ -6,7 +6,7 @@ import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -63,7 +63,7 @@ public class FindInProjectManager {
     findModel.setOpenInNewTab(toOpenInNewTab[0]);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       String s = editor.getSelectionModel().getSelectedText();
       if (s != null && !s.contains("\r") && !s.contains("\n")){

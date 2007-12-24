@@ -19,7 +19,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
     if (project == null){
       return;
     }
-    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null){
       analyze(project, psiFile);
     }
@@ -40,7 +40,7 @@ public class CodeInspectionOnEditorAction extends AnAction {
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     e.getPresentation().setEnabled(project != null && psiFile != null  && DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile));
   }
 }

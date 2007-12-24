@@ -64,8 +64,8 @@ public class ShowImplementationsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
-    PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
 
     if (project == null || file == null) return;
 
@@ -82,7 +82,7 @@ public class ShowImplementationsAction extends AnAction {
                                                     | TargetElementUtil.SUPER_ACCEPTED);
     }
     else {
-      element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file.getVirtualFile());
       if (fileEditor instanceof TextEditor) {
         editor = ((TextEditor)fileEditor).getEditor();

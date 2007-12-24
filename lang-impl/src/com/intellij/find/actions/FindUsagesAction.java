@@ -6,7 +6,6 @@ import com.intellij.find.FindBundle;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -40,7 +39,7 @@ public class FindUsagesAction extends AnAction {
   }
 
   private static void chooseAmbiguousTarget(final AnActionEvent e, final Project project) {
-    Editor editor = e.getData(DataKeys.EDITOR);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null) {
       int offset = editor.getCaretModel().getOffset();
       if (GotoDeclarationAction.chooseAmbiguousTarget(project, editor, offset, new PsiElementProcessor<PsiElement>() {

@@ -55,7 +55,7 @@ public class FindUsagesInFileAction extends AnAction {
       return false;
     }
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 

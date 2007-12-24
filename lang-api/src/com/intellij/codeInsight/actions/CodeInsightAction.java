@@ -40,7 +40,7 @@ public abstract class CodeInsightAction extends AnAction {
 
   @Nullable
   protected Editor getEditor(final DataContext dataContext, final Project project) {
-    return DataKeys.EDITOR.getData(dataContext);
+    return PlatformDataKeys.EDITOR.getData(dataContext);
   }
 
   public void actionPerformedImpl(final Project project, final Editor editor) {
