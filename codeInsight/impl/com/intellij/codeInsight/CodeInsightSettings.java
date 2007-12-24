@@ -2,6 +2,9 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.*;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.DefaultBraceMatcher;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
+import com.intellij.codeInsight.highlighting.HtmlBraceMatcher;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -146,11 +149,11 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)));
 
-      final BraceMatchingUtil.BraceMatcher defaultBraceMatcher = new BraceMatchingUtil.DefaultBraceMatcher();
+      final BraceMatcher defaultBraceMatcher = new DefaultBraceMatcher();
       BraceMatchingUtil.registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
       BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
 
-      BraceMatchingUtil.HtmlBraceMatcher braceMatcher = new BraceMatchingUtil.HtmlBraceMatcher();
+      HtmlBraceMatcher braceMatcher = new HtmlBraceMatcher();
       BraceMatchingUtil.registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
       BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
 

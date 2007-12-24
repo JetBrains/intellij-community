@@ -3,6 +3,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
@@ -271,7 +272,7 @@ public class TypedHandler implements TypedActionHandler {
     boolean atEndOfDocument = offset == editor.getDocument().getTextLength();
 
     if (!atEndOfDocument) iterator.retreat();
-    BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
     IElementType braceTokenType = braceMatcher.getTokenType(lparenChar, iterator);
     if (iterator.atEnd() || iterator.getTokenType() != braceTokenType) return;
 
@@ -320,7 +321,7 @@ public class TypedHandler implements TypedActionHandler {
     if (offset == editor.getDocument().getTextLength()) return false;
 
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
     if (iterator.atEnd() || braceMatcher.getTokenType(rightParen,iterator) != iterator.getTokenType()) {
       return false;
     }

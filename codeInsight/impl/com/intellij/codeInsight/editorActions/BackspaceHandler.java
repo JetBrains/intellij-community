@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -86,7 +87,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       }
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-      BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+      BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
       if (!braceMatcher.isLBraceToken(iterator, chars, fileType) &&
           !braceMatcher.isRBraceToken(iterator, chars, fileType)
           ) {

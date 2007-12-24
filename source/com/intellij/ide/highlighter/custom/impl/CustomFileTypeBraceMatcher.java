@@ -1,6 +1,6 @@
 package com.intellij.ide.highlighter.custom.impl;
 
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.CustomHighlighterTokenType;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * Time: 8:36:58 PM
  * To change this template use File | Settings | File Templates.
  */
-class CustomFileTypeBraceMatcher implements BraceMatchingUtil.BraceMatcher {
+class CustomFileTypeBraceMatcher implements BraceMatcher {
   public int getTokenGroup(IElementType tokenType) {
     return 777;
   }

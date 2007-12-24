@@ -7,6 +7,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
@@ -361,7 +362,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    BraceMatchingUtil.BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
 
     if (!braceMatcher.isLBraceToken(iterator, chars, fileType) ||
         !braceMatcher.isStructuralBrace(iterator, chars, fileType)
