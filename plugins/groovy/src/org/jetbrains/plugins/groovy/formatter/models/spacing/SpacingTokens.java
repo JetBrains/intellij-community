@@ -48,7 +48,4 @@ public abstract class SpacingTokens implements GroovyElementTypes {
   protected final static TokenSet PREFIXES_OPTIONAL = TokenSet.create(mPLUS, mMINUS);
 
   protected final static TokenSet RANGES = TokenSet.create(mRANGE_EXCLUSIVE, mRANGE_INCLUSIVE);
-
-  protected final static TokenSet BLOCKS = TokenSet.create(OPEN_BLOCK, CLASS_BODY);
-
 }

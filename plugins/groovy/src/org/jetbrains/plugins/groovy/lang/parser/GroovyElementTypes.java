@@ -219,5 +219,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
       BLOCK_STATEMENT,
       OPEN_BLOCK,
+      ENUM_BODY,
       CLASS_BODY);
 }

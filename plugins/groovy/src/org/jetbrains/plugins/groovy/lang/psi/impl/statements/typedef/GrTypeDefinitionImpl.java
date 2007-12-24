@@ -393,12 +393,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public final PsiClassType[] getSuperTypes() {
-    PsiClassType[] extendsTypes = getExtendsListTypes();
-    PsiClassType[] implementsTypes = getImplementsListTypes();
-    if (extendsTypes.length == 0) return implementsTypes;
-    if (implementsTypes.length == 0) return extendsTypes;
-
-    return ArrayUtil.mergeArrays(extendsTypes, implementsTypes, PsiClassType.class);
+    return ArrayUtil.mergeArrays(getExtendsListTypes(), getImplementsListTypes(), PsiClassType.class);
   }
 
   @NotNull
