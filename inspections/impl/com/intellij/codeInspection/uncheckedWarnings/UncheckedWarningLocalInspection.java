@@ -39,4 +39,8 @@ public class UncheckedWarningLocalInspection extends UnfairLocalInspectionTool {
   public String getID() {
     return ID;
   }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 }

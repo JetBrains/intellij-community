@@ -23,8 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -98,5 +98,9 @@ public class RequiredAttributesInspection extends UnfairLocalInspectionTool impl
 
   public void setAdditionalEntries(int type, String additionalEntries) {
     myAdditionalRequiredHtmlAttributes = additionalEntries;
+  }
+
+  public boolean isEnabledByDefault() {
+    return true;
   }
 }

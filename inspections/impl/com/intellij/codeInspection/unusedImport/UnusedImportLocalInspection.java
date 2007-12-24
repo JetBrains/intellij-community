@@ -33,4 +33,8 @@ public class UnusedImportLocalInspection extends UnfairLocalInspectionTool {
   public String getShortName() {
     return SHORT_NAME;
   }
+
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 }

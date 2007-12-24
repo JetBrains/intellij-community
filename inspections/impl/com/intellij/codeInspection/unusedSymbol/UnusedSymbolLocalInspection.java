@@ -76,6 +76,10 @@ public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
     return ID;
   }
 
+  public boolean isEnabledByDefault() {
+    return true;
+  }
+
   public class OptionsPanel {
     private JCheckBox myCheckLocalVariablesCheckBox;
     private JCheckBox myCheckClassesCheckBox;
