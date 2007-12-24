@@ -1,2 +1,2 @@
 Features:
-- Groovy support (requires GroovyJ plugin).
+- Groovy support
