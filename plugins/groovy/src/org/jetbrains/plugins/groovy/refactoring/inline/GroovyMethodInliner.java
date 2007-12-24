@@ -159,7 +159,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       assert body != null;
       GrStatement[] statements = body.getStatements();
       GrExpression replaced = null;
-      if (replaceCall && !isTailMethodCall) {
+      if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
         GrExpression resultExpr;
         if (PsiType.VOID == methodType) {
           resultExpr = factory.createExpressionFromText("null");
@@ -226,7 +226,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           owner.addStatementBefore(statement, anchor);
         }
       }
-      if (replaceCall && !isTailMethodCall) {
+      if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
         assert replaced != null;
         SmartPsiElementPointer<GrExpression> pointer = SmartPointerManager.getInstance(replaced.getProject()).createSmartPsiElementPointer(replaced);
         reformatOwner(owner);
