@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.xml.XmlFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -94,8 +93,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
       final ASTNode node = child.getNode();
-      if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken ||
-          node != null && PropertiesTokenTypes.PROPERTIES_TYPES_TO_IGNORE.contains(node.getElementType())) {
+      if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken) {
         myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, child);
         return;
       }

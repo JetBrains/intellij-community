@@ -3,10 +3,6 @@ package com.intellij.find.impl;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindSettings;
-import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
@@ -75,11 +71,11 @@ public class FindSettingsImpl extends FindSettings implements ApplicationCompone
   public void readExternal(Element element) throws InvalidDataException{
     DefaultJDOMExternalizer.readExternal(this, element);
     if (RECENT_FILE_MASKS.isEmpty()) {
-      RECENT_FILE_MASKS.add("*" + PropertiesFileType.DOT_DEFAULT_EXTENSION);
-      RECENT_FILE_MASKS.add("*" + HtmlFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*.properites");
+      RECENT_FILE_MASKS.add("*.html");
       RECENT_FILE_MASKS.add("*.jsp");
-      RECENT_FILE_MASKS.add("*" + XmlFileType.DOT_DEFAULT_EXTENSION);
-      RECENT_FILE_MASKS.add("*" + JavaFileType.DOT_DEFAULT_EXTENSION);
+      RECENT_FILE_MASKS.add("*.xml");
+      RECENT_FILE_MASKS.add("*.java");
     }
   }
 
