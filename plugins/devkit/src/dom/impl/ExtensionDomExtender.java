@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
@@ -29,8 +28,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   public Object[] registerExtensions(@NotNull final Extensions extensions, @NotNull final DomExtensionsRegistrar registrar) {
     final XmlElement xmlElement = extensions.getXmlElement();
     if (xmlElement == null) return new Object[0];
-    final XmlFile xmlFile = (XmlFile)xmlElement.getContainingFile();
-    final PsiManager psiManager = xmlFile.getManager();
+    final PsiManager psiManager = xmlElement.getManager();
 
     IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
 
@@ -47,7 +45,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       deps.add(plugin.<DomElement>getRoot());
     }
 
-    deps.add(ProjectRootManager.getInstance(xmlFile.getProject()));
+    deps.add(ProjectRootManager.getInstance(xmlElement.getProject()));
     deps.add(ideaPlugin.getRoot());
 
     //dependencies
