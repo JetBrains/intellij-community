@@ -123,6 +123,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
     if (method == null) return;
     if (!CodeInsightUtil.prepareFileForWrite(method.getContainingFile())) return;
 
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method);
+    assert handler != null;
+
     final FindUsagesOptions options = new FindUsagesOptions(project);
     options.isImplementingMethods = true;
     options.isMethodsUsages = true;
@@ -138,9 +142,6 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction {
           }
         };
         
-        FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-        FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method);
-        assert handler != null;
         handler.processElementUsages(method, processor, options);
       }
     };
