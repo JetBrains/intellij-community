@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -97,13 +96,6 @@ public class IntentionManagerImpl extends IntentionManager {
     List<IntentionAction> options = new ArrayList<IntentionAction>(9);
     options.add(new EditInspectionToolsSettingsAction(displayKey));
     options.add(new RunInspectionIntention(displayKey));
-    options.add(new AddNoInspectionCommentFix(displayKey, context));
-    options.add(new AddNoInspectionDocTagFix(displayKey, context));
-    options.add(new AddNoInspectionForClassFix(displayKey, context));
-    options.add(new AddNoInspectionAllForClassFix(context));
-    options.add(new AddSuppressWarningsAnnotationFix(displayKey, context));
-    options.add(new AddSuppressWarningsAnnotationForClassFix(displayKey, context));
-    options.add(new AddSuppressWarningsAnnotationForAllFix(context));
     options.add(new DisableInspectionToolAction(displayKey));
     return options;
   }

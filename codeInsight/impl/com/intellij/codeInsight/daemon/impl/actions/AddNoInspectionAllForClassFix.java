@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
+import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -56,9 +56,9 @@ public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
     if (status.hasReadonlyFiles()) return;
     PsiDocComment docComment = container.getDocComment();
     if (docComment != null){
-      PsiDocTag noInspectionTag = docComment.findTagByName(GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+      PsiDocTag noInspectionTag = docComment.findTagByName(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
-        String tagText = "@" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
+        String tagText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
         noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
         DaemonCodeAnalyzer.getInstance(project).restart();
         return;

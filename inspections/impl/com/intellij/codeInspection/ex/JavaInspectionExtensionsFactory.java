@@ -5,6 +5,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.HTMLComposer;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.lang.HTMLComposerExtension;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
@@ -31,12 +32,12 @@ public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory
   }
 
   public boolean isToCheckMember(final PsiElement element, final String id) {
-    return GlobalJavaInspectionContextImpl.getElementToolSuppressedIn(element, id) == null;
+    return SuppressManager.getInstance().getElementToolSuppressedIn(element, id) == null;
   }
 
   @Nullable
   public String getSuppressedInspectionIdsIn(final PsiElement element) {
-    return GlobalJavaInspectionContextImpl.getSuppressedInspectionIdsIn(element);
+    return SuppressManager.getInstance().getSuppressedInspectionIdsIn(element);
   }
 
   public boolean isProjectConfiguredToRunInspections(final Project project, final boolean online) {

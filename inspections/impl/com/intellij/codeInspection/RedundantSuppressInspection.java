@@ -102,7 +102,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
 
       private void checkElement(final PsiElement owner) {
-        String idsString = GlobalJavaInspectionContextImpl.getSuppressedInspectionIdsIn(owner);
+        String idsString = SuppressManager.getInstance().getSuppressedInspectionIdsIn(owner);
         if (idsString != null && idsString.length() != 0) {
           List<String> ids = StringUtil.split(idsString, ",");
           Collection<String> suppressed = suppressedScopes.get(owner);
@@ -178,7 +178,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
             if (!(descriptor instanceof ProblemDescriptor)) continue;
             PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
             if (element == null) continue;
-            PsiElement annotation = GlobalJavaInspectionContextImpl.getElementToolSuppressedIn(element, toolId);
+            PsiElement annotation = SuppressManager.getInstance().getElementToolSuppressedIn(element, toolId);
             if (annotation != null && PsiTreeUtil.isAncestor(suppressedScope, annotation, false)) {
               hasErrorInsideSuppressedScope = true;
               break;

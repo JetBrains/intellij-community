@@ -18,6 +18,7 @@ package com.intellij.codeInspection.htmlInspections;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
@@ -36,7 +37,7 @@ import java.awt.*;
  * User: anna
  * Date: 18-Nov-2005
  */
-public class RequiredAttributesInspection extends UnfairLocalInspectionTool implements XmlEntitiesInspection {
+public class RequiredAttributesInspection extends XmlSuppressableInspectionTool implements XmlEntitiesInspection, UnfairLocalInspectionTool {
 
   public String myAdditionalRequiredHtmlAttributes = "";
 

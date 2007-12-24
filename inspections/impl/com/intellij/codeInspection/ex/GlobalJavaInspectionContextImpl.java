@@ -24,30 +24,20 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
   private static final Logger LOG = Logger.getInstance("#" + GlobalJavaInspectionContextImpl.class.getName());
@@ -57,11 +47,6 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   private THashMap<PsiElement, List<UsagesProcessor>> myMethodUsagesRequests;
   private THashMap<PsiElement, List<UsagesProcessor>> myFieldUsagesRequests;
   private THashMap<PsiElement, List<UsagesProcessor>> myClassUsagesRequests;
-  @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
-  public static final String SUPPRESS_INSPECTIONS_ANNOTATION_NAME = "java.lang.SuppressWarnings";
-  @NonNls public static final Pattern SUPPRESS_IN_LINE_COMMENT_PATTERN =
-    Pattern.compile("//\\s*" + SUPPRESS_INSPECTIONS_TAG_NAME + "\\s+(\\w+(s*,\\w+)*)");
-
 
 
   public void enqueueClassUsagesProcessor(RefClass refClass, UsagesProcessor p) {
@@ -392,199 +377,4 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     while (!needRepeatSearchRequest.isEmpty());
   }
 
-  public static boolean isToCheckMember(PsiDocCommentOwner owner, @NonNls String inspectionToolID) {
-    return getElementMemberSuppressedIn(owner, inspectionToolID) == null;
-  }
-
-  @Nullable
-  public static PsiElement getElementMemberSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
-    PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
-    if (element != null) return element;
-    element = getAnnotationMemberSuppressedIn(owner, inspectionToolID);
-    if (element != null) return element;
-    PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(owner, PsiClass.class);
-    while (classContainer != null) {
-      element = getDocCommentToolSuppressedIn(classContainer, inspectionToolID);
-      if (element != null) return element;
-
-      element = getAnnotationMemberSuppressedIn(classContainer, inspectionToolID);
-      if (element != null) return element;
-
-      classContainer = PsiTreeUtil.getParentOfType(classContainer, PsiClass.class);
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiElement getAnnotationMemberSuppressedIn(final PsiModifierListOwner owner, final String inspectionToolID) {
-    PsiModifierList modifierList = owner.getModifierList();
-    Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
-    for (String ids : suppressedIds) {
-      if (isInspectionToolIdMentioned(ids, inspectionToolID)) {
-        return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiElement getDocCommentToolSuppressedIn(final PsiDocCommentOwner owner, final String inspectionToolID) {
-    PsiDocComment docComment = owner.getDocComment();
-    if (docComment != null) {
-      PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
-      if (inspectionTag != null) {
-        final PsiElement[] dataElements = inspectionTag.getDataElements();
-        for (PsiElement dataElement : dataElements) {
-          String valueText = dataElement.getText();
-          if (isInspectionToolIdMentioned(valueText, inspectionToolID)) {
-            return docComment;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  public static boolean isInspectionToolIdMentioned(String inspectionsList, String inspectionToolID) {
-    Iterable<String> ids = StringUtil.tokenize(inspectionsList, "[,]");
-
-    for (@NonNls String id : ids) {
-      if (id.equals(inspectionToolID) || id.equals("ALL")) return true;
-    }
-    return false;
-  }
-
-  @NotNull
-  public static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierListOwner owner) {
-    if (LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(owner)) > 0) return Collections.emptyList();
-    PsiModifierList modifierList = owner.getModifierList();
-    return getInspectionIdsSuppressedInAnnotation(modifierList);
-  }
-
-  @NotNull
-  public static Collection<String> getInspectionIdsSuppressedInAnnotation(final PsiModifierList modifierList) {
-    if (modifierList == null) {
-      return Collections.emptyList();
-    }
-    PsiAnnotation annotation = modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
-    if (annotation == null) {
-      return Collections.emptyList();
-    }
-    final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
-    if (attributes.length == 0) {
-      return Collections.emptyList();
-    }
-    final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-    Collection<String> result = new ArrayList<String>();
-    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
-      final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-      for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
-        final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);
-        if (id != null) {
-          result.add(id);
-        }
-      }
-    }
-    else {
-      final String id = getInspectionIdSuppressedInAnnotationAttribute(attributeValue);
-      if (id != null) {
-        result.add(id);
-      }
-    }
-    return result;
-  }
-
-  @Nullable
-  public static String getInspectionIdSuppressedInAnnotationAttribute(PsiElement element) {
-    if (element instanceof PsiLiteralExpression) {
-      final Object value = ((PsiLiteralExpression)element).getValue();
-      if (value instanceof String) {
-        return (String)value;
-      }
-    }
-    else if (element instanceof PsiReferenceExpression) {
-      final PsiElement psiElement = ((PsiReferenceExpression)element).resolve();
-      if (psiElement instanceof PsiVariableEx) {
-        final Object val = ((PsiVariableEx)psiElement).computeConstantValue(new HashSet<PsiVariable>());
-        if (val instanceof String) {
-          return (String)val;
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static String getSuppressedInspectionIdsIn(PsiElement element) {
-    if (element instanceof PsiComment) {
-      String text = element.getText();
-      Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
-      if (matcher.matches()) {
-        return matcher.group(1);
-      }
-    }
-    if (element instanceof PsiDocCommentOwner) {
-      PsiDocComment docComment = ((PsiDocCommentOwner)element).getDocComment();
-      if (docComment != null) {
-        PsiDocTag inspectionTag = docComment.findTagByName(SUPPRESS_INSPECTIONS_TAG_NAME);
-        if (inspectionTag != null) {
-          String valueText = "";
-          for (PsiElement dataElement : inspectionTag.getDataElements()) {
-            valueText += dataElement.getText();
-          }
-          return valueText;
-        }
-      }
-    }
-    if (element instanceof PsiModifierListOwner) {
-      Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation((PsiModifierListOwner)element);
-      return suppressedIds.isEmpty() ? null : StringUtil.join(suppressedIds, ",");
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiElement getElementToolSuppressedIn(final PsiElement place, final String toolId) {
-    if (place == null) return null;
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Nullable
-      public PsiElement compute() {
-        PsiStatement statement = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class);
-        if (statement != null) {
-          PsiElement prev = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class);
-          if (prev instanceof PsiComment) {
-            String text = prev.getText();
-            Matcher matcher = SUPPRESS_IN_LINE_COMMENT_PATTERN.matcher(text);
-            if (matcher.matches() && isInspectionToolIdMentioned(matcher.group(1), toolId)) {
-              return prev;
-            }
-          }
-        }
-
-        PsiLocalVariable local = PsiTreeUtil.getParentOfType(place, PsiLocalVariable.class);
-        if (local != null && getAnnotationMemberSuppressedIn(local, toolId) != null) {
-          PsiModifierList modifierList = local.getModifierList();
-          return modifierList != null ? modifierList.findAnnotation(SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
-        }
-
-        PsiElement container = PsiTreeUtil.getNonStrictParentOfType(place, PsiDocCommentOwner.class);
-        while (true) {
-          if (!(container instanceof PsiTypeParameter)) break;
-          container = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class);
-        }
-
-        if (container != null) {
-          PsiElement element = getElementMemberSuppressedIn((PsiDocCommentOwner)container, toolId);
-          if (element != null) return element;
-        }
-        PsiDocCommentOwner classContainer = PsiTreeUtil.getParentOfType(container, PsiDocCommentOwner.class, true);
-        if (classContainer != null) {
-          PsiElement element = getElementMemberSuppressedIn(classContainer, toolId);
-          if (element != null) return element;
-        }
-
-        return null;
-      }
-    });
-  }
 }

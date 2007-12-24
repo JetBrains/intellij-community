@@ -9,7 +9,6 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionDocTagFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressWarningsAnnotationFix;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -173,8 +172,8 @@ class SuppressActionWrapper extends AnAction {
       }
     }
 
-    if (SuppressUtil.canHave15Suppressions(context.getContainingFile())) {
-      if (!(context instanceof PsiDocCommentOwner && SuppressUtil.alreadyHas14Suppressions((PsiDocCommentOwner)context))) {
+    if (SuppressManager.getInstance().canHave15Suppressions(context.getContainingFile())) {
+      if (!(context instanceof PsiDocCommentOwner && SuppressManager.getInstance().alreadyHas14Suppressions((PsiDocCommentOwner)context))) {
         return myClassToSuppress ? new AddSuppressWarningsAnnotationFix(myID, context) {
           @Nullable
           protected PsiModifierListOwner getContainer() {

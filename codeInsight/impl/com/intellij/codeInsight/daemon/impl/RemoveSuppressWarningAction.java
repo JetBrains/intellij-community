@@ -4,7 +4,8 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
+import com.intellij.codeInspection.SuppressManager;
+import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -58,7 +59,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
         final PsiIdentifier identifier = (PsiIdentifier)element;
         final PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(identifier, PsiDocCommentOwner.class);
         if (commentOwner != null) {
-          final PsiElement psiElement = GlobalJavaInspectionContextImpl.getElementMemberSuppressedIn(commentOwner, myID);
+          final PsiElement psiElement = SuppressManager.getInstance().getElementMemberSuppressedIn(commentOwner, myID);
           if (psiElement instanceof PsiAnnotation) {
             removeFromAnnotation((PsiAnnotation)psiElement);
           } else if (psiElement instanceof PsiDocComment) {
@@ -107,21 +108,21 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       }
       else {
         PsiComment newComment = JavaPsiFacade.getInstance(comment.getProject()).getElementFactory()
-          .createCommentFromText("// " + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
+          .createCommentFromText("// " + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME+" "+newText, comment);
         comment.replace(newComment);
       }
     }
   }
 
   private void removeFromJavaDoc(PsiDocComment docComment) throws IncorrectOperationException {
-    PsiDocTag tag = docComment.findTagByName(GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+    PsiDocTag tag = docComment.findTagByName(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
     if (tag == null) return;
     String newText = removeFromElementText(tag.getDataElements());
     if (newText != null && newText.length() == 0) {
       tag.delete();
     }
     else if (newText != null) {
-      newText = "@" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
+      newText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
       PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText, tag);
       tag.replace(newTag);
     }
@@ -134,7 +135,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       text += StringUtil.trimStart(element.getText(), "//").trim();
     }
     text = StringUtil.trimStart(text, "@").trim();
-    text = StringUtil.trimStart(text, GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
+    text = StringUtil.trimStart(text, SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
     List<String> ids = StringUtil.split(text, ",");
     int i = ArrayUtil.find(ids.toArray(), myID);
     if (i==-1) return null;

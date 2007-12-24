@@ -2,11 +2,11 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.SuppressUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
+import com.intellij.codeInspection.SuppressManager;
+import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -77,7 +77,7 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
     final PsiDocCommentOwner container = getContainer();
     final boolean isValid = container != null && !(container instanceof JspHolderMethod);
     if (!isValid) return false;
-    if (SuppressUtil.canHave15Suppressions(file) && !SuppressUtil.alreadyHas14Suppressions(container)) return false;
+    if (SuppressManager.getInstance().canHave15Suppressions(file) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) return false;
     PsiElement context = myContext.getElement();
     return context != null && context.getManager().isInProject(context);
   }
@@ -91,19 +91,19 @@ public class AddNoInspectionDocTagFix implements IntentionAction {
     PsiDocComment docComment = container.getDocComment();
     PsiManager manager = PsiManager.getInstance(project);
     if (docComment == null) {
-      String commentText = "/** @" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
+      String commentText = "/** @" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "+ myID + "*/";
       docComment = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocCommentFromText(commentText, null);
       PsiElement firstChild = container.getFirstChild();
       container.addBefore(docComment, firstChild);
     } else {
-      PsiDocTag noInspectionTag = docComment.findTagByName(GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+      PsiDocTag noInspectionTag = docComment.findTagByName(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
       if (noInspectionTag != null) {
         final PsiDocTagValue valueElement = noInspectionTag.getValueElement();
-        String tagText = "@" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
+        String tagText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " "
                          + (valueElement != null ? valueElement.getText() + "," : "")+ myID;
         noInspectionTag.replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
       } else {
-        String tagText = "@" + GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
+        String tagText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID;
         docComment.add(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createDocTagFromText(tagText, null));
       }
     }

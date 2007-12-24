@@ -4,11 +4,9 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-
 /**
  * User: anna
  * Date: 22-Feb-2006
  */
-public abstract class UnfairLocalInspectionTool extends LocalInspectionTool {
+public interface UnfairLocalInspectionTool  {
 }

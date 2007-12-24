@@ -4,17 +4,18 @@
 
 package com.intellij.xml.util;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
 import com.intellij.xml.XmlBundle;
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim Mossienko
  */
-public class CheckXmlFileWithXercesValidatorInspection extends UnfairLocalInspectionTool {
+public class CheckXmlFileWithXercesValidatorInspection extends XmlSuppressableInspectionTool implements UnfairLocalInspectionTool {
   public static final @NonNls String SHORT_NAME = "CheckXmlFileWithXercesValidator";
 
   public boolean isEnabledByDefault() {

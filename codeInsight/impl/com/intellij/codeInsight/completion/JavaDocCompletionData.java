@@ -4,7 +4,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
+import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.openapi.diagnostic.Logger;
@@ -122,7 +122,7 @@ public class JavaDocCompletionData extends CompletionData {
       final JavadocManager manager = JavaPsiFacade.getInstance(context.file.getProject()).getJavadocManager();
       final JavadocTagInfo[] infos = manager.getTagInfos(parent);
       for (JavadocTagInfo info : infos) {
-        if (info.getName().equals(GlobalJavaInspectionContextImpl.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
+        if (info.getName().equals(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME)) continue;
         if (isInline != (info.isInline())) continue;
         ret.add(info.getName());
       }

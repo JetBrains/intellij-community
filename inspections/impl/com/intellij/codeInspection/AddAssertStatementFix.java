@@ -1,6 +1,5 @@
 package com.intellij.codeInspection;
 
-import com.intellij.codeInspection.ex.GlobalJavaInspectionContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +31,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
     PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorElement != null);
     PsiElement prev = PsiTreeUtil.skipSiblingsBackward(anchorElement, PsiWhiteSpace.class);
-    if (prev instanceof PsiComment && GlobalJavaInspectionContextImpl.getSuppressedInspectionIdsIn(prev) != null) {
+    if (prev instanceof PsiComment && SuppressManager.getInstance().getSuppressedInspectionIdsIn(prev) != null) {
       anchorElement = prev;
     }
 

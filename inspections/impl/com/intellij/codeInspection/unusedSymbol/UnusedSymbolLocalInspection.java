@@ -9,6 +9,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedCodeExtension;
 import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
@@ -34,7 +35,7 @@ import java.util.List;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends UnfairLocalInspectionTool {
+public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
   public static final Collection<String> STANDARD_INJECTION_ANNOS = Collections.unmodifiableCollection(new HashSet<String>(Arrays.asList(
     "javax.annotation.Resource", "javax.ejb.EJB", "javax.xml.ws.WebServiceRef", "javax.persistence.PersistenceContext",
     "javax.persistence.PersistenceUnit", "javax.persistence.GeneratedValue")));
