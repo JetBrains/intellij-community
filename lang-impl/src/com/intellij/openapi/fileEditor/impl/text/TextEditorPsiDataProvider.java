@@ -1,19 +1,19 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
-import com.intellij.openapi.fileEditor.EditorDataProvider;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.lang.Language;
-import com.intellij.codeInsight.TargetElementUtil;
 import org.jetbrains.annotations.Nullable;
 
 public class TextEditorPsiDataProvider implements EditorDataProvider {
@@ -69,9 +69,8 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   private PsiElement getPsiElementIn(final Editor editor, VirtualFile file) {
     final PsiFile psiFile = getPsiFile(editor, file);
     if (psiFile == null) return null;
+
     return TargetElementUtil.findTargetElement(editor,
-                                          TargetElementUtil.THROW_STATEMENT_ACCEPTED |
-                                          TargetElementUtil.THROWS_ACCEPTED |
                                           TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                           TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                           TargetElementUtil.NEW_AS_CONSTRUCTOR |

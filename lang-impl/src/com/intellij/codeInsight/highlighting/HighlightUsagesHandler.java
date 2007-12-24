@@ -47,6 +47,7 @@ import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -66,7 +67,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       return;
     }
 
-    PsiElement target = getTargetElement(editor);
+    PsiElement target = getTargetElement(editor, file);
     PsiElement[] targets = null;
 
     if (target == null) {
@@ -107,18 +108,33 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     createHighlightAction(project, file, targets, editor).run();
   }
 
-  private static PsiElement getTargetElement(Editor editor) {
+  @Nullable
+  private static PsiElement getTargetElement(Editor editor, PsiFile file) {
     PsiElement target = TargetElementUtil.findTargetElement(editor,
                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
                                                             TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
                                                             TargetElementUtil.NEW_AS_CONSTRUCTOR |
-                                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED |
-                                                            TargetElementUtil.TRY_ACCEPTED |
-                                                            TargetElementUtil.CATCH_ACCEPTED |
-                                                            TargetElementUtil.THROWS_ACCEPTED |
-                                                            TargetElementUtil.THROW_ACCEPTED |
-                                                            TargetElementUtil.RETURN_ACCEPTED |
-                                                            TargetElementUtil.EXTENDS_IMPLEMENTS_ACCEPTED);
+                                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+
+    if (target == null) {
+      int offset = TargetElementUtil.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+      PsiElement element = file.findElementAt(offset);
+      if (element == null) return null;
+
+      if (element instanceof PsiKeyword) {
+        String elementText = element.getText();
+        if (PsiKeyword.TRY.equals(elementText) ||
+            PsiKeyword.CATCH.equals(elementText) ||
+            PsiKeyword.THROWS.equals(elementText) ||
+            PsiKeyword.THROW.equals(elementText) ||
+            PsiKeyword.RETURN.equals(elementText) ||
+            PsiKeyword.IMPLEMENTS.equals(elementText) ||
+            PsiKeyword.EXTENDS.equals(elementText)) {
+          return element;
+        }
+      }
+    }
+
     if (target instanceof PsiCompiledElement) target = ((PsiCompiledElement)target).getMirror();
     return target;
   }

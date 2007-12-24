@@ -1,9 +1,15 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
@@ -17,7 +23,7 @@ import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class LeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement {
+public class LeafPsiElement extends CharTableBasedLeafElementImpl implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LeafPsiElement");
 
   public LeafPsiElement(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
@@ -206,5 +212,33 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
 
   public PsiElement getPsi() {
     return this;
+  }
+  
+  public ItemPresentation getPresentation() {
+    return null;
+  }
+
+  public String getName() {
+    return null;
+  }
+
+  public void navigate(boolean requestFocus) {
+    EditSourceUtil.getDescriptor(this).navigate(requestFocus);
+  }
+
+  public boolean canNavigate() {
+    return EditSourceUtil.canNavigate(this);
+  }
+
+  public boolean canNavigateToSource() {
+    return canNavigate();
+  }
+
+  public FileStatus getFileStatus() {
+    if (!isPhysical()) return FileStatus.NOT_CHANGED;
+    PsiFile contFile = getContainingFile();
+    if (contFile == null) return FileStatus.NOT_CHANGED;
+    VirtualFile vFile = contFile.getVirtualFile();
+    return vFile != null ? FileStatusManager.getInstance(getProject()).getStatus(vFile) : FileStatus.NOT_CHANGED;
   }
 }

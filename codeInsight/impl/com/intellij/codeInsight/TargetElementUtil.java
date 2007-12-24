@@ -21,13 +21,6 @@ public class TargetElementUtil {
   public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
-  public static final int TRY_ACCEPTED = 0x40;
-  public static final int CATCH_ACCEPTED = 0x80;
-  public static final int THROW_ACCEPTED = 0x100;
-  public static final int THROWS_ACCEPTED = 0x200;
-  public static final int RETURN_ACCEPTED = 0x400;
-  public static final int THROW_STATEMENT_ACCEPTED = 0x800;
-  public static final int EXTENDS_IMPLEMENTS_ACCEPTED = 0x1000;
 
   private TargetElementUtil() {}
 
@@ -138,37 +131,6 @@ public class TargetElementUtil {
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
       }
-
-      String elementText = element.getText();
-      if (PsiKeyword.TRY.equals(elementText) && (flags & TRY_ACCEPTED) != 0) {
-        return element;
-      }
-
-      if (PsiKeyword.CATCH.equals(elementText) && (flags & CATCH_ACCEPTED) != 0) {
-        return element;
-      }
-
-      if (PsiKeyword.THROWS.equals(elementText) && (flags & THROWS_ACCEPTED) != 0) {
-        return element;
-      }
-
-      if (PsiKeyword.THROW.equals(elementText)) {
-        if ((flags & THROW_ACCEPTED) != 0) return element;
-        if ((flags & THROW_STATEMENT_ACCEPTED) != 0) {
-          final PsiElement parent = element.getParent();
-          if (parent instanceof PsiThrowStatement) {
-            return parent;
-          }
-        }
-        return null;
-      }
-
-      if (PsiKeyword.RETURN.equals(elementText) && (flags & RETURN_ACCEPTED) != 0) {
-        return element;
-      }
-      if ((PsiKeyword.IMPLEMENTS.equals(elementText) || PsiKeyword.EXTENDS.equals(elementText)) && (flags & EXTENDS_IMPLEMENTS_ACCEPTED) != 0) {
-        return element;
-      }
     }
 
     return null;
@@ -181,7 +143,7 @@ public class TargetElementUtil {
            ((PsiMethod)referenceOrReferencedElement).isConstructor();
   }
 
-  private static int adjustOffset(Document document, final int offset) {
+  public static int adjustOffset(Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
     int textLength = document.getTextLength();
