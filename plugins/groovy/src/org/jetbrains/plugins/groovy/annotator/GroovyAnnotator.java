@@ -640,7 +640,7 @@ public class GroovyAnnotator implements Annotator {
             "cannot.reference.nonstatic";
         String message = GroovyBundle.message(key, refExpr.getReferenceName());
         holder.createWarningAnnotation(refExpr, message);
-      } else if (refExpr.getParent() instanceof GrMethodCallExpression) {
+      } else if (refExpr.getParent() instanceof GrCall) {
         if (resolved instanceof PsiMethod && resolved.getUserData(GrMethod.BUILDER_METHOD) == null) {
           checkMethodApplicability(resolveResult, refExpr, holder);
         } else {
