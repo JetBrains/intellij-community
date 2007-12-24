@@ -13,7 +13,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
@@ -172,17 +171,12 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  protected String getTextAttributeKey(final Project project, HighlightSeverity severity, ProblemHighlightType highlightType) {
+  protected static String getTextAttributeKey(final Project project, HighlightSeverity severity, ProblemHighlightType highlightType) {
     if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return HighlightInfoType.DEPRECATED.getAttributesKey().getExternalName();
     }
-    else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) {
-      if (JavaDocReferenceInspection.SHORT_NAME.equals(getShortName())) {
-        return HighlightInfoType.JAVADOC_WRONG_REF.getAttributesKey().getExternalName();
-      }
-      else {
-        return HighlightInfoType.WRONG_REF.getAttributesKey().getExternalName();
-      }
+    else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL && severity == HighlightSeverity.ERROR) {
+      return HighlightInfoType.WRONG_REF.getAttributesKey().getExternalName();
     }
     else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
