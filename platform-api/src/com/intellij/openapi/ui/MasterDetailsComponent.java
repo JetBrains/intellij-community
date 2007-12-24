@@ -30,7 +30,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.profile.Profile;
 import com.intellij.ui.*;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -676,7 +675,7 @@ public abstract class MasterDetailsComponent implements Configurable, Persistent
         }
 
         public Icon getIcon() {
-          return Profile.LOCAL_PROFILE; //just stub
+          return IconLoader.getIcon("/general/applicationSettings.png");
         }
 
         @Nullable
