@@ -881,7 +881,9 @@ public class GroovyAnnotator implements Annotator {
   }
 
   private void registerCreateClassByTypeFix(GrReferenceElement refElement, Annotation annotation, boolean createConstructor) {
-    annotation.registerFix(CreateClassFix.createClassFixAction(refElement, createConstructor));
+    if (PsiTreeUtil.getParentOfType(refElement, GrPackageDefinition.class) == null) {
+      annotation.registerFix(CreateClassFix.createClassFixAction(refElement, createConstructor));
+    }
   }
 
   private void highlightMember
