@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import org.jdom.Element;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
+@Deprecated
 public class XMLExportUtl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.util.XMLExportUtl");
 
@@ -28,9 +29,7 @@ public class XMLExportUtl {
   }
 
   public static Element createElement(RefEntity refEntity, Element parentNode, int actualLine, final TextRange range) {
-    if (refEntity instanceof RefImplicitConstructor) {
-      return createElement(refEntity.getOwner(), parentNode, actualLine, range);
-    }
+    refEntity = refEntity.getRefManager().getRefinedElement(refEntity);
 
     Element problem = new Element("problem");
 

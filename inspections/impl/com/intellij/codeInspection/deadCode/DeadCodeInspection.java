@@ -22,7 +22,6 @@ import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.codeInspection.util.XMLExportUtl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -547,7 +546,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (!(refEntity instanceof RefJavaElement)) return;
         if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
           if (refEntity instanceof RefImplicitConstructor) refEntity = ((RefImplicitConstructor)refEntity).getOwnerClass();
-          Element element = XMLExportUtl.createElement(refEntity, parentNode, -1, null);
+          Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
           @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
           if (refEntity instanceof RefElement) {

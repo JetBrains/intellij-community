@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -94,4 +95,6 @@ public abstract class RefManager {
   public abstract String getType(final RefEntity ref);
 
   public abstract RefEntity getRefinedElement(final RefEntity ref);
+
+  public abstract Element export(RefEntity entity, Element element, final int actualLine);
 }

@@ -16,6 +16,7 @@ import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
 import com.intellij.util.concurrency.LockFactory;
 import gnu.trove.THashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -166,6 +168,57 @@ public class RefManagerImpl extends RefManager {
       ref = extension.getRefinedElement(ref);
     }
     return ref;
+  }
+
+  public Element export(RefEntity refEntity, final Element element, final int actualLine) {
+    refEntity = getRefinedElement(refEntity);
+
+    Element problem = new Element("problem");
+
+    if (refEntity instanceof RefElement) {
+      final RefElement refElement = (RefElement)refEntity;
+      PsiElement psiElement = refElement.getElement();
+      PsiFile psiFile = psiElement.getContainingFile();
+
+      Element fileElement = new Element("file");
+      Element lineElement = new Element("line");
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      LOG.assertTrue(virtualFile != null);
+      fileElement.addContent(virtualFile.getUrl());
+
+      if (actualLine == -1) {
+        final Document document = PsiDocumentManager.getInstance(refElement.getRefManager().getProject()).getDocument(psiFile);
+        LOG.assertTrue(document != null);
+        lineElement.addContent(String.valueOf(document.getLineNumber(psiElement.getTextOffset()) + 1));
+      }
+      else {
+        lineElement.addContent(String.valueOf(actualLine));
+      }
+
+      problem.addContent(fileElement);
+      problem.addContent(lineElement);
+
+      appendModule(problem, refElement.getModule());
+    }
+    else if (refEntity instanceof RefModule) {
+      final RefModule refModule = (RefModule)refEntity;
+      final VirtualFile moduleFile = refModule.getModule().getModuleFile();
+      final Element fileElement = new Element("file");
+      fileElement.addContent(moduleFile != null? moduleFile.getUrl() : refEntity.getName());
+      problem.addContent(fileElement);
+      appendModule(problem, refModule);
+    }
+    new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
+    element.addContent(problem);
+    return problem;
+  }
+
+  private static void appendModule(final Element problem, final RefModule refModule) {
+    if (refModule != null) {
+      Element moduleElement = new Element("module");
+      moduleElement.addContent(refModule.getName());
+      problem.addContent(moduleElement);
+    }
   }
 
   public void findAllDeclarations() {
