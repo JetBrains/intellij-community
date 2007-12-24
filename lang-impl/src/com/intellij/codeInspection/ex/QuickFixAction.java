@@ -5,7 +5,10 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,6 +23,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import gnu.trove.THashSet;
@@ -220,11 +224,21 @@ public class QuickFixAction extends AnAction {
         if (o1 instanceof RefElement && o2 instanceof RefElement) {
           RefElement r1 = (RefElement)o1;
           RefElement r2 = (RefElement)o2;
-          int i1 = r1 instanceof RefImplicitConstructor ? 0 : r1.getElement().getTextOffset();
-          int i2 = r2 instanceof RefImplicitConstructor ? 0 : r2.getElement().getTextOffset();
-          if (i1 < i2) return 1;
-          if (i1 == i2) return 0;
-          return -1;
+          final PsiElement element1 = r1.getElement();
+          final PsiElement element2 = r2.getElement();
+          final PsiFile containingFile1 = element1.getContainingFile();
+          final PsiFile containingFile2 = element2.getContainingFile();
+          if (containingFile1 == containingFile2) {
+            int i1 = element1.getTextOffset();
+            int i2 = element2.getTextOffset();
+            if (i1 < i2) {
+              return 1;
+            } else if (i1 > i2){
+              return -1;
+            }
+            return 0;
+          }
+          return containingFile1.getName().compareTo(containingFile2.getName());
         }
         if (o1 instanceof RefElement) {
           return 1;

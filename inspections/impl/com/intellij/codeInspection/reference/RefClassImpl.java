@@ -475,5 +475,12 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private void setIsLocal(boolean isLocal) {
     setFlag(isLocal, IS_LOCAL_MASK);
   }
+
+  @NotNull
+  public RefElement getContainingEntry() {
+    RefElement defaultConstructor = getDefaultConstructor();
+    if (defaultConstructor != null) return defaultConstructor;
+    return super.getContainingEntry();
+  }
 }
 

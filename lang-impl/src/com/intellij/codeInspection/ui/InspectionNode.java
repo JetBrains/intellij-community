@@ -39,7 +39,7 @@ public class InspectionNode extends InspectionTreeNode {
     Enumeration children = children();
     while (children.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)children.nextElement();
-      if (child instanceof EntryPointsNode) continue;
+      if (child instanceof InspectionNode) continue;
       sum += child.getProblemCount();
     }
     return sum;

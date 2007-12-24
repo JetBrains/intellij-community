@@ -86,5 +86,6 @@ public interface RefElement extends RefEntity {
    */
   boolean isPermanentEntry();
 
-
+  @NotNull
+  RefElement getContainingEntry();
 }

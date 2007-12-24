@@ -9,8 +9,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefJavaVisitor;
 import com.intellij.codeInspection.reference.RefManagerImpl;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -105,7 +105,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
                           final InspectionManager manager,
                           final GlobalInspectionContext context,
                           final boolean filterSuppressed) {
-    context.getRefManager().iterate(new RefJavaVisitor() {
+    context.getRefManager().iterate(new RefVisitor() {
       @Override public void visitElement(RefEntity refEntity) {
         CommonProblemDescriptor[] descriptors = myTool.checkElement(refEntity, analysisScope, manager, context, GlobalInspectionToolWrapper.this);
         if (descriptors != null) {

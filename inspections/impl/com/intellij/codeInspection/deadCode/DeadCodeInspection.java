@@ -17,6 +17,9 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.EntryPointsNode;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.XMLExportUtl;
@@ -951,4 +954,10 @@ public class DeadCodeInspection extends FilteringInspectionTool {
     super.updateContent();
   }
 
+  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
+    final InspectionNode toolNode = super.createToolNode(provider, parentNode, showStructure);
+    final EntryPointsNode entryPointsNode = new EntryPointsNode(this);
+    provider.appendToolNodeContent(entryPointsNode, toolNode, showStructure);
+    return entryPointsNode;
+  }
 }

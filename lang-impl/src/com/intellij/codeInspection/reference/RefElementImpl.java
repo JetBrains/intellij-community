@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -75,6 +77,15 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
         return element != null && element.isPhysical();
       }
     }).booleanValue();
+  }
+
+  @Nullable
+  public Icon getIcon(final boolean expanded) {
+    final PsiElement element = getElement();
+    if (element != null) {
+      return element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
+    }
+    return null;
   }
 
   public RefModule getModule() {
@@ -161,6 +172,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   public boolean isPermanentEntry() {
     return checkFlag(IS_PERMANENT_ENTRY_MASK);
+  }
+
+
+  @NotNull
+  public RefElement getContainingEntry() {
+    return this;
   }
 
   public void setPermanentEntry(boolean permanentEntry) {

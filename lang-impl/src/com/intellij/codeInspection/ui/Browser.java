@@ -2,12 +2,9 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefImplicitConstructor;
-import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.ui.actions.SuppressActionsProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,21 +93,16 @@ public class Browser extends JPanel {
   private void showPageFromHistory(RefEntity newEntity) {
     InspectionTool tool = getTool(newEntity);
     try {
-      if (!(newEntity instanceof RefJavaElement) || tool instanceof DescriptorProviderInspection){
+      if (tool instanceof DescriptorProviderInspection) {
         showEmpty();
-        return;
       }
-      if (tool instanceof FilteringInspectionTool){
-        if (tool instanceof DeadCodeInspection || ((FilteringInspectionTool)tool).getFilter().accepts((RefJavaElement)newEntity)) {
-          try {
-            String html = generateHTML(newEntity, tool);
-            myHTMLViewer.read(new StringReader(html), null);
-            myHTMLViewer.setCaretPosition(0);
-          }
-          catch (Exception e) {
-            showEmpty();
-          }
-        } else {
+      else {
+        try {
+          String html = generateHTML(newEntity, tool);
+          myHTMLViewer.read(new StringReader(html), null);
+          myHTMLViewer.setCaretPosition(0);
+        }
+        catch (Exception e) {
           showEmpty();
         }
       }
@@ -137,12 +129,12 @@ public class Browser extends JPanel {
   }
 
   public void showPageFor(RefEntity newEntity) {
-    if (newEntity instanceof RefImplicitConstructor) {
-      newEntity = ((RefImplicitConstructor)newEntity).getOwnerClass();
+    if (newEntity == null) {
+      showEmpty();
+      return;
     }
-
     //multiple problems for one entity -> refresh browser
-    showPageFromHistory(newEntity);
+    showPageFromHistory(newEntity.getRefManager().getRefinedElement(newEntity));
   }
 
   public Browser(InspectionResultsView view) {

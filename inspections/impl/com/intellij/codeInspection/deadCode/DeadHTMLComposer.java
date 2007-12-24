@@ -13,9 +13,11 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.HTMLComposerImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -321,7 +323,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
   }
 
   private void appendCallesList(RefElement element, StringBuffer buf, Set<RefElement> mentionedElements, boolean appendCallees){
-    final Set<RefElement> possibleChildren = new RefElementNode(element, myTool).getPossibleChildren(element);
+    final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myTool), element);
     if (possibleChildren.size() > 0) {
       if (appendCallees){
         appendHeading(buf, InspectionsBundle.message("inspection.export.results.callees"));
@@ -348,5 +350,54 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         buf.append(closeFont);
       }
     }
+  }
+
+  public static Set<RefElement> getPossibleChildren(final RefElementNode refElementNode, RefElement refElement) {
+    final TreeNode[] pathToRoot = refElementNode.getPath();
+
+    final HashSet<RefElement> newChildren = new HashSet<RefElement>();
+
+    if (!refElement.isValid()) return newChildren;
+
+    for (RefElement refCallee : refElement.getOutReferences()) {
+      if (((RefElementImpl)refCallee).isSuspicious()) {
+        if (notInPath(pathToRoot, refCallee)) newChildren.add(refCallee);
+      }
+    }
+
+    if (refElement instanceof RefMethod) {
+      RefMethod refMethod = (RefMethod) refElement;
+
+      if (!refMethod.isStatic() && !refMethod.isConstructor() && !refMethod.getOwnerClass().isAnonymous()) {
+        for (RefMethod refDerived : refMethod.getDerivedMethods()) {
+          if (((RefMethodImpl)refDerived).isSuspicious()) {
+            if (notInPath(pathToRoot, refDerived)) newChildren.add(refDerived);
+          }
+        }
+      }
+    } else if (refElement instanceof RefClass) {
+      RefClass refClass = (RefClass) refElement;
+      for (RefClass subClass : refClass.getSubClasses()) {
+        if ((subClass.isInterface() || subClass.isAbstract()) && ((RefClassImpl)subClass).isSuspicious()) {
+          if (notInPath(pathToRoot, subClass)) newChildren.add(subClass);
+        }
+      }
+
+      if (refClass.getDefaultConstructor() instanceof RefImplicitConstructor) {
+        Set<RefElement> fromConstructor = getPossibleChildren(refElementNode, refClass.getDefaultConstructor());
+        newChildren.addAll(fromConstructor);
+      }
+    }
+
+    return newChildren;
+  }
+
+  private static boolean notInPath(TreeNode[] pathToRoot, RefElement refChild) {
+    for (TreeNode aPathToRoot : pathToRoot) {
+      InspectionTreeNode node = (InspectionTreeNode)aPathToRoot;
+      if (node instanceof RefElementNode && ((RefElementNode)node).getElement() == refChild) return false;
+    }
+
+    return true;
   }
 }

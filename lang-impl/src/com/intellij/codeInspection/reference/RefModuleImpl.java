@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 
 /**
@@ -51,6 +52,10 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
 
   public boolean isValid() {
     return myModule != null && !myModule.isDisposed();
+  }
+
+  public Icon getIcon(final boolean expanded) {
+    return getModule().getModuleType().getNodeIcon(expanded);
   }
 
   @Nullable

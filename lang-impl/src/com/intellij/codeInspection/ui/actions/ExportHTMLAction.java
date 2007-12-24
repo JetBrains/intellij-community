@@ -14,7 +14,6 @@ import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.InspectionGroupNode;
 import com.intellij.codeInspection.ui.InspectionNode;
@@ -245,10 +244,7 @@ public class ExportHTMLAction extends AnAction {
       StringBuffer contentIndex = new StringBuffer();
       contentIndex.append("<html><body>");
       for (RefEntity refElement : packageContent) {
-        if (refElement instanceof RefImplicitConstructor) {
-          refElement = ((RefImplicitConstructor)refElement).getOwnerClass();
-        }
-
+        refElement = refElement.getRefManager().getRefinedElement(refElement);
         contentIndex.append("<a HREF=\"");
         contentIndex.append(exporter.getURL(refElement));
         contentIndex.append("\" target=\"elementFrame\">");

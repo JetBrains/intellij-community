@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.SingleInspectionProfilePanel;
-import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -267,14 +266,13 @@ public class InspectionTree extends Tree {
       if (node instanceof RefElementNode) {
         RefEntity refElement = ((RefElementNode)node).getElement();
 
-        if (refElement instanceof RefClass) {
-          RefElement defaultConstructor = ((RefClass)refElement).getDefaultConstructor();
-          if (defaultConstructor != null) refElement = defaultConstructor;
+        if (refElement instanceof RefElement) {
+          refElement = ((RefElement)refElement).getContainingEntry();
+          if (((RefElement)refElement).isEntry() && ((RefElement)refElement).isPermanentEntry()) {
+            foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.blue);
+          }
         }
 
-        if (refElement != null && refElement instanceof RefElement && ((RefElement)refElement).isEntry() && ((RefElement)refElement).isPermanentEntry()) {
-          foreground = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, Color.blue);
-        }
       }
       final FileStatus nodeStatus = node.getNodeStatus();
       if (nodeStatus != FileStatus.NOT_CHANGED){

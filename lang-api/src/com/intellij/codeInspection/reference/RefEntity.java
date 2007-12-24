@@ -16,7 +16,9 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -33,6 +35,8 @@ public interface RefEntity extends UserDataHolder {
    * @return the name of the node.
    */
   String getName();
+
+  String getQualifiedName();
 
   /**
    * Returns the list of children of the node.
@@ -75,4 +79,7 @@ public interface RefEntity extends UserDataHolder {
    * @return the reference graph element for the instance.
    */
   RefManager getRefManager();
+
+  @Nullable
+  Icon getIcon(boolean expanded);
 }

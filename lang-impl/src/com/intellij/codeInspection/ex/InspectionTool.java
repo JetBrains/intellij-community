@@ -18,6 +18,8 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -196,5 +198,11 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   @Nullable
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     return null;
+  }
+
+  public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showSructure) {
+    final InspectionNode toolNode = new InspectionNode(this);
+    provider.appendToolNodeContent(toolNode, parentNode, showSructure);
+    return toolNode;
   }
 }

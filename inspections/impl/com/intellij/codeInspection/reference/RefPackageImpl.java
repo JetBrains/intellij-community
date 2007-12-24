@@ -9,6 +9,9 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.Icons;
+
+import javax.swing.*;
 
 
 public class RefPackageImpl extends RefEntityImpl implements RefPackage {
@@ -51,5 +54,9 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
 
   public boolean isValid() {
     return true;
+  }
+
+  public Icon getIcon(final boolean expanded) {
+    return expanded ? Icons.PACKAGE_OPEN_ICON : Icons.PACKAGE_ICON;
   }
 }

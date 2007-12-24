@@ -5,13 +5,16 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
+import com.intellij.util.IconUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Stack;
@@ -239,5 +242,16 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     if (isEntry()) {
       getRefJavaManager().getEntryPointsManager().removeEntryPoint(this);
     }
+  }
+
+  public Icon getIcon(final boolean expanded) {
+    if (isSyntheticJSP()) {
+      final PsiElement element = getElement();
+      if (element != null) {
+        return IconUtil.getIcon(element.getContainingFile().getVirtualFile(),
+                                Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, element.getProject());
+      }
+    }
+    return super.getIcon(expanded);
   }
 }

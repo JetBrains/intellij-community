@@ -43,19 +43,17 @@ public class InspectionResultsViewComparator implements Comparator {
     if (node1 instanceof InspectionGroupNode && node2 instanceof InspectionGroupNode) {
       return ((InspectionGroupNode)node1).getGroupTitle().compareToIgnoreCase(((InspectionGroupNode)node2).getGroupTitle());
     }
-    if (node1 instanceof InspectionNode && node2 instanceof InspectionGroupNode) return -1;
-    if (node2 instanceof InspectionNode && node1 instanceof InspectionGroupNode) return 1;
 
     if (node1 instanceof InspectionPackageNode && node2 instanceof InspectionPackageNode) {
       return ((InspectionPackageNode)node1).getPackageName().compareToIgnoreCase(((InspectionPackageNode)node2).getPackageName());
     }
 
-    if (node1 instanceof EntryPointsNode) return -1;
-    if (node2 instanceof EntryPointsNode) return 1;
-
     if (node1 instanceof InspectionNode && node2 instanceof InspectionNode)
       return SingleInspectionProfilePanel.getDisplayTextToSort(node1.toString())
       .compareToIgnoreCase(SingleInspectionProfilePanel.getDisplayTextToSort(node2.toString()));
+
+    if (node1 instanceof InspectionNode) return -1;
+    if (node2 instanceof InspectionNode) return 1;
 
     if ((node1 instanceof OfflineRefElementNode && node2 instanceof OfflineRefElementNode) ||
         (node1 instanceof OfflineProblemDescriptorNode && node2 instanceof OfflineProblemDescriptorNode)) {

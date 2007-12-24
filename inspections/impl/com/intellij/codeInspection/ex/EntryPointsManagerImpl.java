@@ -9,7 +9,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.ui.ConstructorPicker;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -122,9 +121,8 @@ public class EntryPointsManagerImpl implements JDOMExternalizable, ProjectCompon
         return;
       } else if (refConstructors.size() > 1) {
         // Many constructors here. Need to ask user which ones are used
-        ArrayList pickedConstructors = ConstructorPicker.pickConstructorsFrom(refClass, refConstructors);
-        for (int i = 0; i < pickedConstructors.size(); i++) {
-          addEntryPoint((RefMethod) pickedConstructors.get(i), isPersistent);
+        for (int i = 0; i < refConstructors.size(); i++) {
+          addEntryPoint((RefMethod) ((ArrayList)refConstructors).get(i), isPersistent);
         }
 
         return;

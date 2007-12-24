@@ -8,8 +8,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
-import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -408,13 +406,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
     final InspectionTreeNode parentNode = getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : GroupNames.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
-    final InspectionNode toolNode = new InspectionNode(tool);
-    myProvider.appendToolNodeContent(toolNode, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
-    if (tool instanceof DeadCodeInspection) {
-      final DummyEntryPointsTool entryPoints = new DummyEntryPointsTool((DeadCodeInspection)tool);
-      entryPoints.updateContent();
-      myProvider.appendToolNodeContent(new EntryPointsNode(entryPoints), toolNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
-    }
+    tool.createToolNode(myProvider, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
     regsisterActionShortcuts(tool);
   }
 

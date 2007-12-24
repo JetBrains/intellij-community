@@ -36,6 +36,10 @@ public abstract class RefEntityImpl implements RefEntity {
     return myName;
   }
 
+  public String getQualifiedName() {
+    return myName;
+  }
+
   public List<RefEntity> getChildren() {
     return myChildren;
   }
