@@ -1,4 +1,4 @@
-package com.intellij.codeInsight.editorActions;
+package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -22,12 +23,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 
 public class EnterAfterUnmatchedBraceHandler implements EnterHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.EnterAfterUnmatchedBraceHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler");
 
-  public Result preprocessEnter(final PsiFile file, final Editor editor, final int caretOffset, final DataContext dataContext, final EditorActionHandler originalHandler) {
+  public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffsetRef, final Ref<Integer> caretAdvance,
+                                final DataContext dataContext, final EditorActionHandler originalHandler) {
     Document document = editor.getDocument();
     CharSequence text = document.getText();
     Project project = file.getProject();
+    int caretOffset = caretOffsetRef.get().intValue();
     if (CodeInsightSettings.getInstance().INSERT_BRACE_ON_ENTER && isAfterUnmatchedLBrace(editor, caretOffset, file.getFileType())) {
       int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
       if (offset < document.getTextLength()) {

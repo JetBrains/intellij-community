@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.codeInsight.editorActions.EnterAfterUnmatchedBraceHandler;
+import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiCodeBlock;

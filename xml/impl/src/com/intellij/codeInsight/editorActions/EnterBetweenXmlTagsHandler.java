@@ -10,10 +10,13 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.Ref;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 
 public class EnterBetweenXmlTagsHandler implements EnterHandlerDelegate {
-  public Result preprocessEnter(final PsiFile file, final Editor editor, final int caretOffset, final DataContext dataContext, final EditorActionHandler originalHandler) {
-    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset)) {
+  public Result preprocessEnter(final PsiFile file, final Editor editor, final Ref<Integer> caretOffset, final Ref<Integer> caretAdvance,
+                                final DataContext dataContext, final EditorActionHandler originalHandler) {
+    if (file instanceof XmlFile && isBetweenXmlTags(editor, caretOffset.get().intValue())) {
       originalHandler.execute(editor, dataContext);
       return Result.HandledAndForceIndent;
     }

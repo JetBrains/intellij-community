@@ -6,7 +6,7 @@ package com.intellij.codeInsight.completion.simple;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.codeInsight.editorActions.EnterAfterUnmatchedBraceHandler;
+import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;

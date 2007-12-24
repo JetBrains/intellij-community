@@ -6,17 +6,14 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
@@ -26,6 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -101,71 +99,12 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
-    if (file instanceof PropertiesFile) {
-      handleEnterInPropertiesFile(editor, document, psiAtOffset, caretOffset);
-      return;
-    }
     boolean forceIndent = false;
-    int caretAdvance = 0;
-    if (psiAtOffset != null && psiAtOffset.getTextOffset() < caretOffset) {
-      ASTNode token = psiAtOffset.getNode();
-      final Language language = psiAtOffset.getLanguage();
-      final Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
-      final CodeDocumentationAwareCommenter commenter = languageCommenter instanceof CodeDocumentationAwareCommenter
-                                                        ? (CodeDocumentationAwareCommenter)languageCommenter:null;
-      final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile());
-      TypedHandler.JavaLikeQuoteHandler quoteHandler = fileTypeQuoteHandler instanceof TypedHandler.JavaLikeQuoteHandler ?
-                                                       (TypedHandler.JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
-
-      if (quoteHandler != null &&
-          quoteHandler.getConcatenatableStringTokenTypes() != null &&
-          quoteHandler.getConcatenatableStringTokenTypes().contains(token.getElementType())) {
-        TextRange range = token.getTextRange();
-        final char literalStart = token.getText().charAt(0);
-        final StringLiteralLexer lexer = new StringLiteralLexer(literalStart, token.getElementType());
-        lexer.start(text, range.getStartOffset(), range.getEndOffset(),0);
-
-        while (lexer.getTokenType() != null) {
-          if (lexer.getTokenStart() < caretOffset && caretOffset < lexer.getTokenEnd()) {
-            if (StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(lexer.getTokenType())) {
-              caretOffset = lexer.getTokenEnd();
-            }
-            break;
-          }
-          lexer.advance();
-        }
-
-        if (psiAtOffset.getParent() instanceof PsiLiteralExpression && psiAtOffset.getParent().getParent() instanceof PsiReferenceExpression) {
-          document.insertString(psiAtOffset.getTextRange().getEndOffset(), ")");
-          document.insertString(psiAtOffset.getTextRange().getStartOffset(), "(");
-          caretOffset++;
-          caretAdvance++;
-        }        
-
-        final String insertedFragment = literalStart + " " + quoteHandler.getStringConcatenationOperatorRepresentation();
-        document.insertString(caretOffset, insertedFragment + " " + literalStart);
-        text = document.getCharsSequence();
-        caretOffset += insertedFragment.length();
-        caretAdvance = 1;
-        if (CodeStyleSettingsManager.getSettings(project).BINARY_OPERATION_SIGN_ON_NEXT_LINE) {
-          caretOffset -= 1;
-          caretAdvance = 3;
-        }
-        forceIndent = true;
-      }
-      else if (commenter != null && token.getElementType() == commenter.getLineCommentTokenType() ) {
-        final int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-
-        if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
-          assert commenter.getLineCommentPrefix() != null:"Line Comment type is set but Line Comment Prefix is null!";
-          document.insertString(caretOffset, commenter.getLineCommentPrefix() + " ");
-          text = document.getCharsSequence();
-        }
-      }
-    }
-
+    Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);
+    Ref<Integer> caretAdvanceRef = new Ref<Integer>(0);
     for(EnterHandlerDelegate delegate: Extensions.getExtensions(EnterHandlerDelegate.EP_NAME)) {
-      EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffset, dataContext, myOriginalHandler);
+      EnterHandlerDelegate.Result result = delegate.preprocessEnter(file, editor, caretOffsetRef, caretAdvanceRef, dataContext, myOriginalHandler);
+      if (result == EnterHandlerDelegate.Result.HandledAndSkipOriginal) return;
       if (result != EnterHandlerDelegate.Result.NotHandled) {
         text = document.getCharsSequence();
         if (result == EnterHandlerDelegate.Result.HandledAndForceIndent) {
@@ -175,6 +114,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
     }
 
+    caretOffset = caretOffsetRef.get().intValue();
     boolean isFirstColumn = caretOffset == 0 || text.charAt(caretOffset - 1) == '\n';
     final boolean insertSpace =
       !isFirstColumn && !(caretOffset >= document.getTextLength() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
@@ -190,43 +130,9 @@ public class EnterHandler extends EditorWriteActionHandler {
     }
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final DoEnterAction action = new DoEnterAction(file, editor, document, caretOffset, !insertSpace, caretAdvance);
+    final DoEnterAction action = new DoEnterAction(file, editor, document, caretOffset, !insertSpace, caretAdvanceRef.get());
     action.setForceIndent(forceIndent);
     action.run();
-  }
-
-  private static void handleEnterInPropertiesFile(final Editor editor,
-                                                  final Document document,
-                                                  final PsiElement psiAtOffset,
-                                                  int caretOffset) {
-    String text = document.getText();
-    String line = text.substring(0, caretOffset);
-    int i = line.lastIndexOf('\n');
-    if (i > 0) {
-      line = line.substring(i);
-    }
-    final String toInsert;
-    if (PropertiesUtil.isUnescapedBackSlashAtTheEnd(line)) {
-      toInsert = "\n  ";
-    }
-    else {
-      final IElementType elementType = psiAtOffset == null ? null : psiAtOffset.getNode().getElementType();
-
-      if (elementType == PropertiesTokenTypes.VALUE_CHARACTERS) {
-        toInsert = "\\\n  ";
-      }
-      else if (elementType == PropertiesTokenTypes.END_OF_LINE_COMMENT && "#!".indexOf(document.getText().charAt(caretOffset)) == -1) {
-        toInsert = "\n#";
-      }
-      else {
-        toInsert = "\n";
-      }
-    }
-    document.insertString(caretOffset, toInsert);
-    caretOffset+=toInsert.length();
-    editor.getCaretModel().moveToOffset(caretOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    editor.getSelectionModel().removeSelection();
   }
 
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
