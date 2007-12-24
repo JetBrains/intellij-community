@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -267,14 +268,24 @@ public abstract class GroovyRefactoringUtil {
 
 
   public static void highlightOccurrences(Project project, Editor editor, PsiElement[] elements) {
+    if (editor == null) return;
     ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
-    if (editor != null) {
-      HighlightManager highlightManager = HighlightManager.getInstance(project);
-      EditorColorsManager colorsManager = EditorColorsManager.getInstance();
-      TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-      if (elements.length > 0) {
-        highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
-      }
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    if (elements.length > 0) {
+      highlightManager.addOccurrenceHighlights(editor, elements, attributes, false, highlighters);
+    }
+  }
+
+  public static void highlightOccurrencesByRanges(Project project, Editor editor, TextRange[] ranges) {
+    if (editor == null) return;
+    ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>();
+    HighlightManager highlightManager = HighlightManager.getInstance(project);
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    for (TextRange range : ranges) {
+      highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
     }
   }
 

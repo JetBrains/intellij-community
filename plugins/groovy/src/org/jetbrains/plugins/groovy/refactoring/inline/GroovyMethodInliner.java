@@ -19,9 +19,12 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.impl.PersistentRangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -99,27 +102,32 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     PsiElement element = reference.getElement();
     assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
     GrCallExpression call = (GrCallExpression) element.getParent();
-    SmartPsiElementPointer<GrExpression> pointer =
-        inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call));
+    RangeMarker marker = inlineReferenceImpl(call, myMethod, isOnExpressionOrReturnPlace(call), GroovyInlineMethodUtil.isTailMethodCall(call));
 
     // highilght replaced result
-    if (pointer != null && pointer.getElement() != null) {
+    if (marker != null) {
       Project project = referenced.getProject();
       FileEditorManager manager = FileEditorManager.getInstance(project);
       Editor editor = manager.getSelectedTextEditor();
-      GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{pointer.getElement()});
+
+      //GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{pointer.getElement()});
+      TextRange range = new TextRange(marker.getStartOffset(), marker.getEndOffset());
+      GroovyRefactoringUtil.highlightOccurrencesByRanges(project, editor, new TextRange[]{range});
+
       WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-      GrExpression expression = pointer.getElement();
-      if (editor != null && expression != null) {
-        editor.getCaretModel().moveToOffset(expression.getTextRange().getEndOffset());
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(marker.getEndOffset());
       }
     }
   }
 
-  static SmartPsiElementPointer<GrExpression> inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
+  static RangeMarker inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
     try {
       GroovyElementFactory factory = GroovyElementFactory.getInstance(call.getProject());
       final Project project = call.getProject();
+
+      FileEditorManager manager = FileEditorManager.getInstance(project);
+      Editor editor = manager.getSelectedTextEditor();
 
       // Variable declaration for qualifier expression
       GrVariableDeclaration qualifierDeclaration = null;
@@ -145,7 +153,8 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       GrExpression result = getAloneResultExpression(newMethod);
       if (result != null) {
         GrExpression expression = call.replaceWithExpression(result, false);
-        return SmartPointerManager.getInstance(result.getProject()).createSmartPsiElementPointer(expression);
+        TextRange range = expression.getTextRange();
+        return editor != null ? new PersistentRangeMarker(editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
       }
 
       String resultName = InlineMethodConflictSolver.suggestNewName("result", newMethod, call);
@@ -218,7 +227,6 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         }
       }
 
-
       // Add all method statements
       statements = body.getStatements();
       for (GrStatement statement : statements) {
@@ -228,9 +236,11 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       }
       if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
         assert replaced != null;
-        SmartPsiElementPointer<GrExpression> pointer = SmartPointerManager.getInstance(replaced.getProject()).createSmartPsiElementPointer(replaced);
+
+        TextRange range = replaced.getTextRange();
+        RangeMarker marker = editor != null ? new PersistentRangeMarker(editor.getDocument(), range.getStartOffset(), range.getEndOffset()) : null;
         reformatOwner(owner);
-        return pointer;
+        return marker;
       } else {
         GrStatement stmt;
         if (isTailMethodCall && enclosingExpr.getParent() instanceof GrReturnStatement) {
