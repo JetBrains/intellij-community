@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.xml.XmlFileViewProvider;
@@ -12,7 +11,6 @@ import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.xml.XmlFile;
 
 public class PsiChangeHandler extends PsiTreeChangeAdapter {
@@ -92,8 +90,7 @@ public class PsiChangeHandler extends PsiTreeChangeAdapter {
 
     // optimization
     if (whitespaceOptimizationAllowed && UpdateHighlightersUtil.isWhitespaceOptimizationAllowed(document)) {
-      final ASTNode node = child.getNode();
-      if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiDocToken) {
+      if (child instanceof PsiWhiteSpace || child instanceof PsiComment) {
         myDaemonCodeAnalyzer.getFileStatusMap().markFileScopeDirty(document, child);
         return;
       }
