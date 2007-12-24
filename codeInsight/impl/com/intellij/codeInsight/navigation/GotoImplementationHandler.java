@@ -16,7 +16,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
-import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -36,12 +35,6 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
                                   | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
                                   | TargetElementUtil.THIS_ACCEPTED
                                   | TargetElementUtil.SUPER_ACCEPTED;
-
-  protected interface ResultsFilter {
-    boolean acceptClass(PsiClass aClass);
-
-    boolean acceptMethod(PsiMethod method);
-  }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
@@ -100,20 +93,6 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  protected ResultsFilter createFilter(Project project, final Editor editor, final PsiFile file, PsiElement element, final int offset) {
-    final PsiElement element1 = editor == null ? null : TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
-
-    return new ResultsFilter() {
-      public boolean acceptClass(PsiClass aClass) {
-        return aClass != element1;
-      }
-
-      public boolean acceptMethod(PsiMethod method) {
-        return method != element1;
-      }
-    };
-  }
-
   private static void getOverridingMethods(PsiMethod method, ArrayList<PsiMethod> list) {
     for (PsiMethod psiMethod : OverridingMethodsSearch.search(method)) {
       list.add(psiMethod);
@@ -121,29 +100,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   }
 
   protected PsiElement[] filterElements(@Nullable Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements, final int offset) {
-    if (targetElements.length <= 1) return targetElements;
-    Project project = file.getProject();
-    ResultsFilter filter = createFilter(project, editor, file, element, offset);
-
-    ArrayList<PsiElement> result = new ArrayList<PsiElement>();
-    for (PsiElement targetElement : targetElements) {
-      if (targetElement instanceof PsiClass && filter.acceptClass((PsiClass)targetElement)) {
-        result.add(targetElement);
-      }
-      else if (targetElement instanceof PsiMethod && filter.acceptMethod((PsiMethod)targetElement)) {
-        result.add(targetElement);
-      }
-      else {
-        result.add(targetElement);
-      }
-    }
-
-    if (result.size() == targetElements.length) {
-      return targetElements;
-    }
-    else {
-      return result.toArray(new PsiElement[result.size()]);
-    }
+    return targetElements;
   }
 
   static {
@@ -155,7 +112,6 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
   public static PsiClass[] getClassImplementations(final PsiClass psiClass) {
     final ArrayList<PsiClass> list = new ArrayList<PsiClass>();
 
-    PsiSearchHelper helper = psiClass.getManager().getSearchHelper();
     ClassInheritorsSearch.search(psiClass, psiClass.getUseScope(), true).forEach(new PsiElementProcessorAdapter<PsiClass>(new PsiElementProcessor<PsiClass>() {
       public boolean execute(PsiClass element) {
         if (!element.isInterface()) {
