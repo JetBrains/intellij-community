@@ -141,8 +141,8 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     }
   }
 
-  public PackageSet getScope() {
-    return myPanel.getCurrentScope();
+  public NamedScope getScope() {
+    return myScope;
   }
 
   public void restoreCanceledProgress() {

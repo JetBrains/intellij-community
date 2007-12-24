@@ -137,7 +137,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)node.getConfigurable();
-      final NamedScope namedScope = scopeConfigurable.getEditableObject();
+      final NamedScope namedScope = scopeConfigurable.getScope();
       if (scopeConfigurable.getHolder() == myLocalScopesManager) {
         myLocalScopesManager.addScope(namedScope);
       }
@@ -442,7 +442,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         final NamedConfigurable configurable = node.getConfigurable();
         if (configurable instanceof ScopeConfigurable) {
           final ScopeConfigurable scopeConfigurable = (ScopeConfigurable)configurable;
-          PackageSet set = scopeConfigurable.getScope();
+          PackageSet set = scopeConfigurable.getEditableObject().getValue();
           if (set != null) {
             if (scopeConfigurable.getHolder() == mySharedScopesManager) {
               createScope(false, IdeBundle.message("scopes.save.dialog.title.shared"), set.createCopy());
