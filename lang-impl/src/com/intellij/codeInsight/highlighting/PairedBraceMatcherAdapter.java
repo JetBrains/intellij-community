@@ -23,7 +23,7 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
     for (BracePair pair : pairs) {
       if (tokenType == pair.getLeftBraceType() || tokenType == pair.getRightBraceType()) return myLanguage.hashCode();
     }
-    return BraceMatchingUtil.UNDEFINED_TOKEN_GROUP;
+    return -1;
   }
 
   public boolean isLBraceToken(HighlighterIterator iterator, CharSequence fileText, FileType fileType) {
