@@ -150,7 +150,7 @@ public class GroovyAnnotator implements Annotator {
     assert virtualFile != null;
 
     final VirtualFile sourceRootForFile = projectFileIndex.getSourceRootForFile(virtualFile);
-    assert sourceRootForFile != null;
+    if (sourceRootForFile == null) return;
     assert virtualFile.getPath().startsWith(sourceRootForFile.getPath());
 
     final VirtualFile containingDirectory = virtualFile.getParent();
