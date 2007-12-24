@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.maddyhome.idea.copyright.ui.TemplateCommentPanel">
+  <grid id="715a5" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="0" left="0" bottom="0" right="0"/>
+    <constraints>
+      <xy x="36" y="27" width="655" height="487"/>
+      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <grid id="c9bd3" binding="mainPanel" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="5" left="5" bottom="5" right="5"/>
+        <constraints>
+          <xy x="0" y="0" width="655" height="487"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="fa04f" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="5" y="175" width="645" height="307"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+            </constraints>
+            <properties/>
+            <border type="etched" title="Copyright Notice (Velocity Template)"/>
+            <children>
+              <scrollpane id="9e821" binding="noticeScroll">
+                <constraints>
+                  <xy x="6" y="51" width="633" height="250"/>
+                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="85e7f" class="javax.swing.JTextArea" binding="noticeBody">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+              <component id="f2d0b" class="javax.swing.JCheckBox" binding="cbPreview">
+                <constraints>
+                  <xy x="6" y="22" width="70" height="23"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Previe&amp;w"/>
+                </properties>
+              </component>
+              <component id="c0f7c" class="javax.swing.JButton" binding="btnValidate">
+                <constraints>
+                  <xy x="556" y="21" width="83" height="25"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Validate"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="49aed" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="5" y="145" width="645" height="25"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="1"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="45c1" class="javax.swing.JLabel" binding="lblKeyword">
+                <constraints>
+                  <xy x="0" y="5" width="117" height="15"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Copyright &amp;Keyword:"/>
+                </properties>
+              </component>
+              <component id="82fc7" class="javax.swing.JTextField" binding="txtKeyword">
+                <constraints>
+                  <xy x="127" y="2" width="150" height="21"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <columns value="20"/>
+                </properties>
+              </component>
+              <component id="8ddfa" class="javax.swing.JButton" binding="btnSelect">
+                <constraints>
+                  <xy x="287" y="0" width="69" height="25"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="&amp;Select"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="c0258" row-count="2" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <xy x="5" y="5" width="645" height="135"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="1"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="d21b3" class="javax.swing.JPanel" binding="overridePanel">
+                <constraints>
+                  <xy x="0" y="0" width="10" height="10"/>
+                  <grid row="0" column="0" row-span="2" col-span="1" vsize-policy="3" hsize-policy="0" anchor="9" fill="0">
+                    <minimum-size width="0" height="0"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <grid id="ba5e7" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="328" y="0" width="177" height="96"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0"/>
+                </constraints>
+                <properties/>
+                <border type="etched" title="Relative Location"/>
+                <children>
+                  <component id="83e39" class="javax.swing.JRadioButton" binding="rbBefore">
+                    <constraints>
+                      <xy x="6" y="21" width="165" height="23"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Bef&amp;ore Other Comments"/>
+                    </properties>
+                  </component>
+                  <component id="c0972" class="javax.swing.JRadioButton" binding="rbAfter">
+                    <constraints>
+                      <xy x="6" y="44" width="156" height="23"/>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                    </constraints>
+                    <properties>
+                      <text value="Afte&amp;r Other Comments"/>
+                    </properties>
+                  </component>
+                  <component id="a3078" class="javax.swing.JCheckBox" binding="cbAddBlank">
+                    <constraints>
+                      <xy x="6" y="67" width="144" height="23"/>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+                    </constraints>
+                    <properties>
+                      <text value="A&amp;dd Blank Line After"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <component id="e555d" class="com.maddyhome.idea.copyright.ui.TemplateOptionsPanel" binding="tempOptionsPanel">
+                <constraints>
+                  <xy x="30" y="0" width="288" height="119"/>
+                  <grid row="0" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0"/>
+                </constraints>
+                <properties/>
+              </component>
+              <grid id="fe40a" binding="fileLocationPanel" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="0" vgap="0">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <xy x="515" y="0" width="32" height="107"/>
+                  <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="4" anchor="9" fill="0"/>
+                </constraints>
+                <properties/>
+                <border type="etched" title="File Location"/>
+                <children/>
+              </grid>
+              <component id="fe109" class="javax.swing.JCheckBox" binding="cbUseAlternate">
+                <constraints>
+                  <xy x="328" y="112" width="168" height="23"/>
+                  <grid row="1" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="0"/>
+                </constraints>
+                <properties>
+                  <text value="Use Alternate Comments"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+    </children>
+  </grid>
+</form>
