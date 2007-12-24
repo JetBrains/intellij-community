@@ -177,8 +177,8 @@ public class PasteHandler extends EditorActionHandler {
       }
 
       String newText = text;
-      for(PastePreProcessor preProcessor: Extensions.getExtensions(PastePreProcessor.EP_NAME)) {
-        newText = preProcessor.preprocess(project, file, editor, newText, rawText);
+      for(CopyPastePreProcessor preProcessor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+        newText = preProcessor.preprocessOnPaste(project, file, editor, newText, rawText);
       }
       int indentOptions = text.equals(newText) ? settings.REFORMAT_ON_PASTE : CodeInsightSettings.REFORMAT_BLOCK;
       text = newText;

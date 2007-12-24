@@ -10,12 +10,11 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
@@ -62,30 +61,17 @@ public class CopyHandler extends EditorActionHandler {
     final TextBlockTransferable.FoldingData[] foldingData = collectFoldingsInBlock(editor, startOffsets, endOffsets);
 
     String rawText = TextBlockTransferable.convertLineSeparators(selectionModel.getSelectedText(), "\n", referenceData, foldingData);
-    String escapedText = unescapeIfInsideLiteral(file, startOffsets, endOffsets, rawText);
-
+    String escapedText = null;
+    for(CopyPastePreProcessor processor: Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+      escapedText = processor.preprocessOnCopy(file, startOffsets, endOffsets, rawText);
+      if (escapedText != null) {
+        break;
+      }
+    }
     final Transferable transferable = new TextBlockTransferable(escapedText != null ? escapedText : rawText,
                                                                 referenceData, foldingData,
                                                                 escapedText != null ? new RawText(rawText) : null);
     CopyPasteManager.getInstance().setContents(transferable);
-  }
-
-  @Nullable
-  private static String unescapeIfInsideLiteral(final PsiFile file, final int[] startOffsets,
-                                         final int[] endOffsets, String text) {
-    boolean isLiteral = true;
-    for (int i = 0; i < startOffsets.length && isLiteral; i++) {
-      final int startOffset = startOffsets[i];
-      final PsiElement elementAtCaret = file.findElementAt(startOffset);
-      if (!(elementAtCaret instanceof PsiJavaToken &&
-            (((PsiJavaToken) elementAtCaret)).getTokenType() == JavaTokenType.STRING_LITERAL &&
-            startOffset > elementAtCaret.getTextRange().getStartOffset() &&
-            endOffsets[i] < elementAtCaret.getTextRange().getEndOffset())) {
-        isLiteral = false;
-      }
-    }
-
-    return isLiteral ? StringUtil.unescapeStringCharacters(text) : null;
   }
 
   private static TextBlockTransferable.ReferenceData[] collectReferencesInBlock(PsiFile file,

@@ -12,8 +12,24 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 
-public class StringLiteralPasteProcessor implements PastePreProcessor {
-  public String preprocess(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
+public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
+  public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
+    boolean isLiteral = true;
+    for (int i = 0; i < startOffsets.length && isLiteral; i++) {
+      final int startOffset = startOffsets[i];
+      final PsiElement elementAtCaret = file.findElementAt(startOffset);
+      if (!(elementAtCaret instanceof PsiJavaToken &&
+            (((PsiJavaToken) elementAtCaret)).getTokenType() == JavaTokenType.STRING_LITERAL &&
+            startOffset > elementAtCaret.getTextRange().getStartOffset() &&
+            endOffsets[i] < elementAtCaret.getTextRange().getEndOffset())) {
+        isLiteral = false;
+      }
+    }
+
+    return isLiteral ? StringUtil.unescapeStringCharacters(text) : null;
+  }
+
+  public String preprocessOnPaste(final Project project, final PsiFile file, final Editor editor, String text, final RawText rawText) {
     final Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     int caretOffset = editor.getCaretModel().getOffset();
