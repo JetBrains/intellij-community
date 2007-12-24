@@ -10,7 +10,6 @@ package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.ex.DescriptorProviderInspection;
 import com.intellij.codeInspection.ex.InspectionRVContentProvider;
 import com.intellij.codeInspection.ex.InspectionTool;
@@ -155,8 +154,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                   final boolean canPackageRepeat) {
     final RefElementNode elemNode = addNodeToParent(container, tool, packageNode);
     if (tool instanceof DescriptorProviderInspection) {
-      elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(),
-                                                    !(tool instanceof DuplicatePropertyInspection), (DescriptorProviderInspection)tool));
+      elemNode.add(new OfflineProblemDescriptorNode(((OfflineProblemDescriptorContainer)container).getUserObject(), (DescriptorProviderInspection)tool));
     }
   }
 

@@ -30,9 +30,8 @@ import java.util.List;
 public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
 
   public OfflineProblemDescriptorNode(final OfflineProblemDescriptor descriptor,
-                                      final boolean replaceProblemDescriptorTemplateMessage,
                                       final DescriptorProviderInspection tool) {
-    super(descriptor, replaceProblemDescriptorTemplateMessage, tool);
+    super(descriptor, tool);
   }
 
   @Nullable

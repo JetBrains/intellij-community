@@ -21,25 +21,20 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public static final Icon INFO = IconLoader.getIcon("/compiler/information.png");
   protected RefEntity myElement;
   private CommonProblemDescriptor myDescriptor;
-  private boolean myReplaceProblemDescriptorTemplateMessage;
   protected DescriptorProviderInspection myTool;
 
   public ProblemDescriptionNode(final Object userObject,
-                                final boolean replaceProblemDescriptorTemplateMessage,
                                 final DescriptorProviderInspection tool) {
     super(userObject);
-    myReplaceProblemDescriptorTemplateMessage = replaceProblemDescriptorTemplateMessage;
     myTool = tool;
   }
 
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
-                                boolean isReplaceProblemDescriptorTemplateMessage,
                                 DescriptorProviderInspection descriptorProviderInspection) {
     super(descriptor);
     myElement = element;
     myDescriptor = descriptor;
-    myReplaceProblemDescriptorTemplateMessage = isReplaceProblemDescriptorTemplateMessage;
     myTool = descriptorProviderInspection;
   }
 
@@ -68,7 +63,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
 
 
   public boolean isResolved() {
-    return myElement instanceof RefElement && myTool.isElementIgnored((RefElement)myElement);
+    return myElement instanceof RefElement && myTool.isElementIgnored(myElement);
   }
 
   public void ignoreElement() {
@@ -87,20 +82,16 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   public String toString() {
-    return renderDescriptionMessage(getDescriptor(), myReplaceProblemDescriptorTemplateMessage);
+    return renderDescriptionMessage(getDescriptor());
   }
 
-  private static String renderDescriptionMessage(@Nullable CommonProblemDescriptor descriptor, boolean isReplaceProblemDescriptorTemplateMessage) {
+  private static String renderDescriptionMessage(@Nullable CommonProblemDescriptor descriptor) {
     PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     @NonNls String message = descriptor != null ? descriptor.getDescriptionTemplate().replaceAll("<[^>]*>", "") : "";
-    if (isReplaceProblemDescriptorTemplateMessage) {
-      message = StringUtil.replace(message, "#ref", psiElement != null && psiElement.isValid() ? psiElement.getText() : "");
-    }
-    else {
-      final int endIndex = message.indexOf("#end");
-      if (endIndex > 0) {
-        message = message.substring(0, endIndex);
-      }
+    message = StringUtil.replace(message, "#ref", psiElement != null && psiElement.isValid() ? psiElement.getText() : "");
+    final int endIndex = message.indexOf("#end");
+    if (endIndex > 0) {
+      message = message.substring(0, endIndex);
     }
     message = StringUtil.replace(message, "#loc", "");
     message = StringUtil.unescapeXml(message);

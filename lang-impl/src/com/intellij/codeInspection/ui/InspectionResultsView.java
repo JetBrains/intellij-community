@@ -13,7 +13,6 @@ import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefImplicitConstructor;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InspectionsOptionsToolbarAction;
@@ -578,13 +577,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (selectedNode instanceof RefElementNode) {
       final RefElementNode refElementNode = (RefElementNode)selectedNode;
       RefEntity refElement = refElementNode.getElement();
-      final RefEntity item;
-      if (refElement instanceof RefImplicitConstructor) {
-        item = ((RefImplicitConstructor)refElement).getOwnerClass();
-      }
-      else {
-        item = refElement;
-      }
+      if (refElement == null) return null;
+      final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
 
       if (item == null || !item.isValid()) return null;
 

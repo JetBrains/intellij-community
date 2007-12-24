@@ -9,7 +9,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
@@ -107,7 +106,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
             continue;
           }
           elemNode.add(
-            new ProblemDescriptionNode(refElement, problem, !(tool instanceof DuplicatePropertyInspection), descriptorProviderInspection));
+            new ProblemDescriptionNode(refElement, problem, descriptorProviderInspection));
           if (problems.length == 1) {
             elemNode.setProblem(problems[0]);
           }

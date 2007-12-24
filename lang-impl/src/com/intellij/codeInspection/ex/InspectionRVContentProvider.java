@@ -8,8 +8,6 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.deadCode.DeadCodeInspection;
-import com.intellij.codeInspection.deadCode.DummyEntryPointsTool;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -121,20 +119,18 @@ public abstract class InspectionRVContentProvider {
           for (int i = 0; i < pNode.getChildCount(); i++) {
             final RefElementNode elementNode = (RefElementNode)pNode.getChildAt(i);
             content.add(elementNode);
-            if (!(tool instanceof DeadCodeInspection || tool instanceof DummyEntryPointsTool)) {
-              final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
-              TreeUtil.traverse(elementNode, new TreeUtil.Traverse() {
-                public boolean accept(final Object node) {
-                  if (node instanceof ProblemDescriptionNode) {
-                    nodes.add((ProblemDescriptionNode)node);
-                  }
-                  return true;
+            final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
+            TreeUtil.traverse(elementNode, new TreeUtil.Traverse() {
+              public boolean accept(final Object node) {
+                if (node instanceof ProblemDescriptionNode) {
+                  nodes.add((ProblemDescriptionNode)node);
                 }
-              });
-              elementNode.removeAllChildren();
-              for (ProblemDescriptionNode node : nodes) {
-                elementNode.add(node);
+                return true;
               }
+            });
+            elementNode.removeAllChildren();
+            for (ProblemDescriptionNode node : nodes) {
+              elementNode.add(node);
             }
           }
         }
