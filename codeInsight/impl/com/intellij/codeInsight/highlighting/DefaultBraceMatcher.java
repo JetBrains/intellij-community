@@ -26,7 +26,9 @@ import java.util.List;
 
 public class DefaultBraceMatcher implements BraceMatcher {
   private static final int JAVA_TOKEN_GROUP = 0;
+  private static final int XML_TAG_TOKEN_GROUP = 1;
   private static final int XML_VALUE_DELIMITER_GROUP = 2;
+  private static final int JSP_TOKEN_GROUP = 3;
   private static final int PAIRED_TOKEN_GROUP = 4;
   private static final int DOC_TOKEN_GROUP = 5;
 
@@ -55,10 +57,10 @@ public class DefaultBraceMatcher implements BraceMatcher {
     else if (tokenType instanceof IXmlLeafElementType) {
       return tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER || tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
              ? XML_VALUE_DELIMITER_GROUP
-             : BraceMatchingUtil.XML_TAG_TOKEN_GROUP;
+             : XML_TAG_TOKEN_GROUP;
     }
     else if (tokenType instanceof IJspElementType) {
-      return BraceMatchingUtil.JSP_TOKEN_GROUP;
+      return JSP_TOKEN_GROUP;
     }
     else if (tokenType instanceof IJavaDocElementType) {
       return DOC_TOKEN_GROUP;
@@ -214,6 +216,35 @@ public class DefaultBraceMatcher implements BraceMatcher {
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     return true;
+  }
+
+  public boolean isStrictTagMatching(final FileType fileType, final int group) {
+    switch(group){
+      case XML_TAG_TOKEN_GROUP:
+        // Other xml languages may have nonbalanced tag names
+        return fileType == StdFileTypes.XML ||
+               fileType == StdFileTypes.XHTML ||
+               fileType == StdFileTypes.JSPX;
+
+      case JSP_TOKEN_GROUP:
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
+    switch(tokenGroup){
+      case XML_TAG_TOKEN_GROUP:
+        return fileType == StdFileTypes.XML;
+
+      case JSP_TOKEN_GROUP:
+        return true;
+
+      default:
+        return false;
+    }
   }
 
   private static boolean findEndTagStart(HighlighterIterator iterator) {

@@ -23,8 +23,6 @@ import java.util.Stack;
 
 public class BraceMatchingUtil {
   public static final int UNDEFINED_TOKEN_GROUP = -1;
-  public static final int XML_TAG_TOKEN_GROUP = 1;
-  public static final int JSP_TOKEN_GROUP = 3;
 
   private BraceMatchingUtil() {}
 
@@ -96,8 +94,9 @@ public class BraceMatchingUtil {
       group = getTokenGroup(brace1Token, fileType);
       brace1TagName = getTagName(fileText, iterator);
 
-      isStrict = isStrictTagMatching(fileType, group);
-      isCaseSensitive = areTagsCaseSensitive(fileType, group);
+      BraceMatcher matcher = getBraceMatcher(_fileType);
+      isStrict = matcher != null && matcher.isStrictTagMatching(fileType, group);
+      isCaseSensitive = matcher != null && matcher.areTagsCaseSensitive(fileType, group);
     }
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward,
@@ -176,6 +175,9 @@ public class BraceMatchingUtil {
     ourBraceStack.clear();
     ourTagNameStack.clear();
 
+    BraceMatcher matcher = getBraceMatcher(fileType);
+    if (matcher == null) return false;
+
     while (!iterator.atEnd()) {
       if (isStructuralBraceToken(fileType, iterator,fileText)) {
         if (isRBraceToken(iterator, fileText, fileType)) {
@@ -185,13 +187,13 @@ public class BraceMatchingUtil {
         if (isLBraceToken(iterator, fileText, fileType)) {
           if (ourBraceStack.size() == 0) return true;
 
-          final int group = getTokenGroup(iterator.getTokenType(), fileType);
+          final int group = matcher.getTokenGroup(iterator.getTokenType());
 
           final IElementType topTokenType = ourBraceStack.pop();
           final IElementType tokenType = iterator.getTokenType();
 
-          boolean isStrict = isStrictTagMatching(fileType, group);
-          boolean isCaseSensitive = areTagsCaseSensitive(fileType, group);
+          boolean isStrict = matcher.isStrictTagMatching(fileType, group);
+          boolean isCaseSensitive = matcher.areTagsCaseSensitive(fileType, group);
 
           String topTagName = null;
           String tagName = null;
@@ -239,35 +241,6 @@ public class BraceMatchingUtil {
     BraceMatcher matcher = getBraceMatcher(fileType);
     if (matcher!=null) return matcher.getTokenGroup(tokenType);
     return UNDEFINED_TOKEN_GROUP;
-  }
-
-  private static boolean isStrictTagMatching(FileType fileType, int tokenGroup) {
-    switch(tokenGroup){
-      case XML_TAG_TOKEN_GROUP:
-        // Other xml languages may have nonbalanced tag names
-        return fileType == StdFileTypes.XML ||
-               fileType == StdFileTypes.XHTML ||
-               fileType == StdFileTypes.JSPX;
-
-      case JSP_TOKEN_GROUP:
-        return true;
-
-      default:
-        return false;
-    }
-  }
-
-  private static boolean areTagsCaseSensitive(FileType fileType, int tokenGroup) {
-    switch(tokenGroup){
-      case XML_TAG_TOKEN_GROUP:
-        return fileType == StdFileTypes.XML;
-
-      case JSP_TOKEN_GROUP:
-        return true;
-
-      default:
-        return false;
-    }
   }
 
   public static String getTagName(CharSequence fileText, HighlighterIterator iterator) {

@@ -69,4 +69,12 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
     return true;
   }
+
+  public boolean isStrictTagMatching(final FileType fileType, final int group) {
+    return false;
+  }
+
+  public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
+    return false;
+  }
 }

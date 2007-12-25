@@ -80,4 +80,12 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
     return myMatcher.isPairedBracesAllowedBeforeType(lbraceType, contextType);
   }
+
+  public boolean isStrictTagMatching(final FileType fileType, final int group) {
+    return false;
+  }
+
+  public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
+    return false;
+  }
 }

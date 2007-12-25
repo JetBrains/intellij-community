@@ -15,4 +15,7 @@ public interface BraceMatcher {
   boolean isStructuralBrace(HighlighterIterator iterator,CharSequence text, FileType fileType);
   IElementType getTokenType(char ch, HighlighterIterator iterator);
   boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType);
+
+  boolean isStrictTagMatching(final FileType fileType, final int group);
+  boolean areTagsCaseSensitive(FileType fileType, int tokenGroup);
 }
