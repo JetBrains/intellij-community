@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.Language;
