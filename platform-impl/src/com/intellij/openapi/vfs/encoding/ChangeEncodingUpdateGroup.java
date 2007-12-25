@@ -32,12 +32,12 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
         virtualFile = ((OpenFileDescriptor)navigatable).getFile();
       }
     }
-    Pair<String, Boolean> result = update(virtualFile, project);
+    Pair<String, Boolean> result = update(project, virtualFile);
     e.getPresentation().setText(result.getFirst());
     e.getPresentation().setEnabled(result.getSecond());
   }
 
-  public static Pair<String,Boolean> update(final VirtualFile virtualFile, final Project project) {
+  public static Pair<String,Boolean> update(final Project project, final VirtualFile virtualFile) {
     boolean enabled = virtualFile != null && ChooseFileEncodingAction.isEnabled(project, virtualFile);
     String text;
     if (enabled) {
@@ -59,7 +59,7 @@ public class ChangeEncodingUpdateGroup extends DefaultActionGroup {
         pattern = "Change encoding from ''{0}'' to";
       }
       if (charset == null) charset = virtualFile.getCharset();
-      text = MessageFormat.format(pattern, charset.toString());
+      text = MessageFormat.format(pattern, charset.displayName());
     }
     else {
       text = "Encoding";

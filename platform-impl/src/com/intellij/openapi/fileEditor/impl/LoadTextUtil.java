@@ -90,17 +90,17 @@ public final class LoadTextUtil {
     CharsetSettings settings = CharsetSettings.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing();
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset()) : null;
-    virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, null);
+    setUtfCharsetWasDetectedFromBytes(virtualFile, false);
     if (shouldGuess) {
       toolkit.setEnforce8Bit(true);
       Charset charset = toolkit.guessFromBOM();
       if (charset != null) {
-        virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, Boolean.TRUE);
+        setUtfCharsetWasDetectedFromBytes(virtualFile, true);
         return charset;
       }
       CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(content.length);
       if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-        virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, Boolean.TRUE);
+        setUtfCharsetWasDetectedFromBytes(virtualFile, true);
         return CharsetToolkit.UTF8_CHARSET; //UTF detected, ignore all directives
       }
     }
@@ -158,6 +158,10 @@ public final class LoadTextUtil {
     Charset charset = chooseMostlyHarmlessCharset(existing, specified, text);
     if (charset != null) {
       virtualFile.setCharset(charset);
+      if (virtualFile.getBOM() != null) {
+        // prevent file to be reloaded in other encoding after save with BOM
+        setUtfCharsetWasDetectedFromBytes(virtualFile, true);
+      }
     }
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     return new BufferedWriter(specified == null ? new OutputStreamWriter(outputStream) : new OutputStreamWriter(outputStream, charset));
@@ -253,5 +257,8 @@ public final class LoadTextUtil {
   private static final Key<Boolean> UTF_CHARSET_WAS_DETECTED_FROM_BYTES = new Key<Boolean>("UTF_CHARSET_WAS_DETECTED_FROM_BYTES");
   public static boolean utfCharsetWasDetectedFromBytes(final VirtualFile virtualFile) {
     return virtualFile.getUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES) != null;
+  }
+  private static void setUtfCharsetWasDetectedFromBytes(final VirtualFile virtualFile, boolean flag) {
+    virtualFile.putUserData(UTF_CHARSET_WAS_DETECTED_FROM_BYTES, flag ? Boolean.TRUE : null);
   }
 }

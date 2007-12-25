@@ -44,7 +44,7 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
     String text;
     if (selected != null) {
       VirtualFile file = getSelectedFile(selected);
-      Pair<String,Boolean> result = ChangeEncodingUpdateGroup.update(file, getProject());
+      Pair<String,Boolean> result = ChangeEncodingUpdateGroup.update(getProject(), file);
       text = result.getFirst();
       enabled = result.getSecond();
       if (file != null) {

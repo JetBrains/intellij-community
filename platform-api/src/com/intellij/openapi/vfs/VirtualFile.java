@@ -431,7 +431,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public void setCharset(final Charset charset) {
     final Charset old = getUserData(CHARSET_KEY);
     putUserData(CHARSET_KEY, charset);
-    setBOM(charset == null ? null : CharsetToolkit.getBom(charset));
+    byte[] bom = charset == null ? null : CharsetToolkit.getBom(charset);
+    setBOM(bom);
 
     if (old != null && !old.equals(charset)) { //do not send on detect
       final Application application = ApplicationManager.getApplication();

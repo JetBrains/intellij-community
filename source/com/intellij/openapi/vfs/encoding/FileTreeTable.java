@@ -8,10 +8,12 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TableUtil;
@@ -54,26 +56,28 @@ public class FileTreeTable extends TreeTable {
                                                      final boolean isSelected, final boolean hasFocus, final int row, final int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         Charset t = (Charset)value;
+        Object userObject = table.getModel().getValueAt(row, 0);
+        VirtualFile file = userObject instanceof VirtualFile ? (VirtualFile)userObject : null;
+        Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(myProject, file);
+        boolean enabled = file == null || pair.getSecond();
         if (t != null) {
           setText(t.displayName());
         }
         else {
-          Object userObject = table.getModel().getValueAt(row, 0);
-          if (userObject instanceof VirtualFile) {
-            VirtualFile file = (VirtualFile)userObject;
+          if (file != null) {
             Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
-            boolean enabled = ChooseFileEncodingAction.isEnabled(myProject, file);
             if (charset != null) {
               setText(charset.displayName());
             }
-            else if (!enabled) {
+            else if (LoadTextUtil.utfCharsetWasDetectedFromBytes(file)) {
+              setText(file.getCharset().displayName());
+            }
+            else if (!ChooseFileEncodingAction.isEnabled(myProject, file)) {
               setText("N/A");
             }
-            setEnabled(enabled);
-            return this;
           }
         }
-        setEnabled(true);
+        setEnabled(enabled);
         return this;
       }
     });
@@ -91,6 +95,7 @@ public class FileTreeTable extends TreeTable {
 	    }
         };
       }
+
       public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, int row, int column) {
         Object o = table.getModel().getValueAt(row, 0);
         myVirtualFile = o instanceof Project ? null : (VirtualFile)o;
@@ -111,6 +116,11 @@ public class FileTreeTable extends TreeTable {
         AnActionEvent event = new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, templatePresentation, ActionManager.getInstance(), 0);
         changeAction.update(event);
         editorComponent = comboComponent;
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            press(comboComponent);
+          }
+        });
 
         Charset charset = (Charset)myModel.getValueAt(new DefaultMutableTreeNode(myVirtualFile), 1);
         templatePresentation.setText(charset == null ? "" : charset.displayName());
@@ -161,6 +171,21 @@ public class FileTreeTable extends TreeTable {
     valueColumn.setPreferredWidth(60);
   }
 
+  private static void press(final Container comboComponent) {
+    if (comboComponent instanceof JButton) {
+      final JButton button = (JButton)comboComponent;
+      button.doClick();
+    }
+    else {
+      for (int i=0; i<comboComponent.getComponentCount();i++) {
+        Component child = comboComponent.getComponent(i);
+        if (child instanceof Container) {
+          press((Container)child);
+        }
+      }
+    }
+  }
+
   private int askWhetherClearSubdirectories(final VirtualFile parent) {
     Map<VirtualFile, Charset> mappings = myModel.myCurrentMapping;
     Map<VirtualFile, Charset> subdirectoryMappings = new THashMap<VirtualFile, Charset>();
@@ -182,6 +207,25 @@ public class FileTreeTable extends TreeTable {
       }
       return ret;
     }
+  }
+
+  public boolean editCellAt(final int row, final int column, final EventObject me) {
+    boolean b = super.editCellAt(row, column, me);
+    //if (column == 1) {
+    //  Rectangle bounds = getTree().getRowBounds(row);
+    //  Rectangle rect = getBounds();
+    //  Rectangle r = new Rectangle(rect.x + bounds.x, rect.y + bounds.y, 10, 10);
+    //  MouseEvent newME2 = new MouseEvent(
+    //    this,
+    //    MouseEvent.MOUSE_PRESSED,
+    //    0, 0,
+    //    (int)r.getX()/* - getCellRect(0, column, true).x*/,
+    //    (int)r.getY()/*- getCellRect(0, column, true).y*/, 1,
+    //    false
+    //  );
+    //  getTree().dispatchEvent(newME2);
+    //}
+    return b;
   }
 
   public Map<VirtualFile, Charset> getValues() {
@@ -287,7 +331,8 @@ public class FileTreeTable extends TreeTable {
           Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
           if (userObject instanceof VirtualFile) {
             VirtualFile file = (VirtualFile)userObject;
-            return ChooseFileEncodingAction.isEnabled(myProject, file);
+            Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(myProject, file);
+            return pair.getSecond();
           }
           return true;
         default: throw new RuntimeException("invalid column " + column);
@@ -324,7 +369,7 @@ public class FileTreeTable extends TreeTable {
     protected void appendChildrenTo(final Collection<ConvenientNode> children) {
       Project project = getObject();
       VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
-      
+
       NextRoot:
       for (VirtualFile root : roots) {
         for (VirtualFile candidate : roots) {
