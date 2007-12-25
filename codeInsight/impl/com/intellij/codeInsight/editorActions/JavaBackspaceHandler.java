@@ -35,11 +35,11 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
 
   private static void handleLTDeletion(final Editor editor, final int offset) {
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+    while (iterator.getStart() > 0 && !JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
       iterator.retreat();
     }
 
-    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
+    if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
 
     int balance = 0;
     while (!iterator.atEnd() && balance >= 0) {
@@ -50,7 +50,7 @@ public class JavaBackspaceHandler extends BackspaceHandlerDelegate {
       else if (tokenType == JavaTokenType.GT) {
         balance--;
       }
-      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
+      else if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(tokenType)) {
         break;
       }
 

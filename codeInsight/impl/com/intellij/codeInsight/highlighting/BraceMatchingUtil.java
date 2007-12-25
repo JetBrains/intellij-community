@@ -48,12 +48,6 @@ public class BraceMatchingUtil {
     return false;
   }
 
-  public static boolean isTokenInvalidInsideReference(final IElementType tokenType) {
-    return tokenType == JavaTokenType.SEMICOLON ||
-           tokenType == JavaTokenType.LBRACE ||
-           tokenType == JavaTokenType.RBRACE;
-  }
-
   public static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
     return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
             || tokenType == JavaTokenType.SEMICOLON

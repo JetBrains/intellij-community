@@ -147,12 +147,12 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.getTokenType() != JavaTokenType.GT) return false;
-    while (!iterator.atEnd() && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+    while (!iterator.atEnd() && !JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
       iterator.advance();
     }
 
     if (iterator.atEnd()) return false;
-    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.retreat();
+    if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.retreat();
 
     int balance = 0;
     while (!iterator.atEnd() && balance >= 0) {
@@ -163,7 +163,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       else if (tokenType == JavaTokenType.GT) {
         balance++;
       }
-      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
+      else if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(tokenType)) {
         break;
       }
 
@@ -185,11 +185,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     int offset = editor.getCaretModel().getOffset();
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
+    while (iterator.getStart() > 0 && !JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
       iterator.retreat();
     }
 
-    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
+    if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
 
     int balance = 0;
     while (!iterator.atEnd() && balance >= 0) {
@@ -200,7 +200,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       else if (tokenType == JavaTokenType.GT) {
         balance--;
       }
-      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
+      else if (JavaTypedHandlerUtil.isTokenInvalidInsideReference(tokenType)) {
         break;
       }
 
