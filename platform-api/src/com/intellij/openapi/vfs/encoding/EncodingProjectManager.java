@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @State(
   name = "Encoding",
@@ -47,7 +44,13 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
 
   public Element getState() {
     Element element = new Element("x");
-    for (VirtualFile file : myMapping.keySet()) {
+    List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
+    Collections.sort(files, new Comparator<VirtualFile>() {
+      public int compare(final VirtualFile o1, final VirtualFile o2) {
+        return o1.getPath().compareTo(o2.getPath());
+      }
+    });
+    for (VirtualFile file : files) {
       Charset charset = myMapping.get(file);
       Element child = new Element("file");
       element.addContent(child);
@@ -108,18 +111,19 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
   }
 
   private static void saveOrReload(final VirtualFile virtualFileOrDir, final Charset charset) {
-    if (virtualFileOrDir != null && !virtualFileOrDir.isDirectory()) {
-      virtualFileOrDir.setCharset(charset);
-      FileDocumentManager documentManager = FileDocumentManager.getInstance();
-      if (documentManager.isFileModified(virtualFileOrDir)) {
-        Document document = documentManager.getDocument(virtualFileOrDir);
-        if (document != null) {
-          documentManager.saveDocument(document);
-        }
+    if (virtualFileOrDir == null || virtualFileOrDir.isDirectory()) {
+      return;
+    }
+    virtualFileOrDir.setCharset(charset);
+    FileDocumentManager documentManager = FileDocumentManager.getInstance();
+    if (documentManager.isFileModified(virtualFileOrDir)) {
+      Document document = documentManager.getDocument(virtualFileOrDir);
+      if (document != null) {
+        documentManager.saveDocument(document);
       }
-      else {
-        ((VirtualFileListener)documentManager).contentsChanged(new VirtualFileEvent(null, virtualFileOrDir, virtualFileOrDir.getName(), virtualFileOrDir.getParent()));
-      }
+    }
+    else {
+      ((VirtualFileListener)documentManager).contentsChanged(new VirtualFileEvent(null, virtualFileOrDir, virtualFileOrDir.getName(), virtualFileOrDir.getParent()));
     }
   }
 
