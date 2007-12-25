@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -215,6 +216,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
   }
 
   public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+    if (contextType instanceof IJavaElementType) return isPairedBracesAllowedBeforeTypeInJava(contextType);
     return true;
   }
 
@@ -270,5 +272,14 @@ public class DefaultBraceMatcher implements BraceMatcher {
   private static boolean isEndOfSingleHtmlTag(CharSequence text,HighlighterIterator iterator) {
     String tagName = BraceMatchingUtil.getTagName(text,iterator);
     return tagName != null && HtmlUtil.isSingleHtmlTag(tagName);
+  }
+
+  public static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
+    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
+            || tokenType == JavaTokenType.SEMICOLON
+            || tokenType == JavaTokenType.COMMA
+            || tokenType == JavaTokenType.RPARENTH
+            || tokenType == JavaTokenType.RBRACKET
+            || tokenType == JavaTokenType.RBRACE;
   }
 }

@@ -12,10 +12,8 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.HashMap;
@@ -46,17 +44,7 @@ public class BraceMatchingUtil {
     return false;
   }
 
-  public static boolean isPairedBracesAllowedBeforeTypeInJava(final IElementType tokenType) {
-    return TokenTypeEx.WHITE_SPACE_OR_COMMENT_BIT_SET.contains(tokenType)
-            || tokenType == JavaTokenType.SEMICOLON
-            || tokenType == JavaTokenType.COMMA
-            || tokenType == JavaTokenType.RPARENTH
-            || tokenType == JavaTokenType.RBRACKET
-            || tokenType == JavaTokenType.RBRACE;
-  }
-
   public static boolean isPairedBracesAllowedBeforeTypeInFileType(final IElementType lbraceType, final IElementType tokenType, final FileType fileType) {
-    if (tokenType instanceof IJavaElementType) return isPairedBracesAllowedBeforeTypeInJava(tokenType);
     try {
       return getBraceMatcher(fileType).isPairedBracesAllowedBeforeType(lbraceType, tokenType);
     } catch (AbstractMethodError incompatiblePluginThatWeDoNotCare) {}
