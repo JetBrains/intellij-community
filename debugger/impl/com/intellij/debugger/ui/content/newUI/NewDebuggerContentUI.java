@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -56,12 +55,14 @@ public class NewDebuggerContentUI
   DefaultActionGroup myDebuggerActions = new DefaultActionGroup();
 
   DefaultActionGroup myMinimizedViewActions = new DefaultActionGroup();
-  Map<Grid, Wrapper> myToolbarPlaceholders = new HashMap<Grid, Wrapper>();
+
+  Map<Grid, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<Grid, Wrapper>();
+  Map<Grid, Wrapper> myCommonActionsPlaceholder = new HashMap<Grid, Wrapper>();
+  Map<Grid, Content> myContextActions = new HashMap<Grid, Content>();
 
   boolean myUiLastStateWasRestored;
 
   private Set<Object> myRestoreStateRequestors = new HashSet<Object>();
-
 
   public NewDebuggerContentUI(Project project, ActionManager actionManager, DebuggerSettings settings, String sessionName) {
     myProject = project;
@@ -163,7 +164,8 @@ public class NewDebuggerContentUI
   private void removeGridIfNeeded(Grid grid) {
     if (grid.isEmpty()) {
       myTabs.removeTab(grid);
-      myToolbarPlaceholders.remove(grid);
+      myMinimizedButtonsPlaceholder.remove(grid);
+      myCommonActionsPlaceholder.remove(grid);
       Disposer.dispose(grid);
     }
   }
@@ -178,59 +180,18 @@ public class NewDebuggerContentUI
     TabInfo tab = new TabInfo(grid).setObject(getStateFor(content).getTab()).setText("Tab");
 
 
-    final JComponent left = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myDebuggerActions, true).getComponent();
-    Wrapper minimizedToolbarPlaceholder = new Wrapper();
-    myToolbarPlaceholders.put(grid, minimizedToolbarPlaceholder);
-    final JComponent right = minimizedToolbarPlaceholder;
+    Wrapper leftWrapper = new Wrapper();
+    myCommonActionsPlaceholder.put(grid, leftWrapper);
 
+    Wrapper rightWrapper = new Wrapper();
+    myMinimizedButtonsPlaceholder.put(grid, rightWrapper);
 
-    NonOpaquePanel sideComponent = new NonOpaquePanel(new AbstractLayoutManager() {
-      public Dimension preferredLayoutSize(final Container parent) {
-
-        Dimension size = new Dimension();
-        Dimension leftSize = left.getPreferredSize();
-        Dimension rightSize = right.getPreferredSize();
-
-        size.width = leftSize.width + rightSize.width;
-        size.height = Math.max(leftSize.height, rightSize.height);
-
-        return size;
-      }
-
-      public void layoutContainer(final Container parent) {
-        Dimension size = parent.getSize();
-        Dimension prefSize = parent.getPreferredSize();
-        if (prefSize.width <= size.width) {
-          left.setBounds(0, 0, left.getPreferredSize().width, parent.getHeight());
-          Dimension rightSize = right.getPreferredSize();
-          right.setBounds(parent.getWidth() - rightSize.width, 0, rightSize.width, parent.getHeight());
-        } else {
-          Dimension leftMinSize = left.getMinimumSize();
-          Dimension rightMinSize = right.getMinimumSize();
-
-          int delta = (prefSize.width - size.width) / 2;
-
-          left.setBounds(0, 0, left.getPreferredSize().width - delta, parent.getHeight());
-          int rightX = (int)left.getBounds().getMaxX();
-          int rightWidth = size.width - rightX;
-          if (rightWidth < rightMinSize.width) {
-            Dimension leftSize = left.getSize();
-            int diffToRightMin = rightMinSize.width - rightWidth;
-            if (leftSize.width - diffToRightMin >= leftMinSize.width) {
-              leftSize.width = leftSize.width - diffToRightMin;
-              left.setSize(leftSize);
-            }
-          }
-
-          right.setBounds((int)left.getBounds().getMaxX(), 0, parent.getWidth() - left.getWidth(), parent.getHeight());
-        }
-      }
-    });
+    NonOpaquePanel sideComponent = new NonOpaquePanel(new CommonToolbarLayout(leftWrapper, rightWrapper));
 
     tab.setSideComponent(sideComponent);
 
-    sideComponent.add(left);
-    sideComponent.add(right);
+    sideComponent.add(leftWrapper);
+    sideComponent.add(rightWrapper);
 
     tab.setTabLabelActions((ActionGroup)myActionManager.getAction(DebuggerActions.DEBUGGER_VIEW_TOOLBAR), TAB_TOOLBAR_PLACE);
 
@@ -247,9 +208,42 @@ public class NewDebuggerContentUI
     return cell.getCellFor(content);
   }
 
+  private void rebuildToolbar() {
+    rebuildCommonActions();
+    rebuildMinimizedActions();
+  }
+
+  private void rebuildCommonActions() {
+    for (Grid each : myCommonActionsPlaceholder.keySet()) {
+      Wrapper eachPlaceholder = myCommonActionsPlaceholder.get(each);
+      DefaultActionGroup groupToBuild = null;
+      JComponent contextComponent = null;
+      if (isHorizontalToolbar() && each.getContents().size() == 1) {
+        Content content = each.getContents().get(0);
+        if (myContextActions.get(each) != content) {
+          groupToBuild = new DefaultActionGroup();
+          groupToBuild.addAll(content.getActions());
+          groupToBuild.addSeparator();
+          groupToBuild.addAll(myDebuggerActions);
+          contextComponent = content.getActionsContextComponent();
+          myContextActions.put(each, content);
+        }
+      } else {
+        myContextActions.remove(each);
+        groupToBuild = myDebuggerActions;
+      }
+
+      if (groupToBuild != null) {
+        ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, groupToBuild, true);
+        tb.setTargetComponent(contextComponent);
+        eachPlaceholder.setContent(tb.getComponent());
+      }
+    }
+  }
+
   private void rebuildMinimizedActions() {
-    for (Grid each : myToolbarPlaceholders.keySet()) {
-      Wrapper eachPlaceholder = myToolbarPlaceholders.get(each);
+    for (Grid each : myMinimizedButtonsPlaceholder.keySet()) {
+      Wrapper eachPlaceholder = myMinimizedButtonsPlaceholder.get(each);
       ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, myMinimizedViewActions, true);
       ((ActionToolbarImpl)tb).setReservePlaceAutoPopupIcon(false);
       JComponent minimized = tb.getComponent();
@@ -261,6 +255,8 @@ public class NewDebuggerContentUI
   }
 
   private void updateTabsUI(final boolean validateNow) {
+    rebuildToolbar();
+
     java.util.List<TabInfo> tabs = myTabs.getTabs();
     for (TabInfo each : tabs) {
       updateTabUI(each);
@@ -381,6 +377,8 @@ public class NewDebuggerContentUI
     for (Grid each : getGrids()) {
       each.setToolbarHorizontal(state);
     }
+
+    updateTabsUI(false);
   }
 
 
@@ -530,7 +528,7 @@ public class NewDebuggerContentUI
           public void run() {
             saveUiState();
             select(content, true);
-            rebuildMinimizedActions();
+            updateTabsUI(false);
           }
         });
       }
@@ -539,7 +537,7 @@ public class NewDebuggerContentUI
     myMinimizedViewActions.add(restoreAction.get());
 
     saveUiState();
-    rebuildMinimizedActions();
+    updateTabsUI(false);
   }
 
   private static boolean willBeEmptyOnRemove(Grid grid, List<Content> toRemove) {
@@ -663,5 +661,56 @@ public class NewDebuggerContentUI
           });
         }
       });
+  }
+
+  private static class CommonToolbarLayout extends AbstractLayoutManager {
+    private final JComponent myLeft;
+    private final JComponent myRight;
+
+    public CommonToolbarLayout(final JComponent left, final JComponent right) {
+      myLeft = left;
+      myRight = right;
+    }
+
+    public Dimension preferredLayoutSize(final Container parent) {
+
+      Dimension size = new Dimension();
+      Dimension leftSize = myLeft.getPreferredSize();
+      Dimension rightSize = myRight.getPreferredSize();
+
+      size.width = leftSize.width + rightSize.width;
+      size.height = Math.max(leftSize.height, rightSize.height);
+
+      return size;
+    }
+
+    public void layoutContainer(final Container parent) {
+      Dimension size = parent.getSize();
+      Dimension prefSize = parent.getPreferredSize();
+      if (prefSize.width <= size.width) {
+        myLeft.setBounds(0, 0, myLeft.getPreferredSize().width, parent.getHeight());
+        Dimension rightSize = myRight.getPreferredSize();
+        myRight.setBounds(parent.getWidth() - rightSize.width, 0, rightSize.width, parent.getHeight());
+      } else {
+        Dimension leftMinSize = myLeft.getMinimumSize();
+        Dimension rightMinSize = myRight.getMinimumSize();
+
+        int delta = (prefSize.width - size.width) / 2;
+
+        myLeft.setBounds(0, 0, myLeft.getPreferredSize().width - delta, parent.getHeight());
+        int rightX = (int)myLeft.getBounds().getMaxX();
+        int rightWidth = size.width - rightX;
+        if (rightWidth < rightMinSize.width) {
+          Dimension leftSize = myLeft.getSize();
+          int diffToRightMin = rightMinSize.width - rightWidth;
+          if (leftSize.width - diffToRightMin >= leftMinSize.width) {
+            leftSize.width = leftSize.width - diffToRightMin;
+            myLeft.setSize(leftSize);
+          }
+        }
+
+        myRight.setBounds((int)myLeft.getBounds().getMaxX(), 0, parent.getWidth() - myLeft.getWidth(), parent.getHeight());
+      }
+    }
   }
 }
