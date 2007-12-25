@@ -25,13 +25,13 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
   @NonNls private static final String ID = "ALL";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
 
-  public AddSuppressInspectionAllForClassFix(final PsiElement context) {
-    super(ID, context);
+  public AddSuppressInspectionAllForClassFix() {
+    super(ID);
   }
 
   @Nullable
-  protected PsiDocCommentOwner getContainer() {
-    PsiDocCommentOwner container = super.getContainer();
+  protected PsiDocCommentOwner getContainer(final PsiElement element) {
+    PsiDocCommentOwner container = super.getContainer(element);
     if (container == null) {
       return null;
     }
@@ -50,13 +50,13 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
     return InspectionsBundle.message("suppress.all.for.class");
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiDocCommentOwner container = getContainer();
+  public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+    final PsiDocCommentOwner container = getContainer(element);
     LOG.assertTrue(container != null);
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
-    if (SuppressManager.getInstance().canHave15Suppressions(file) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
+    if (SuppressManager.getInstance().canHave15Suppressions(element) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
@@ -79,6 +79,6 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
       }
     }
 
-    super.invoke(project, editor, file);
+    super.invoke(project, editor, element);
   }
 }

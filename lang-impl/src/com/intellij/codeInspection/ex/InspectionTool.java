@@ -199,4 +199,9 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     provider.appendToolNodeContent(toolNode, parentNode, showSructure);
     return toolNode;
   }
+  
+  @Nullable
+  public SuppressIntentionAction[] getSuppressActions() {
+    return null;
+  }
 }

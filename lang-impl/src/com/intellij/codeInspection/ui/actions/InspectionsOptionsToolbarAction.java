@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.ui.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
@@ -23,17 +24,19 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.CommonBundle;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
@@ -104,10 +107,8 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       }
     });
 
-    final AnAction[] actions = new SuppressActionsProvider(myView).getSuppressActions();
-    if (actions != null) {
-      result.addAll(Arrays.asList(actions));
-    }
+    result.add(new SuppressActionWrapper(myView.getProject(), tool, tree.getSelectionPaths()));
+    
 
     return result;
   }

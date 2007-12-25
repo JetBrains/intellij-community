@@ -180,4 +180,12 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   public String getStaticDescription() {
     return myTool.getStaticDescription();
   }
+
+  @Nullable
+  public SuppressIntentionAction[] getSuppressActions() {
+    if (myTool instanceof CustomSuppressableInspectionTool) {
+      return ((CustomSuppressableInspectionTool)myTool).getSuppressActions();
+    }
+    return super.getSuppressActions();
+  }
 }

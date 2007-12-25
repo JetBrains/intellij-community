@@ -1,5 +1,8 @@
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefJavaElement;
 import com.intellij.codeInspection.reference.RefJavaUtil;
@@ -9,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -145,5 +149,10 @@ public abstract class FilteringInspectionTool extends InspectionTool {
       allAvailable.addAll(elements);
     }
     return allAvailable;
+  }
+
+  @Nullable
+  public SuppressIntentionAction[] getSuppressActions() {
+    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 }

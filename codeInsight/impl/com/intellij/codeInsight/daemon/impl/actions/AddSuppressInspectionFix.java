@@ -2,9 +2,8 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
@@ -21,44 +20,30 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class AddSuppressInspectionFix implements IntentionAction {
+public class AddSuppressInspectionFix extends SuppressIntentionAction {
   private String myID;
-  protected SmartPsiElementPointer myContext;
+  private String myKey;
 
-  public AddSuppressInspectionFix(LocalInspectionTool tool, PsiElement context) {
-    this(tool.getID(), context);
+  public AddSuppressInspectionFix(HighlightDisplayKey key) {
+    this(key.getID());
   }
 
-  public AddSuppressInspectionFix(HighlightDisplayKey key, PsiElement context) {
-    this(key.getID(), context);
-  }
-
-  public AddSuppressInspectionFix(String ID, PsiElement context) {
+  public AddSuppressInspectionFix(String ID) {
     myID = ID;
-    myContext = SmartPointerManager.getInstance(context.getProject()).createLazyPointer(context);
   }
 
   @NotNull
   public String getText() {
-    PsiDocCommentOwner container = getContainer();
-
-    @NonNls String key = container instanceof PsiClass
-                         ? "suppress.inspection.class"
-                         : container instanceof PsiMethod
-                           ? "suppress.inspection.method"
-                           : "suppress.inspection.field";
-    return InspectionsBundle.message(key);
+    return myKey != null ? InspectionsBundle.message(myKey) : "Suppress for member";
   }
 
-  @Nullable protected PsiDocCommentOwner getContainer() {
-    PsiElement context = myContext.getElement();
+  @Nullable protected PsiDocCommentOwner getContainer(final PsiElement context) {
     if (context == null || !(context.getContainingFile().getLanguage() instanceof JavaLanguage) || context instanceof PsiFile){
       return null;
     }
@@ -76,21 +61,25 @@ public class AddSuppressInspectionFix implements IntentionAction {
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiDocCommentOwner container = getContainer();
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+    final PsiDocCommentOwner container = getContainer(context);
+    myKey = container instanceof PsiClass
+                         ? "suppress.inspection.class"
+                         : container instanceof PsiMethod
+                           ? "suppress.inspection.method"
+                           : "suppress.inspection.field";
     final boolean isValid = container != null && !(container instanceof JspHolderMethod);
     if (!isValid) return false;
-    PsiElement context = myContext.getElement();
     return context != null && context.getManager().isInProject(context);
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiDocCommentOwner container = getContainer();
+  public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+    PsiDocCommentOwner container = getContainer(element);
     assert container != null;
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
-    if (SuppressManager.getInstance().canHave15Suppressions(file) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
+    if (SuppressManager.getInstance().canHave15Suppressions(element) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       assert modifierList != null;
       PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
@@ -111,7 +100,7 @@ public class AddSuppressInspectionFix implements IntentionAction {
             annotation.replace(JavaPsiFacade.getInstance(container.getProject()).getElementFactory().createAnnotationFromText(
               annotation.getText().substring(0, curlyBraceIndex) + ", \"" + myID + "\"})", container));
           }
-          else if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          else if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
             Messages.showErrorDialog(editor.getComponent(),
                                      InspectionsBundle.message("suppress.inspection.annotation.syntax.error", annotation.getText()));
           }

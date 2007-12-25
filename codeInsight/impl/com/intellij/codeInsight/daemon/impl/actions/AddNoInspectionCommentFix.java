@@ -1,9 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,23 +18,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class AddNoInspectionCommentFix implements IntentionAction {
-  private final SmartPsiElementPointer myContext;
+public class AddNoInspectionCommentFix extends SuppressIntentionAction {
   private static final @NonNls String COMMENT_START_TEXT = "//noinspection ";
 
   private final String myID;
 
-  public AddNoInspectionCommentFix(LocalInspectionTool tool, PsiElement context) {
-    this(tool.getID(), context);
+
+  public AddNoInspectionCommentFix(HighlightDisplayKey key) {
+    this(key.getID());
   }
 
-  public AddNoInspectionCommentFix(HighlightDisplayKey key, PsiElement context) {
-    this(key.getID(), context);
-  }
-
-  private AddNoInspectionCommentFix(final String ID, final PsiElement context) {
+  private AddNoInspectionCommentFix(final String ID) {
     myID = ID;
-    myContext = SmartPointerManager.getInstance(context.getProject()).createLazyPointer(context);
   }
 
   @NotNull
@@ -44,8 +38,7 @@ public class AddNoInspectionCommentFix implements IntentionAction {
   }
 
   @Nullable
-  private PsiStatement getContainer() {
-    PsiElement context = myContext.getElement();
+  private static PsiStatement getContainer(PsiElement context) {
     if (context == null || PsiTreeUtil.getParentOfType(context, JspMethodCall.class) != null) return null;
     return PsiTreeUtil.getParentOfType(context, PsiStatement.class);
   }
@@ -55,13 +48,12 @@ public class AddNoInspectionCommentFix implements IntentionAction {
     return InspectionsBundle.message("suppress.inspection.family");
   }
 
-  public boolean isAvailable(Project project, Editor editor, PsiFile file) {
-    PsiElement context = myContext.getElement();
-    return context != null && context.getManager().isInProject(context) && getContainer() != null;
+  public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement context) {
+    return context != null && context.getManager().isInProject(context) && getContainer(context) != null;
   }
 
-  public void invoke(Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiStatement container = getContainer();
+  public void invoke(final Project project, @Nullable Editor editor, final PsiElement element) throws IncorrectOperationException {
+    PsiStatement container = getContainer(element);
     if (container == null) return;
 
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
@@ -76,12 +68,12 @@ public class AddNoInspectionCommentFix implements IntentionAction {
         return;
       }
     }
-    boolean caretWasBeforeStatement = editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
+    boolean caretWasBeforeStatement = editor != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
     container.getParent().addBefore(factory.createCommentFromText(COMMENT_START_TEXT +  myID, null), container);
     if (caretWasBeforeStatement) {
       editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
     }
-    UndoUtil.markPsiFileForUndo(file);
+    UndoUtil.markPsiFileForUndo(element.getContainingFile());
   }
 
   public boolean startInWriteAction() {

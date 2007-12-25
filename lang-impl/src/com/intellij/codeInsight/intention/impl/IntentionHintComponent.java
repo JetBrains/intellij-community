@@ -224,7 +224,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     @NotNull
     public String getTextFor(final IntentionActionWithTextCaching action) {
-      return action.getText();
+      return action.getAction().getText();
     }
 
     public Icon getIconFor(final IntentionActionWithTextCaching value) {

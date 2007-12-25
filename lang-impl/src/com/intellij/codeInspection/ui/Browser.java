@@ -5,7 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.actions.SuppressActionsProvider;
+import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -195,8 +195,8 @@ public class Browser extends JPanel {
                   invokeLocalFix(actionNumber);
                 }
               } else if (ref.startsWith("suppress:")){
-                final AnAction[] actions = new SuppressActionsProvider(myView).getSuppressActions();
-                if (actions != null) {
+                final AnAction[] actions = new SuppressActionWrapper(myView.getProject(), getTool(), myView.getTree().getSelectionPaths()).getChildren(null);
+                if (actions != null && actions.length > 0) {
                   int actionNumber = Integer.parseInt(ref.substring("suppress:".length()));
                   if (actionNumber > -1 && actions.length > actionNumber) {
                     actions[actionNumber].actionPerformed(null);
@@ -305,8 +305,8 @@ public class Browser extends JPanel {
     if (tool != null) {
       final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
       if (key != null){//dummy entry points
-        final AnAction[] suppressActions = new SuppressActionsProvider(myView).getSuppressActions();
-        if (suppressActions != null) {
+        final AnAction[] suppressActions = new SuppressActionWrapper(myView.getProject(), tool, myView.getTree().getSelectionPaths()).getChildren(null);
+        if (suppressActions != null && suppressActions.length > 0) {
           int idx = 0;
           @NonNls String font = "<font style=\"font-family:verdana;\" size = \"3\">";
           buf.append(font);
