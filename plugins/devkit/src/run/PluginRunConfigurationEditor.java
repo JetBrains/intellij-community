@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
@@ -67,7 +68,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
       public void actionPerformed(ActionEvent e) {
         if (myModules.getSelectedItem() != null){
           prc.removeAllLogFiles();
-          ProjectJdk jdk = ModuleRootManager.getInstance((Module)myModules.getSelectedItem()).getJdk();
+          ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance((Module)myModules.getSelectedItem()));
           jdk = IdeaJdk.findIdeaJdk(jdk);
           if (jdk != null) {
             final String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();

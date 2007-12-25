@@ -20,9 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
@@ -45,7 +43,7 @@ public class PluginBuildUtil {
   }
 
   @NonNls @Nullable public static String getPluginExPath(Module module) {
-    final ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(module).getJdk());
+    final ProjectJdk jdk = IdeaJdk.findIdeaJdk(ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module)));
     if (jdk == null) {
       return null;
     }

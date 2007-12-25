@@ -24,6 +24,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
@@ -129,7 +130,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public static List<Module> getCandidateModules(Module module) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
 
-    final ProjectJdk jdk = manager.getJdk();
+    final ProjectJdk jdk = ModuleJdkUtil.getJdk(manager);
     // don't allow modules that don't use an IDEA-JDK
     if (IdeaJdk.findIdeaJdk(jdk) == null) {
       return Collections.emptyList();

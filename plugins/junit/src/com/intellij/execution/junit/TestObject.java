@@ -41,6 +41,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -175,7 +176,7 @@ public abstract class TestObject implements JavaCommandLine {
     final Module module = myConfiguration.getConfigurationModule().getModule();
     if (myJavaParameters.getJdk() == null){
       myJavaParameters.setJdk(module != null
-                              ? ModuleRootManager.getInstance(module).getJdk()
+                              ? ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module))
                               : ProjectRootManager.getInstance(myProject).getProjectJdk());
     }
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);

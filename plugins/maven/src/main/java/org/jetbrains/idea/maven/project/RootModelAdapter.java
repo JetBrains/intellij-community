@@ -35,7 +35,7 @@ class RootModelAdapter {
       myRootModel.addContentEntry(virtualFile);
     }
 
-    myRootModel.inheritJdk(); // TODO should be able to import
+    ModuleJdkUtil.inheritJdk(myRootModel);
     myRootModel.setExcludeOutput(true);
 
     for (OrderEntry entry : myRootModel.getOrderEntries()) {
