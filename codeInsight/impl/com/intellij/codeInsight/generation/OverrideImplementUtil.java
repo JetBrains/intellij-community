@@ -195,7 +195,7 @@ public class OverrideImplementUtil {
       results.addAll(Arrays.asList(implementor.createImplementationPrototypes(aClass, method)));
     }
     if (results.isEmpty()) {
-      PsiMethod method1 = substitutor == PsiSubstitutor.EMPTY ? method : GenerateMembersUtil.substituteGenericMethod(method, substitutor);
+      PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor);
 
       PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);

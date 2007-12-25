@@ -273,8 +273,8 @@ public class GenerateMembersUtil {
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
+      return method;
     }
-    return method;
   }
 
   private static PsiType substituteType(final PsiSubstitutor substitutor, final PsiType type, final boolean isRaw) {
