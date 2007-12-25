@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiUtil;
@@ -34,7 +34,7 @@ public class RadNestedForm extends RadComponent {
     super(module, JPanel.class, id);
     myFormFileName = formFileName;
     LOG.debug("Loading nested form " + formFileName);
-    VirtualFile formFile = ModuleUtil.findResourceFileInDependents(module, formFileName);
+    VirtualFile formFile = ResourceFileUtil.findResourceFileInDependents(module, formFileName);
     if (formFile == null) {
       throw new IllegalArgumentException("Couldn't find virtual file for nested form " + formFileName);
     }

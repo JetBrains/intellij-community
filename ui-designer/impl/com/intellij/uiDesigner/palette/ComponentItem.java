@@ -7,13 +7,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -165,7 +164,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
 
     // Create new icon
     if(myIconPath != null && myIconPath.length() > 0) {
-      final VirtualFile iconFile = ModuleUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
+      final VirtualFile iconFile = ResourceFileUtil.findResourceFileInScope(myIconPath, myProject, GlobalSearchScope.allScope(myProject));
       if (iconFile != null) {
         try {
           myIcon = new ImageIcon(iconFile.contentsToByteArray());

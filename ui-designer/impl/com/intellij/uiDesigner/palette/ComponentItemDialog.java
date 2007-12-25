@@ -7,7 +7,7 @@ import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -246,7 +246,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   }
 
   private boolean saveNestedForm() {
-    VirtualFile formFile = ModuleUtil.findResourceFileInProject(myProject, myTfNestedForm.getText());
+    VirtualFile formFile = ResourceFileUtil.findResourceFileInProject(myProject, myTfNestedForm.getText());
     if (formFile == null) {
       Messages.showErrorDialog(getWindow(), UIDesignerBundle.message("add.component.cannot.load.form", myTfNestedForm.getText()), CommonBundle.getErrorTitle());
       return false;
@@ -382,7 +382,7 @@ public final class ComponentItemDialog extends DialogWrapper {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       PsiFile formFile = null;
       if (myTextField.getText().length() > 0) {
-        VirtualFile formVFile = ModuleUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
+        VirtualFile formVFile = ResourceFileUtil.findResourceFileInScope(myTextField.getText(), myProject, ProjectScope.getAllScope(myProject));
         if (formVFile != null) {
           formFile = PsiManager.getInstance(myProject).findFile(formVFile);
         }

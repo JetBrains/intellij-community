@@ -4,7 +4,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -152,7 +152,7 @@ public class PropertiesUtil {
    */
   @Nullable public static PropertiesFile getPropertiesFile(final String bundleName, final Module searchFromModule) {
     @NonNls final String fileName = bundleName + ".properties";
-    VirtualFile vFile = ModuleUtil.findResourceFileInDependents(searchFromModule, fileName);
+    VirtualFile vFile = ResourceFileUtil.findResourceFileInDependents(searchFromModule, fileName);
     if (vFile != null) {
       PsiFile psiFile = PsiManager.getInstance(searchFromModule.getProject()).findFile(vFile);
       if (psiFile instanceof PropertiesFile) return (PropertiesFile) psiFile;

@@ -5,14 +5,13 @@
 package com.intellij.uiDesigner.make;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.PsiPropertiesProvider;
 import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.util.ClassUtil;
 
@@ -34,7 +33,7 @@ public class PsiNestedFormLoader implements NestedFormLoader {
     if (myFormCache.containsKey(formFileName)) {
       return myFormCache.get(formFileName);
     }
-    VirtualFile formFile = ModuleUtil.findResourceFileInDependents(myModule, formFileName);
+    VirtualFile formFile = ResourceFileUtil.findResourceFileInDependents(myModule, formFileName);
     if (formFile == null) {
       throw new Exception("Could not find nested form file " + formFileName);
     }

@@ -5,7 +5,7 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -39,7 +39,7 @@ public class NestedFormFileReference extends ReferenceInForm {
     if (module == null) {
       return null;
     }
-    final VirtualFile formFile = ModuleUtil.findResourceFileInDependents(module, getRangeText());
+    final VirtualFile formFile = ResourceFileUtil.findResourceFileInDependents(module, getRangeText());
     if (formFile == null) {
       return null;
     }

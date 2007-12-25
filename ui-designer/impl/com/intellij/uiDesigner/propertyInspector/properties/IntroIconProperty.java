@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.UIFormXmlConstants;
@@ -65,7 +65,7 @@ public class IntroIconProperty extends IntrospectedProperty<IconDescriptor> {
 
   public static void ensureIconLoaded(final Module module, final IconDescriptor value) {
     if (value.getIcon() == null) {
-      VirtualFile iconFile = ModuleUtil.findResourceFileInScope(value.getIconPath(), module.getProject(),
+      VirtualFile iconFile = ResourceFileUtil.findResourceFileInScope(value.getIconPath(), module.getProject(),
                                                                 module.getModuleWithDependenciesAndLibrariesScope(true));
       if (iconFile != null) {
         loadIconFromFile(iconFile, value);

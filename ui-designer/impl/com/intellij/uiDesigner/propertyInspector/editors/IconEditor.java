@@ -3,7 +3,7 @@ package com.intellij.uiDesigner.propertyInspector.editors;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ResourceFileUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -36,7 +36,7 @@ public class IconEditor extends PropertyEditor<IconDescriptor> {
         final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myModule.getProject());
         PsiFile iconFile = null;
         if (myValue != null) {
-          VirtualFile iconVFile = ModuleUtil.findResourceFileInScope(myValue.getIconPath(), myModule.getProject(),
+          VirtualFile iconVFile = ResourceFileUtil.findResourceFileInScope(myValue.getIconPath(), myModule.getProject(),
                                                                      myModule.getModuleWithDependenciesAndLibrariesScope(true));
           if (iconVFile != null) {
             iconFile = PsiManager.getInstance(myModule.getProject()).findFile(iconVFile);
