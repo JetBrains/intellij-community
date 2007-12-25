@@ -1,10 +1,9 @@
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author nik
@@ -14,6 +13,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     super(id, title);
   }
 
-  @Nullable
-  public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);  
+  public abstract boolean canPutAt(@NotNull VirtualFile file, int line);
+
+  public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
+
+  public abstract String getDisplayText(final XLineBreakpoint<P> breakpoint);
 }

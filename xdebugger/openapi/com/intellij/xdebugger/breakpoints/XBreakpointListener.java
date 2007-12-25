@@ -13,4 +13,5 @@ public interface XBreakpointListener<B extends XBreakpoint<?>> extends EventList
 
   void breakpointRemoved(@NotNull B breakpoint);
 
+  void breakpointChanged(@NotNull B breakpoint);
 }

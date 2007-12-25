@@ -1,6 +1,7 @@
 package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,11 +21,14 @@ public interface XBreakpointManager {
   void removeBreakpoint(@NotNull XBreakpoint<?> breakpoint);
 
 
-  @NotNull 
+  @NotNull
   XBreakpoint<?>[] getAllBreakpoints();
 
   @NotNull <P extends XBreakpointProperties, B extends XBreakpoint<P>>
   Collection<? extends B> getBreakpoints(@NotNull XBreakpointType<B, P> type);
+
+  @Nullable <P extends XBreakpointProperties>
+  XLineBreakpoint<P> findBreakpointAtLine(@NotNull XLineBreakpointType<P> type, @NotNull VirtualFile file, int line);
 
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
@@ -35,4 +39,5 @@ public interface XBreakpointManager {
 
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
   void addBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener, Disposable parentDisposable);
+
 }

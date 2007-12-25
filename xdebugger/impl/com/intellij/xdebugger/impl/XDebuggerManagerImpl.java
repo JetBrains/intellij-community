@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
@@ -28,9 +29,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   private Project myProject;
   private XBreakpointManagerImpl myBreakpointManager;
 
-  public XDebuggerManagerImpl(final Project project) {
+  public XDebuggerManagerImpl(final Project project, final StartupManager startupManager) {
     myProject = project;
-    myBreakpointManager = new XBreakpointManagerImpl(myProject);
+    myBreakpointManager = new XBreakpointManagerImpl(myProject, startupManager);
   }
 
   @NotNull

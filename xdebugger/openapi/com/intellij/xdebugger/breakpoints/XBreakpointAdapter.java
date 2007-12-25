@@ -11,4 +11,7 @@ public abstract class XBreakpointAdapter<B extends XBreakpoint<?>> implements XB
 
   public void breakpointRemoved(@NotNull final B breakpoint) {
   }
+
+  public void breakpointChanged(@NotNull final B breakpoint) {
+  }
 }

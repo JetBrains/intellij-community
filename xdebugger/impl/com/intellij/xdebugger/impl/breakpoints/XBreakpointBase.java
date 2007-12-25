@@ -14,7 +14,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 
@@ -25,24 +24,32 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
   private final S myState;
-  protected final Project myProject;
+  private final XBreakpointManagerImpl myBreakpointManager;
 
-  public XBreakpointBase(final XBreakpointType<Self, P> type, final Project project, final @Nullable P properties, final S state) {
+  public XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, final @Nullable P properties, final S state) {
     myState = state;
     myType = type;
     myProperties = properties;
-    myProject = project;
+    myBreakpointManager = breakpointManager;
   }
 
-  protected XBreakpointBase(final XBreakpointType<Self, P> type, final Project project, S breakpointState) {
+  protected XBreakpointBase(final XBreakpointType<Self, P> type, XBreakpointManagerImpl breakpointManager, S breakpointState) {
     myState = breakpointState;
     myType = type;
-    myProject = project;
+    myBreakpointManager = breakpointManager;
     myProperties = type.createProperties();
     if (myProperties != null) {
       Object state = XmlSerializer.deserialize(myState.getPropertiesElement(), getStateClass(myProperties.getClass()));
       myProperties.loadState(state);
     }
+  }
+
+  protected final Project getProject() {
+    return myBreakpointManager.getProject();
+  }
+
+  protected final void fireBreakpointChanged() {
+    myBreakpointManager.fireBreakpointChanged(this);
   }
 
   private static Class getStateClass(final Class<? extends XBreakpointProperties> propertiesClass) {
@@ -74,7 +81,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   }
 
   public void setEnabled(final boolean enabled) {
-    myState.setEnabled(true);
+    myState.setEnabled(enabled);
+    fireBreakpointChanged();
   }
 
   public boolean isValid() {
@@ -84,11 +92,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   @Nullable 
   public P getProperties() {
     return myProperties;
-  }
-
-  @NotNull
-  public Icon getIcon() {
-    throw new UnsupportedOperationException("'getIcon' not implemented in " + getClass().getName());
   }
 
   @NotNull
@@ -146,8 +149,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       myPropertiesElement = propertiesElement;
     }
 
-    public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull Project project) {
-      return new XBreakpointBase<B, P, BreakpointState<B,P,?>>(type, project, this);
+    public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull XBreakpointManagerImpl breakpointManager) {
+      return new XBreakpointBase<B, P, BreakpointState<B,P,?>>(type, breakpointManager, this);
     }
   }
 }

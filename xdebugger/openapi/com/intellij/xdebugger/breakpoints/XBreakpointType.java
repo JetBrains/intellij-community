@@ -1,11 +1,14 @@
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
+
+import javax.swing.*;
 
 /**
  * @author nik
@@ -22,13 +25,17 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @Nullable
   public static XBreakpointType<?,?> findType(@NotNull @NonNls String id) {
-    XBreakpointType[] breakpointTypes = Extensions.getExtensions(EXTENSION_POINT_NAME);
+    XBreakpointType[] breakpointTypes = getBreakpointTypes();
     for (XBreakpointType breakpointType : breakpointTypes) {
       if (id.equals(breakpointType.getId())) {
         return breakpointType;
       }
     }
     return null;
+  }
+
+  public static XBreakpointType[] getBreakpointTypes() {
+    return Extensions.getExtensions(EXTENSION_POINT_NAME);
   }
 
   @Nullable 
@@ -45,4 +52,16 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public String getTitle() {
     return myTitle;
   }
+
+  @NotNull 
+  public Icon getEnabledIcon() {
+    return DebuggerIcons.ENABLED_BREAKPOINT_ICON;
+  }
+
+  @NotNull
+  public Icon getDisabledIcon() {
+    return DebuggerIcons.DISABLED_BREAKPOINT_ICON;
+  }
+
+  public abstract String getDisplayText(B breakpoint);
 }

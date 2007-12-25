@@ -26,7 +26,7 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
     MutablePicoContainer container = getApplication().getPicoContainer();
     registerComponentImplementation(container, EditorFactory.class, MockEditorFactory.class);
     registerComponentImplementation(container, VirtualFileManager.class, MockVirtualFileManager.class);
-    myBreakpointManager = new XBreakpointManagerImpl(project);
+    myBreakpointManager = new XBreakpointManagerImpl(project, null);
   }
 
   public void testAddRemove() throws Exception {
@@ -77,6 +77,10 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
 
       public void breakpointRemoved(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
         out.append("removed[").append(breakpoint.getProperties().myOption).append("];");
+      }
+
+      public void breakpointChanged(@NotNull final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
+        out.append("changed[").append(breakpoint.getProperties().myOption).append("];");
       }
     };
     myBreakpointManager.addBreakpointListener(MY_LINE_BREAKPOINT_TYPE, listener);

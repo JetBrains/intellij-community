@@ -4,8 +4,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author nik
  */
@@ -15,9 +13,6 @@ public interface XBreakpoint<P extends XBreakpointProperties> {
   void setEnabled(boolean enabled);
 
   boolean isValid();
-
-  @NotNull
-  Icon getIcon();
 
   @NotNull
   XBreakpointType<?,P> getType();

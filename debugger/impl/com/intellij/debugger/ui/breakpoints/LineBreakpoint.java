@@ -27,6 +27,7 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -40,8 +41,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
   // icons
-  public static Icon ICON = IconLoader.getIcon("/debugger/db_set_breakpoint.png");
-  public static final Icon DISABLED_ICON = IconLoader.getIcon("/debugger/db_disabled_breakpoint.png");
+  public static Icon ICON = DebuggerIcons.ENABLED_BREAKPOINT_ICON;
+  public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
   public static final Icon DISABLED_DEP_ICON = IconLoader.getIcon("/debugger/db_dep_line_breakpoint.png");
   private static Icon ourInvalidIcon = IconLoader.getIcon("/debugger/db_invalid_breakpoint.png");
   private static Icon ourVerifiedIcon = IconLoader.getIcon("/debugger/db_verified_breakpoint.png");

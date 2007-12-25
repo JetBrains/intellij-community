@@ -2,10 +2,7 @@ package com.intellij.xdebugger;
 
 import com.intellij.testFramework.LiteFixture;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +26,10 @@ public abstract class XDebuggerTestCase extends LiteFixture {
       super("testLine", "239");
     }
 
+    public boolean canPutAt(@NotNull final VirtualFile file, final int line) {
+      return false;
+    }
+
     public MyBreakpointProperties createBreakpointProperties(@NotNull final VirtualFile file, final int line) {
       return null;
     }
@@ -36,11 +37,19 @@ public abstract class XDebuggerTestCase extends LiteFixture {
     public MyBreakpointProperties createProperties() {
       return new MyBreakpointProperties();
     }
+
+    public String getDisplayText(final XLineBreakpoint<MyBreakpointProperties> breakpoint) {
+      return "";
+    }
   }
 
   public static class MySimpleBreakpointType extends XBreakpointType<XBreakpoint<MyBreakpointProperties>,MyBreakpointProperties> {
     public MySimpleBreakpointType() {
       super("test", "239");
+    }
+
+    public String getDisplayText(final XBreakpoint<MyBreakpointProperties> breakpoint) {
+      return "";
     }
 
     public MyBreakpointProperties createProperties() {
