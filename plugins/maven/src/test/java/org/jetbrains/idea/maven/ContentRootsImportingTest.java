@@ -402,6 +402,25 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getProjectPath() + "/testCustom");
   }
 
+  public void testExcludingCustomOutputUnderTargetUsingStandartVariable() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <outputDirectory>${project.build.directory}/outputCustom</outputDirectory>" +
+                  "  <testOutputDirectory>${project.build.directory}/testCustom</testOutputDirectory>" +
+                  "</build>");
+
+    assertModules("project");
+
+    // todo should fail when maven embedder is fixed
+    assertExcludes("project");
+    assertModuleOutput("project",
+                       getProjectPath() + "/${project.build.directory}/outputCustom",
+                       getProjectPath() + "/${project.build.directory}/testCustom");
+  }
+
   public void testOutputDirsOutsideOfContentRoot() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
