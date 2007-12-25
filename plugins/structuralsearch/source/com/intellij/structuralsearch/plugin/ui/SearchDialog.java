@@ -276,14 +276,14 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
         contextLanguage = psiElement != null ? psiElement.getParent().getLanguage():null;
       }
 
-      if (file.getFileType() == StdFileTypes.HTML ||
+      if (file.getLanguage() == StdLanguages.HTML ||
           ( file.getFileType() == StdFileTypes.JSP &&
             contextLanguage == StdLanguages.HTML
           )
          ) {
         ourFileType = "html";
       }
-      else if (file.getFileType() == StdFileTypes.XHTML ||
+      else if (file.getLanguage() == StdLanguages.XHTML ||
                ( file.getFileType() == StdFileTypes.JSPX &&
                  contextLanguage == StdLanguages.HTML
                )) {
