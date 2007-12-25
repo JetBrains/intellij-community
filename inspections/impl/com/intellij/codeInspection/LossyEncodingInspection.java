@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.util.List;
 
 public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
   @Nls
@@ -48,19 +50,42 @@ public class LossyEncodingInspection extends BaseJavaLocalInspectionTool {
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
-    for (int i=0; i<text.length();i++) {
+    int errorCount = 0;
+    int start = -1;
+    List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      String str = Character.toString(c);
-      ByteBuffer out = charset.encode(str);
-      CharBuffer buffer = charset.decode(out);
-      if (!str.equals(buffer.toString())) {
-        ProblemDescriptor descriptor = manager.createProblemDescriptor(file,
-                                                                       new TextRange(i,i+1),
-                                                                       InspectionsBundle.message("unsupported.character.for.the.charset.0", charset),
-                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        return new ProblemDescriptor[]{descriptor};
+      if (isRepresentable(c, charset)) {
+        if (start != -1) {
+          //if (Character.isWhitespace(c)) i--;
+          ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, i), InspectionsBundle.message(
+            "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          descriptors.add(descriptor);
+          start = -1;
+
+          //do not report too many errors
+          if (errorCount++ > 200) break;
+        }
+      }
+      else {
+        if (start == -1) {
+          start = i;
+        }
       }
     }
-    return null;
+    if (start != -1) {
+      ProblemDescriptor descriptor = manager.createProblemDescriptor(file, new TextRange(start, text.length()), InspectionsBundle.message(
+        "unsupported.character.for.the.charset", charset), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+      descriptors.add(descriptor);
+    }
+
+    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+  }
+
+  private static boolean isRepresentable(final char c, final Charset charset) {
+    String str = Character.toString(c);
+    ByteBuffer out = charset.encode(str);
+    CharBuffer buffer = charset.decode(out);
+    return str.equals(buffer.toString());
   }
 }
