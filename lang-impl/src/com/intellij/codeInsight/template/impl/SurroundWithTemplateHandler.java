@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -31,12 +32,12 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
-    int contextType = TemplateManager.getInstance(project).getContextType(file, offset);
+    TemplateContextType contextType = TemplateManager.getInstance(project).getContextType(file, offset);
     TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
     ArrayList<TemplateImpl> array = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) continue;
-      if (template.getTemplateContext().isInContext(contextType) && template.isSelectionTemplate()) {
+      if (contextType.isEnabled(template.getTemplateContext()) && template.isSelectionTemplate()) {
         array.add(template);
       }
     }

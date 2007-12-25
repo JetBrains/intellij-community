@@ -20,7 +20,7 @@ public abstract class TemplateManager {
 
   public abstract boolean startTemplate(Editor editor, char shortcutChar);
 
-  public abstract int getContextType(PsiFile file, int offset);
+  public abstract TemplateContextType getContextType(PsiFile file, int offset);
 
   public abstract Template createTemplate(String key, String group);
 

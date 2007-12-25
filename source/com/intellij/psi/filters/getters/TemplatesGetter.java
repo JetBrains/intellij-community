@@ -1,18 +1,15 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.psi.filters.ContextGetter;
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.CompletionContext;
-import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.CompletionContextType;
 import com.intellij.codeInsight.template.impl.TemplateContext;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.filters.ContextGetter;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +29,7 @@ public class TemplatesGetter implements ContextGetter{
 
       final TemplateContext templateContext = template.getTemplateContext();
 
-      if (!templateContext.isInContext(TemplateContext.COMPLETION_CONTEXT)) {
+      if (!new CompletionContextType().isEnabled(templateContext)) {
         continue;
       }
       result.add(template);

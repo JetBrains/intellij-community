@@ -1,12 +1,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.ExpressionContext;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateEditingListener;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -15,13 +10,12 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -237,51 +231,20 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   private boolean checkContext(final TemplateImpl template, final PsiFile file, final int offset) {
-    int contextType = getContextType(file, offset);
+    TemplateContextType contextType = getContextType(file, offset);
     TemplateContext templateContext = template.getTemplateContext();
-    return templateContext.isInContext(contextType);
+    return contextType.isEnabled(templateContext);
   }
 
-  public int getContextType(PsiFile file, int offset) {
-    FileType fileType = file.getFileType();
-
-    if (fileType == StdFileTypes.XML) {
-      return TemplateContext.XML_CONTEXT;
-    }
-    if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML) {
-      return TemplateContext.HTML_CONTEXT;
-    }
-
-    if (fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX) {
-      final Language language = PsiUtil.getLanguageAtOffset(file, offset);
-      if (language.equals(StdLanguages.JAVA)) return TemplateContext.JAVA_CODE_CONTEXT;
-      return TemplateContext.JSP_CONTEXT;
-    }
-
-    if (fileType == StdFileTypes.JAVA) {
-      PsiElement element = file.findElementAt(offset);
-      if (isInComment(element)) {
-        return TemplateContext.JAVA_COMMENT_CONTEXT;
+  public TemplateContextType getContextType(PsiFile file, int offset) {
+    final TemplateContextType[] contextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
+    for(TemplateContextType contextType: contextTypes) {
+      if (contextType.isInContext(file, offset)) {
+        return contextType;
       }
-      if (element instanceof PsiJavaToken) {
-        if (((PsiJavaToken)element).getTokenType() == JavaTokenType.STRING_LITERAL) {
-          return TemplateContext.JAVA_STRING_CONTEXT;
-        }
-      }
-      return TemplateContext.JAVA_CODE_CONTEXT;
     }
-
-    return TemplateContext.OTHER_CONTEXT;
-  }
-
-  private boolean isInComment(PsiElement element) {
-    if (element == null) {
-      return false;
-    }
-    if (element instanceof PsiComment) {
-      return true;
-    }
-    return isInComment(element.getParent());
+    assert false: "OtherContextType should match any context";
+    return null;
   }
 
   public String getComponentName() {

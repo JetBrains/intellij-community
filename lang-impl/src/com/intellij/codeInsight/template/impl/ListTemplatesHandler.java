@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -23,14 +24,14 @@ public class ListTemplatesHandler implements CodeInsightActionHandler{
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
     String prefix = getPrefix(editor.getDocument(), offset);
-    int contextType = TemplateManager.getInstance(project).getContextType(file, offset);
+    TemplateContextType contextType = TemplateManager.getInstance(project).getContextType(file, offset);
 
     TemplateImpl[] templates = TemplateSettings.getInstance().getTemplates();
     ArrayList<LookupItem> array = new ArrayList<LookupItem>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated() || template.isSelectionTemplate()) continue;
       String key = template.getKey();
-      if (key.startsWith(prefix) && template.getTemplateContext().isInContext(contextType)) {
+      if (key.startsWith(prefix) && contextType.isEnabled(template.getTemplateContext())) {
         LookupItem item = new LookupItem(template, key);
         array.add(item);
       }
