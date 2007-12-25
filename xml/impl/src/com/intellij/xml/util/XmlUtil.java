@@ -855,12 +855,8 @@ public class XmlUtil {
     }
 
     if (file != null) {
-      final FileType fileType = file.getFileType();
-
-      if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML) {
-        return new String[][]{new String[]{"", XHTML_URI}};
-      }
-      else if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP) {
+      final FileType fileType = file.getViewProvider().getVirtualFile().getFileType();
+      if (fileType == StdFileTypes.JSPX || fileType == StdFileTypes.JSP) {
         String baseLanguageNameSpace = EMPTY_URI;
         if (PsiUtil.isInJspFile(file)) {
           final Language baseLanguage = PsiUtil.getJspFile(file).getViewProvider().getTemplateDataLanguage();
@@ -870,6 +866,11 @@ public class XmlUtil {
         }
 
         return new String[][]{new String[]{"", baseLanguageNameSpace}, new String[]{"jsp", JSP_URI}};
+      }
+
+      final Language language = file.getLanguage();
+      if (language == StdLanguages.HTML || language == StdLanguages.XHTML) {
+        return new String[][]{new String[]{"", XHTML_URI}};
       }
     }
 

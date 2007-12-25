@@ -6,19 +6,20 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.MacroFactory;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.jsp.impl.TldAttributeDescriptor;
+import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -170,7 +171,7 @@ public class XmlCompletionData extends CompletionData {
 
       final Document document = editor.getDocument();
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getFileType() == StdFileTypes.HTML &&
+      if (PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(document).getLanguage() == StdLanguages.HTML &&
           HtmlUtil.isSingleHtmlAttribute((String)item.getObject())) {
         return;
       }
@@ -279,16 +280,16 @@ public class XmlCompletionData extends CompletionData {
       return false;
     }
 
-    private void insertIncompleteTag(char completionChar, final Editor editor, Project project, XmlElementDescriptor descriptor, XmlTag tag) {
+    private static void insertIncompleteTag(char completionChar, final Editor editor, Project project, XmlElementDescriptor descriptor, XmlTag tag) {
       TemplateManager templateManager = TemplateManager.getInstance(project);
       Template template = templateManager.createTemplate("", "");
 
       template.setToIndent(true);
 
       // temp code
-      FileType fileType = tag.getContainingFile().getFileType();
-      boolean htmlCode = fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
-      boolean jspCode = fileType == StdFileTypes.JSP || fileType == StdFileTypes.JSPX;
+      final Language language = tag.getContainingFile().getLanguage();
+      boolean htmlCode = language == StdLanguages.HTML || language == StdLanguages.XHTML;
+      boolean jspCode = language == StdLanguages.JSP || language == StdLanguages.JSPX;
       Set<String> notRequiredAttributes = Collections.emptySet();
 
       if (tag instanceof HtmlTag) {

@@ -67,6 +67,14 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
     myViewProvider = provider;
   }
 
+  public void setContentElementType(final IElementType contentElementType) {
+    myContentElementType = contentElementType;
+  }
+
+  public IElementType getContentElementType() {
+    return myContentElementType;
+  }
+
   protected void init(@NotNull final IElementType elementType, final IElementType contentElementType) {
     myElementType = elementType;
     myContentElementType = contentElementType;
@@ -153,9 +161,8 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected boolean isPsiUpToDate(VirtualFile vFile) {
-    final FileViewProvider viewProvider = myManager.findViewProvider(vFile);
-
-    return viewProvider.getPsi(viewProvider.getBaseLanguage()) == this;
+    final FileViewProvider provider = myManager.findViewProvider(vFile);
+    return provider.getPsi(getLanguage()) == this || provider.getPsi(provider.getBaseLanguage()) == this;
   }
 
   public boolean isContentsLoaded() {
@@ -359,7 +366,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   @NotNull
   public Language getLanguage() {
-    return myContentElementType.getLanguage();
+    return myElementType.getLanguage();
   }
 
   @NotNull

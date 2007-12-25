@@ -10,9 +10,6 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.Constants;
@@ -77,8 +74,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
 
   @NotNull
   public Language getLanguage() {
-    final FileType fileType = getContainingFile().getFileType();
-    return fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : StdLanguages.XML;
+    return getContainingFile().getLanguage();
   }
 
   @Nullable

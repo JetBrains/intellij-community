@@ -61,7 +61,7 @@ public class CheckEmptyScriptTagInspection extends BaseJavaLocalInspectionTool {
                 try {
                   final FileType fileType = tag.getContainingFile().getFileType();
                   PsiFile file = PsiFileFactory.getInstance(tag.getProject()).createFileFromText(
-                    "dummy." + (fileType == StdFileTypes.JSP || fileType == StdFileTypes.HTML ? "html" : "xml"), builder.toString());
+                    "dummy." + (fileType == StdFileTypes.JSP || tag.getContainingFile().getLanguage() == StdLanguages.HTML ? "html" : "xml"), builder.toString());
 
                   tag.replace(((XmlFile)file).getDocument().getRootTag());
                 }

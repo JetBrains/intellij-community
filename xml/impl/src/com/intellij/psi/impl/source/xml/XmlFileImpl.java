@@ -5,7 +5,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -94,7 +93,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   }
 
   private boolean isWebFileType() {
-    return getFileType() == StdFileTypes.XHTML || getFileType() == StdFileTypes.HTML;
+    return getLanguage() == StdLanguages.XHTML || getLanguage() == StdLanguages.HTML;
   }
 
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {

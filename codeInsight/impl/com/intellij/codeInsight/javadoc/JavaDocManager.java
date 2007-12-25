@@ -13,8 +13,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -52,6 +52,7 @@ import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +63,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 public class JavaDocManager implements ProjectComponent {
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
@@ -104,7 +107,7 @@ public class JavaDocManager implements ProjectComponent {
     public void afterActionPerformed(final AnAction action, final DataContext dataContext) {
     }
   };
-  
+
   private static final int ourFlagsForTargetElements = TargetElementUtil.ELEMENT_NAME_ACCEPTED
                                                        | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
                                                        | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
@@ -765,19 +768,22 @@ public class JavaDocManager implements ProjectComponent {
     SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
     PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
     PsiFile containingFile = originalElement != null ? originalElement.getContainingFile() : element != null ? element.getContainingFile() : null;
+    Set<DocumentationProvider> result = new LinkedHashSet<DocumentationProvider>();
 
     DocumentationProvider originalProvider = containingFile != null ? LanguageDocumentation.INSTANCE
       .forLanguage(containingFile.getLanguage()) : null;
+
     final Language elementLanguage = element != null ?element.getLanguage():null;
     DocumentationProvider elementProvider = element == null ? null : LanguageDocumentation.INSTANCE.forLanguage(elementLanguage);
 
-    if (elementProvider == null ||
-        // If resolve result (element) goes into xml (schema of some sort) then prefer picking up original element provider
-        (elementLanguage.getClass() == XMLLanguage.class && originalProvider != null)) {
-      return originalProvider;
+    ContainerUtil.addIfNotNull(elementProvider, result);
+    ContainerUtil.addIfNotNull(originalProvider, result);
+    if (containingFile != null) {
+      ContainerUtil.addIfNotNull(LanguageDocumentation.INSTANCE.forLanguage(containingFile.getViewProvider().getBaseLanguage()), result);
     }
 
-    return elementProvider; //give priority to the real element
+    if (result.isEmpty()) return null;
+    return new CompositeDocumentationProvider(result);
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {

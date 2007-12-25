@@ -1,7 +1,5 @@
 package com.intellij.psi.impl.source.html;
 
-import com.intellij.lang.Language;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.xml.XmlTagImpl;
 import com.intellij.psi.xml.XmlTag;
@@ -77,11 +75,6 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
 
   public String toString() {
     return "HtmlTag:" + getName();
-  }
-
-  @NotNull
-  public Language getLanguage() {
-    return StdFileTypes.HTML.getLanguage();
   }
 
   public String getPrefixByNamespace(String namespace) {

@@ -21,6 +21,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +52,11 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
                                            text), isPhysical));
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
     myPhysical = isPhysical;
+  }
+
+  @NotNull
+  public Language getLanguage() {
+    return getContentElementType().getLanguage();
   }
 
   protected PsiCodeFragmentImpl clone() {

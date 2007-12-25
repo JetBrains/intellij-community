@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -250,9 +250,9 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     final PsiFile containingFile = element.getContainingFile();
 
     if (containingFile instanceof JspFile ||
-        containingFile.getFileType() == StdFileTypes.HTML ||
-        containingFile.getFileType() == StdFileTypes.JSP ||
-        containingFile.getFileType() == StdFileTypes.XHTML
+        containingFile.getLanguage() == StdLanguages.HTML ||
+        containingFile.getLanguage() == StdLanguages.JSP ||
+        containingFile.getLanguage() == StdLanguages.XHTML
       ) {
       return false;
     }
