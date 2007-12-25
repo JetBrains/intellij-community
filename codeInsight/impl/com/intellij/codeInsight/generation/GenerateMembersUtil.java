@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -257,7 +258,9 @@ public class GenerateMembersUtil {
         if (paramName == null) paramName = "p" + i;
 
         PsiParameter newParameter = factory.createParameter(paramName, substituted);
-        newParameter.getModifierList().replace(parameter.getModifierList());
+        if (parameter.getLanguage() == StdLanguages.JAVA) {
+          newParameter.getModifierList().replace(parameter.getModifierList());
+        }
         newMethod.getParameterList().add(newParameter);
       }
 
