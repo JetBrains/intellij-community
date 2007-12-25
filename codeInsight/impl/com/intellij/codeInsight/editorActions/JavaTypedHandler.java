@@ -8,13 +8,17 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +31,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   public void checkAutoPopup(final char charTyped, final Project project, final Editor editor, final PsiFile file) {
     if (charTyped == '@' && file instanceof PsiJavaFile) {
-      AutoPopupController.getInstance(project).autoPopupJavadocLookup(editor);
+      autoPopupJavadocLookup(project, editor);
     }
   }
 
@@ -205,6 +209,30 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     if (balance == 1) {
       editor.getDocument().insertString(offset, ">");
+    }
+  }
+
+  private static void autoPopupJavadocLookup(final Project project, final Editor editor) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    if (settings.AUTO_POPUP_JAVADOC_LOOKUP) {
+      final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file == null) return;
+      final Runnable request = new Runnable(){
+        public void run(){
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+              public void run(){
+                new JavadocAutoLookupHandler().invoke(project, editor, file);
+              }
+            },
+            "",
+            null
+          );
+        }
+      };
+      AutoPopupController.getInstance(project).invokeAutoPopupRunnable(request, settings.JAVADOC_LOOKUP_DELAY);
     }
   }
 }

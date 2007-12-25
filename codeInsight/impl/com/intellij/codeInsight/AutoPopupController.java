@@ -1,7 +1,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.DotAutoLookupHandler;
-import com.intellij.codeInsight.completion.JavadocAutoLookupHandler;
 import com.intellij.codeInsight.hint.ShowParameterInfoHandler;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
@@ -11,7 +10,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
@@ -120,36 +118,6 @@ public class AutoPopupController implements Disposable {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
               myAlarm.addRequest(request, settings.PARAMETER_INFO_DELAY);
-            }
-          });
-    }
-  }
-
-  public void autoPopupJavadocLookup(final Editor editor) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    if (settings.AUTO_POPUP_JAVADOC_LOOKUP) {
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (file == null) return;
-      final Runnable request = new Runnable(){
-        public void run(){
-          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-          CommandProcessor.getInstance().executeCommand(
-              myProject, new Runnable() {
-              public void run(){
-                new JavadocAutoLookupHandler().invoke(myProject, editor, file);
-              }
-            },
-            "",
-            null
-          );
-        }
-      };
-      // invoke later prevents cancelling request by keyPressed from the same action
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              myAlarm.addRequest(request, settings.JAVADOC_LOOKUP_DELAY);
             }
           });
     }
