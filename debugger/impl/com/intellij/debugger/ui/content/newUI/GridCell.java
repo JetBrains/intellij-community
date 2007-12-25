@@ -51,7 +51,7 @@ public class GridCell implements Disposable {
     myContext = context;
     myContainer = container;
 
-    Disposer.register(context, this);
+    Disposer.register(container, this);
 
     myPlaceInGrid = placeInGrid;
     myPlaceholder = placeholder;
