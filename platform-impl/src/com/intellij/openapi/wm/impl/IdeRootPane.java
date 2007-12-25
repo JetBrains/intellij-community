@@ -85,7 +85,7 @@ public class IdeRootPane extends JRootPane{
     myGlassPane.setVisible(false);
     myApplication = application;
 
-    myNorthComponents.addAll(Arrays.asList(Extensions.getExtensions(IdeRootPaneNorthExtension.EP_NAME)));
+
   }
 
 
@@ -189,6 +189,7 @@ public class IdeRootPane extends JRootPane{
   }
 
   public void installNorthComponents(final Project project) {
+    myNorthComponents.addAll(Arrays.asList(Extensions.getExtensions(IdeRootPaneNorthExtension.EP_NAME, project)));
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       northComponent.installComponent(project, myNorthPanel);
       northComponent.uiSettingsChanged(myUISettings);
@@ -200,6 +201,7 @@ public class IdeRootPane extends JRootPane{
       northComponent.deinstallComponent(myNorthPanel);
       Disposer.dispose(northComponent);
     }
+    myNorthComponents.clear();
   }
 
   public IdeRootPaneNorthExtension findByName(String name) {
