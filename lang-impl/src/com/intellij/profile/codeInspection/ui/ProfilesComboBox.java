@@ -2,7 +2,7 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-package com.intellij.profile.ui;
+package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;

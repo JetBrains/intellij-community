@@ -12,7 +12,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.profile.ui.ErrorOptionsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;

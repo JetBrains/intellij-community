@@ -15,7 +15,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.profile.ui.ErrorOptionsConfigurable;
+import com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

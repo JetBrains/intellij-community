@@ -8,7 +8,7 @@
  * Date: 31-Jul-2006
  * Time: 17:44:39
  */
-package com.intellij.codeInspection.ex;
+package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
