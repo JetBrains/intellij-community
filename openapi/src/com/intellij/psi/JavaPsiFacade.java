@@ -5,6 +5,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataCache;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -14,8 +15,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class JavaPsiFacade {
+  private static UserDataCache<JavaPsiFacade, Project, Void> IN_PROJECT_CACHE = new UserDataCache<JavaPsiFacade, Project, Void>("IN_PROJ_CACHE") {
+    protected JavaPsiFacade compute(final Project project, final Void p) {
+      return ServiceManager.getService(project, JavaPsiFacade.class);
+    }
+  };
+
   public static JavaPsiFacade getInstance(Project project) {
-    return ServiceManager.getService(project, JavaPsiFacade.class);
+    return IN_PROJECT_CACHE.get(project, null);
   }
 
   static {
