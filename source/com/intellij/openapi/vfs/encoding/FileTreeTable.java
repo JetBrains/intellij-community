@@ -14,8 +14,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Icons;
@@ -56,28 +54,26 @@ public class FileTreeTable extends TreeTable {
                                                      final boolean isSelected, final boolean hasFocus, final int row, final int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         Charset t = (Charset)value;
-        Object userObject = table.getModel().getValueAt(row, 0);
-        VirtualFile file = userObject instanceof VirtualFile ? (VirtualFile)userObject : null;
-        Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(myProject, file);
-        boolean enabled = file == null || pair.getSecond();
         if (t != null) {
           setText(t.displayName());
         }
         else {
-          if (file != null) {
+          Object userObject = table.getModel().getValueAt(row, 0);
+          if (userObject instanceof VirtualFile) {
+            VirtualFile file = (VirtualFile)userObject;
             Charset charset = ChooseFileEncodingAction.encodingFromContent(myProject, file);
+            boolean enabled = ChooseFileEncodingAction.isEnabled(myProject, file);
             if (charset != null) {
               setText(charset.displayName());
             }
-            else if (LoadTextUtil.utfCharsetWasDetectedFromBytes(file)) {
-              setText(file.getCharset().displayName());
-            }
-            else if (!ChooseFileEncodingAction.isEnabled(myProject, file)) {
+            else if (!enabled) {
               setText("N/A");
             }
+            setEnabled(enabled);
+            return this;
           }
         }
-        setEnabled(enabled);
+        setEnabled(true);
         return this;
       }
     });
@@ -291,8 +287,7 @@ public class FileTreeTable extends TreeTable {
           Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
           if (userObject instanceof VirtualFile) {
             VirtualFile file = (VirtualFile)userObject;
-            Pair<String,Boolean> pair = ChangeEncodingUpdateGroup.update(myProject, file);
-            return pair.getSecond();
+            return ChooseFileEncodingAction.isEnabled(myProject, file);
           }
           return true;
         default: throw new RuntimeException("invalid column " + column);
