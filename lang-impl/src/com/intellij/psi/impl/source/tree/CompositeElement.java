@@ -414,6 +414,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
     if (myWrapper != null) return myWrapper;
     synchronized (PsiLock.LOCK) {
       if (myWrapper != null) return myWrapper;
+
       final Language lang = getElementType().getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       if (parserDefinition != null) {

@@ -6,8 +6,6 @@ package com.intellij.lang.pratt;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
@@ -19,20 +17,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PrattBuilder {
-  public static final PsiParser PRATT_PARSER = new PsiParser() {
-    @NotNull
-    public ASTNode parse(final IElementType root, final PsiBuilder builder) {
-      builder.setDebugMode(true);
-
-      final PrattBuilder prattBuilder = new PrattBuilder(builder);
-      final MutableMarker marker = prattBuilder.mark();
-      prattBuilder.parse(Integer.MIN_VALUE);
-      while (builder.getTokenType() != null) builder.advanceLexer();
-      marker.finish(root);
-      return builder.getTreeBuilt();
-    }
-  };
-
   private final PsiBuilder myBuilder;
   private final Stack<PrattTokenType> myStack = new Stack<PrattTokenType>();
   private MutableMarker myStartMarker;
@@ -192,4 +176,5 @@ public class PrattBuilder {
   public String getTokenText() {
     return myBuilder.getTokenText();
   }
+
 }

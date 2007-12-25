@@ -19,10 +19,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.IChameleonElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.LeafPsiElementType;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.jsp.IJspElementType;
 import com.intellij.psi.tree.jsp.el.IELElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
@@ -842,6 +839,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       return childNode;
     }
+    if (type instanceof ICompositeElementType) {
+      return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
+    }
+
     else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) { // hack....
       return Factory.createCompositeElement(type);
     }
@@ -1032,16 +1033,19 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(myText, start, end, myCharTable);
     }
-    else if (myComments.contains(type)) {
+    if (myComments.contains(type)) {
       return new PsiCommentImpl(type, myText, start, end, myCharTable);
     }
-    else if (type instanceof IChameleonElementType) {
+    if (type instanceof IChameleonElementType) {
       return new ChameleonElement(type, myText, start, end, myCharTable);
     }
-    else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
+    if (type instanceof ILeafElementType) {
+      return (LeafElement) ((ILeafElementType)type).createLeafNode(myText, start, end, myCharTable);
+    }
+    if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
       return Factory.createLeafElement(type, myText, start, end, myCharTable);
     }
-    else if (type instanceof LeafPsiElementType) {
+    if (type instanceof LeafPsiElementType) {
       return (LeafElement)((LeafPsiElementType)type).createLeafNode(myText, start, end, myCharTable);
     }
 
