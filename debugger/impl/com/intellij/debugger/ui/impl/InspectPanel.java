@@ -10,8 +10,6 @@ import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.impl.watch.DebuggerTree;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,9 +38,7 @@ public class InspectPanel extends DebuggerTreePanel {
   }
 
   protected ActionPopupMenu createPopupMenu() {
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(DebuggerActions.INSPECT_PANEL_POPUP);
-    ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(DebuggerActions.INSPECT_PANEL_POPUP, group);
-    return popupMenu;
+    return InspectDebuggerTree.createPopupMenu();
   }
 
   public InspectDebuggerTree getInspectTree() {
