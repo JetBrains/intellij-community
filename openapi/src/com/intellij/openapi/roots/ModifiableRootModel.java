@@ -16,7 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 public interface ModifiableRootModel extends ModuleRootModel {
   @NonNls String PRODUCTION = "production";
   @NonNls String TEST = "test";
+
+  Project getProject();
 
   /**
    * Adds the specified directory as a content root.
@@ -125,27 +127,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
   LibraryTable getModuleLibraryTable();
 
   /**
-   * Sets JDK for this module to a specific value
-   *
-   * @param jdk
-   */
-  void setJdk(ProjectJdk jdk);
-
-  /**
-   * Sets JDK name and type for this module.
-   * To be used when JDK with this name and type does not exist (e.g. when importing module configuration).
-   *
-   * @param jdkName JDK name
-   * @param jdkType JDK type
-   */
-  void setInvalidJdk(String jdkName, String jdkType);
-
-  /**
-   * Makes this module inheriting JDK from its project
-   */
-  void inheritJdk();
-
-  /**
    * Makes this module inheriting compiler output from its project
    * @param inherit wether or not compiler output is inherited
    */
@@ -197,5 +178,5 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   void setAnnotationUrls(String[] urls);
 
-  String getJdkName();
+  <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, T entry);
 }

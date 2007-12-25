@@ -19,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -60,12 +61,12 @@ public class ModuleChunk {
   }
 
   public boolean isJdkInherited() {
-    return ModuleRootManager.getInstance(myMainModule).isJdkInherited();
+    return ModuleJdkUtil.isJdkInherited(ModuleRootManager.getInstance(myMainModule));
   }
 
   @Nullable
   public ProjectJdk getJdk() {
-    return ModuleRootManager.getInstance(myMainModule).getJdk();
+    return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(myMainModule));
   }
 
   public ModuleChunk[] getDependentChunks() {

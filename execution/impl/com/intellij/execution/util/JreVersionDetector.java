@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JdkVersionUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 
 public class JreVersionDetector {
   private String myLastAlternativeJrePath = null; //awful hack
@@ -33,7 +34,7 @@ public class JreVersionDetector {
       final Module module = configuration.getConfigurationModule().getModule();
       if (module != null && !module.isDisposed()) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ProjectJdk jdk = rootManager.getJdk();
+        final ProjectJdk jdk = ModuleJdkUtil.getJdk(rootManager);
         return isJre50(jdk);
       }
 

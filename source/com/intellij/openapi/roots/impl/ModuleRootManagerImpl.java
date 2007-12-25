@@ -9,7 +9,6 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.InvalidDataException;
@@ -122,16 +121,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getCompilerOutputUrlForTests();
   }
 
-  public boolean isJdkInherited() {
-    return myRootModel.isJdkInherited();
-  }
-
   public boolean isCompilerOutputPathInherited() {
     return myRootModel.isCompilerOutputPathInherited();
-  }
-
-  public ProjectJdk getJdk() {
-    return myRootModel.getJdk();
   }
 
   public VirtualFile getExplodedDirectory() {

@@ -109,7 +109,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ProjectJdk jdk = rootManager.getJdk();
+        final ProjectJdk jdk = ModuleJdkUtil.getJdk(rootManager);
         final OrderEntry[] entries = rootManager.getOrderEntries();
         for (OrderEntry entry : entries) {
           if (entry instanceof JdkOrderEntry) {

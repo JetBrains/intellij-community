@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -117,7 +118,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     }
 
     if (myJdk != null) {
-      model.setJdk(JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
+      ModuleJdkUtil.setJdk(model, JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
     } else {
       final ProjectJdk projectJdk;
       switch (myMockJdkLevel) {
@@ -128,7 +129,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
           projectJdk = JavaSdkImpl.getMockJdk15("java 1.5");
           break;
       }
-      model.setJdk(projectJdk);
+      ModuleJdkUtil.setJdk(model, projectJdk);
     }
     model.commit();
   }

@@ -12,10 +12,7 @@ import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -98,7 +95,7 @@ public class ModuleChunk extends Chunk<Module> {
    */
   public ProjectJdk getJdk() {
     final Module module = getNodes().iterator().next();
-    return ModuleRootManager.getInstance(module).getJdk();
+    return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
   }
 
   public VirtualFile[] getSourceRoots() {

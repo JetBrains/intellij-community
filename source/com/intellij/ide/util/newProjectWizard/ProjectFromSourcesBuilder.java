@@ -196,7 +196,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
 
   private void setupRootModel(final ModuleDescriptor descriptor, final ModifiableRootModel rootModel, final Map<String, String> sourceRootToPrefixMap, final Map<LibraryDescriptor, Library> projectLibs) {
     rootModel.setExcludeOutput(true);
-    rootModel.inheritJdk();
+    ModuleJdkUtil.inheritJdk(rootModel);
 
     final Set<File> contentRoots = descriptor.getContentRoots();
     for (File contentRoot : contentRoots) {

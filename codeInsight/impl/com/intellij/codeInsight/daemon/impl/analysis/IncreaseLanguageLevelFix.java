@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -67,7 +68,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   private static ProjectJdk getRelevantJdk(final Project project, @Nullable Module module) {
     ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    ProjectJdk moduleJdk = module == null ? null : ModuleRootManager.getInstance(module).getJdk();
+    ProjectJdk moduleJdk = module == null ? null : ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     return moduleJdk == null ? projectJdk : moduleJdk;
   }
 

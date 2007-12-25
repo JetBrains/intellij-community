@@ -322,7 +322,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public ProjectJdk getJdk() {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     if (modules.length > 0) {
-      return ModuleRootManager.getInstance(modules[0]).getJdk();
+      return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(modules[0]));
     }
     else {
       return null;
@@ -520,6 +520,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     doSynchronize();
 
     addRootsToWatch();
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   private static class LibrariesOnlyScope extends GlobalSearchScope {

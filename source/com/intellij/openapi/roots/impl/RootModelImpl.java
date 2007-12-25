@@ -12,6 +12,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -507,6 +508,10 @@ public class RootModelImpl implements ModifiableRootModel {
     return result;
   }
 
+  public Project getProject() {
+    return myProjectRootManager.getProject();
+  }
+
   @NotNull
   public ContentEntry addContentEntry(VirtualFile file) {
     return addContentEntry(new ContentEntryImpl(file, this));
@@ -613,35 +618,26 @@ public class RootModelImpl implements ModifiableRootModel {
     else {
       jdkLibraryEntry = null;
     }
-    replaceJdkEntry(jdkLibraryEntry);
+    replaceEntryOfType(JdkOrderEntry.class, jdkLibraryEntry);
 
   }
 
-  public void setInvalidJdk(String jdkName, String jdkType) {
+  public <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, final T entry) {
     assertWritable();
-    replaceJdkEntry(new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager, myFilePointerManager));
-  }
-
-  private void replaceJdkEntry(final JdkOrderEntry jdkLibraryEntry) {
     for (int i = 0; i < myOrderEntries.size(); i++) {
       OrderEntry orderEntry = myOrderEntries.get(i);
-      if (orderEntry instanceof JdkOrderEntry) {
+      if (entryClass.isInstance(orderEntry)) {
         myOrderEntries.remove(i);
-        if (jdkLibraryEntry != null) {
-          myOrderEntries.add(i, jdkLibraryEntry);
+        if (entry != null) {
+          myOrderEntries.add(i, entry);
         }
         return;
       }
     }
 
-    if (jdkLibraryEntry != null) {
-      myOrderEntries.add(0, jdkLibraryEntry);
+    if (entry != null) {
+      myOrderEntries.add(0, entry);
     }
-  }
-
-  public void inheritJdk() {
-    assertWritable();
-    replaceJdkEntry(new InheritedJdkOrderEntryImpl(this, myProjectRootManager, myFilePointerManager));
   }
 
   public void inheritCompilerOutputPath(boolean inherit) {
@@ -656,15 +652,6 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
     return null;
-  }
-
-  public boolean isJdkInherited() {
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof InheritedJdkOrderEntry) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public boolean isCompilerOutputPathInherited() {
@@ -1210,14 +1197,5 @@ public class RootModelImpl implements ModifiableRootModel {
       myAnnotationPointerContainer.add(url);
     }
   }
-
-  public String getJdkName() {
-    for (OrderEntry orderEntry : getOrderEntries()) {
-      if (orderEntry instanceof JdkOrderEntry) {
-        return ((JdkOrderEntry)orderEntry).getJdkName();
-      }
-    }
-    return null;
-  }
-
 }
+

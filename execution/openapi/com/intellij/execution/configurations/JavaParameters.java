@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
@@ -115,7 +116,7 @@ public class JavaParameters {
   }
 
   public static ProjectJdk getModuleJdk(final Module module) throws CantRunException {
-    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
+    final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     if (jdk == null) {
       throw CantRunException.noJdkForModule(module);
     }

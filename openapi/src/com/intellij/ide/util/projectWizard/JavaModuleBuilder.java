@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Pair;
@@ -108,9 +109,9 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
     rootModel.setExcludeOutput(true);
     if (myJdk != null){
-      rootModel.setJdk(myJdk);
+      ModuleJdkUtil.setJdk(rootModel, myJdk);
     } else {
-      rootModel.inheritJdk();
+      ModuleJdkUtil.inheritJdk(rootModel);
     }
 
     final String moduleRootPath = getContentEntryPath();

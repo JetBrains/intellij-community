@@ -198,7 +198,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
                                           final File outputDir
   ) throws IOException{
 
-    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
+    final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
 
     final Map<String, RmicProcessingItem> pathToItemMap = new HashMap<String, RmicProcessingItem>();
     final String[] cmdLine = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
@@ -250,7 +250,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   // todo: Module -> ModuleChunk
   private String[] createStartupCommand(final Module module, final String outputPath, final RmicProcessingItem[] items) {
-    final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();
+    final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {

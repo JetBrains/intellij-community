@@ -204,7 +204,7 @@ import java.util.Map;
 
         if (projectJDK != null) {
           ourJDK = projectJDK;
-          rootModel.setJdk(projectJDK);
+          ModuleJdkUtil.setJdk(rootModel, projectJDK);
         }
 
         final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);

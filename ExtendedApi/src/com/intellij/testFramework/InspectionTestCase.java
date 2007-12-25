@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -171,7 +172,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
       jdk = JavaSdkImpl.getMockJdk(jdkName);
     }
 
-    rootModel.setJdk(jdk);
+    ModuleJdkUtil.setJdk(rootModel, jdk);
 
     rootModel.commit();
   }

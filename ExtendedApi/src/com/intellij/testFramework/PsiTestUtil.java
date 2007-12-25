@@ -79,7 +79,7 @@ import java.util.Collection;
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
     rootModel.clear();
-    rootModel.setJdk(jdk);
+    ModuleJdkUtil.setJdk(rootModel, jdk);
     rootModel.commit();
   }
 

@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -52,25 +51,6 @@ public interface ModuleRootModel {
    */
   @NotNull
   OrderEntry[] getOrderEntries();
-
-  /**
-   * Returns the JDK used by the module.
-   *
-   * @return either module-specific or inherited JDK
-   * @see #isJdkInherited()
-   */
-  @Nullable
-  ProjectJdk getJdk();
-
-  /**
-   * Returns <code>true</code> if JDK for this module is inherited from a project.
-   *
-   * @return true if the JDK is inherited, false otherwise
-   * @see ProjectRootManager#getProjectJdk()
-   * @see ProjectRootManager#setProjectJdk(com.intellij.openapi.projectRoots.ProjectJdk)
-   */
-  boolean isJdkInherited();
-
 
   /**
    * Returns <code>true</code> if compiler output for this module is inherited from a project
