@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -20,22 +21,23 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: May 13, 2005
  */
-public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
+public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFix {
   @NonNls private static final String ID = "ALL";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionAllForClassFix");
 
-  public AddNoInspectionAllForClassFix(final PsiElement context) {
+  public AddSuppressInspectionAllForClassFix(final PsiElement context) {
     super(ID, context);
   }
 
-  @Nullable protected PsiDocCommentOwner getContainer() {
+  @Nullable
+  protected PsiDocCommentOwner getContainer() {
     PsiDocCommentOwner container = super.getContainer();
-    if (container == null){
+    if (container == null) {
       return null;
     }
-    while (container != null ) {
+    while (container != null) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(container, PsiClass.class);
-      if (parentClass == null && container instanceof PsiClass){
+      if (parentClass == null && container instanceof PsiClass) {
         return container;
       }
       container = parentClass;
@@ -54,16 +56,29 @@ public class AddNoInspectionAllForClassFix extends AddNoInspectionDocTagFix {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
-    PsiDocComment docComment = container.getDocComment();
-    if (docComment != null){
-      PsiDocTag noInspectionTag = docComment.findTagByName(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
-      if (noInspectionTag != null) {
-        String tagText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
-        noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
-        DaemonCodeAnalyzer.getInstance(project).restart();
-        return;
+    if (SuppressManager.getInstance().canHave15Suppressions(file) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
+      final PsiModifierList modifierList = container.getModifierList();
+      if (modifierList != null) {
+        final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        if (annotation != null) {
+          annotation.replace(JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText("@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME + ID, container));
+          return;
+        }
       }
     }
+    else {
+      PsiDocComment docComment = container.getDocComment();
+      if (docComment != null) {
+        PsiDocTag noInspectionTag = docComment.findTagByName(SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME);
+        if (noInspectionTag != null) {
+          String tagText = "@" + SuppressManagerImpl.SUPPRESS_INSPECTIONS_TAG_NAME + " " + ID;
+          noInspectionTag.replace(JavaPsiFacade.getInstance(project).getElementFactory().createDocTagFromText(tagText, null));
+          DaemonCodeAnalyzer.getInstance(project).restart();
+          return;
+        }
+      }
+    }
+
     super.invoke(project, editor, file);
   }
 }

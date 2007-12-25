@@ -9,8 +9,7 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionDocTagFix;
-import com.intellij.codeInsight.daemon.impl.actions.AddSuppressWarningsAnnotationFix;
+import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -172,22 +171,12 @@ class SuppressActionWrapper extends AnAction {
       }
     }
 
-    if (SuppressManager.getInstance().canHave15Suppressions(context.getContainingFile())) {
-      if (!(context instanceof PsiDocCommentOwner && SuppressManager.getInstance().alreadyHas14Suppressions((PsiDocCommentOwner)context))) {
-        return myClassToSuppress ? new AddSuppressWarningsAnnotationFix(myID, context) {
-          @Nullable
-          protected PsiModifierListOwner getContainer() {
-            return (PsiModifierListOwner)getParentClass(super.getContainer());
-          }
-        } : new AddSuppressWarningsAnnotationFix(myID, context);
-      }
-    }
-    return myClassToSuppress ? new AddNoInspectionDocTagFix(myID, context) {
+    return myClassToSuppress ? new AddSuppressInspectionFix(myID, context) {
       @Nullable
       protected PsiDocCommentOwner getContainer() {
         return (PsiDocCommentOwner)getParentClass(super.getContainer());
       }
-    } : new AddNoInspectionDocTagFix(myID, context);
+    } : new AddSuppressInspectionFix(myID, context);
   }
 
   @Nullable

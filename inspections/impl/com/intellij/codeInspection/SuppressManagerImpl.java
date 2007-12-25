@@ -6,7 +6,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.actions.*;
+import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionCommentFix;
+import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionAllForClassFix;
+import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionFix;
+import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionForClassFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -36,10 +39,9 @@ import java.util.regex.Matcher;
 public class SuppressManagerImpl extends SuppressManager {
 
   public IntentionAction[] createSuppressActions(final HighlightDisplayKey displayKey, final PsiElement context) {
-    return new IntentionAction[]{new AddNoInspectionCommentFix(displayKey, context), new AddNoInspectionDocTagFix(displayKey, context),
-      new AddNoInspectionForClassFix(displayKey, context), new AddNoInspectionAllForClassFix(context),
-      new AddSuppressWarningsAnnotationFix(displayKey, context), new AddSuppressWarningsAnnotationForClassFix(displayKey, context),
-      new AddSuppressWarningsAnnotationForAllFix(context)};
+    return new IntentionAction[]{new AddNoInspectionCommentFix(displayKey, context), new AddSuppressInspectionFix(displayKey, context),
+      new AddSuppressInspectionForClassFix(displayKey, context), new AddSuppressInspectionAllForClassFix(context)
+      };
   }
 
   public boolean isSuppressedFor(final PsiElement element, final String toolId) {

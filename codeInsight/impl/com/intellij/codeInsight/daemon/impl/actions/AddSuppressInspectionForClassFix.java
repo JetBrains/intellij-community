@@ -12,12 +12,12 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: May 13, 2005
  */
-public class AddNoInspectionForClassFix extends AddNoInspectionDocTagFix {
-  public AddNoInspectionForClassFix(final LocalInspectionTool tool, final PsiElement context) {
+public class AddSuppressInspectionForClassFix extends AddSuppressInspectionFix {
+  public AddSuppressInspectionForClassFix(final LocalInspectionTool tool, final PsiElement context) {
     super(tool, context);
   }
 
-  public AddNoInspectionForClassFix(final HighlightDisplayKey key, final PsiElement context) {
+  public AddSuppressInspectionForClassFix(final HighlightDisplayKey key, final PsiElement context) {
     super(key, context);
   }
 
