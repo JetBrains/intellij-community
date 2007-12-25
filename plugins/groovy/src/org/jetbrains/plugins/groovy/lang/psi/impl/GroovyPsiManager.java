@@ -59,7 +59,7 @@ public class GroovyPsiManager implements ProjectComponent {
   private GrTypeDefinition myArrayClass;
 
   private final ConcurrentWeakHashMap<GroovyPsiElement, PsiType> myCalculatedTypes = new ConcurrentWeakHashMap<GroovyPsiElement, PsiType>();
-  private boolean myRebuildGdkPending;
+  private boolean myRebuildGdkPending = true;
 
   public TypeInferenceHelper getTypeInferenceHelper() {
     return myTypeInferenceHelper;
@@ -87,12 +87,6 @@ public class GroovyPsiManager implements ProjectComponent {
   }
 
   public void initComponent() {
-    StartupManager.getInstance(myProject).registerStartupActivity(new Runnable() {
-      public void run() {
-        buildGDK();
-      }
-    });
-
     ((PsiManagerEx) PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
       public void run() {
         myCalculatedTypes.clear();
