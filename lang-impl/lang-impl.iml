@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="UsageView" />
     <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntryProperties />
   </component>
 </module>
