@@ -2,6 +2,8 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.CompletionContextType;
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -10,6 +12,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -39,14 +42,7 @@ public class EditTemplateDialog extends DialogWrapper {
   private JCheckBox myCbReformat;
   private JCheckBox myCbShortenFQNames;
 
-  private JCheckBox myCbJavaCode;
-  private JCheckBox myCbJavaComment;
-  private JCheckBox myCbJavaString;
-  private JCheckBox myCbCompletion;
-  private JCheckBox myCbOther;
-  private JCheckBox myCbHTML;
-  private JCheckBox myCbXML;
-  private JCheckBox myCbJSP;
+  private Map<TemplateContextType, JCheckBox> myCbContextMap = new HashMap<TemplateContextType, JCheckBox>();
 
   private JButton myEditVariablesButton;
 
@@ -252,74 +248,46 @@ public class EditTemplateDialog extends DialogWrapper {
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.fill = GridBagConstraints.BOTH;
     gbConstraints.weightx = 1;
-
-    gbConstraints.gridy = 0;
     gbConstraints.weighty = 1;
-    gbConstraints.gridx = 0;
-    myCbJavaCode = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.java.code"));
-    myCbJavaCode.getModel().addChangeListener(listener);
-    panel.add(myCbJavaCode, gbConstraints);
 
-    gbConstraints.gridx = 1;
-    myCbHTML = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.html"));
-    panel.add(myCbHTML, gbConstraints);
-    myCbHTML.getModel().addChangeListener(listener);
+    final TemplateContextType[] contextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
+    int row = 0;
+    int col = 0;
+    for (TemplateContextType contextType : contextTypes) {
+      gbConstraints.gridy = row;
+      gbConstraints.gridx = col;
+      JCheckBox cb = new JCheckBox(contextType.getName());
+      cb.getModel().addChangeListener(listener);
+      panel.add(cb, gbConstraints);
+      myCbContextMap.put(contextType, cb);
 
-    gbConstraints.gridy++;
-    gbConstraints.gridx = 0;
-    myCbJavaComment = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.java.comment"));
-    panel.add(myCbJavaComment, gbConstraints);
-    myCbJavaComment.getModel().addChangeListener(listener);
+      if (row == (contextTypes.length + 1) / 2 - 1) {
+        row = 0;
+        col = 1;
+      }
+      else {
+        row++;
+      }
+    }
 
-    gbConstraints.gridx = 1;
-    myCbXML = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.xml"));
-    panel.add(myCbXML, gbConstraints);
-    myCbXML.getModel().addChangeListener(listener);
-
-    gbConstraints.gridy++;
-    gbConstraints.gridx = 0;
-    myCbJavaString = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.java.string"));
-    panel.add(myCbJavaString, gbConstraints);
-    myCbJavaString.getModel().addChangeListener(listener);
-
-    gbConstraints.gridx = 1;
-    myCbJSP = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.jsp"));
-    panel.add(myCbJSP, gbConstraints);
-    myCbJSP.getModel().addChangeListener(listener);
-
-    gbConstraints.gridy++;
-    gbConstraints.gridx = 0;
-    myCbCompletion = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.smart.type.completion"));
-    panel.add(myCbCompletion, gbConstraints);
-    myCbCompletion.getModel().addChangeListener(listener);
-
-    gbConstraints.gridx = 1;
-    myCbOther = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.other"));
-    panel.add(myCbOther, gbConstraints);
-    myCbOther.getModel().addChangeListener(listener);
-
-    addUpdateHighlighterAction(myCbJavaCode);
-    addUpdateHighlighterAction(myCbJavaComment);
-    addUpdateHighlighterAction(myCbJavaString);
-    addUpdateHighlighterAction(myCbCompletion);
-    addUpdateHighlighterAction(myCbXML);
-    addUpdateHighlighterAction(myCbHTML);
-    addUpdateHighlighterAction(myCbJSP);
-    addUpdateHighlighterAction(myCbOther);
+    for(JCheckBox checkBox: myCbContextMap.values()) {
+      addUpdateHighlighterAction(checkBox);
+    }
 
     return panel;
   }
 
   private boolean isEnabledInStaticContextOnly() {
-    return
-        myCbCompletion.isSelected() &&
-        !myCbJavaCode.isSelected() &&
-        !myCbJavaComment.isSelected() &&
-        !myCbJavaString.isSelected() &&
-        !myCbXML.isSelected() &&
-        !myCbHTML.isSelected() &&
-        !myCbJSP.isSelected() &&
-        !myCbOther.isSelected();
+    for(TemplateContextType type: myCbContextMap.keySet()) {
+      final JCheckBox cb = myCbContextMap.get(type);
+      if (type instanceof CompletionContextType) {
+        if (!cb.isSelected()) return false;
+      }
+      else {
+        if (cb.isSelected()) return false;
+      }
+    }
+    return true;
   }
 
   private void addUpdateHighlighterAction(JCheckBox checkbox) {
@@ -417,14 +385,10 @@ public class EditTemplateDialog extends DialogWrapper {
       myVariables.add(variable);
     }
 
-    myCbJavaCode.setSelected(myTemplate.getTemplateContext().JAVA_CODE);
-    myCbJavaComment.setSelected(myTemplate.getTemplateContext().JAVA_COMMENT);
-    myCbJavaString.setSelected(myTemplate.getTemplateContext().JAVA_STRING);
-    myCbCompletion.setSelected(myTemplate.getTemplateContext().COMPLETION);
-    myCbOther.setSelected(myTemplate.getTemplateContext().OTHER);
-    myCbHTML.setSelected(myTemplate.getTemplateContext().HTML);
-    myCbXML.setSelected(myTemplate.getTemplateContext().XML);
-    myCbJSP.setSelected(myTemplate.getTemplateContext().JSP);
+    for(TemplateContextType type: myCbContextMap.keySet()) {
+      JCheckBox cb = myCbContextMap.get(type);
+      cb.setSelected(type.isEnabled(myTemplate.getTemplateContext()));
+    }
 
     myCbReformat.setSelected(myTemplate.isToReformat());
     myCbShortenFQNames.setSelected(myTemplate.isToShortenLongNames());
@@ -475,14 +439,10 @@ public class EditTemplateDialog extends DialogWrapper {
   }
 
   private void updateTemplateContext(TemplateContext templateContext) {
-    templateContext.JAVA_CODE = myCbJavaCode.isSelected();
-    templateContext.JAVA_COMMENT = myCbJavaComment.isSelected();
-    templateContext.JAVA_STRING = myCbJavaString.isSelected();
-    templateContext.COMPLETION = myCbCompletion.isSelected();
-    templateContext.OTHER = myCbOther.isSelected();
-    templateContext.HTML = myCbHTML.isSelected();
-    templateContext.XML = myCbXML.isSelected();
-    templateContext.JSP = myCbJSP.isSelected();
+    for(TemplateContextType type: myCbContextMap.keySet()) {
+      JCheckBox cb = myCbContextMap.get(type);
+      type.setEnabled(templateContext, cb.isSelected());
+    }
   }
 
   private void editVariables() {
