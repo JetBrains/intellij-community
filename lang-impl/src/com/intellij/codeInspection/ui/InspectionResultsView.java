@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SmartExpander;
@@ -335,8 +336,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       public void run() {
         PsiElement psiElement = refElement.getElement();
         if (psiElement != null) {
-          file[0] = psiElement.getContainingFile().getVirtualFile();
-          offset[0] = psiElement.getTextOffset();
+          final PsiFile containingFile = psiElement.getContainingFile();
+          if (containingFile != null) {
+            file[0] = containingFile.getVirtualFile();
+            offset[0] = psiElement.getTextOffset();
+          }
         }
         else {
           file[0] = null;

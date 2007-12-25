@@ -103,14 +103,14 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void updateContent();
 
-  public abstract Map<String, Set<RefEntity>> getPackageContent();
+  public abstract Map<String, Set<RefEntity>> getContent();
 
   @Nullable
-  public abstract Map<String, Set<RefEntity>> getOldPackageContent();
+  public abstract Map<String, Set<RefEntity>> getOldContent();
 
   public boolean isOldProblemsIncluded() {
     final GlobalInspectionContextImpl context = getContext();
-    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldPackageContent() != null;
+    return context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN && getOldContent() != null;
   }
 
   @Nullable

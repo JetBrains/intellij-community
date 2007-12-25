@@ -196,7 +196,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private void initializeSuperMethods(PsiMethod method) {
     for (PsiMethod psiSuperMethod : method.findSuperMethods()) {
-      if (RefUtil.getInstance().belongsToScope(psiSuperMethod, getRefManager())) {
+      if (getRefManager().belongsToScope(psiSuperMethod)) {
         RefMethodImpl refSuperMethod = (RefMethodImpl)getRefManager().getReference(psiSuperMethod);
         if (refSuperMethod != null) {
           addSuperMethod(refSuperMethod);
@@ -256,7 +256,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
           if (psiType instanceof PsiClassType) {
             PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-            if (psiClass != null && RefUtil.getInstance().belongsToScope(psiClass, getRefManager())) {
+            if (psiClass != null && getRefManager().belongsToScope(psiClass)) {
                 RefClassImpl refClass = (RefClassImpl) getRefManager().getReference(psiClass);
               if (refClass != null) {
                 refClass.addTypeReference(ownerClass);
@@ -469,7 +469,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
     ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>();
     for (RefParameter parameter : getParameters()) {
-      RefUtil.getInstance().removeRefElement(parameter, deletedRefs);
+      getRefManager().removeRefElement(parameter, deletedRefs);
     }
   }
 

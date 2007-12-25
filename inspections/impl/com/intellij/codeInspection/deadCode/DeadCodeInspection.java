@@ -723,7 +723,7 @@ public class DeadCodeInspection extends FilteringInspectionTool {
         if (psiElement == null) continue;
         if (myFilter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
         commentOutDead(psiElement);
-        RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
+        refElement.getRefManager().removeRefElement(refElement, deletedRefs);
       }
 
       EntryPointsManager entryPointsManager = getEntryPointsManager();

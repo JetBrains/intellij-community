@@ -23,6 +23,8 @@ import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Manager of the reference graph for a global inspection run.
  *
@@ -97,4 +99,13 @@ public abstract class RefManager {
   public abstract RefEntity getRefinedElement(final RefEntity ref);
 
   public abstract Element export(RefEntity entity, Element element, final int actualLine);
+
+  @Nullable
+  public abstract String getGroupName(final RefElement entity);
+
+  public abstract boolean belongsToScope(PsiElement psiElement);
+
+  public abstract String getQualifiedName(RefEntity refEntity);
+
+  public abstract void removeRefElement(RefElement refElement, List<RefElement> deletedRefs);
 }

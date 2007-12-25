@@ -27,6 +27,7 @@ public interface SmartRefElementPointer {
   @NonNls String FILE = "file";
   @NonNls String MODULE = "module";
   @NonNls String PROJECT = "project";
+  @NonNls String DIR = "dir";
 
   boolean isPersistent();
 

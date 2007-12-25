@@ -21,8 +21,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 
-import java.util.List;
-
 /**
  * Application component which provides utility methods for working with the reference
  * graph.
@@ -34,12 +32,6 @@ public abstract class RefUtil {
   public static RefUtil getInstance() {
     return ServiceManager.getService(RefUtil.class);
   }
-
-  public abstract boolean belongsToScope(PsiElement psiElement, RefManager refManager);
-
-  public abstract String getQualifiedName(RefEntity refEntity);
-
-  public abstract void removeRefElement(RefElement refElement, List<RefElement> deletedRefs);
 
   public static boolean isEntryPoint(final RefElement refElement) {
     final Object[] addins = Extensions.getRootArea()

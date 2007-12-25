@@ -163,7 +163,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private void initializeSuperReferences(PsiClass psiClass) {
     if (!isSelfInheritor(psiClass)) {
       for (PsiClass psiSuperClass : psiClass.getSupers()) {
-        if (RefUtil.getInstance().belongsToScope(psiSuperClass, getRefManager())) {
+        if (getRefManager().belongsToScope(psiSuperClass)) {
           RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiSuperClass);
           if (refClass != null) {
             addBaseClass(refClass);

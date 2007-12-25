@@ -351,7 +351,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
       if (psiType instanceof PsiClassType) {
         PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-        if (psiClass != null && RefUtil.getInstance().belongsToScope(psiClass, refManager)) {
+        if (psiClass != null && refManager.belongsToScope(psiClass)) {
           RefClassImpl refClass = (RefClassImpl)refManager.getReference(psiClass);
           if (refClass != null) {
             refClass.addTypeReference(ownerClass);

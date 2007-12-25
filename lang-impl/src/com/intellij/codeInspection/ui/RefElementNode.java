@@ -1,10 +1,10 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +54,10 @@ public class RefElementNode extends InspectionTreeNode {
 
   public String toString() {
     final RefEntity element = getElement();
-    if (element == null) {
-      return "";
+    if (element == null || !element.isValid()) {
+      return InspectionsBundle.message("inspection.reference.invalid");
     }
-    return RefUtil.getInstance().getQualifiedName(element.getRefManager().getRefinedElement(element));
+    return element.getRefManager().getRefinedElement(element).getQualifiedName();
   }
 
   public boolean isValid() {

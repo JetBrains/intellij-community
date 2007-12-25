@@ -122,7 +122,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         psiType = psiType.getDeepComponentType();
         if (psiType instanceof PsiClassType) {
           PsiClass psiClass = PsiUtil.resolveClassInType(psiType);
-          if (psiClass != null && RefUtil.getInstance().belongsToScope(psiClass, getRefManager())) {
+          if (psiClass != null && getRefManager().belongsToScope(psiClass)) {
               RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(psiClass);
             if (refClass != null) {
               refClass.addTypeReference(ownerClass);

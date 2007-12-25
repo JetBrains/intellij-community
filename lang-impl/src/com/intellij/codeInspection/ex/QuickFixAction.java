@@ -8,7 +8,6 @@ import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
-import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -200,7 +199,7 @@ public class QuickFixAction extends AnAction {
     refreshViews(project, refElements, tool);
     final ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
     for (RefElement refElement : refElements) {
-      RefUtil.getInstance().removeRefElement(refElement, deletedRefs);
+      refElement.getRefManager().removeRefElement(refElement, deletedRefs);
     }
   }
 

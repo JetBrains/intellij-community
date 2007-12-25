@@ -41,7 +41,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
       }
       if (!refClass.isSelfInheritor(psiClass)) {
         for (PsiClass psiSuperClass : psiClass.getSupers()) {
-          if (RefUtil.getInstance().belongsToScope(psiSuperClass, myManager)) {
+          if (myManager.belongsToScope(psiSuperClass)) {
             RefClass refSuperClass = (RefClass)myManager.getReference(psiSuperClass);
             if (refSuperClass != null) {
               ((RefClassImpl)refSuperClass).setFlag(false, CAN_BE_FINAL_MASK);
@@ -65,7 +65,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           ((RefMethodImpl)refMethod).setFlag(false, CAN_BE_FINAL_MASK);
         }
         for (PsiMethod psiSuperMethod : psiMethod.findSuperMethods()) {
-          if (RefUtil.getInstance().belongsToScope(psiSuperMethod, myManager)) {
+          if (myManager.belongsToScope(psiSuperMethod)) {
             RefMethod refSuperMethod = (RefMethod)myManager.getReference(psiSuperMethod);
             if (refSuperMethod != null) {
               ((RefMethodImpl)refSuperMethod).setFlag(false, CAN_BE_FINAL_MASK);

@@ -69,11 +69,11 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return false;
   }
 
-  public Map<String, Set<RefEntity>> getPackageContent() {
+  public Map<String, Set<RefEntity>> getContent() {
     return myPackageContents;
   }
 
-  public Map<String, Set<RefEntity>> getOldPackageContent() {
+  public Map<String, Set<RefEntity>> getOldContent() {
     return myOldPackageContents;
   }
 

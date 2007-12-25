@@ -226,7 +226,7 @@ public class ExportHTMLAction extends AnAction {
     final Map<String, Set<RefEntity>> content = new HashMap<String, Set<RefEntity>>();
 
     for (InspectionTool tool : tools) {
-      content.putAll(tool.getPackageContent());
+      content.putAll(tool.getContent());
     }
 
     final Set<RefEntity> defaultPackageEntities = content.remove(null);

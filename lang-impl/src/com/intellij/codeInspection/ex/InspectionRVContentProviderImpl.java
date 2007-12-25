@@ -9,6 +9,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
@@ -53,7 +54,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       }
     };
 
-    final Map<String, Set<RefEntity>> contents = tool.getPackageContent();
+    final Map<String, Set<RefEntity>> contents = tool.getContent();
     final Set<RefModule> moduleProblems = tool.getModuleProblems();
     if (moduleProblems != null) {
       Set<RefEntity> entities = contents.get("");
@@ -79,7 +80,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         }
       };
 
-      list = buildTree(tool.getOldPackageContent(), true, tool, computeContainer, showStructure);
+      list = buildTree(tool.getOldContent(), true, tool, computeContainer, showStructure);
 
       for (InspectionTreeNode node : list) {
         merge(node, toolNode, true);
@@ -115,7 +116,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     }
     else {
       if (canPackageRepeat) {
-        final Set<RefEntity> currentElements = tool.getPackageContent().get(pNode.getPackageName());
+        final Set<RefEntity> currentElements = tool.getContent().get(pNode.getPackageName());
         if (currentElements != null) {
           final Set<RefEntity> currentEntities = new HashSet<RefEntity>(currentElements);
           if (InspectionTool.contains(refElement, currentEntities)) return;
@@ -164,7 +165,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     }
 
     public boolean supportStructure() {
-      return myElement instanceof RefElement; //do not show structure for refModule and refPackage
+      return myElement instanceof RefElement && !(myElement instanceof RefDirectory); //do not show structure for refModule and refPackage
     }
 
     public CommonProblemDescriptor[] getProblemDescriptors() {

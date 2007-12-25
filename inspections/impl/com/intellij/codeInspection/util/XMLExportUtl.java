@@ -135,8 +135,7 @@ public class XMLExportUtl {
     classElement.addContent(nameElement);
 
     Element displayName = new Element("display_name");
-    final RefUtil refUtil = RefUtil.getInstance();
-    displayName.addContent(refUtil.getQualifiedName(refClass));
+    displayName.addContent(refClass.getQualifiedName());
     classElement.addContent(displayName);
 
     parentNode.addContent(classElement);
@@ -160,8 +159,7 @@ public class XMLExportUtl {
     methodElement.addContent(shortNameElement);
 
     Element displayName = new Element("name");
-    final RefUtil refUtil = RefUtil.getInstance();
-    displayName.addContent(refUtil.getQualifiedName(refMethod));
+    displayName.addContent(refMethod.getQualifiedName());
     methodElement.addContent(displayName);
 
     appendClass(RefJavaUtil.getInstance().getTopLevelClass(refMethod), methodElement);
@@ -179,8 +177,7 @@ public class XMLExportUtl {
     fieldElement.addContent(shortNameElement);
 
     Element displayName = new Element("display_name");
-    final RefUtil refUtil = RefUtil.getInstance();
-    displayName.addContent(refUtil.getQualifiedName(refField));
+    displayName.addContent(refField.getQualifiedName());
     fieldElement.addContent(displayName);
 
     appendClass(RefJavaUtil.getInstance().getTopLevelClass(refField), fieldElement);

@@ -35,4 +35,9 @@ public interface RefManagerExtension<T> {
   RefEntity getRefinedElement(final RefEntity ref);
 
   void visitElement(final PsiElement element);
+
+  @Nullable
+  String getGroupName(final RefEntity entity);
+
+  boolean belongsToScope(final PsiElement psiElement);
 }

@@ -225,7 +225,18 @@ public class RefJavaManagerImpl extends RefJavaManager {
     element.accept(myProjectIterator);
   }
 
-   public EntryPointsManager getEntryPointsManager() {
+  @Nullable
+  public String getGroupName(final RefEntity entity) {
+    if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
+    return RefJavaUtil.getInstance().getPackageName(entity);
+  }
+
+  public boolean belongsToScope(final PsiElement psiElement) {
+    if (psiElement instanceof PsiTypeParameter) return false;
+    return true;
+  }
+
+  public EntryPointsManager getEntryPointsManager() {
     if (myEntryPointsManager == null) {
       myEntryPointsManager = new EntryPointsManagerImpl();
       ((EntryPointsManagerImpl)myEntryPointsManager).addAllPersistentEntries(EntryPointsManagerImpl.getInstance(myRefManager.getProject()));

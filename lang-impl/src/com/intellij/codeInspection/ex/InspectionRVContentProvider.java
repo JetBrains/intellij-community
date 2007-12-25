@@ -18,6 +18,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.MutableTreeNode;
 import java.util.*;
 
 public abstract class InspectionRVContentProvider {
@@ -107,7 +108,13 @@ public abstract class InspectionRVContentProvider {
                 continue;
               }
             }
-            moduleNode.add(packageNode);
+            if (packageNode.getPackageName() != null) {
+              moduleNode.add(packageNode);
+            } else {
+              for(int i = packageNode.getChildCount() - 1; i >= 0; i--) {
+                moduleNode.add((MutableTreeNode)packageNode.getChildAt(i));
+              }
+            }
           }
         }
       }
@@ -118,20 +125,30 @@ public abstract class InspectionRVContentProvider {
         for (InspectionPackageNode pNode : packageNodes.values()) {
           for (int i = 0; i < pNode.getChildCount(); i++) {
             final RefElementNode elementNode = (RefElementNode)pNode.getChildAt(i);
-            content.add(elementNode);
-            final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
-            TreeUtil.traverse(elementNode, new TreeUtil.Traverse() {
-              public boolean accept(final Object node) {
-                if (node instanceof ProblemDescriptionNode) {
-                  nodes.add((ProblemDescriptionNode)node);
-                }
-                return true;
+            final Set<RefElementNode> parentNodes = new HashSet<RefElementNode>();
+            if (pNode.getPackageName() != null) {
+              parentNodes.add(elementNode);
+            } else {
+              for(int e = 0; e < elementNode.getChildCount(); e++) {
+                parentNodes.add((RefElementNode)elementNode.getChildAt(e));
               }
-            });
-            elementNode.removeAllChildren();
-            for (ProblemDescriptionNode node : nodes) {
-              elementNode.add(node);
             }
+            for (RefElementNode parentNode : parentNodes) {
+              final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
+              TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
+                public boolean accept(final Object node) {
+                  if (node instanceof ProblemDescriptionNode) {
+                    nodes.add((ProblemDescriptionNode)node);
+                  }
+                  return true;
+                }
+              });
+              parentNode.removeAllChildren();
+              for (ProblemDescriptionNode node : nodes) {
+                parentNode.add(node);
+              }
+            }
+            content.addAll(parentNodes);
           }
         }
       }

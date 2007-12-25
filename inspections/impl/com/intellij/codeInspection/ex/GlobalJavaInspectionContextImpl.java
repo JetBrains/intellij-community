@@ -205,7 +205,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
 
         ((GlobalInspectionContextImpl)context)
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refMethod));
+          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 
         final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(psiMethod);
         OverridingMethodsSearch.search(psiMethod, searchScope, true)
@@ -234,7 +234,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final List<UsagesProcessor> processors = myFieldUsagesRequests.get(psiField);
 
         ((GlobalInspectionContextImpl)context)
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiField)));
+          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiField)));
 
         ReferencesSearch.search(psiField, searchScope, false)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
@@ -265,7 +265,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         final List<UsagesProcessor> processors = myMethodUsagesRequests.get(psiMethod);
 
         ((GlobalInspectionContextImpl)context)
-          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, RefUtil.getInstance().getQualifiedName(refManager.getReference(psiMethod)));
+          .incrementJobDoneAmount(GlobalInspectionContextImpl.FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiMethod)));
 
         MethodReferencesSearch.search(psiMethod, searchScope, true)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));

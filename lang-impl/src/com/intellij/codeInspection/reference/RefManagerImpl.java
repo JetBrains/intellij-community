@@ -10,6 +10,7 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.concurrency.JBReentrantReadWriteLock;
@@ -35,7 +37,7 @@ import java.util.*;
 
 public class RefManagerImpl extends RefManager {
 
-  private int myLastUsedMask = 256*256*256*4;
+  private int myLastUsedMask = 256 * 256 * 256 * 4;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
@@ -100,7 +102,7 @@ public class RefManagerImpl extends RefManager {
     myRefTable = null;
     myModules = null;
     myContext = null;
-    
+
     myGraphAnnotators.clear();
     for (RefManagerExtension extension : myExtensions.values()) {
       extension.cleanup();
@@ -112,7 +114,7 @@ public class RefManagerImpl extends RefManager {
   }
 
 
-  public void fireNodeInitialized(RefElement refElement){
+  public void fireNodeInitialized(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onInitialize(refElement);
     }
@@ -120,19 +122,21 @@ public class RefManagerImpl extends RefManager {
 
   public void fireNodeMarkedReferenced(RefElement refWhat,
                                        RefElement refFrom,
-                                       boolean referencedFromClassInitializer, final boolean forReading, final boolean forWriting){
+                                       boolean referencedFromClassInitializer,
+                                       final boolean forReading,
+                                       final boolean forWriting) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting);
     }
   }
 
-  public void fireBuildReferences(RefElement refElement){
+  public void fireBuildReferences(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onReferencesBuild(refElement);
     }
   }
 
-  public void registerGraphAnnotator(RefGraphAnnotator annotator){
+  public void registerGraphAnnotator(RefGraphAnnotator annotator) {
     myGraphAnnotators.add(annotator);
   }
 
@@ -159,6 +163,8 @@ public class RefManagerImpl extends RefManager {
     }
     else if (ref instanceof RefProject) {
       return SmartRefElementPointer.PROJECT;
+    } else if (ref instanceof RefDirectory) {
+      return SmartRefElementPointer.DIR;
     }
     return null;
   }
@@ -204,13 +210,22 @@ public class RefManagerImpl extends RefManager {
       final RefModule refModule = (RefModule)refEntity;
       final VirtualFile moduleFile = refModule.getModule().getModuleFile();
       final Element fileElement = new Element("file");
-      fileElement.addContent(moduleFile != null? moduleFile.getUrl() : refEntity.getName());
+      fileElement.addContent(moduleFile != null ? moduleFile.getUrl() : refEntity.getName());
       problem.addContent(fileElement);
       appendModule(problem, refModule);
     }
     new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
     element.addContent(problem);
     return problem;
+  }
+
+  @Nullable
+  public String getGroupName(final RefElement entity) {
+    for (RefManagerExtension extension : myExtensions.values()) {
+      final String groupName = extension.getGroupName(entity);
+      if (groupName != null) return groupName;
+    }
+    return null;
   }
 
   private static void appendModule(final Element problem, final RefModule refModule) {
@@ -286,11 +301,12 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void initializeAnnotators() {
-    final Object[] graphAnnotators = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR).getExtensions();
+    final Object[] graphAnnotators =
+      Extensions.getRootArea().getExtensionPoint(ExtensionPoints.INSPECTIONS_GRAPH_ANNOTATOR).getExtensions();
     for (Object annotator : graphAnnotators) {
       registerGraphAnnotator((RefGraphAnnotator)annotator);
     }
-    for (RefGraphAnnotator graphAnnotator: myGraphAnnotators) {
+    for (RefGraphAnnotator graphAnnotator : myGraphAnnotators) {
       if (graphAnnotator instanceof RefGraphAnnotatorEx) {
         ((RefGraphAnnotatorEx)graphAnnotator).initialize(this);
       }
@@ -298,7 +314,8 @@ public class RefManagerImpl extends RefManager {
   }
 
   private class ProjectIterator extends PsiElementVisitor {
-    @Override public void visitElement(PsiElement element) {
+    @Override
+    public void visitElement(PsiElement element) {
       final RefManagerExtension extension = getExtension(element.getLanguage());
       if (extension != null) {
         extension.visitElement(element);
@@ -312,7 +329,8 @@ public class RefManagerImpl extends RefManager {
     public void visitFile(PsiFile file) {
       final VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile != null) {
-        myContext.incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
+        myContext
+          .incrementJobDoneAmount(GlobalInspectionContextImpl.BUILD_GRAPH, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
       }
       final FileViewProvider viewProvider = file.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
@@ -322,13 +340,17 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  @Nullable public RefElement getReference(final PsiElement elem) {
-    if (elem != null && RefUtil.getInstance().belongsToScope(elem, this)) {
+  @Nullable
+  public RefElement getReference(final PsiElement elem) {
+    if (elem instanceof PsiDirectory) {
+      return new RefDirectoryImpl((PsiDirectory)elem, this);
+    }
+    if (elem != null && belongsToScope(elem)) {
       if (!elem.isValid()) return null;
 
       RefElement ref = getFromRefTable(elem);
       if (ref == null) {
-        if (!isValidPointForReference()){
+        if (!isValidPointForReference()) {
           //LOG.assertTrue(true, "References may become invalid after process is finished");
           return null;
         }
@@ -343,9 +365,6 @@ public class RefManagerImpl extends RefManager {
             }
             if (elem instanceof PsiFile) {
               return new RefFileImpl((PsiFile)elem, RefManagerImpl.this);
-            }
-            else if (elem instanceof PsiDirectory) {
-              return new RefDirectoryImpl(((PsiDirectory)elem).getName(), elem, RefManagerImpl.this);
             }
             else {
               return null;
@@ -383,10 +402,18 @@ public class RefManagerImpl extends RefManager {
     }
     if (SmartRefElementPointer.FILE.equals(type)) {
       return RefFileImpl.fileFromExternalName(this, fqName);
-    } else if (SmartRefElementPointer.MODULE.equals(type)) {
+    }
+    else if (SmartRefElementPointer.MODULE.equals(type)) {
       return RefModuleImpl.moduleFromName(this, fqName);
-    } else if (SmartRefElementPointer.PROJECT.equals(type)) {
+    }
+    else if (SmartRefElementPointer.PROJECT.equals(type)) {
       return getRefProject();
+    } else if (SmartRefElementPointer.DIR.equals(type)) {
+      final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fqName);
+      if (vFile != null) {
+        final PsiDirectory dir = PsiManager.getInstance(getProject()).findDirectory(vFile);
+        return getReference(dir);
+      }
     }
     return null;
   }
@@ -412,18 +439,56 @@ public class RefManagerImpl extends RefManager {
   }
 
   public RefModule getRefModule(Module module) {
-    if (module == null){
+    if (module == null) {
       return null;
     }
-    if (myModules == null){
+    if (myModules == null) {
       myModules = new THashMap<Module, RefModule>();
     }
     RefModule refModule = myModules.get(module);
-    if (refModule == null){
+    if (refModule == null) {
       refModule = new RefModuleImpl(module, this);
       myModules.put(module, refModule);
     }
     return refModule;
+  }
+
+  public boolean belongsToScope(final PsiElement psiElement) {
+    if (psiElement == null) return false;
+    if (psiElement instanceof PsiCompiledElement) return false;
+    if (psiElement.getContainingFile() == null) return false;
+    for (RefManagerExtension extension : myExtensions.values()) {
+      if (!extension.belongsToScope(psiElement)) return false;
+    }
+    final Boolean inProject = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      public Boolean compute() {
+        return psiElement != null && psiElement.isValid() && psiElement.getManager().isInProject(psiElement);
+      }
+    });
+    return inProject.booleanValue() && (getScope() == null || getScope().contains(psiElement));
+  }
+
+  public String getQualifiedName(RefEntity refEntity) {
+
+    if (refEntity == null || refEntity instanceof RefElementImpl && !refEntity.isValid()) {
+      return InspectionsBundle.message("inspection.reference.invalid");
+    }
+
+    return refEntity.getQualifiedName();
+  }
+
+  public void removeRefElement(RefElement refElement, List<RefElement> deletedRefs) {
+    List<RefEntity> children = refElement.getChildren();
+    if (children != null) {
+      RefElement[] refElements = children.toArray(new RefElement[children.size()]);
+      for (RefElement refChild : refElements) {
+        removeRefElement(refChild, deletedRefs);
+      }
+    }
+
+    ((RefManagerImpl)refElement.getRefManager()).removeReference(refElement);
+    ((RefElementImpl)refElement).referenceRemoved();
+    if (!deletedRefs.contains(refElement)) deletedRefs.add(refElement);
   }
 
   protected boolean isValidPointForReference() {

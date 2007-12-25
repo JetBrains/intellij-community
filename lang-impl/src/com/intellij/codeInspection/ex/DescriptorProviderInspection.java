@@ -1,7 +1,10 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +29,7 @@ import java.util.*;
  */
 public abstract class DescriptorProviderInspection extends InspectionTool implements ProblemDescriptionsProcessor {
   private Map<RefEntity, CommonProblemDescriptor[]> myProblemElements;
-  private HashMap<String, Set<RefEntity>> myPackageContents = null;
+  private HashMap<String, Set<RefEntity>> myContents = null;
   private HashSet<RefModule> myModulesProblems = null;
   private Map<CommonProblemDescriptor, RefEntity> myProblemToElements;
   private DescriptorComposer myComposer;
@@ -193,7 +196,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
     myProblemToElements = null;
     myQuickFixActions = null;
     myIgnoredElements = null;
-    myPackageContents = null;
+    myContents = null;
     myModulesProblems = null;
   }
 
@@ -309,7 +312,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   }
 
   public void updateContent() {
-    myPackageContents = new HashMap<String, Set<RefEntity>>();
+    myContents = new HashMap<String, Set<RefEntity>>();
     myModulesProblems = new HashSet<RefModule>();
     final Set<RefEntity> elements = getProblemElements().keySet();
     for (RefEntity element : elements) {
@@ -318,36 +321,36 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         myModulesProblems.add((RefModule)element);
       }
       else {
-        String packageName = RefJavaUtil.getInstance().getPackageName(element);
-        Set<RefEntity> content = myPackageContents.get(packageName);
+        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : null;
+        Set<RefEntity> content = myContents.get(groupName);
         if (content == null) {
           content = new HashSet<RefEntity>();
-          myPackageContents.put(packageName, content);
+          myContents.put(groupName, content);
         }
         content.add(element);
       }
     }
   }
 
-  public Map<String, Set<RefEntity>> getPackageContent() {
-    return myPackageContents;
+  public Map<String, Set<RefEntity>> getContent() {
+    return myContents;
   }
 
-  public Map<String, Set<RefEntity>> getOldPackageContent() {
+  public Map<String, Set<RefEntity>> getOldContent() {
     if (myOldProblemElements == null) return null;
     final HashMap<String, Set<RefEntity>> oldContents = new HashMap<String, Set<RefEntity>>();
     final Set<RefEntity> elements = myOldProblemElements.keySet();
     for (RefEntity element : elements) {
-      String packageName = RefJavaUtil.getInstance().getPackageName(element);
-      final Set<RefEntity> collection = myPackageContents.get(packageName);
+      String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getName();
+      final Set<RefEntity> collection = myContents.get(groupName);
       if (collection != null) {
         final Set<RefEntity> currentElements = new HashSet<RefEntity>(collection);
         if (contains(element, currentElements)) continue;
       }
-      Set<RefEntity> oldContent = oldContents.get(packageName);
+      Set<RefEntity> oldContent = oldContents.get(groupName);
       if (oldContent == null) {
         oldContent = new HashSet<RefEntity>();
-        oldContents.put(packageName, oldContent);
+        oldContents.put(groupName, oldContent);
       }
       oldContent.add(element);
     }
