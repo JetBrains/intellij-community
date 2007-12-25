@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -10,15 +10,12 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.IElementType;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
   private EditorActionHandler myOriginalHandler;
@@ -62,10 +59,10 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     final QuoteHandler quoteHandler = TypedHandler.getQuoteHandler(file);
     if (quoteHandler == null) return false;
 
-    boolean toDeleteGt = c =='<' &&
-                        file instanceof PsiJavaFile &&
-                        ((PsiJavaFile)file).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0
-                        && BraceMatchingUtil.isAfterClassLikeIdentifierOrDot(offset, editor);
+    final BackspaceHandlerDelegate[] delegates = Extensions.getExtensions(BackspaceHandlerDelegate.EP_NAME);
+    for(BackspaceHandlerDelegate delegate: delegates) {
+      delegate.beforeCharDeleted(c, file, editor);
+    }
 
     HighlighterIterator hiterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
     boolean wasClosingQuote = quoteHandler.isClosingQuote(hiterator, offset);
@@ -73,18 +70,20 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     myOriginalHandler.execute(editor, dataContext);
 
     if (offset >= editor.getDocument().getTextLength()) return true;
+
+    for(BackspaceHandlerDelegate delegate: delegates) {
+      if (delegate.charDeleted(c, file, editor)) {
+        return true;
+      }
+    }
+
+
     chars = editor.getDocument().getCharsSequence();
-    if (c == '(' || c == '[' || c == '{' || toDeleteGt){
+    if (c == '(' || c == '[' || c == '{'){
       char c1 = chars.charAt(offset);
       if (c == '(' && c1 != ')') return true;
       if (c == '[' && c1 != ']') return true;
       if (c == '{' && c1 != '}') return true;
-
-      if (c == '<') {
-        if (c1 != '>') return true;
-        handleLTDeletion(editor, offset);
-        return true;
-      }
 
       HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
       BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(fileType);
@@ -116,35 +115,5 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
 
     return true;
-  }
-
-  //need custom handler since cannot use brace matcher
-  private static void handleLTDeletion(final Editor editor, final int offset) {
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset);
-    while (iterator.getStart() > 0 && !BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) {
-      iterator.retreat();
-    }
-
-    if (BraceMatchingUtil.isTokenInvalidInsideReference(iterator.getTokenType())) iterator.advance();
-
-    int balance = 0;
-    while (!iterator.atEnd() && balance >= 0) {
-      final IElementType tokenType = iterator.getTokenType();
-      if (tokenType == JavaTokenType.LT) {
-        balance++;
-      }
-      else if (tokenType == JavaTokenType.GT) {
-        balance--;
-      }
-      else if (BraceMatchingUtil.isTokenInvalidInsideReference(tokenType)) {
-        break;
-      }
-
-      iterator.advance();
-    }
-
-    if (balance < 0) {
-      editor.getDocument().deleteString(offset, offset + 1);
-    }
   }
 }
