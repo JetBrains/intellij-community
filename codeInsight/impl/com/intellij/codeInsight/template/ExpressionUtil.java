@@ -1,4 +1,4 @@
- package com.intellij.codeInsight.template;
+package com.intellij.codeInsight.template;
 
  import com.intellij.openapi.components.ServiceManager;
  import com.intellij.openapi.diagnostic.Logger;
