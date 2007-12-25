@@ -58,7 +58,7 @@ public class NewDebuggerContentUI
 
   Map<Grid, Wrapper> myMinimizedButtonsPlaceholder = new HashMap<Grid, Wrapper>();
   Map<Grid, Wrapper> myCommonActionsPlaceholder = new HashMap<Grid, Wrapper>();
-  Map<Grid, Content> myContextActions = new HashMap<Grid, Content>();
+  Map<Grid, Set<Content>> myContextActions = new HashMap<Grid, Set<Content>>();
 
   boolean myUiLastStateWasRestored;
 
@@ -157,8 +157,27 @@ public class NewDebuggerContentUI
       }
 
       public void selectionChanged(final ContentManagerEvent event) {
+        if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
+          Grid toSelect = findGridFor(event.getContent());
+          Grid selected = getSelectedGrid();
+
+          if (selected != null && toSelect != null && selected == toSelect) {
+            select(event.getContent(), true);
+          } else {
+            SwingUtilities.invokeLater(new Runnable() {
+              public void run() {
+                select(event.getContent(), true);
+              }
+            });
+          }
+        }
       }
     });
+  }
+
+  private Grid getSelectedGrid() {
+    TabInfo selection = myTabs.getSelectedInfo();
+    return selection != null ? getGridFor(selection) : null;
   }
 
   private void removeGridIfNeeded(Grid grid) {
@@ -216,28 +235,33 @@ public class NewDebuggerContentUI
   private void rebuildCommonActions() {
     for (Grid each : myCommonActionsPlaceholder.keySet()) {
       Wrapper eachPlaceholder = myCommonActionsPlaceholder.get(each);
-      DefaultActionGroup groupToBuild = null;
+      DefaultActionGroup groupToBuild;
       JComponent contextComponent = null;
-      if (isHorizontalToolbar() && each.getContents().size() == 1) {
-        Content content = each.getContents().get(0);
-        if (myContextActions.get(each) != content) {
-          groupToBuild = new DefaultActionGroup();
+      List<Content> contentList = each.getContents();
+
+      Set<Content> contents = new HashSet<Content>();
+      contents.addAll(contentList);
+
+      if (isHorizontalToolbar() && contents.size() == 1) {
+        Content content = contentList.get(0);
+        groupToBuild = new DefaultActionGroup();
+        if (content.getActions() != null) {
           groupToBuild.addAll(content.getActions());
           groupToBuild.addSeparator();
-          groupToBuild.addAll(myDebuggerActions);
           contextComponent = content.getActionsContextComponent();
-          myContextActions.put(each, content);
         }
+        groupToBuild.addAll(myDebuggerActions);
       } else {
-        myContextActions.remove(each);
         groupToBuild = myDebuggerActions;
       }
 
-      if (groupToBuild != null) {
+      if (!contents.equals(myContextActions.get(each))) {
         ActionToolbar tb = myActionManager.createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, groupToBuild, true);
         tb.setTargetComponent(contextComponent);
         eachPlaceholder.setContent(tb.getComponent());
       }
+
+      myContextActions.put(each, contents);
     }
   }
 
@@ -378,6 +402,7 @@ public class NewDebuggerContentUI
       each.setToolbarHorizontal(state);
     }
 
+    myContextActions.clear();
     updateTabsUI(false);
   }
 

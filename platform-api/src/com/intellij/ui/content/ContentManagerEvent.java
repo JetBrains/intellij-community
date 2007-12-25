@@ -21,11 +21,17 @@ public class ContentManagerEvent extends EventObject {
   private Content myContent;
   private int myIndex;
   private boolean myConsumed;
+  private ContentOperation myOperation;
 
-  public ContentManagerEvent(Object source, Content content, int index) {
+  public ContentManagerEvent(Object source, Content content, int index, ContentOperation operation) {
     super(source);
     myContent = content;
     myIndex = index;
+    myOperation = operation;
+  }
+
+  public ContentManagerEvent(Object source, Content content, int index) {
+    this(source, content, index, ContentOperation.undefined);
   }
 
   public Content getContent() {
@@ -42,5 +48,13 @@ public class ContentManagerEvent extends EventObject {
 
   public void consume() {
     myConsumed = true;
+  }
+
+  public ContentOperation getOperation() {
+    return myOperation;
+  }
+
+  public static enum ContentOperation {
+    add, remove, undefined
   }
 }

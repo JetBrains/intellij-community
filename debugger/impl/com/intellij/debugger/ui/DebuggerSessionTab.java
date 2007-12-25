@@ -118,20 +118,6 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
                 }
               }
               break;
-
-            case DebuggerSession.EVENT_PAUSE:
-              if (myIsJustStarted) {
-                final Content frameView = findContent(DebuggerContentInfo.FRAME_CONTENT);
-                final Content watchView = findContent(DebuggerContentInfo.WATCHES_CONTENT);
-                if (frameView != null) {
-                  Content content = myViewsContentManager.getSelectedContent();
-                  if (content == null || content.equals(frameView) || content.equals(watchView)) {
-                    return;
-                  }
-                  showFramePanel();
-                }
-                myIsJustStarted = false;
-              }
           }
         }
       });
