@@ -39,6 +39,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +66,16 @@ public class FramesPanel extends UpdatableDebuggerView {
     myFramesList = new FramesList();
     myFramesListener = new FramesListener();
     myFramesList.addListSelectionListener(myFramesListener);
+
+    myFramesList.addMouseListener(new MouseAdapter() {
+      public void mousePressed(final MouseEvent e) {
+        int index = myFramesList.locationToIndex(e.getPoint());
+        if (index >= 0 && myFramesList.isSelectedIndex(index)) {
+          processListValue(myFramesList.getModel().getElementAt(index));
+        }
+      }
+    });
+
     registerThreadsPopupMenu(myFramesList);
 
     setBorder(null);
@@ -87,12 +99,16 @@ public class FramesPanel extends UpdatableDebuggerView {
         return;
       }
       final JList list = (JList)e.getSource();
-      final Object selected = list.getSelectedValue();
-      if (selected instanceof StackFrameDescriptorImpl) {
-        DebuggerContextUtil.setStackFrame(getContextManager(), ((StackFrameDescriptorImpl)selected).getFrameProxy());
-      }
+      processListValue(list.getSelectedValue());
+    }
+
+  }
+  private void processListValue(final Object selected) {
+    if (selected instanceof StackFrameDescriptorImpl) {
+      DebuggerContextUtil.setStackFrame(getContextManager(), ((StackFrameDescriptorImpl)selected).getFrameProxy());
     }
   }
+
 
   private void registerThreadsPopupMenu(final JList framesList) {
     final PopupHandler popupHandler = new PopupHandler() {
