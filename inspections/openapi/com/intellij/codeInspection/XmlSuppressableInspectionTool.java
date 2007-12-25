@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,18 +34,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class XmlSuppressableInspectionTool extends CustomSuppressableInspectionTool {
+public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + XmlSuppressableInspectionTool.class.getName());
   @NonNls private static final String SUPPRESS_PREFIX = "<!--suppress ";
   @NonNls private static final String SUPPRESS_SUFFIX = " -->\n";
   @NonNls private static final String ALL = "ALL";
 
-  public IntentionAction[] getSuppressActions(final PsiElement element) {
-    final XmlTag tag = PsiTreeUtil.getContextOfType(element, XmlTag.class, false);
-    if (tag != null) {
-      return new IntentionAction[]{new SuppressTag(tag), new SuppressForFile(), new SuppressAllForFile()};
-    }
-    return new IntentionAction[]{new SuppressForFile(), new SuppressAllForFile()};
+  public SuppressIntentionAction[] getSuppressActions() {
+    return new SuppressIntentionAction[]{new SuppressTag(), new SuppressForFile(), new SuppressAllForFile()};
   }
 
   public boolean isSuppressedFor(final PsiElement element) {
@@ -121,12 +116,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
     UndoUtil.markPsiFileForUndo(file);
   }
 
-  public class SuppressTag implements IntentionAction {
-    private XmlTag myTag;
-
-    public SuppressTag(final XmlTag tag) {
-      myTag = tag;
-    }
+  public class SuppressTag extends SuppressIntentionAction {
 
     @NotNull
     public String getText() {
@@ -138,12 +128,13 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
       return getText();
     }
 
-    public boolean isAvailable(final Project project, final Editor editor, final PsiFile file) {
-      return myTag != null && myTag.isValid();
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+      return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      suppress(file, myTag);
+    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+      suppress(element.getContainingFile(), tag);
     }
 
     public boolean startInWriteAction() {
@@ -151,7 +142,7 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
     }
   }
 
-  public class SuppressForFile implements IntentionAction {
+  public class SuppressForFile extends SuppressIntentionAction{
 
     @NotNull
     public String getText() {
@@ -163,21 +154,23 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
       return getText();
     }
 
-    public boolean isAvailable(final Project project, final Editor editor, final PsiFile file) {
-      return file instanceof XmlFile && file.isValid();
-    }
-
-    public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+      final PsiFile file = element.getContainingFile();
       final XmlDocument document = ((XmlFile)file).getDocument();
       suppress(file, document != null ? document.getRootTag() : null);
     }
+
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+      return element != null && element.isValid() && element.getContainingFile() instanceof XmlFile;
+    }
+
 
     public boolean startInWriteAction() {
       return true;
     }
   }
 
-  public static class SuppressAllForFile implements IntentionAction {
+  public static class SuppressAllForFile extends SuppressIntentionAction{
     @NotNull
     public String getText() {
       return InspectionsBundle.message("xml.suppressable.all.for.file.title");
@@ -188,11 +181,12 @@ public abstract class XmlSuppressableInspectionTool extends CustomSuppressableIn
       return getText();
     }
 
-    public boolean isAvailable(final Project project, final Editor editor, final PsiFile file) {
-      return file instanceof XmlFile && file.isValid();
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+      return element != null && element.isValid() && element.getContainingFile() instanceof XmlFile;
     }
 
-    public void invoke(final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+      final PsiFile file = element.getContainingFile();
       final XmlDocument document = ((XmlFile)file).getDocument();
       final XmlTag rootTag = document != null ? document.getRootTag() : null;
       final String suppressComment = SUPPRESS_PREFIX + ALL + SUPPRESS_SUFFIX;

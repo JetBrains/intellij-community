@@ -1,11 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -28,13 +24,14 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author cdr
  */
-public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
+public class UnusedPropertyInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.properties.UnusedPropertyInspection");
   @NotNull
   public String getGroupDisplayName() {
@@ -94,10 +91,8 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
   }
 
 
-  public IntentionAction[] getSuppressActions(final PsiElement element) {
-    Property property = PsiTreeUtil.getParentOfType(element, Property.class, false);
-    if (property == null) return new IntentionAction[] {new SuppressForFile()};
-    return new IntentionAction[] {new SuppressSinglePropertyFix(property), new SuppressForFile()};
+  public SuppressIntentionAction[] getSuppressActions() {
+    return new SuppressIntentionAction[] {new SuppressSinglePropertyFix(), new SuppressForFile()};
   }
 
   public boolean isSuppressedFor(PsiElement element) {
@@ -128,12 +123,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
     return false;
   }
 
-  private static class SuppressSinglePropertyFix implements IntentionAction {
-    @NotNull private final Property myProperty;
-
-    public SuppressSinglePropertyFix(@NotNull final Property property) {
-      myProperty = property;
-    }
+  private static class SuppressSinglePropertyFix extends SuppressIntentionAction {
 
     @NotNull
     public String getText() {
@@ -145,16 +135,21 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
       return PropertiesBundle.message("unused.property.suppress.for.property");
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return myProperty.isValid();
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+      final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
+      return property != null && property.isValid();
     }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+      final PsiFile file = element.getContainingFile();
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
-      @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
+      LOG.assertTrue(property != null);
+      final int start = property.getTextRange().getStartOffset();
 
-      final int start = myProperty.getTextRange().getStartOffset();
+      @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+      LOG.assertTrue(doc != null);
       final int line = doc.getLineNumber(start);
       final int lineStart = doc.getLineStartOffset(line);
 
@@ -166,7 +161,7 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
     }
   }
 
-  private static class SuppressForFile implements IntentionAction {
+  private static class SuppressForFile extends SuppressIntentionAction {
     @NotNull
     public String getText() {
       return PropertiesBundle.message("unused.property.suppress.for.file");
@@ -177,11 +172,12 @@ public class UnusedPropertyInspection extends CustomSuppressableInspectionTool {
       return PropertiesBundle.message("unused.property.suppress.for.file");
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return file instanceof PropertiesFile && file.isValid();
+    public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
+      return element != null && element.isValid() && element.getContainingFile() instanceof PropertiesFile;
     }
 
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final Project project, final Editor editor, final PsiElement element) throws IncorrectOperationException {
+      final PsiFile file = element.getContainingFile();
       if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);

@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.impl.actions.AddNoInspectionCommentFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionAllForClassFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionFix;
 import com.intellij.codeInsight.daemon.impl.actions.AddSuppressInspectionForClassFix;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -38,9 +37,9 @@ import java.util.regex.Matcher;
 
 public class SuppressManagerImpl extends SuppressManager {
 
-  public IntentionAction[] createSuppressActions(final HighlightDisplayKey displayKey, final PsiElement context) {
-    return new IntentionAction[]{new AddNoInspectionCommentFix(displayKey, context), new AddSuppressInspectionFix(displayKey, context),
-      new AddSuppressInspectionForClassFix(displayKey, context), new AddSuppressInspectionAllForClassFix(context)
+  public SuppressIntentionAction[] createSuppressActions(final HighlightDisplayKey displayKey) {
+    return new SuppressIntentionAction[]{new AddNoInspectionCommentFix(displayKey), new AddSuppressInspectionFix(displayKey),
+      new AddSuppressInspectionForClassFix(displayKey), new AddSuppressInspectionAllForClassFix()
       };
   }
 
@@ -240,7 +239,7 @@ public class SuppressManagerImpl extends SuppressManager {
     return null;
   }
 
-  public boolean canHave15Suppressions(final PsiFile file) {
+  public boolean canHave15Suppressions(final PsiElement file) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return false;
     final ProjectJdk jdk = ModuleRootManager.getInstance(module).getJdk();

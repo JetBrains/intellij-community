@@ -5,11 +5,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,7 @@ public abstract class SuppressManager {
     return ServiceManager.getService(SuppressManager.class);
   }
 
-  public abstract IntentionAction[] createSuppressActions(HighlightDisplayKey key, PsiElement psiElement);
+  public abstract SuppressIntentionAction[] createSuppressActions(HighlightDisplayKey key);
 
   public abstract boolean isSuppressedFor(final PsiElement element, final String toolId);
 
@@ -51,7 +49,7 @@ public abstract class SuppressManager {
   @Nullable
   public abstract PsiElement getElementToolSuppressedIn(PsiElement place, String toolId);
 
-  public abstract boolean canHave15Suppressions(PsiFile file);
+  public abstract boolean canHave15Suppressions(PsiElement file);
 
   public abstract boolean alreadyHas14Suppressions(PsiDocCommentOwner commentOwner);
 }

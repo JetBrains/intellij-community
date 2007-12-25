@@ -16,7 +16,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see GlobalInspectionTool
  */
-public abstract class BaseJavaLocalInspectionTool extends CustomSuppressableInspectionTool {
+public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  implements CustomSuppressableInspectionTool {
   /**
    * Override this to report problems at method level.
    *
@@ -120,8 +119,8 @@ public abstract class BaseJavaLocalInspectionTool extends CustomSuppressableInsp
   }
 
   @Nullable
-  public IntentionAction[] getSuppressActions(final PsiElement element) {
-    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()), element);
+  public SuppressIntentionAction[] getSuppressActions() {
+    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 
   public boolean isSuppressedFor(final PsiElement element) {

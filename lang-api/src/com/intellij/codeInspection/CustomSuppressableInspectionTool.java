@@ -22,23 +22,13 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CustomSuppressableInspectionTool extends LocalInspectionTool {
+public interface CustomSuppressableInspectionTool  {
 
   @Nullable
-  @Deprecated
-  public IntentionAction[] getSuppressActions(ProblemDescriptor context){
-    return null;
-  }
+  SuppressIntentionAction[] getSuppressActions();
 
-  @Nullable
-  public IntentionAction[] getSuppressActions(PsiElement element) {
-    final InspectionManager inspectionManager = InspectionManager.getInstance(element.getProject());
-    return getSuppressActions(inspectionManager.createProblemDescriptor(element, "", new LocalQuickFix[0], ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-  }
-
-  public abstract boolean isSuppressedFor(PsiElement element);
+  boolean isSuppressedFor(PsiElement element);
 }
