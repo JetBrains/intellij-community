@@ -18,4 +18,7 @@ public interface BraceMatcher {
 
   boolean isStrictTagMatching(final FileType fileType, final int group);
   boolean areTagsCaseSensitive(FileType fileType, int tokenGroup);
+
+  @Nullable
+  String getTagName(CharSequence fileText, HighlighterIterator iterator);
 }

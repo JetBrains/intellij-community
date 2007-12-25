@@ -125,7 +125,7 @@ public class DefaultBraceMatcher implements BraceMatcher {
       final boolean result = findEndTagStart(iterator);
 
       if (fileType == StdFileTypes.HTML || fileType == StdFileTypes.JSP) {
-        final String tagName = BraceMatchingUtil.getTagName(fileText, iterator);
+        final String tagName = getTagName(fileText, iterator);
 
         if (tagName != null && HtmlUtil.isSingleHtmlTag(tagName)) {
           return !result;
@@ -269,8 +269,8 @@ public class DefaultBraceMatcher implements BraceMatcher {
     return tokenType == XmlTokenType.XML_END_TAG_START;
   }
 
-  private static boolean isEndOfSingleHtmlTag(CharSequence text,HighlighterIterator iterator) {
-    String tagName = BraceMatchingUtil.getTagName(text,iterator);
+  private boolean isEndOfSingleHtmlTag(CharSequence text,HighlighterIterator iterator) {
+    String tagName = getTagName(text,iterator);
     return tagName != null && HtmlUtil.isSingleHtmlTag(tagName);
   }
 
@@ -281,5 +281,53 @@ public class DefaultBraceMatcher implements BraceMatcher {
             || tokenType == JavaTokenType.RPARENTH
             || tokenType == JavaTokenType.RBRACKET
             || tokenType == JavaTokenType.RBRACE;
+  }
+
+  public String getTagName(CharSequence fileText, HighlighterIterator iterator) {
+    final IElementType tokenType = iterator.getTokenType();
+    String name = null;
+    if (tokenType == XmlTokenType.XML_START_TAG_START) {
+      {
+        boolean wasWhiteSpace = false;
+        iterator.advance();
+        IElementType tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
+
+        if (tokenType1 == JavaTokenType.WHITE_SPACE || tokenType1 == JspTokenType.JSP_WHITE_SPACE) {
+          wasWhiteSpace = true;
+          iterator.advance();
+          tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
+        }
+
+        if (tokenType1 == XmlTokenType.XML_TAG_NAME ||
+            tokenType1 == XmlTokenType.XML_NAME
+           ) {
+          name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
+        }
+
+        if (wasWhiteSpace) iterator.retreat();
+        iterator.retreat();
+      }
+    }
+    else if (tokenType == XmlTokenType.XML_TAG_END || tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+      {
+        int balance = 0;
+        int count = 0;
+        IElementType tokenType1 = iterator.getTokenType();
+        while (balance >=0) {
+          iterator.retreat();
+          count++;
+          if (iterator.atEnd()) break;
+          tokenType1 = iterator.getTokenType();
+
+          if(tokenType1 == XmlTokenType.XML_TAG_END || tokenType1 == XmlTokenType.XML_EMPTY_ELEMENT_END) balance++;
+          else if(tokenType1 == XmlTokenType.XML_TAG_NAME)
+            balance--;
+        }
+        if(tokenType1 == XmlTokenType.XML_TAG_NAME) name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
+        while (count-- > 0) iterator.advance();
+      }
+    }
+
+    return name;
   }
 }

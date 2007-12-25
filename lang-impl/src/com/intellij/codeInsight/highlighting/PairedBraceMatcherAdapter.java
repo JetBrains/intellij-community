@@ -88,4 +88,9 @@ class PairedBraceMatcherAdapter implements BraceMatcher {
   public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
     return false;
   }
+
+  @Nullable
+  public String getTagName(final CharSequence fileText, final HighlighterIterator iterator) {
+    return null;
+  }
 }

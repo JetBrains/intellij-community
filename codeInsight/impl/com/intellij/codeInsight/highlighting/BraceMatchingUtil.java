@@ -12,9 +12,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.HashMap;
 import java.util.Stack;
@@ -71,6 +69,7 @@ public class BraceMatchingUtil {
     String brace1TagName;
     boolean isStrict;
     boolean isCaseSensitive;
+    private BraceMatcher myMatcher;
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward) {
       fileText = _fileText;
@@ -78,13 +77,13 @@ public class BraceMatchingUtil {
       iterator = _iterator;
       forward = _forward;
 
+      myMatcher = getBraceMatcher(_fileType);
       brace1Token = iterator.getTokenType();
       group = getTokenGroup(brace1Token, fileType);
-      brace1TagName = getTagName(fileText, iterator);
+      brace1TagName = myMatcher == null ? null : myMatcher.getTagName(fileText, iterator);
 
-      BraceMatcher matcher = getBraceMatcher(_fileType);
-      isStrict = matcher != null && matcher.isStrictTagMatching(fileType, group);
-      isCaseSensitive = matcher != null && matcher.areTagsCaseSensitive(fileType, group);
+      isStrict = myMatcher != null && myMatcher.isStrictTagMatching(fileType, group);
+      isCaseSensitive = myMatcher != null && myMatcher.areTagsCaseSensitive(fileType, group);
     }
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward,
@@ -115,7 +114,7 @@ public class BraceMatchingUtil {
         IElementType tokenType = iterator.getTokenType();
 
         if (getTokenGroup(tokenType, fileType) == group) {
-          String tagName = getTagName(fileText, iterator);
+          String tagName = myMatcher == null ? null : myMatcher.getTagName(fileText, iterator);
           if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
           if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)){
             ourBraceStack.push(tokenType);
@@ -170,7 +169,7 @@ public class BraceMatchingUtil {
       if (isStructuralBraceToken(fileType, iterator,fileText)) {
         if (isRBraceToken(iterator, fileText, fileType)) {
           ourBraceStack.push(iterator.getTokenType());
-          ourTagNameStack.push(getTagName(fileText, iterator));
+          ourTagNameStack.push(matcher.getTagName(fileText, iterator));
         }
         if (isLBraceToken(iterator, fileText, fileType)) {
           if (ourBraceStack.size() == 0) return true;
@@ -187,7 +186,7 @@ public class BraceMatchingUtil {
           String tagName = null;
           if (isStrict){
             topTagName = ourTagNameStack.pop();
-            tagName = getTagName(fileText, iterator);
+            tagName = matcher.getTagName(fileText, iterator);
           }
 
           if (!isPairBraces(topTokenType, tokenType, fileType)
@@ -229,54 +228,6 @@ public class BraceMatchingUtil {
     BraceMatcher matcher = getBraceMatcher(fileType);
     if (matcher!=null) return matcher.getTokenGroup(tokenType);
     return UNDEFINED_TOKEN_GROUP;
-  }
-
-  public static String getTagName(CharSequence fileText, HighlighterIterator iterator) {
-    final IElementType tokenType = iterator.getTokenType();
-    String name = null;
-    if (tokenType == XmlTokenType.XML_START_TAG_START) {
-      {
-        boolean wasWhiteSpace = false;
-        iterator.advance();
-        IElementType tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
-
-        if (tokenType1 == JavaTokenType.WHITE_SPACE || tokenType1 == JspTokenType.JSP_WHITE_SPACE) {
-          wasWhiteSpace = true;
-          iterator.advance();
-          tokenType1 = (!iterator.atEnd() ? iterator.getTokenType() :null);
-        }
-
-        if (tokenType1 == XmlTokenType.XML_TAG_NAME ||
-            tokenType1 == XmlTokenType.XML_NAME
-           ) {
-          name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-        }
-
-        if (wasWhiteSpace) iterator.retreat();
-        iterator.retreat();
-      }
-    }
-    else if (tokenType == XmlTokenType.XML_TAG_END || tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END) {
-      {
-        int balance = 0;
-        int count = 0;
-        IElementType tokenType1 = iterator.getTokenType();
-        while (balance >=0) {
-          iterator.retreat();
-          count++;
-          if (iterator.atEnd()) break;
-          tokenType1 = iterator.getTokenType();
-
-          if(tokenType1 == XmlTokenType.XML_TAG_END || tokenType1 == XmlTokenType.XML_EMPTY_ELEMENT_END) balance++;
-          else if(tokenType1 == XmlTokenType.XML_TAG_NAME)
-            balance--;
-        }
-        if(tokenType1 == XmlTokenType.XML_TAG_NAME) name = fileText.subSequence(iterator.getStart(), iterator.getEnd()).toString();
-        while (count-- > 0) iterator.advance();
-      }
-    }
-
-    return name;
   }
 
   // TODO: better name for this method

@@ -77,4 +77,8 @@ class CustomFileTypeBraceMatcher implements BraceMatcher {
   public boolean areTagsCaseSensitive(final FileType fileType, final int tokenGroup) {
     return false;
   }
+
+  public String getTagName(final CharSequence fileText, final HighlighterIterator iterator) {
+    return null;
+  }
 }
