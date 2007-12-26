@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -271,7 +272,7 @@ public class MatcherImpl {
           result.addAll(Arrays.asList(contentRoots));
 
           if (scope.isSearchInLibraries()) {
-            for(VirtualFile file: instance.getRootFiles(ProjectRootType.SOURCE)) {
+            for(VirtualFile file: instance.getFilesFromAllModules(OrderRootType.SOURCES)) {
               if (projectFileIndex.isInLibrarySource(file)) {
                 result.add(file);
               }
