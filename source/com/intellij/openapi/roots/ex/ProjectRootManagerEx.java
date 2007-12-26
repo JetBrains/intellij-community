@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import java.util.EventListener;
@@ -15,10 +14,6 @@ public abstract class ProjectRootManagerEx extends ProjectRootManager {
   public static ProjectRootManagerEx getInstanceEx(Project project) {
     return (ProjectRootManagerEx)getInstance(project);
   }
-
-  public abstract void setLanguageLevel(LanguageLevel level);
-
-  public abstract LanguageLevel getLanguageLevel();
 
   public abstract void registerChangeUpdater(CacheUpdater updater);
 

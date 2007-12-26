@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,13 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class StubProjectRootManagerEx extends ProjectRootManagerEx {
-  public void setLanguageLevel(LanguageLevel level) {
-    throw new UnsupportedOperationException();
-  }
-
-  public LanguageLevel getLanguageLevel() {
-    throw new UnsupportedOperationException();
-  }
 
   public void registerChangeUpdater(CacheUpdater updater) {
     throw new UnsupportedOperationException();

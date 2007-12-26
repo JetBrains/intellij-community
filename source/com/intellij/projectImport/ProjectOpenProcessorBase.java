@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -112,7 +113,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
           final String versionString = wizardContext.getProjectJdk().getVersionString();
           if (versionString != null) {
             rootManager.setProjectJdk(wizardContext.getProjectJdk());
-            rootManager.setLanguageLevel(NewProjectUtil.getDefaultLanguageLevel(versionString));
+            JavaProjectExtension.getInstance(projectToUpdate).setLanguageLevel(NewProjectUtil.getDefaultLanguageLevel(versionString));
           }
         }
 

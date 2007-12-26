@@ -574,7 +574,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     boolean needToReload = myRootModel.getLanguageLevel() != languageLevel;
     myRootModel.setLanguageLevel(languageLevel);
     if (needToReload && myModule.getProject().isOpen()) {
-      myProjectRootManager.reloadProjectOnLanguageLevelChange(languageLevel, true);
+      JavaProjectExtension.getInstance(myModule.getProject()).reloadProjectOnLanguageLevelChange(languageLevel, true);
     }
   }
 

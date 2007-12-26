@@ -18,6 +18,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -70,8 +71,9 @@ public class NewProjectUtil {
                   final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
                   projectRootManager.setProjectJdk(jdk);
                   final LanguageLevel languageLevel = getDefaultLanguageLevel(versionString);
-                  if (projectRootManager.getLanguageLevel().compareTo(languageLevel) > 0) {
-                    projectRootManager.setLanguageLevel(languageLevel);
+                  final JavaProjectExtension projectExtension = JavaProjectExtension.getInstance(newProject);
+                  if (projectExtension.getLanguageLevel().compareTo(languageLevel) > 0) {
+                    projectExtension.setLanguageLevel(languageLevel);
                   }
                 }
               });

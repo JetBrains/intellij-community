@@ -8,8 +8,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
@@ -58,7 +57,7 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
       (LanguageLevel)myLanguageLevelCombo.getSelectedItem() : null;
     if (newLanguageLevel != myRootModule.getLanguageLevel()) {
       myRootModule.setLanguageLevel(newLanguageLevel);
-      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myRootModule.getModule().getProject())).reloadProjectOnLanguageLevelChange(newLanguageLevel, true);
+      JavaProjectExtension.getInstance(myRootModule.getModule().getProject()).reloadProjectOnLanguageLevelChange(newLanguageLevel, true);
     }
   }
 

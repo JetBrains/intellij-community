@@ -8,10 +8,10 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -62,7 +62,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
       ModuleRootManager.getInstance(module).setLanguageLevel(myLevel);
     }
     else {
-      ProjectRootManagerEx.getInstanceEx(project).setLanguageLevel(myLevel);
+      JavaProjectExtension.getInstance(project).setLanguageLevel(myLevel);
     }
   }
 
