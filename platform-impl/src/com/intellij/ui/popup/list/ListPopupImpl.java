@@ -364,4 +364,8 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   public void setHandleAutoSelectionBeforeShow(final boolean autoHandle) {
     myAutoHandleBeforeShow = autoHandle;
   }
+
+  public boolean isModalContext() {
+    return true;
+  }
 }

@@ -90,4 +90,6 @@ public interface ComponentPopupBuilder {
 
   @NotNull ComponentPopupBuilder addUserData(Object object);
 
+  @NotNull ComponentPopupBuilder setModalContext(boolean modal);
+
 }

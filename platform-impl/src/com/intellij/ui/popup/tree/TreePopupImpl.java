@@ -509,4 +509,7 @@ public class TreePopupImpl extends BasePopup implements TreePopup {
     }
   }
 
+  public boolean isModalContext() {
+    return true;
   }
+}

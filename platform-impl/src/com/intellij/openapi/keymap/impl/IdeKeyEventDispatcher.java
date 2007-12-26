@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.popup.JBPopupImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,6 +176,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     boolean isMainFrame = window instanceof IdeFrameImpl;
     boolean isFloatingDecorator = window instanceof FloatingDecorator;
+
+    boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
+    if (isPopup) {
+      if (component instanceof JWindow) {
+        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(JBPopupImpl.KEY);
+        if (popup != null) {
+          return popup.isModalContext();
+        }
+      }
+    }
+
     return !isMainFrame && !isFloatingDecorator;
   }
 

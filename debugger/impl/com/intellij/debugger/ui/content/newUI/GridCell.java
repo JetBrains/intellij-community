@@ -388,6 +388,7 @@ public class GridCell implements Disposable {
       .setLocateWithinScreenBounds(!dragging)
       .setCancelKeyEnabled(false)
       .setBelongsToGlobalPopupStack(false)
+      .setModalContext(false)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
           if (myDisposed) return Boolean.TRUE;

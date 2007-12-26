@@ -124,6 +124,8 @@ public interface JBPopup extends Disposable {
 
   boolean isPersistent();
 
+  boolean isModalContext();
+
   void setUiVisible(boolean visible);
 
   @Nullable

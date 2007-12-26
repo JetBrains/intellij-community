@@ -49,6 +49,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private ArrayList<Object> myUserData;
 
   private boolean myInStack = true;
+  private boolean myModalContext = true;
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -142,7 +143,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack);
+                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext);
     if (myProject != null) {
       popup.setProject(myProject);
     }
@@ -212,6 +213,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myUserData = new ArrayList<Object>();
     }
     myUserData.add(object);
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setModalContext(final boolean modal) {
+    myModalContext = modal;
     return this;
   }
 }
