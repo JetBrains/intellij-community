@@ -23,8 +23,6 @@ public interface FileManager {
   @Nullable
   PsiDirectory findDirectory(@NotNull VirtualFile vFile);
 
-  PsiDirectory[] getRootDirectories(int rootType);
-
   void reloadFromDisk(@NotNull PsiFile file); //Q: move to PsiFile(Impl)?
 
   @Nullable

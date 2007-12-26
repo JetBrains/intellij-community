@@ -1,21 +1,20 @@
 package com.intellij.history.integration.stubs;
 
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.projectRoots.ProjectRootType;
+import com.intellij.openapi.module.ModifiableModuleModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.ProjectRootType;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.psi.search.GlobalSearchScope;
-
-import java.util.List;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class StubProjectRootManagerEx extends ProjectRootManagerEx {
   public void setLanguageLevel(LanguageLevel level) {
@@ -80,6 +79,14 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
   }
 
   public VirtualFile[] getRootFiles(ProjectRootType type) {
+    throw new UnsupportedOperationException();
+  }
+
+  public VirtualFile[] getFilesFromAllModules(final OrderRootType type) {
+    throw new UnsupportedOperationException();
+  }
+
+  public VirtualFile[] getContentRootsFromAllModules() {
     throw new UnsupportedOperationException();
   }
 

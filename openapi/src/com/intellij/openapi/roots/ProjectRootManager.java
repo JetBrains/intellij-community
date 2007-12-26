@@ -76,6 +76,14 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * @deprecated
    */
   public abstract VirtualFile[] getRootFiles(ProjectRootType type);
+  public abstract VirtualFile[] getFilesFromAllModules(OrderRootType type);
+
+  /**
+   * Unlike getContentRoots(), this includes the project base dir. Is this really necessary?
+   * TODO: remove this method?
+   * @return
+   */
+  public abstract VirtualFile[] getContentRootsFromAllModules();
 
   /**
    * Returns the list of content roots for all modules in the project.
@@ -173,5 +181,4 @@ public abstract class ProjectRootManager implements ModificationTracker {
    */
   public abstract void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
     throws ModuleCircularDependencyException;
-
 }

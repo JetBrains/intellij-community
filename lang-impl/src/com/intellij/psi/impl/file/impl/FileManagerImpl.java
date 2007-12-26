@@ -55,7 +55,6 @@ public class FileManagerImpl implements FileManager {
 
   private final ProjectRootManager myProjectRootManager;
   private ProjectFileIndex myProjectFileIndex = null;
-  private RootManager myRootManager = null;
 
   private final ConcurrentHashMap<VirtualFile, PsiDirectory> myVFileToPsiDirMap = new ConcurrentHashMap<VirtualFile, PsiDirectory>();
   private final ConcurrentMap<VirtualFile, FileViewProvider> myVFileToViewProviderMap = new ConcurrentWeakValueHashMap<VirtualFile, FileViewProvider>();
@@ -157,8 +156,6 @@ public class FileManagerImpl implements FileManager {
     LOG.assertTrue(!myInitialized);
     myDisposed = false;
     myInitialized = true;
-
-    myRootManager = new RootManager(this, myProjectRootManager);
 
     myProjectFileIndex = myProjectRootManager.getFileIndex();
 
@@ -406,10 +403,6 @@ public class FileManagerImpl implements FileManager {
     return myVFileToPsiDirMap.cacheOrGet(vFile, psiDir);
   }
 
-
-  public PsiDirectory[] getRootDirectories(int rootType) {
-    return myRootManager.getRootDirectories(rootType);
-  }
 
   @Nullable
   private PsiFile getCachedPsiFileInner(VirtualFile file) {

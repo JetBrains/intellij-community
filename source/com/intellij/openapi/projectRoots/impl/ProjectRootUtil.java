@@ -1,17 +1,30 @@
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.file.impl.FileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.ArrayList;
 
 /**
  * @author mike
  */
 public class ProjectRootUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootUtil");
+
   @NonNls public static final String SIMPLE_ROOT = "simple";
   @NonNls public static final String COMPOSITE_ROOT = "composite";
   /**
@@ -36,6 +49,9 @@ public class ProjectRootUtil {
   @NonNls public static final String EJB_ROOT = "ejb";
   @NonNls private static final String ATTRIBUTE_TYPE = "type";
   @NonNls private static final String ELEMENT_ROOT = "root";
+
+  private ProjectRootUtil() {
+  }
 
   static ProjectRoot read(Element element) throws InvalidDataException {
     final String type = element.getAttributeValue(ATTRIBUTE_TYPE);
@@ -112,5 +128,35 @@ public class ProjectRootUtil {
     }
 
     throw new IllegalArgumentException("Wrong type: " + s);
+  }
+
+  public static PsiDirectory[] convertRoots(final Project project, VirtualFile[] roots) {
+    return convertRoots(((PsiManagerImpl)PsiManager.getInstance(project)).getFileManager(), roots);
+  }
+
+  public static PsiDirectory[] convertRoots(final FileManager fileManager, VirtualFile[] roots) {
+    ArrayList<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
+
+    for (VirtualFile root : roots) {
+      if (!root.isValid()) {
+        LOG.error("Root " + root + " is not valid!");
+      }
+      PsiDirectory dir = fileManager.findDirectory(root);
+      if (dir != null) {
+        dirs.add(dir);
+      }
+    }
+
+    return dirs.toArray(new PsiDirectory[dirs.size()]);
+  }
+
+  public static PsiDirectory[] getRootDirectories(final Project project, final OrderRootType rootType) {
+    VirtualFile[] files = ProjectRootManager.getInstance(project).getFilesFromAllModules(rootType);
+    return convertRoots(project, files);
+  }
+
+  public static PsiDirectory[] getAllContentRoots(final Project project) {
+    VirtualFile[] files = ProjectRootManager.getInstance(project).getContentRootsFromAllModules();
+    return convertRoots(project, files);
   }
 }

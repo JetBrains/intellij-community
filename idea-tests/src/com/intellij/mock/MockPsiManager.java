@@ -67,11 +67,6 @@ public class MockPsiManager extends PsiManagerEx {
     return myProject;
   }
 
-  @NotNull
-  public PsiDirectory[] getRootDirectories(int rootType) {
-    return PsiDirectory.EMPTY_ARRAY;
-  }
-
   public OrderEntry findOrderEntry(PsiElement element) {
     return null;  //To change body of implemented methods use Options | File Templates.
   }

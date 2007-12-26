@@ -8,15 +8,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.ModuleFileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
@@ -62,6 +60,7 @@ public class PackageUtil {
   /**
    * @deprecated
    */
+  @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
                                                              String packageName,
                                                              PsiDirectory baseDir,
@@ -84,7 +83,7 @@ public class PackageUtil {
     }
 
     if (psiDirectory == null) {
-      PsiDirectory[] sourceDirectories = PsiManager.getInstance(project).getRootDirectories(PsiRootPackageType.SOURCE_PATH);
+      PsiDirectory[] sourceDirectories = ProjectRootUtil.getRootDirectories(project, OrderRootType.SOURCES);
       psiDirectory = selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;

@@ -284,7 +284,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     myCompilerOutputWatchRequest = watchRequest;
   }
 
-  private VirtualFile[] getFilesFromAllModules(OrderRootType type) {
+  public VirtualFile[] getFilesFromAllModules(OrderRootType type) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
@@ -304,7 +304,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return result.toArray(new VirtualFile[result.size()]);
   }
 
-  private VirtualFile[] getContentRootsFromAllModules() {
+  public VirtualFile[] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {

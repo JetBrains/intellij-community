@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerConfiguration;
@@ -45,7 +46,6 @@ public class JavaFileManagerImpl implements JavaFileManager {
   private final PsiManagerEx myManager;
   private final ProjectRootManager myProjectRootManager;
   private final FileManager myFileManager;
-  private final RootManager myRootManager;
   private final boolean myUseRepository;
   private Set<String> myNontrivialPackagePrefixes = null;
   private boolean myInitialized = false;
@@ -56,7 +56,6 @@ public class JavaFileManagerImpl implements JavaFileManager {
     myManager = manager;
     myProjectRootManager = projectRootManager;
     myFileManager = fileManager;
-    myRootManager = new RootManager(fileManager, myProjectRootManager);
 
     PsiManagerConfiguration configuration = PsiManagerConfiguration.getInstance();
     myUseRepository = configuration.REPOSITORY_ENABLED;
@@ -178,8 +177,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
-    VirtualFile[] sourcePath = myRootManager.getSourceRootsCopy();
-    VirtualFile[] classPath = myRootManager.getClassRootsCopy();
+    VirtualFile[] sourcePath = myProjectRootManager.getRootFiles(ProjectRootType.SOURCE).clone();
+    VirtualFile[] classPath = myProjectRootManager.getRootFiles(ProjectRootType.CLASS).clone();
 
     int index = 0;
     while (index < qName.length()) {

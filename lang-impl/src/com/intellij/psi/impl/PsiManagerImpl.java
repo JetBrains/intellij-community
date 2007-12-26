@@ -345,11 +345,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     return myResolveCache;
   }
 
-  @NotNull
-  public PsiDirectory[] getRootDirectories(int rootType) {
-    return myFileManager.getRootDirectories(rootType);
-  }
-
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     myProgressManager.checkCanceled(); // We hope this method is being called often enough to cancel daemon processes smoothly

@@ -53,10 +53,6 @@ public class MockFileManager implements FileManager {
     throw new UnsupportedOperationException("Method findPackage is not yet implemented in " + getClass().getName());
   }
 
-  public PsiDirectory[] getRootDirectories(int rootType) {
-    throw new UnsupportedOperationException("Method getRootDirectories is not yet implemented in " + getClass().getName());
-  }
-
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     throw new UnsupportedOperationException("Method findClass is not yet implemented in " + getClass().getName());

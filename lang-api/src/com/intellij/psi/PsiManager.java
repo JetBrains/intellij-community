@@ -54,12 +54,6 @@ public abstract class PsiManager extends UserDataHolderBase {
   public abstract Project getProject();
 
   /**
-   * @deprecated
-   */
-  @NotNull
-  public abstract PsiDirectory[] getRootDirectories(int rootType);
-
-  /**
    * Returns the PSI file corresponding to the specified virtual file.
    *
    * @param file the file for which the PSI is requested.
