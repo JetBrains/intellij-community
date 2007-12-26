@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
@@ -336,12 +337,12 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   private static void addDocs(SdkModificator sdkModificator, final Sdk javaSdk) {
-    if (!addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, javaSdk, sdkModificator) &&
+    if (!addOrderEntries(JavadocOrderRootType.INSTANCE, ProjectRootType.JAVADOC, javaSdk, sdkModificator) &&
         SystemInfo.isMac){
       ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (ProjectJdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
-          addOrderEntries(OrderRootType.JAVADOC, ProjectRootType.JAVADOC, jdk, sdkModificator);
+          addOrderEntries(JavadocOrderRootType.INSTANCE, ProjectRootType.JAVADOC, jdk, sdkModificator);
           break;
         }
       }

@@ -221,7 +221,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     assertNotNull(lib);
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, path);
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath);
-    assertModuleLibDepPath(lib, OrderRootType.JAVADOC, javadocPath);
+    assertModuleLibDepPath(lib, JavadocOrderRootType.INSTANCE, javadocPath);
   }
 
   private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, String path) {
