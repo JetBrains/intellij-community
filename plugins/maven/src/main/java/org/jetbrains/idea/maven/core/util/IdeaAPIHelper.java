@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ui.UIUtil;
 
@@ -50,11 +49,7 @@ public class IdeaAPIHelper {
     }
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        try {
-          model.commit();
-        }
-        catch (ModuleCircularDependencyException ignore) {
-        }
+        model.commit();
       }
     });
   }

@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectMacrosUtil;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -266,12 +265,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<EclipseProjectMod
     for (IdeaModuleModel moduleModel : modules) {
       ClasspathStorage.setStorageType(modifiableModuleModel.findModuleByName(moduleModel.getName()), link ? EclipseClasspathStorageProvider.ID : ClasspathStorage.DEFAULT_STORAGE);
     }
-    try {
-      modifiableModuleModel.commit();
-    }
-    catch (ModuleCircularDependencyException e) {
-      // not an error, actually not even ever thrown
-    }
+    modifiableModuleModel.commit();
   }
 
   public Parameters getParameters() {

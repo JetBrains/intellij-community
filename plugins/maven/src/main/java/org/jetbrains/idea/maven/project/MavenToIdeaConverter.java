@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -150,11 +149,7 @@ public class MavenToIdeaConverter {
     for (Module module : myMapping.getExistingModules()) {
       new RootModelAdapter(module).resolveModuleDependencies(myMapping.getLibraryNameToModuleName());
     }
-    try {
-      myModuleModel.commit();
-    }
-    catch (ModuleCircularDependencyException ignore) {
-    }
+    myModuleModel.commit();
   }
 
   @Nullable
