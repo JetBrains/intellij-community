@@ -193,22 +193,6 @@ public class ModuleUtil {
     return list;
   }
 
-  public static boolean containsPackagePrefix(Module module, String packageFQName) {
-    if (module == null) return false;
-    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (ContentEntry contentEntry : contentEntries) {
-      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        final String packagePrefix = sourceFolder.getPackagePrefix();
-        final int prefixLength = packagePrefix.length();
-        if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   public static boolean visitMeAndDependentModules(final @NotNull Module module, final ModuleVisitor visitor) {
     if (!visitor.visit(module)) {
       return false;

@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -310,7 +307,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
         }
         PsiPackage psiPackage = getPsiPackage(fileOrDir.getParent());
         if (psiPackage != null) {
-          if (psiPackage.getQualifiedName().length() == 0  || ModuleUtil.containsPackagePrefix(module, psiPackage.getQualifiedName())) {
+          if (psiPackage.getQualifiedName().length() == 0  || containsPackagePrefix(module, psiPackage.getQualifiedName())) {
             mySourceFiles.add(PathUtil.getLocalPath(fileOrDir));
           }
         }
@@ -340,12 +337,28 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     for (PsiFile file : files) {
       if (file instanceof PsiJavaFile) {
         final PsiJavaFile javaFile = (PsiJavaFile)file;
-        if (ModuleUtil.containsPackagePrefix(module, javaFile.getPackageName())) {
+        if (containsPackagePrefix(module, javaFile.getPackageName())) {
           sources.add(PathUtil.getLocalPath(javaFile.getVirtualFile()));
         } else {
           packages.add(javaFile.getPackageName());
         }
         return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean containsPackagePrefix(Module module, String packageFQName) {
+    if (module == null) return false;
+    final ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
+    for (ContentEntry contentEntry : contentEntries) {
+      final SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+      for (SourceFolder sourceFolder : sourceFolders) {
+        final String packagePrefix = sourceFolder.getPackagePrefix();
+        final int prefixLength = packagePrefix.length();
+        if (prefixLength > 0 && packageFQName.startsWith(packagePrefix)) {
+          return true;
+        }
       }
     }
     return false;
