@@ -15,6 +15,9 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.concurrency.JBLock;
+import com.intellij.util.concurrency.JBReentrantReadWriteLock;
+import com.intellij.util.concurrency.LockFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -50,8 +53,9 @@ public class ReflectionCache {
   };
 
   private static final Map<Class, Map<Class,Boolean>> ourAssignables = new THashMap<Class, Map<Class, Boolean>>();
-  private static final Object cacheLock = new Object();
-
+  private static final JBReentrantReadWriteLock cacheLock = LockFactory.createReadWriteLock();
+  private static final JBLock cacheRead = cacheLock.readLock();
+  private static final JBLock cacheWrite = cacheLock.writeLock();
 
   private static final ConcurrentFactoryMap<Class,Boolean> ourIsInterfaces = new ConcurrentFactoryMap<Class, Boolean>() {
     @NotNull
@@ -99,21 +103,41 @@ public class ReflectionCache {
       return ancestor.isAssignableFrom(descendant);
     }
 
-    synchronized (cacheLock) {
+    cacheRead.lock();
+    try {
       Map<Class, Boolean> map = ourAssignables.get(ancestor);
       if (map == null) {
-        map = new THashMap<Class, Boolean>();
-        ourAssignables.put(ancestor, map);
+        cacheRead.unlock();
+        cacheWrite.lock();
+        try {
+          map = new THashMap<Class, Boolean>();
+          ourAssignables.put(ancestor, map);
+        }
+        finally {
+          cacheWrite.unlock();
+          cacheRead.lock();
+        }
       }
 
       Boolean result = map.get(descendant);
       if (result != null) {
-        return result;
+        return result.booleanValue();
       }
 
-      result = ancestor.isAssignableFrom(descendant);
-      map.put(descendant, result);
-      return result;
+      cacheRead.unlock();
+      cacheWrite.lock();
+      try {
+        result = ancestor.isAssignableFrom(descendant);
+        map.put(descendant, result);
+        return result.booleanValue();
+      }
+      finally {
+        cacheWrite.unlock();
+        cacheRead.lock();
+      }
+    }
+    finally {
+      cacheRead.unlock();
     }
   }
 
