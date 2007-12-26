@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -122,7 +123,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       public void itemStateChanged(final ItemEvent e) {
         if (myFreeze) return;
         final ProjectJdk javaJdk = (ProjectJdk)e.getItem();
-        for (ProjectRootType type : ProjectRootType.ALL_TYPES) {
+        for (OrderRootType type : OrderRootType.getAllTypes()) {
           final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
           final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);
           for (VirtualFile file : internalRoots) {

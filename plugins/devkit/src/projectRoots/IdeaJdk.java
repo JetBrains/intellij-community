@@ -20,8 +20,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
@@ -267,7 +267,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       final VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
       if (ideaLib != null) {
         for (VirtualFile aIdeaLib : ideaLib) {
-          sdkModificator.addRoot(aIdeaLib, ProjectRootType.CLASS);
+          sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
         }
       }
       addSources(new File(sdkHome), sdkModificator);
@@ -304,7 +304,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
         String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
         jarFileSystem.setNoCopyJarForPath(path);
         VirtualFile vFile = jarFileSystem.findFileByPath(path);
-        sdkModificator.addRoot(vFile, ProjectRootType.SOURCE);
+        sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
       }
     }
   }
@@ -316,7 +316,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (docFile.exists() && docFile.isDirectory()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(docFile), ProjectRootType.JAVADOC);}
+          sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(docFile), JavadocOrderRootType.INSTANCE);}
         }
       );
       return;
@@ -328,21 +328,21 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
       String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + openapi;
       jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
-      sdkModificator.addRoot(vFile, ProjectRootType.JAVADOC);
+      sdkModificator.addRoot(vFile, JavadocOrderRootType.INSTANCE);
     }
   }
 
   private static void addClasses(SdkModificator sdkModificator, final Sdk javaSdk) {
-    addOrderEntries(OrderRootType.CLASSES, ProjectRootType.CLASS, javaSdk, sdkModificator);
+    addOrderEntries(OrderRootType.CLASSES, javaSdk, sdkModificator);
   }
 
   private static void addDocs(SdkModificator sdkModificator, final Sdk javaSdk) {
-    if (!addOrderEntries(JavadocOrderRootType.INSTANCE, ProjectRootType.JAVADOC, javaSdk, sdkModificator) &&
+    if (!addOrderEntries(JavadocOrderRootType.INSTANCE, javaSdk, sdkModificator) &&
         SystemInfo.isMac){
       ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (ProjectJdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
-          addOrderEntries(JavadocOrderRootType.INSTANCE, ProjectRootType.JAVADOC, jdk, sdkModificator);
+          addOrderEntries(JavadocOrderRootType.INSTANCE, jdk, sdkModificator);
           break;
         }
       }
@@ -351,12 +351,12 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   private static void addSources(SdkModificator sdkModificator, final Sdk javaSdk) {
     if (javaSdk != null) {
-      if (!addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, javaSdk, sdkModificator)){
+      if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)){
         if (SystemInfo.isMac) {
           ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
           for (ProjectJdk jdk : jdks) {
             if (jdk.getSdkType() instanceof JavaSdk) {
-              addOrderEntries(OrderRootType.SOURCES, ProjectRootType.SOURCE, jdk, sdkModificator);
+              addOrderEntries(OrderRootType.SOURCES, jdk, sdkModificator);
               break;
             }
           }
@@ -369,20 +369,20 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
             JarFileSystem jarFileSystem = JarFileSystem.getInstance();
             String path = jarFile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR;
             jarFileSystem.setNoCopyJarForPath(path);
-            sdkModificator.addRoot(jarFileSystem.findFileByPath(path), ProjectRootType.SOURCE);
+            sdkModificator.addRoot(jarFileSystem.findFileByPath(path), OrderRootType.SOURCES);
           }
         }
       }
     }
   }
 
-  private static boolean addOrderEntries(OrderRootType orderRootType, ProjectRootType projectRootType, Sdk sdk, SdkModificator toModificator){
+  private static boolean addOrderEntries(OrderRootType orderRootType, Sdk sdk, SdkModificator toModificator){
     boolean wasSmthAdded = false;
     final String[] entries = sdk.getRootProvider().getUrls(orderRootType);
     for (String entry : entries) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(entry);
       if (virtualFile != null) {
-        toModificator.addRoot(virtualFile, projectRootType);
+        toModificator.addRoot(virtualFile, orderRootType);
         wasSmthAdded = true;
       }
     }
