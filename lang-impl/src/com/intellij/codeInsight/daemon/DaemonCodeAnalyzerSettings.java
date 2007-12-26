@@ -42,7 +42,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
   public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = false;
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
-  public @NonNls String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
+  @NonNls public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
   public boolean SUPPRESS_WARNINGS = true;
   public boolean SHOW_METHOD_SEPARATORS = false;
   public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
@@ -54,7 +54,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
       Element rootOld = new Element(ROOT_TAG);
       oldSettings.writeExternal(rootOld);
 
-      return !(JDOMUtil.areElementsEqual(rootOld, rootNew));
+      return !JDOMUtil.areElementsEqual(rootOld, rootNew);
     }
     catch (WriteExternalException e) {
       LOG.error(e);
@@ -63,6 +63,7 @@ public class DaemonCodeAnalyzerSettings implements NamedJDOMExternalizable, Clon
     return false;
   }
 
+  @NotNull
   public String getComponentName() {
     return "DaemonCodeAnalyzerSettings";
   }

@@ -76,6 +76,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                      runAfterCompletionOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterCompletionOf,
                                      runAfterOfStartingOf == null ? ArrayUtil.EMPTY_INT_ARRAY : runAfterOfStartingOf);
     int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
+    PassConfig registered = myRegisteredPassFactories.get(passId);
+    assert registered == null: "Pass id "+passId +" has already been registered: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
     return passId;
   }

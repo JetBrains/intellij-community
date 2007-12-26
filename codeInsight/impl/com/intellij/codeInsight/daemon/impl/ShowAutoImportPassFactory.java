@@ -27,7 +27,7 @@ public class ShowAutoImportPassFactory extends AbstractProjectComponent implemen
     highlightingPassRegistrar.registerTextEditorHighlightingPass(this, new int[]{
       Pass.UPDATE_VISIBLE,
       Pass.UPDATE_ALL,
-    }, null, false, Pass.POPUP_HINTS);
+    }, null, false, -1);
   }
 
   @NonNls
