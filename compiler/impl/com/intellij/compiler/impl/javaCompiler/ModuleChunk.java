@@ -171,7 +171,7 @@ public class ModuleChunk extends Chunk<Module> {
       final OrderEntry[] orderEntries = CompilerPathsEx.getOrderEntries(module);
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof JdkOrderEntry) {
-          jdkFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.COMPILATION_CLASSES)));
+          jdkFiles.addAll(Arrays.asList(orderEntry.getFiles(OrderRootType.CLASSES)));
           break;
         }
         else {
