@@ -3,10 +3,7 @@ package com.intellij.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileStatusNotification;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerPaths;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -18,9 +15,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.impl.local.VirtualFileImpl;
 import com.intellij.testFramework.ModuleTestCase;
 import org.apache.log4j.Level;
 import org.jdom.Document;
@@ -127,7 +122,15 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           doCompile(new CompileStatusNotification() {
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
-                assertTrue("Code compiled with errors or did not compile!", !aborted && errors == 0);
+                assertFalse("Code did not compile!", aborted);
+                if (errors > 0) {
+                  final CompilerMessage[] messages = compileContext.getMessages(CompilerMessageCategory.ERROR);
+                  StringBuilder errorBuilder = new StringBuilder();
+                  for(CompilerMessage message: messages) {
+                    errorBuilder.append(message.getMessage()).append("\n");
+                  }
+                  fail("Compiler errors occurred! " + errorBuilder.toString());
+                }
               }
               finally {
                 down();
