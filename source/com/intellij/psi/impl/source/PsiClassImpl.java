@@ -274,6 +274,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiReferenceList getExtendsList() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
+      if (myRepositoryExtendsList != null) {
+        return myRepositoryExtendsList;
+      }
       synchronized (PsiLock.LOCK) {
         if (myRepositoryExtendsList == null){
           myRepositoryExtendsList = new PsiReferenceListImpl(myManager, this, JavaElementType.EXTENDS_LIST);
@@ -289,6 +292,9 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiReferenceList getImplementsList() {
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){
+      if (myRepositoryImplementsList != null) {
+        return myRepositoryImplementsList;
+      }
       synchronized (PsiLock.LOCK) {
         if (myRepositoryImplementsList == null){
           myRepositoryImplementsList = new PsiReferenceListImpl(myManager, this, JavaElementType.IMPLEMENTS_LIST);
