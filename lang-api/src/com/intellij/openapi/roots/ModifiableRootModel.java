@@ -174,9 +174,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   boolean isWritable();
 
-  void setJavadocUrls(String[] urls);
-
-  void setAnnotationUrls(String[] urls);
+  void setRootUrls(OrderRootType orderRootType, String[] urls);
 
   <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, T entry);
 }

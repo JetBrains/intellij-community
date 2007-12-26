@@ -2,6 +2,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.watcher.OrderEntryProperties;
@@ -12,8 +13,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
@@ -66,9 +67,8 @@ public class RootModelImpl implements ModifiableRootModel {
 
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
-  private final VirtualFilePointerContainer myJavadocPointerContainer;
-  private final VirtualFilePointerContainer myAnnotationPointerContainer;
 
+  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
   private LanguageLevel myLanguageLevel;
 
   private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
@@ -91,11 +91,9 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   };
   @NonNls private static final String PROPERTIES_CHILD_NAME = "orderEntryProperties";
-  @NonNls private static final String JAVADOC_PATHS_NAME = "javadoc-paths";
   @NonNls private static final String ROOT_ELEMENT = "root";
   private ProjectRootManagerImpl myProjectRootManager;
   @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
-  @NonNls private static final String ANNOTATION_PATHS_NAME = "annotation-paths";
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
 
   public String getCompilerOutputPathUrl() {
@@ -118,8 +116,6 @@ public class RootModelImpl implements ModifiableRootModel {
     myVirtualFilePointerListener = listener;
     addSourceOrderEntries();
     myOrderEntryProperties = new OrderEntryProperties();
-    myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
-    myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
     myInheritedCompilerOutput = false;
   }
@@ -184,16 +180,16 @@ public class RootModelImpl implements ModifiableRootModel {
       myOrderEntryProperties.readExternal(propertiesChild);
     }
 
-    myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
-    final Element javaDocPaths = element.getChild(JAVADOC_PATHS_NAME);
-    if (javaDocPaths != null) {
-      myJavadocPointerContainer.readExternal(javaDocPaths, ROOT_ELEMENT);
-    }
-
-    myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
-    final Element annotationPaths = element.getChild(ANNOTATION_PATHS_NAME);
-    if (annotationPaths != null) {
-      myAnnotationPointerContainer.readExternal(annotationPaths, ROOT_ELEMENT);
+    for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+      String paths = orderRootType.getModulePathsName();
+      if (paths != null) {
+        final Element pathsElement = element.getChild(paths);
+        if (pathsElement != null) {
+          VirtualFilePointerContainer container = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+          myOrderRootPointerContainers.put(orderRootType, container);
+          container.readExternal(pathsElement, ROOT_ELEMENT);
+        }
+      }
     }
 
     final String languageLevel = element.getAttributeValue(LANGUAGE_LEVEL_ELEMENT_NAME);
@@ -261,13 +257,21 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
     myOrderEntryProperties = rootModel.myOrderEntryProperties.copy(this);
-    myJavadocPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
-    myJavadocPointerContainer.addAll(rootModel.myJavadocPointerContainer);
-
-    myAnnotationPointerContainer = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
-    myAnnotationPointerContainer.addAll(rootModel.myAnnotationPointerContainer);
+    for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+      final VirtualFilePointerContainer otherContainer = rootModel.getOrderRootContainer(orderRootType);
+      if (otherContainer != null) {
+        VirtualFilePointerContainer container = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+        container.addAll(otherContainer);
+        myOrderRootPointerContainers.put(orderRootType, container);
+      }
+    }
 
     myLanguageLevel = rootModel.myLanguageLevel;
+  }
+
+  @Nullable
+  VirtualFilePointerContainer getOrderRootContainer(OrderRootType orderRootType) {
+    return myOrderRootPointerContainers.get(orderRootType);
   }
 
   @NotNull
@@ -596,16 +600,13 @@ public class RootModelImpl implements ModifiableRootModel {
     myOrderEntryProperties.writeExternal(propertiesChild, this);
     element.addContent(propertiesChild);
 
-    if (myJavadocPointerContainer.size() > 0) {
-      final Element javaDocPaths = new Element(JAVADOC_PATHS_NAME);
-      myJavadocPointerContainer.writeExternal(javaDocPaths, ROOT_ELEMENT);
-      element.addContent(javaDocPaths);
-    }
-
-    if (myAnnotationPointerContainer.size() > 0) {
-      final Element annotationPaths = new Element(ANNOTATION_PATHS_NAME);
-      myAnnotationPointerContainer.writeExternal(annotationPaths, ROOT_ELEMENT);
-      element.addContent(annotationPaths);
+    for(OrderRootType orderRootType: myOrderRootPointerContainers.keySet()) {
+      VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
+      if (container != null && container.size() > 0) {
+        final Element javaDocPaths = new Element(orderRootType.getModulePathsName());
+        container.writeExternal(javaDocPaths, ROOT_ELEMENT);
+        element.addContent(javaDocPaths);
+      }
     }
   }
 
@@ -909,11 +910,7 @@ public class RootModelImpl implements ModifiableRootModel {
         }
       }
     }
-    final String[] urls = myJavadocPointerContainer.getUrls();
-    final String[] thatUrls = getSourceModel().myJavadocPointerContainer.getUrls();
-    if (!Arrays.equals(urls, thatUrls)) return true;
-
-    return !Arrays.equals(myAnnotationPointerContainer.getUrls(), getSourceModel().myAnnotationPointerContainer.getUrls());
+    return !myOrderRootPointerContainers.equals(getSourceModel().myOrderRootPointerContainers);
   }
 
   void addExportedUrs(OrderRootType type, List<String> result, Set<Module> processed) {
@@ -1121,6 +1118,20 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   @NotNull
+  public VirtualFile[] getRootPaths(final OrderRootType rootType) {
+    final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
+    if (container != null) return container.getFiles();
+    return VirtualFile.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public String[] getRootUrls(final OrderRootType rootType) {
+    final VirtualFilePointerContainer container = myOrderRootPointerContainers.get(rootType);
+    if (container != null) return container.getUrls();
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @NotNull
   public Module[] getModuleDependencies() {
     final List<Module> result = new ArrayList<Module>();
 
@@ -1154,26 +1165,6 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
 
-  @NotNull
-  public VirtualFile[] getJavadocPaths() {
-    return myJavadocPointerContainer.getDirectories();
-  }
-
-  @NotNull
-  public String[] getJavadocUrls() {
-    return myJavadocPointerContainer.getUrls();
-  }
-
-  @NotNull
-  public VirtualFile[] getAnnotationPaths() {
-    return myAnnotationPointerContainer.getFiles();
-  }
-
-  @NotNull
-  public String[] getAnnotationUrls() {
-    return myAnnotationPointerContainer.getUrls();
-  }
-
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     myLanguageLevel = languageLevel;
   }
@@ -1182,19 +1173,16 @@ public class RootModelImpl implements ModifiableRootModel {
     return myLanguageLevel;
   }
 
-  public void setJavadocUrls(String[] urls) {
+  public void setRootUrls(final OrderRootType orderRootType, final String[] urls) {
     assertWritable();
-    myJavadocPointerContainer.clear();
-    for (final String url : urls) {
-      myJavadocPointerContainer.add(url);
+    VirtualFilePointerContainer container = myOrderRootPointerContainers.get(orderRootType);
+    if (container == null) {
+      container = myFilePointerManager.createContainer(myVirtualFilePointerFactory);
+      myOrderRootPointerContainers.put(orderRootType, container);
     }
-  }
-
-  public void setAnnotationUrls(final String[] urls) {
-    assertWritable();
-    myAnnotationPointerContainer.clear();
-    for (String url : urls) {
-      myAnnotationPointerContainer.add(url);
+    container.clear();
+    for (final String url : urls) {
+      container.add(url);
     }
   }
 }

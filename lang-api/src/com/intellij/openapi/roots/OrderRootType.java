@@ -26,11 +26,13 @@ import org.jetbrains.annotations.NonNls;
 public class OrderRootType {
   private String myName;
   private String mySdkRootName;
+  private String myModulePathsName;
   private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
 
-  protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, boolean persistent) {
+  protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, @NonNls String modulePathsName, boolean persistent) {
     myName = name;
     mySdkRootName = sdkRootName;
+    myModulePathsName = modulePathsName;
     if (persistent) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourPersistentOrderRootTypes = ArrayUtil.append(ourPersistentOrderRootTypes, this);
@@ -40,29 +42,39 @@ public class OrderRootType {
   /**
    * Classpath.
    */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", null, false);
+  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", null, null, false);
 
   /**
    * Classpath for compilation
    */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", null, false);
+  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", null, null, false);
 
   /**
    * Classpath without output directories for this module.
    */
-  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", "classPath", true);
+  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", "classPath", null, true);
 
   /**
    * Sources.
    */
-  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", "sourcePath", true);
+  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", "sourcePath", null, true);
 
   public String name() {
     return myName;
   }
 
+  /**
+   * Element name used for storing roots of this type in JDK definitions.
+   */
   public String getSdkRootName() {
     return mySdkRootName;
+  }
+
+  /**
+   * Element name used for storing roots of this type in module definitions.
+   */
+  public String getModulePathsName() {
+    return myModulePathsName;
   }
 
   public static final OrderRootType[] ALL_TYPES = {

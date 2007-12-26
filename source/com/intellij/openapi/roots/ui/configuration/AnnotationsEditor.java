@@ -5,6 +5,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
@@ -65,7 +66,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    myModel.setAnnotationUrls(urls);
+    myModel.setRootUrls(AnnotationOrderRootType.INSTANCE, urls);
   }
 
   public JComponent createComponentImpl() {
@@ -126,7 +127,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] urls = myModel.getAnnotationUrls();
+    final String[] urls = myModel.getRootUrls(AnnotationOrderRootType.INSTANCE);
     for (String javadocUrl : urls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }

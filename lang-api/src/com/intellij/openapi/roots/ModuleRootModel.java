@@ -171,22 +171,8 @@ public interface ModuleRootModel {
    */
   @NotNull String[] getDependencyModuleNames();
 
-  /**
-   * Returns the list of javadoc roots for the module.
-   *
-   * @return the array of javadoc roots.
-   */
-  @NotNull VirtualFile[] getJavadocPaths();
-
-  /**
-   * Returns the list of javadoc root URLs for the module.
-   *
-   * @return the array of javadoc root URLs.
-   */
-  @NotNull String[] getJavadocUrls();
-
-  @NotNull VirtualFile[] getAnnotationPaths();
-  @NotNull String[] getAnnotationUrls();
+  @NotNull VirtualFile[] getRootPaths(OrderRootType rootType);
+  @NotNull String[] getRootUrls(OrderRootType rootType);
 
   void setLanguageLevel(LanguageLevel languageLevel);
 

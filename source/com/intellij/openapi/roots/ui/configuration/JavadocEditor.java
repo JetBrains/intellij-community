@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.util.CellAppearance;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
@@ -67,7 +68,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    myModel.setJavadocUrls(urls);
+    myModel.setRootUrls(JavadocOrderRootType.INSTANCE, urls);
   }
 
   public JComponent createComponentImpl() {
@@ -131,7 +132,7 @@ public class JavadocEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] javadocUrls = myModel.getJavadocUrls();
+    final String[] javadocUrls = myModel.getRootUrls(JavadocOrderRootType.INSTANCE);
     for (String javadocUrl : javadocUrls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }

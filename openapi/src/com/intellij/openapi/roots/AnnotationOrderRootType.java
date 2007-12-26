@@ -10,6 +10,6 @@ public class AnnotationOrderRootType extends OrderRootType {
   public static final OrderRootType INSTANCE = new AnnotationOrderRootType();
 
   private AnnotationOrderRootType() {
-    super("ANNOTATIONS", "annotationsPath", true);
+    super("ANNOTATIONS", "annotationsPath", "annotation-paths", true);
   }
 }

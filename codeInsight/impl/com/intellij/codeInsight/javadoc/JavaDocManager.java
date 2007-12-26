@@ -557,7 +557,7 @@ public class JavaDocManager implements ProjectComponent {
       }
     }
     if (module != null) {
-      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getJavadocPaths();
+      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getRootPaths(JavadocOrderRootType.INSTANCE);
       List<String> httpRoot = getHttpRoots(javadocPaths, relPath);
       if (httpRoot != null) return httpRoot;
     }

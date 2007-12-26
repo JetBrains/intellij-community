@@ -313,6 +313,16 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getDependencyModuleNames();
   }
 
+  @NotNull
+  public VirtualFile[] getRootPaths(final OrderRootType rootType) {
+    return myRootModel.getRootPaths(rootType);
+  }
+
+  @NotNull
+  public String[] getRootUrls(final OrderRootType rootType) {
+    return myRootModel.getRootUrls(rootType);
+  }
+
   public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.processOrder(policy, initialValue);
@@ -526,26 +536,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
         })));
   }
 
-
-  @NotNull
-  public VirtualFile[] getJavadocPaths() {
-    return myRootModel.getJavadocPaths();
-  }
-
-  @NotNull
-  public String[] getJavadocUrls() {
-    return myRootModel.getJavadocUrls();
-  }
-
-  @NotNull
-  public VirtualFile[] getAnnotationPaths() {
-    return myRootModel.getAnnotationPaths();
-  }
-
-  @NotNull
-  public String[] getAnnotationUrls() {
-    return myRootModel.getAnnotationUrls();
-  }
 
   public void dropCaches() {
     VirtualFilePointerManager manager = VirtualFilePointerManager.getInstance();
