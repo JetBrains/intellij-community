@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
+import org.hsqldb.lib.StringUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -137,39 +138,20 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
         text = handleOutputBuffer(GroovycRunner.MESSAGES_START, GroovycRunner.MESSAGES_END);
 
-        String cathegory = "";
-        String message = "";
-        String url = "";
-        String linenum = "";
-        String colomnnum = "";
-        String token;
+        String category;
+        String message;
+        String url;
+        String linenum;
+        String colomnnum;
 
-        final StringTokenizer compilerMessageTokenizer = new StringTokenizer(text, GroovycRunner.SEPARATOR, false);
+        String[] tokens = StringUtil.split(text, GroovycRunner.SEPARATOR);
+        LOG.assertTrue(tokens.length > 4, "Wrong number of output params");
 
-        if (compilerMessageTokenizer.hasMoreTokens()) {
-          token = compilerMessageTokenizer.nextToken();
-          cathegory = token;
-        }
-
-        if (compilerMessageTokenizer.hasMoreTokens()) {
-          token = compilerMessageTokenizer.nextToken();
-          message = token;
-        }
-
-        if (compilerMessageTokenizer.hasMoreTokens()) {
-          token = compilerMessageTokenizer.nextToken();
-          url = token;
-        }
-
-        if (compilerMessageTokenizer.hasMoreTokens()) {
-          token = compilerMessageTokenizer.nextToken();
-          linenum = token;
-        }
-
-        if (compilerMessageTokenizer.hasMoreTokens()) {
-          token = compilerMessageTokenizer.nextToken();
-          colomnnum = token;
-        }
+        category = tokens[0];
+        message = tokens[1];
+        url = tokens[2];
+        linenum = tokens[3];
+        colomnnum = tokens[4];
 
         int linenumInt;
         int colomnnumInt;
@@ -185,7 +167,7 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
 
         myContext.getProgressIndicator().setText(url);
 
-        compilerMessages.add(new CompilerMessage(cathegory, message, url, linenumInt, colomnnumInt));
+        compilerMessages.add(new CompilerMessage(category, message, url, linenumInt, colomnnumInt));
       } else {
         if (outputBuffer.indexOf("Exception") != -1) unparsedOutput.append(outputBuffer);
         outputBuffer.setLength(0);

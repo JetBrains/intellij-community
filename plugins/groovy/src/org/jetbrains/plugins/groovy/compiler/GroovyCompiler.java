@@ -76,8 +76,8 @@ public class GroovyCompiler implements TranslatingCompiler {
       assert jdk != null; //verified before
       commandLine.setExePath(jdk.getVMExecutablePath());
 
-      /*commandLine.addParameter("-Xdebug");
-      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5046");*/
+//      commandLine.addParameter("-Xdebug");
+//      commandLine.addParameter("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5557");
       commandLine.addParameter("-cp");
 
       String rtJarPath = PathUtil.getJarPathForClass(GroovycRunner.class);
