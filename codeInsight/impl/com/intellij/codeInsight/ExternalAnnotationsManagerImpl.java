@@ -142,7 +142,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         if (!entries.isEmpty()) {
           for (final OrderEntry entry : entries) {
             if (!(entry instanceof ModuleOrderEntry)) {
-              final VirtualFile[] virtualFiles = entry.getFiles(OrderRootType.ANNOTATIONS);
+              final VirtualFile[] virtualFiles = entry.getFiles(AnnotationOrderRootType.INSTANCE);
               if (virtualFiles.length > 0) {
                 final XmlFile annotationsXml = createAnnotationsXml(virtualFiles[0], packageName);
                 if (annotationsXml != null) {
@@ -235,7 +235,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     if (!entries.isEmpty()) {
       for (OrderEntry entry : entries) {
         if (!(entry instanceof ModuleOrderEntry)) {
-          if (entry.getUrls(OrderRootType.ANNOTATIONS).length > 0) {
+          if (entry.getUrls(AnnotationOrderRootType.INSTANCE).length > 0) {
             return AnnotationPlace.EXTERNAL;
           }
           break;
@@ -260,7 +260,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       LOG.assertTrue(library != null);
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
       final Library.ModifiableModel model = library.getModifiableModel();
-      model.addRoot(vFile, OrderRootType.ANNOTATIONS);
+      model.addRoot(vFile, AnnotationOrderRootType.INSTANCE);
       model.commit();
       rootModel.commit();
     }
@@ -374,7 +374,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
         for (OrderEntry entry : entries) {
           if (!(entry instanceof ModuleOrderEntry)) {
-            final String[] externalUrls = entry.getUrls(OrderRootType.ANNOTATIONS);
+            final String[] externalUrls = entry.getUrls(AnnotationOrderRootType.INSTANCE);
             for (String url : externalUrls) {
               final VirtualFile ext = LocalFileSystem.getInstance().findFileByPath(
                 VfsUtil.urlToPath(url) + "/" + packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);

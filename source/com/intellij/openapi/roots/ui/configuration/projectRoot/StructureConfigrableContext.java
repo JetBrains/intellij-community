@@ -274,7 +274,7 @@ public class StructureConfigrableContext implements Disposable {
 
    private void updateLibraryValidityCache(final LibraryEx library) {
      if (myLibraryPathValidityCache.containsKey(library)) return; //do not check twice
-     final boolean valid = library.allPathsValid(OrderRootType.CLASSES) && library.allPathsValid(OrderRootType.JAVADOC) && library.allPathsValid(OrderRootType.SOURCES);
+     final boolean valid = library.allPathsValid(OrderRootType.CLASSES) && library.allPathsValid(JavadocOrderRootType.INSTANCE) && library.allPathsValid(OrderRootType.SOURCES);
      SwingUtilities.invokeLater(new Runnable(){
        public void run() {
          if (!myDisposed){

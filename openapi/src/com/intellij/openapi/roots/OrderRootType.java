@@ -27,7 +27,7 @@ public class OrderRootType {
   private String myName;
   private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
 
-  private OrderRootType(@NonNls String name, boolean persistent) {
+  protected OrderRootType(@NonNls String name, boolean persistent) {
     myName = name;
     if (persistent) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -55,22 +55,12 @@ public class OrderRootType {
    */
   public static final OrderRootType SOURCES = new OrderRootType("SOURCES", true);
 
-  /**
-   * JavaDoc paths.
-   */
-  public static final OrderRootType JAVADOC = new OrderRootType("JAVADOC", true);
-
-  /**
-   * External annotations path
-   */
-  public static final OrderRootType ANNOTATIONS = new OrderRootType("ANNOTATIONS", true);
-
   public String name() {
     return myName;
   }
 
   public static final OrderRootType[] ALL_TYPES = {
-    CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC, ANNOTATIONS
+    CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JavadocOrderRootType.INSTANCE, AnnotationOrderRootType.INSTANCE
   };
 
   public static OrderRootType[] getAllTypes() {

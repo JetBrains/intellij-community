@@ -564,7 +564,7 @@ public class JavaDocManager implements ProjectComponent {
 
     final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry orderEntry : orderEntries) {
-      final VirtualFile[] files = orderEntry.getFiles(OrderRootType.JAVADOC);
+      final VirtualFile[] files = orderEntry.getFiles(JavadocOrderRootType.INSTANCE);
       final List<String> httpRoot = getHttpRoots(files, relPath);
       if (httpRoot != null) return httpRoot;
     }

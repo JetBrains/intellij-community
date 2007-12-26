@@ -8,6 +8,8 @@ import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -287,8 +289,8 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     ourOrderRootsToProjectRoots.put(OrderRootType.CLASSES_AND_OUTPUT, ProjectRootType.CLASS);
     ourOrderRootsToProjectRoots.put(OrderRootType.COMPILATION_CLASSES, ProjectRootType.CLASS);
     ourOrderRootsToProjectRoots.put(OrderRootType.SOURCES, ProjectRootType.SOURCE);
-    ourOrderRootsToProjectRoots.put(OrderRootType.JAVADOC, ProjectRootType.JAVADOC);
-    ourOrderRootsToProjectRoots.put(OrderRootType.ANNOTATIONS, ProjectRootType.ANNOTATIONS);
+    ourOrderRootsToProjectRoots.put(JavadocOrderRootType.INSTANCE, ProjectRootType.JAVADOC);
+    ourOrderRootsToProjectRoots.put(AnnotationOrderRootType.INSTANCE, ProjectRootType.ANNOTATIONS);
   }
 
   // SdkModificator implementation

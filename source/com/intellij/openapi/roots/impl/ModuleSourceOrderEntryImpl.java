@@ -73,7 +73,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
-    if (OrderRootType.ANNOTATIONS.equals(type)) {
+    if (AnnotationOrderRootType.INSTANCE.equals(type)) {
       return myRootModel.getAnnotationPaths();
     }
     if (OrderRootType.SOURCES.equals(type)) {
@@ -94,7 +94,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
-    if (OrderRootType.ANNOTATIONS.equals(type)) {
+    if (AnnotationOrderRootType.INSTANCE.equals(type)) {
       return myRootModel.getAnnotationUrls();
     }
     final ArrayList<String> result = new ArrayList<String>();

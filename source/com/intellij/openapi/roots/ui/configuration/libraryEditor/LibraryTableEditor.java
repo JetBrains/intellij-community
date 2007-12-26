@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -685,7 +687,7 @@ public class LibraryTableEditor implements Disposable {
     }
 
     protected OrderRootType getRootType() {
-      return OrderRootType.ANNOTATIONS;
+      return AnnotationOrderRootType.INSTANCE;
     }
   }
 
@@ -699,7 +701,7 @@ public class LibraryTableEditor implements Disposable {
     }
 
     protected OrderRootType getRootType() {
-      return OrderRootType.JAVADOC;
+      return JavadocOrderRootType.INSTANCE;
     }
   }
 
@@ -709,7 +711,7 @@ public class LibraryTableEditor implements Disposable {
       if (library != null) {
         final VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(myPanel);
         if (vFile != null) {
-          attachFiles(library, new VirtualFile[] {vFile}, OrderRootType.JAVADOC, false);
+          attachFiles(library, new VirtualFile[] {vFile}, JavadocOrderRootType.INSTANCE, false);
         }
       }
       myTree.requestFocus();

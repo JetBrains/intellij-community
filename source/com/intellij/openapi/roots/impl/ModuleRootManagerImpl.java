@@ -324,7 +324,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       myRootModel.addExportedUrs(rootType, result, processed);
       return result.toArray(new String[result.size()]);
     }
-    else if (OrderRootType.JAVADOC.equals(rootType)) {
+    else if (JavadocOrderRootType.INSTANCE.equals(rootType)) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     else if (OrderRootType.CLASSES.equals(rootType)) {
@@ -334,7 +334,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
-    else if (OrderRootType.ANNOTATIONS.equals(rootType)) {
+    else if (AnnotationOrderRootType.INSTANCE.equals(rootType)) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     LOG.error("Unknown root type: " + rootType);
@@ -383,10 +383,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
         return getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
       }
-      else if (OrderRootType.JAVADOC.equals(rootType)) {
-        return getFiles(OrderRootType.JAVADOC, processed);
+      else if (JavadocOrderRootType.INSTANCE.equals(rootType)) {
+        return getFiles(JavadocOrderRootType.INSTANCE, processed);
       }
-      else if (OrderRootType.ANNOTATIONS.equals(rootType)) {
+      else if (AnnotationOrderRootType.INSTANCE.equals(rootType)) {
         return VirtualFile.EMPTY_ARRAY;
       }
       else {

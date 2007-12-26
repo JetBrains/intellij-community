@@ -3,7 +3,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,7 +54,7 @@ public class JavaDocUtil {
   public static String[] getDocPaths(Project project) {
     ArrayList<String> result = new ArrayList<String>();
 
-    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getFilesFromAllModules(OrderRootType.JAVADOC);
+    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getFilesFromAllModules(JavadocOrderRootType.INSTANCE);
     for (VirtualFile root : roots) {
       if (!(root.getFileSystem() instanceof HttpFileSystem)) {
         result.add(root.getUrl());

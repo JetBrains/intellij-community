@@ -4,6 +4,8 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +46,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
         elements.add(new SourcesElement(myRootElement));
       }
 
-      final String[] javadocs = myParentEditor.getLibraryEditor(library).getUrls(OrderRootType.JAVADOC);
+      final String[] javadocs = myParentEditor.getLibraryEditor(library).getUrls(JavadocOrderRootType.INSTANCE);
       if (javadocs.length > 0) {
         elements.add(new JavadocElement(myRootElement));
       }
@@ -54,7 +56,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
         elements.add(new ClassesElement(myRootElement));
       }
 
-      final String[] annotations = myParentEditor.getLibraryEditor(library).getUrls(OrderRootType.ANNOTATIONS);
+      final String[] annotations = myParentEditor.getLibraryEditor(library).getUrls(AnnotationOrderRootType.INSTANCE);
       if (annotations.length > 0) {
         elements.add(new AnnotationElement(myRootElement));
       }
@@ -71,11 +73,11 @@ public class LibraryTreeStructure extends AbstractTreeStructure{
     }
 
     if (element instanceof JavadocElement) {
-      return buildItems(element, ((JavadocElement)element).getParent().getLibrary(), OrderRootType.JAVADOC);
+      return buildItems(element, ((JavadocElement)element).getParent().getLibrary(), JavadocOrderRootType.INSTANCE);
     }
 
     if (element instanceof AnnotationElement) {
-      return buildItems(element, ((AnnotationElement)element).getParent().getLibrary(), OrderRootType.ANNOTATIONS);
+      return buildItems(element, ((AnnotationElement)element).getParent().getLibrary(), AnnotationOrderRootType.INSTANCE);
     }
 
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
