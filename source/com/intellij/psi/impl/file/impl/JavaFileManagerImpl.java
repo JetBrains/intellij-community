@@ -8,16 +8,12 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerConfiguration;
@@ -177,8 +173,8 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   private PsiClass _findClassWithoutRepository(String qName) {
-    VirtualFile[] sourcePath = myProjectRootManager.getRootFiles(ProjectRootType.SOURCE).clone();
-    VirtualFile[] classPath = myProjectRootManager.getRootFiles(ProjectRootType.CLASS).clone();
+    VirtualFile[] sourcePath = myProjectRootManager.getFilesFromAllModules(OrderRootType.SOURCES).clone();
+    VirtualFile[] classPath = myProjectRootManager.getFilesFromAllModules(OrderRootType.CLASSES).clone();
 
     int index = 0;
     while (index < qName.length()) {

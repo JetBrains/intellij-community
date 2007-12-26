@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -210,23 +209,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public Runnable getReloadProjectRequest() {
     return myReloadProjectRequest;
-  }
-
-  private static final HashMap<ProjectRootType, OrderRootType> ourProjectRootTypeToOrderRootType = new HashMap<ProjectRootType, OrderRootType>();
-
-  static {
-    ourProjectRootTypeToOrderRootType.put(ProjectRootType.CLASS, OrderRootType.CLASSES);
-    ourProjectRootTypeToOrderRootType.put(ProjectRootType.SOURCE, OrderRootType.SOURCES);
-    ourProjectRootTypeToOrderRootType.put(ProjectRootType.JAVADOC, OrderRootType.JAVADOC);
-    ourProjectRootTypeToOrderRootType.put(ProjectRootType.ANNOTATIONS, OrderRootType.ANNOTATIONS);
-  }
-
-  public VirtualFile[] getRootFiles(ProjectRootType type) {
-    if (ourProjectRootTypeToOrderRootType.get(type) != null) {
-      return getFilesFromAllModules(ourProjectRootTypeToOrderRootType.get(type));
-    }
-    LOG.assertTrue(false);
-    return null;
   }
 
   @NotNull

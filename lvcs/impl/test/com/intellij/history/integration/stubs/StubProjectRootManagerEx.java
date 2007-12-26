@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -75,10 +74,6 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
   }
 
   public void removeModuleRootListener(ModuleRootListener listener) {
-    throw new UnsupportedOperationException();
-  }
-
-  public VirtualFile[] getRootFiles(ProjectRootType type) {
     throw new UnsupportedOperationException();
   }
 

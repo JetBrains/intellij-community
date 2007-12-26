@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -72,10 +71,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
    */
   public abstract void removeModuleRootListener(ModuleRootListener listener);
 
-  /**
-   * @deprecated
-   */
-  public abstract VirtualFile[] getRootFiles(ProjectRootType type);
   public abstract VirtualFile[] getFilesFromAllModules(OrderRootType type);
 
   /**

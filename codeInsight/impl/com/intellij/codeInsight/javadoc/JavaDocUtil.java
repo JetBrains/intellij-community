@@ -3,7 +3,7 @@ package com.intellij.codeInsight.javadoc;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -30,6 +31,9 @@ public class JavaDocUtil {
   private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
   private static final @NonNls Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
   private static final @NonNls String LT_ENTITY = "&lt;";
+
+  private JavaDocUtil() {
+  }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
@@ -50,14 +54,14 @@ public class JavaDocUtil {
   public static String[] getDocPaths(Project project) {
     ArrayList<String> result = new ArrayList<String>();
 
-    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getRootFiles(ProjectRootType.JAVADOC);
+    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getFilesFromAllModules(OrderRootType.JAVADOC);
     for (VirtualFile root : roots) {
       if (!(root.getFileSystem() instanceof HttpFileSystem)) {
         result.add(root.getUrl());
       }
     }
 
-    return (String[])result.toArray(new String[result.size()]);
+    return result.toArray(new String[result.size()]);
   }
 
   /**
@@ -86,6 +90,7 @@ public class JavaDocUtil {
     }
   }
 
+  @Nullable
   public static PsiElement findReferenceTarget(PsiManager manager, String refText, PsiElement context) {
     LOG.assertTrue(context == null || context.isValid());
 
@@ -131,6 +136,7 @@ public class JavaDocUtil {
     }
   }
 
+  @Nullable
   private static PsiElement findReferencedMember(PsiClass aClass, String memberRefText, PsiElement context) {
     int parenthIndex = memberRefText.indexOf('(');
     if (parenthIndex < 0) {
@@ -200,6 +206,7 @@ public class JavaDocUtil {
     }
   }
 
+  @Nullable
   public static String getReferenceText(Project project, PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
@@ -423,7 +430,7 @@ public class JavaDocUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final void formatEntityName(String type, String name, StringBuilder destination) {
+  public static void formatEntityName(String type, String name, StringBuilder destination) {
     destination.append(type).append(":&nbsp;<b>").append(name).append("</b><br>");
   }
 }
