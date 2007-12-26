@@ -20,36 +20,46 @@ package com.intellij.openapi.roots;
  * @see OrderEntry
  * @author dsl
  */
-public enum OrderRootType {
+public class OrderRootType {
+  private String myName;
+
+  private OrderRootType(String name) {
+    myName = name;
+  }
+
   /**
    * Classpath.
    */
-  CLASSES_AND_OUTPUT,
+  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
 
   /**
    * Classpath for compilation
    */
-  COMPILATION_CLASSES,
+  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
 
   /**
    * Classpath without output directories for this module.
    */
-  CLASSES,
+  public static final OrderRootType CLASSES = new OrderRootType("CLASSES");
 
   /**
    * Sources.
    */
-  SOURCES,
+  public static final OrderRootType SOURCES = new OrderRootType("SOURCES");
 
   /**
    * JavaDoc paths.
    */
-  JAVADOC,
+  public static final OrderRootType JAVADOC = new OrderRootType("JAVADOC");
 
   /**
    * External annotations path
    */
-  ANNOTATIONS;
+  public static final OrderRootType ANNOTATIONS = new OrderRootType("ANNOTATIONS");
+
+  public String name() {
+    return myName;
+  }
 
   public static final OrderRootType[] ALL_TYPES = {
     CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC, ANNOTATIONS
