@@ -165,15 +165,4 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * @param rootModels the root models to commit.
    */
   public abstract void multiCommit(ModifiableModuleModel moduleModel, ModifiableRootModel[] rootModels);
-
-  /**
-   * Checks if the specified project structure contains a circular dependency between modules,
-   * and throws an exception if it does.
-   *
-   * @param rootModels  the list of root models for the modules in the project.
-   * @param moduleModel the list of modules in the project.
-   * @throws ModuleCircularDependencyException if there is a circular dependency between some of the modules.
-   */
-  public abstract void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
-    throws ModuleCircularDependencyException;
 }

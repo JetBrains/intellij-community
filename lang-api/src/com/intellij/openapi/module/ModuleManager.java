@@ -18,7 +18,6 @@ package com.intellij.openapi.module;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.graph.Graph;
 import org.jdom.JDOMException;
@@ -72,9 +71,8 @@ public abstract class ModuleManager {
    * @throws IOException if an I/O error occurred when loading the module file.
    * @throws JDOMException if the file contains invalid XML data.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
-   * @throws ModuleCircularDependencyException never actually thrown (circular module dependency is not an error).
    */
-  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists, ModuleCircularDependencyException;
+  @NotNull public abstract Module loadModule(@NotNull String filePath) throws InvalidDataException, IOException, JDOMException, ModuleWithNameAlreadyExists;
 
   /**
    * Disposes of the specified module and removes it from the project.

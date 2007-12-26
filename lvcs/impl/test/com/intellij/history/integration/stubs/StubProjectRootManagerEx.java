@@ -139,11 +139,6 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
-    throws ModuleCircularDependencyException {
-    throw new UnsupportedOperationException();
-  }
-
   public long getModificationCount() {
     throw new UnsupportedOperationException();
   }

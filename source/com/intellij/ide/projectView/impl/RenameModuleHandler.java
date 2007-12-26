@@ -12,7 +12,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -80,21 +79,7 @@ public class RenameModuleHandler implements RenameHandler {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              try {
-                modifiableModel.commit();
-              }
-              catch (final ModuleCircularDependencyException e) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                              public void run() {
-                                Messages.showErrorDialog(myProject, IdeBundle.message(
-                                  "error.renaming.module.will.introduce.circular.dependency", myModule.getName(), inputString,
-                                  e.getModuleName1(), e.getModuleName2()),
-                                                         IdeBundle.message("title.rename.module"));
-                              }
-                            });
-                modifiableModel.dispose();
-                success.set(Boolean.FALSE);
-              }
+              modifiableModel.commit();
             }
           });
         }

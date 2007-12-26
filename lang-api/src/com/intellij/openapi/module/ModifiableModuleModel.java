@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -115,10 +114,8 @@ public interface ModifiableModuleModel {
 
   /**
    * Commits changes made in this model to the actual project structure.
-   *
-   * @throws ModuleCircularDependencyException never actually thrown (circular module dependency is not an error).
    */
-  void commit() throws ModuleCircularDependencyException;
+  void commit();
 
   /**
    * @deprecated use {@link #commit()} instead.

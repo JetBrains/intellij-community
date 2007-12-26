@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.ui.Messages;
@@ -441,8 +440,7 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   public Module loadModule(@NotNull String filePath) throws InvalidDataException,
                                                    IOException,
                                                    JDOMException,
-                                                   ModuleWithNameAlreadyExists,
-                                                   ModuleCircularDependencyException {
+                                                   ModuleWithNameAlreadyExists {
     myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
     final Module module = modifiableModel.loadModule(filePath);
@@ -782,15 +780,10 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
     }
 
     public void commitAssertingNoCircularDependency() {
-      try {
-        commit();
-      }
-      catch (ModuleCircularDependencyException e) {
-        LOG.error(e);
-      }
+      commit();
     }
 
-    public void commit() throws ModuleCircularDependencyException {
+    public void commit() {
       ProjectRootManagerEx.getInstanceEx(myProject).multiCommit(this, new ModifiableRootModel[0]);
     }
 

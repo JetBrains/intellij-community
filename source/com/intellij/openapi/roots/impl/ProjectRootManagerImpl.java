@@ -137,11 +137,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     ModuleRootManagerImpl.multiCommit(rootModels, moduleModel);
   }
 
-  public void checkCircularDependency(ModifiableRootModel[] rootModels, ModifiableModuleModel moduleModel)
-    throws ModuleCircularDependencyException {
-    ModuleRootManagerImpl.checkCircularDependencies(rootModels, moduleModel);
-  }
-
   public VirtualFilePointerListener getVirtualFilePointerListener() {
     return myVirtualFilePointerListener;
   }
