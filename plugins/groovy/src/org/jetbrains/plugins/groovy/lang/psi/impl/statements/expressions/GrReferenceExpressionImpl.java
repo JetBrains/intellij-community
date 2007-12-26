@@ -292,7 +292,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       final PsiType inferred = GroovyPsiManager.getInstance(refExpr.getProject()).getTypeInferenceHelper().getInferredType(refExpr);
       final PsiType nominal = refExpr.getNominalTypeImpl();
-      if (inferred == null) return nominal;
+      if (inferred == null || inferred == PsiType.NULL) return nominal;
       if (nominal == null) return inferred;
       if (!nominal.isAssignableFrom(inferred)) {
         final PsiElement resolved = refExpr.resolve();
