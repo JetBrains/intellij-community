@@ -47,11 +47,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   @NotNull
   public VirtualFile[] getRootFiles(OrderRootType type) {
-    final VirtualFile[] files = myFiles.get(type);
-    if (files == null) {
-      throw new AssertionError();
-    }
-    return files;
+    return myFiles.get(type);
   }
 
   public ProjectRoot[] getRoots(OrderRootType type) {
