@@ -151,7 +151,7 @@ class RootModelAdapter {
   }
 
   private void setExported(ModuleRootModel m, final Library library) {
-    m.processOrder(new RootPolicy<Object>() {
+    m.processOrder(new JavaRootPolicy<Object>() {
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
         if (!library.equals(e.getLibrary())) return null;

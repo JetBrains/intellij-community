@@ -28,8 +28,8 @@ import org.jetbrains.idea.maven.state.MavenProjectsState;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 public abstract class ImportingTestCase extends IdeaTestCase {
   private File dir;
@@ -239,7 +239,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   protected void assertExportedModuleLibDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<String>();
 
-    getRootManager(moduleName).processOrder(new RootPolicy<Object>() {
+    getRootManager(moduleName).processOrder(new JavaRootPolicy<Object>() {
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
         if (e.isExported()) actual.add(e.getLibraryName());
