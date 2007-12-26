@@ -29,10 +29,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -147,7 +147,7 @@ public class TestNGRunnableState extends JavaCommandLineState
 
     //the next few lines are awkward for a reason, using compareTo for some reason causes a JVM class verification error!
     Module module = config.getConfigurationModule().getModule();
-    LanguageLevel effectiveLanguageLevel = module == null ? ProjectRootManagerEx.getInstanceEx(project).getLanguageLevel() : LanguageLevelUtil
+    LanguageLevel effectiveLanguageLevel = module == null ? JavaProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevelUtil
       .getEffectiveLanguageLevel(module);
     boolean is15 = effectiveLanguageLevel != LanguageLevel.JDK_1_4 && effectiveLanguageLevel != LanguageLevel.JDK_1_3;
 
