@@ -9,10 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -49,7 +48,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
     processedModules.add(module);
 
-    ModuleRootManager.getInstance(module).processOrder(new RootPolicy<LinkedHashSet<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).processOrder(new JavaRootPolicy<LinkedHashSet<VirtualFile>>() {
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
                                                                final LinkedHashSet<VirtualFile> value) {
         value.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.CLASSES)));

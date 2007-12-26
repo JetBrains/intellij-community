@@ -397,7 +397,7 @@ public class FindInProjectUtil {
           final Collection<VirtualFile> librarySources = new THashSet<VirtualFile>();
           Module[] modules = module == null ? ModuleManager.getInstance(project).getModules() : new Module[]{module};
           for (Module mod : modules) {
-            ModuleRootManager.getInstance(mod).processOrder(new RootPolicy<Object>(){
+            ModuleRootManager.getInstance(mod).processOrder(new JavaRootPolicy<Object>(){
               public Object visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final Object value) {
                 VirtualFile[] sources = libraryOrderEntry.getFiles(OrderRootType.SOURCES);
                 librarySources.addAll(Arrays.asList(sources));

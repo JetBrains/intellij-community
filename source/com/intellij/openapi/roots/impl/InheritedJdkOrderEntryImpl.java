@@ -4,10 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.roots.InheritedJdkOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.RootPolicy;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
@@ -72,7 +69,10 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
-    return policy.visitInheritedJdkOrderEntry(this, initialValue);
+    if (policy instanceof JavaRootPolicy) {
+      return ((JavaRootPolicy<R>) policy).visitInheritedJdkOrderEntry(this, initialValue);
+    }
+    return policy.visitOrderEntry(this, initialValue);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {

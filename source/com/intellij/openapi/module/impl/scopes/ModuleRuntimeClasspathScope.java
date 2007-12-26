@@ -8,13 +8,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -48,7 +47,7 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
     final Set<Module> processedModules = new HashSet<Module>();
     processedModules.add(module);
 
-    ModuleRootManager.getInstance(module).processOrder(new RootPolicy<LinkedHashSet<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).processOrder(new JavaRootPolicy<LinkedHashSet<VirtualFile>>() {
       private boolean myJDKProcessed = false;
 
       public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,

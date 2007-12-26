@@ -187,7 +187,7 @@ public class FacetLibrariesValidatorImpl extends FacetLibrariesValidator {
     return roots;
   }
 
-  private class CollectingLibrariesPolicy extends RootPolicy<List<VirtualFile>> {
+  private class CollectingLibrariesPolicy extends JavaRootPolicy<List<VirtualFile>> {
     private Set<Module> myProcessedModules = new HashSet<Module>();
 
     public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry, final List<VirtualFile> value) {
