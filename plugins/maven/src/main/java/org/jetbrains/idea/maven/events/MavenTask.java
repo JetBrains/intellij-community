@@ -7,21 +7,10 @@ import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.util.Arrays;
-import java.util.Comparator;
 
-/**
- * @author Vladislav.Kaznacheev
-*/
-public class MavenTask implements Cloneable {
-
+public class MavenTask implements Cloneable, Comparable {
   public String pomPath;
   public String goal;
-
-  public final static Comparator<MavenTask> ourComparator = new Comparator<MavenTask>() {
-    public int compare(final MavenTask o1, final MavenTask o2) {
-      return o1.toString().compareTo(o2.toString());
-    }
-  };
 
   public MavenTask() {
   }
@@ -56,6 +45,10 @@ public class MavenTask implements Cloneable {
 
   public String toString(){
     return pomPath + "#" + goal;
+  }
+
+  public int compareTo(Object o) {
+    return toString().compareTo(o.toString());
   }
 
   @Nullable
