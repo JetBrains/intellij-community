@@ -1,5 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
+
 class JavadocElement extends LibraryTableTreeContentElement {
     private final LibraryElement myParent;
 
@@ -11,7 +15,15 @@ class JavadocElement extends LibraryTableTreeContentElement {
       return myParent;
     }
 
-    public boolean equals(Object o) {
+  public OrderRootType getOrderRootType() {
+    return JavadocOrderRootType.INSTANCE;
+  }
+
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+    return new JavadocElementDescriptor(parentDescriptor, this);
+  }
+
+  public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof JavadocElement)) return false;
 

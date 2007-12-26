@@ -1,8 +1,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 
-class LibraryElement extends LibraryTableTreeContentElement {
+public class LibraryElement extends LibraryTableTreeContentElement {
   private final Library myLibrary;
   private final LibraryTableEditor myParentEditor;
   private final boolean myHasInvalidPaths;
@@ -44,5 +46,17 @@ class LibraryElement extends LibraryTableTreeContentElement {
 
   public int hashCode() {
     return myLibrary.hashCode();
+  }
+
+  public LibraryTableTreeContentElement getParent() {
+    return null;
+  }
+
+  public OrderRootType getOrderRootType() {
+    return null;
+  }
+
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+    return new LibraryElementDescriptor(parentDescriptor, this, parentEditor);
   }
 }

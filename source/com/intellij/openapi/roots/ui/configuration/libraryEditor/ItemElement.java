@@ -1,18 +1,19 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 
 
 class ItemElement extends LibraryTableTreeContentElement {
-  private final Object myParent;
+  private final LibraryTableTreeContentElement myParent;
   private final Library myLibrary;
   private final String myUrl;
   private final OrderRootType myRootType;
   private final boolean myIsJarDirectory;
   private boolean myValid;
 
-  public ItemElement(Object parent, Library library, String url, OrderRootType rootType, final boolean isJarDirectory, boolean isValid) {
+  public ItemElement(LibraryTableTreeContentElement parent, Library library, String url, OrderRootType rootType, final boolean isJarDirectory, boolean isValid) {
     myParent = parent;
     myLibrary = library;
     myUrl = url;
@@ -21,8 +22,16 @@ class ItemElement extends LibraryTableTreeContentElement {
     myValid = isValid;
   }
 
-  public Object getParent() {
+  public LibraryTableTreeContentElement getParent() {
     return myParent;
+  }
+
+  public OrderRootType getOrderRootType() {
+    return null;
+  }
+
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+    return new ItemElementDescriptor(parentDescriptor, this);
   }
 
   public String getUrl() {

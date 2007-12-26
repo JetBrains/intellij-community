@@ -1,5 +1,8 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.roots.OrderRootType;
+
 class ClassesElement extends LibraryTableTreeContentElement {
   private final LibraryElement myParent;
 
@@ -9,6 +12,14 @@ class ClassesElement extends LibraryTableTreeContentElement {
 
   public LibraryElement getParent() {
     return myParent;
+  }
+
+  public OrderRootType getOrderRootType() {
+    return OrderRootType.CLASSES;
+  }
+
+  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {
+    return new ClassesElementDescriptor(parentDescriptor, this);
   }
 
   public boolean equals(Object o) {

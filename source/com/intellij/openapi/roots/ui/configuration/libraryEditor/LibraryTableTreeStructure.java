@@ -4,10 +4,9 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrariesAlphaComparator;
+import com.intellij.openapi.roots.ui.configuration.OrderRootTypeUIFactory;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +42,10 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
       LibraryElement[] elements = new LibraryElement[libraries.length];
       for (int idx = 0; idx < libraries.length; idx++) {
         final Library library = libraries[idx];
-        final boolean allPathsValid = allPathsValid(library, OrderRootType.CLASSES) && allPathsValid(library, OrderRootType.SOURCES)
-                                      && allPathsValid(library, JavadocOrderRootType.INSTANCE)  && allPathsValid(library, AnnotationOrderRootType.INSTANCE);
+        boolean allPathsValid = true;
+        for (OrderRootType type : OrderRootType.getAllTypes()) {
+          allPathsValid &= allPathsValid(library, type);
+        }
         elements[idx] = new LibraryElement(library, myParentEditor, !allPathsValid);
       }
       return elements;
@@ -55,47 +56,27 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
       ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<LibraryTableTreeContentElement>(3);
       final Library library = libraryItemElement.getLibrary();
 
-      if (!libraryItemElement.isAnonymous()) {
-        elements.add(new ClassesElement(libraryItemElement));
+      final LibraryEditor parentEditor = myParentEditor.getLibraryEditor(library);
+      for (OrderRootType type : OrderRootType.getAllTypes()) {
+        final String[] urls = parentEditor.getUrls(type);
+        if (urls.length > 0) {
+          elements.add(OrderRootTypeUIFactory.FACTORY.getByKey(type).createElement(libraryItemElement));
+        }
       }
-
-      final String[] sources = myParentEditor.getLibraryEditor(library).getUrls(OrderRootType.SOURCES);
-      if (sources.length > 0) {
-        elements.add(new SourcesElement(libraryItemElement));
-      }
-
-      final String[] javadocs = myParentEditor.getLibraryEditor(library).getUrls(JavadocOrderRootType.INSTANCE);
-      if (javadocs.length > 0) {
-        elements.add(new JavadocElement(libraryItemElement));
-      }
-
-      final String[] annotations = myParentEditor.getLibraryEditor(library).getUrls(AnnotationOrderRootType.INSTANCE);
-      if (annotations.length > 0) {
-        elements.add(new AnnotationElement(libraryItemElement));
-      }
-
       return elements.toArray();
     }
 
-    if (element instanceof ClassesElement) {
-      return buildItems(element, ((ClassesElement)element).getParent().getLibrary(), OrderRootType.CLASSES);
+    if (element instanceof LibraryTableTreeContentElement) {
+      final LibraryTableTreeContentElement contentElement = (LibraryTableTreeContentElement)element;
+      final LibraryTableTreeContentElement parentElement = contentElement.getParent();
+      if (parentElement instanceof LibraryElement) {
+        return buildItems(contentElement, ((LibraryElement)parentElement).getLibrary(), contentElement.getOrderRootType());
+      }
     }
-
-    if (element instanceof SourcesElement) {
-      return buildItems(element, ((SourcesElement)element).getParent().getLibrary(), OrderRootType.SOURCES);
-    }
-
-    if (element instanceof JavadocElement) {
-      return buildItems(element, ((JavadocElement)element).getParent().getLibrary(), JavadocOrderRootType.INSTANCE);
-    }
-    if (element instanceof AnnotationElement) {
-      return buildItems(element, ((AnnotationElement)element).getParent().getLibrary(), AnnotationOrderRootType.INSTANCE);
-    }
-
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
-  private Object[] buildItems(Object parent, Library library, OrderRootType orderRootType) {
+  private Object[] buildItems(LibraryTableTreeContentElement parent, Library library, OrderRootType orderRootType) {
     ArrayList<ItemElement> items = new ArrayList<ItemElement>();
     final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor(library);
     final String[] urls = libraryEditor.getUrls(orderRootType);
@@ -115,17 +96,8 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
     if (element == myRootElement) {
       return null;
     }
-    if (element instanceof ClassesElement) {
-      return ((ClassesElement)element).getParent();
-    }
-    if (element instanceof SourcesElement) {
-      return ((SourcesElement)element).getParent();
-    }
-    if (element instanceof JavadocElement) {
-      return ((JavadocElement)element).getParent();
-    }
-    if (element instanceof ItemElement) {
-      return ((ItemElement)element).getParent();
+    if (element instanceof LibraryTableTreeContentElement) {
+      return ((LibraryTableTreeContentElement)element).getParent();
     }
     return myRootElement;
   }
@@ -135,20 +107,8 @@ class LibraryTableTreeStructure extends AbstractTreeStructure {
     if (element == myRootElement) {
       return myRootElementDescriptor;
     }
-    if (element instanceof LibraryElement) {
-      return new LibraryElementDescriptor(parentDescriptor, (LibraryElement)element, myParentEditor);
-    }
-    if (element instanceof ClassesElement) {
-      return new ClassesElementDescriptor(parentDescriptor, (ClassesElement)element);
-    }
-    if (element instanceof SourcesElement) {
-      return new SourcesElementDescriptor(parentDescriptor, (SourcesElement)element);
-    }
-    if (element instanceof JavadocElement) {
-      return new JavadocElementDescriptor(parentDescriptor, (JavadocElement)element);
-    }
-    if (element instanceof ItemElement) {
-      return new ItemElementDescriptor(parentDescriptor, (ItemElement)element);
+    if (element instanceof LibraryTableTreeContentElement) {
+      return ((LibraryTableTreeContentElement)element).createDescriptor(parentDescriptor, myParentEditor);
     }
     return null;
   }
