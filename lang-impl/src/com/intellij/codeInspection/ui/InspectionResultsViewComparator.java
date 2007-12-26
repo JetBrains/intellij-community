@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 import java.util.Comparator;
 
@@ -109,14 +109,14 @@ public class InspectionResultsViewComparator implements Comparator {
 
   private static int compareEntity(final RefEntity entity, final PsiElement element) {
     if (entity instanceof RefElement) {
-      return PsiUtil.compareElementsByPosition(((RefElement)entity).getElement(), element);
+      return PsiUtilBase.compareElementsByPosition(((RefElement)entity).getElement(), element);
     }
     return -1;
   }
 
   private static int compareEntities(final RefEntity entity1, final RefEntity entity2) {
     if (entity1 instanceof RefElement && entity2 instanceof RefElement) {
-      return PsiUtil.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+      return PsiUtilBase.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
     } else if (entity1 != null && entity2 != null) {
       return entity1.getName().compareToIgnoreCase(entity2.getName());
     }

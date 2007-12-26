@@ -15,6 +15,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -256,7 +257,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       if (!referencedFields.isEmpty()) {
         Collections.sort(referencedFields, new Comparator<PsiField>() {
           public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtil.compareElementsByPosition(o1, o2);
+            return -PsiUtilBase.compareElementsByPosition(o1, o2);
           }
         });
         return referencedFields.get(0);
