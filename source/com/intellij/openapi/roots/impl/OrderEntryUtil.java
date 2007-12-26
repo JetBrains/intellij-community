@@ -102,21 +102,11 @@ public class OrderEntryUtil {
     if (libraryOrderEntry.isModuleLevel()) {
       final Library jarLibrary = rootModel.getModuleLibraryTable().createLibrary();
       final Library.ModifiableModel libraryModel = jarLibrary.getModifiableModel();
-      VirtualFile[] files = library.getFiles(OrderRootType.CLASSES);
-      for (VirtualFile jarFile : files) {
-        libraryModel.addRoot(jarFile, OrderRootType.CLASSES);
-      }
-      final VirtualFile[] sources = library.getFiles(OrderRootType.SOURCES);
-      for (VirtualFile source : sources) {
-        libraryModel.addRoot(source, OrderRootType.SOURCES);
-      }
-      final VirtualFile[] javadocs = library.getFiles(OrderRootType.JAVADOC);
-      for (VirtualFile javadoc : javadocs) {
-        libraryModel.addRoot(javadoc, OrderRootType.JAVADOC);
-      }
-      final VirtualFile[] annotations = library.getFiles(OrderRootType.ANNOTATIONS);
-      for (VirtualFile annotation : annotations) {
-        libraryModel.addRoot(annotation, OrderRootType.ANNOTATIONS);
+      for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+        VirtualFile[] files = library.getFiles(orderRootType);
+        for (VirtualFile jarFile : files) {
+          libraryModel.addRoot(jarFile, orderRootType);
+        }
       }
       libraryModel.commit();
     }

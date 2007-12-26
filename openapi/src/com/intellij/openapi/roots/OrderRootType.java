@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
+
 /**
  * Root types that can be queried from OrderEntry.
  * @see OrderEntry
@@ -22,40 +25,45 @@ package com.intellij.openapi.roots;
  */
 public class OrderRootType {
   private String myName;
+  private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
 
-  private OrderRootType(String name) {
+  private OrderRootType(@NonNls String name, boolean persistent) {
     myName = name;
+    if (persistent) {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourPersistentOrderRootTypes = ArrayUtil.append(ourPersistentOrderRootTypes, this);
+    }
   }
 
   /**
    * Classpath.
    */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT");
+  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", false);
 
   /**
    * Classpath for compilation
    */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES");
+  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", false);
 
   /**
    * Classpath without output directories for this module.
    */
-  public static final OrderRootType CLASSES = new OrderRootType("CLASSES");
+  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", true);
 
   /**
    * Sources.
    */
-  public static final OrderRootType SOURCES = new OrderRootType("SOURCES");
+  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", true);
 
   /**
    * JavaDoc paths.
    */
-  public static final OrderRootType JAVADOC = new OrderRootType("JAVADOC");
+  public static final OrderRootType JAVADOC = new OrderRootType("JAVADOC", true);
 
   /**
    * External annotations path
    */
-  public static final OrderRootType ANNOTATIONS = new OrderRootType("ANNOTATIONS");
+  public static final OrderRootType ANNOTATIONS = new OrderRootType("ANNOTATIONS", true);
 
   public String name() {
     return myName;
@@ -64,4 +72,8 @@ public class OrderRootType {
   public static final OrderRootType[] ALL_TYPES = {
     CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JAVADOC, ANNOTATIONS
   };
+
+  public static OrderRootType[] getAllTypes() {
+    return ourPersistentOrderRootTypes;
+  }
 }

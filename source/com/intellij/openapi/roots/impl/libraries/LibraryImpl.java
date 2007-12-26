@@ -77,7 +77,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     myRoots = initRoots();
     mySource = that;
     myLibraryTable = that.myLibraryTable;
-    for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       final VirtualFilePointerContainer thisContainer = myRoots.get(rootType);
       final VirtualFilePointerContainer thatContainer = that.myRoots.get(rootType);
       thisContainer.addAll(thatContainer);
@@ -185,23 +185,18 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     final HashMap<OrderRootType, VirtualFilePointerContainer> result =
       new HashMap<OrderRootType, VirtualFilePointerContainer>(5);
 
-    final VirtualFilePointerContainer classesRoots = VirtualFilePointerManager.getInstance().createContainer();
-    result.put(OrderRootType.CLASSES, classesRoots);
-    result.put(OrderRootType.COMPILATION_CLASSES, classesRoots);
-    result.put(OrderRootType.CLASSES_AND_OUTPUT, classesRoots);
-    result.put(OrderRootType.JAVADOC, VirtualFilePointerManager.getInstance().createContainer());
-    result.put(OrderRootType.SOURCES, VirtualFilePointerManager.getInstance().createContainer());
-    result.put(OrderRootType.ANNOTATIONS, VirtualFilePointerManager.getInstance().createContainer());
+    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
+      result.put(rootType, VirtualFilePointerManager.getInstance().createContainer());
+    }
+    result.put(OrderRootType.COMPILATION_CLASSES, result.get(OrderRootType.CLASSES));
+    result.put(OrderRootType.CLASSES_AND_OUTPUT, result.get(OrderRootType.CLASSES));
+
     return result;
   }
 
-  private static final OrderRootType[] SERIALIZABLE_ROOT_TYPES = {
-    OrderRootType.CLASSES, OrderRootType.JAVADOC, OrderRootType.SOURCES, OrderRootType.ANNOTATIONS
-  };
-
   public void readExternal(Element element) throws InvalidDataException {
     myName = element.getAttributeValue(LIBRARY_NAME_ATTR);
-    for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       VirtualFilePointerContainer roots = myRoots.get(rootType);
       final Element rootChild = element.getChild(rootType.name());
       if (rootChild == null) {
@@ -228,7 +223,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
-    for (OrderRootType rootType : SERIALIZABLE_ROOT_TYPES) {
+    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       if (roots.size() == 0 && OrderRootType.ANNOTATIONS.equals(rootType)) continue; //compatibility iml/ipr
       final Element rootTypeElement = new Element(rootType.name());

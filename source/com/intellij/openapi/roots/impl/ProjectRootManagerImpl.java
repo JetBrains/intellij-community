@@ -640,16 +640,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       for (OrderEntry entry : orderEntries) {
         if (entry instanceof LibraryOrderEntry) {
           final Library library = ((LibraryOrderEntry)entry).getLibrary();
-          rootPaths.addAll(getRootsToTrack(library, OrderRootType.CLASSES));
-          rootPaths.addAll(getRootsToTrack(library, OrderRootType.SOURCES));
-          rootPaths.addAll(getRootsToTrack(library, OrderRootType.JAVADOC));
-          rootPaths.addAll(getRootsToTrack(library, OrderRootType.ANNOTATIONS));
+          for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+            rootPaths.addAll(getRootsToTrack(library, orderRootType));
+          }
         }
         else if (entry instanceof JdkOrderEntry) {
-          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.CLASSES));
-          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.SOURCES));
-          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.JAVADOC));
-          rootPaths.addAll(getRootsToTrack(entry, OrderRootType.ANNOTATIONS));
+          for(OrderRootType orderRootType: OrderRootType.getAllTypes()) {
+            rootPaths.addAll(getRootsToTrack(entry, orderRootType));
+          }
         }
       }
     }
