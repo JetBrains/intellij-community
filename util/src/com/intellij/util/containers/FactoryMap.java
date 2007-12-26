@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -26,7 +27,12 @@ import java.util.Set;
  * @author peter
  */
 public abstract class FactoryMap<K,V> {
-  static final Object NULL = new Object();
+  static final Object NULL = new Object() {
+    @NonNls
+    public String toString() {
+      return "NULL";
+    }
+  };
   protected final Map<K,V> myMap = createMap();
 
   protected Map<K, V> createMap() {
@@ -38,12 +44,12 @@ public abstract class FactoryMap<K,V> {
   
   @Nullable
   public V get(K key) {
-    V v = myMap.get(getKey(key));
-    if (v == null) {
-      v = create(key);
-      myMap.put(getKey(key), v == null ? (V)NULL : v);
+    V value = myMap.get(getKey(key));
+    if (value == null) {
+      value = create(key);
+      put(key, value);
     }
-    return v == NULL ? null : v;
+    return value == NULL ? null : value;
   }
 
   private static <K> K getKey(final K key) {
@@ -55,7 +61,7 @@ public abstract class FactoryMap<K,V> {
   }
 
   public void put(K key, V value) {
-    myMap.put(key, value);
+    myMap.put(getKey(key), value == null ? (V)NULL : value);
   }
 
   public void removeEntry(K key) {
