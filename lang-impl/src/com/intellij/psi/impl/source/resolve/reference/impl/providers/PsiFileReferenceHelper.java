@@ -79,8 +79,9 @@ public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory>
           final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(path);
           if (psiPackage != null) {
             final Module module = ModuleUtil.findModuleForFile(file, project);
-            assert module != null;
-            return Arrays.<PsiFileSystemItem>asList(psiPackage.getDirectories(module.getModuleWithDependenciesScope()));
+            if (module != null) {
+              return Arrays.<PsiFileSystemItem>asList(psiPackage.getDirectories(module.getModuleWithDependenciesScope()));
+            }
           }
         }
         return Collections.singleton(parent);
