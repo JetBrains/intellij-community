@@ -43,7 +43,7 @@ public class TypeInferenceTest extends GroovyResolveTestCase {
   }
 
   public void testGrvy852() throws Exception {
-    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("throwVariable/A.groovy").getElement();
+    GrReferenceExpression ref = (GrReferenceExpression) configureByFile("grvy852/A.groovy").getElement();
     final PsiType type = ref.getType();
     assertNotNull(type);
     assertEquals("java.lang.Object", type.getCanonicalText());
