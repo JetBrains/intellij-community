@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -176,13 +178,13 @@ public class JavaSdkImpl extends JavaSdk {
 
     final SdkModificator sdkModificator = sdk.getSdkModificator();
     for (VirtualFile aClass : classes) {
-      sdkModificator.addRoot(aClass, ProjectRootType.CLASS);
+      sdkModificator.addRoot(aClass, OrderRootType.CLASSES);
     }
     if(sources != null){
-      sdkModificator.addRoot(sources, ProjectRootType.SOURCE);
+      sdkModificator.addRoot(sources, OrderRootType.SOURCES);
     }
     if(docs != null){
-      sdkModificator.addRoot(docs, ProjectRootType.JAVADOC);
+      sdkModificator.addRoot(docs, JavadocOrderRootType.INSTANCE);
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
@@ -190,7 +192,7 @@ public class JavaSdkImpl extends JavaSdk {
         commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
       }
       if (commonDocs != null) {
-        sdkModificator.addRoot(commonDocs, ProjectRootType.JAVADOC);
+        sdkModificator.addRoot(commonDocs, JavadocOrderRootType.INSTANCE);
       }
 
       VirtualFile appleDocs = findDocs(jdkHome, "appledocs");
@@ -198,7 +200,7 @@ public class JavaSdkImpl extends JavaSdk {
         appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
       }
       if (appleDocs != null) {
-        sdkModificator.addRoot(appleDocs, ProjectRootType.JAVADOC);
+        sdkModificator.addRoot(appleDocs, JavadocOrderRootType.INSTANCE);
       }
     }
     sdkModificator.commitChanges();
@@ -291,7 +293,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static void addClasses(File file, SdkModificator sdkModificator, final boolean isJre) {
     VirtualFile[] classes = findClasses(file, isJre);
     for (VirtualFile virtualFile : classes) {
-      sdkModificator.addRoot(virtualFile, ProjectRootType.CLASS);
+      sdkModificator.addRoot(virtualFile, OrderRootType.CLASSES);
     }
   }
 
@@ -353,7 +355,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static void addSources(File file, SdkModificator sdkModificator) {
     VirtualFile vFile = findSources(file);
     if (vFile != null) {
-      sdkModificator.addRoot(vFile, ProjectRootType.SOURCE);
+      sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
     }
   }
 
@@ -384,7 +386,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static void addDocs(File file, SdkModificator rootContainer) {
     VirtualFile vFile = findDocs(file, "docs/api");
     if (vFile != null) {
-      rootContainer.addRoot(vFile, ProjectRootType.JAVADOC);
+      rootContainer.addRoot(vFile, JavadocOrderRootType.INSTANCE);
     }
   }
 

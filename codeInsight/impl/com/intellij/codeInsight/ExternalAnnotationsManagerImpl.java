@@ -18,7 +18,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -271,7 +270,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
     }
     else if (entry instanceof JdkOrderEntry) {
       final SdkModificator sdkModificator = ((JdkOrderEntry)entry).getJdk().getSdkModificator();
-      sdkModificator.addRoot(vFile, ProjectRootType.ANNOTATIONS);
+      sdkModificator.addRoot(vFile, AnnotationOrderRootType.INSTANCE);
       sdkModificator.commitChanges();
     }
     myExternalAnotations.clear();

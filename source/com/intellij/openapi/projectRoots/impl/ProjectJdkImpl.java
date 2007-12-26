@@ -8,8 +8,6 @@ import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.projectRoots.ex.ProjectRootContainer;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
-import com.intellij.openapi.roots.AnnotationOrderRootType;
-import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -18,7 +16,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -219,14 +216,13 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     dest.setSdkAdditionalData(getSdkAdditionalData());
     dest.myRootContainer.startChange();
     dest.myRootContainer.removeAllRoots();
-    copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.CLASS);
-    copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.SOURCE);
-    copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.JAVADOC);
-    copyRoots(myRootContainer, dest.myRootContainer, ProjectRootType.ANNOTATIONS);
+    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
+      copyRoots(myRootContainer, dest.myRootContainer, rootType);
+    }
     dest.myRootContainer.finishChange();
   }
 
-  private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, ProjectRootType type){
+  private static void copyRoots(ProjectRootContainer srcContainer, ProjectRootContainer destContainer, OrderRootType type){
     final ProjectRoot[] newRoots = srcContainer.getRoots(type);
     for (ProjectRoot newRoot : newRoots) {
       destContainer.addRoot(newRoot, type);
@@ -235,7 +231,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
     public String[] getUrls(OrderRootType rootType) {
-      final VirtualFile[] rootFiles = myRootContainer.getRootFiles(ourOrderRootsToProjectRoots.get(rootType));
+      final VirtualFile[] rootFiles = myRootContainer.getRootFiles(rootType);
       final ArrayList<String> result = new ArrayList<String>();
       for (VirtualFile rootFile : rootFiles) {
         result.add(rootFile.getUrl());
@@ -282,17 +278,6 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     }
   }
 
-  private final static HashMap<OrderRootType,ProjectRootType> ourOrderRootsToProjectRoots = new HashMap<OrderRootType, ProjectRootType>();
-
-  static {
-    ourOrderRootsToProjectRoots.put(OrderRootType.CLASSES, ProjectRootType.CLASS);
-    ourOrderRootsToProjectRoots.put(OrderRootType.CLASSES_AND_OUTPUT, ProjectRootType.CLASS);
-    ourOrderRootsToProjectRoots.put(OrderRootType.COMPILATION_CLASSES, ProjectRootType.CLASS);
-    ourOrderRootsToProjectRoots.put(OrderRootType.SOURCES, ProjectRootType.SOURCE);
-    ourOrderRootsToProjectRoots.put(JavadocOrderRootType.INSTANCE, ProjectRootType.JAVADOC);
-    ourOrderRootsToProjectRoots.put(AnnotationOrderRootType.INSTANCE, ProjectRootType.ANNOTATIONS);
-  }
-
   // SdkModificator implementation
 
   public SdkModificator getSdkModificator() {
@@ -324,7 +309,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     myAdditionalData = data;
   }
 
-  public VirtualFile[] getRoots(ProjectRootType rootType) {
+  public VirtualFile[] getRoots(OrderRootType rootType) {
     final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
     final List<VirtualFile> files = new ArrayList<VirtualFile>(roots.length);
     for (ProjectRoot root : roots) {
@@ -333,15 +318,15 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
     return files.toArray(new VirtualFile[files.size()]);
   }
 
-  public void addRoot(VirtualFile root, ProjectRootType rootType) {
+  public void addRoot(VirtualFile root, OrderRootType rootType) {
     myRootContainer.addRoot(root, rootType);
   }
 
-  public void removeRoot(VirtualFile root, ProjectRootType rootType) {
+  public void removeRoot(VirtualFile root, OrderRootType rootType) {
     myRootContainer.removeRoot(root, rootType);
   }
 
-  public void removeRoots(ProjectRootType rootType) {
+  public void removeRoots(OrderRootType rootType) {
     myRootContainer.removeAllRoots(rootType);
   }
 

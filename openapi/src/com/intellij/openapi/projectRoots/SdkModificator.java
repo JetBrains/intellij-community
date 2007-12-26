@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +37,13 @@ public interface SdkModificator {
 
   void setSdkAdditionalData(SdkAdditionalData data);
 
-  // todo: replace ProjectRootType with OrderRootType?
-  VirtualFile[] getRoots(ProjectRootType rootType);
+  VirtualFile[] getRoots(OrderRootType rootType);
 
-  void addRoot(VirtualFile root, ProjectRootType rootType);
+  void addRoot(VirtualFile root, OrderRootType rootType);
 
-  void removeRoot(VirtualFile root, ProjectRootType rootType);
+  void removeRoot(VirtualFile root, OrderRootType rootType);
 
-  void removeRoots(ProjectRootType rootType);
+  void removeRoots(OrderRootType rootType);
 
   void removeAllRoots();
 

@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NonNls;
  */
 public class OrderRootType {
   private String myName;
+  private String mySdkRootName;
   private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
 
-  protected OrderRootType(@NonNls String name, boolean persistent) {
+  protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, boolean persistent) {
     myName = name;
+    mySdkRootName = sdkRootName;
     if (persistent) {
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourPersistentOrderRootTypes = ArrayUtil.append(ourPersistentOrderRootTypes, this);
@@ -38,25 +40,29 @@ public class OrderRootType {
   /**
    * Classpath.
    */
-  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", false);
+  public static final OrderRootType CLASSES_AND_OUTPUT = new OrderRootType("CLASSES_AND_OUTPUT", null, false);
 
   /**
    * Classpath for compilation
    */
-  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", false);
+  public static final OrderRootType COMPILATION_CLASSES = new OrderRootType("COMPILATION_CLASSES", null, false);
 
   /**
    * Classpath without output directories for this module.
    */
-  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", true);
+  public static final OrderRootType CLASSES = new OrderRootType("CLASSES", "classPath", true);
 
   /**
    * Sources.
    */
-  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", true);
+  public static final OrderRootType SOURCES = new OrderRootType("SOURCES", "sourcePath", true);
 
   public String name() {
     return myName;
+  }
+
+  public String getSdkRootName() {
+    return mySdkRootName;
   }
 
   public static final OrderRootType[] ALL_TYPES = {

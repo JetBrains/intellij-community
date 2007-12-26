@@ -7,8 +7,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.projectRoots.SdkModificator;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -53,7 +53,7 @@ public abstract class PathEditor {
 
   protected abstract boolean isShowUrlButton();
 
-  protected abstract ProjectRootType getRootType();
+  protected abstract OrderRootType getRootType();
 
   protected abstract FileChooserDescriptor createFileChooserDescriptor();
 
@@ -72,7 +72,7 @@ public abstract class PathEditor {
   }
 
   public void apply(SdkModificator sdkModificator) {
-    final ProjectRootType rootType = getRootType();
+    final OrderRootType rootType = getRootType();
     sdkModificator.removeRoots(rootType);
     // add all items
     for (int i = 0; i < getRowCount(); i++){
@@ -209,7 +209,7 @@ public abstract class PathEditor {
     }
   }
 
-  public void addPaths(VirtualFile[] paths){
+  public void addPaths(VirtualFile... paths){
     boolean added = false;
     keepSelectionState();
     for (int i = 0; i < paths.length; i++){
@@ -224,7 +224,7 @@ public abstract class PathEditor {
     }
   }
 
-  public void removePaths(VirtualFile[] paths) {
+  public void removePaths(VirtualFile... paths) {
     final Set<VirtualFile> pathsSet = new java.util.HashSet<VirtualFile>(Arrays.asList(paths));
     int size = getRowCount();
     final TIntArrayList indicesToRemove = new TIntArrayList(paths.length);

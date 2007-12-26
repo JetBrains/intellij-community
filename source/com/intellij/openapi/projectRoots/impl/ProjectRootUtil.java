@@ -2,14 +2,13 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectRootType;
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -84,38 +83,6 @@ public class ProjectRootUtil {
     }
 
     return element;
-  }
-
-  @NonNls
-  public static String typeToString(ProjectRootType type) {
-    if (type == ProjectRootType.SOURCE) {
-      return "sourcePath";
-    }
-    if (type == ProjectRootType.CLASS) {
-      return "classPath";
-    }
-    if (type == ProjectRootType.JAVADOC) {
-      return "javadocPath";
-    }
-    if (type == ProjectRootType.ANNOTATIONS) {
-      return "annotationsPath";
-    }
-
-    throw new IllegalArgumentException("Wrong type: " + type);
-  }
-
-  public static ProjectRootType stringToType(@NonNls String s) {
-    if (s.equals("sourcePath")) {
-      return ProjectRootType.SOURCE;
-    }
-    if (s.equals("classPath")) {
-      return ProjectRootType.CLASS;
-    }
-    if (s.equals("javadocPath")) {
-      return ProjectRootType.JAVADOC;
-    }
-
-    throw new IllegalArgumentException("Wrong type: " + s);
   }
 
   public static PsiDirectory[] convertRoots(final Project project, VirtualFile[] roots) {

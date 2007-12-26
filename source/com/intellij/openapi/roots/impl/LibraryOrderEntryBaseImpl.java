@@ -44,7 +44,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   }
 
   private void updatePathsFromProvider(final RootProvider rootProvider) {
-    final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
+    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
     for (OrderRootType type : allTypes) {
       final VirtualFilePointerContainer container = myRootContainers.get(type);
       container.clear();
@@ -58,7 +58,7 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
   }
 
   private boolean needUpdateFromProvider(final RootProvider rootProvider) {
-    final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
+    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
     for (OrderRootType type : allTypes) {
       final VirtualFilePointerContainer container = myRootContainers.get(type);
       final String[] urls = container.getUrls();

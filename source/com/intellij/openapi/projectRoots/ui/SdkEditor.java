@@ -10,6 +10,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.roots.AnnotationOrderRootType;
+import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
@@ -51,6 +54,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private PathEditor mySourcePathEditor;
   private PathEditor myJavadocPathEditor;
   private PathEditor myAnnotationPathEditor;
+  private Map<OrderRootType, PathEditor> myPathEditors = new HashMap<OrderRootType, PathEditor>();
 
   private TextFieldWithBrowseButton myHomeComponent;
   private Map<SdkType, AdditionalDataConfigurable> myAdditionalDataConfigurables = new HashMap<SdkType, AdditionalDataConfigurable>();
@@ -111,10 +115,14 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private void createMainPanel(){
-    myClassPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.classpath.tab"), ProjectRootType.CLASS, new FileChooserDescriptor(true, true, true, false, true, true), false);
-    mySourcePathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), ProjectRootType.SOURCE, new FileChooserDescriptor(true, true, true, false, true, true), false);
-    myJavadocPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), ProjectRootType.JAVADOC, new FileChooserDescriptor(false, true, true, false, true, true), true);
-    myAnnotationPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.annotations.tab"), ProjectRootType.ANNOTATIONS, FileChooserDescriptorFactory.createSingleFolderDescriptor(), false);
+    myClassPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true), false);
+    mySourcePathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true), false);
+    myJavadocPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.INSTANCE, new FileChooserDescriptor(false, true, true, false, true, true), true);
+    myAnnotationPathEditor = new MyPathsEditor(ProjectBundle.message("sdk.configure.annotations.tab"), AnnotationOrderRootType.INSTANCE, FileChooserDescriptorFactory.createSingleFolderDescriptor(), false);
+    myPathEditors.put(OrderRootType.CLASSES, myClassPathEditor);
+    myPathEditors.put(OrderRootType.SOURCES, mySourcePathEditor);
+    myPathEditors.put(JavadocOrderRootType.INSTANCE, myJavadocPathEditor);
+    myPathEditors.put(AnnotationOrderRootType.INSTANCE, myAnnotationPathEditor);
 
     myMainPanel = new JPanel(new GridBagLayout());
 
@@ -241,10 +249,9 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private void clearAllPaths(){
-    myClassPathEditor.clearList();
-    mySourcePathEditor.clearList();
-    myJavadocPathEditor.clearList();
-    myAnnotationPathEditor.clearList();
+    for(PathEditor editor: myPathEditors.values()) {
+      editor.clearList();
+    }
   }
 
   private void setHomePathValue(String absolutePath) {
@@ -296,18 +303,18 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private static class MyPathsEditor extends PathEditor {
     private final String myDisplayName;
-    private final ProjectRootType myRootType;
+    private final OrderRootType myRootType;
     private final FileChooserDescriptor myDescriptor;
     private final boolean myCanAddUrl;
 
-    public MyPathsEditor(String displayName, ProjectRootType rootType, FileChooserDescriptor descriptor, boolean canAddUrl) {
+    public MyPathsEditor(String displayName, OrderRootType rootType, FileChooserDescriptor descriptor, boolean canAddUrl) {
       myDisplayName = displayName;
       myRootType = rootType;
       myDescriptor = descriptor;
       myCanAddUrl = canAddUrl;
     }
 
-    protected ProjectRootType getRootType() {
+    protected OrderRootType getRootType() {
       return myRootType;
     }
 
@@ -451,69 +458,26 @@ public class SdkEditor implements Configurable, Place.Navigator {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
-    public VirtualFile[] getRoots(ProjectRootType rootType) {
-      if (ProjectRootType.CLASS.equals(rootType)) {
-        return myClassPathEditor.getRoots();
-      }
-      if (ProjectRootType.JAVADOC.equals(rootType)) {
-        return myJavadocPathEditor.getRoots();
-      }
-      if (ProjectRootType.SOURCE.equals(rootType)) {
-        return mySourcePathEditor.getRoots();
-      }
-      if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
-        return myAnnotationPathEditor.getRoots();
-      }
-      return VirtualFile.EMPTY_ARRAY;
+    public VirtualFile[] getRoots(OrderRootType rootType) {
+      return myPathEditors.get(rootType).getRoots();
     }
 
-    public void addRoot(VirtualFile root, ProjectRootType rootType) {
-      if (ProjectRootType.CLASS.equals(rootType)) {
-        myClassPathEditor.addPaths(new VirtualFile[] {root});
-      }
-      else if (ProjectRootType.JAVADOC.equals(rootType)) {
-        myJavadocPathEditor.addPaths(new VirtualFile[] {root});
-      }
-      else if (ProjectRootType.SOURCE.equals(rootType)) {
-        mySourcePathEditor.addPaths(new VirtualFile[] {root});
-      } else if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
-        myAnnotationPathEditor.addPaths(new VirtualFile[]{root});
-      }
+    public void addRoot(VirtualFile root, OrderRootType rootType) {
+      myPathEditors.get(rootType).addPaths(root);
     }
 
-    public void removeRoot(VirtualFile root, ProjectRootType rootType) {
-      if (ProjectRootType.CLASS.equals(rootType)) {
-        myClassPathEditor.removePaths(new VirtualFile[] {root});
-      }
-      else if (ProjectRootType.JAVADOC.equals(rootType)) {
-        myJavadocPathEditor.removePaths(new VirtualFile[] {root});
-      }
-      else if (ProjectRootType.SOURCE.equals(rootType)) {
-        mySourcePathEditor.removePaths(new VirtualFile[] {root});
-      } else if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
-        myAnnotationPathEditor.removePaths(new VirtualFile[]{root});
-      }
+    public void removeRoot(VirtualFile root, OrderRootType rootType) {
+      myPathEditors.get(rootType).removePaths(root);
     }
 
-    public void removeRoots(ProjectRootType rootType) {
-      if (ProjectRootType.CLASS.equals(rootType)) {
-        myClassPathEditor.clearList();
-      }
-      else if (ProjectRootType.JAVADOC.equals(rootType)) {
-        myJavadocPathEditor.clearList();
-      }
-      else if (ProjectRootType.SOURCE.equals(rootType)) {
-        mySourcePathEditor.clearList();
-      } else if (ProjectRootType.ANNOTATIONS.equals(rootType)) {
-        myAnnotationPathEditor.clearList();
-      }
+    public void removeRoots(OrderRootType rootType) {
+      myPathEditors.get(rootType).clearList();
     }
 
     public void removeAllRoots() {
-      myClassPathEditor.clearList();
-      myJavadocPathEditor.clearList();
-      mySourcePathEditor.clearList();
-      myAnnotationPathEditor.clearList();
+      for(PathEditor editor: myPathEditors.values()) {
+        editor.clearList();
+      }
     }
 
     public void commitChanges() {

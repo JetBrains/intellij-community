@@ -8,24 +8,26 @@
  */
 package com.intellij.openapi.projectRoots.ex;
 
-import com.intellij.openapi.projectRoots.ProjectRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public interface ProjectRootContainer {
-  VirtualFile[] getRootFiles(ProjectRootType type);
-  ProjectRoot[] getRoots(ProjectRootType type);
+  @NotNull
+  VirtualFile[] getRootFiles(OrderRootType type);
+  ProjectRoot[] getRoots(OrderRootType type);
 
   void startChange();
   void finishChange();
 
-  ProjectRoot addRoot(VirtualFile virtualFile, ProjectRootType type);
-  void addRoot(ProjectRoot root, ProjectRootType type);
-  void removeRoot(ProjectRoot root, ProjectRootType type);
-  void removeAllRoots(ProjectRootType type);
+  ProjectRoot addRoot(VirtualFile virtualFile, OrderRootType type);
+  void addRoot(ProjectRoot root, OrderRootType type);
+  void removeRoot(ProjectRoot root, OrderRootType type);
+  void removeAllRoots(OrderRootType type);
 
   void removeAllRoots();
 
-  void removeRoot(VirtualFile root, ProjectRootType type);
+  void removeRoot(VirtualFile root, OrderRootType type);
 
   void update();
 }

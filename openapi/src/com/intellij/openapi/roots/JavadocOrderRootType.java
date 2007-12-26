@@ -10,6 +10,6 @@ public class JavadocOrderRootType extends OrderRootType {
   public static final OrderRootType INSTANCE = new JavadocOrderRootType();
 
   private JavadocOrderRootType() {
-    super("JAVADOC", true);
+    super("JAVADOC", "javadocPath", true);
   }
 }
