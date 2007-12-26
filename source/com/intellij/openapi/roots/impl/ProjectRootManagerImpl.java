@@ -225,12 +225,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (ourProjectRootTypeToOrderRootType.get(type) != null) {
       return getFilesFromAllModules(ourProjectRootTypeToOrderRootType.get(type));
     }
-    else if (type == ProjectRootType.EXCLUDE) {
-      return getExcludeRootsFromAllModules();
-    }
-    else if (type == ProjectRootType.PROJECT) {
-      return getContentRootsFromAllModules();
-    }
     LOG.assertTrue(false);
     return null;
   }

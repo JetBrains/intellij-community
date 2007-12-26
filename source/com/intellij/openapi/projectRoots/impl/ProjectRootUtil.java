@@ -100,12 +100,6 @@ public class ProjectRootUtil {
     if (type == ProjectRootType.ANNOTATIONS) {
       return "annotationsPath";
     }
-    if (type == ProjectRootType.PROJECT) {
-      return "projectPath";
-    }
-    if (type == ProjectRootType.EXCLUDE) {
-      return "excludePath";
-    }
 
     throw new IllegalArgumentException("Wrong type: " + type);
   }
@@ -119,12 +113,6 @@ public class ProjectRootUtil {
     }
     if (s.equals("javadocPath")) {
       return ProjectRootType.JAVADOC;
-    }
-    if (s.equals("projectPath")) {
-      return ProjectRootType.PROJECT;
-    }
-    if (s.equals("excludePath")) {
-      return ProjectRootType.EXCLUDE;
     }
 
     throw new IllegalArgumentException("Wrong type: " + s);
