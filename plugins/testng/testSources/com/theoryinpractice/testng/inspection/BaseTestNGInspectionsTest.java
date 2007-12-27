@@ -7,6 +7,7 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -38,9 +39,8 @@ public abstract class BaseTestNGInspectionsTest {
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
     myFixture = fixtureFactory.createCodeInsightFixture(testFixtureBuilder.getFixture());
     myFixture.setTestDataPath(PathManager.getHomePath() + "/svnPlugins/testng/testData");
-    final JavaModuleFixtureBuilder builder =
-      (JavaModuleFixtureBuilder)testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
-        .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
+    final JavaModuleFixtureBuilder builder = (JavaModuleFixtureBuilder)testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class)
+      .addContentRoot(myFixture.getTempDirPath()).addSourceRoot(getSourceRoot());
     builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
     builder.addLibrary("junit", PathUtil.getJarPathForClass(TestCase.class));
     builder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
@@ -48,14 +48,14 @@ public abstract class BaseTestNGInspectionsTest {
     myFixture.enableInspections(myEnabledTool);
     myFixture.setUp();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
-    myLanguageLevel = facade.getEffectiveLanguageLevel();
-    facade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myLanguageLevel = JavaProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
+    JavaProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
 
   @AfterMethod
   public void tearDown() throws Exception {
-    JavaPsiFacade.getInstance(myFixture.getProject()).setEffectiveLanguageLevel(myLanguageLevel);
+    JavaProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
     myFixture.tearDown();
     myFixture = null;
     myEnabledTool = null;

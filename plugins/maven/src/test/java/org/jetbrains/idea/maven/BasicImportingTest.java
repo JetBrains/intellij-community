@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.roots.JavaModuleExtension;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 
@@ -478,7 +478,7 @@ public class BasicImportingTest extends ImportingTestCase {
   }
 
   private LanguageLevel getLanguageLevelForProject() {
-    return ModuleRootManager.getInstance(getModule("project")).getLanguageLevel();
+    return JavaModuleExtension.getInstance(getModule("project")).getLanguageLevel();
   }
 
   public void testProjectWithBuiltExtension() throws Exception {
