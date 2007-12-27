@@ -3,13 +3,13 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
-import com.intellij.ui.EditorComboBoxEditor;
-import com.intellij.ui.EditorComboBoxRenderer;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.StringComboboxEditor;
+import com.intellij.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -35,6 +35,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
   private JComboBox myContainingClassComboBox;
   private JPanel myDynamicPropertyDialogPanel;
   private JComboBox myTypeComboBox;
+  //  private JComboBox myTypeComboBox;
   private final DynamicPropertiesManager myDynamicPropertiesManager;
   private final Project myProject;
   private final DynamicProperty myDynamicProperty;
@@ -72,25 +73,21 @@ public class DynamicPropertyDialog extends DialogWrapper {
     }
   }
 
-//  private Document createDocument(final String text) {
-//    PsiPackage defaultPackage = manager.findPackage("");
-//    final PsiCodeFragment fragment = manager.getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
-//    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-//    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
-//  }
+  private Document createDocument(final String text) {
+    final PsiManager manager = myReferenceExpression.getManager();
+    PsiPackage defaultPackage = manager.findPackage("");
+    final PsiCodeFragment fragment = manager.getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
+    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    return PsiDocumentManager.getInstance(myReferenceExpression.getProject()).getDocument(fragment);
+  }
 
   private void setUpTypeComboBox() {
-    //todo: implement my ComboboxEditor
-
-    final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
-//    final EditorComboBoxEditor comboEditor = DebuggerExpressionComboBox.
-
+    final EditorComboBoxEditor comboEditor = new EditorComboBoxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
+    final Document document = createDocument("");
+    comboEditor.setItem(document);
 
     myTypeComboBox.setEditor(comboEditor);
-    myTypeComboBox.setRenderer(new EditorComboBoxRenderer(comboEditor));
     myTypeComboBox.setEditable(true);
-
-//    myTypeComboBox.setMaximumRowCount();
 
     myListenerList.add(DataChangedListener.class, new DataChangedListener());
 
@@ -111,8 +108,8 @@ public class DynamicPropertyDialog extends DialogWrapper {
       }
     });
 
-    final TypeItem item = new TypeItem(TypesUtil.createJavaLangObject(myReferenceExpression));
-    myTypeComboBox.getEditor().setItem(item.getPresentableText());
+    final PsiClassType objectType = TypesUtil.createJavaLangObject(myReferenceExpression);
+    myTypeComboBox.getEditor().setItem(createDocument(objectType.getCanonicalText()));
   }
 
   class DataChangedListener implements EventListener {
@@ -130,15 +127,9 @@ public class DynamicPropertyDialog extends DialogWrapper {
   public String getEnteredTypeName() {
     final Object item = myTypeComboBox.getEditor().getItem();
 
-//    if (item instanceof TypeItem) {
-//      return ((TypeItem) item).getPresentableText();
-//    } else {
-//      return null;
-//    }
-
-    if (item instanceof String &&
-        ((String) item).length() > 0) {
-      return (String) item;
+    if (item instanceof Document) {
+      final Document document = (Document) item;
+      return document.getText();
     } else {
       return null;
     }
