@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public abstract class RootsContainerProjectExtesion extends ProjectExtension {
+public abstract class RootsContainerProjectExtension extends ProjectExtension {
   @NotNull
   public abstract Set<String> getRootsToWatch();
 }

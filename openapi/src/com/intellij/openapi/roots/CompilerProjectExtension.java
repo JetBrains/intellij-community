@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CompilerProjectExtension extends RootsContainerProjectExtesion {
+public abstract class CompilerProjectExtension extends RootsContainerProjectExtension {
 
   public static CompilerProjectExtension getInstance(Project project) {
     for (ProjectExtension extension : Extensions.getExtensions(EP_NAME, project)) {

@@ -487,8 +487,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
 
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
-      if (extension instanceof RootsContainerProjectExtesion) {
-        rootPaths.addAll(((RootsContainerProjectExtesion)extension).getRootsToWatch());
+      if (extension instanceof RootsContainerProjectExtension) {
+        rootPaths.addAll(((RootsContainerProjectExtension)extension).getRootsToWatch());
       }
     }
 
