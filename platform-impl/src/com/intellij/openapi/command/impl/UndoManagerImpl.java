@@ -222,6 +222,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     });
   }
 
+  public void invalidateAllComplexCommands() {
+    dropMergers();
+
+    myUndoStacksHolder.invalidateAllComplexCommands();
+    myRedoStacksHolder.invalidateAllComplexCommands();
+  }
+
   private void dropMergers() {
     // Run dummy command in order to drop all mergers...
     CommandProcessor.getInstance()
@@ -427,7 +434,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
         Document original = getOriginal(document);
 
         if (shouldCheckMerger) {
-          if (myMerger != null && !myMerger.isEmpty(DocumentReferenceByDocument.createDocumentReference(original))) {
+          if (myMerger != null && myMerger.hasChangesOf(DocumentReferenceByDocument.createDocumentReference(original))) {
             return true;
           }
         }
@@ -502,16 +509,18 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     return myCommandLevel > 0;
   }
 
-  public boolean undoableActionsForDocumentAreEmpty(DocumentReference docRef) {
-    if (myCurrentMerger != null && !myCurrentMerger.isEmpty(docRef)) return false;
-    if (myMerger != null && !myMerger.isEmpty(docRef)) return false;
-    if (!myUndoStacksHolder.getStack(docRef).isEmpty()) return false;
+  public boolean documentWasChanged(DocumentReference docRef) {
+    if (myCurrentMerger != null && myCurrentMerger.hasChangesOf(docRef)) return true;
+    if (myMerger != null && myMerger.hasChangesOf(docRef)) return true;
+    if (!myUndoStacksHolder.getStack(docRef).isEmpty()) return true;
+
     LinkedList<UndoableGroup> globalStack = myUndoStacksHolder.getGlobalStack();
     for (final UndoableGroup group : globalStack) {
       Collection<DocumentReference> affectedDocuments = group.getAffectedDocuments();
-      if (affectedDocuments.contains(docRef)) return false;
+      if (affectedDocuments.contains(docRef)) return true;
     }
-    return true;
+
+    return false;
   }
 
   public int getCommandCounterAndInc() {

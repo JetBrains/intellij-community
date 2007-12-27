@@ -1,11 +1,14 @@
 package com.intellij.history.core.storage;
 
 import com.intellij.history.core.LocalVcs;
+import com.intellij.history.core.tree.Entry;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Storage {
@@ -203,6 +206,35 @@ public class Storage {
 
   protected void purgeContent(StoredContent c) {
     myContentStorage.remove(c.getId());
+  }
+
+  public void checkIntegrity() {
+    LocalVcs.Memento memento = load();
+    List<String> badContents = new ArrayList<String>();
+    checkEntryContent(memento.myRoot, badContents);
+
+    if (badContents.isEmpty()) return;
+
+    String formatted = StringUtil.join(badContents, "\n");
+    LOG.warn("Storage integrity check failed:\n" + formatted);
+  }
+
+  private void checkEntryContent(Entry e, List<String> badContents) {
+    if (e.isDirectory()) {
+      for (Entry child : e.getChildren()) checkEntryContent(child, badContents);
+      return;
+    }
+
+    Content c = e.getContent();
+    if (!(c instanceof StoredContent)) return;
+
+    StoredContent sc = (StoredContent)c;
+    try {
+      myContentStorage.load(sc.getId());
+    }
+    catch (BrokenStorageException ex) {
+      badContents.add("ContentId: " + sc.getId() + " Path: " + e.getPath());
+    }
   }
 
   private static interface Loader<T> {

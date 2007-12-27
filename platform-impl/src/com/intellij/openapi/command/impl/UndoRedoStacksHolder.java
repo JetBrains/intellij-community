@@ -55,10 +55,10 @@ class UndoRedoStacksHolder {
   }
 
   private LinkedList<UndoableGroup> getStackForDocument(DocumentReference r) {
-    // If document does not associated with file, we have to store its stack in document
-    // itself to avoid memory leaks caused by holding stacks of all documents created ever in
-    // here.
-    // And to know what document do exist now we have to maintain soft reference list of them.
+    // If document is not associated with file, we have to store its stack in document
+    // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
+    // And to know, what documents do exist now, we have to maintain soft reference list of them.
+    
     Document d = r.getDocument();
     LinkedList<UndoableGroup> result = d.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
@@ -96,6 +96,19 @@ class UndoRedoStacksHolder {
 
   public void clearGlobalStack() {
     myGlobalStack.clear();
+  }
+
+  public void invalidateAllComplexCommands() {
+    invalidateAllComplexCommands(getGlobalStack());
+    for (DocumentReference r : getAffectedDocuments()) {
+      invalidateAllComplexCommands(getStack(r));
+    }
+  }
+
+  private void invalidateAllComplexCommands(LinkedList<UndoableGroup> stack) {
+    for (UndoableGroup g : stack) {
+      g.invalidateIfComplex();
+    }
   }
 
   public void dropHistory() {

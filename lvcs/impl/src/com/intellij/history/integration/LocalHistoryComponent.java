@@ -88,10 +88,20 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
     myVcs = new ThreadSafeLocalVcs(myVcsImpl);
   }
 
+  //private void checkStorageIntegrity() {
+  //  if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
+  //  myStorage.checkIntegrity();
+  //}
+
   protected void initService() {
     myGateway = new IdeaGateway(myProject);
-    myService =
-      new LocalHistoryService(myVcs, myGateway, myConfiguration, myStartupManager, myRootManager, myFileManager, myCommandProcessor);
+    myService = new LocalHistoryService(myVcs,
+                                        myGateway,
+                                        myConfiguration,
+                                        myStartupManager,
+                                        myRootManager,
+                                        myFileManager,
+                                        myCommandProcessor);
   }
 
   public File getStorageDir() {
@@ -111,10 +121,11 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   public void disposeComponent() {
     if (!isInitialized) return;
 
+    myVcs.purgeObsolete(myConfiguration.PURGE_PERIOD);
+
     // save could haven't been called if user had canceled save of project files
     // so we have to force save. But that will be ignored if where were
     // no changes since last save, so there is no performance issues here
-    myVcs.purgeObsolete(myConfiguration.PURGE_PERIOD);
     save();
 
     closeVcs();
@@ -177,6 +188,7 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
   @Override
   protected Checkpoint putCheckpoint() {
     if (!isInitialized) return new Checkpoint.NullCheckpoint();
+
     return new CheckpointImpl(myGateway, myVcs);
   }
 

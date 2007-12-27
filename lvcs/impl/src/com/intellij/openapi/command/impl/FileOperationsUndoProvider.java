@@ -1,38 +1,71 @@
 package com.intellij.openapi.command.impl;
 
+import com.intellij.ProjectTopics;
 import com.intellij.history.Checkpoint;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvider, Disposable {
-  private Key<Boolean> DELETE_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
+public class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvider, Disposable {
+  private Key<Boolean> DELETION_WAS_UNDOABLE = new Key<Boolean>("DeletionWasUndoable");
 
   private Project myProject;
   private boolean myIsInsideCommand;
 
   private List<MyUndoableAction> myCommandActions;
+  private MessageBusConnection myBusConnection;
 
-  FileOperationsUndoProvider() {
-    this(null);
+  public FileOperationsUndoProvider() {
+    this(null, null);
   }
 
-  public FileOperationsUndoProvider(Project p) {
+  public FileOperationsUndoProvider(Project p, MessageBus bus) {
     myProject = p;
-
     if (myProject == null) return;
+
+    myBusConnection = bus.connect();
+
     getFileManager().addVirtualFileListener(this);
+    listenForModuleChanges();
+  }
+
+  private void listenForModuleChanges() {
+    // We have to invalidate all complex commands, that affect file system, in order to
+    // prevent deletion and recreation changed roots during undo.
+    //
+    // Also, undoing roots creation/deletion causes dead-lock in local history, because
+    // roots changes notifications are sent in separate thread, while local history is locked
+    // inside revert method.
+    //
+    // Another point is that local history does not distinguish creation of file from addition of
+    // content root, thereby, if already existed content root was just added to module, it will
+    // be physically removed from dist during revert.
+
+    myBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(final ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(final ModuleRootEvent event) {
+        ((UndoManagerImpl)UndoManager.getInstance(myProject)).invalidateAllComplexCommands();
+      }
+    });
   }
 
   public void dispose() {
     if (myProject == null) return;
+
+    myBusConnection.disconnect();
     getFileManager().removeVirtualFileListener(this);
   }
 
@@ -87,7 +120,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvi
     if (shouldNotProcess(e)) return;
     if (nonUndoableDeletion(e)) return;
     if (isUndoable(e)) {
-      e.getFile().putUserData(DELETE_WAS_UNDOABLE, true);
+      e.getFile().putUserData(DELETION_WAS_UNDOABLE, true);
     }
     else {
       createNonUndoableDeletionAction(e);
@@ -101,9 +134,9 @@ class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvi
   public void fileDeleted(VirtualFileEvent e) {
     VirtualFile f = e.getFile();
 
-    if (f.getUserData(DELETE_WAS_UNDOABLE) != null) {
+    if (f.getUserData(DELETION_WAS_UNDOABLE) != null) {
       createUndoableAction(e, true);
-      f.putUserData(DELETE_WAS_UNDOABLE, null);
+      f.putUserData(DELETION_WAS_UNDOABLE, null);
     }
   }
 
@@ -139,7 +172,7 @@ class FileOperationsUndoProvider extends VirtualFileAdapter implements UndoProvi
   }
 
   private void registerNonUndoableAction(final DocumentReference r) {
-    if (getUndoManager().undoableActionsForDocumentAreEmpty(r)) return;
+    if (!getUndoManager().documentWasChanged(r)) return;
 
     getUndoManager().undoableActionPerformed(new NonUndoableAction() {
       public DocumentReference[] getAffectedDocuments() {

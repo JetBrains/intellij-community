@@ -169,14 +169,14 @@ class CommandMerger {
     return myCurrentActions.isEmpty();
   }
 
-  public boolean isEmpty(DocumentReference doc) {
+  public boolean hasChangesOf(DocumentReference doc) {
     for (UndoableAction action : myCurrentActions) {
       for (DocumentReference document : action.getAffectedDocuments()) {
-        if (document.equals(doc)) return false;
+        if (document.equals(doc)) return true;
       }
     }
 
-    return true;
+    return false;
   }
 
   public void reset() {

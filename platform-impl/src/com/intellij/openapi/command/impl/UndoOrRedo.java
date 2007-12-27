@@ -74,6 +74,12 @@ abstract class UndoOrRedo {
 
   public void execute() {
     Set<DocumentReference> otherAffected = new HashSet<DocumentReference>();
+
+    if (!myUndoableGroup.isValid()) {
+      reportCannotUndo(CommonBundle.message("cannot.undo.error.roots.was.changed.message"), myUndoableGroup.getAffectedDocuments());
+      return;
+    }
+
     if (containsAnotherChanges(otherAffected)) {
       //otherAffected.removeAll(myUndoableGroup.getAffectedDocuments());
       reportCannotUndo(CommonBundle.message("cannot.undo.error.other.affected.files.changed.message"), otherAffected);
@@ -218,7 +224,7 @@ abstract class UndoOrRedo {
 
   private void reportCannotUndo(final String message, final Collection<DocumentReference> problemFiles) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new RuntimeException("Files changed");
+      throw new RuntimeException(message);
     }
 
     new CannotUndoReportDialog(myManager.getProject(), message, problemFiles).show();

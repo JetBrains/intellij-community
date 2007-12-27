@@ -116,9 +116,8 @@ class DocumentEditingUndoProvider {
     private void createNonUndoableAction(final Document document) {
       UndoManagerImpl undoManager = getUndoManager();
       final DocumentReference ref = DocumentReferenceByDocument.createDocumentReference(document);
-      if (undoManager.undoableActionsForDocumentAreEmpty(ref)) {
-        return;
-      }
+      if (!undoManager.documentWasChanged(ref)) return;
+
       undoManager.undoableActionPerformed(
         new NonUndoableAction() {
           public DocumentReference[] getAffectedDocuments() {

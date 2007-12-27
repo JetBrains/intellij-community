@@ -30,6 +30,7 @@ class UndoableGroup {
   private EditorAndState myStateAfter;
   private Project myProject;
   private final UndoConfirmationPolicy myUndoConfirmationPolicy;
+  private boolean isValid = true;
 
   public UndoableGroup(String commandName,
                        boolean isComplex,
@@ -202,6 +203,15 @@ class UndoableGroup {
 
   public boolean isTransparentsOnly() {
     return myTransparentsOnly;
+  }
+
+  public void invalidateIfComplex() {
+    if (!myComplex) return;
+    isValid = false;
+  }
+
+  public boolean isValid() {
+    return isValid;
   }
 
   public String toString() {
