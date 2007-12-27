@@ -158,8 +158,8 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     if (mySuggestSearchInLibs) {
       model.addElement(new ScopeDescriptor(GlobalSearchScope.allScope(myProject)));
     }
-    model.addElement(new ScopeDescriptor(GlobalSearchScope.projectProductionScope(myProject, true)));
-    model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject, true)));
+    model.addElement(new ScopeDescriptor(GlobalSearchScope.projectProductionScope(myProject)));
+    model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject)));
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
     final PsiElement dataContextElement = DataKeys.PSI_ELEMENT.getData(dataContext);

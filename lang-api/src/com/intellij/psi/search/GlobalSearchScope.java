@@ -86,15 +86,15 @@ public abstract class GlobalSearchScope extends SearchScope {
     return ProjectScope.getProjectScope(project);
   }
 
-  public static GlobalSearchScope projectProductionScope(@NotNull Project project, final boolean includeNonJavaFiles) {
+  public static GlobalSearchScope projectProductionScope(@NotNull Project project) {
     return new IntersectionScope(projectScope(project),
-                                 new ProductionScopeFilter(project, includeNonJavaFiles),
+                                 new ProductionScopeFilter(project),
                                  PsiBundle.message("psi.search.scope.production.files"));
   }
 
-  public static GlobalSearchScope projectTestScope(@NotNull Project project, final boolean includeNonJavaFiles) {
+  public static GlobalSearchScope projectTestScope(@NotNull Project project) {
     return new IntersectionScope(projectScope(project),
-                                 new TestScopeFilter(project, includeNonJavaFiles),
+                                 new TestScopeFilter(project),
                                  PsiBundle.message("psi.search.scope.test.files"));
   }
 
@@ -281,15 +281,12 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   private static class ProductionScopeFilter extends GlobalSearchScope {
     private final ProjectFileIndex myFileIndex;
-    private final boolean myIncludeNonJavaFiles;
 
-    public ProductionScopeFilter(Project project, boolean includeNonJavaFiles) {
-      myIncludeNonJavaFiles = includeNonJavaFiles;
+    public ProductionScopeFilter(Project project) {
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
     public boolean contains(VirtualFile file) {
-      if (!myFileIndex.isJavaSourceFile(file)) return myIncludeNonJavaFiles;
       return myFileIndex.isInSourceContent(file) && !myFileIndex.isInTestSourceContent(file);
     }
 
@@ -312,15 +309,12 @@ public abstract class GlobalSearchScope extends SearchScope {
 
   private static class TestScopeFilter extends GlobalSearchScope {
     private final ProjectFileIndex myFileIndex;
-    private final boolean myIncludeNonJavaFiles;
 
-    public TestScopeFilter(Project project, boolean includeNonJavaFiles) {
-      myIncludeNonJavaFiles = includeNonJavaFiles;
+    public TestScopeFilter(Project project) {
       myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     }
 
     public boolean contains(VirtualFile file) {
-      if (!myFileIndex.isJavaSourceFile(file)) return myIncludeNonJavaFiles;
       return myFileIndex.isInTestSourceContent(file);
     }
 

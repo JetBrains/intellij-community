@@ -46,10 +46,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
       searchScope = new LocalSearchScope(containingClass);
     }
     else if (CallHierarchyBrowser.SCOPE_PROJECT.equals(myScopeType)) {
-      searchScope = GlobalSearchScope.projectProductionScope(myProject, true);
+      searchScope = GlobalSearchScope.projectProductionScope(myProject);
     }
     else if (CallHierarchyBrowser.SCOPE_TEST.equals(myScopeType)) {
-      searchScope = GlobalSearchScope.projectTestScope(myProject, true);
+      searchScope = GlobalSearchScope.projectTestScope(myProject);
     }
 
     final Set<PsiMethod> methodsToFind = new HashSet<PsiMethod>();
