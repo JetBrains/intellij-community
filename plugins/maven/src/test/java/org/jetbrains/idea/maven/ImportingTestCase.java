@@ -185,11 +185,12 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     assertElementsAreEqual(expected, actual);
   }
 
-  protected void assertModuleOutput(String module, String output, String testOutput) {
-    ModuleRootManager m = getRootManager(module);
-    assertFalse(m.isCompilerOutputPathInherited());
-    assertEquals(output, getAbsolutePath(m.getCompilerOutputPathUrl()));
-    assertEquals(testOutput, getAbsolutePath(m.getCompilerOutputPathForTestsUrl()));
+  protected void assertModuleOutput(String moduleName, String output, String testOutput) {
+    ModuleRootManager m = getRootManager(moduleName);
+    final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(m.getModule());
+    assertFalse(compilerModuleExtension.isCompilerOutputPathInherited());
+    assertEquals(output, getAbsolutePath(compilerModuleExtension.getCompilerOutputUrl()));
+    assertEquals(testOutput, getAbsolutePath(compilerModuleExtension.getCompilerOutputUrlForTests()));
   }
 
   private String getAbsolutePath(String path) {
@@ -203,7 +204,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
 
   protected void assertProjectOutput(String module) {
     ModuleRootManager m = getRootManager(module);
-    assertTrue(m.isCompilerOutputPathInherited());
+    assertTrue(CompilerModuleExtension.getInstance(m.getModule()).isCompilerOutputPathInherited());
   }
 
   protected void assertModuleLibDep(String moduleName, String depName, String path) {

@@ -12,6 +12,7 @@ import com.intellij.compiler.ant.BuildTargetsFactory;
 import com.intellij.compiler.ant.ModuleChunk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -35,7 +36,7 @@ public class GenerateAntTest extends IdeaTestCase {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         final VirtualFile parent = myModule.getModuleFile().getParent();
         assertTrue(parent != null);
-        model.setCompilerOutputPath(parent.getUrl() + "/classes");
+        CompilerModuleExtension.getInstance(model.getModule()).setCompilerOutputPath(parent.getUrl() + "/classes");
         model.commit();
       }
     });

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -90,13 +91,13 @@ class RootModelAdapter {
   }
 
   public void useProjectOutput() {
-    myRootModel.inheritCompilerOutputPath(true);
+    CompilerModuleExtensionImpl.getInstance(myRootModel.getModule()).inheritCompilerOutputPath(true);
   }
 
   public void useModuleOutput(String production, String test) {
-    myRootModel.inheritCompilerOutputPath(false);
-    myRootModel.setCompilerOutputPath(toUrl(production).getUrl());
-    myRootModel.setCompilerOutputPathForTests(toUrl(test).getUrl());
+    CompilerModuleExtensionImpl.getInstance(myRootModel.getModule()).inheritCompilerOutputPath(false);
+    CompilerModuleExtension.getInstance(myRootModel.getModule()).setCompilerOutputPath(toUrl(production).getUrl());
+    CompilerModuleExtension.getInstance(myRootModel.getModule()).setCompilerOutputPathForTests(toUrl(test).getUrl());
   }
 
   private Url toUrl(String path) {
