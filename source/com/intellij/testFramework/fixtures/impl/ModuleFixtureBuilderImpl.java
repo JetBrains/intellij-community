@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -124,7 +125,7 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
     if (myOutputPath != null) {
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
       assert virtualFile != null : "cannot find output path: " + myOutputPath;
-      rootModel.setCompilerOutputPath(virtualFile);
+      CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPath(virtualFile);
     }
     rootModel.commit();
   }

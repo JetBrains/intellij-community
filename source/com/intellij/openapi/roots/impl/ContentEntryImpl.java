@@ -121,9 +121,10 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
     result.addAll(myExcludedOutputFolders);
     if (myRootModel.isExcludeOutput()) {
-      if (!myRootModel.isCompilerOutputPathInherited()) {
-        addExcludeForOutputPath(myRootModel.myCompilerOutputPointer, result);
-        addExcludeForOutputPath(myRootModel.myCompilerOutputPathForTestsPointer, result);
+      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(myRootModel.getModule());
+      if (!compilerModuleExtension.isCompilerOutputPathInherited()) {
+        addExcludeForOutputPath(compilerModuleExtension.getCompilerOutputPointer(), result);
+        addExcludeForOutputPath(compilerModuleExtension.getCompilerOutputForTestsPointer(), result);
       } else {
         CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myRootModel.getModule().getProject());
         final String outputUrl = compilerProjectExtension.getCompilerOutputUrl();

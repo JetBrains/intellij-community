@@ -21,7 +21,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -94,19 +94,19 @@ public class CompilerPaths {
    */
   @Nullable
   public static VirtualFile getModuleOutputDirectory(final Module module, boolean forTestClasses) {
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     VirtualFile outPath;
     if (forTestClasses) {
-      final VirtualFile path = moduleRootManager.getCompilerOutputPathForTests();
+      final VirtualFile path = compilerModuleExtension.getCompilerOutputPathForTests();
       if (path != null) {
         outPath = path;
       }
       else {
-        outPath = moduleRootManager.getCompilerOutputPath();
+        outPath = compilerModuleExtension.getCompilerOutputPath();
       }
     }
     else {
-      outPath = moduleRootManager.getCompilerOutputPath();
+      outPath = compilerModuleExtension.getCompilerOutputPath();
     }
     if (outPath == null) {
       return null;
@@ -124,31 +124,30 @@ public class CompilerPaths {
    */
   @Nullable
   public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     final String outPathUrl;
     final Application application = ApplicationManager.getApplication();
     if (forTestClasses) {
       if (application.isDispatchThread()) {
-        final String url = moduleRootManager.getCompilerOutputPathForTestsUrl();
-        outPathUrl = (url != null) ? url : moduleRootManager.getCompilerOutputPathUrl();
+        final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests();
+        outPathUrl = (url != null) ? url : CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
           public String compute() {
-            final String url = moduleRootManager.getCompilerOutputPathForTestsUrl();
-            return (url != null) ? url : moduleRootManager.getCompilerOutputPathUrl();
+            final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests();
+            return (url != null) ? url : CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
           }
         });
       }
     }
     else { // for ordinary classes
       if (application.isDispatchThread()) {
-        outPathUrl = moduleRootManager.getCompilerOutputPathUrl();
+        outPathUrl = CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
       }
       else {
         outPathUrl = application.runReadAction(new Computable<String>() {
           public String compute() {
-            return moduleRootManager.getCompilerOutputPathUrl();
+            return CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
           }
         });
       }

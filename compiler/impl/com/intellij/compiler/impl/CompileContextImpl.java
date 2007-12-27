@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -73,7 +74,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     final Set<VirtualFile> productionOutputDirs = new java.util.HashSet<VirtualFile>();
 
     for (Module module : allModules) {
-      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+      final CompilerModuleExtension manager = CompilerModuleExtension.getInstance(module);
       final VirtualFile output = manager.getCompilerOutputPath();
       if (output != null && output.isValid()) {
         allDirs.add(output);

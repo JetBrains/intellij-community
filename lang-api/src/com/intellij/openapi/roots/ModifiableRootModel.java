@@ -20,9 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Model of roots that should be used by clients to modify module roots.
@@ -31,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
  * @see ModuleRootManager#getModifiableModel()
  */
 public interface ModifiableRootModel extends ModuleRootModel {
-  @NonNls String PRODUCTION = "production";
-  @NonNls String TEST = "test";
 
   Project getProject();
 
@@ -126,33 +122,9 @@ public interface ModifiableRootModel extends ModuleRootModel {
   @NotNull
   LibraryTable getModuleLibraryTable();
 
-  /**
-   * Makes this module inheriting compiler output from its project
-   * @param inherit wether or not compiler output is inherited
-   */
-  void inheritCompilerOutputPath(boolean inherit);
-
-  /**
-   * @deprecated Use {@link #getCompilerOutputPathUrl()} instead
-   */
-  @Nullable
-  String getCompilerOutputUrl();
-
-  /**
-   * @deprecated Use {@link #getCompilerOutputPathForTestsUrl()} instead
-   */
-  @Nullable
-  String getCompilerOutputUrlForTests();
 
   @NotNull VirtualFile[] getOrderedRoots(OrderRootType type);
 
-  void setCompilerOutputPath(VirtualFile file);
-
-  void setCompilerOutputPath(String url);
-
-  void setCompilerOutputPathForTests(VirtualFile file);
-
-  void setCompilerOutputPathForTests(String url);
 
   void setExplodedDirectory(VirtualFile file);
 

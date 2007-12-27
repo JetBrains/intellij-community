@@ -6,18 +6,18 @@ package com.intellij.compiler.make;
 
 import com.intellij.compiler.SymbolTable;
 import com.intellij.compiler.classParsing.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -268,7 +268,7 @@ public class MakeUtil {
   public static String getModuleOutputDirPath(final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       public String compute() {
-        final String url = ModuleRootManager.getInstance(module).getCompilerOutputPathUrl();
+        final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
         if (url == null) return null;
         return VfsUtil.urlToPath(url);
       }

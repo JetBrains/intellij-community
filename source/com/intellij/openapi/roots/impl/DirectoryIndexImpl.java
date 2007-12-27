@@ -384,6 +384,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new THashMap<VirtualFile, Set<VirtualFile>>();
     for (Module module : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       ContentEntry[] contentEntries = rootManager.getContentEntries();
       for (ContentEntry contentEntry : contentEntries) {
         VirtualFile contentRoot = contentEntry.getFile();
@@ -393,7 +394,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         for (VirtualFile excludeRoot : excludeRoots) {
           // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
           if (!VfsUtil.isAncestor(contentRoot, excludeRoot, false)) {
-            if (rootManager.getCompilerOutputPath() == excludeRoot || rootManager.getCompilerOutputPathForTests() == excludeRoot) {
+            if (compilerModuleExtension.getCompilerOutputPath() == excludeRoot || compilerModuleExtension.getCompilerOutputPathForTests() == excludeRoot) {
               putForFileAndAllAncestors(excludeRootsMap, excludeRoot, excludeRoot);
             }
           }
@@ -886,9 +887,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
 
       for (Module m : getModules()) {
-        ModuleRootManager rm = ModuleRootManager.getInstance(m);
-        if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPath(), rm.getCompilerOutputPathUrl())) return true;
-        if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputPathForTestsUrl())) return true;
+        CompilerModuleExtension rm = CompilerModuleExtension.getInstance(m);
+        if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPath(), rm.getCompilerOutputUrl())) return true;
+        if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputUrlForTests())) return true;
       }
       return false;
     }

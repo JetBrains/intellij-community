@@ -51,11 +51,6 @@ public interface ModuleRootModel {
   @NotNull
   OrderEntry[] getOrderEntries();
 
-  /**
-   * Returns <code>true</code> if compiler output for this module is inherited from a project
-   * @return true if compiler output path is inherited, false otherwise
-   */
-  boolean isCompilerOutputPathInherited();
 
   /**
    * Returns an array of content roots from all content entries. A helper method.
@@ -104,37 +99,6 @@ public interface ModuleRootModel {
    * @see #getContentEntries()
    */
   @NotNull String[] getSourceRootUrls();
-
-  /**
-   * Returns a compiler output path for production sources of the module, if it is valid.
-   *
-   * @return the compile output path, or null if one is not valid.
-   */
-  @Nullable
-  VirtualFile getCompilerOutputPath();
-
-  /**
-   * Returns a compiler output path url for production sources of the module.
-   *
-   * @return the compiler output path URL, or null if it has never been set.
-   */
-  @Nullable
-  String getCompilerOutputPathUrl();
-
-  /**
-   * Returns a compiler output path for test sources of the module, if it is valid.
-   *
-   * @return the compile output path for the test sources, or null if one is not valid.
-   */
-  @Nullable
-  VirtualFile getCompilerOutputPathForTests();
-
-  /**
-   * Returns a compiler output path url for test sources of the module.
-   *
-   * @return the compiler output path URL, or null if it has never been set.
-   */
-  String getCompilerOutputPathForTestsUrl();
 
   /**
    * Returns an exploded directory path of the module, if it is valid.

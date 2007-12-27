@@ -210,23 +210,24 @@ public final class ContentEntryEditor implements ContentRootPanel.ActionCallback
   }
 
   public boolean isCompilerOutput(VirtualFile file) {
-    final VirtualFile compilerOutputPath = myRootModel.getCompilerOutputPath();
+    final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(myRootModel.getModule());
+    final VirtualFile compilerOutputPath = compilerModuleExtension.getCompilerOutputPath();
     if (compilerOutputPath != null) {
       if (compilerOutputPath.equals(file)) {
         return true;
       }
     }
 
-    final VirtualFile compilerOutputPathForTests = myRootModel.getCompilerOutputPathForTests();
+    final VirtualFile compilerOutputPathForTests = compilerModuleExtension.getCompilerOutputPathForTests();
     if (compilerOutputPathForTests != null) {
       if (compilerOutputPathForTests.equals(file)) {
         return true;
       }
     }
 
-    if (myRootModel.isCompilerOutputPathInherited()){
+    if (compilerModuleExtension.isCompilerOutputPathInherited()) {
       final VirtualFile compilerOutput = CompilerProjectExtension.getInstance(myRootModel.getModule().getProject()).getCompilerOutput();
-      if (Comparing.equal(compilerOutput, file)){
+      if (Comparing.equal(compilerOutput, file)) {
         return true;
       }
     }

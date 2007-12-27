@@ -18,7 +18,7 @@ package com.intellij.openapi.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +85,7 @@ public class DummyCompileContext implements CompileContext {
   public VirtualFile getModuleOutputDirectory(final Module module) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       public VirtualFile compute() {
-        return ModuleRootManager.getInstance(module).getCompilerOutputPath();
+        return CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
       }
     });
   }

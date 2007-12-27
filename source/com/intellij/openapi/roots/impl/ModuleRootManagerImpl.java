@@ -103,25 +103,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     myIsDisposed = true;
   }
 
-  public VirtualFile getCompilerOutputPath() {
-    return myRootModel.getCompilerOutputPath();
-  }
 
-  public String getCompilerOutputPathUrl() {
-    return myRootModel.getCompilerOutputUrl();
-  }
-
-  public VirtualFile getCompilerOutputPathForTests() {
-    return myRootModel.getCompilerOutputPathForTests();
-  }
-
-  public String getCompilerOutputPathForTestsUrl() {
-    return myRootModel.getCompilerOutputUrlForTests();
-  }
-
-  public boolean isCompilerOutputPathInherited() {
-    return myRootModel.isCompilerOutputPathInherited();
-  }
 
   public VirtualFile getExplodedDirectory() {
     return myRootModel.getExplodedDirectory();

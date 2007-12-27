@@ -18,8 +18,9 @@ package com.intellij.compiler.ant;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -49,11 +50,12 @@ public class ModuleChunk {
 
   @Nullable
   public String getOutputDirUrl() {
-    return ModuleRootManager.getInstance(myMainModule).getCompilerOutputPathUrl();
+    return CompilerModuleExtension.getInstance(myMainModule).getCompilerOutputUrl();
   }
 
+  @Nullable
   public String getTestsOutputDirUrl() {
-    return ModuleRootManager.getInstance(myMainModule).getCompilerOutputPathForTestsUrl();
+    return CompilerModuleExtension.getInstance(myMainModule).getCompilerOutputUrlForTests();
   }
 
   public boolean isSavePathsRelative() {

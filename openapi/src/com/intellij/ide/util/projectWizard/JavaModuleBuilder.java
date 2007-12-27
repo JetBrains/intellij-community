@@ -19,10 +19,7 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Pair;
@@ -141,10 +138,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       catch (IOException e) {
         canonicalPath = myCompilerOutputPath;
       }
-      rootModel.setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
+      CompilerModuleExtension.getInstance(rootModel.getModule())
+        .setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
     }
     else {
-      rootModel.inheritCompilerOutputPath(true);
+      CompilerModuleExtension.getInstance(rootModel.getModule()).inheritCompilerOutputPath(true);
     }
 
     LibraryTable libraryTable = rootModel.getModuleLibraryTable();

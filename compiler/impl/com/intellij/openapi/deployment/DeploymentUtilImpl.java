@@ -12,10 +12,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
@@ -85,7 +82,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     return ApplicationManager.getApplication().runReadAction(new Computable<File>() {
       @Nullable
       public File compute() {
-        final String url = ModuleRootManager.getInstance(module).getCompilerOutputPathUrl();
+        final String url = CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
         if (url == null) return null;
         return new File(PathUtil.toPresentableUrl(url));
       }

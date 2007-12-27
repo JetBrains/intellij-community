@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Chunk;
@@ -72,12 +72,11 @@ public class GenerationOptionsImpl extends GenerationOptions {
 
       final Module[] modules = chunk.getModules();
       for (final Module module : modules) {
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final String outputPathUrl = rootManager.getCompilerOutputPathUrl();
+        final String outputPathUrl = CompilerModuleExtension.getInstance(module).getCompilerOutputUrl();
         if (outputPathUrl != null) {
           map.put(outputPathUrl, outputPathRef);
         }
-        final String outputPathForTestsUrl = rootManager.getCompilerOutputPathForTestsUrl();
+        final String outputPathForTestsUrl = CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests();
         if (outputPathForTestsUrl != null) {
           if (outputPathUrl == null || !outputPathForTestsUrl.equals(outputPathUrl)) {
             map.put(outputPathForTestsUrl, testsOutputPathRef);

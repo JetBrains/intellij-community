@@ -7,8 +7,8 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -87,14 +87,12 @@ public class CompilerProjectExtensionImpl extends CompilerProjectExtension {
     final Set<String> rootsToWatch = new HashSet<String>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-
-      final String compilerOutputPath = ProjectRootManagerImpl.extractLocalPath(moduleRootManager.getCompilerOutputPathUrl());
+      final String compilerOutputPath = ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrl());
       if (compilerOutputPath.length() > 0) {
         rootsToWatch.add(compilerOutputPath);
       }
       final String compilerOutputPathForTests =
-        ProjectRootManagerImpl.extractLocalPath(moduleRootManager.getCompilerOutputPathForTestsUrl());
+        ProjectRootManagerImpl.extractLocalPath(CompilerModuleExtension.getInstance(module).getCompilerOutputUrlForTests());
       if (compilerOutputPathForTests.length() > 0) {
         rootsToWatch.add(compilerOutputPathForTests);
       }

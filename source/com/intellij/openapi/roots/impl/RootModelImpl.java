@@ -41,12 +41,9 @@ public class RootModelImpl implements ModifiableRootModel {
   private boolean myWritable;
   private VirtualFilePointerListener myVirtualFilePointerListener;
   private VirtualFilePointerManager myFilePointerManager;
-  VirtualFilePointer myCompilerOutputPointer;
-  VirtualFilePointer myCompilerOutputPathForTestsPointer;
   VirtualFilePointer myExplodedDirectoryPointer;
 
-  private String myCompilerOutput;
-  private String myCompilerOutputForTests;
+
   private String myExplodedDirectory;
 
   ArrayList<RootModelComponentBase> myComponents = new ArrayList<RootModelComponentBase>();
@@ -55,10 +52,8 @@ public class RootModelImpl implements ModifiableRootModel {
   private boolean myExcludeOutput;
   private boolean myExcludeExploded;
 
-  private boolean myInheritedCompilerOutput;
 
-  @NonNls private static final String OUTPUT_TAG = "output";
-  @NonNls private static final String TEST_OUTPUT_TAG = "output-test";
+
   @NonNls private static final String EXPLODED_TAG = "exploded";
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String URL_ATTR = ATTRIBUTE_URL;
@@ -92,15 +87,6 @@ public class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String PROPERTIES_CHILD_NAME = "orderEntryProperties";
   @NonNls private static final String ROOT_ELEMENT = "root";
   private ProjectRootManagerImpl myProjectRootManager;
-  @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
-
-  public String getCompilerOutputPathUrl() {
-    return getCompilerOutputUrl();
-  }
-
-  public String getCompilerOutputPathForTestsUrl() {
-    return getCompilerOutputUrlForTests();
-  }
 
   RootModelImpl(ModuleRootManagerImpl moduleRootManager,
                 ProjectRootManagerImpl projectRootManager,
@@ -115,7 +101,6 @@ public class RootModelImpl implements ModifiableRootModel {
     addSourceOrderEntries();
     myOrderEntryProperties = new OrderEntryProperties();
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
-    myInheritedCompilerOutput = false;
   }
 
   private void addSourceOrderEntries() {
@@ -159,14 +144,6 @@ public class RootModelImpl implements ModifiableRootModel {
     myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
     myExcludeExploded = element.getChild(EXCLUDE_EXPLODED_TAG) != null;
 
-    final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
-    myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
-
-    myCompilerOutputPointer = getOutputPathValue(element, OUTPUT_TAG, !myInheritedCompilerOutput);
-    myCompilerOutput = getOutputPathValue(element, OUTPUT_TAG);
-
-    myCompilerOutputPathForTestsPointer = getOutputPathValue(element, TEST_OUTPUT_TAG, !myInheritedCompilerOutput);
-    myCompilerOutputForTests = getOutputPathValue(element, TEST_OUTPUT_TAG);
 
     myExplodedDirectoryPointer = getOutputPathValue(element, EXPLODED_TAG, true);
     myExplodedDirectory = getOutputPathValue(element, EXCLUDE_EXPLODED_TAG);
@@ -214,18 +191,6 @@ public class RootModelImpl implements ModifiableRootModel {
     myWritable = writable;
     LOG.assertTrue(!writable || virtualFilePointerListener == null);
     myVirtualFilePointerListener = virtualFilePointerListener;
-
-    myInheritedCompilerOutput = rootModel.myInheritedCompilerOutput;
-
-    if (rootModel.myCompilerOutputPointer != null) {
-      myCompilerOutputPointer = pointerFactory().duplicate(rootModel.myCompilerOutputPointer);
-    }
-    myCompilerOutput = rootModel.myCompilerOutput;
-
-    if (rootModel.myCompilerOutputPathForTestsPointer != null) {
-      myCompilerOutputPathForTestsPointer = pointerFactory().duplicate(rootModel.myCompilerOutputPathForTestsPointer);
-    }
-    myCompilerOutputForTests = rootModel.myCompilerOutputForTests;
 
     if (rootModel.myExplodedDirectoryPointer != null) {
       myExplodedDirectoryPointer = pointerFactory().duplicate(rootModel.myExplodedDirectoryPointer);
@@ -521,36 +486,15 @@ public class RootModelImpl implements ModifiableRootModel {
     return e;
   }
 
-  private VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
-    final Element outputPathChild = element.getChild(tag);
-    VirtualFilePointer vptr = null;
-    if (outputPathChild != null && createPointer) {
-      String outputPath = outputPathChild.getAttributeValue(ATTRIBUTE_URL);
-      vptr = pointerFactory().create(outputPath);
-    }
-    return vptr;
-  }
 
-  private String getOutputPathValue(Element element, String tag) {
-    final Element outputPathChild = element.getChild(tag);
-    if (outputPathChild != null) {
-      return outputPathChild.getAttributeValue(ATTRIBUTE_URL);
-    }
-    return null;
-  }
 
   public void writeExternal(Element element) throws WriteExternalException {
     for (ModuleExtension extension : Extensions
       .getExtensions(ModuleExtension.EP_NAME, myModuleRootManager.getModule())) {
       extension.writeExternal(element);
     }
-    element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));
 
-    if (myCompilerOutput!= null) {
-      final Element pathElement = new Element(OUTPUT_TAG);
-      pathElement.setAttribute(URL_ATTR, myCompilerOutput);
-      element.addContent(pathElement);
-    }
+
 
     if (myExcludeOutput) {
       element.addContent(new Element(EXCLUDE_OUTPUT_TAG));
@@ -566,11 +510,7 @@ public class RootModelImpl implements ModifiableRootModel {
       element.addContent(new Element(EXCLUDE_EXPLODED_TAG));
     }
 
-    if (myCompilerOutputForTests != null) {
-      final Element pathElement = new Element(TEST_OUTPUT_TAG);
-      pathElement.setAttribute(ATTRIBUTE_URL, myCompilerOutputForTests);
-      element.addContent(pathElement);
-    }
+
 
     for (ContentEntry contentEntry : myContent) {
       if (contentEntry instanceof ContentEntryImpl) {
@@ -631,11 +571,6 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public void inheritCompilerOutputPath(boolean inherit) {
-    assertWritable();
-    myInheritedCompilerOutput = inherit;    
-  }
-
   public ProjectJdk getJdk() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -643,10 +578,6 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
     return null;
-  }
-
-  public boolean isCompilerOutputPathInherited() {
-    return myInheritedCompilerOutput;
   }
 
   public void assertWritable() {
@@ -673,33 +604,6 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public VirtualFile getCompilerOutputPath() {
-    if (myInheritedCompilerOutput){
-      final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
-      if (projectOutputPath == null) return null;
-      return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getModule().getName());
-    }
-    if (myCompilerOutputPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPointer.getFile();
-    }
-  }
-
-  public VirtualFile getCompilerOutputPathForTests() {
-    if (myInheritedCompilerOutput){
-      final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
-      if (projectOutputPath == null) return null;
-      return projectOutputPath.findFileByRelativePath(TEST + "/" + getModule().getName());
-    }
-    if (myCompilerOutputPathForTestsPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPathForTestsPointer.getFile();
-    }
-  }
 
   public VirtualFile getExplodedDirectory() {
     if (myExplodedDirectoryPointer == null) {
@@ -710,49 +614,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public void setCompilerOutputPath(VirtualFile file) {
-    assertWritable();
-    if (file != null) {
-      myCompilerOutputPointer = pointerFactory().create(file);
-      myCompilerOutput = file.getUrl();
-    }
-    else {
-      myCompilerOutputPointer = null;
-    }
-  }
 
-  public void setCompilerOutputPath(String url) {
-    assertWritable();
-    if (url != null) {
-      myCompilerOutputPointer = pointerFactory().create(url);
-      myCompilerOutput = url;
-    }
-    else {
-      myCompilerOutputPointer = null;
-    }
-  }
-
-  public void setCompilerOutputPathForTests(VirtualFile file) {
-    assertWritable();
-    if (file != null) {
-      myCompilerOutputPathForTestsPointer = pointerFactory().create(file);
-      myCompilerOutputForTests = file.getUrl();
-    }
-    else {
-      myCompilerOutputPathForTestsPointer = null;
-    }
-  }
-
-  public void setCompilerOutputPathForTests(String url) {
-    assertWritable();
-    if (url != null) {
-      myCompilerOutputPathForTestsPointer = pointerFactory().create(url);
-      myCompilerOutputForTests = url;
-    }
-    else {
-      myCompilerOutputPathForTestsPointer = null;
-    }
-  }
 
   public void setExplodedDirectory(VirtualFile file) {
     assertWritable();
@@ -785,35 +647,7 @@ public class RootModelImpl implements ModifiableRootModel {
     return myVirtualFilePointerListener;
   }
 
-  @Nullable
-  public String getCompilerOutputUrl() {
-    if (myInheritedCompilerOutput){
-      final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
-      if (projectOutputPath == null) return null;
-      return projectOutputPath + "/" + PRODUCTION + "/" + getModule().getName();
-    }
-    if (myCompilerOutputPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPointer.getUrl();
-    }
-  }
 
-  @Nullable
-  public String getCompilerOutputUrlForTests() {
-    if (myInheritedCompilerOutput){
-      final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
-      if (projectOutputPath == null) return null;
-      return projectOutputPath + "/" + TEST + "/" + getModule().getName();
-    }
-    if (myCompilerOutputPathForTestsPointer == null) {
-      return null;
-    }
-    else {
-      return myCompilerOutputPathForTestsPointer.getUrl();
-    }
-  }
 
   public String getExplodedDirectoryUrl() {
     if (myExplodedDirectoryPointer == null) {
@@ -835,18 +669,6 @@ public class RootModelImpl implements ModifiableRootModel {
     if (!myWritable) return false;
 //    if (myJdkChanged) return true;
 
-    if (myInheritedCompilerOutput != getSourceModel().myInheritedCompilerOutput) {
-      return true;
-    }
-
-    if (!myInheritedCompilerOutput) {
-      if (!vptrEqual(myCompilerOutputPointer, getSourceModel().myCompilerOutputPointer)) {
-        return true;
-      }
-      if (!vptrEqual(myCompilerOutputPathForTestsPointer, getSourceModel().myCompilerOutputPathForTestsPointer)) {
-        return true;
-      }
-    }
     if (!vptrEqual(myExplodedDirectoryPointer, getSourceModel().myExplodedDirectoryPointer)) {
       return true;
     }
@@ -1167,5 +989,26 @@ public class RootModelImpl implements ModifiableRootModel {
       container.add(url);
     }
   }
+
+  @Nullable
+  protected VirtualFilePointer getOutputPathValue(Element element, String tag, final boolean createPointer) {
+    final Element outputPathChild = element.getChild(tag);
+    VirtualFilePointer vptr = null;
+    if (outputPathChild != null && createPointer) {
+      String outputPath = outputPathChild.getAttributeValue(ATTRIBUTE_URL);
+      vptr = pointerFactory().create(outputPath);
+    }
+    return vptr;
+  }
+
+  @Nullable
+  protected String getOutputPathValue(Element element, String tag) {
+    final Element outputPathChild = element.getChild(tag);
+    if (outputPathChild != null) {
+      return outputPathChild.getAttributeValue(ATTRIBUTE_URL);
+    }
+    return null;
+  }
+
 }
 

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,14 +91,13 @@ public class CompilerPathsEx extends CompilerPaths {
   public static String[] getOutputPaths(Module[] modules) {
     final Set<String> outputPaths = new OrderedSet<String>((TObjectHashingStrategy<String>)TObjectHashingStrategy.CANONICAL);
     for (Module module : modules) {
-      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-
-      String outputPathUrl = moduleRootManager.getCompilerOutputPathUrl();
+      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+      String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
       if (outputPathUrl != null) {
         outputPaths.add(VirtualFileManager.extractPath(outputPathUrl).replace('/', File.separatorChar));
       }
 
-      String outputPathForTestsUrl = moduleRootManager.getCompilerOutputPathForTestsUrl();
+      String outputPathForTestsUrl = compilerModuleExtension.getCompilerOutputUrlForTests();
       if (outputPathForTestsUrl != null) {
         outputPaths.add(VirtualFileManager.extractPath(outputPathForTestsUrl).replace('/', File.separatorChar));
       }
