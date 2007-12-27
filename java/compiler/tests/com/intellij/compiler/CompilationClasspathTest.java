@@ -7,6 +7,7 @@ package com.intellij.compiler;
 import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -90,9 +91,9 @@ public class CompilationClasspathTest extends CompilerTestCase{
           else {
             myTestsOutput = myClassesDir;
           }
-          rootModel.setCompilerOutputPathForTests(myTestsOutput);
+          CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPathForTests(myTestsOutput);
           if (removeProductionOutput) {
-            rootModel.setCompilerOutputPath((String)null);
+            CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPath((String)null);
           }
           rootModel.commit();
         }

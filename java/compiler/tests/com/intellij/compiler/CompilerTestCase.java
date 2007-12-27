@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.JDOMUtil;
@@ -402,7 +399,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     // configure source and output path
     final ContentEntry contentEntry = rootModel.addContentEntry(myModuleRoot);
     contentEntry.addSourceFolder(mySourceDir, false);
-    rootModel.setCompilerOutputPath(myClassesDir);
+    CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPath(myClassesDir);
     rootModel.setExcludeOutput(shouldExcludeOutputFromProject());
 
     // Mock JDK is used by default. Uncomment in order to use 'real' JDK if needed
