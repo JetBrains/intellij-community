@@ -26,7 +26,7 @@ public abstract class RootModelComponentBase {
 
   }
 
-  RootModelImpl getRootModel() {
+  public RootModelImpl getRootModel() {
     return myRootModel;
   }
 

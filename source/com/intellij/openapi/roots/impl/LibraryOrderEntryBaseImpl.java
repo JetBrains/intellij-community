@@ -85,6 +85,14 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
     return myRootContainers.get(type).getUrls();
   }
 
+  public VirtualFile[] getRootFiles(OrderRootType type) {
+    return myRootContainers.get(type).getDirectories();
+  }
+
+  public String[] getRootUrls(OrderRootType type) {
+    return myRootContainers.get(type).getUrls();
+  }
+
   public final Module getOwnerModule() {
     return myRootModel.getModule();
   }

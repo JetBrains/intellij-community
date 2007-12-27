@@ -273,7 +273,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
     return cloned;
   }
 
-  RootModelImpl getRootModel() {
+  public RootModelImpl getRootModel() {
     return myRootModel;
   }
 

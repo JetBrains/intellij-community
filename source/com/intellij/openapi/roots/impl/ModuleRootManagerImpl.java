@@ -344,11 +344,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
       return getUrls(OrderRootType.CLASSES_AND_OUTPUT, processed);
     }
-    else if (AnnotationOrderRootType.INSTANCE.equals(rootType)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-    LOG.error("Unknown root type: " + rootType);
-    return null;
+    return ArrayUtil.EMPTY_STRING_ARRAY;
 
     /*
     if (OrderRootType.SOURCES.equals(rootType)) {
@@ -396,12 +392,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       else if (JavadocOrderRootType.INSTANCE.equals(rootType)) {
         return getFiles(JavadocOrderRootType.INSTANCE, processed);
       }
-      else if (AnnotationOrderRootType.INSTANCE.equals(rootType)) {
-        return VirtualFile.EMPTY_ARRAY;
-      }
       else {
-        LOG.error("Unknown root type: " + rootType);
-        return null;
+        return VirtualFile.EMPTY_ARRAY;
       }
       final VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       for (String url : result) {

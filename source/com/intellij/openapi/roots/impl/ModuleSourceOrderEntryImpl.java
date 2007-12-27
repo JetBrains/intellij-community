@@ -76,9 +76,6 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
-    if (AnnotationOrderRootType.INSTANCE.equals(type)) {
-      return myRootModel.getRootPaths(AnnotationOrderRootType.INSTANCE);
-    }
     if (OrderRootType.SOURCES.equals(type)) {
       return myRootModel.getSourceRoots();
     }
@@ -92,14 +89,11 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
       }
       return result.toArray(new VirtualFile[result.size()]);
     }
-    return VirtualFile.EMPTY_ARRAY;
+    return myRootModel.getRootPaths(type);
   }
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
-    if (AnnotationOrderRootType.INSTANCE.equals(type)) {
-      return myRootModel.getRootUrls(AnnotationOrderRootType.INSTANCE);
-    }
     final ArrayList<String> result = new ArrayList<String>();
     if (OrderRootType.SOURCES.equals(type)) {
       final ContentEntry[] content = myRootModel.getContentEntries();
@@ -110,6 +104,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
           result.add(url);
         }
       }
+      return result.toArray(new String[result.size()]);
     }
     else if (OrderRootType.CLASSES_AND_OUTPUT.equals(type) || OrderRootType.COMPILATION_CLASSES.equals(type)) {
       String outputRoot = myRootModel.getCompilerOutputPathUrl();
@@ -118,9 +113,11 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
       if (outputPathForTests != null && !outputPathForTests.equals(outputRoot)) {
         result.add(outputPathForTests);
       }
+      return result.toArray(new String[result.size()]);
     }
-    return result.toArray(new String[result.size()]);
-
+    else {
+      return myRootModel.getRootUrls(type);
+    }
   }
 
   public OrderEntry cloneEntry(RootModelImpl rootModel,

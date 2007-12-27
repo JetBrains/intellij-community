@@ -20,4 +20,5 @@ package com.intellij.openapi.roots;
  *  @author dsl
  */
 public interface ModuleSourceOrderEntry extends OrderEntry {
+  ModuleRootModel getRootModel();
 }

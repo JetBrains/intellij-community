@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,4 +31,7 @@ public interface LibraryOrderEntry extends ExportableOrderEntry {
   String getLibraryLevel();
 
   String getLibraryName();
+
+  VirtualFile[] getRootFiles(OrderRootType type);
+  String[] getRootUrls(OrderRootType type);
 }
