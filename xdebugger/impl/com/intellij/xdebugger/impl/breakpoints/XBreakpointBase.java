@@ -1,7 +1,9 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -74,6 +76,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   public XSourcePosition getSourcePosition() {
     return null;
+  }
+
+  public Navigatable getNavigatable() {
+    XSourcePosition position = getSourcePosition();
+    return position != null ? new OpenFileDescriptor(getProject(), position.getFile(), position.getOffset()) : null;
   }
 
   public boolean isEnabled() {

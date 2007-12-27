@@ -16,6 +16,8 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.ui.DebuggerExpressionComboBox;
+import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +42,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
 import com.sun.jdi.Field;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectReference;
@@ -75,7 +78,7 @@ public class BreakpointManager implements JDOMExternalizable {
   private StartupManager myStartupManager;
 
   private final DocumentListener myDocumentListener = new DocumentAdapter() {
-    Alarm myUpdateAlarm = new Alarm();
+    private final Alarm myUpdateAlarm = new Alarm();
 
     public void documentChanged(final DocumentEvent e) {
       final Document document = e.getDocument();
@@ -323,11 +326,25 @@ public class BreakpointManager implements JDOMExternalizable {
     eventMulticaster.removeDocumentListener(myDocumentListener);
   }
 
-  public DialogWrapper createConfigurationDialog(Breakpoint initialBreakpoint, String selectComponent) {
+  public DialogWrapper createConfigurationDialog(@Nullable Breakpoint initialBreakpoint, @Nullable String selectComponent) {
     if (myBreakpointsConfigurable == null) {
       myBreakpointsConfigurable = new BreakpointsConfigurationDialogFactory(myProject);
     }
-    return myBreakpointsConfigurable.createDialog(initialBreakpoint, selectComponent);
+    BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog dialog = myBreakpointsConfigurable.createDialog(initialBreakpoint);
+    if (initialBreakpoint != null && selectComponent != null) {
+      final JComponent component = ((BreakpointPanel)dialog.getSelectedPanel()).getControl(selectComponent);
+      dialog.setPreferredFocusedComponent(component, new Runnable() {
+        public void run() {
+          if (component instanceof DebuggerExpressionComboBox) {
+            ((DebuggerExpressionComboBox)component).selectAll();
+          }
+          else if (component instanceof DebuggerExpressionTextField) {
+            ((DebuggerExpressionTextField)component).selectAll();
+          }
+        }
+      });
+    }
+    return dialog;
   }
 
   @Nullable
@@ -351,6 +368,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return breakpoint;
   }
 
+  @Nullable
   public FieldBreakpoint addFieldBreakpoint(Field field, ObjectReference object) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, field, object);
@@ -360,6 +378,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return fieldBreakpoint;
   }
 
+  @Nullable
   public FieldBreakpoint addFieldBreakpoint(Document document, int offset) {
     PsiField field = FieldBreakpoint.findField(myProject, document, offset);
     if (field == null) {
@@ -375,6 +394,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return addFieldBreakpoint(document, line, field.getName());
   }
 
+  @Nullable
   public FieldBreakpoint addFieldBreakpoint(Document document, int lineIndex, String fieldName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     FieldBreakpoint fieldBreakpoint = FieldBreakpoint.create(myProject, document, lineIndex, fieldName);
@@ -395,6 +415,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return breakpoint;
   }
 
+  @Nullable
   public MethodBreakpoint addMethodBreakpoint(Document document, int lineIndex) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     MethodBreakpoint breakpoint = MethodBreakpoint.create(myProject, document, lineIndex);
@@ -405,6 +426,7 @@ public class BreakpointManager implements JDOMExternalizable {
     return breakpoint;
   }
 
+  @Nullable
   public WildcardMethodBreakpoint addMethodBreakpoint(String classPattern, String methodName) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     WildcardMethodBreakpoint breakpoint = WildcardMethodBreakpoint.create(myProject, classPattern, methodName);

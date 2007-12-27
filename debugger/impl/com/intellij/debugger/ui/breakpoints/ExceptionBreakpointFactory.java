@@ -16,7 +16,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
@@ -43,8 +42,9 @@ public class ExceptionBreakpointFactory extends BreakpointFactory{
 
   public BreakpointPanel createBreakpointPanel(final Project project, DialogWrapper parentDialog) {
     BreakpointPanel panel = new BreakpointPanel(project, new ExceptionBreakpointPropertiesPanel(project), createActions(project), getBreakpointCategory(), DebuggerBundle.message("exception.breakpoints.tab.title"), HelpID.EXCEPTION_BREAKPOINTS) {
-      public void setBreakpoints(Breakpoint[] breakpoints) {
-        super.setBreakpoints(breakpoints);
+      public void resetBreakpoints() {
+        super.resetBreakpoints();
+        Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
         final AnyExceptionBreakpoint anyExceptionBreakpoint = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
         boolean found = false;
         for (Breakpoint breakpoint : breakpoints) {

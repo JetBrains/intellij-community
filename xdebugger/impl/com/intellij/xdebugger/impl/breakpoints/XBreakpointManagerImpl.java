@@ -104,7 +104,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   @NotNull
-  public <P extends XBreakpointProperties, B extends XBreakpoint<P>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,P> type) {
+  public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull final XBreakpointType<B,?> type) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Collection<? extends XBreakpointBase<?,?,?>> breakpoints = myBreakpoints.get(type);
     if (breakpoints == null) {

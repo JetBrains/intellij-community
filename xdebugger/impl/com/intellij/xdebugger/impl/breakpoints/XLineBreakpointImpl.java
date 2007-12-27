@@ -9,9 +9,9 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -61,9 +61,14 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Nullable
   public Document getDocument() {
-    VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
+    VirtualFile file = getFile();
     if (file == null) return null;
     return FileDocumentManager.getInstance().getDocument(file);
+  }
+
+  @Nullable
+  private VirtualFile getFile() {
+    return VirtualFileManager.getInstance().findFileByUrl(getFileUrl());
   }
 
   private void setupGutterRenderer(final RangeHighlighter highlighter) {
@@ -94,7 +99,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @NotNull
   public XSourcePosition getSourcePosition() {
-    return new XSourcePositionImpl();
+    return new XSourcePositionImpl(getFile(), getLine());
   }
 
   public boolean isValid() {
@@ -225,6 +230,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
 
     public void actionPerformed(final AnActionEvent e) {
+      
     }
   }
 }

@@ -17,6 +17,7 @@
 package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,4 +38,7 @@ public interface XBreakpoint<P extends XBreakpointProperties> {
 
   @Nullable
   XSourcePosition getSourcePosition();
+
+  @Nullable
+  Navigatable getNavigatable();
 }

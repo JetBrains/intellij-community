@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="resources" />
     <orderEntry type="module" module-name="resources_eng" />
     <orderEntry type="module" module-name="xdebugger-openapi" />
+    <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntryProperties />
   </component>
   <component name="copyright">

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
-import com.intellij.util.EventDispatcher;
+import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,20 +22,19 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.EventListener;
+import java.util.List;
 
 /**
  * @author Jeka
  */
-public class BreakpointPanel {
+public class BreakpointPanel extends AbstractBreakpointPanel<Breakpoint> {
   private final BreakpointPropertiesPanel myPropertiesPanel;
   private final BreakpointPanelAction[] myActions;
   private final Key<? extends Breakpoint> myBreakpointCategory;
-  private final String myDisplayName;
-  private final String myHelpID;
   private Breakpoint myCurrentViewableBreakpoint;
-  private java.util.List<Runnable> myDisposeActions = new ArrayList<Runnable>();
+  private List<Runnable> myDisposeActions = new ArrayList<Runnable>();
 
+  private final Project myProject;
   private JPanel myPanel;
   private JPanel myBreakPointsPanel;
   private JPanel myTablePlace;
@@ -43,7 +42,6 @@ public class BreakpointPanel {
   private BreakpointTable myTable;
   private BreakpointTree myTree;
   private JPanel myButtonsPanel;
-  private EventDispatcher<ChangesListener> myEventDispatcher = EventDispatcher.create(ChangesListener.class);
   private String myCurrentViewId = TABLE_VIEW;
 
   private static final @NonNls String PROPERTIES_STUB = "STUB";
@@ -52,64 +50,17 @@ public class BreakpointPanel {
   public static final @NonNls String TREE_VIEW = "TREE";
   public static final @NonNls String TABLE_VIEW = "TABLE";
 
-  public BreakpointTable getTable() {
-    return myTable;
-  }
-
-  public BreakpointTree getTree() {
-    return myTree;
-  }
-
-  public void switchViews() {
-    final Breakpoint[] selectedBreakpoints = getSelectedBreakpoints();
-    showView(isTreeShowing() ? TABLE_VIEW : TREE_VIEW);
-    selectBreakpoints(selectedBreakpoints);
-  }
-
-  public void showView(final String viewId) {
-    if (TREE_VIEW.equals(viewId) || TABLE_VIEW.equals(viewId)) {
-      myCurrentViewId = viewId;
-      ((CardLayout)myTablePlace.getLayout()).show(myTablePlace, viewId);
-      updateButtons();
-      ensureSelectionExists();
-    }
-  }
-
-  public String getCurrentViewId() {
-    return myCurrentViewId;
-  }
-
-  public boolean isTreeShowing() {
-    return BreakpointPanel.TREE_VIEW.equals(getCurrentViewId());
-  }
-
-  public String getHelpID() {
-    return myHelpID;
-  }
-
-  public interface ChangesListener extends EventListener {
-    void breakpointsChanged();
-  }
-
-  public void addChangesListener(ChangesListener listener) {
-    myEventDispatcher.addListener(listener);
-  }
-
-  public void removeChangesListener(ChangesListener listener) {
-    myEventDispatcher.removeListener(listener);
-  }
-
   public BreakpointPanel(final Project project,
                          BreakpointPropertiesPanel propertiesPanel,
                          final BreakpointPanelAction[] actions,
                          Key<? extends Breakpoint> breakpointCategory,
-                         String displayName,
+                         String tabName,
                          String helpId) {
+    super(tabName, helpId, Breakpoint.class);
+    myProject = project;
     myPropertiesPanel = propertiesPanel;
     myActions = actions;
     myBreakpointCategory = breakpointCategory;
-    myDisplayName = displayName;
-    myHelpID = helpId;
 
     myTable = new BreakpointTable(project);
     myTree = new BreakpointTree(project);
@@ -149,7 +100,7 @@ public class BreakpointPanel {
         if (e.getType() == TableModelEvent.UPDATE) {
           updateCurrentBreakpointPropertiesPanel();
         }
-        myEventDispatcher.getMulticaster().breakpointsChanged();
+        fireBreakpointsChanged();
       }
     };
     tableModel.addTableModelListener(tableModelListener);
@@ -245,19 +196,105 @@ public class BreakpointPanel {
     });
   }
 
-  public Key<? extends Breakpoint> getBreakpointCategory() {
-    return myBreakpointCategory;
+  public BreakpointTable getTable() {
+    return myTable;
   }
 
-  public String getDisplayName() {
-    return myDisplayName;
+  public BreakpointTree getTree() {
+    return myTree;
+  }
+
+  public void switchViews() {
+    final Breakpoint[] selectedBreakpoints = getSelectedBreakpoints();
+    showView(isTreeShowing() ? TABLE_VIEW : TREE_VIEW);
+    selectBreakpoints(selectedBreakpoints);
+  }
+
+  public void showView(final String viewId) {
+    if (TREE_VIEW.equals(viewId) || TABLE_VIEW.equals(viewId)) {
+      myCurrentViewId = viewId;
+      ((CardLayout)myTablePlace.getLayout()).show(myTablePlace, viewId);
+      updateButtons();
+      ensureSelectionExists();
+    }
+  }
+
+  public String getCurrentViewId() {
+    return myCurrentViewId;
+  }
+
+  public boolean isTreeShowing() {
+    return BreakpointPanel.TREE_VIEW.equals(getCurrentViewId());
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void setupPanelUI() {
+    final BreakpointManager breakpointManager = getBreakpointManager();
+    final Key<? extends Breakpoint> category = getBreakpointCategory();
+    final BreakpointTree tree = getTree();
+    final String flattenPackages = breakpointManager.getProperty(category + "_flattenPackages");
+    if (flattenPackages != null) {
+      tree.setFlattenPackages("true".equalsIgnoreCase(flattenPackages));
+    }
+    final String groupByClasses = breakpointManager.getProperty(category + "_groupByClasses");
+    if (groupByClasses != null) {
+      tree.setGroupByClasses("true".equalsIgnoreCase(groupByClasses));
+    }
+    final String groupByMethods = breakpointManager.getProperty(category + "_groupByMethods");
+    if (groupByMethods != null) {
+      tree.setGroupByMethods("true".equalsIgnoreCase(groupByMethods));
+    }
+
+    final String viewId = breakpointManager.getProperty(category + "_viewId");
+    if (viewId != null) {
+      showView(viewId);
+    }
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  public void savePanelSettings() {
+    Key<? extends Breakpoint> category = getBreakpointCategory();
+    final BreakpointManager breakpointManager = getBreakpointManager();
+
+    final BreakpointTree tree = getTree();
+    breakpointManager.setProperty(category + "_flattenPackages", tree.isFlattenPackages() ? "true" : "false");
+    breakpointManager.setProperty(category + "_groupByClasses", tree.isGroupByClasses() ? "true" : "false");
+    breakpointManager.setProperty(category + "_groupByMethods", tree.isGroupByMethods() ? "true" : "false");
+    breakpointManager.setProperty(category + "_viewId", getCurrentViewId());
+  }
+
+  protected BreakpointManager getBreakpointManager() {
+    return DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
+  }
+
+  private boolean hasEnabledBreakpoints() {
+    final List<Breakpoint> breakpoints = getBreakpoints();
+    for (Breakpoint breakpoint : breakpoints) {
+      if (breakpoint.ENABLED) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public Icon getTabIcon() {
+    final BreakpointFactory factory = BreakpointFactory.getInstance(getBreakpointCategory());
+    return hasEnabledBreakpoints() ? factory.getIcon() : factory.getDisabledIcon();
+  }
+
+  public boolean canSelectBreakpoint(final Breakpoint breakpoint) {
+    return breakpoint.getCategory().equals(getBreakpointCategory());
+  }
+
+  public Key<? extends Breakpoint> getBreakpointCategory() {
+    return myBreakpointCategory;
   }
 
   public Breakpoint getCurrentViewableBreakpoint() {
     return myCurrentViewableBreakpoint;
   }
 
-  public void saveChanges() {
+  public void saveBreakpoints() {
     if (myCurrentViewableBreakpoint != null) {
       myPropertiesPanel.saveTo(myCurrentViewableBreakpoint, new Runnable() {
         public void run() {
@@ -310,7 +347,8 @@ public class BreakpointPanel {
     }
   }
 
-  public void setBreakpoints(Breakpoint[] breakpoints) {
+  public void resetBreakpoints() {
+    Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
     myTable.setBreakpoints(breakpoints);
     myTree.setBreakpoints(breakpoints);
     ensureSelectionExists();
@@ -394,11 +432,12 @@ public class BreakpointPanel {
     return myTable.getBreakpoints().size();
   }
 
-  public final java.util.List<Breakpoint> getBreakpoints() {
+  public final List<Breakpoint> getBreakpoints() {
     return myTable.getBreakpoints();
   }
 
   public void dispose() {
+    savePanelSettings();
     for (Runnable runnable : myDisposeActions) {
       runnable.run();
     }
@@ -454,7 +493,7 @@ public class BreakpointPanel {
       model.addSelectionInterval(0, 0);
     }
 
-    final java.util.List<Breakpoint> treeBreakpoints = myTree.getBreakpoints();
+    final List<Breakpoint> treeBreakpoints = myTree.getBreakpoints();
     if (treeBreakpoints.size() > 0) {
       if (myTree.getSelectionModel().getSelectionCount() == 0) {
         myTree.selectFirstBreakpoint();

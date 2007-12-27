@@ -40,8 +40,8 @@ public interface XBreakpointManager {
   @NotNull
   XBreakpoint<?>[] getAllBreakpoints();
 
-  @NotNull <P extends XBreakpointProperties, B extends XBreakpoint<P>>
-  Collection<? extends B> getBreakpoints(@NotNull XBreakpointType<B, P> type);
+  @NotNull <B extends XBreakpoint<?>>
+  Collection<? extends B> getBreakpoints(@NotNull XBreakpointType<B, ?> type);
 
   @Nullable <P extends XBreakpointProperties>
   XLineBreakpoint<P> findBreakpointAtLine(@NotNull XLineBreakpointType<P> type, @NotNull VirtualFile file, int line);

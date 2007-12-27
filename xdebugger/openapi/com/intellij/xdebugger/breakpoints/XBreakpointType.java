@@ -50,7 +50,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
-  public static XBreakpointType[] getBreakpointTypes() {
+  public static XBreakpointType<?,?>[] getBreakpointTypes() {
     return Extensions.getExtensions(EXTENSION_POINT_NAME);
   }
 
