@@ -157,6 +157,8 @@ public class NewDebuggerContentUI
       }
 
       public void selectionChanged(final ContentManagerEvent event) {
+        if (isStateBeingRestored()) return;
+
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
           Grid toSelect = findGridFor(event.getContent());
           Grid selected = getSelectedGrid();
@@ -431,13 +433,22 @@ public class NewDebuggerContentUI
 
   public void restoreLayout() {
     Content[] all = myManager.getContents();
-    myManager.removeAllContents(false);
+
+    setStateIsBeingRestored(true, this);
+    try {
+      myManager.removeAllContents(false);
+      myMinimizedViewActions.removeAll();
+    } finally {
+      setStateIsBeingRestored(false, this);
+    }
 
     getSettings().getLayoutSettings().resetToDefault();
     for (Content each : all) {
       myManager.addContent(each);
     }
     restoreLastUiState();
+
+    updateTabsUI(true);
   }
 
   public static boolean isActive() {
