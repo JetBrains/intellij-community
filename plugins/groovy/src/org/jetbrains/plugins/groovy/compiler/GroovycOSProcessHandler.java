@@ -20,12 +20,12 @@ import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.TranslatingCompiler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
 import org.jetbrains.groovy.compiler.rt.GroovycRunner;
-import org.hsqldb.lib.StringUtil;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -144,14 +144,14 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
         String linenum;
         String colomnnum;
 
-        String[] tokens = StringUtil.split(text, GroovycRunner.SEPARATOR);
-        LOG.assertTrue(tokens.length > 4, "Wrong number of output params");
+        List<String> tokens = StringUtil.split(text, GroovycRunner.SEPARATOR);
+        LOG.assertTrue(tokens.size() > 4, "Wrong number of output params");
 
-        category = tokens[0];
-        message = tokens[1];
-        url = tokens[2];
-        linenum = tokens[3];
-        colomnnum = tokens[4];
+        category = tokens.get(0);
+        message = tokens.get(1);
+        url = tokens.get(2);
+        linenum = tokens.get(3);
+        colomnnum = tokens.get(4);
 
         int linenumInt;
         int colomnnumInt;
@@ -225,3 +225,4 @@ public class GroovycOSProcessHandler extends OSProcessHandler {
     return unparsedOutput;
   }
 }
+               
