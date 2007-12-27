@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.tree.IElementType;
 
 /**
@@ -38,4 +39,11 @@ public interface TokenType {
    * Internal token type used by the code formatter.
    */
   IElementType NEW_LINE_INDENT = new IElementType("NEW_LINE_INDENT", Language.ANY);
+
+  IElementType ERROR_ELEMENT = new IElementType("ERROR_ELEMENT", Language.ANY);
+
+  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", StdLanguages.TEXT);
+  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", StdLanguages.TEXT);
+  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
+  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", Language.ANY);
 }

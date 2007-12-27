@@ -1,24 +1,16 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.jsp.JspElementType;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public interface ElementType extends
                              TokenTypeEx,
                              JavaElementType,
                              JavaDocElementType {
-  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", StdLanguages.TEXT);
-  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", StdLanguages.TEXT);
-  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
-  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", Language.ANY);
-
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.create(WHITE_SPACE,
                                                  JspElementType.JSP_TEMPLATE_EXPRESSION);
 

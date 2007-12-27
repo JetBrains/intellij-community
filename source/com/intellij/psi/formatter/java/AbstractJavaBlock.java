@@ -1,12 +1,12 @@
 package com.intellij.psi.formatter.java;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -908,6 +908,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
   }
 
+  
+
   private ASTNode processParenBlock(final IElementType from,
                                     final IElementType to, final List<Block> result, ASTNode child,
                                     final WrappingStrategy wrappingStrategy, final boolean doAlign
@@ -923,7 +925,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     ASTNode prev = child;
     int startOffset = child.getTextRange().getStartOffset();
     while (child != null) {
-      isAfterIncomplete = isAfterIncomplete || child.getElementType() == JavaElementType.ERROR_ELEMENT ||
+      isAfterIncomplete = isAfterIncomplete || child.getElementType() == TokenType.ERROR_ELEMENT ||
                           child.getElementType() == JavaElementType.EMPTY_EXPRESSION;
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (child.getElementType() == from) {

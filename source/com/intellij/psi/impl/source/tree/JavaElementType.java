@@ -24,8 +24,6 @@ public interface JavaElementType {
   IElementType TYPE_PARAMETER = new IJavaElementType("TYPE_PARAMETER");
   IElementType TYPE_PARAMETER_LIST = new IJavaElementType("TYPE_PARAMETER_LIST");
 
-  IElementType ERROR_ELEMENT = new IJavaElementType("ERROR_ELEMENT");
-
   IElementType JAVA_CODE_REFERENCE = new IJavaElementType("JAVA_CODE_REFERENCE");
 
   IElementType PACKAGE_STATEMENT = new IJavaElementType("PACKAGE_STATEMENT");

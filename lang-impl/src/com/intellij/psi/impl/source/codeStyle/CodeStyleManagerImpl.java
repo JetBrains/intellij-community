@@ -43,7 +43,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   private Project myProject;
   @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
 
-  public CodeStyleManagerImpl(Project project, StatisticsManagerEx statisticsManagerEx) {
+  public CodeStyleManagerImpl(Project project) {
     myProject = project;
   }
 
