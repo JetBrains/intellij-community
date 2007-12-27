@@ -224,7 +224,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
     if (myName != null) {
       element.setAttribute(LIBRARY_NAME_ATTR, myName);
     }
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+    for (OrderRootType rootType : OrderRootType.getSortedRootTypes()) {
       final VirtualFilePointerContainer roots = myRoots.get(rootType);
       if (roots.size() == 0 && AnnotationOrderRootType.INSTANCE.equals(rootType)) continue; //compatibility iml/ipr
       final Element rootTypeElement = new Element(rootType.name());

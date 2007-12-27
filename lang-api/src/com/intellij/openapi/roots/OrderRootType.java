@@ -18,6 +18,11 @@ package com.intellij.openapi.roots;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
 /**
  * Root types that can be queried from OrderEntry.
  * @see OrderEntry
@@ -64,7 +69,7 @@ public class OrderRootType {
   }
 
   /**
-   * Element name used for storing roots of this type in JDK definitions.
+   * Element name used for storing roots of this type in JDK and library definitions.
    */
   public String getSdkRootName() {
     return mySdkRootName;
@@ -83,5 +88,16 @@ public class OrderRootType {
 
   public static OrderRootType[] getAllTypes() {
     return ourPersistentOrderRootTypes;
+  }
+
+  public static List<OrderRootType> getSortedRootTypes() {
+    List<OrderRootType> allTypes = new ArrayList<OrderRootType>();
+    Collections.addAll(allTypes, getAllTypes());
+    Collections.sort(allTypes, new Comparator<OrderRootType>() {
+      public int compare(final OrderRootType o1, final OrderRootType o2) {
+        return o1.getSdkRootName().compareTo(o2.getSdkRootName());
+      }
+    });
+    return allTypes;
   }
 }

@@ -18,8 +18,7 @@ import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -167,7 +166,8 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
+    List<OrderRootType> allTypes = OrderRootType.getSortedRootTypes();
+    for (OrderRootType type : allTypes) {
       write(element, type);
     }
   }
