@@ -7,6 +7,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -29,7 +30,7 @@ public class JavaParserDefinition implements ParserDefinition {
 
   @NotNull
   public Lexer createLexer(Project project) {
-    throw new UnsupportedOperationException("Cannot create lexer");
+    return new JavaLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
   }
 
   @NotNull

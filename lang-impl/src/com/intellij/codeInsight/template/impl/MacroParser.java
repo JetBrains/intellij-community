@@ -13,7 +13,10 @@ import com.intellij.psi.tree.IElementType;
  *
  */
 class MacroParser {
-//-----------------------------------------------------------------------------------
+  private MacroParser() {
+  }
+
+  //-----------------------------------------------------------------------------------
   public static Expression parse(String expression) {
     if(expression.length() == 0) {
       return new ConstantNode("");

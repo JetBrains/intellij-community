@@ -12,7 +12,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -142,8 +141,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
     final PsiFile containingFile = comment.getContainingFile();
     final Language language = comment.getParent().getLanguage();
-    Lexer lexer = language == StdLanguages.JAVA ? new JavaLexer(PsiUtil.getLanguageLevel(comment)): LanguageParserDefinitions.INSTANCE
-      .forLanguage(language).createLexer(containingFile.getProject());
+    Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(containingFile.getProject());
     lexer.start(commentText, commenter.getDocumentationCommentPrefix().length(), commentText.length(),0);
     QuoteHandler fileTypeHandler = TypedHandler.getQuoteHandler(containingFile);
     TypedHandler.JavaLikeQuoteHandler javaLikeQuoteHandler = fileTypeHandler instanceof TypedHandler.JavaLikeQuoteHandler ?
