@@ -19,13 +19,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import net.sf.cglib.proxy.Factory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,22 +77,17 @@ public abstract class ElementPresentationManager {
   public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags);
 
 
-  private static final Map<Class, String> ourTypeNames = new HashMap<Class, String>();
   private static final Map<Class, Icon[]> ourIcons = new HashMap<Class, Icon[]>();
 
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<Function<Object, String>>();
-  private static final List<Function<Class, String>> ourTypeProviders = new ArrayList<Function<Class, String>>();
   private static final List<Function<Object, Icon>> ourIconProviders = new ArrayList<Function<Object, Icon>>();
 
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
-  public static void registerTypeProvider(Function<Class, String> function) { ourTypeProviders.add(function); }
   public static void registerIconProvider(Function<Object, Icon> function) { ourIconProviders.add(function); }
 
   public static void unregisterNameProvider(Function<Object, String> function) { ourNameProviders.remove(function); }
-  public static void unregisterTypeProvider(Function<Class, String> function) { ourTypeProviders.remove(function); }
   public static void unregisterIconProvider(Function<Object, Icon> function) { ourIconProviders.remove(function); }
 
-  public static void registerTypeName(Class aClass, String typeName) { ourTypeNames.put(aClass, typeName); }
   public static void registerIcon(Class aClass, Icon icon) { registerIcons(aClass, icon); }
   public static void registerIcons(Class aClass, Icon... icon) { ourIcons.put(aClass, icon); }
 
@@ -131,7 +124,7 @@ public abstract class ElementPresentationManager {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;
     final Class<? extends Object> aClass = o.getClass();
-    String s = _getTypeName(aClass);
+    String s = TypeNameManager._getTypeName(aClass);
     if (s != null) {
       return s;
     }
@@ -140,47 +133,7 @@ public abstract class ElementPresentationManager {
       final DomElement element = (DomElement)o;
       return StringUtil.capitalizeWords(element.getNameStrategy().splitIntoWords(element.getXmlElementName()), true);
     }
-    return getDefaultTypeName(aClass);
-  }
-
-  public static String getTypeName(Class aClass) {
-    String s = _getTypeName(aClass);
-    if (s != null) return s;
-    return getDefaultTypeName(aClass);
-  }
-
-  private static String getDefaultTypeName(final Class aClass) {
-    String simpleName = aClass.getSimpleName();
-    final int i = simpleName.indexOf('$');
-    if (i >= 0) {
-      if (Factory.class.isAssignableFrom(aClass)) {
-        simpleName = simpleName.substring(0, i);
-      } else {
-        simpleName = simpleName.substring(i + 1);
-      }
-    }
-    return StringUtil.capitalizeWords(StringUtil.join(NameUtil.nameToWords(simpleName),  " "), true);
-  }
-
-  @Nullable
-  private static <T> T getFromClassMap(Map<Class,T> map, Class value) {
-    for (final Map.Entry<Class, T> entry : map.entrySet()) {
-      if (entry.getKey().isAssignableFrom(value)) {
-        return entry.getValue();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String _getTypeName(final Class aClass) {
-    for (final Function<Class, String> function : ourTypeProviders) {
-      final String s = function.fun(aClass);
-      if (s != null) {
-        return s;
-      }
-    }
-    return getFromClassMap(ourTypeNames, aClass);
+    return TypeNameManager.getDefaultTypeName(aClass);
   }
 
   @Nullable
@@ -231,7 +184,7 @@ public abstract class ElementPresentationManager {
         result.add(icon);
       }
     }
-    final Icon[] icons = getFromClassMap(ourIcons, o.getClass());
+    final Icon[] icons = TypeNameManager.getFromClassMap(ourIcons, o.getClass());
     if (icons != null) {
       result.addAll(Arrays.asList(icons));
     }

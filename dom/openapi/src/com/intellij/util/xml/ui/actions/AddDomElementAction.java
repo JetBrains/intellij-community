@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.TypeChooser;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.ui.DomCollectionControl;
 import org.jetbrains.annotations.NotNull;
@@ -127,7 +124,7 @@ public abstract class AddDomElementAction extends AnAction {
       for (Type type : chooser.getChooserTypes()) {
 
         final Class<?> rawType = ReflectionUtil.getRawType(type);
-        String name = ElementPresentationManager.getTypeName(rawType);
+        String name = TypeNameManager.getTypeName(rawType);
         Icon icon = null;
         if (!showAsPopup() || descriptions.length == 1) {
 //          if (descriptions.length > 1) {

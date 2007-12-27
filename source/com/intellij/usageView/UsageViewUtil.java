@@ -17,7 +17,7 @@ import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -209,7 +209,7 @@ public class UsageViewUtil {
       return type;
     }
 
-    return ElementPresentationManager.getTypeName(psiElement.getClass());
+    return TypeNameManager.getTypeName(psiElement.getClass());
   }
 
   public static String getDescriptiveName(final PsiElement psiElement) {

@@ -14,8 +14,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.MergedObject;
+import com.intellij.util.xml.TypeNameManager;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomElementsGroupNode;
@@ -118,7 +118,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
       final DomElementsGroupNode selectedNode = getDomElementsGroupNode(getTreeView(e));
       if (selectedNode != null) {
         final Type type = selectedNode.getChildDescription().getType();
-        text += " " + ElementPresentationManager.getTypeName(ReflectionUtil.getRawType(type));
+        text += " " + TypeNameManager.getTypeName(ReflectionUtil.getRawType(type));
       }
     }
     return text;

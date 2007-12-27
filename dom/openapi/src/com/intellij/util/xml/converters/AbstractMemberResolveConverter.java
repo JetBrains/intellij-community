@@ -88,7 +88,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   public String getErrorMessage(final String s, final ConvertContext context) {
     final DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
-    return CodeInsightBundle.message("error.cannot.resolve.0.1", ElementPresentationManager.getTypeName(parent.getClass()), s);
+    return CodeInsightBundle.message("error.cannot.resolve.0.1", TypeNameManager.getTypeName(parent.getClass()), s);
   }
 
   @NotNull

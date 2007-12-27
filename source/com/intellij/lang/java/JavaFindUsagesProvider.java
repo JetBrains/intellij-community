@@ -13,7 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.TypeNameManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -100,7 +100,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       }
     }
 
-    final String name = ElementPresentationManager.getTypeName(element.getClass());
+    final String name = TypeNameManager.getTypeName(element.getClass());
     if (name != null) {
       return name;
     }
