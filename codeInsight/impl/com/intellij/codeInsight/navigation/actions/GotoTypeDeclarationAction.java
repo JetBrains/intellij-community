@@ -19,9 +19,11 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     return this;
   }
 
+  /*
   protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
     return file instanceof PsiJavaFile;
   }
+  */
 
   protected boolean isValidForLookup() {
     return true;
