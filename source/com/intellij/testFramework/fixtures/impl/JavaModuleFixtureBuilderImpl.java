@@ -8,10 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -25,9 +22,9 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author mike
@@ -84,13 +81,11 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   void initModule(final Module module) {
     super.initModule(module);
 
-    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-
     if (myMockJdkLevel == MockJdkLevel.jdk15) {
-      moduleRootManager.setLanguageLevel(LanguageLevel.JDK_1_5);
+      JavaModuleExtension.getInstance(module).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
 
-    final ModifiableRootModel model = moduleRootManager.getModifiableModel();
+    final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final LibraryTable libraryTable = model.getModuleLibraryTable();
 
     for (Lib lib : myLibraries) {

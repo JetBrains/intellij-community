@@ -10,6 +10,7 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -20,12 +21,12 @@ public class RenameFieldTest extends CodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPreviousLanguageLevel = getJavaFacade().getEffectiveLanguageLevel();
-    getJavaFacade().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myPreviousLanguageLevel = JavaProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
+    JavaProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected void tearDown() throws Exception {
-    getJavaFacade().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    JavaProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
     super.tearDown();
   }
 

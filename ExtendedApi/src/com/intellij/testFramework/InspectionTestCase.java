@@ -20,10 +20,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -166,7 +163,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ProjectJdk jdk;
     if ("java 1.5".equals(jdkName)) {
       jdk = JavaSdkImpl.getMockJdk15(jdkName);
-      myJavaFacade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+      JavaProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
     else {
       jdk = JavaSdkImpl.getMockJdk(jdkName);

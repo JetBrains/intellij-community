@@ -1,5 +1,6 @@
 package com.intellij.refactoring;
 
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -15,7 +16,7 @@ public class UIDesignerRelatedTest extends MultiFileTestCase {
   }
 
   protected void setupProject(VirtualFile rootDir) {
-    myJavaFacade.setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    JavaProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     super.setupProject(rootDir);
   }
 

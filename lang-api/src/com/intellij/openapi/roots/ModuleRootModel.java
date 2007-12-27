@@ -17,7 +17,6 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,7 +173,4 @@ public interface ModuleRootModel {
   @NotNull VirtualFile[] getRootPaths(OrderRootType rootType);
   @NotNull String[] getRootUrls(OrderRootType rootType);
 
-  void setLanguageLevel(LanguageLevel languageLevel);
-
-  LanguageLevel getLanguageLevel();
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.module.impl;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.components.impl.ModulePathMacroManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
@@ -20,11 +19,8 @@ import com.intellij.openapi.module.impl.scopes.ModuleRuntimeClasspathScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope;
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.*;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,6 +200,10 @@ public class ModuleImpl extends ComponentManagerImpl implements Module {
       myFileToModuleName.put(fileName, moduleName);
     }
     return moduleName;
+  }
+
+  public boolean isLoaded() {
+    return isModuleAdded;
   }
 
   public boolean isSavePathsRelative() {

@@ -12,8 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -361,16 +361,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     ((PsiManagerEx)PsiManager.getInstance(myProject)).physicalChange();
   }
 
-  @NotNull
-  public LanguageLevel getEffectiveLanguageLevel() {
-    return myLanguageLevel;
-  }
-
-  public void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || myProject.isDefault(), "Use PsiManager.setEffectiveLanguageLevel only from unit tests");
-    myLanguageLevel = languageLevel;
-  }
-
 
   public boolean isPartOfPackagePrefix(String packageName) {
     final Collection<String> packagePrefixes = myFileManager.getNonTrivialPackagePrefixes();
@@ -451,6 +441,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     }
 
     return false;
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   @NotNull

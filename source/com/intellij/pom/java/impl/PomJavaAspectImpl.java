@@ -35,6 +35,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.pom.PomElement;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -46,7 +47,10 @@ import com.intellij.pom.java.events.JavaTreeChanged;
 import com.intellij.pom.java.events.PomJavaAspectChangeSet;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
 
 import java.util.Collections;
 
@@ -66,7 +70,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   }
 
   public LanguageLevel getLanguageLevel() {
-    return JavaPsiFacade.getInstance(myPsiManager.getProject()).getEffectiveLanguageLevel();
+    return JavaProjectExtension.getInstance(myPsiManager.getProject()).getLanguageLevel();
   }
 
   public void projectOpened() {

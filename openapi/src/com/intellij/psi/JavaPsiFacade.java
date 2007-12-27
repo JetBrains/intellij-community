@@ -6,7 +6,6 @@ package com.intellij.psi;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataCache;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -155,16 +154,6 @@ public abstract class JavaPsiFacade {
   public abstract PsiConstantEvaluationHelper getConstantEvaluationHelper();
 
   /**
-   * Returns the language level set for this project.
-   *
-   * @deprecated  use {@link com.intellij.psi.PsiJavaFile#getLanguageLevel()} or
-   * {@link com.intellij.psi.util.PsiUtil#getLanguageLevel(PsiElement)}
-   * @return the language level instance.
-   */
-  @NotNull
-  public abstract LanguageLevel getEffectiveLanguageLevel();
-
-  /**
    * Checks if the specified package name is part of the package prefix for
    * any of the modules in this project.
    *
@@ -172,13 +161,6 @@ public abstract class JavaPsiFacade {
    * @return true if it is part of the package prefix, false otherwise.
    */
   public abstract boolean isPartOfPackagePrefix(String packageName);
-
-  /**
-   * Sets the language level to use for this project. For tests only.
-   *
-   * @param languageLevel the language level to set.
-   */
-  public abstract void setEffectiveLanguageLevel(@NotNull LanguageLevel languageLevel);
 
   /* Checks if the specified PSI element belongs to the specified package.
    *
@@ -214,4 +196,6 @@ public abstract class JavaPsiFacade {
    * @return true if the field is bound, false otherwise.
    */
   public abstract boolean isFieldBoundToForm(@NotNull PsiField field);
+
+  public abstract Project getProject();
 }

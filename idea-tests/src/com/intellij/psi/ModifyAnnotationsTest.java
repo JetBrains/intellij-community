@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -24,7 +25,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
 
         public void run() {
           try {
-            JavaPsiFacade.getInstance(myProject).setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+            JavaProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
             String root = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/modifyAnnotations";
             PsiTestUtil.removeAllRoots(myModule, JavaSdkImpl.getMockJdk15("mock 1.5"));
             PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);

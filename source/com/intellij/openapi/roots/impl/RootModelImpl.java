@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
@@ -13,7 +14,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.*;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -69,7 +69,6 @@ public class RootModelImpl implements ModifiableRootModel {
   private final OrderEntryProperties myOrderEntryProperties;
 
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
-  private LanguageLevel myLanguageLevel;
 
   private VirtualFilePointerFactory myVirtualFilePointerFactory = new VirtualFilePointerFactory() {
     public VirtualFilePointer create(VirtualFile file) {
@@ -94,7 +93,6 @@ public class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String ROOT_ELEMENT = "root";
   private ProjectRootManagerImpl myProjectRootManager;
   @NonNls private static final String INHERIT_COMPILER_OUTPUT = "inherit-compiler-output";
-  @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
 
   public String getCompilerOutputPathUrl() {
     return getCompilerOutputUrl();
@@ -192,14 +190,8 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    final String languageLevel = element.getAttributeValue(LANGUAGE_LEVEL_ELEMENT_NAME);
-    if (languageLevel != null) {
-      try {
-        myLanguageLevel = LanguageLevel.valueOf(languageLevel);
-      }
-      catch (IllegalArgumentException e) {
-        //bad value was stored
-      }
+    for (LanguageModuleExtension extension : Extensions.getExtensions(LanguageModuleExtension.EP_NAME, moduleRootManager.getModule())) {
+      extension.readExternal(element);
     }
   }
 
@@ -265,8 +257,6 @@ public class RootModelImpl implements ModifiableRootModel {
         myOrderRootPointerContainers.put(orderRootType, container);
       }
     }
-
-    myLanguageLevel = rootModel.myLanguageLevel;
   }
 
   @Nullable
@@ -550,10 +540,10 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    if (myLanguageLevel != null) {
-      element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
+    for (LanguageModuleExtension extension : Extensions
+      .getExtensions(LanguageModuleExtension.EP_NAME, myModuleRootManager.getModule())) {
+      extension.writeExternal(element);
     }
-
     element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));
 
     if (myCompilerOutput!= null) {
@@ -863,7 +853,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
     if (myExcludeOutput != getSourceModel().myExcludeOutput) return true;
     if (myExcludeExploded != getSourceModel().myExcludeExploded) return true;
-    if (myLanguageLevel != getSourceModel().myLanguageLevel) return true;
 
     OrderEntry[] orderEntries = getOrderEntries();
     OrderEntry[] sourceOrderEntries = getSourceModel().getOrderEntries();
@@ -1165,13 +1154,6 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
 
-  public void setLanguageLevel(final LanguageLevel languageLevel) {
-    myLanguageLevel = languageLevel;
-  }
-
-  public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel;
-  }
 
   public void setRootUrls(final OrderRootType orderRootType, final String[] urls) {
     assertWritable();

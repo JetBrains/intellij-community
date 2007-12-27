@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -238,7 +235,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   }
 
   private LanguageLevel getLanguageLevelInner() {
-    final LanguageLevel defaultLevel = JavaPsiFacade.getInstance(getManager().getProject()).getEffectiveLanguageLevel();
+    final LanguageLevel defaultLevel = JavaProjectExtension.getInstance(getManager().getProject()).getLanguageLevel();
     if (myClass != null && myClass.isContentsLoaded()) {
       final ClassFileData data = myClass.getClassFileData();
       if (data != null) {

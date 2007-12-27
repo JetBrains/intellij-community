@@ -11,6 +11,7 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -29,12 +30,12 @@ public class IntroduceParameterTest extends CodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPreviousLanguageLevel = getJavaFacade().getEffectiveLanguageLevel();
-    getJavaFacade().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myPreviousLanguageLevel = JavaProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
+    JavaProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected void tearDown() throws Exception {
-    getJavaFacade().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    JavaProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
     super.tearDown();
   }
 

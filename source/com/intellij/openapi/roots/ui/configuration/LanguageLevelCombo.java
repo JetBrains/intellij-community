@@ -2,7 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.impl.JavaProjectExtension;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
 

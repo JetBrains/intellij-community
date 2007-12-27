@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -271,7 +272,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (myTypeSelectorManager.isSuggestedType("java.lang.String") &&
-        JavaPsiFacade.getInstance(psiManager.getProject()).getEffectiveLanguageLevel().hasEnumKeywordAndAutoboxing() &&
+        JavaProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel().hasEnumKeywordAndAutoboxing() &&
         JavaPsiFacade.getInstance(psiManager.getProject()).findClass(AnnotationUtil.NON_NLS, myParentClass.getResolveScope()) != null) {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
       myCbNonNls.setSelected(component.isTrueValue(NONNLS_SELECTED_PROPERTY));

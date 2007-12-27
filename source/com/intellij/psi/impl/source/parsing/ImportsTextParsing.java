@@ -6,7 +6,7 @@ import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.tree.*;
@@ -26,7 +26,7 @@ public class ImportsTextParsing extends Parsing {
    */
   public TreeElement parseImportsText(PsiManager manager, Lexer lexer, CharSequence buffer, int startOffset, int endOffset, int state) {
     if (lexer == null){
-      lexer = new JavaLexer(JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+      lexer = new JavaLexer(JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     }
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);

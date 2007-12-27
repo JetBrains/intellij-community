@@ -21,6 +21,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -1214,13 +1215,13 @@ public final class PsiUtil extends PsiUtilBase {
     if (element instanceof PsiDirectory) return JavaDirectoryService.getInstance().getLanguageLevel(((PsiDirectory)element));
     final PsiFile file = element.getContainingFile();
     if (file == null) {
-      return JavaPsiFacade.getInstance(element.getProject()).getEffectiveLanguageLevel();
+      return JavaProjectExtension.getInstance(element.getProject()).getLanguageLevel();
     }
 
     if (!(file instanceof PsiJavaFile)) {
       final PsiElement context = file.getContext();
       if (context != null) return getLanguageLevel(context);
-      return JavaPsiFacade.getInstance(element.getProject()).getEffectiveLanguageLevel();
+      return JavaProjectExtension.getInstance(element.getProject()).getLanguageLevel();
     }
     return ((PsiJavaFile)file).getLanguageLevel();
   }

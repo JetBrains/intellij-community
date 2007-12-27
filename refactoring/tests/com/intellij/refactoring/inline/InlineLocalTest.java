@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
@@ -20,8 +21,8 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
   protected void setUp() throws Exception {
     super.setUp();
-    myPreviousLanguageLevel = getJavaFacade().getEffectiveLanguageLevel();
-    getJavaFacade().setEffectiveLanguageLevel(LanguageLevel.JDK_1_5);
+    myPreviousLanguageLevel = JavaProjectExtension.getInstance(getJavaFacade().getProject()).getLanguageLevel();
+    JavaProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   protected ProjectJdk getProjectJDK() {
@@ -29,7 +30,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   protected void tearDown() throws Exception {
-    getJavaFacade().setEffectiveLanguageLevel(myPreviousLanguageLevel);
+    JavaProjectExtension.getInstance(getJavaFacade().getProject()).setLanguageLevel(myPreviousLanguageLevel);
     super.tearDown();
   }
 

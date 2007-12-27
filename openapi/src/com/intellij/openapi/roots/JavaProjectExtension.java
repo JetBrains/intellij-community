@@ -2,15 +2,14 @@
  * User: anna
  * Date: 26-Dec-2007
  */
-package com.intellij.openapi.roots.impl;
+package com.intellij.openapi.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.roots.LanguageProjectExtension;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -67,8 +66,10 @@ public class JavaProjectExtension extends LanguageProjectExtension {
   }
 
   public void setLanguageLevel(LanguageLevel languageLevel) {
+    if (myLanguageLevel != languageLevel) {
+      reloadProjectOnLanguageLevelChange(languageLevel, false);
+    }
     myLanguageLevel = languageLevel;
-    reloadProjectOnLanguageLevelChange(languageLevel, false);
   }
 
   public void reloadProjectOnLanguageLevelChange(final LanguageLevel languageLevel, final boolean forceReload) {
@@ -85,7 +86,7 @@ public class JavaProjectExtension extends LanguageProjectExtension {
           }
           final String _message = ProjectBundle.message("project.language.level.reload.prompt", myProject.getName());
           if (Messages.showYesNoDialog(myProject, _message, ProjectBundle.message("project.language.level.reload.title"), Messages.getQuestionIcon()) == 0) {
-            ProjectManagerEx.getInstanceEx().reloadProject(myProject);
+            ProjectManager.getInstance().reloadProject(myProject);
           }
           myReloadProjectRequest = null;
         }

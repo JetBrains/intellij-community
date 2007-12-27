@@ -79,6 +79,8 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   boolean isDisposed();
 
+  boolean isLoaded();
+
   /**
    * Returns the value of the option "Use absolute/relative paths for files outside
    * the module file directory" for this module.

@@ -13,7 +13,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.JavaProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Chunk;
@@ -244,7 +243,7 @@ public class ModuleChunk extends Chunk<Module> {
   //the check for equal language levels is done elsewhere
   public LanguageLevel getLanguageLevel() {
     final Module module = getModules()[0];
-    final LanguageLevel level = ModuleRootManager.getInstance(module).getLanguageLevel();
+    final LanguageLevel level = JavaModuleExtension.getInstance(module).getLanguageLevel();
     return level == null? JavaProjectExtension.getInstance(module.getProject()).getLanguageLevel() : level;
   }
 }

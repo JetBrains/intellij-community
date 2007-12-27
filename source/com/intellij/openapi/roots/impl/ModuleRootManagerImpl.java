@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -30,7 +29,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -560,19 +558,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       throw new ModuleCircularDependencyException(circularDependency.first.getModule().getName(),
                                                   circularDependency.second.getModule().getName());
     }
-  }
-
-  public void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
-    boolean needToReload = myRootModel.getLanguageLevel() != languageLevel;
-    myRootModel.setLanguageLevel(languageLevel);
-    if (needToReload && myModule.getProject().isOpen()) {
-      JavaProjectExtension.getInstance(myModule.getProject()).reloadProjectOnLanguageLevelChange(languageLevel, true);
-    }
-  }
-
-  @Nullable
-  public LanguageLevel getLanguageLevel() {
-    return myRootModel.getLanguageLevel();
   }
 
   public ModuleRootManagerState getState() {

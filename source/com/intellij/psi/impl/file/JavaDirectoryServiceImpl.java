@@ -8,9 +8,10 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.LanguageLevelUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -173,7 +174,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
       return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
-    return JavaPsiFacade.getInstance(project).getEffectiveLanguageLevel();
+    return JavaProjectExtension.getInstance(project).getLanguageLevel();
   }
 
 }

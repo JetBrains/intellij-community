@@ -6,7 +6,7 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.roots.JavaProjectExtension;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.JavaDummyHolder;
@@ -38,11 +38,11 @@ public class Parsing implements Constants{
                                                        int endOffset,
                                                        CharTable table,
                                                        boolean eatAll) {
-    Lexer originalLexer = new JavaLexer(JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+    Lexer originalLexer = new JavaLexer(JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset,0);
 
-    JavaParsingContext context = new JavaParsingContext(table, JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+    JavaParsingContext context = new JavaParsingContext(table, JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     CompositeElement ref = context.getStatementParsing().parseJavaCodeReference(lexer, false, true);
     final FileElement dummyRoot = new JavaDummyHolder(manager, null, table).getTreeElement();
     if (ref == null) {
@@ -155,11 +155,11 @@ public class Parsing implements Constants{
   }
 
   public static CompositeElement parseTypeText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
-    Lexer originalLexer = new JavaLexer(JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+    Lexer originalLexer = new JavaLexer(JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset, 0);
     final JavaParsingContext context = new JavaParsingContext(table,
-                                                              JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+                                                              JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     CompositeElement type = context.getStatementParsing().parseTypeWithEllipsis(lexer);
     if (type == null) return null;
     if (lexer.getTokenType() != null) return null;
@@ -258,13 +258,13 @@ public class Parsing implements Constants{
                                           int state,
                                           CharTable table) {
     if (lexer == null){
-      lexer = new JavaLexer(JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+      lexer = new JavaLexer(JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     }
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
     final JavaParsingContext context = new JavaParsingContext(table,
-                                                              JavaPsiFacade.getInstance(manager.getProject()).getEffectiveLanguageLevel());
+                                                              JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel());
     final FileElement dummyRoot = new JavaDummyHolder(manager, null, context.getCharTable()).getTreeElement();
     final CompositeElement root = context.getStatementParsing().parseType(filterLexer);
 

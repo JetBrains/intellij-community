@@ -1,10 +1,10 @@
 package com.intellij.openapi.module;
 
-import org.jetbrains.annotations.NotNull;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.openapi.roots.JavaModuleExtension;
+import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -16,8 +16,8 @@ public class LanguageLevelUtil {
   @NotNull
   public static LanguageLevel getEffectiveLanguageLevel(final Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LanguageLevel level = ModuleRootManager.getInstance(module).getLanguageLevel();
+    LanguageLevel level = JavaModuleExtension.getInstance(module).getLanguageLevel();
     if (level != null) return level;
-    return JavaPsiFacade.getInstance(module.getProject()).getEffectiveLanguageLevel();
+    return JavaProjectExtension.getInstance(module.getProject()).getLanguageLevel();
   }
 }
