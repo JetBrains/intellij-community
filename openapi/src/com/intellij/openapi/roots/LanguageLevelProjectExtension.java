@@ -24,7 +24,7 @@ public class LanguageLevelProjectExtension extends ProjectExtension {
   public static LanguageLevelProjectExtension getInstance(Project project) {
     final ProjectExtension[] extensions = Extensions.getExtensions(EP_NAME, project);
     for (ProjectExtension extension : extensions) {
-      if (extension.getClass().isAssignableFrom(LanguageLevelProjectExtension.class)) return (LanguageLevelProjectExtension)extension;
+      if (LanguageLevelProjectExtension.class.isAssignableFrom(extension.getClass())) return (LanguageLevelProjectExtension)extension;
     }
     return null;
   }

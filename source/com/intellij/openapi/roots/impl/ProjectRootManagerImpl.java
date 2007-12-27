@@ -35,7 +35,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PendingEventDispatcher;
@@ -57,8 +56,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   @NonNls private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
   @NonNls private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
-  @NonNls private static final String OUTPUT_TAG = "output";
-  @NonNls private static final String URL = "url";
+
   private final ProjectEx myProject;
   private final ProjectFileIndex myProjectFileIndex;
 
@@ -82,9 +80,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   private final Map<List<Module>, GlobalSearchScope> myLibraryScopes = new ConcurrentHashMap<List<Module>, GlobalSearchScope>();
   private final Map<String, GlobalSearchScope> myJdkScopes = new HashMap<String, GlobalSearchScope>();
 
-  private VirtualFilePointer myCompilerOutput;
   private boolean myStartupActivityPerformed = false;
-  private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
+
   private final MessageBusConnection myConnection;
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
@@ -178,34 +175,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       result.addAll(Arrays.asList(sourceRoots));
     }
     return result.toArray(new VirtualFile[result.size()]);
-  }
-
-  public VirtualFile getCompilerOutput() {
-    if (myCompilerOutput == null) return null;
-    return myCompilerOutput.getFile();
-  }
-
-  public String getCompilerOutputUrl() {
-    if (myCompilerOutput == null) return null;
-    return myCompilerOutput.getUrl();
-  }
-
-  public VirtualFilePointer getCompilerOutputPointer() {
-    return myCompilerOutput;
-  }
-
-  public void setCompilerOutputPointer(VirtualFilePointer pointer) {
-    myCompilerOutput = pointer;
-  }
-
-  public void setCompilerOutputUrl(String compilerOutputUrl) {
-    myCompilerOutput = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myVirtualFilePointerListener);
-    final LocalFileSystem.WatchRequest watchRequest =
-      LocalFileSystem.getInstance().addRootToWatch(extractLocalPath(compilerOutputUrl), true);
-    if (myCompilerOutputWatchRequest != null) {
-      LocalFileSystem.getInstance().removeWatchedRoot(myCompilerOutputWatchRequest);
-    }
-    myCompilerOutputWatchRequest = watchRequest;
   }
 
   public VirtualFile[] getFilesFromAllModules(OrderRootType type) {
@@ -338,11 +307,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
     myProjectJdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
-    final Element outputPathChild = element.getChild(OUTPUT_TAG);
-    if (outputPathChild != null) {
-      String outputPath = outputPathChild.getAttributeValue(URL);
-      myCompilerOutput = VirtualFilePointerManager.getInstance().create(outputPath, null);
-    }
+
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -356,11 +321,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (myProjectJdkType != null){
       element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectJdkType);
     }
-    if (myCompilerOutput != null) {
-      final Element pathElement = new Element(OUTPUT_TAG);
-      pathElement.setAttribute(URL, myCompilerOutput.getUrl());
-      element.addContent(pathElement);
-    }
+
   }
 
 
@@ -514,30 +475,21 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     if (myProject.isDefault()) {
       return;
     }
+    final Set<String> rootPaths = new HashSet<String>();
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    Set<String> rootPaths = new HashSet<String>();
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final String[] contentRootUrls = moduleRootManager.getContentRootUrls();
       for (String url : contentRootUrls) {
         rootPaths.add(extractLocalPath(url));
       }
-
-      final String compilerOutputPath = extractLocalPath(moduleRootManager.getCompilerOutputPathUrl());
-      if (compilerOutputPath.length() > 0) {
-        rootPaths.add(compilerOutputPath);
-      }
-      final String compilerOutputPathForTests = extractLocalPath(moduleRootManager.getCompilerOutputPathForTestsUrl());
-      if (compilerOutputPathForTests.length() > 0) {
-        rootPaths.add(compilerOutputPathForTests);
-      }
-
       rootPaths.add(module.getModuleFilePath());
     }
 
-    if (myCompilerOutput != null) {
-      final String url = myCompilerOutput.getUrl();
-      rootPaths.add(extractLocalPath(url));
+    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+      if (extension instanceof RootsContainerProjectExtesion) {
+        rootPaths.addAll(((RootsContainerProjectExtesion)extension).getRootsToWatch());
+      }
     }
 
     final String projectFile = myProject.getStateStore().getProjectFilePath();
@@ -601,7 +553,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return result;
   }
 
-  private static String extractLocalPath(final String url) {
+  public static String extractLocalPath(final String url) {
     final String path = VfsUtil.urlToPath(url);
     final int jarSeparatorIndex = path.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (jarSeparatorIndex > 0) {

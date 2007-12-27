@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
@@ -118,7 +119,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
         }
 
         final String projectFilePath = wizardContext.getProjectFileDirectory();
-        rootManager.setCompilerOutputUrl(getUrl(
+        CompilerProjectExtension.getInstance(projectToUpdate).setCompilerOutputUrl(getUrl(
           StringUtil.endsWithChar(projectFilePath, '/') ? projectFilePath + "classes" : projectFilePath + "/classes"));
       }
     });

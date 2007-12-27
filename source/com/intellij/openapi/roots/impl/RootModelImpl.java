@@ -675,7 +675,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public VirtualFile getCompilerOutputPath() {
     if (myInheritedCompilerOutput){
-      final VirtualFile projectOutputPath = myProjectRootManager.getCompilerOutput();
+      final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
       if (projectOutputPath == null) return null;
       return projectOutputPath.findFileByRelativePath(PRODUCTION + "/" + getModule().getName());
     }
@@ -689,7 +689,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public VirtualFile getCompilerOutputPathForTests() {
     if (myInheritedCompilerOutput){
-      final VirtualFile projectOutputPath = myProjectRootManager.getCompilerOutput();
+      final VirtualFile projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutput();
       if (projectOutputPath == null) return null;
       return projectOutputPath.findFileByRelativePath(TEST + "/" + getModule().getName());
     }
@@ -788,7 +788,7 @@ public class RootModelImpl implements ModifiableRootModel {
   @Nullable
   public String getCompilerOutputUrl() {
     if (myInheritedCompilerOutput){
-      final String projectOutputPath = myProjectRootManager.getCompilerOutputUrl();
+      final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
       if (projectOutputPath == null) return null;
       return projectOutputPath + "/" + PRODUCTION + "/" + getModule().getName();
     }
@@ -803,7 +803,7 @@ public class RootModelImpl implements ModifiableRootModel {
   @Nullable
   public String getCompilerOutputUrlForTests() {
     if (myInheritedCompilerOutput){
-      final String projectOutputPath = myProjectRootManager.getCompilerOutputUrl();
+      final String projectOutputPath = CompilerProjectExtension.getInstance(getProject()).getCompilerOutputUrl();
       if (projectOutputPath == null) return null;
       return projectOutputPath + "/" + TEST + "/" + getModule().getName();
     }

@@ -13,11 +13,9 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.ui.Messages;
@@ -142,7 +140,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     myFreeze = true;
     try {
       myProjectJdkConfigurable.reset();
-      final String compilerOutput = ProjectRootManager.getInstance(myProject).getCompilerOutputUrl();
+      final String compilerOutput = CompilerProjectExtension.getInstance(myProject).getCompilerOutputUrl();
       if (compilerOutput != null) {
         myProjectCompilerOutput.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(compilerOutput)));
       }
@@ -195,7 +193,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
 
   public void apply() throws ConfigurationException {
-    final ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myProject);
+    final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
@@ -217,10 +215,10 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
             //file doesn't exist yet
           }
           canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-          projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+          compilerProjectExtension.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
         }
         else {
-          projectRootManager.setCompilerOutputPointer(null);
+          compilerProjectExtension.setCompilerOutputPointer(null);
         }
       }
     });
@@ -256,11 +254,11 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
 
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
-    final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
     if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
       return true;
     }
-    final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();
+    final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
+    final String compilerOutput = compilerProjectExtension.getCompilerOutputUrl();
     if (!Comparing.strEqual(FileUtil.toSystemIndependentName(VfsUtil.urlToPath(compilerOutput)),
                             FileUtil.toSystemIndependentName(myProjectCompilerOutput.getText()))) return true;
     if (myProjectJdkConfigurable.isModified()) return true;

@@ -96,22 +96,6 @@ public abstract class ProjectRootManager implements ModificationTracker {
   public abstract VirtualFile[] getContentSourceRoots();
 
   /**
-   * @return compiler output url
-   */
-  public abstract String getCompilerOutputUrl();
-
-  /**
-   * @return compiler output path selected for the project
-   */
-  public abstract VirtualFile getCompilerOutput();
-
-  /**
-   * Sets compiler output url
-   * @param compilerOutputUrl compiler output url
-   */
-  public abstract void setCompilerOutputUrl(String compilerOutputUrl);
-
-  /**
    * @deprecated
    */
   public abstract VirtualFile[] getFullClassPath();

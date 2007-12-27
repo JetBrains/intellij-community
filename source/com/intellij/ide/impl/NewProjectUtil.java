@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -87,7 +88,6 @@ public class NewProjectUtil {
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
-              final ProjectRootManagerEx projectRootManager = (ProjectRootManagerEx)ProjectRootManager.getInstance(newProject);
               String canonicalPath = compileOutput;
               try {
                 canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
@@ -96,7 +96,7 @@ public class NewProjectUtil {
                 //file doesn't exist
               }
               canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-              projectRootManager.setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
+              CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtil.pathToUrl(canonicalPath));
             }
           });
         }

@@ -125,11 +125,11 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
         addExcludeForOutputPath(myRootModel.myCompilerOutputPointer, result);
         addExcludeForOutputPath(myRootModel.myCompilerOutputPathForTestsPointer, result);
       } else {
-        ProjectRootManagerImpl projectRootManager = ProjectRootManagerImpl.getInstanceImpl(myRootModel.getModule().getProject());
-        final String outputUrl = projectRootManager.getCompilerOutputUrl();
+        CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myRootModel.getModule().getProject());
+        final String outputUrl = compilerProjectExtension.getCompilerOutputUrl();
         if (outputUrl != null){
           if (new File(VfsUtil.urlToPath(outputUrl)).exists()){
-            addExcludeForOutputPath(projectRootManager.getCompilerOutputPointer(), result);
+            addExcludeForOutputPath(compilerProjectExtension.getCompilerOutputPointer(), result);
           }
         }
       }

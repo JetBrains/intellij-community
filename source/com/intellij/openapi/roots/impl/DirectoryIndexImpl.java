@@ -403,7 +403,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    VirtualFile outputPath = ProjectRootManager.getInstance(myProject).getCompilerOutput();
+    VirtualFile outputPath = CompilerProjectExtension.getInstance(myProject).getCompilerOutput();
     if (outputPath != null) putForFileAndAllAncestors(excludeRootsMap, outputPath, outputPath);
 
     return excludeRootsMap;
@@ -882,8 +882,8 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     }
 
     private boolean isOutputPathOfAnyModule(VirtualFile f) {
-      ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
-      if (isEqualWithFileOrUrl(f, prm.getCompilerOutput(), prm.getCompilerOutputUrl())) return true;
+      CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
+      if (isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
 
       for (Module m : getModules()) {
         ModuleRootManager rm = ModuleRootManager.getInstance(m);
