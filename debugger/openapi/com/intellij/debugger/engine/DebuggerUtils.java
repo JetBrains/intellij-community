@@ -30,7 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -299,7 +299,7 @@ public abstract class DebuggerUtils  implements ApplicationComponent {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiManager psiManager = PsiManager.getInstance(project);
     if (getArrayClass(className) != null) {
-      return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().getArrayClass(JavaProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
+      return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().getArrayClass(LanguageLevelProjectExtension.getInstance(psiManager.getProject()).getLanguageLevel());
     }
     if(project.isDefault()) {
       return null;

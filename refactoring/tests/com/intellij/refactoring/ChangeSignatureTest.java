@@ -2,7 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
@@ -192,7 +192,7 @@ public class ChangeSignatureTest extends CodeInsightTestCase {
 
   protected void setUpJdk() {
     super.setUpJdk();
-    JavaProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
+    LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
   private void doTest(String newReturnType, ParameterInfo[] parameterInfos, final boolean generateDelegate) throws Exception {

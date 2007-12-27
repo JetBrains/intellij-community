@@ -190,7 +190,7 @@ public class RootModelImpl implements ModifiableRootModel {
       }
     }
 
-    for (LanguageModuleExtension extension : Extensions.getExtensions(LanguageModuleExtension.EP_NAME, moduleRootManager.getModule())) {
+    for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
       extension.readExternal(element);
     }
   }
@@ -540,8 +540,8 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (LanguageModuleExtension extension : Extensions
-      .getExtensions(LanguageModuleExtension.EP_NAME, myModuleRootManager.getModule())) {
+    for (ModuleExtension extension : Extensions
+      .getExtensions(ModuleExtension.EP_NAME, myModuleRootManager.getModule())) {
       extension.writeExternal(element);
     }
     element.setAttribute(INHERIT_COMPILER_OUTPUT, String.valueOf(myInheritedCompilerOutput));

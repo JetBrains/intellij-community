@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
@@ -75,7 +75,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   ) {
     myProject = project;
-    myLanguageLevel = JavaProjectExtension.getInstance(myProject).getLanguageLevel();
+    myLanguageLevel = LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel();
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
     myJavadocManager = new JavadocManagerImpl();
     myNameHelper = new PsiNameHelperImpl(this);
@@ -118,7 +118,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
         // update effective language level before the project is opened because it might be changed
         // e.g. while setting up newly created project
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          myLanguageLevel = JavaProjectExtension.getInstance(myProject).getLanguageLevel();
+          myLanguageLevel = LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel();
         }
       }
     });

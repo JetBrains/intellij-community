@@ -5,7 +5,7 @@ import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaDocLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiManager;
@@ -71,7 +71,7 @@ public class JavadocParsing extends Parsing {
   }
 
   public TreeElement parseDocCommentText(PsiManager manager, CharSequence buffer, int startOffset, int endOffset) {
-    Lexer originalLexer = new JavaDocLexer(JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
+    Lexer originalLexer = new JavaDocLexer(LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel().hasEnumKeywordAndAutoboxing()); // we need caching lexer because the lexer has states
 
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(TOKEN_FILTER));
     lexer.start(buffer, startOffset, endOffset, 0);
@@ -160,7 +160,7 @@ public class JavadocParsing extends Parsing {
         return parseSeeTagValue(lexer);
       }
       else {
-        if (JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0 &&
+        if (LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel().compareTo(LanguageLevel.JDK_1_4) >= 0 &&
                  LINKPLAIN_TAG.equals(tagName) && isInlineItem) {
           return parseSeeTagValue(lexer);
         }
@@ -175,7 +175,7 @@ public class JavadocParsing extends Parsing {
           return parseParamTagValue(lexer);
         }
         else {
-          if (JavaProjectExtension.getInstance(manager.getProject()).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 && VALUE_TAG.equals(tagName) && isInlineItem) {
+          if (LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel().compareTo(LanguageLevel.JDK_1_5) >= 0 && VALUE_TAG.equals(tagName) && isInlineItem) {
             return parseSeeTagValue(lexer);
           }
           else {

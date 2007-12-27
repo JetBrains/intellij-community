@@ -163,7 +163,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
     ProjectJdk jdk;
     if ("java 1.5".equals(jdkName)) {
       jdk = JavaSdkImpl.getMockJdk15(jdkName);
-      JavaProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
     else {
       jdk = JavaSdkImpl.getMockJdk(jdkName);

@@ -35,7 +35,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.PomElement;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -70,7 +70,7 @@ public class PomJavaAspectImpl extends PomJavaAspect implements ProjectComponent
   }
 
   public LanguageLevel getLanguageLevel() {
-    return JavaProjectExtension.getInstance(myPsiManager.getProject()).getLanguageLevel();
+    return LanguageLevelProjectExtension.getInstance(myPsiManager.getProject()).getLanguageLevel();
   }
 
   public void projectOpened() {

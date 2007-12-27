@@ -2,7 +2,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -27,7 +27,7 @@ public class LanguageLevelCombo extends ComboBox {
   }
 
   public void reset(Project project){
-    setSelectedItem(JavaProjectExtension.getInstance(project).getLanguageLevel());
+    setSelectedItem(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
   }
 
   public void setSelectedItem(Object anObject) {

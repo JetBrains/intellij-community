@@ -17,14 +17,14 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-public class JavaProjectExtension extends LanguageProjectExtension {
+public class LanguageLevelProjectExtension extends ProjectExtension {
   @NonNls private static final String ASSERT_KEYWORD_ATTR = "assert-keyword";
   @NonNls private static final String JDK_15_ATTR = "jdk-15";
 
-  public static JavaProjectExtension getInstance(Project project) {
-    final LanguageProjectExtension[] extensions = Extensions.getExtensions(EP_NAME, project);
-    for (LanguageProjectExtension extension : extensions) {
-      if (extension.getClass().isAssignableFrom(JavaProjectExtension.class)) return (JavaProjectExtension)extension;
+  public static LanguageLevelProjectExtension getInstance(Project project) {
+    final ProjectExtension[] extensions = Extensions.getExtensions(EP_NAME, project);
+    for (ProjectExtension extension : extensions) {
+      if (extension.getClass().isAssignableFrom(LanguageLevelProjectExtension.class)) return (LanguageLevelProjectExtension)extension;
     }
     return null;
   }
@@ -35,7 +35,7 @@ public class JavaProjectExtension extends LanguageProjectExtension {
   private Project myProject;
   private Runnable myReloadProjectRequest;
 
-  public JavaProjectExtension(final Project project) {
+  public LanguageLevelProjectExtension(final Project project) {
     myProject = project;
   }
 

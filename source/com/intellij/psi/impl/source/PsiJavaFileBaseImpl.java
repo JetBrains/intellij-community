@@ -7,7 +7,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -475,7 +475,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (virtualFile == null) {
       final PsiFile originalFile = getOriginalFile();
       if (originalFile instanceof PsiJavaFile && originalFile != this) return ((PsiJavaFile)originalFile).getLanguageLevel();
-      return JavaProjectExtension.getInstance(getProject()).getLanguageLevel();
+      return LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel();
     }
     final Project project = getProject();
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
@@ -496,12 +496,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
     }
 
-    return JavaProjectExtension.getInstance(project).getLanguageLevel();
+    return LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
   }
 
   private LanguageLevel getLanguageLevel(final VirtualFile dirFile) {
     final VirtualFile[] children = dirFile.getChildren();
-    final LanguageLevel defaultLanguageLevel = JavaProjectExtension.getInstance(getManager().getProject()).getLanguageLevel();
+    final LanguageLevel defaultLanguageLevel = LanguageLevelProjectExtension.getInstance(getManager().getProject()).getLanguageLevel();
     for (VirtualFile child : children) {
       if (StdFileTypes.CLASS.equals(child.getFileType())) {
         return ClsFileImpl.getLanguageLevel(child, defaultLanguageLevel);

@@ -333,7 +333,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   }
 
   public void readExternal(Element element) throws InvalidDataException {
-    for (LanguageProjectExtension extension : Extensions.getExtensions(LanguageProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.readExternal(element);
     }
     myProjectJdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
@@ -347,7 +347,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
 
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(ATTRIBUTE_VERSION, "2");
-    for (LanguageProjectExtension extension : Extensions.getExtensions(LanguageProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.writeExternal(element);
     }
     if (myProjectJdkName != null) {

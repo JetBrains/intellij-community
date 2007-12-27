@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaDummyHolder;
@@ -56,7 +56,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   private LanguageLevel getLanguageLevel(final PsiElement context) {
     if (context == null) {
-      return JavaProjectExtension.getInstance(myManager.getProject()).getLanguageLevel();
+      return LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel();
     }
     return PsiUtil.getLanguageLevel(context);
   }
@@ -107,7 +107,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiField createFieldFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
     final FileElement holderElement = new JavaDummyHolder(myManager, context).getTreeElement();
-    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, JavaProjectExtension
+    TreeElement decl = getJavaParsingContext(holderElement).getDeclarationParsing().parseDeclarationText(myManager, LanguageLevelProjectExtension
       .getInstance(myManager.getProject()).getLanguageLevel(), text, DeclarationParsing.Context.CLASS_CONTEXT);
     if (decl == null || decl.getElementType() != JavaElementType.FIELD) {
       throw new IncorrectOperationException("Incorrect field \"" + text + "\".");
@@ -117,7 +117,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   }
 
   protected JavaParsingContext getJavaParsingContext (FileElement holderElement) {
-    return new JavaParsingContext(holderElement.getCharTable(), JavaProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
+    return new JavaParsingContext(holderElement.getCharTable(), LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
   }
 
   private static JavaParsingContext getJavaParsingContext (FileElement holderElement, LanguageLevel languageLevel) {
@@ -138,7 +138,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @NotNull
   public final PsiMethod createMethodFromText(@NotNull String text, PsiElement context) throws IncorrectOperationException {
-    return createMethodFromText(text, context, JavaProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
+    return createMethodFromText(text, context, LanguageLevelProjectExtension.getInstance(myManager.getProject()).getLanguageLevel());
   }
 
   @NotNull

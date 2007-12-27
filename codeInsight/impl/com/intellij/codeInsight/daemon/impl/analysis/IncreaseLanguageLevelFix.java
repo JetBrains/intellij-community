@@ -53,13 +53,13 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
-    LanguageLevel moduleLevel = module == null ? null : JavaModuleExtension.getInstance(module).getLanguageLevel();
+    LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
     ProjectJdk jdk = getRelevantJdk(project, module);
     if (moduleLevel != null && isJdkSupportsLevel(jdk)) {
-      JavaModuleExtension.getInstance(module).setLanguageLevel(myLevel);
+      LanguageLevelModuleExtension.getInstance(module).setLanguageLevel(myLevel);
     }
     else {
-      JavaProjectExtension.getInstance(project).setLanguageLevel(myLevel);
+      LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);
     }
   }
 

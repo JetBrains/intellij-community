@@ -12,32 +12,32 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-public class JavaModuleExtension extends LanguageModuleExtension<JavaModuleExtension> {
+public class LanguageLevelModuleExtension extends ModuleExtension<LanguageLevelModuleExtension> {
   @NonNls private static final String LANGUAGE_LEVEL_ELEMENT_NAME = "LANGUAGE_LEVEL";
   private final Module myModule;
 
-  public static JavaModuleExtension getInstance(final Module module) {
-    final LanguageModuleExtension[] extensions = Extensions.getExtensions(EP_NAME, module);
-    for (LanguageModuleExtension extension : extensions) {
-      if (extension.getClass().isAssignableFrom(JavaModuleExtension.class)) return (JavaModuleExtension)extension;
+  public static LanguageLevelModuleExtension getInstance(final Module module) {
+    final ModuleExtension[] extensions = Extensions.getExtensions(EP_NAME, module);
+    for (ModuleExtension extension : extensions) {
+      if (extension.getClass().isAssignableFrom(LanguageLevelModuleExtension.class)) return (LanguageLevelModuleExtension)extension;
     }
     return null;
   }
 
   private LanguageLevel myLanguageLevel;
 
-  public JavaModuleExtension(Module module) {
+  public LanguageLevelModuleExtension(Module module) {
     myModule = module;
   }
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     if (myModule.isLoaded()) { //do not reload project for non-commited modules: j2me|project imports
       if (myLanguageLevel != languageLevel) {
-        final JavaProjectExtension javaProjectExtension = JavaProjectExtension.getInstance(myModule.getProject());
-        final LanguageLevel projectLanguageLevel = javaProjectExtension.getLanguageLevel();
+        final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(myModule.getProject());
+        final LanguageLevel projectLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
         if (!(languageLevel == null && myLanguageLevel == projectLanguageLevel || 
              (myLanguageLevel == null && languageLevel == projectLanguageLevel))) {
-          javaProjectExtension.reloadProjectOnLanguageLevelChange(languageLevel, true);
+          languageLevelProjectExtension.reloadProjectOnLanguageLevelChange(languageLevel, true);
         }
       }
     }
@@ -64,13 +64,5 @@ public class JavaModuleExtension extends LanguageModuleExtension<JavaModuleExten
     if (myLanguageLevel != null) {
       element.setAttribute(LANGUAGE_LEVEL_ELEMENT_NAME, myLanguageLevel.toString());
     }
-  }
-
-  public void copy(final JavaModuleExtension source) {
-    myLanguageLevel = source.myLanguageLevel;
-  }
-
-  public boolean isModified(final JavaModuleExtension source) {
-    return myLanguageLevel != source.myLanguageLevel;
   }
 }

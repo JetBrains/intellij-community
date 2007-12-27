@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.roots.JavaModuleExtension;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 
@@ -46,7 +46,7 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   public boolean isModified() {
     if (myLanguageLevelCombo == null) return false;
-    final LanguageLevel moduleLanguageLevel = JavaModuleExtension.getInstance(myModule).getLanguageLevel();
+    final LanguageLevel moduleLanguageLevel = LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel();
     if (moduleLanguageLevel == null) {
       return myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL;
     }
@@ -56,13 +56,13 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
   public void apply() throws ConfigurationException {
     final LanguageLevel newLanguageLevel = myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL ?
       (LanguageLevel)myLanguageLevelCombo.getSelectedItem() : null;
-    if (newLanguageLevel != JavaModuleExtension.getInstance(myModule).getLanguageLevel()) {
-      JavaModuleExtension.getInstance(myModule).setLanguageLevel(newLanguageLevel);
+    if (newLanguageLevel != LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel()) {
+      LanguageLevelModuleExtension.getInstance(myModule).setLanguageLevel(newLanguageLevel);
     }
   }
 
   public void reset() {
-    final LanguageLevel originalLanguageLevel = JavaModuleExtension.getInstance(myModule).getLanguageLevel();
+    final LanguageLevel originalLanguageLevel = LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel();
     myLanguageLevelCombo.setSelectedItem(originalLanguageLevel);
   }
 

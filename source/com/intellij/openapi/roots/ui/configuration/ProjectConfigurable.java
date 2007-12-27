@@ -13,7 +13,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -200,7 +200,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final LanguageLevel newLevel = (LanguageLevel)myLanguageLevelCombo.getSelectedItem();
-        JavaProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
+        LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(newLevel);
         ((ProjectEx)myProject).setSavePathsRelative(myRbRelativePaths.isSelected());
         try {
           myProjectJdkConfigurable.apply();
@@ -257,7 +257,7 @@ public class ProjectConfigurable extends NamedConfigurable<Project> implements D
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isModified() {
     final ProjectRootManagerEx projectRootManagerEx = ProjectRootManagerEx.getInstanceEx(myProject);
-    if (!JavaProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
+    if (!LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem())) {
       return true;
     }
     final String compilerOutput = projectRootManagerEx.getCompilerOutputUrl();

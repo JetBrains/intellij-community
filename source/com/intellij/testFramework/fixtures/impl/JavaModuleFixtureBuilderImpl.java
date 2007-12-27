@@ -82,7 +82,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     super.initModule(module);
 
     if (myMockJdkLevel == MockJdkLevel.jdk15) {
-      JavaModuleExtension.getInstance(module).setLanguageLevel(LanguageLevel.JDK_1_5);
+      LanguageLevelModuleExtension.getInstance(module).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
 
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
