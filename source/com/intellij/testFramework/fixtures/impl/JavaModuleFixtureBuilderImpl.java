@@ -95,7 +95,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
 
       final Library.ModifiableModel libraryModel = library.getModifiableModel();
 
-      for (OrderRootType rootType : OrderRootType.ALL_TYPES) {
+      for (OrderRootType rootType : OrderRootType.getAllTypes()) {
         final String[] roots = lib.getRoots(rootType);
         for (String root : roots) {
           VirtualFile vRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(root);

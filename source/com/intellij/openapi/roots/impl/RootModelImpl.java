@@ -957,7 +957,7 @@ public class RootModelImpl implements ModifiableRootModel {
       if (!equal) return false;
     }
 
-    final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
+    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
     for (OrderRootType type : allTypes) {
       final String[] orderedRootUrls1 = orderEntry1.getUrls(type);
       final String[] orderedRootUrls2 = orderEntry2.getUrls(type);

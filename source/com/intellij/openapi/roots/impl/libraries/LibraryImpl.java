@@ -313,11 +313,11 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
   }
 
   public boolean isChanged() {
-    return !Comparing.equal(mySource.myName, myName) || areRootchChanged(mySource);
+    return !Comparing.equal(mySource.myName, myName) || areRootsChanged(mySource);
   }
 
-  private boolean areRootchChanged(final LibraryImpl that) {
-    final OrderRootType[] allTypes = OrderRootType.ALL_TYPES;
+  private boolean areRootsChanged(final LibraryImpl that) {
+    final OrderRootType[] allTypes = OrderRootType.getAllTypes();
     for (OrderRootType type : allTypes) {
       final String[] urls = getUrls(type);
       final String[] thatUrls = that.getUrls(type);
@@ -363,7 +363,7 @@ public class LibraryImpl implements LibraryEx.ModifiableModelEx, LibraryEx {
         ((LibraryTableBase)myLibraryTable).fireLibraryRenamed(this);
       }
     }
-    if (areRootchChanged(model)) {
+    if (areRootsChanged(model)) {
       myRoots = model.myRoots;
       myJarDirectories = model.myJarDirectories;
       updateWatchedRoots();

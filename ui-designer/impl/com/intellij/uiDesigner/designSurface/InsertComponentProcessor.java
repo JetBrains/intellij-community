@@ -386,7 +386,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     final LibraryTable.ModifiableModel libraryTableModel = toModel.getModuleLibraryTable().getModifiableModel();
     Library library = libraryTableModel.createLibrary(null);
     final Library.ModifiableModel libraryModel = library.getModifiableModel();
-    for(OrderRootType rootType: OrderRootType.ALL_TYPES) {
+    for(OrderRootType rootType: OrderRootType.getAllTypes()) {
       for(String url: fromLibrary.getUrls(rootType)) {
         libraryModel.addRoot(url, rootType);
       }

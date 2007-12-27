@@ -228,7 +228,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
 
         final LibraryImpl model = (LibraryImpl)lib.getModifiableModel();
 
-        for (OrderRootType type : OrderRootType.ALL_TYPES) {
+        for (OrderRootType type : OrderRootType.getAllTypes()) {
           final VirtualFile[] files = library.getFiles(type);
           for (VirtualFile file : files) {
             if (mySaveAsCb.isSelected()) {

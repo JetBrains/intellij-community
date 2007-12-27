@@ -85,7 +85,7 @@ public class OrderEntryUtil {
 
     if (library2.getTable() != null) return false;
 
-    for (OrderRootType type : OrderRootType.ALL_TYPES) {
+    for (OrderRootType type : OrderRootType.getAllTypes()) {
       if (!Comparing.equal(library1.getUrls(type), library2.getUrls(type))) {
         return false;
       }
