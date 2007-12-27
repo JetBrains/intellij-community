@@ -137,7 +137,7 @@ public class GroovyLoader implements ApplicationComponent {
         });
 
         ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
-        //ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrReferenceExpression.class, new DynamicPropertiesReferenceProvider());
+        ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrReferenceExpression.class, new DynamicPropertiesReferenceProvider());
       }
     });
   }

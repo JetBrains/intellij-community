@@ -8,11 +8,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.*;
+import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement.PROPERTY_NAME_ATTRIBUTE;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.io.*;
 import java.util.*;
@@ -58,29 +63,29 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   private File initializeDynamicProperties(Module module) {
-    final String moduleDynPath = findOrCreateProjectDynamicDir() + File.separatorChar +
+    final String moduleDynPath = getOrCreateProjectDynamicDir() + File.separatorChar +
         DYNAMIC_PROPERTIES_MODULE + "_" + module.getName() + "_" +
         module.getModuleFilePath().hashCode() + ".xml";
 
-    return new File(findOrCreateFile(moduleDynPath));
+    return new File(getOrCreateFile(moduleDynPath));
   }
 
   @NotNull
-  private String findOrCreateProjectDynamicDir() {
+  private String getOrCreateProjectDynamicDir() {
     final String url = getProject().getPresentableUrl();
-    final String projectDynPath = findOrCreateDynamicDirectory() + File.separatorChar +
+    final String projectDynPath = getOrCreateDynamicDirectory() + File.separatorChar +
         DYNAMIC_PROPERTIES_PROJECT + "_" + getProject().getName() + "_" +
         (url != null ? url : getProject().getName()).hashCode();
 
-    return findOrCreateDir(projectDynPath);
+    return getOrCreateDir(projectDynPath);
   }
 
-  private String findOrCreateDynamicDirectory() {
+  private String getOrCreateDynamicDirectory() {
     final String dynDirPath = PathManager.getSystemPath() + File.separatorChar + DYNAMIC_PROPERTIES_DIR;
-    return findOrCreateDir(dynDirPath);
+    return getOrCreateDir(dynDirPath);
   }
 
-  private String findOrCreateFile(String dynDirPath) {
+  private String getOrCreateFile(String dynDirPath) {
     try {
       final File dynDir = new File(dynDirPath);
       if (!dynDir.exists()) {
@@ -94,7 +99,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     }
   }
 
-  private String findOrCreateDir(String dynDirPath) {
+  private String getOrCreateDir(String dynDirPath) {
     try {
       final File dynDir = new File(dynDirPath);
       if (!dynDir.exists()) {
@@ -115,9 +120,9 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     Document document = loadModuleDynXML(moduleName);
     Element rootElement = document.getRootElement();
 
-    final String dynPropertyElement = findConcreateDynamicProperty(rootElement, dynamicProperty.getContainingClassQualifiedName(), dynamicProperty.getPropertyName());
+    final Element propertyElement = findConcreateDynamicProperty(rootElement, dynamicProperty.getContainingClassQualifiedName(), dynamicProperty.getPropertyName());
 
-    if (dynPropertyElement == null) {
+    if (propertyElement == null) {
       final Element dynPropertyTypeElement = findDynamicPropertyClassElement(rootElement, dynamicProperty.getContainingClassQualifiedName());
 
       if (dynPropertyTypeElement == null) {
@@ -170,47 +175,83 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  public String findConcreateDynamicProperty(String moduleName, final String typeQualifiedName, final String propertyName) {
+  public Element findConcreateDynamicProperty(GrReferenceExpression referenceExpression, final String moduleName, final String containingClassName, final String propertyName) {
+    final PsiClassType type = TypesUtil.createPsiClassTypeFromText(referenceExpression, containingClassName);
+
+    final PsiClass psiClass = type.resolve();
+    if (psiClass == null) return null;
+
+    final Set<PsiClass> classes = new HashSet<PsiClass>();
+    classes.addAll(Arrays.asList(psiClass.getSupers()));
+
+    Element result = findConcreateDynamicPropertyWithSupers(moduleName, psiClass.getQualifiedName(), propertyName);
+    if (result != null) return result;
+
+    for (PsiClass aClass : classes) {
+      result = findConcreateDynamicPropertyWithSupers(moduleName, aClass.getQualifiedName(), propertyName);
+
+      if (result != null) return result;
+    }
+    return null;
+  }
+
+  @Nullable
+  public Element findConcreateDynamicPropertyWithSupers(String moduleName, final String conatainingClassName, final String propertyName) {
     Document document = loadModuleDynXML(moduleName);
 
-    return findConcreateDynamicProperty(document.getRootElement(), typeQualifiedName, propertyName);
+    return findConcreateDynamicProperty(document.getRootElement(), conatainingClassName, propertyName);
   }
-    
+
+  @Nullable
+  protected String getTypeOfDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, String conatainingClassName, String propertyName) {
+    final Element dynamicProperty = findConcreateDynamicProperty(referenceExpression, moduleName, conatainingClassName, propertyName);
+    if (dynamicProperty == null) return null;
+
+    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
+    if (types == null || (types.size() != 1)) return null;
+
+    final Object type = types.get(0);
+    if(!(type instanceof Element)) return null;
+
+    return ((Element) type).getText();
+  }
+
   @Nullable
   public String[] findDynamicPropertiesOfClass(String moduleName, String className) {
     Document document = loadModuleDynXML(moduleName);
 
-    final Element dynPropTypeElement = findDynamicPropertyClassElement(document.getRootElement(), className);
-    if (dynPropTypeElement == null) return new String[0];
+    final Element containingClassElement = findDynamicPropertyClassElement(document.getRootElement(), className);
+    if (containingClassElement == null) return new String[0];
 
-    final List propertiesOfClass = dynPropTypeElement.getContent(DPFiltersFactory.createPropertyNameTagFilter());
+    final List propertiesTagsOfClass = containingClassElement.getContent(DynamicFiltersFactory.createPropertyTagFilter());
+
     List<String> result = new ArrayList<String>();
-    for (Object o : propertiesOfClass) {
-      result.add(((Element) o).getText());
+    for (Object o : propertiesTagsOfClass) {
+      result.add(((Element) o).getAttributeValue(PROPERTY_NAME_ATTRIBUTE));
     }
 
     return result.toArray(new String[0]);
   }
 
   @Nullable
-  private Element findDynamicPropertyClassElement(Element rootElement, final String typeQualifiedName) {
-    final List definedProperties = rootElement.getContent(DPFiltersFactory.createConcreatePropertyTagFilter(typeQualifiedName));
-
-    if (definedProperties == null || definedProperties.size() == 0 || definedProperties.size() > 1) return null;
-    return ((Element) definedProperties.get(0));
-  }
-
-  @Nullable
-  private String findConcreateDynamicProperty(Element rootElement, final String typeQualifiedName, final String propertyName) {
-    Element definedClass = findDynamicPropertyClassElement(rootElement, typeQualifiedName);
+  private Element findConcreateDynamicProperty(Element rootElement, final String conatainingClassName, final String propertyName) {
+    Element definedClass = findDynamicPropertyClassElement(rootElement, conatainingClassName);
     if (definedClass == null) return null;
 
-    final List definedPropertiesInTypeDef = definedClass.getContent(DPFiltersFactory.createConcreatePropertyNameTagFilter(propertyName));
+    final List definedPropertiesInTypeDef = definedClass.getContent(DynamicFiltersFactory.createConcreatePropertyNameFilter(propertyName));
     if (definedPropertiesInTypeDef == null || definedPropertiesInTypeDef.size() == 0) {
       return null;
     }
 
-    return definedPropertiesInTypeDef.get(0).toString();
+    return ((Element) definedPropertiesInTypeDef.get(0));
+  }
+
+  @Nullable
+  private Element findDynamicPropertyClassElement(Element rootElement, final String conatainingClassName) {
+    final List definedProperties = rootElement.getContent(DynamicFiltersFactory.createConcreatePropertyTagFilter(conatainingClassName));
+
+    if (definedProperties == null || definedProperties.size() == 0 || definedProperties.size() > 1) return null;
+    return ((Element) definedProperties.get(0));
   }
 
   public void disposeComponent() {

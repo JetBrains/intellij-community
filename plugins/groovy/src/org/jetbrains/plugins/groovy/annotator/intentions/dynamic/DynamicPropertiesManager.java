@@ -2,12 +2,11 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
-
-import java.util.Set;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -42,27 +41,18 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   */
 
   @Nullable
-  public abstract String findConcreateDynamicProperty(String moduleName, final String typeQualifiedName, final String propertyName);
+  public abstract Element findConcreateDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, final String conatainingClassName, final String propertyName);
 
   /*
-  * Find dynamic property
+   * Gets type of property
+   */
+  @Nullable
+  protected abstract String getTypeOfDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, final String conatainingClassName, final String propertyName);
+
+  /*
+  * Finds dynamic property
   */
 
   @Nullable
-  public String findConcreateDynamicProperty(DynamicProperty dynamicProperty) {
-    final Set<PsiClass> classes = dynamicProperty.getContainigClassSupers();
-    String result = findConcreateDynamicProperty(dynamicProperty.getModuleName(), dynamicProperty.getContainingClassQualifiedName(), dynamicProperty.getPropertyName());
-
-    if (result != null) return result;
-
-    for (PsiClass aClass : classes) {
-      result = findConcreateDynamicProperty(dynamicProperty.getModuleName(), aClass.getQualifiedName(), dynamicProperty.getPropertyName());
-
-      if (result != null) return result;
-    }
-    return null;
-  }
-
-  @Nullable
-  public abstract String[] findDynamicPropertiesOfClass(String moduleName, final String typeQualifiedName);
+  public abstract String[] findDynamicPropertiesOfClass(String moduleName, final String conatainingClassName);
 }

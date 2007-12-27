@@ -1,14 +1,11 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -36,7 +33,7 @@ import java.util.Set;
  */
 public class DynamicPropertyDialog extends DialogWrapper {
   private JComboBox myContainingClassComboBox;
-  private JPanel myDynPropDialogPanel;
+  private JPanel myDynamicPropertyDialogPanel;
   private JComboBox myTypeComboBox;
   private final DynamicPropertiesManager myDynamicPropertiesManager;
   private final Project myProject;
@@ -57,7 +54,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
     setUpTypeComboBox();
     setUpContainingClassComboBox();
 
-    myDynPropDialogPanel.registerKeyboardAction(new ActionListener() {
+    myDynamicPropertyDialogPanel.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myTypeComboBox.requestFocus();
       }
@@ -75,9 +72,16 @@ public class DynamicPropertyDialog extends DialogWrapper {
     }
   }
 
+//  private Document createDocument(final String text) {
+//    PsiPackage defaultPackage = manager.findPackage("");
+//    final PsiCodeFragment fragment = manager.getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
+//    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+//    return PsiDocumentManager.getInstance(manager.getProject()).getDocument(fragment);
+//  }
 
   private void setUpTypeComboBox() {
     //todo: implement my ComboboxEditor
+
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
 //    final EditorComboBoxEditor comboEditor = DebuggerExpressionComboBox.
 
@@ -119,7 +123,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
   private void updateOkStatus() {
     String text = getEnteredTypeName();
-    setOKActionEnabled(GroovyNamesUtil.isIdentifier(text));
+    setOKActionEnabled(/*GroovyNamesUtil.isIdentifier(text)*/true);
   }
 
   @Nullable
@@ -159,7 +163,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return myDynPropDialogPanel;
+    return myDynamicPropertyDialogPanel;
   }
 
   protected void doOKAction() {
