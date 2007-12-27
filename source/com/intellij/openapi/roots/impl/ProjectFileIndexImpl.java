@@ -138,13 +138,6 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
     return info.packageName;
   }
 
-  public boolean isJavaSourceFile(@NotNull VirtualFile file) {
-    if (file.isDirectory()) return false;
-    if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;
-    if (myFileTypeManager.isFileIgnored(file.getName())) return false;
-    return isInSource(file);
-  }
-
   public boolean isContentJavaSourceFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) return false;
     if (myFileTypeManager.getFileTypeByFile(file) != StdFileTypes.JAVA) return false;

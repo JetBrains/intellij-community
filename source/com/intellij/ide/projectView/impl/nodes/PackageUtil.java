@@ -483,7 +483,7 @@ public class PackageUtil {
         }
       }
     }
-    if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && projectFileIndex.isJavaSourceFile(vFile)) {
+    if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && FileIndexUtil.isJavaSourceFile(psiDir.getProject(), vFile)) {
       return; // skip java sources in classpath
     }
 

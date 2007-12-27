@@ -86,15 +86,6 @@ public interface ProjectFileIndex extends FileIndex {
   String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
 
   /**
-   * Returns true if <code>file</code> is a Java source file which is treated as source
-   * (that is either project source or library source)
-   *
-   * @param file the file to check.
-   * @return true if the file is a Java source file belonging to project or library sources, false otherwise.
-   */
-  boolean isJavaSourceFile(@NotNull VirtualFile file);
-
-  /**
    * Returns true if <code>file</code> is a compiled class file which belongs to some library.
    *
    * @param file the file to check.

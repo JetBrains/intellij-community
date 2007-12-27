@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -50,8 +51,7 @@ public class FileIconPatcherImpl implements ApplicationComponent, FileIconProvid
   public Icon patchIcon(final Icon baseIcon, final VirtualFile file, final int flags, final Project project) {
     Icon icon = baseIcon;
     if (project != null) {
-      final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      final boolean isUnderSource = projectFileIndex.isJavaSourceFile(file);
+      final boolean isUnderSource = FileIndexUtil.isJavaSourceFile(project, file);
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(file);
       if (fileType == StdFileTypes.JAVA) {
         if (!isUnderSource) {
