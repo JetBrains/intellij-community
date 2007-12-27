@@ -1,11 +1,13 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 public class TreeUtil {
+  public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
 
   public static ASTNode findChild(ASTNode parent, IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
@@ -376,7 +379,7 @@ public class TreeUtil {
   }
 
   public static ASTNode nextLeaf(@NotNull final ASTNode node) {
-    return ParseUtil.nextLeaf((TreeElement)node, null);
+    return nextLeaf((TreeElement)node, null);
   }
 
   public static FileElement getFileElement(TreeElement parent) {
@@ -396,7 +399,7 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode prevLeaf(final ASTNode node) {
-    return ParseUtil.prevLeaf((TreeElement)node, null);
+    return prevLeaf((TreeElement)node, null);
   }
 
   public static boolean containsErrors(final TreeElement treeNext) {
@@ -420,5 +423,96 @@ public class TreeUtil {
       current = current.getTreeNext();
     }
     return childOffsetInParent;
+  }
+
+  public static boolean isStrongWhitespaceHolder(IElementType type) {
+    return type == XmlElementType.XML_TEXT;
+  }
+
+  public static String getTokenText(Lexer lexer) {
+    return lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
+  }
+
+  @Nullable
+  public static LeafElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent) {
+    return (LeafElement)nextLeaf(start, commonParent, null);
+  }
+
+  @Nullable
+  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType) {
+    TreeElement next = null;
+    if (commonParent != null) {
+      commonParent.startLeafBranchStart = start;
+      initStrongWhitespaceHolder(commonParent, start, true);
+    }
+    TreeElement nextTree = start;
+    while (next == null && (nextTree = nextTree.getTreeNext()) != null) {
+      if (nextTree.getElementType() == searchedType) {
+        return nextTree;
+      }
+      next = findFirstLeaf(nextTree, searchedType, commonParent);
+    }
+    if (next != null) {
+      if (commonParent != null) commonParent.nextLeafBranchStart = nextTree;
+      return next;
+    }
+    final CompositeElement parent = start.getTreeParent();
+    if (parent == null) return null;
+    return nextLeaf(parent, commonParent, searchedType);
+  }
+
+  public static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
+    if (start instanceof CompositeElement &&
+        (isStrongWhitespaceHolder(start.getElementType()) || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)) {
+      commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
+      commonParent.isStrongElementOnRisingSlope = slopeSide;
+    }
+  }
+
+  @Nullable
+  public static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
+    if (commonParent != null) {
+      initStrongWhitespaceHolder(commonParent, element, false);
+    }
+    if (element instanceof LeafElement || element.getElementType() == searchedType) {
+      return element;
+    }
+    else {
+      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
+        TreeElement leaf = findFirstLeaf(child, searchedType, commonParent);
+        if (leaf != null) return leaf;
+      }
+      return null;
+    }
+  }
+
+  @Nullable
+  public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
+    if (start == null) return null;
+    LeafElement prev = null;
+    if (commonParent != null) {
+      if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
+        commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
+      }
+      commonParent.nextLeafBranchStart = start;
+    }
+    ASTNode prevTree = start;
+    while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
+      prev = findLastLeaf(prevTree);
+    }
+    if (prev != null) {
+      if (commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
+      return prev;
+    }
+    final CompositeElement parent = start.getTreeParent();
+    if (parent == null) return null;
+    return prevLeaf(parent, commonParent);
+  }
+
+  public static final class CommonParentState {
+    public TreeElement startLeafBranchStart = null;
+    public ASTNode nextLeafBranchStart = null;
+    public CompositeElement strongWhiteSpaceHolder = null;
+    public boolean isStrongElementOnRisingSlope = true;
   }
 }

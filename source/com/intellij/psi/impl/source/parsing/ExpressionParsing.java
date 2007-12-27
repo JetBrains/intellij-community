@@ -883,7 +883,7 @@ public class ExpressionParsing extends Parsing {
     }
     else {
       TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
-      element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+      element.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
     }
 
     return element;
@@ -906,7 +906,7 @@ public class ExpressionParsing extends Parsing {
 
       if (lexer.getTokenType() == null) {
         TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
-        element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+        element.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
         return element;
       }
 
@@ -922,7 +922,7 @@ public class ExpressionParsing extends Parsing {
         }
         else {
           TreeUtil.addChildren(element, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
-          element.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+          element.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
           return element;
         }
       }

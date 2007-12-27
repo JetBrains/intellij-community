@@ -1,7 +1,5 @@
 package com.intellij.ide.highlighter;
 
-import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
-import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -9,35 +7,12 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.jsp.JspSpiUtil;
-import org.jetbrains.annotations.Nullable;
 
 public class HighlighterFactory {
-  public static EditorHighlighter createJavaHighlighter(EditorColorsScheme settings, LanguageLevel languageLevel){
-    return createHighlighter(new JavaFileHighlighter(languageLevel), settings);
-  }
-
-  public static EditorHighlighter createHTMLHighlighter(EditorColorsScheme settings){
-    SyntaxHighlighter highlighter = new HtmlFileHighlighter();
-    return createHighlighter(highlighter, settings);
-  }
+  private HighlighterFactory() {}
 
   public static EditorHighlighter createHighlighter(SyntaxHighlighter highlighter, EditorColorsScheme settings) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(highlighter, settings);
-  }
-
-  public static EditorHighlighter createXMLHighlighter(EditorColorsScheme settings){
-    return createHighlighter(new XmlFileHighlighter(), settings);
-  }
-
-  @Nullable
-  public static EditorHighlighter createJSPHighlighter(EditorColorsScheme settings, Project project, VirtualFile virtualFile) {
-    return JspSpiUtil.createJSPHighlighter(settings, project, virtualFile);
-  }
-
-  public static EditorHighlighter createCustomHighlighter(SyntaxTable syntaxTable, EditorColorsScheme settings){
-    return createHighlighter(new CustomFileHighlighter(syntaxTable), settings);
   }
 
   public static EditorHighlighter createHighlighter(Project project, String fileName) {

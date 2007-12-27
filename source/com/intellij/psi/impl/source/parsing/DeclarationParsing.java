@@ -481,7 +481,7 @@ public class DeclarationParsing extends Parsing {
         }
         else {
           TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
-          parameterList.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+          parameterList.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
           return parameterList;
         }
       }
@@ -574,7 +574,7 @@ public class DeclarationParsing extends Parsing {
         }
       } else {
         TreeUtil.addChildren(memberList, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
-        memberList.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+        memberList.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
         return memberList;
       }
     }

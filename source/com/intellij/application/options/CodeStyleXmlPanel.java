@@ -31,7 +31,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.FileType;
@@ -67,7 +67,7 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
   }
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    return HighlighterFactory.createXMLHighlighter(scheme);
+    return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
   protected int getRightMargin() {

@@ -19,7 +19,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
@@ -287,8 +286,8 @@ public class CodeEditUtil {
       }
     }
     if(generatedWhitespace != null){
-      final ParseUtil.CommonParentState parentState = new ParseUtil.CommonParentState();
-      ParseUtil.prevLeaf((TreeElement)right, parentState);
+      final TreeUtil.CommonParentState parentState = new TreeUtil.CommonParentState();
+      TreeUtil.prevLeaf((TreeElement)right, parentState);
       parentState.nextLeafBranchStart.getTreeParent().addChild(generatedWhitespace, parentState.nextLeafBranchStart);
     }
     else markToReformatBefore(right, true);
@@ -365,7 +364,7 @@ public class CodeEditUtil {
   public static String getStringWhiteSpaceBetweenTokens(ASTNode first, ASTNode second, PsiFile file) {
     final FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(file);
     if (modelBuilder == null) {
-      final LeafElement leafElement = ParseUtil.nextLeaf((TreeElement)first, null);
+      final LeafElement leafElement = TreeUtil.nextLeaf((TreeElement)first, null);
       if (leafElement != second) {
         return leafElement.getText();
       }

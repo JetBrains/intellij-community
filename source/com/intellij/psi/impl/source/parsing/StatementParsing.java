@@ -128,7 +128,7 @@ public class StatementParsing extends Parsing {
       }
       final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBufferSequence(), start, end, myContext.getCharTable());
       if (braceCount != 0){
-        chameleon.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+        chameleon.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
       return chameleon;
     }
@@ -153,7 +153,7 @@ public class StatementParsing extends Parsing {
     if (lastChild == null || lastChild.getElementType() != RBRACE){
       CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace"));
       TreeUtil.addChildren(elementToAdd, errorElement);
-      elementToAdd.putUserData(ParseUtil.UNCLOSED_ELEMENT_PROPERTY, "");
+      elementToAdd.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
     }
   }
 

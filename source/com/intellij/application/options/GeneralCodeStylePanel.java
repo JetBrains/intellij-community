@@ -1,6 +1,6 @@
 package com.intellij.application.options;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.highlighter.JavaHighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -323,7 +323,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    return HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
+    return JavaHighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST);
   }
 
   private class IndentOptions extends OptionGroup {

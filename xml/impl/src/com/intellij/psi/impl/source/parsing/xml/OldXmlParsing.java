@@ -549,7 +549,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
           tokenType != XML_ENTITY_REF_TOKEN &&
           tokenType != XML_CONTENT_ANY &&
           tokenType != XML_CONTENT_EMPTY &&
-          (tokenType != XML_NAME || ( !(tokenText = ParseUtil.getTokenText(lexer)).equals("-") && !tokenText.equals("O"))) // sgml compatibility
+          (tokenType != XML_NAME || ( !(tokenText = TreeUtil.getTokenText(lexer)).equals("-") && !tokenText.equals("O"))) // sgml compatibility
         ) {
         TreeUtil.addChildren(parent,Factory.createErrorElement(XmlBundle.message("dtd.parser.message.left.paren.or.entityref.or.empty.or.any.expected")));
       }

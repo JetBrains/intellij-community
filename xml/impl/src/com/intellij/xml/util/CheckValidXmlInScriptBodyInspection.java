@@ -28,7 +28,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
@@ -83,7 +83,7 @@ public class CheckValidXmlInScriptBodyInspection extends BaseJavaLocalInspection
                     if (tokenType == null) break;
                   }
                   if (( tokenType == XmlTokenType.XML_BAD_CHARACTER &&
-                        "&".equals(ParseUtil.getTokenText(myXmlLexer))
+                        "&".equals(TreeUtil.getTokenText(myXmlLexer))
                       ) ||
                       tokenType == XmlTokenType.XML_START_TAG_START
                     ) {

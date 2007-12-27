@@ -5,7 +5,6 @@ import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.JavaWithJspTemplateDataLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.Constants;
@@ -17,9 +16,7 @@ import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlElementType;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,12 +24,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ParseUtil implements Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.parsing.ParseUtil");
-
-  public static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
-
-  public static boolean isStrongWhitespaceHolder(IElementType type) {
-    return type == XmlElementType.XML_TEXT;
-  }
 
   public static TreeElement createTokenElement(Lexer lexer, CharTable table) {
     IElementType tokenType = lexer.getTokenType();
@@ -45,10 +36,6 @@ public class ParseUtil implements Constants {
     else {
       return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
     }
-  }
-
-  public static String getTokenText(Lexer lexer) {
-    return lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
   }
 
   public static interface TokenProcessor {
@@ -134,13 +121,6 @@ public class ParseUtil implements Constants {
     }
   }
 
-  public static final class CommonParentState {
-    public TreeElement startLeafBranchStart = null;
-    public ASTNode nextLeafBranchStart = null;
-    public CompositeElement strongWhiteSpaceHolder = null;
-    public boolean isStrongElementOnRisingSlope = true;
-  }
-
   /*public static void insertMissingTokens(CompositeElement root,
                                          Lexer lexer,
                                          int startOffset,
@@ -191,7 +171,7 @@ public class ParseUtil implements Constants {
       if (firstMissing != null) {
         ASTNode current = root;
         while (current instanceof CompositeElement) {
-          if (current.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) break;
+          if (current.getUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY) != null) break;
           current = current.getLastChildNode();
         }
         if (current instanceof CompositeElement) {
@@ -211,16 +191,16 @@ public class ParseUtil implements Constants {
                                                    TokenProcessor processor,
                                                    ParsingContext context,
                                                    ASTNode endToken) {
-    final CommonParentState commonParents = new CommonParentState();
+    final TreeUtil.CommonParentState commonParents = new TreeUtil.CommonParentState();
     while (leaf != null) {
       commonParents.strongWhiteSpaceHolder = null;
       final IElementType tokenType = gt ? GTTokens.getTokenType(lexer) : lexer.getTokenType();
       final TreeElement next;
       if (tokenType instanceof IChameleonElementType) {
-        next = nextLeaf(leaf, commonParents, tokenType);
+        next = TreeUtil.nextLeaf(leaf, commonParents, tokenType);
       }
       else {
-        next = nextLeaf(leaf, commonParents, null);
+        next = TreeUtil.nextLeaf(leaf, commonParents, null);
       }
 
       if (next == null || tokenType == null || next == endToken) break;
@@ -249,7 +229,7 @@ public class ParseUtil implements Constants {
               insertAfter = current;
               break;
             }
-            if (treeNext.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
+            if (treeNext.getUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY) != null) {
               insertAfter = null;
               TreeUtil.addChildren((CompositeElement)treeNext, firstMissing);
               break;
@@ -277,82 +257,6 @@ public class ParseUtil implements Constants {
     else {
       lexer.advance();
     }
-  }
-
-  @Nullable
-  public static LeafElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent) {
-    return (LeafElement)nextLeaf(start, commonParent, null);
-  }
-
-  @Nullable
-  public static TreeElement nextLeaf(@NotNull TreeElement start, CommonParentState commonParent, IElementType searchedType) {
-    TreeElement next = null;
-    if (commonParent != null) {
-      commonParent.startLeafBranchStart = start;
-      initStrongWhitespaceHolder(commonParent, start, true);
-    }
-    TreeElement nextTree = start;
-    while (next == null && (nextTree = nextTree.getTreeNext()) != null) {
-      if (nextTree.getElementType() == searchedType) {
-        return nextTree;
-      }
-      next = findFirstLeaf(nextTree, searchedType, commonParent);
-    }
-    if (next != null) {
-      if (commonParent != null) commonParent.nextLeafBranchStart = nextTree;
-      return next;
-    }
-    final CompositeElement parent = start.getTreeParent();
-    if (parent == null) return null;
-    return nextLeaf(parent, commonParent, searchedType);
-  }
-
-  private static void initStrongWhitespaceHolder(CommonParentState commonParent, ASTNode start, boolean slopeSide) {
-    if (start instanceof CompositeElement &&
-        (isStrongWhitespaceHolder(start.getElementType()) || slopeSide && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null)) {
-      commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
-      commonParent.isStrongElementOnRisingSlope = slopeSide;
-    }
-  }
-
-  @Nullable
-  private static TreeElement findFirstLeaf(TreeElement element, IElementType searchedType, CommonParentState commonParent) {
-    if (commonParent != null) {
-      initStrongWhitespaceHolder(commonParent, element, false);
-    }
-    if (element instanceof LeafElement || element.getElementType() == searchedType) {
-      return element;
-    }
-    else {
-      for (TreeElement child = element.getFirstChildNode(); child != null; child = child.getTreeNext()) {
-        TreeElement leaf = findFirstLeaf(child, searchedType, commonParent);
-        if (leaf != null) return leaf;
-      }
-      return null;
-    }
-  }
-
-  @Nullable
-  public static LeafElement prevLeaf(TreeElement start, @Nullable CommonParentState commonParent) {
-    if (start == null) return null;
-    LeafElement prev = null;
-    if (commonParent != null) {
-      if (commonParent.strongWhiteSpaceHolder != null && start.getUserData(UNCLOSED_ELEMENT_PROPERTY) != null) {
-        commonParent.strongWhiteSpaceHolder = (CompositeElement)start;
-      }
-      commonParent.nextLeafBranchStart = start;
-    }
-    ASTNode prevTree = start;
-    while (prev == null && (prevTree = prevTree.getTreePrev()) != null) {
-      prev = TreeUtil.findLastLeaf(prevTree);
-    }
-    if (prev != null) {
-      if (commonParent != null) commonParent.startLeafBranchStart = (TreeElement)prevTree;
-      return prev;
-    }
-    final CompositeElement parent = start.getTreeParent();
-    if (parent == null) return null;
-    return prevLeaf(parent, commonParent);
   }
 
   static void bindComments(ASTNode root) {

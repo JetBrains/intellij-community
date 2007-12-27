@@ -1,7 +1,7 @@
 package com.intellij.lexer;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.psi.impl.source.parsing.ParseUtil;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
@@ -63,7 +63,7 @@ abstract class BaseHtmlLexer extends LexerBase {
         return; // optimization
       }
 
-      String name = ParseUtil.getTokenText(lexer);
+      String name = TreeUtil.getTokenText(lexer);
       if (caseInsensitive) name = name.toLowerCase();
 
       boolean style = name.equals(TOKEN_STYLE); //name.endsWith("style");
@@ -213,7 +213,7 @@ abstract class BaseHtmlLexer extends LexerBase {
         }
 
         if (baseLexer.getTokenType() == XmlTokenType.XML_NAME) {
-          String name = ParseUtil.getTokenText(baseLexer);
+          String name = TreeUtil.getTokenText(baseLexer);
           if (caseInsensitive) name = name.toLowerCase();
 
           if((hasSeenScript() && XmlNameHandler.TOKEN_SCRIPT.equals(name)) ||

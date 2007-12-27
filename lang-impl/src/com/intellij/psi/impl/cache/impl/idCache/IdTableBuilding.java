@@ -12,15 +12,13 @@ import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lang.properties.parsing.PropertiesLexer;
-import com.intellij.lexer.*;
+import com.intellij.lexer.FilterLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
@@ -93,8 +91,12 @@ public class IdTableBuilding {
   }
 
   public interface IdCacheBuilder {
-    void build(CharSequence chars, int length, TIntIntHashMap wordsTable, IndexPattern[] todoPatterns, int[] todoCounts, final PsiManager manager
-    );
+    void build(CharSequence chars,
+               int length,
+               TIntIntHashMap wordsTable,
+               IndexPattern[] todoPatterns,
+               int[] todoCounts,
+               final PsiManager manager);
   }
 
   public interface ScanWordProcessor {
@@ -126,71 +128,6 @@ public class IdTableBuilding {
     }
   }
 
-  private static class PropertiesIdCacheBuilder implements IdCacheBuilder {
-    public void build(CharSequence chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      Lexer lexer = new PropertiesFilterLexer(new PropertiesLexer(), wordsTable, todoCounts);
-      lexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      lexer.start(chars, 0, length,0);
-      while (lexer.getTokenType() != null) lexer.advance();
-    }
-  }
-
-  static class JavaIdCacheBuilder implements IdCacheBuilder {
-    protected Lexer createLexer() {
-      return new JavaLexer(LanguageLevel.JDK_1_3);
-    }
-
-    public void build(CharSequence chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      Lexer lexer = createLexer();
-      JavaFilterLexer filterLexer = new JavaFilterLexer(lexer, wordsTable, todoCounts);
-      lexer = new FilterLexer(filterLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
-      lexer.start(chars, 0, length,0);
-      while (lexer.getTokenType() != null) lexer.advance();
-    }
-  }
-
-
-  static class XmlIdCacheBuilder implements IdCacheBuilder {
-    public void build(CharSequence chars,
-                      int length,
-                      TIntIntHashMap wordsTable,
-                      IndexPattern[] todoPatterns,
-                      int[] todoCounts,
-                      final PsiManager manager) {
-      BaseFilterLexer filterLexer = createLexer(wordsTable, todoCounts);
-      filterLexer.start(chars, 0, length,0);
-      while (filterLexer.getTokenType() != null) {
-        filterLexer.advance();
-      }
-    }
-
-    protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      Lexer lexer = new XmlLexer();
-      return new XmlFilterLexer(lexer, wordsTable, todoCounts);
-    }
-  }
-
-  static class HtmlIdCacheBuilder extends XmlIdCacheBuilder {
-    protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XHtmlFilterLexer(new HtmlHighlightingLexer(), wordsTable, todoCounts);
-    }
-  }
-
-  static class XHtmlIdCacheBuilder extends XmlIdCacheBuilder {
-    protected BaseFilterLexer createLexer(TIntIntHashMap wordsTable, int[] todoCounts) {
-      return new XHtmlFilterLexer(new XHtmlHighlightingLexer(), wordsTable, todoCounts);
-    }
-  }
 
   static class EmptyBuilder implements IdCacheBuilder {
     public void build(CharSequence chars,
@@ -210,14 +147,7 @@ public class IdTableBuilding {
   }
 
   static {
-    registerCacheBuilder(StdFileTypes.JAVA,new JavaIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.XML,new XmlIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.DTD,new XmlIdCacheBuilder());
-
-    registerCacheBuilder(StdFileTypes.HTML,new HtmlIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.XHTML,new XHtmlIdCacheBuilder());
     registerCacheBuilder(FileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
-    registerCacheBuilder(StdFileTypes.PROPERTIES, new PropertiesIdCacheBuilder());
 
     registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());
     registerCacheBuilder(StdFileTypes.IDEA_WORKSPACE, new EmptyBuilder());

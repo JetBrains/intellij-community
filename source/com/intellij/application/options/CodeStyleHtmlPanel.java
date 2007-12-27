@@ -31,7 +31,7 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -100,7 +100,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    return HighlighterFactory.createXMLHighlighter(scheme);
+    return XmlHighlighterFactory.createXMLHighlighter(scheme);
   }
 
   private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {

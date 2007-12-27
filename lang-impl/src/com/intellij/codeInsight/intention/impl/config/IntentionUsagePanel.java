@@ -3,15 +3,15 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.ide.highlighter.JavaHighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -120,7 +120,7 @@ class IntentionUsagePanel extends JPanel{
       editor.getSelectionModel().setSelection(editorDocument.getLineStartOffset(selectedLine),
                                               editorDocument.getLineEndOffset(selectedLine));
     }
-    editor.setHighlighter(HighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
+    editor.setHighlighter(JavaHighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
     return editor;
   }
 }
