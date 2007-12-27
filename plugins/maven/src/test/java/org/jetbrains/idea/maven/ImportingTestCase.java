@@ -354,12 +354,19 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     return "<?xml version=\"1.0\"?>" +
            "<profiles>" +
            xml +
-          "</profiles>";
+           "</profiles>";
   }
 
   protected VirtualFile createProjectSubDir(String relativePath) {
     File f = new File(getProjectPath(), relativePath);
     f.mkdirs();
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
+  }
+
+  protected VirtualFile createProjectSubFile(String relativePath) throws IOException {
+    File f = new File(getProjectPath(), relativePath);
+    f.getParentFile().mkdirs();
+    f.createNewFile();
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 

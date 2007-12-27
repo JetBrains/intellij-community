@@ -1,7 +1,5 @@
 package org.jetbrains.idea.maven;
 
-import com.intellij.openapi.vfs.VirtualFile;
-
 import java.io.IOException;
 
 public class ContentRootsImportingTest extends ImportingTestCase {
@@ -349,8 +347,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
-    VirtualFile dir = createProjectSubDir("target/generated-sources");
-    dir.createChildData(null, "f.txt");
+    createProjectSubFile("target/generated-sources/f.txt");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
