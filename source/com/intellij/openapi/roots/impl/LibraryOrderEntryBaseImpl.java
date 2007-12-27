@@ -70,12 +70,18 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl {
 
   @NotNull
   public VirtualFile[] getFiles(OrderRootType type) {
+    if (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.CLASSES_AND_OUTPUT) {
+      return myRootContainers.get(OrderRootType.CLASSES).getDirectories();
+    }
     return myRootContainers.get(type).getDirectories();
   }
 
   @NotNull
   public String[] getUrls(OrderRootType type) {
     LOG.assertTrue(!myRootModel.getModule().isDisposed());
+    if (type == OrderRootType.COMPILATION_CLASSES || type == OrderRootType.CLASSES_AND_OUTPUT) {
+      return myRootContainers.get(OrderRootType.CLASSES).getUrls();
+    }
     return myRootContainers.get(type).getUrls();
   }
 
