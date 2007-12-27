@@ -7,7 +7,7 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.roots.JavaProjectExtension;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -48,14 +48,14 @@ public abstract class BaseTestNGInspectionsTest {
     myFixture.enableInspections(myEnabledTool);
     myFixture.setUp();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
-    myLanguageLevel = JavaProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    JavaProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    myLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
+    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }
 
 
   @AfterMethod
   public void tearDown() throws Exception {
-    JavaProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+    LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
     myFixture.tearDown();
     myFixture = null;
     myEnabledTool = null;

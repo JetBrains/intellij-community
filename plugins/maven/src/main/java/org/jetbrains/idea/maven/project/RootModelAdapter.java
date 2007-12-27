@@ -217,7 +217,7 @@ class RootModelAdapter {
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     try {
-      JavaModuleExtension.getInstance(myRootModel.getModule()).setLanguageLevel(languageLevel);
+      LanguageLevelModuleExtension.getInstance(myRootModel.getModule()).setLanguageLevel(languageLevel);
     }
     catch (IllegalArgumentException e) {
       //bad value was stored
