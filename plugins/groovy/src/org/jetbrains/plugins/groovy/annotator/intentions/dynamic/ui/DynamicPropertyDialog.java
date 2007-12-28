@@ -1,24 +1,28 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui;
 
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
-import com.intellij.ui.*;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -74,15 +78,25 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   private Document createDocument(final String text) {
-    final PsiManager manager = myReferenceExpression.getManager();
-    PsiPackage defaultPackage = manager.findPackage("");
-    final PsiCodeFragment fragment = manager.getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
-    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-    return PsiDocumentManager.getInstance(myReferenceExpression.getProject()).getDocument(fragment);
+
+    final PsiFile groovyFile = GroovyElementFactory.getInstance(myProject).createGroovyFile("", true);
+
+//    final Document document = EditorFactory.getInstance().createDocument("");
+//    final Editor editor = EditorFactory.getInstance().createEditor(document, myProject, GroovyFileType.GROOVY_FILE_TYPE, false);
+//    final Document myDocument = editor.getDocument();
+//    return myDocument;
+
+//    final PsiManager manager = myReferenceExpression.getManager();
+//    PsiPackage defaultPackage = manager.findPackage("");
+//    final PsiCodeFragment fragment = manager.getElementFactory().createTypeCodeFragment(text, defaultPackage, false, true, false);
+//    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+
+    return PsiDocumentManager.getInstance(myReferenceExpression.getProject()).getDocument(groovyFile);
   }
 
   private void setUpTypeComboBox() {
     final EditorComboBoxEditor comboEditor = new EditorComboBoxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE);
+
     final Document document = createDocument("");
     comboEditor.setItem(document);
 
@@ -119,6 +133,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   private void updateOkStatus() {
+    //TODO
     String text = getEnteredTypeName();
     setOKActionEnabled(/*GroovyNamesUtil.isIdentifier(text)*/true);
   }
@@ -129,6 +144,19 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
     if (item instanceof Document) {
       final Document document = (Document) item;
+      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (psiFile instanceof GroovyFile) {
+        final GrTopStatement[] topStatements = ((GroovyFile) psiFile).getTopStatements();
+
+        if (topStatements.length != 1) return null;
+        final GrTopStatement qualifierTypeName = topStatements[0];
+
+        if (!(qualifierTypeName instanceof GrReferenceExpression)) return null;
+        final GrReferenceExpression typeReferenceExpression = (GrReferenceExpression) qualifierTypeName;
+
+        return typeReferenceExpression.getCanonicalText();
+      }
+
       return document.getText();
     } else {
       return null;

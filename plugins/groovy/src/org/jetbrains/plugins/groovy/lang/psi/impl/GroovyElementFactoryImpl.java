@@ -157,8 +157,12 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GrClosableBlock) node.getPsi();
   }
 
+  private GroovyFileBase createDummyFile(String s, boolean  isPhisical) {
+    return (GroovyFileBase) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis() , isPhisical);
+  }
+
   private GroovyFileBase createDummyFile(String s) {
-    return (GroovyFileBase) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), s);
+    return createDummyFile(s, false);
   }
 
   public GrParameter createParameter(String name, @Nullable String typeText, GroovyPsiElement context) throws IncorrectOperationException {
@@ -247,8 +251,12 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return ((GrMethod) defintion);
   }
 
-  private PsiFile createGroovyFile(String idText) {
-    return createDummyFile(idText);
+  public PsiFile createGroovyFile(String idText) {
+   return createGroovyFile(idText, false);
+  }
+
+  public PsiFile createGroovyFile(String idText, boolean isPhisical) {
+    return createDummyFile(idText, isPhisical);
   }
 
   public void projectOpened() {

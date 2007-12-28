@@ -216,7 +216,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     return ((Element) type).getText();
   }
 
-  @Nullable
+  @NotNull
   public String[] findDynamicPropertiesOfClass(String moduleName, String className) {
     Document document = loadModuleDynXML(moduleName);
 
@@ -231,6 +231,13 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     }
 
     return result.toArray(new String[0]);
+  }
+
+  public void fireChangeDynamicPropertyEnviroment() {
+    //TODO this
+    //change package
+    //rename property
+    // ... etc
   }
 
   @Nullable

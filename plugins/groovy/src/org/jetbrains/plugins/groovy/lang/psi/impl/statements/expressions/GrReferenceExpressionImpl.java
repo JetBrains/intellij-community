@@ -466,7 +466,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public String getCanonicalText() {
-    return ""; //todo
+    //TODO
+    if (isQualified()) {
+      final GrExpression qualifierExpression = getQualifierExpression();
+
+      if (qualifierExpression instanceof GrReferenceExpression) {
+        final PsiElement dotToken = getDotToken();
+          return ((GrReferenceExpression) qualifierExpression).getCanonicalText() + dotToken.getText() +
+              getName();       
+      }
+    }
+
+    return getText();
   }
 
   public boolean isReferenceTo(PsiElement element) {
@@ -505,7 +516,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   }
 
   public void replaceDotToken(PsiElement newDot) {
-    if (newDot == null)  return;
+    if (newDot == null) return;
     if (!GroovyTokenTypes.DOTS.contains(newDot.getNode().getElementType())) return;
     final PsiElement oldDot = getDotToken();
     if (oldDot == null) return;
@@ -544,12 +555,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           node.removeRange(node.getFirstChildNode(), refNameElement.getNode());
         }
       }
-    }
-    else {
+    } else {
       if (oldQualifier != null) {
         node.replaceChild(oldQualifier.getNode(), newQualifier.getNode());
-      }
-      else {
+      } else {
         if (refNameElement != null) {
           node.addChild(newQualifier.getNode(), refNameElement.getNode());
           node.addLeaf(GroovyTokenTypes.mDOT, ".", refNameElement.getNode());

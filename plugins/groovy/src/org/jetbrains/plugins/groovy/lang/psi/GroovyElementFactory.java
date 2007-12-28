@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,4 +111,6 @@ public abstract class GroovyElementFactory {
   public abstract PsiElement createDotToken(String newDot);
 
   public abstract GrMethod createMethodFromText(String methodText);
+
+  public abstract PsiFile createGroovyFile(String idText, boolean isPhisical);
 }

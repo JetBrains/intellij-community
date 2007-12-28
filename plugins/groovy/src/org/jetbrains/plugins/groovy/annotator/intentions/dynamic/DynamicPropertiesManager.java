@@ -53,6 +53,11 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   * Finds dynamic property
   */
 
-  @Nullable
+  @NotNull
   public abstract String[] findDynamicPropertiesOfClass(String moduleName, final String conatainingClassName);
+
+  /*
+   * Makes needed changes in xml file 
+   */
+  public abstract void fireChangeDynamicPropertyEnviroment();
 }
