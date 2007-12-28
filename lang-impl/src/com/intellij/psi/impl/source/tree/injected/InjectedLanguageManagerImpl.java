@@ -1,11 +1,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.ProperTextRange;
-import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.injected.editor.VirtualFileWindowImpl;
+import com.intellij.injected.editor.*;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
@@ -32,18 +28,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author cdr
  */
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
-  private final ConcurrentMap<VirtualFile, List<VirtualFileWindowImpl>> cachedFiles = new ConcurrentWeakHashMap<VirtualFile, List<VirtualFileWindowImpl>>();
+  private final ConcurrentMap<VirtualFile, List<VirtualFileWindow>> cachedFiles = new ConcurrentWeakHashMap<VirtualFile, List<VirtualFileWindow>>();
   private final Project myProject;
   private final PsiManagerEx myPsiManager;
   private final AtomicReference<MultiHostInjector> myPsiManagerRegisteredInjectorsAdapter = new AtomicReference<MultiHostInjector>();
-  private final AtomicReference<MultiHostInjector> myRegisteredConcatenationAdapter = new AtomicReference<MultiHostInjector>();
   private final ExtensionPointListener<LanguageInjector> myListener;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
@@ -54,16 +48,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     myProject = project;
     myPsiManager = psiManager;
 
-    final ExtensionPoint<ConcatenationAwareInjector> concatPoint = Extensions.getArea(project).getExtensionPoint(CONCATENATION_INJECTOR_EP_NAME);
-    concatPoint.addExtensionPointListener(new ExtensionPointListener<ConcatenationAwareInjector>() {
-      public void extensionAdded(ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        registerConcatenationInjector(injector);
-      }
-
-      public void extensionRemoved(ConcatenationAwareInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
-        unregisterConcatenationInjector(injector);
-      }
-    });
     final ExtensionPoint<MultiHostInjector> multiPoint = Extensions.getArea(project).getExtensionPoint(MULTIHOST_INJECTOR_EP_NAME);
     multiPoint.addExtensionPointListener(new ExtensionPointListener<MultiHostInjector>() {
       public void extensionAdded(MultiHostInjector injector, @Nullable PluginDescriptor pluginDescriptor) {
@@ -110,35 +94,21 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       }
     }
   }
-  private void concatenationInjectorsChanged() {
-    if (myConcatenationInjectors.isEmpty()) {
-      MultiHostInjector prev = myRegisteredConcatenationAdapter.getAndSet(null);
-      if (prev != null) {
-        unregisterMultiHostInjector(prev);
-      }
-    }
-    else {
-      MultiHostInjector adapter = new Concatenation2InjectorAdapter(this);
-      if (myRegisteredConcatenationAdapter.compareAndSet(null, adapter)) {
-        registerMultiHostInjector(adapter);
-      }
-    }
-  }
 
-  VirtualFileWindowImpl createVirtualFile(final Language language,
+  VirtualFileWindow createVirtualFile(final Language language,
                                       final VirtualFile hostVirtualFile,
                                       final DocumentWindowImpl documentWindow,
                                       StringBuilder text) {
-    VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(hostVirtualFile, documentWindow, language, text);
-    List<VirtualFileWindowImpl> cachedList = cachedFiles.get(hostVirtualFile);
+    VirtualFileWindow virtualFile = new VirtualFileWindowImpl(hostVirtualFile, documentWindow, language, text);
+    List<VirtualFileWindow> cachedList = cachedFiles.get(hostVirtualFile);
     if (cachedList == null) {
-      cachedList = ConcurrencyUtil.cacheOrGet(cachedFiles, hostVirtualFile, new ArrayList<VirtualFileWindowImpl>());
+      cachedList = ConcurrencyUtil.cacheOrGet(cachedFiles, hostVirtualFile, new ArrayList<VirtualFileWindow>());
     }
     return insertFileNear(cachedList, virtualFile);
   }
 
   private static final MyRangesIntersectionComparator rangesIntersectionComparator = new MyRangesIntersectionComparator();
-  private VirtualFileWindowImpl insertFileNear(List<VirtualFileWindowImpl> cachedList, VirtualFileWindowImpl virtualFile) {
+  private VirtualFileWindow insertFileNear(List<VirtualFileWindow> cachedList, VirtualFileWindow virtualFile) {
     FileManager fileManager = myPsiManager.getFileManager();
     synchronized (cachedList) {
       int insertionIndex = Collections.binarySearch(cachedList, virtualFile, rangesIntersectionComparator);
@@ -167,7 +137,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       boolean enoughChecking = false;
       int i = insertionIndex;
       while (i < cachedList.size()) {
-        VirtualFileWindowImpl oldValidFile = checkAndRemoveInvalidFile(i,cachedList,fileManager);
+        VirtualFileWindow oldValidFile = checkAndRemoveInvalidFile(i,cachedList,fileManager);
         if (oldValidFile == null) {
           enoughChecking = false;
         }
@@ -182,19 +152,19 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return virtualFile;
   }
   //returns null if file is invalid and has been removed
-  private static VirtualFileWindowImpl checkAndRemoveInvalidFile(int index, List<VirtualFileWindowImpl> cachedList, FileManager fileManager) {
-    VirtualFileWindowImpl oldFile = cachedList.get(index);
+  private static VirtualFileWindow checkAndRemoveInvalidFile(int index, List<VirtualFileWindow> cachedList, FileManager fileManager) {
+    VirtualFileWindow oldFile = cachedList.get(index);
     boolean isValid = oldFile.isValid();
     if (isValid) {
-      PsiFile cached = fileManager.getCachedPsiFile(oldFile);
+      PsiFile cached = fileManager.getCachedPsiFile((VirtualFile)oldFile);
       PsiElement context;
       if (cached == null || (context = cached.getContext()) == null || !cached.isValid() || !context.isValid()) {
         isValid = false;
       }
       else if (index < cachedList.size() - 1) {
-        VirtualFileWindowImpl nextFile = cachedList.get(index + 1);
+        VirtualFileWindow nextFile = cachedList.get(index + 1);
         if (oldFile.getDocumentWindow().areRangesEqual(nextFile.getDocumentWindow())) {
-          PsiFile nextCached = fileManager.getCachedPsiFile(nextFile);
+          PsiFile nextCached = fileManager.getCachedPsiFile((VirtualFile)nextFile);
           if (nextCached != null && nextCached.isValid()) {
             isValid = false;
           }
@@ -205,7 +175,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
       return oldFile;
     }
     cachedList.remove(index);
-    fileManager.setViewProvider(oldFile, null);
+    fileManager.setViewProvider((VirtualFile)oldFile, null);
     return null;
   }
 
@@ -266,65 +236,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     return removed;
   }
 
-  private static class Concatenation2InjectorAdapter implements MultiHostInjector {
-    private InjectedLanguageManagerImpl myInjectedLanguageManager;
-
-    public Concatenation2InjectorAdapter(final InjectedLanguageManagerImpl injectedLanguageManager) {
-      myInjectedLanguageManager = injectedLanguageManager;
-    }
-
-    public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
-      if (myInjectedLanguageManager.myConcatenationInjectors.isEmpty()) return;
-      PsiElement element = context;
-      PsiElement parent = context.getParent();
-      while (parent instanceof PsiBinaryExpression) {
-        element = parent;
-        parent = parent.getParent();
-      }
-      if (element instanceof PsiBinaryExpression) {
-        List<PsiElement> operands = new ArrayList<PsiElement>();
-        collectOperands(element, operands);
-        PsiElement[] elements = operands.toArray(new PsiElement[operands.size()]);
-        tryInjectors(injectionPlacesRegistrar, elements);
-      }
-      else {
-        tryInjectors(injectionPlacesRegistrar, context);
-      }
-    }
-
-    private void collectOperands(PsiElement expression, List<PsiElement> operands) {
-      if (expression instanceof PsiBinaryExpression) {
-        PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-        collectOperands(binaryExpression.getLOperand(), operands);
-        collectOperands(binaryExpression.getROperand(), operands);
-      }
-      else if (expression != null) {
-        operands.add(expression);
-      }
-    }
-
-    void tryInjectors(MultiHostRegistrar registrar, PsiElement... elements) {
-      for (ConcatenationAwareInjector concatenationInjector : myInjectedLanguageManager.myConcatenationInjectors) {
-        concatenationInjector.getLanguagesToInject(registrar, elements);
-      }
-    }
-
-    @NotNull
-    public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-      return Arrays.asList(PsiLiteralExpression.class);
-    }
-  }
-  private final List<ConcatenationAwareInjector> myConcatenationInjectors = new CopyOnWriteArrayList<ConcatenationAwareInjector>();
-  public void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
-    myConcatenationInjectors.add(injector);
-    concatenationInjectorsChanged();
-  }
-
-  public boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector) {
-    boolean removed = myConcatenationInjectors.remove(injector);
-    concatenationInjectorsChanged();
-    return removed;
-  }
 
   static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
   public String getUnescapedText(@NotNull final PsiElement injectedNode) {
@@ -361,7 +272,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
 
   public void clearCaches(VirtualFileWindow virtualFile) {
     VirtualFile hostFile = virtualFile.getDelegate();
-    List<VirtualFileWindowImpl> cachedList = cachedFiles.get(hostFile);
+    List<VirtualFileWindow> cachedList = cachedFiles.get(hostFile);
     if (cachedList != null) {
       synchronized (cachedList) {
         cachedList.remove(virtualFile);
@@ -401,16 +312,16 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager {
     }
   }
 
-  private static class MyRangesIntersectionComparator implements Comparator<VirtualFileWindowImpl> {
-    public int compare(VirtualFileWindowImpl v1, VirtualFileWindowImpl v2) {
+  private static class MyRangesIntersectionComparator implements Comparator<VirtualFileWindow> {
+    public int compare(VirtualFileWindow v1, VirtualFileWindow v2) {
       return compareRanges(v1, v2);
     }
 
   }
 
-  private static int compareRanges(VirtualFileWindowImpl v1, VirtualFileWindowImpl v2) {
-    DocumentWindowImpl d1 = v1.getDocumentWindow();
-    DocumentWindowImpl d2 = v2.getDocumentWindow();
+  private static int compareRanges(VirtualFileWindow v1, VirtualFileWindow v2) {
+    DocumentWindow d1 = v1.getDocumentWindow();
+    DocumentWindow d2 = v2.getDocumentWindow();
     RangeMarker[] ranges1 = d1.getHostRanges();
     RangeMarker[] ranges2 = d2.getHostRanges();
     if (ranges1.length == 0 || ranges2.length == 0) return -1;

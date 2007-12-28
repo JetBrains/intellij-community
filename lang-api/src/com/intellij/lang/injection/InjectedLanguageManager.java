@@ -31,7 +31,6 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class InjectedLanguageManager implements ProjectComponent {
-  public static final ExtensionPointName<ConcatenationAwareInjector> CONCATENATION_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.concatenationAwareInjector");
   public static final ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.multiHostInjector");
 
   public static InjectedLanguageManager getInstance(Project project) {
@@ -45,8 +44,5 @@ public abstract class InjectedLanguageManager implements ProjectComponent {
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector);
   public abstract boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector);
 
-  public abstract void registerConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
-  public abstract boolean unregisterConcatenationInjector(@NotNull ConcatenationAwareInjector injector);
   public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
-
 }

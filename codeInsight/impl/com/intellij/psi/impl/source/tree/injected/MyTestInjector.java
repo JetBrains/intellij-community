@@ -10,7 +10,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.JavaConcatenationInjectorManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -62,7 +62,7 @@ public class MyTestInjector {
         injectionPlacesRegistrar.doneInjecting();
       }
     };
-    InjectedLanguageManager.getInstance(project).registerConcatenationInjector(injector);
+    JavaConcatenationInjectorManager.getInstance(project).registerConcatenationInjector(injector);
     return injector;
   }
 
@@ -70,11 +70,11 @@ public class MyTestInjector {
   public void uninjectAll() {
     myPsiManager.unregisterLanguageInjector(myInjector);
     Project project = myPsiManager.getProject();
-    boolean b = InjectedLanguageManager.getInstance(project).unregisterConcatenationInjector(myQLInPlaceInjector);
+    boolean b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myQLInPlaceInjector);
     assert b;
-    b = InjectedLanguageManager.getInstance(project).unregisterConcatenationInjector(myJSInPlaceInjector);
+    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(myJSInPlaceInjector);
     assert b;
-    b = InjectedLanguageManager.getInstance(project).unregisterConcatenationInjector(mySeparatedJSInjector);
+    b = JavaConcatenationInjectorManager.getInstance(project).unregisterConcatenationInjector(mySeparatedJSInjector);
     assert b;
   }
 

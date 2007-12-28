@@ -186,13 +186,13 @@ public class InjectedLanguageUtil {
     }
 
     public FileViewProvider clone() {
-      final DocumentWindowImpl oldDocumentRange = ((VirtualFileWindowImpl)getVirtualFile()).getDocumentWindow();
-      DocumentEx delegate = oldDocumentRange.getDelegate();
+      final DocumentWindow oldDocumentRange = ((VirtualFileWindow)getVirtualFile()).getDocumentWindow();
+      Document delegate = oldDocumentRange.getDelegate();
       final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
       PsiFile hostFile = documentManager.getPsiFile(delegate);
       PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
 
-      RangeMarker firstTextRange = oldDocumentRange.getFirstTextRange();
+      RangeMarker firstTextRange = oldDocumentRange.getHostRanges()[0];
       PsiElement elementCopy = hostPsiFileCopy.findElementAt(firstTextRange.getStartOffset());
       assert elementCopy != null;
       final Ref<FileViewProvider> provider = new Ref<FileViewProvider>();
@@ -629,7 +629,7 @@ public class InjectedLanguageUtil {
             throw new IllegalStateException("Seems you haven't called addPlace()");
           }
           DocumentWindowImpl documentWindow = new DocumentWindowImpl(myHostDocument, isOneLineEditor, prefixes, suffixes, relevantRangesInHostDocument);
-          VirtualFileWindowImpl virtualFile = myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
+          VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)myInjectedManager.createVirtualFile(myLanguage, myHostVirtualFile, documentWindow, outChars);
 
           DocumentImpl decodedDocument = new DocumentImpl(outChars);
           FileDocumentManagerImpl.registerDocument(decodedDocument, virtualFile);

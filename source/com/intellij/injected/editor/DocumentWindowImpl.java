@@ -423,10 +423,6 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     return false;
   }
 
-  public RangeMarker getFirstTextRange() {
-    return myRelevantRangesInHostDocument[0];
-  }
-
   @Nullable
   public TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
     int offset = 0;
@@ -540,7 +536,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
     calculateMinEditSequence(hostText, newText, result, i+1, j-1);
   }
 
-  public boolean areRangesEqual(DocumentWindowImpl window) {
+  public boolean areRangesEqual(DocumentWindow otherd) {
+    DocumentWindowImpl window = (DocumentWindowImpl)otherd;
     if (myRelevantRangesInHostDocument.length != window.myRelevantRangesInHostDocument.length) return false;
     for (int i = 0; i < myRelevantRangesInHostDocument.length; i++) {
       if (!myPrefixes[i].equals(window.myPrefixes[i])) return false;
