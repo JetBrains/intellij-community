@@ -42,7 +42,6 @@ public class MavenToIdeaConverter {
   private MavenToIdeaMapping myMapping;
   private Collection<String> myProfiles;
   private MavenImporterPreferences myPrefs;
-  private boolean myMarkSynthetic;
   private Pattern myIgnorePattern;
 
   private static Map<String, LanguageLevel> stringToLanguageLevel;
@@ -147,14 +146,19 @@ public class MavenToIdeaConverter {
 
   private void resolveDependenciesAndCommit() {
     for (Module module : myMapping.getExistingModules()) {
-      new RootModelAdapter(module).resolveModuleDependencies(myMapping.getLibraryNameToModuleName());
+      RootModelAdapter a = new RootModelAdapter(module);
+      a.resolveModuleDependencies(myMapping.getLibraryNameToModuleName());
     }
     myModuleModel.commit();
   }
 
   @Nullable
   private String getLanguageLevel(MavenProject mavenProject) {
-    return ProjectUtil.findPluginConfiguration(mavenProject, myProfiles, "org.apache.maven.plugins", "maven-compiler-plugin", "source");
+    return ProjectUtil.findPluginConfiguration(mavenProject,
+                                               myProfiles,
+                                               "org.apache.maven.plugins",
+                                               "maven-compiler-plugin",
+                                               "source");
   }
 
   private void configFolders(RootModelAdapter m, MavenProject p) {
