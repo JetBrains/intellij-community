@@ -328,7 +328,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   public DialogWrapper createConfigurationDialog(@Nullable Breakpoint initialBreakpoint, @Nullable String selectComponent) {
     if (myBreakpointsConfigurable == null) {
-      myBreakpointsConfigurable = new BreakpointsConfigurationDialogFactory(myProject);
+      myBreakpointsConfigurable = BreakpointsConfigurationDialogFactory.getInstance(myProject);
     }
     BreakpointsConfigurationDialogFactory.BreakpointsConfigurationDialog dialog = myBreakpointsConfigurable.createDialog(initialBreakpoint);
     if (initialBreakpoint != null && selectComponent != null) {

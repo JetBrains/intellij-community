@@ -3,7 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -259,8 +259,7 @@ public class PositionHighlighter {
             for (Iterator<Pair<Breakpoint, Event>> iterator = eventsOutOfLine.iterator(); iterator.hasNext();) {
               Pair<Breakpoint, Event> eventDescriptor = iterator.next();
               Breakpoint breakpoint = eventDescriptor.getFirst();
-              ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName());
-              viewBreakpointsAction.setInitialBreakpoint(breakpoint);
+              ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(breakpoint.getDisplayName(), breakpoint);
               group.add(viewBreakpointsAction);
             }
 

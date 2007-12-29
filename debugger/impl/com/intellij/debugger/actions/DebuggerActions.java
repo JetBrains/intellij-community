@@ -17,7 +17,6 @@ public interface DebuggerActions {
   @NonNls String POP_FRAME = "Debugger.PopFrame";
   @NonNls String RUN_TO_CURSOR = "RunToCursor";
   @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
-  @NonNls String VIEW_BREAKPOINTS = "ViewBreakpoints";
   @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
   @NonNls String EVALUATION_DIALOG_POPUP = "Debugger.EvaluationDialogPopup";
   @NonNls String FRAME_PANEL_POPUP = "Debugger.FramePanelPopup";

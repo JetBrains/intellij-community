@@ -2,7 +2,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.*;
-import com.intellij.debugger.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -650,8 +650,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       }
     }
 
-      ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(DebuggerBundle.message("breakpoint.manager.action.view.breakpoints.text"));
-      viewBreakpointsAction.setInitialBreakpoint(this);
+      ViewBreakpointsAction viewBreakpointsAction = new ViewBreakpointsAction(DebuggerBundle.message("breakpoint.manager.action.view.breakpoints.text"), this);
 
       DefaultActionGroup group = new DefaultActionGroup();
       group.add(new SetEnabledAction(this, !ENABLED));

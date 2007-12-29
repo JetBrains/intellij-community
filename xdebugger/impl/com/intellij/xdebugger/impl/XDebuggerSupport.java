@@ -11,7 +11,7 @@ public class XDebuggerSupport extends DebuggerSupport {
   private XBreakpointPanelProvider myBreakpointPanelProvider = new XBreakpointPanelProvider();
 
   @NotNull
-  public BreakpointPanelProvider getBreakpointPanelProvider() {
+  public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
     return myBreakpointPanelProvider;
   }
 }

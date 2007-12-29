@@ -12,15 +12,14 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
  */
 public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
   private final CheckedTreeNode myRoot;
+  private Map<B, BreakpointNode<B>> myNodes = new HashMap<B, BreakpointNode<B>>();
 
   private XBreakpointsTree(final CheckedTreeNode root) {
     super(new BreakpointsTreeCellRenderer(), root);
@@ -34,8 +33,11 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
 
   public void buildTree(@NotNull Collection<? extends B> breakpoints) {
     myRoot.removeAllChildren();
+    myNodes.clear();
     for (B breakpoint : breakpoints) {
-      myRoot.add(new BreakpointNode<B>(breakpoint));
+      BreakpointNode<B> node = new BreakpointNode<B>(breakpoint);
+      myRoot.add(node);
+      myNodes.put(breakpoint, node);
     }
     ((DefaultTreeModel)getModel()).nodeStructureChanged(myRoot);
     expandPath(new TreePath(myRoot));
@@ -65,6 +67,13 @@ public class XBreakpointsTree<B extends XBreakpoint<?>> extends CheckboxTree {
     }
 
     return list;
+  }
+
+  public void selectBreakpoint(final B breakpoint) {
+    BreakpointNode<B> node = myNodes.get(breakpoint);
+    if (node != null) {
+      TreeUtil.selectNode(this, node);
+    }
   }
 
   private static class BreakpointsTreeCellRenderer extends CheckboxTreeCellRenderer {

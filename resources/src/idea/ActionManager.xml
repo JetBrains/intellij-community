@@ -412,7 +412,7 @@
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
       <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
       <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>
-      <action id="ViewBreakpoints" class="com.intellij.debugger.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
+      <action id="ViewBreakpoints" class="com.intellij.xdebugger.impl.actions.ViewBreakpointsAction" icon="/debugger/viewBreakpoints.png"/>
       <separator/>
       <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png"/>
 

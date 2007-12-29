@@ -20,6 +20,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,7 +195,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       group.add(new MyRemoveBreakpointAction());
       group.add(new MyToggleBreakpointAction());
       group.add(new Separator());
-      group.add(new MyViewBreakpointPropertiesAction());
+      group.add(new ViewBreakpointsAction(XDebuggerBundle.message("xdebugger.view.breakpoint.properties.action"), XLineBreakpointImpl.this));
       return group;
     }
 
@@ -224,13 +225,4 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     }
   }
 
-  private class MyViewBreakpointPropertiesAction extends AnAction {
-    private MyViewBreakpointPropertiesAction() {
-      super(XDebuggerBundle.message("xdebugger.view.breakpoint.properties.action"));
-    }
-
-    public void actionPerformed(final AnActionEvent e) {
-      
-    }
-  }
 }

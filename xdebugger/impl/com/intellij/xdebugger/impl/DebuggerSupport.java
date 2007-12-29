@@ -17,6 +17,6 @@ public abstract class DebuggerSupport {
   }
 
   @NotNull
-  public abstract BreakpointPanelProvider getBreakpointPanelProvider();
+  public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
 
 }

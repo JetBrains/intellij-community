@@ -132,6 +132,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   }
 
   public void selectBreakpoint(final XBreakpoint breakpoint) {
+    myTree.selectBreakpoint((B)breakpoint);
   }
 
   public DialogWrapper getParentDialog() {

@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.*;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -368,7 +369,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     group.addSeparator();
 
-    addActionToGroup(group, DebuggerActions.VIEW_BREAKPOINTS);
+    addActionToGroup(group, XDebuggerActions.VIEW_BREAKPOINTS);
     addActionToGroup(group, DebuggerActions.MUTE_BREAKPOINTS);
 
     group.addSeparator();

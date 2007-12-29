@@ -5,11 +5,13 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -20,6 +22,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * created Jun 18, 2001
@@ -31,6 +34,10 @@ public class BreakpointsConfigurationDialogFactory {
   private List<BreakpointPanelProvider> myBreakpointPanelProviders;
 
   private int myLastSelectedTabIndex = 0;
+
+  public static BreakpointsConfigurationDialogFactory getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, BreakpointsConfigurationDialogFactory.class);
+  }
 
   public BreakpointsConfigurationDialogFactory(Project project) {
     myProject = project;
@@ -93,12 +100,8 @@ public class BreakpointsConfigurationDialogFactory {
       myTabbedPane = new TabbedPaneWrapper();
       myPanel = new JPanel(new BorderLayout());
 
-      for (BreakpointPanelProvider panelProvider : myBreakpointPanelProviders) {
-        AbstractBreakpointPanel[] panels = panelProvider.getBreakpointPanels(myProject, this);
-        for (AbstractBreakpointPanel breakpointPanel : panels) {
-          myPanels.add(breakpointPanel);
-          addPanel(breakpointPanel, breakpointPanel.getTabTitle());
-        }
+      for (BreakpointPanelProvider<?> panelProvider : myBreakpointPanelProviders) {
+        addPanels(panelProvider);
       }
 
       final ChangeListener tabPaneChangeListener = new ChangeListener() {
@@ -130,6 +133,14 @@ public class BreakpointsConfigurationDialogFactory {
       );
       myPanel.setPreferredSize(new Dimension(600, 500));
       return myPanel;
+    }
+
+    private <B> void addPanels(final BreakpointPanelProvider<B> panelProvider) {
+      Collection<AbstractBreakpointPanel<B>> panels = panelProvider.getBreakpointPanels(myProject, this);
+      for (AbstractBreakpointPanel<B> breakpointPanel : panels) {
+        myPanels.add(breakpointPanel);
+        addPanel(breakpointPanel, breakpointPanel.getTabTitle());
+      }
     }
 
     private void addPanel(final AbstractBreakpointPanel panel, final String title) {
