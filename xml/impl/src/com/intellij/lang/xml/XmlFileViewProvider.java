@@ -32,6 +32,11 @@ public class XmlFileViewProvider extends CompositeLanguageFileViewProvider {
     return myRelevantLanguages = new LinkedHashSet<Language>(relevantLanguages);
   }
 
+  // Specifically override super implementation method in order to prevent SOE when this class's getRelevantLanguages() is invoked before
+  // getting psi for myLanguage (see also super.isRelevantLanguage as well)
+  protected boolean isRelevantLanguage(final Language lang) {
+    return myLanguage == lang || super.isRelevantLanguage(lang);
+  }
 
   @NotNull
   public LanguageFilter[] getLanguageExtensions() {

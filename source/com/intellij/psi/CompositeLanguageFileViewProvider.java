@@ -192,12 +192,16 @@ public class CompositeLanguageFileViewProvider extends SingleRootFileViewProvide
   protected PsiFile createFile(Language lang) {
     final PsiFile psiFile = super.createFile(lang);
     if (psiFile != null) return psiFile;
-    if (getRelevantLanguages().contains(lang)) {
+    if (isRelevantLanguage(lang)) {
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       assert parserDefinition != null;
       return parserDefinition.createFile(this);
     }
     return null;
+  }
+
+  protected boolean isRelevantLanguage(final Language lang) {
+    return getRelevantLanguages().contains(lang);
   }
 
   public void rootChanged(PsiFile psiFile) {
