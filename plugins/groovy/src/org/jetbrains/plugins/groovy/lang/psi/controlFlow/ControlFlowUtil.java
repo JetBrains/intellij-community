@@ -14,13 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
-import java.util.List;
-import java.util.ArrayList;
-
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectHashMap;
 import com.intellij.openapi.diagnostic.Logger;
+import gnu.trove.TIntHashSet;
+import gnu.trove.TObjectIntHashMap;
+
+import java.util.*;
 
 /**
  * @author ven
@@ -41,7 +39,7 @@ public class ControlFlowUtil {
       }
     }
 
-    assert N == 0;
+    LOG.assertTrue(N == 0);
     return result;
   }
 
@@ -60,15 +58,14 @@ public class ControlFlowUtil {
     List<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     TObjectIntHashMap<String> namesIndex = buildNamesIndex(flow);
 
-    TIntObjectHashMap<TIntHashSet> written = new TIntObjectHashMap<TIntHashSet>(flow.length);
-
-    boolean[] visited = new boolean[flow.length];
-    for (int i = 0; i < visited.length; i++) visited[i] = false;
+    ArrayList<TIntHashSet> definitelyAssigned = new ArrayList<TIntHashSet>();
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < flow.length; i++) definitelyAssigned.add(null);
 
     CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
-    for (int i = 0; i < flow.length; i++) {
-      if (!visited[i]) doVisitForReadsBeforeWrites(flow[i], written, result, env, namesIndex, visited);
-    }
+    int[] postorder = postorder(flow);
+
+    findReadsBeforeWrites(flow, definitelyAssigned, result, env, namesIndex, postorder);
 
     return result.toArray(new ReadWriteVariableInstruction[result.size()]);
   }
@@ -87,49 +84,51 @@ public class ControlFlowUtil {
     return namesIndex;
   }
 
-  private static void doVisitForReadsBeforeWrites(Instruction curr, TIntObjectHashMap<TIntHashSet> written,
-                                                  List<ReadWriteVariableInstruction> result, CallEnvironment env,
-                                                  TObjectIntHashMap<String> namesIndex, boolean[] visited) {
+  private static void findReadsBeforeWrites(Instruction[] flow, ArrayList<TIntHashSet> definitelyAssigned,
+                                            List<ReadWriteVariableInstruction> result, CallEnvironment env,
+                                            TObjectIntHashMap<String> namesIndex,
+                                            int[] postorder) {
 
-    if (curr instanceof ReadWriteVariableInstruction) {
-      ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr; //do not check for isWrite() to prevent multiple warnings
-      int idx = namesIndex.get(readWriteInsn.getVariableName());
-      TIntHashSet defs = written.get(idx);
-      if (defs == null) {
-        defs = new TIntHashSet();
-        written.put(idx, defs);
-      }
-      defs.add(curr.num());
-    }
-
-    visited[curr.num()] = true;
-
-    for (Instruction succ : curr.succ(env)) {
-      if (succ instanceof ReadWriteVariableInstruction) {
-        ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) succ;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < postorder.length; i++) {
+      int j = postorder[i];
+      Instruction curr = flow[j];
+      if (curr instanceof ReadWriteVariableInstruction) {
+        ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
+        int idx = namesIndex.get(readWriteInsn.getVariableName());
+        TIntHashSet vars = definitelyAssigned.get(j);
         if (!readWriteInsn.isWrite()) {
-          int idx = namesIndex.get(readWriteInsn.getVariableName());
-          if (!written.contains(idx)) {
-            result.add((ReadWriteVariableInstruction) succ);
+          if (vars == null || !vars.contains(idx)) {
+            result.add(readWriteInsn);
+          }
+        } else {
+          if (vars == null) {
+            vars = new TIntHashSet();
+            definitelyAssigned.add(j, vars);
+          }
+          vars.add(idx);
+        }
+      }
+
+      for (Instruction succ : curr.succ(env)) {
+        if (postorder[succ.num()] > postorder[curr.num()]) {
+          TIntHashSet currDefinitelyAssigned = definitelyAssigned.get(curr.num());
+          TIntHashSet succDefinitelyAssigned = definitelyAssigned.get(succ.num());
+          if (currDefinitelyAssigned != null) {
+            int[] currArray = currDefinitelyAssigned.toArray();
+            if (succDefinitelyAssigned == null) {
+              succDefinitelyAssigned = new TIntHashSet();
+              succDefinitelyAssigned.addAll(currArray);
+              definitelyAssigned.add(succ.num(), succDefinitelyAssigned);
+            } else {
+              succDefinitelyAssigned.retainAll(currArray);
+            }
+          } else if (succDefinitelyAssigned != null) {
+            succDefinitelyAssigned.clear();
           }
         }
       }
 
-      if (!visited[succ.num()]) {
-        doVisitForReadsBeforeWrites(succ, written, result, env, namesIndex, visited);
-      }
-    }
-
-
-    if (curr instanceof ReadWriteVariableInstruction) {
-      ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
-      int idx = namesIndex.get(readWriteInsn.getVariableName());
-      TIntHashSet defs = written.get(idx);
-      LOG.assertTrue(defs != null);
-      defs.remove(curr.num());
-      if (defs.isEmpty()) {
-        written.remove(idx);
-      }
     }
   }
 }
