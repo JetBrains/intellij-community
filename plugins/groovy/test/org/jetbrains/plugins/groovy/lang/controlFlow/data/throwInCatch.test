@@ -1,0 +1,22 @@
+try {
+  a
+} catch (Exception e) {
+  throw e
+} finally {
+  c
+}
+-----
+0(1) element: null
+1(2,3) element: Open block
+2(3,9) READ a
+3(4) element: Catch clause
+4(5) READ e
+5(7) element: THROW statement
+6(11) element: Finally clause
+7(6,8)  CALL 6
+8(13) AFTER CALL 7
+9(6,10)  CALL 6
+10(13) AFTER CALL 9
+11(12) READ c
+12(13)  RETURN
+13() element: null
