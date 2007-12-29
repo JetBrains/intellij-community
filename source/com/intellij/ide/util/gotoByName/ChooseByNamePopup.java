@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
@@ -176,5 +178,42 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);
     return newPopup;
+  }
+
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.*)(?:\\:|@|,|#)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+
+  public String getNamePattern(String pattern) {
+    if (pattern.indexOf(':') != -1 ||
+        pattern.indexOf(',') != -1 ||
+        pattern.indexOf('#') != -1 ||
+        pattern.indexOf('@') != -1) { // quick test if reg exp should be used
+      final Matcher matcher = patternToDetectLinesAndColumns.matcher(pattern);
+      if (matcher.matches()) {
+        pattern = matcher.group(1);
+      }
+    }
+
+    return super.getNamePattern(pattern);
+  }
+
+  public int getLinePosition() {
+    return getLineOrColumn(true);
+  }
+
+  private int getLineOrColumn(final boolean line) {
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(myTextField.getText());
+    if (matcher.matches()) {
+      final int groupNumber = line ? 2:3;
+      try {
+        if(groupNumber < matcher.groupCount()) return Integer.parseInt(matcher.group(groupNumber)) - 1;
+        else if (!line && groupNumber - 1 < matcher.groupCount()) return 0;
+      } catch (NumberFormatException ex) {}
+    }
+
+    return -1;
+  }
+
+  public int getColumnPosition() {
+    return getLineOrColumn(false);
   }
 }

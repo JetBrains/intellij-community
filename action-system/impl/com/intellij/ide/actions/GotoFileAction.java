@@ -30,7 +30,7 @@ public class GotoFileAction extends GotoActionBase {
         if (file == null) return;
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile());
+            final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file.getVirtualFile(), popup.getLinePosition(), popup.getColumnPosition());
             if (descriptor.canNavigate()) {
               descriptor.navigate(true);
             }
