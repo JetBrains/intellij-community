@@ -44,8 +44,8 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
   private static final Key<Class<? extends CodeCompletionHandlerBase>> COMPLETION_HANDLER_CLASS_KEY =
     Key.create("COMPLETION_HANDLER_CLASS_KEY");
 
-  private LookupItemPreferencePolicy myPreferencePolicy = null;
-  private static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(
+  protected LookupItemPreferencePolicy myPreferencePolicy = null;
+  protected static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(
     psiElement().whitespaceOrComment(),
     psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
 
@@ -391,7 +391,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     return data;
   }
 
-  private Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
+  protected Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
     PsiFile oldFileCopy = createFileCopy(context.file);
     PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(oldFileCopy);
     Project project = hostFile.getProject();

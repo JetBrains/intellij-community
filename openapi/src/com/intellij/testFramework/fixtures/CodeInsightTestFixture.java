@@ -17,22 +17,22 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.io.IOException;
+import java.util.List;
 
 /**
  *
@@ -164,6 +164,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void configureByFiles(@NonNls String... files) throws Throwable;
 
+  PsiFile configureByText(FileType fileType, @NonNls String text) throws Throwable;
+
   /**
    * Compares current file against the given one.
    *
@@ -216,4 +218,12 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   PsiClass addClass(@NotNull @NonNls final String classText) throws IOException;
 
   PsiManager getPsiManager();
+
+  @Nullable LookupElement[] completeBasic();
+
+  void checkResult(final String text) throws IOException;
+
+  Document getDocument(PsiFile file);
+
+  void setFileContext(@Nullable PsiElement context);
 }

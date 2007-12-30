@@ -3,7 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.patterns.impl.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -16,9 +16,9 @@ import org.apache.oro.text.regex.Pattern;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
+@Deprecated
 public class CompletionContext implements Cloneable {
+  public static final Key<CompletionContext> COMPLETION_CONTEXT_KEY = Key.create("CompletionContext");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
   private Pattern myPattern;
   private Perl5Matcher myMatcher;
