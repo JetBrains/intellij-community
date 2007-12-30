@@ -1,13 +1,13 @@
 <idea-plugin version="2">
   <name>Intention Power Pack</name>
   <id>IntentionPowerPack</id>
-  <version>0.9</version>
+  <version>1.0</version>
 
   <vendor>InspectionGadgets Software</vendor>
-  <idea-version min="4.0" max="6.0"/>
+  <idea-version since-build="8000"/>
   <resource-bundle>com.siyeh.IntentionPowerPackBundle</resource-bundle>
 
-  <extensions xmlns="com.intellij">
+  <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
 
     <!-- Numbers -->
@@ -274,6 +274,10 @@
     -->
 
     <!-- Other -->
+    <intentionAction>
+      <className>com.siyeh.ipp.expression.FlipExpressionIntention</className>
+      <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.commutative.FlipCommutativeMethodCallIntention</className>
       <categoryKey>intention.category.other</categoryKey>
