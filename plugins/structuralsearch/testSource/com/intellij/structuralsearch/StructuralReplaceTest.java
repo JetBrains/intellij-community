@@ -1475,7 +1475,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
-  @Bombed(day = 30, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
+  @Bombed(day = 31, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
   public void testClassReplacement10() throws IOException {
     String s1 = TestUtils.loadFile("before2.java");
     String s2 = "class '_Class {\n" +
