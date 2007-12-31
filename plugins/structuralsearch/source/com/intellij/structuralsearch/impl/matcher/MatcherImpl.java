@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
+import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ArrayBackedNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.FilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.NodeIterator;
@@ -611,27 +612,50 @@ public class MatcherImpl {
       if (targetNode instanceof PsiIdentifier) {
         targetNode = targetNode.getParent();
         final PsiElement parent = targetNode.getParent();
-        if (parent instanceof PsiTypeElement) targetNode = parent;
+        if (parent instanceof PsiTypeElement || parent instanceof PsiStatement) targetNode = parent;
       }
+
+      MatchingHandler handler = null;
 
       while (element.getClass() == targetNode.getClass() ||
              (compiledPattern.isTypedVar(targetNode) && compiledPattern.getHandler(targetNode).canMatch(targetNode, element))
             ) {
-        MatchingHandler handler = compiledPattern.getHandler(targetNode);
+        handler = compiledPattern.getHandler(targetNode);
         handler.setPinnedElement(element);
         elementToStartMatching = element;
+        if (handler instanceof TopLevelMatchingHandler) break;
         element = element.getParent();
         targetNode = targetNode.getParent();
+
+        if (options.isLooseMatching()) {
+          element = updateCurrentNode(element);
+          targetNode = updateCurrentNode(targetNode);
+        }
       }
+
+      if (!(handler instanceof TopLevelMatchingHandler)) return null;
     }
-     
+
     assert targetNode != null : "Could not match down up when no target node";
 
-    //if (!(targetNode instanceof PsiBlockStatement) || !(targetNode.getParent() instanceof PsiFile)) return null;
     match(elementToStartMatching);
     matchContext.getSink().matchingFinished();
     final int matchCount = sink.getMatches().size();
     assert matchCount <= 1;
     return matchCount > 0 ? sink.getMatches().get(0) : null;
+  }
+
+  private static PsiElement updateCurrentNode(PsiElement targetNode) {
+    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatements().length == 1) {
+      PsiElement targetNodeParent = targetNode.getParent();
+      if (targetNodeParent instanceof PsiBlockStatement) {
+        targetNodeParent = targetNodeParent.getParent();
+      }
+
+      if (targetNodeParent instanceof PsiIfStatement || targetNodeParent instanceof PsiLoopStatement) {
+        targetNode = targetNodeParent;
+      }
+    }
+    return targetNode;
   }
 }

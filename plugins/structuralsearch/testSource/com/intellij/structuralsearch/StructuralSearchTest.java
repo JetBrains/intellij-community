@@ -2527,7 +2527,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Type2", result.getMatchImage());
   }
 
-  @Bombed(day = 31, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
+  @Bombed(day = 31, description = "support it", month = Calendar.JANUARY, user = "maxim.mossienko", year = 2008)
   public void testContainsPredicate() {
     String s1 = "{{\n" +
                 "  int a;\n" +
@@ -2570,7 +2570,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1,findMatchesCount(s1, s2_2));
   }
 
-  @Bombed(day = 31, description = "support it", month = Calendar.DECEMBER, user = "maxim.mossienko")
   public void testWithinPredicate2() {
     String s3 = "class C {\n" +
                 "  void aaa() {\n" +
@@ -2583,11 +2582,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "            LOG.debug(true);\n" +
                 "        }\n" +
                 "        if (true) LOG.debug(true);\n" +
+                "        if (true) { int 1 = 1; } else { LOG.debug(true); }\n" +
                 "    }" +
                 "}";
     String s4 = "LOG.debug('_params*:[!within( \"if('_a) { 'st*; }\" )]);";
 
-    assertEquals(5,findMatchesCount(s3, s4));
+    assertEquals(6,findMatchesCount(s3, s4));
   }
 
   public void testMultiStatementPatternWithTypedVariable() throws Exception {
