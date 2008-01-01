@@ -454,7 +454,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (finallyClause != null) {
       flowAbrupted();
       final InstructionImpl finallyInstruction = startNode(finallyClause);
-      Set<PostCallInstructionImpl> postCalls = new HashSet<PostCallInstructionImpl>();
+      Set<PostCallInstructionImpl> postCalls = new LinkedHashSet<PostCallInstructionImpl>();
       addFinallyEdges(finallyInstruction, postCalls);
 
       if (tryEnd != null) {
@@ -470,8 +470,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       final RetInstruction retInsn = new RetInstruction(myInstructionNumber++);
       for (PostCallInstructionImpl postCall : postCalls) {
         postCall.setReturnInstruction(retInsn);
+        addEdge(retInsn, postCall);
       }
       addNode(retInsn);
+      flowAbrupted();
       finishNode(finallyInstruction);
     }
   }
@@ -547,6 +549,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return Collections.singletonList(myCallee);
     }
 
+    public Iterable<? extends Instruction> allSucc() {
+      return Collections.singletonList(myCallee);
+    }
+
     protected String getElementPresentation() { return ""; }
 
     CallInstructionImpl(int num, InstructionImpl callee) {
@@ -561,6 +567,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     public String toString() {
       return super.toString() + "AFTER CALL " + myCall.num();
+    }
+
+    public Iterable<? extends Instruction> allPred() {
+      return Collections.singletonList(myReturnInsn);
     }
 
     public Iterable<? extends Instruction> pred(CallEnvironment env) {

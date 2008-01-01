@@ -28,6 +28,9 @@ public interface Instruction {
   Iterable<? extends Instruction> succ(CallEnvironment env);
   Iterable<? extends Instruction> pred(CallEnvironment env);
 
+  Iterable<? extends Instruction> allSucc();
+  Iterable<? extends Instruction> allPred();
+
   int num();
 
   @Nullable

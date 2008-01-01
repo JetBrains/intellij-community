@@ -32,22 +32,17 @@ public class ControlFlowUtil {
     for (int i = 0; i < result.length; i++) visited[i] = false;
 
     int N = flow.length;
-    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
-    for (int i = 0; i < flow.length; i++) {
-      if (!visited[i]) {
-        N = doVisitForPostorder(flow[i], N, env, result, visited);
-      }
-    }
+    N = doVisitForPostorder(flow[0], N, result, visited);
 
     LOG.assertTrue(N == 0);
     return result;
   }
 
-  private static int doVisitForPostorder(Instruction curr, int currN, CallEnvironment env, int[] postorder, boolean[] visited) {
+  private static int doVisitForPostorder(Instruction curr, int currN, int[] postorder, boolean[] visited) {
     visited[curr.num()] = true;
-    for (Instruction succ : curr.succ(env)) {
+    for (Instruction succ : curr.allSucc()) {
       if (!visited[succ.num()]) {
-        currN = doVisitForPostorder(succ, currN, env, postorder, visited);
+        currN = doVisitForPostorder(succ, currN, postorder, visited);
       }
     }
     postorder[curr.num()] = --currN;
@@ -62,12 +57,21 @@ public class ControlFlowUtil {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < flow.length; i++) definitelyAssigned.add(null);
 
-    CallEnvironment env = new CallEnvironment.DepthFirstCallEnvironment();
     int[] postorder = postorder(flow);
+    int[] revpostorder = revpostorder(postorder);
 
-    findReadsBeforeWrites(flow, definitelyAssigned, result, env, namesIndex, postorder);
+    findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, revpostorder);
 
     return result.toArray(new ReadWriteVariableInstruction[result.size()]);
+  }
+
+  private static int[] revpostorder(int[] postorder) {
+    int[] result = new int[postorder.length];
+    for (int i = 0; i < postorder.length; i++) {
+      result[postorder[i]] = i;
+    }
+
+    return result;
   }
 
   private static TObjectIntHashMap<String> buildNamesIndex(Instruction[] flow) {
@@ -85,13 +89,14 @@ public class ControlFlowUtil {
   }
 
   private static void findReadsBeforeWrites(Instruction[] flow, ArrayList<TIntHashSet> definitelyAssigned,
-                                            List<ReadWriteVariableInstruction> result, CallEnvironment env,
+                                            List<ReadWriteVariableInstruction> result,
                                             TObjectIntHashMap<String> namesIndex,
-                                            int[] postorder) {
+                                            int[] postorder,
+                                            int[] revpostorder) {
 
     //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < postorder.length; i++) {
-      int j = postorder[i];
+    for (int i = 0; i < flow.length; i++) {
+      int j = revpostorder[i];
       Instruction curr = flow[j];
       if (curr instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
@@ -110,7 +115,7 @@ public class ControlFlowUtil {
         }
       }
 
-      for (Instruction succ : curr.succ(env)) {
+      for (Instruction succ : curr.allSucc()) {
         if (postorder[succ.num()] > postorder[curr.num()]) {
           TIntHashSet currDefinitelyAssigned = definitelyAssigned.get(curr.num());
           TIntHashSet succDefinitelyAssigned = definitelyAssigned.get(succ.num());
@@ -123,8 +128,13 @@ public class ControlFlowUtil {
             } else {
               succDefinitelyAssigned.retainAll(currArray);
             }
-          } else if (succDefinitelyAssigned != null) {
-            succDefinitelyAssigned.clear();
+          } else {
+            if (succDefinitelyAssigned != null) {
+              succDefinitelyAssigned.clear();
+            } else {
+              succDefinitelyAssigned = new TIntHashSet();
+              definitelyAssigned.add(succ.num(), succDefinitelyAssigned);
+            }
           }
         }
       }

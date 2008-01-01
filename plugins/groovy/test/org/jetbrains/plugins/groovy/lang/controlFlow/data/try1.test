@@ -16,7 +16,7 @@ print e
 8(5,9)  CALL 5
 9(12) AFTER CALL 8
 10(11) READ e
-11(12)  RETURN
+11(7,9)  RETURN
 12(13) READ print
 13(14) READ e
 14() element: null

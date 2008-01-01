@@ -17,5 +17,5 @@ try {
 8(5,9)  CALL 5
 9(12) AFTER CALL 8
 10(11) READ c
-11(12)  RETURN
+11(7,9)  RETURN
 12() element: null

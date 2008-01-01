@@ -55,6 +55,14 @@ class InstructionImpl implements Instruction, Cloneable {
     return myPred;
   }
 
+  public Iterable<? extends Instruction> allSucc() {
+    return mySucc;
+  }
+
+  public Iterable<? extends Instruction> allPred() {
+    return myPred;
+  }
+
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(myNumber);

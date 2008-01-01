@@ -18,5 +18,5 @@ try {
 9(6,10)  CALL 6
 10(13) AFTER CALL 9
 11(12) READ c
-12(13)  RETURN
+12(8,10)  RETURN
 13() element: null
