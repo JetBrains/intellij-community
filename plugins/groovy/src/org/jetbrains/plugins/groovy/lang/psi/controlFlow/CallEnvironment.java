@@ -23,16 +23,4 @@ public interface CallEnvironment {
   Stack<CallInstruction> callStack(Instruction instruction);
 
   void update(Stack<CallInstruction> callStack, Instruction instruction);
-
-  static class DepthFirstCallEnvironment implements CallEnvironment {
-    private Stack<CallInstruction> myStack = new Stack<CallInstruction>();
-
-    public Stack<CallInstruction> callStack(Instruction instruction) {
-      return myStack;
-    }
-
-    public void update(Stack<CallInstruction> callStack, Instruction instruction) {
-      myStack = callStack;
-    }
-  }
 }
