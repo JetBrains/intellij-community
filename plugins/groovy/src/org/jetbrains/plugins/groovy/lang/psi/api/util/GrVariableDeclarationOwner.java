@@ -18,14 +18,17 @@ public interface GrVariableDeclarationOwner extends GroovyPsiElement, GrStatemen
   /**
    * Removes variable from its declaration. In case of alone variablein declaration,
    * it also will be removed.
+   * @param variable to remove
+   * @throws com.intellij.util.IncorrectOperationException in case the operation cannot be performed
    */
   void removeVariable(GrVariable variable) throws IncorrectOperationException;
 
   /**
    * Adds new variable declaration after anchor spectified. If anchor == null, adds variable at owner's first position
+   * @param declaration declaration to insert 
    * @param anchor Anchor after which new variabler declaration will be placed
-   * @return
-   * @throws IncorrectOperationException
+   * @return inserted variable declaration
+   * @throws com.intellij.util.IncorrectOperationException in case the operation cannot be performed
    */
   GrVariableDeclaration addVariableDeclarationBefore(GrVariableDeclaration declaration, GrStatement anchor) throws IncorrectOperationException;
 
