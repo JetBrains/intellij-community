@@ -58,14 +58,14 @@ public class ControlFlowUtil {
     for (int i = 0; i < flow.length; i++) definitelyAssigned.add(null);
 
     int[] postorder = postorder(flow);
-    int[] revpostorder = revpostorder(postorder);
+    int[] invpostorder = invPostorder(postorder);
 
-    findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, revpostorder);
+    findReadsBeforeWrites(flow, definitelyAssigned, result, namesIndex, postorder, invpostorder);
 
     return result.toArray(new ReadWriteVariableInstruction[result.size()]);
   }
 
-  private static int[] revpostorder(int[] postorder) {
+  private static int[] invPostorder(int[] postorder) {
     int[] result = new int[postorder.length];
     for (int i = 0; i < postorder.length; i++) {
       result[postorder[i]] = i;
@@ -92,11 +92,10 @@ public class ControlFlowUtil {
                                             List<ReadWriteVariableInstruction> result,
                                             TObjectIntHashMap<String> namesIndex,
                                             int[] postorder,
-                                            int[] revpostorder) {
+                                            int[] invpostorder) {
 
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < flow.length; i++) {
-      int j = revpostorder[i];
+      int j = invpostorder[i];
       Instruction curr = flow[j];
       if (curr instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
