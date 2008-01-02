@@ -89,9 +89,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
     scope.accept(this);
 
-    if (myHead == first) {
-      flowAbrupted();
-    }
     final InstructionImpl end = startNode(null);
     checkPending(end); //collect return edges
     return myInstructions.toArray(new Instruction[myInstructions.size()]);
@@ -213,6 +210,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         } else {
           addPendingEdge(null, throwInstruction);
         }
+      } else {
+        addPendingEdge(null, throwInstruction);
       }
       finishNode(throwInstruction);
     }
