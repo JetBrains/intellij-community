@@ -467,7 +467,6 @@ public abstract class GroovyRefactoringUtil {
    *
    * @param call   method call
    * @param method given method
-   * @throws IncorrectOperationException
    */
   public static void replaceParamatersWithArguments(GrCallExpression call, GrMethod method) throws IncorrectOperationException {
     GrArgumentList argumentList = call.getArgumentList();
@@ -552,7 +551,6 @@ public abstract class GroovyRefactoringUtil {
    * @param values          values vector
    * @param nameFilter
    * @param firstParamIsMap
-   * @throws IncorrectOperationException
    */
   private static void setValuesToParameters(GrMethod method, List<GrExpression> values, Set<String> nameFilter, boolean firstParamIsMap)
       throws IncorrectOperationException {
