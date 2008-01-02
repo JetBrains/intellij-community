@@ -18,7 +18,6 @@ package com.intellij.codeInspection.javaDoc;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.*;
 import org.jetbrains.annotations.NonNls;
@@ -39,12 +38,12 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  public ProblemDescriptor[] checkMethod(PsiMethod psiMethod, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkMember(psiMethod, manager);
   }
 
   @Nullable
-  public ProblemDescriptor[] checkField(PsiField field, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkMember(field, manager);
   }
 
@@ -62,11 +61,11 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
     return problems.isEmpty()
            ? null
-           : problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+           : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
   @Nullable
-  public ProblemDescriptor[] checkClass(PsiClass aClass, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return checkMember(aClass, manager);
   }
 
