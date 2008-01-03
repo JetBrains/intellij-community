@@ -209,6 +209,9 @@ public class NonNlsUtils {
         }
         final PsiParameterList parameterList = method.getParameterList();
         final PsiParameter[] parameters = parameterList.getParameters();
+        if (parameters.length == 0) {
+            return false;
+        }
         final PsiParameter parameter;
         if (index < parameters.length) {
             parameter = parameters[index];
