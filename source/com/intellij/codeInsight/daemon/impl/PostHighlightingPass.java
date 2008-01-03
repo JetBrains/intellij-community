@@ -102,7 +102,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
   public void doCollectInformation(ProgressIndicator progress) {
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     final FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
-    myRefCountHolder = fileStatusMap.getRefCountHolder(myFile);
+    myRefCountHolder = RefCountHolder.getInstance(myFile);
     Runnable doCollectInfo = new Runnable() {
       public void run() {
         List<HighlightInfo> highlights = new ArrayList<HighlightInfo>();

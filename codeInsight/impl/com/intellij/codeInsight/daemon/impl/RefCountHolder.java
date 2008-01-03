@@ -2,6 +2,8 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiMatcherImpl;
@@ -41,7 +43,17 @@ public class RefCountHolder {
     public static final int BEING_USED_BY_PHP = 3;        // post highlighting pass is retrieving info
   }
 
-  public RefCountHolder(@NotNull PsiFile file) {
+  private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("REF_COUND_HOLDER_IN_FILE_KEY");
+  public static RefCountHolder getInstance(PsiFile file) {
+    RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
+    UserDataHolderEx holder = (UserDataHolderEx)file;
+    if (refCountHolder == null) {
+      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
+    }
+    return refCountHolder;
+  }
+
+  private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
     LOG.debug("RefCountHolder created for '"+ StringUtil.first(file.getText(), 30, true));
   }
@@ -145,13 +157,14 @@ public class RefCountHolder {
         iterator.remove();
       }
     }
-    for(Iterator<PsiNamedElement> iterator = myDclsUsedMap.keySet().iterator(); iterator.hasNext();) {
-      PsiNamedElement element = iterator.next();
-      if (!element.isValid()) iterator.remove();
-    }
-    for(Iterator<PsiNamedElement> iterator = myUsedElements.iterator(); iterator.hasNext();) {
-      PsiNamedElement element = iterator.next();
-      if (!element.isValid()) iterator.remove();
+    removeInvalidFrom(myDclsUsedMap.keySet());
+    removeInvalidFrom(myUsedElements);
+    removeInvalidFrom(myPossiblyDuplicateElements.keySet());
+  }
+  private static void removeInvalidFrom(Iterable<? extends PsiElement> collection) {
+    for (Iterator<? extends PsiElement> it = collection.iterator(); it.hasNext();) {
+      PsiElement element = it.next();
+      if (!element.isValid()) it.remove();
     }
   }
 
@@ -233,20 +246,28 @@ public class RefCountHolder {
   }
 
   public boolean analyzeAndStoreReferences(Runnable analyze) {
-    myState.compareAndSet(State.READY, State.VIRGIN);
-    if (!myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP)) {
-      return false;
-    }
-    int newState = State.VIRGIN;
+    if (!startAnalyzing()) return false;
+
+    boolean success = false;
     try {
       analyze.run();
-      newState = State.READY;
+      success = true;
     }
     finally {
-      boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
-      assert set : myState.get();
+      finishAnalyzing(success);
     }
     return true;
+  }
+
+  public boolean startAnalyzing() {
+    myState.compareAndSet(State.READY, State.VIRGIN);
+    return myState.compareAndSet(State.VIRGIN, State.BEING_WRITTEN_BY_GHP);
+  }
+  public void finishAnalyzing(boolean finishedSuccessfully) {
+    int newState = finishedSuccessfully ? State.READY : State.VIRGIN;
+
+    boolean set = myState.compareAndSet(State.BEING_WRITTEN_BY_GHP, newState);
+    assert set : myState.get();
   }
 
   public boolean retrieveUnusedReferencesInfo(Runnable analyze) {

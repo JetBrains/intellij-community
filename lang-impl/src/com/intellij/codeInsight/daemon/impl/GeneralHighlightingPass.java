@@ -17,7 +17,6 @@ import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -91,7 +90,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<AtomicInteger>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
-  private HighlightVisitor[] createHighlightVisitors() {
+  private HighlightVisitor[] createHighlightVisitors(final ProgressIndicator progress) {
     AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
     if (count == null) {
       count = ((UserDataHolderEx)myProject).putUserDataIfAbsent(HIGHLIGHT_VISITOR_INSTANCE_COUNT, new AtomicInteger(0));
@@ -105,16 +104,22 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
     }
     for (final HighlightVisitor highlightVisitor : highlightVisitors) {
-      highlightVisitor.init();
+      if (!highlightVisitor.init(myUpdateAll, myFile)) {
+        progress.cancel();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            DaemonCodeAnalyzer.getInstance(myProject).restart();
+          }
+        }, myProject.getDisposed());
+        throw new ProcessCanceledException();
+      }
     }
     return highlightVisitors;
   }
 
-  private void releaseHighlightVisitors(HighlightVisitor[] highlightVisitors) {
+  private void releaseHighlightVisitors(HighlightVisitor[] highlightVisitors, final boolean finishedSuccessfully) {
     for (HighlightVisitor visitor : highlightVisitors) {
-      if (visitor instanceof Disposable) {
-        ((Disposable)visitor).dispose();
-      }
+      visitor.cleanup(finishedSuccessfully, myFile);
     }
     AtomicInteger count = myProject.getUserData(HIGHLIGHT_VISITOR_INSTANCE_COUNT);
     int i = count.decrementAndGet();
@@ -122,78 +127,39 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   }
 
   protected void collectInformationWithProgress(final ProgressIndicator progress) {
-    final HighlightVisitor[] highlightVisitors = createHighlightVisitors();
+    final HighlightVisitor[] highlightVisitors = createHighlightVisitors(progress);
     final Collection<HighlightInfo> result = new THashSet<HighlightInfo>(100);
     DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
+    boolean finishedSuccessfully = false;
     try {
-      final RefCountHolder refCountHolder;
-      if (myUpdateAll) {
-        refCountHolder = fileStatusMap.getRefCountHolder(myFile);
-      }
-      else {
-        refCountHolder = null;
-      }
-      setRefCountHolders(refCountHolder, highlightVisitors);
-
-      Runnable doCollectInfo = new Runnable() {
-        public void run() {
-          if (refCountHolder != null) {
-            DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
-            PsiElement dirtyScope = daemonCodeAnalyzer.getFileStatusMap().getFileDirtyScope(myDocument, Pass.UPDATE_ALL);
-            if (dirtyScope != null) {
-              if (dirtyScope instanceof PsiFile) {
-                refCountHolder.clear();
-              }
-              else {
-                refCountHolder.removeInvalidRefs();
-              }
-            }
-          }
-
-          final FileViewProvider viewProvider = myFile.getViewProvider();
-          final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
-          for (Language language : relevantLanguages) {
-            PsiElement psiRoot = viewProvider.getPsi(language);
-            if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
-            //long time = System.currentTimeMillis();
-            List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
-            if (elements.isEmpty()) {
-              elements = Collections.singletonList(psiRoot);
-            }
-
-            result.addAll(collectHighlights(elements, highlightVisitors));
-            result.addAll(highlightTodos());
-            addInjectedPsiHighlights(elements, refCountHolder);
-          }
+      final FileViewProvider viewProvider = myFile.getViewProvider();
+      final Set<Language> relevantLanguages = viewProvider.getPrimaryLanguages();
+      for (Language language : relevantLanguages) {
+        PsiElement psiRoot = viewProvider.getPsi(language);
+        if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
+        //long time = System.currentTimeMillis();
+        List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+        if (elements.isEmpty()) {
+          elements = Collections.singletonList(psiRoot);
         }
-      };
-      if (refCountHolder != null) {
-        if (!refCountHolder.analyzeAndStoreReferences(doCollectInfo)) {
-          progress.cancel();
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              DaemonCodeAnalyzer.getInstance(myProject).restart();
-            }
-          }, myProject.getDisposed());
-          throw new ProcessCanceledException();
-        }
-      }
-      else {
-        doCollectInfo.run();
+
+        result.addAll(collectHighlights(elements, highlightVisitors));
+        result.addAll(highlightTodos());
+        addInjectedPsiHighlights(elements);
       }
       if (myUpdateAll) {
         fileStatusMap.setErrorFoundFlag(myDocument, myErrorFound);
       }
+      finishedSuccessfully = true;
     }
     finally {
-      setRefCountHolders(null, highlightVisitors);
-      releaseHighlightVisitors(highlightVisitors);
+      releaseHighlightVisitors(highlightVisitors, finishedSuccessfully);
     }
     myHighlights = result;
   }
 
-  private void addInjectedPsiHighlights(final List<PsiElement> elements, final RefCountHolder refCountHolder) {
+  private void addInjectedPsiHighlights(final List<PsiElement> elements) {
     List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(myFile);
     Collection<PsiElement> hosts = new THashSet<PsiElement>(elements.size() + injected.size());
 
@@ -225,7 +191,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     JobUtil.invokeConcurrentlyForAll(injectedFiles, new Processor<PsiFile>() {
       public boolean process(final PsiFile injectedPsi) {
         AnnotationHolderImpl annotationHolder = createAnnotationHolder();
-        highlightInjectedIn(injectedPsi, annotationHolder, refCountHolder);
+        highlightInjectedIn(injectedPsi, annotationHolder);
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         for (Annotation annotation : annotationHolder) {
           HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
@@ -244,17 +210,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }, "Highlight injected language fragments");
   }
 
-  private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder, final RefCountHolder refCountHolder) {
+  private static void highlightInjectedIn(PsiFile injectedPsi, final AnnotationHolderImpl annotationHolder) {
     final DocumentWindow documentRange = ((VirtualFileWindow)injectedPsi.getContainingFile().getViewProvider().getVirtualFile()).getDocumentWindow();
     assert documentRange != null;
     assert documentRange.getText().equals(injectedPsi.getText());
     LanguageDialect languageDialect = injectedPsi.getLanguageDialect();
     Language injectedLanguage = languageDialect == null ? injectedPsi.getLanguage() : languageDialect;
-    final List<Annotator> result;
-    synchronized (injectedLanguage) {
-      result = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
-    }
-    final List<Annotator> annotators = result;
+    final List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(injectedLanguage);
 
     final AnnotationHolderImpl fixingOffsetsHolder = new AnnotationHolderImpl() {
       public boolean add(final Annotation annotation) {
@@ -282,14 +244,14 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           annotator.annotate(element, fixingOffsetsHolder);
         }
 
-        if (refCountHolder != null) {
-          for (PsiReference reference : element.getReferences()) {
-            PsiElement resolved = reference.resolve();
-            if (resolved instanceof PsiNamedElement) {
-              refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
-            }
-          }
-        }
+        //if (refCountHolder != null) {
+        //  for (PsiReference reference : element.getReferences()) {
+        //    PsiElement resolved = reference.resolve();
+        //    if (resolved instanceof PsiNamedElement) {
+        //      refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+        //    }
+        //  }
+        //}
       }
 
       @Override public void visitErrorElement(PsiErrorElement element) {
@@ -335,12 +297,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         TextAttributes forced = new TextAttributes(fore, back, attributes.getEffectColor(), attributes.getEffectType(), attributes.getFontType());
         annotation.setEnforcedTextAttributes(forced);
       }
-    }
-  }
-
-  private static void setRefCountHolders(RefCountHolder refCountHolder, final HighlightVisitor[] visitors) {
-    for (HighlightVisitor visitor : visitors) {
-      visitor.setRefCountHolder(refCountHolder);
     }
   }
 

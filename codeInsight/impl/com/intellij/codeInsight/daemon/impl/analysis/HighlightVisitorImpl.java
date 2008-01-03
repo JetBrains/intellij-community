@@ -1,5 +1,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -10,10 +12,11 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.jsp.JspxFileViewProvider;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +24,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
@@ -34,6 +38,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.injected.editor.DocumentWindow;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +47,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor, Disposable {
+public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl");
 
   private final PsiResolveHelper myResolveHelper;
@@ -93,13 +98,67 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     element.accept(this);
   }
 
-  public void init() {
-    clear();
+  public boolean init(final boolean updateWholeFile, final PsiFile file) {
     assert released;
     released = false;
+    boolean success = true;
+    RefCountHolder refCountHolder;
+    if (updateWholeFile) {
+      Project project = file.getProject();
+      DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+      FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
+      refCountHolder = RefCountHolder.getInstance(file);
+      success = refCountHolder.startAnalyzing();
+      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      PsiElement dirtyScope = document == null ? file : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
+      if (dirtyScope != null) {
+        if (dirtyScope instanceof PsiFile) {
+          refCountHolder.clear();
+        }
+        else {
+          refCountHolder.removeInvalidRefs();
+        }
+      }
+    }
+    else {
+      refCountHolder = null;
+    }
+
+    myRefCountHolder = refCountHolder;
+    myXmlVisitor.setRefCountHolder(refCountHolder);
+    return success;
   }
 
-  private void clear() {
+  private static void registerReferencesFromInjectedFragments(final PsiFile hostFile, final RefCountHolder refCountHolder) {
+    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostFile);
+    for (DocumentWindow documentRange : injected) {
+      PsiFile file = PsiDocumentManager.getInstance(hostFile.getProject()).getPsiFile(documentRange);
+      if (file == null) continue;
+      PsiElement context = file.getContext();
+      if (context == null || !context.isValid() || file.getProject().isDisposed()) {
+        continue;
+      }
+      PsiRecursiveElementVisitor visitor = new PsiRecursiveElementVisitor() {
+        @Override public void visitElement(PsiElement element) {
+          super.visitElement(element);
+
+          for (PsiReference reference : element.getReferences()) {
+            PsiElement resolved = reference.resolve();
+            if (resolved instanceof PsiNamedElement) {
+              refCountHolder.registerLocallyReferenced((PsiNamedElement)resolved);
+            }
+          }
+        }
+      };
+      file.accept(visitor);
+    }
+  }
+
+  public void cleanup(final boolean finishedSuccessfully, final PsiFile file) {
+    if (myRefCountHolder != null) {
+      registerReferencesFromInjectedFragments(file, myRefCountHolder);
+      myRefCountHolder.finishAnalyzing(finishedSuccessfully);
+    }
     myUninitializedVarProblems.clear();
     myFinalVarProblems.clear();
     mySingleImportedClasses.clear();
@@ -107,18 +166,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     myParameterIsReassigned.clear();
     myAnnotationHolder.clear();
     myXmlVisitor.clearResult();
-    setRefCountHolder(null);
-  }
 
-  public void dispose() {
-    clear();
+    myRefCountHolder = null;
+    myXmlVisitor.setRefCountHolder(null);
+
     assert !released;
     released = true;
-  }
-
-  public void setRefCountHolder(RefCountHolder refCountHolder) {
-    myRefCountHolder = refCountHolder;
-    myXmlVisitor.setRefCountHolder(myRefCountHolder);
   }
 
   @Override public void visitElement(PsiElement element) {
@@ -130,33 +183,23 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myXmlVisitor.clearResult();
     }
 
-    final List<Annotator> result;
-    synchronized (element.getLanguage()) {
-      result = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
-    }
-    List<Annotator> annotators = result;
-    boolean hasAnnotators = !annotators.isEmpty();
+    runAnnotators(element);
+  }
 
+  private void runAnnotators(final PsiElement element) {
+    List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
     if (!annotators.isEmpty()) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < annotators.size(); i++) {
         Annotator annotator = annotators.get(i);
         annotator.annotate(element, myAnnotationHolder);
       }
-      hasAnnotators = true;
-    }
-
-    if (hasAnnotators) {
-      convertAnnotationsToHighlightInfos();
-    }
-  }
-
-  private void convertAnnotationsToHighlightInfos() {
-    if (myAnnotationHolder.hasAnnotations()) {
-      for (Annotation annotation : myAnnotationHolder) {
-        myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
+      if (myAnnotationHolder.hasAnnotations()) {
+        for (Annotation annotation : myAnnotationHolder) {
+          myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
+        }
+        myAnnotationHolder.clear();
       }
-      myAnnotationHolder.clear();
     }
   }
 

@@ -7,9 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -26,7 +24,6 @@ public class FileStatusMap {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
-  private static final Key<RefCountHolder> REF_COUND_HOLDER_IN_FILE_KEY = Key.create("DaemonCodeAnalyzerImpl.REF_COUND_HOLDER_IN_FILE_KEY");
   private final AtomicInteger myClearModificationCount = new AtomicInteger();
 
   public FileStatusMap(@NotNull Project project) {
@@ -199,16 +196,6 @@ public class FileStatusMap {
     if (!scope1.isValid() || !scope2.isValid()) return documentManager.getPsiFile(document);
     final PsiElement commonParent = PsiTreeUtil.findCommonParent(scope1, scope2);
     return commonParent == null || commonParent instanceof PsiDirectory ? documentManager.getPsiFile(document) : commonParent;
-  }
-
-  @NotNull
-  public RefCountHolder getRefCountHolder(@NotNull PsiFile file) {
-    RefCountHolder refCountHolder = file.getUserData(REF_COUND_HOLDER_IN_FILE_KEY);
-    UserDataHolderEx holder = (UserDataHolderEx)file;
-    if (refCountHolder == null) {
-      refCountHolder = holder.putUserDataIfAbsent(REF_COUND_HOLDER_IN_FILE_KEY, new RefCountHolder(file));
-    }
-    return refCountHolder;
   }
 
   public boolean allDirtyScopesAreNull(final Document document) {

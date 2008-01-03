@@ -43,11 +43,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
     for (Language language : relevantLanguages) {
       PsiFile psiRoot = viewProvider.getPsi(language);
       if (!HighlightUtil.shouldInspect(psiRoot)) continue;
-      final List<ExternalAnnotator> result;
-      synchronized (language) {
-        result = ExternalLanguageAnnotators.INSTANCE.allForLanguage(language);
-      }
-      final List<ExternalAnnotator> externalAnnotators = result;
+      final List<ExternalAnnotator> externalAnnotators = ExternalLanguageAnnotators.INSTANCE.allForLanguage(language);
 
       if (!externalAnnotators.isEmpty()) {
         boolean errorFound = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).getFileStatusMap().wasErrorFound(myDocument);

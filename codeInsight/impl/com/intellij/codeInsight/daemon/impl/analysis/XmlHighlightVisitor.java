@@ -823,8 +823,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     parent.putUserData(DO_NOT_VALIDATE_KEY, "");
   }
 
-  private static void processAttributeValue(@NotNull XmlAttributeValue value, boolean soft, final @NotNull RefCountHolder refCountHolder,
-                                            final @NotNull List<HighlightInfo> highlights) {
+  private static void processAttributeValue(@NotNull XmlAttributeValue value, boolean soft, @NotNull final RefCountHolder refCountHolder,
+                                            @NotNull final List<HighlightInfo> highlights) {
     final PsiElement parent = value.getParent();
     if (!(parent instanceof XmlAttribute)) return;
     XmlAttribute attribute = (XmlAttribute)parent;
@@ -871,18 +871,18 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     }
   }
 
-  public static void checkDuplicates(final @NotNull Map<PsiElement, Boolean> possiblyDuplicatedElementsMap,
-                                     final @NotNull RefCountHolder refCountHolder,
-                                     final @NotNull List<HighlightInfo> highlights) {
-    for (Iterator<Map.Entry<PsiElement, Boolean>> entryIterator = possiblyDuplicatedElementsMap.entrySet().iterator(); entryIterator.hasNext();) {
-      Map.Entry<PsiElement, Boolean> entry = entryIterator.next();
+  public static void checkDuplicates(@NotNull final Map<PsiElement, Boolean> possiblyDuplicatedElementsMap,
+                                     @NotNull final RefCountHolder refCountHolder,
+                                     @NotNull final List<HighlightInfo> highlights) {
+    for (Iterator<Map.Entry<PsiElement, Boolean>> iterator = possiblyDuplicatedElementsMap.entrySet().iterator(); iterator.hasNext();) {
+      Map.Entry<PsiElement, Boolean> entry = iterator.next();
       final XmlAttributeValue value = (XmlAttributeValue)entry.getKey();
 
       if (value.isValid()) {
         processAttributeValue(value, entry.getValue(), refCountHolder, highlights);
       }
       else {
-        entryIterator.remove();
+        iterator.remove();
       }
     }
   }

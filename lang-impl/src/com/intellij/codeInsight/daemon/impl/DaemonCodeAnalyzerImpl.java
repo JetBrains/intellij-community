@@ -129,8 +129,19 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     myFileStatusMap.markAllFilesDirty();
   }
   public void projectClosed() {
+    // clear dangling references to PsiFiles/Documents. SCR#10358
     myFileStatusMap.markAllFilesDirty();
-    dispose();
+
+    if (myDisposed) return;
+    if (myInitialized) {
+      myDaemonListeners.dispose();
+      stopProcess(false);
+      myPassExecutorService.dispose();
+      myStatusBarUpdater.dispose();
+    }
+
+    myDisposed = true;
+    myLastSettings = null;
   }
 
   void repaintErrorStripeRenderer(Editor editor) {
@@ -161,23 +172,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NotNull
   public List<Pair<NamedScope, NamedScopesHolder>> getScopeBasedHighlightingCachedScopes() {
     return myScopes;
-  }
-
-  private void dispose() {
-    if (myDisposed) return;
-    if (myInitialized) {
-      myDaemonListeners.dispose();
-      stopProcess(false);
-      myPassExecutorService.dispose();
-      myStatusBarUpdater.dispose();
-    }
-
-    // clear dangling references to PsiFiles/Documents. SCR#10358
-    myFileStatusMap.markAllFilesDirty();
-
-    myDisposed = true;
-
-    myLastSettings = null;
   }
 
   public void settingsChanged() {
