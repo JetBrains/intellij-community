@@ -524,7 +524,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
     if (variable.getInitializerGroovy() != null) {
-      addNode(new ReadWriteVariableInstructionImpl(variable, myInstructionNumber++));
+      ReadWriteVariableInstructionImpl writeInsn = new ReadWriteVariableInstructionImpl(variable, myInstructionNumber++);
+      checkPending(writeInsn);
+      addNode(writeInsn);
     }
   }
 
