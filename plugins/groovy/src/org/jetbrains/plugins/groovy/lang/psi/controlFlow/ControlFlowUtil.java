@@ -53,9 +53,7 @@ public class ControlFlowUtil {
     List<ReadWriteVariableInstruction> result = new ArrayList<ReadWriteVariableInstruction>();
     TObjectIntHashMap<String> namesIndex = buildNamesIndex(flow);
 
-    ArrayList<TIntHashSet> definitelyAssigned = new ArrayList<TIntHashSet>();
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < flow.length; i++) definitelyAssigned.add(null);
+    TIntHashSet[] definitelyAssigned = new TIntHashSet[flow.length];
 
     int[] postorder = postorder(flow);
     int[] invpostorder = invPostorder(postorder);
@@ -88,7 +86,7 @@ public class ControlFlowUtil {
     return namesIndex;
   }
 
-  private static void findReadsBeforeWrites(Instruction[] flow, ArrayList<TIntHashSet> definitelyAssigned,
+  private static void findReadsBeforeWrites(Instruction[] flow, TIntHashSet[] definitelyAssigned,
                                             List<ReadWriteVariableInstruction> result,
                                             TObjectIntHashMap<String> namesIndex,
                                             int[] postorder,
@@ -100,7 +98,7 @@ public class ControlFlowUtil {
       if (curr instanceof ReadWriteVariableInstruction) {
         ReadWriteVariableInstruction readWriteInsn = (ReadWriteVariableInstruction) curr;
         int idx = namesIndex.get(readWriteInsn.getVariableName());
-        TIntHashSet vars = definitelyAssigned.get(j);
+        TIntHashSet vars = definitelyAssigned[j];
         if (!readWriteInsn.isWrite()) {
           if (vars == null || !vars.contains(idx)) {
             result.add(readWriteInsn);
@@ -108,7 +106,7 @@ public class ControlFlowUtil {
         } else {
           if (vars == null) {
             vars = new TIntHashSet();
-            definitelyAssigned.add(j, vars);
+            definitelyAssigned[j] = vars;
           }
           vars.add(idx);
         }
@@ -116,14 +114,14 @@ public class ControlFlowUtil {
 
       for (Instruction succ : curr.allSucc()) {
         if (postorder[succ.num()] > postorder[curr.num()]) {
-          TIntHashSet currDefinitelyAssigned = definitelyAssigned.get(curr.num());
-          TIntHashSet succDefinitelyAssigned = definitelyAssigned.get(succ.num());
+          TIntHashSet currDefinitelyAssigned = definitelyAssigned[curr.num()];
+          TIntHashSet succDefinitelyAssigned = definitelyAssigned[succ.num()];
           if (currDefinitelyAssigned != null) {
             int[] currArray = currDefinitelyAssigned.toArray();
             if (succDefinitelyAssigned == null) {
               succDefinitelyAssigned = new TIntHashSet();
               succDefinitelyAssigned.addAll(currArray);
-              definitelyAssigned.add(succ.num(), succDefinitelyAssigned);
+              definitelyAssigned[succ.num()] = succDefinitelyAssigned;
             } else {
               succDefinitelyAssigned.retainAll(currArray);
             }
@@ -132,7 +130,7 @@ public class ControlFlowUtil {
               succDefinitelyAssigned.clear();
             } else {
               succDefinitelyAssigned = new TIntHashSet();
-              definitelyAssigned.add(succ.num(), succDefinitelyAssigned);
+              definitelyAssigned[succ.num()] = succDefinitelyAssigned;
             }
           }
         }
