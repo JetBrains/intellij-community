@@ -47,16 +47,22 @@ public class PostprocessReformattingAspect implements PomModelAspect, Disposable
 
   private ApplicationListener myApplicationListener = new ApplicationAdapter() {
     public void writeActionStarted(final Object action) {
-      final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
-      if(project == myProject) {
-        myPostponedCounter++;
+      final CommandProcessor processor = CommandProcessor.getInstance();
+      if (processor != null) {
+        final Project project = processor.getCurrentCommandProject();
+        if(project == myProject) {
+          myPostponedCounter++;
+        }
       }
     }
 
     public void writeActionFinished(final Object action) {
-      final Project project = CommandProcessor.getInstance().getCurrentCommandProject();
-      if(project == myProject) {
-        decrementPostponedCounter();
+      final CommandProcessor processor = CommandProcessor.getInstance();
+      if (processor != null) {
+        final Project project = processor.getCurrentCommandProject();
+        if(project == myProject) {
+          decrementPostponedCounter();
+        }
       }
     }
   };
