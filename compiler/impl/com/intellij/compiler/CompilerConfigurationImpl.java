@@ -115,6 +115,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       addWildcardResourcePattern("?*.html");
       addWildcardResourcePattern("?*.dtd");
       addWildcardResourcePattern("?*.tld");
+      addWildcardResourcePattern("?*.ftl");
     }
     catch (MalformedPatternException e) {
       LOG.error(e);
