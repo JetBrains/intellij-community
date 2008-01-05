@@ -9,21 +9,15 @@ import com.intellij.psi.PsiElement;
 /**
  * @author peter
  */
-public class CompletionParameters<Result> {
-  private final Class<Result> myResultClass;
+public class CompletionParameters {
   private final PsiElement myPosition;
 
-  public CompletionParameters(final Class<Result> resultClass, final PsiElement position) {
-    myResultClass = resultClass;
+  public CompletionParameters(final PsiElement position) {
     myPosition = position;
   }
 
   public PsiElement getPosition() {
     return myPosition;
-  }
-
-  public Class<Result> getResultClass() {
-    return myResultClass;
   }
 
   public boolean equals(final Object o) {
@@ -32,12 +26,12 @@ public class CompletionParameters<Result> {
 
     final CompletionParameters that = (CompletionParameters)o;
 
-    if (!myResultClass.equals(that.myResultClass)) return false;
+    if (myPosition != null ? !myPosition.equals(that.myPosition) : that.myPosition != null) return false;
 
     return true;
   }
 
   public int hashCode() {
-    return myResultClass.hashCode();
+    return (myPosition != null ? myPosition.hashCode() : 0);
   }
 }

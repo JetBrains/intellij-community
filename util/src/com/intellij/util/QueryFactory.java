@@ -36,12 +36,12 @@ public class QueryFactory<Result, Parameters> {
   }
 
   /**
-   * @return query to perform the search.
-   * @param parameters of the search
+   * @return query to perform the search. @param parameters of the search
    */
   public final Query<Result> createQuery(Parameters parameters) {
     return new ExecutorsQuery<Result, Parameters>(parameters, getExecutors());
   }
+
 
   @NotNull
   protected List<QueryExecutor<Result, Parameters>> getExecutors() {
@@ -53,7 +53,7 @@ public class QueryFactory<Result, Parameters> {
    * @param parameters of the search
    */
   public final Query<Result> createUniqueResultsQuery(Parameters parameters) {
-    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, getExecutors()));
+    return new UniqueResultsQuery<Result>(createQuery(parameters));
   }
 
   /**
@@ -62,6 +62,6 @@ public class QueryFactory<Result, Parameters> {
    * @param hashingStrategy strategy to factor results
    */
   public final Query<Result> createUniqueResultsQuery(Parameters parameters, TObjectHashingStrategy<Result> hashingStrategy) {
-    return new UniqueResultsQuery<Result>(new ExecutorsQuery<Result, Parameters>(parameters, getExecutors()), hashingStrategy);
+    return new UniqueResultsQuery<Result>(createQuery(parameters), hashingStrategy);
   }
 }
