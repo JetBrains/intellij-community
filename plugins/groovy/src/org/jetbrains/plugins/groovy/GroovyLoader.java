@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompletionData;
+import com.intellij.codeInsight.completion.CompositeCompletionData;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
@@ -36,6 +38,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Function;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
@@ -44,6 +47,7 @@ import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
 import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
+import org.jetbrains.plugins.groovy.lang.completion.CompletionDataRegistry;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -81,7 +85,7 @@ public class GroovyLoader implements ApplicationComponent {
     GROOVY_EXTENSIONS.add(GROOVY_SCRIPT_EXTENSION);
   }
 
-  public GroovyLoader() {
+  public GroovyLoader(CompletionDataRegistry registry) {
   }
 
   public void initComponent() {
@@ -97,7 +101,11 @@ public class GroovyLoader implements ApplicationComponent {
         }
     );
 
-    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new GroovyCompletionData());
+    //todo add composite completion data
+    CompletionDataRegistry completionDataRegistry = CompletionDataRegistry.getInstance();
+    CompletionData[] otherDatas = completionDataRegistry.getCompletionDatas();
+    CompletionData[] datas = ArrayUtil.mergeArrays(new CompletionData[]{new GroovyCompletionData()}, otherDatas, CompletionData.class);
+    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new CompositeCompletionData(datas));
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());
