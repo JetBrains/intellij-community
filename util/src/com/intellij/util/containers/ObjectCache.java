@@ -118,18 +118,6 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
   // Some AbstractMap functions finished
 
   final public void cacheObject(K key, V x) {
-    final int existingIndex = searchForCacheEntry(key);
-    if (existingIndex != 0) {
-      final CacheEntry<K, V> cacheEntry = myCache[existingIndex];
-      final V deletedVal = cacheEntry.value; 
-      cacheEntry.value = x;
-      if (existingIndex != myTop) {
-        add2Top(existingIndex);
-      }
-      fireListenersAboutDeletion(key, deletedVal);
-      return;
-    }
-
     K deletedKey = null;
     V deletedValue = null;
 

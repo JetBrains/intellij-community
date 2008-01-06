@@ -124,18 +124,6 @@ public class IntObjectCache<T> extends ObjectCacheBase implements Iterable<T> {
   // Some AbstractMap functions finished
 
   final public void cacheObject(int key, T x) {
-    final int existingIndex = searchForCacheEntry(key);
-    if (existingIndex != 0) {
-      final CacheEntry<T> cacheEntry = myCache[existingIndex];
-      final T prevValue = cacheEntry.value;
-      cacheEntry.value = x;
-      if (existingIndex != myTop) {
-        add2Top(existingIndex);
-      }
-      fireListenersAboutDeletion(key, prevValue);
-      return;
-    }
-    
     int deletedKey = 0;
     Object deletedValue = null;
 
