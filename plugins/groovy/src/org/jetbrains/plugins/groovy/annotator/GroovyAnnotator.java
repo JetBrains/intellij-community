@@ -140,7 +140,7 @@ public class GroovyAnnotator implements Annotator {
       if (file.isScript()) {
         checkScriptDuplicateMethod(file.getTopLevelDefinitions(), holder);
       }
-      if (DomainClassUtils.isDomainClass(element.getContainingFile().getVirtualFile())) {
+      if (DomainClassUtils.isDomainClassFile(element.getContainingFile().getVirtualFile())) {
         checkDomainClass((GroovyFile) element, holder);
       }
     } else {
@@ -684,10 +684,13 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refExpr, annotation);
       }
 
+//todo please, fix java.lang.IllegalArgumentException in GSP
+/*
       if (isNeedsAddDynPropertiesAnnotation(refExpr)) {
-        annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
         addDynPropertyAnnotation(annotation, refExpr);
       }
+*/
+      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
 
       //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
     }

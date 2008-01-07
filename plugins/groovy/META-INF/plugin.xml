@@ -201,7 +201,10 @@
       </implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.completion.CompletionDataRegistry</implementation-class>
+      <implementation-class>org.jetbrains.plugins.groovy.lang.completion.VariableNameSuggesterRegistry</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.grails.GrailsLoader</implementation-class>
     </component>
   </application-components>
 
