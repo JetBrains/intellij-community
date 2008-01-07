@@ -149,7 +149,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
         final ConstraintType constraintType = currentSubstitution.getSecond();
         final PsiType type = currentSubstitution.getFirst();
-        if (type == null) return null;
+        if (type == null) return new Pair<PsiType, ConstraintType>(null, ConstraintType.EQUALS);
         switch(constraintType) {
           case EQUALS:
             if (!(type instanceof PsiWildcardType)) return currentSubstitution;
