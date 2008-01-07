@@ -23,7 +23,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,10 +70,8 @@ public class FileReferenceSet {
     }
     else if (element instanceof XmlTag) {
       final XmlTag tag = ((XmlTag)element);
-      final XmlTagValue value = tag.getValue();
-      final String s = value.getText();
-      text = s.trim();
-      offset = value.getTextRange().getStartOffset() + s.indexOf(text) - element.getTextOffset();
+      text = tag.getValue().getTrimmedText();
+      offset = XmlUtil.getTextRangeInTagValue(tag).getStartOffset();
     }
     else {
       return null;
