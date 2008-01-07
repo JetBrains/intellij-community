@@ -15,45 +15,15 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public class PrattTokenType extends IElementType {
-  protected TokenParser myParser;
-  private final int myPriority;
 
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @Nullable final PrefixParser prefixParser, @Nullable final ProceedingParser proceedingParser) {
-    this(tokenName, language, priority, new DefaultTokenParser(prefixParser, proceedingParser));
-  }
 
   public PrattTokenType(@NotNull @NonNls final String debugName,
-                        @Nullable final Language language, final int priority, final TokenParser parser) {
+                        @Nullable final Language language) {
     super(debugName, language);
-    myPriority = priority;
-    myParser = parser;
-  }
-
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @Nullable final PrefixParser prefixParser) {
-    this(tokenName, language, priority, prefixParser, null);
-  }
-
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority, @Nullable final ProceedingParser proceedingParser) {
-    this(tokenName, language, priority, null, proceedingParser);
-  }
-
-  public PrattTokenType(@NotNull final String tokenName,
-                          @Nullable final Language language, final int priority) {
-    this(tokenName, language, priority, null, null);
   }
 
   public String getExpectedText(final PrattBuilder builder) {
     return PsiBundle.message("0.expected", toString());
   }
 
-  public final int getPriority() {
-    return myPriority;
-  }
-
-  public TokenParser getParser() {
-    return myParser;
-  }
 }

@@ -10,16 +10,25 @@ import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Iterator;
 
 /**
  * @author peter
  */
 public class PrattBuilder {
   private final PsiBuilder myBuilder;
+  private final LinkedList<Object> myPath = new LinkedList<Object>();
   private final Stack<PrattTokenType> myStack = new Stack<PrattTokenType>();
   private MutableMarker myStartMarker;
+  private IElementType myLastReduced;
 
   public PrattBuilder(final PsiBuilder builder) {
     myBuilder = builder;
@@ -29,16 +38,8 @@ public class PrattBuilder {
     return ((PsiBuilderImpl) myBuilder).getLexer();
   }
 
-  public MutableMarker getCurrentMarker() {
-    return myStartMarker;
-  }
-
   public MutableMarker mark() {
-    return new MutableMarker(myBuilder.mark());
-  }
-
-  public void precedeCurrentMarker() {
-    myStartMarker = myStartMarker.precede();
+    return new MutableMarker(myPath, myBuilder.mark(), myPath.size());
   }
 
   @Nullable
@@ -53,12 +54,18 @@ public class PrattBuilder {
       return null;
     }
 
-    if (cannotBeParsed(rightPriority)) {
+    myPath.addFirst(Boolean.TRUE);
+
+    TokenParser parser = findParser(rightPriority);
+    if (parser == null) {
+      myPath.removeFirst();
       error(expectedMessage != null ? expectedMessage : JavaErrorMessages.message("unexpected.token"));
       return null;
     }
 
+
     final MutableMarker oldStartMarker = myStartMarker;
+    final IElementType oldLastReduced = myLastReduced;
     myStartMarker = mark();
     try {
       while (!isEof()) {
@@ -66,9 +73,10 @@ public class PrattBuilder {
         PrattTokenType tokenType = (PrattTokenType)getTokenType();
         assert tokenType != null;
 
+        myLastReduced = null;
         pushToken(tokenType);
         try {
-          if (!tokenType.getParser().parseToken(this)) break;
+          if (!parser.parseToken(this)) break;
         }
         finally {
           popToken();
@@ -76,14 +84,24 @@ public class PrattBuilder {
 
         assert startOffset < myBuilder.getCurrentOffset() : "Endless loop on " + getTokenType();
 
-        if (cannotBeParsed(rightPriority)) break;
+        parser = findParser(rightPriority);
+        if (parser == null) break;
       }
 
       myStartMarker.finish();
-      return myStartMarker.getResultType();
+      return myLastReduced;
     }
     finally {
+      for (Iterator<Object> iterator = myPath.iterator(); iterator.hasNext();) {
+        Object o = iterator.next();
+        if (o == Boolean.TRUE) {
+          iterator.remove();
+          break;
+        }
+      }      
+
       myStartMarker = oldStartMarker;
+      myLastReduced = oldLastReduced;
     }
   }
 
@@ -95,9 +113,16 @@ public class PrattBuilder {
     myStack.push(tokenType);
   }
 
-  private boolean cannotBeParsed(final int rightPriority) {
-    final IElementType tokenType = getTokenType();
-    return !(tokenType instanceof PrattTokenType) || ((PrattTokenType)tokenType).getPriority() <= rightPriority;
+  @Nullable
+  private TokenParser findParser(final int rightPriority) {
+    final List<Trinity<Integer,PathPattern,TokenParser>> parsers = PrattRegistry.getParsers(getTokenType());
+    final Trinity<Integer, PathPattern, TokenParser> parserTrinity =
+      ContainerUtil.find(parsers, new Condition<Trinity<Integer, PathPattern, TokenParser>>() {
+        public boolean value(final Trinity<Integer, PathPattern, TokenParser> trinity) {
+          return trinity.first > rightPriority && trinity.second.accepts(PrattBuilder.this);
+        }
+      });
+    return parserTrinity == null ? null : parserTrinity.third;
   }
 
   public boolean assertToken(final PrattTokenType type) {
@@ -124,19 +149,8 @@ public class PrattBuilder {
   }
 
   public void advance() {
+    myPath.addFirst(getTokenType());
     myBuilder.advanceLexer();
-  }
-
-
-  public boolean checkToken(final Class<? extends PrattTokenType> type, @Nullable String errorText) {
-    if (type.isInstance(getTokenType())) {
-      advance();
-      return true;
-    }
-    if (errorText != null) {
-      error(errorText);
-    }
-    return false;
   }
 
   public void error(final String errorText) {
@@ -144,7 +158,6 @@ public class PrattBuilder {
     myBuilder.error(errorText);
     marker.drop();
   }
-
 
   public boolean isEof() {
     return isToken(null);
@@ -165,11 +178,7 @@ public class PrattBuilder {
    */
   @Nullable
   public PrattTokenType getParsedToken(int depth) {
-    return getNestingLevel() - 1 < depth ? null : myStack.get(getNestingLevel() - 1 - depth);
-  }
-
-  public int getNestingLevel() {
-    return myStack.size();
+    return myStack.size() - 1 < depth ? null : myStack.get(myStack.size() - 1 - depth);
   }
 
   @Nullable
@@ -177,4 +186,13 @@ public class PrattBuilder {
     return myBuilder.getTokenText();
   }
 
+  public void reduce(@NotNull final IElementType type) {
+    myLastReduced = type;
+    myStartMarker.finish(type);
+    myStartMarker = myStartMarker.precede();
+  }
+
+  protected LinkedList<Object> getPath() {
+    return myPath;
+  }
 }

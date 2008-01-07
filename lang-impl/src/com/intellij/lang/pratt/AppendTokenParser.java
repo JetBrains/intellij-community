@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public abstract class AppendTokenParser implements TokenParser{
+public abstract class AppendTokenParser extends TokenParser {
   public static final AppendTokenParser JUST_APPEND = new AppendTokenParser() {
     @Nullable
     protected IElementType parseAppend(final PrattBuilder builder) {

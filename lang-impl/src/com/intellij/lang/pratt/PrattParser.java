@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
 */
-public class PrattParser implements PsiParser {
+public abstract class PrattParser implements PsiParser {
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     builder.setDebugMode(true);
