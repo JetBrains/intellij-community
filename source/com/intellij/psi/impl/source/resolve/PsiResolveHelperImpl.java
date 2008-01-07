@@ -186,18 +186,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
     if (lowerBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(lowerBound, ConstraintType.EQUALS);
 
-    final Pair<PsiType, ConstraintType> constraint =
-      inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
-    if (constraint != null) {
-      if (constraint.getSecond() != ConstraintType.SUBTYPE) {
+    if (parent != null) {
+      final Pair<PsiType, ConstraintType> constraint =
+        inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
+      if (constraint != null) {
+        if (constraint.getSecond() != ConstraintType.SUBTYPE) {
+          return constraint;
+        }
+
+        if (upperBound != PsiType.NULL) {
+          return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
+        }
+
         return constraint;
       }
-
-      if (upperBound != PsiType.NULL) {
-        return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
-      }
-
-      return constraint;
     }
 
     if (upperBound != PsiType.NULL) return new Pair<PsiType, ConstraintType>(upperBound, ConstraintType.SUBTYPE);
@@ -232,7 +234,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     Pair<PsiType, ConstraintType>[] constraints = new Pair[typeParameters.length];
     for (int i = 0; i < typeParameters.length; i++) {
       final Pair<PsiType, ConstraintType> constraint =
-        inferTypeForMethodTypeParameterInner(typeParameters[i], parameters, arguments, partialSubstitutor, parent, forCompletion);
+        inferTypeForMethodTypeParameterInner(typeParameters[i], parameters, arguments, partialSubstitutor, null, forCompletion);
       constraints[i] = constraint;
       if (constraint != null && constraint.getSecond() != ConstraintType.SUBTYPE) {
         substitutions[i] = constraint.getFirst();
@@ -283,9 +285,21 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     for (int i = 0; i < typeParameters.length; i++) {
       PsiTypeParameter typeParameter = typeParameters[i];
       PsiType substitution = substitutions[i];
-      final Pair<PsiType, ConstraintType> constraint = constraints[i];
-      if (substitution == null && constraint != null) {
-        substitution = constraint.getFirst();
+      Pair<PsiType, ConstraintType> constraint = constraints[i];
+      if (substitution == null) {
+        if (constraint == null) {
+          constraint = inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
+        } else if (constraint.getSecond() == ConstraintType.SUBTYPE) {
+          Pair<PsiType, ConstraintType> otherConstraint =
+            inferMethodTypeParameterFromParent(typeParameter, partialSubstitutor, parent, forCompletion);
+          if (otherConstraint != null) {
+            if (otherConstraint.getSecond() == ConstraintType.EQUALS || otherConstraint.getSecond() == ConstraintType.SUPERTYPE) constraint = otherConstraint;
+          }
+        }
+
+        if (constraint != null) {
+          substitution = constraint.getFirst();
+        }
       }
 
       if (substitution == null) {
