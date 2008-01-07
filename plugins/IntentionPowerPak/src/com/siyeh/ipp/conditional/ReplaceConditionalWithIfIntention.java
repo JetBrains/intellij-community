@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.project.Project;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ParenthesesUtils;
@@ -73,7 +74,9 @@ public class ReplaceConditionalWithIfIntention extends Intention {
                 ParenthesesUtils.stripParentheses(condition);
         final StringBuilder newStatement = new StringBuilder();
         newStatement.append("if(");
-        newStatement.append(strippedCondition.getText());
+        if (strippedCondition != null) {
+            newStatement.append(strippedCondition.getText());
+        }
         newStatement.append(')');
         if (variable != null) {
             final String name = variable.getName();
@@ -93,7 +96,9 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             newStatement.append(';');
             initializer.delete();
             final PsiManager manager = statement.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final Project project = manager.getProject();
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = facade.getElementFactory();
             final PsiStatement ifStatement = factory.createStatementFromText(
                     newStatement.toString(), statement);
             final PsiElement parent = statement.getParent();
@@ -102,11 +107,23 @@ public class ReplaceConditionalWithIfIntention extends Intention {
             final CodeStyleManager styleManager = manager.getCodeStyleManager();
             styleManager.reformat(addedElement);
         } else {
+            final boolean addBraces =
+                    expression.getParent() instanceof PsiIfStatement;
+            if (addBraces) {
+                newStatement.append('{');
+            }
             appendElementText(statement, expression, thenExpressionText,
                     newStatement);
-            newStatement.append(" else ");
+            if (addBraces) {
+                newStatement.append("} else {");
+            } else {
+                newStatement.append(" else ");
+            }
             appendElementText(statement, expression, elseExpressionText,
                     newStatement);
+            if (addBraces) {
+                newStatement.append('}');
+            }
             replaceStatement(newStatement.toString(), statement);
         }
     }
