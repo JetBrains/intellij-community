@@ -203,8 +203,9 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  protected String getTypeOfDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, String conatainingClassName, String propertyName) {
-    final Element dynamicProperty = findConcreateDynamicProperty(referenceExpression, moduleName, conatainingClassName, propertyName);
+  protected String getTypeOfDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, String containingClassName, String propertyName) {
+    if (containingClassName == null) return null;
+    final Element dynamicProperty = findConcreateDynamicProperty(referenceExpression, moduleName, containingClassName, propertyName);
     if (dynamicProperty == null) return null;
 
     final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
