@@ -3,10 +3,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.ConflictFilterProcessor;
@@ -44,7 +41,7 @@ public abstract class GenericReference extends CachingReference {
       processor = ProcessorRegistry.getProcessorByType(getType(), resultSet, needToCheckAccessibility() ? getElement() : null);
       processor.setName(getCanonicalText());
     }
-    catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
+    catch(IncompatibleReferenceTypeException e){
       LOG.error(e);
       return null;
     }
@@ -65,7 +62,7 @@ public abstract class GenericReference extends CachingReference {
     try{
       proc = ProcessorRegistry.getProcessorByType(getSoftenType(), ret, needToCheckAccessibility() ? getElement() : null);
     }
-    catch(ProcessorRegistry.IncompatibleReferenceTypeException e){
+    catch(IncompatibleReferenceTypeException e){
       LOG.error(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

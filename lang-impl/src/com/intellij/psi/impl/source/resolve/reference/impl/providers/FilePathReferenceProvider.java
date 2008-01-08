@@ -8,7 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
+import com.intellij.psi.impl.source.resolve.reference.IncompatibleReferenceTypeException;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.infos.CandidateInfo;
@@ -43,7 +43,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
       }
 
       protected PsiScopeProcessor createProcessor(final List<CandidateInfo> result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
-        throws ProcessorRegistry.IncompatibleReferenceTypeException {
+        throws IncompatibleReferenceTypeException {
         final PsiScopeProcessor baseProcessor = super.createProcessor(result, allowedClasses, resolvers);
         return new PsiScopeProcessor() {
           public boolean execute(PsiElement element, ResolveState state) {

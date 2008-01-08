@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
+import com.intellij.psi.impl.source.resolve.reference.IncompatibleReferenceTypeException;
 import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
@@ -321,7 +322,7 @@ public class FileReferenceSet {
   }
 
   protected PsiScopeProcessor createProcessor(final List<CandidateInfo> result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
-    throws ProcessorRegistry.IncompatibleReferenceTypeException {
+    throws IncompatibleReferenceTypeException {
     return ProcessorRegistry.getProcessorByType(myType, result, null, allowedClasses, resolvers);
   }
 

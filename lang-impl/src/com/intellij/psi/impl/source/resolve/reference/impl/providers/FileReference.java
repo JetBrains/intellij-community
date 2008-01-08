@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
+import com.intellij.psi.impl.source.resolve.reference.IncompatibleReferenceTypeException;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
@@ -190,7 +190,7 @@ public class FileReference
       }
       return variants;
     }
-    catch (ProcessorRegistry.IncompatibleReferenceTypeException e) {
+    catch (IncompatibleReferenceTypeException e) {
       LOG.error(e);
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }

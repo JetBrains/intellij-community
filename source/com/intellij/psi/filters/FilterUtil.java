@@ -1,29 +1,13 @@
 package com.intellij.psi.filters;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.filters.classes.AnyInnerFilter;
-import com.intellij.psi.filters.classes.InterfaceFilter;
-import com.intellij.psi.filters.classes.ThisOrAnyInnerFilter;
-import com.intellij.psi.filters.element.IsAccessibleFilter;
-import com.intellij.psi.filters.element.ModifierFilter;
-import com.intellij.psi.filters.element.PackageEqualsFilter;
-import com.intellij.psi.filters.position.PreviousElementFilter;
-import com.intellij.psi.filters.position.StartElementFilter;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.jdom.Element;
-import org.jdom.Namespace;
-import org.jetbrains.annotations.NonNls;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,106 +17,10 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class FilterUtil{
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
-  public static final @NonNls Namespace FILTER_NS = Namespace.getNamespace("http://www.intellij.net/data/filter");
-
-  private static final Map<String,Class> ourRegisteredFilters = new HashMap<String, Class>();
-  static{
-    registerFilters();
+  private FilterUtil() {
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void registerFilters() {
-    registerFilter("and", AndFilter.class);
-    registerFilter("or", OrFilter.class);
-    registerFilter("any-inner", AnyInnerFilter.class);
-    registerFilter("class", ClassFilter.class);
-    registerFilter("constructor", AndFilter.class);
-    registerFilter("interface", InterfaceFilter.class);
-    registerFilter("accessible-class", IsAccessibleFilter.class);
-    registerFilter("modifiers", ModifierFilter.class);
-    registerFilter("not", NotFilter.class);
-    registerFilter("same-package", PackageEqualsFilter.class);
-    registerFilter("previous", PreviousElementFilter.class);
-    registerFilter("parent", ScopeFilter.class);
-    registerFilter("text", TextFilter.class);
-    registerFilter("first-classes", StartElementFilter.class);
-    registerFilter("this-or-any-inner", ThisOrAnyInnerFilter.class);
-  }
-
-  static void registerFilter(String name, Class filterClass){
-    ourRegisteredFilters.put(name, filterClass);
-  }
-
-  public static ElementFilter readFilter(Element element)
-  throws UnknownFilterException{
-    final String filterName = element.getName();
-
-      if(ourRegisteredFilters.containsKey(filterName)){
-
-        final ElementFilter filter;
-        try{
-          filter = (ElementFilter)(ourRegisteredFilters.get(filterName)).newInstance();
-          //filter.readExternal(element);
-        }
-        catch(InstantiationException e){
-          throw new UnknownFilterException(filterName, e);
-        }
-        catch(IllegalAccessException e){
-          throw new UnknownFilterException(filterName, e);
-        }
-
-        return filter;
-      }
-      else{
-        throw new UnknownFilterException(filterName);
-      }
-  }
-
-  public static List<ElementFilter> readFilterGroup(Element element){
-    final List<ElementFilter> list = new ArrayList<ElementFilter>();
-    for (final Object o : element.getChildren()) {
-      final Element current = (Element)o;
-      if (current.getNamespace().equals(FILTER_NS)) {
-        try {
-          list.add(FilterUtil.readFilter(current));
-        }
-        catch (UnknownFilterException ufe) {
-          LOG.error(ufe);
-        }
-      }
-    }
-    return list;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public static final Class getClassByName(String shortName){
-    final String[] packs = {
-      "",
-      "com.intellij.psi.",
-      "com.intellij.psi.jsp.",
-      "com.intellij.psi.xml.",
-      "com.intellij.aspects.psi."
-    };
-
-    for (String pack : packs) {
-      final Class aClass = tryClass(pack + shortName);
-      if (aClass != null) {
-        return aClass;
-      }
-    }
-    return null;
-  }
-
-  private static Class tryClass(String name){
-    try{
-      return Class.forName(name);
-    }
-    catch(Exception e){
-      return null;
-    }
-  }
-
+  @Nullable
   public static PsiType getTypeByElement(PsiElement element, PsiElement context){
     //if(!element.isValid()) return null;
     if(element instanceof PsiType){
@@ -156,8 +44,10 @@ public class FilterUtil{
       }
       else if(PsiKeyword.THIS.equals(element.getText())){
         PsiElement previousElement = getPreviousElement(context, false);
-        if(".".equals(previousElement.getText())){
+        if(previousElement != null && ".".equals(previousElement.getText())){
           previousElement = getPreviousElement(previousElement, false);
+          assert previousElement != null;
+
           final String className = previousElement.getText();
           PsiElement walker = context;
           while(walker != null){
@@ -181,6 +71,7 @@ public class FilterUtil{
     return null;
   }
 
+  @Nullable
   public static PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
     if(element == null || element.getNode() == null) return null;
     ASTNode leftNeibour = prevLeaf(element.getNode());
@@ -191,6 +82,7 @@ public class FilterUtil{
 
   }
 
+  @Nullable
   public static ASTNode prevLeaf(final ASTNode leaf) {
     LeafElement leftNeibour = (LeafElement)TreeUtil.prevLeaf(leaf);
     if(leftNeibour instanceof ChameleonElement){
@@ -200,7 +92,8 @@ public class FilterUtil{
     return leftNeibour;
   }
 
-  public static final PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
+  @Nullable
+  public static PsiElement getPreviousElement(final PsiElement element, boolean skipReference){
     PsiElement prev = element;
     if(element != null){
       if(skipReference){
