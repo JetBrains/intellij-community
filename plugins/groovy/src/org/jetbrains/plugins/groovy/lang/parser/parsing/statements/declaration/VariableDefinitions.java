@@ -195,7 +195,7 @@ public class VariableDefinitions implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, mASSIGN)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(AssignmentExpression.parse(builder))) {
+      if (!AssignmentExpression.parse(builder)) {
         builder.error(GroovyBundle.message("expression.expected"));
         return false;
       } else {

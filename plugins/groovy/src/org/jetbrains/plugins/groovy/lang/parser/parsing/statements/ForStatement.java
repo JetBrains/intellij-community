@@ -175,7 +175,7 @@ public class ForStatement implements GroovyElementTypes {
       ParserUtils.eatElement(builder, PARAMETER);
       declMarker.drop();
       ParserUtils.getToken(builder, kIN);
-      if (WRONGWAY.equals(ShiftExpression.parse(builder))) {
+      if (!ShiftExpression.parse(builder)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
       marker.done(FOR_IN_CLAUSE);
@@ -205,7 +205,7 @@ public class ForStatement implements GroovyElementTypes {
       if (kIN.equals(builder.getTokenType()) || mCOLON.equals(builder.getTokenType())) {
         declMarker.done(PARAMETER);
         builder.advanceLexer();
-        if (WRONGWAY.equals(ShiftExpression.parse(builder))) {
+        if (!ShiftExpression.parse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         marker.done(FOR_IN_CLAUSE);

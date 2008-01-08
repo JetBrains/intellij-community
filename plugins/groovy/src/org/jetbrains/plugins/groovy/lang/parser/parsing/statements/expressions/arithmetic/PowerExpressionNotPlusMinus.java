@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -26,21 +25,18 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = UnaryExpressionNotPlusMinus.parse(builder);
 
-    if (!result.equals(WRONGWAY)) {
+    if (UnaryExpressionNotPlusMinus.parse(builder)) {
       if (ParserUtils.getToken(builder, mSTAR_STAR)) {
         ParserUtils.getToken(builder, mNLS);
-        result = UnaryExpression.parse(builder);
-        if (result.equals(WRONGWAY)) {
+        if (!UnaryExpression.parse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(POWER_EXPRESSION_SIMPLE);
-        result = POWER_EXPRESSION_SIMPLE;
         if (mSTAR_STAR.equals(builder.getTokenType())) {
           subParse(builder, newMarker);
         } else {
@@ -49,17 +45,17 @@ public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
       } else {
         marker.drop();
       }
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-    return result;
   }
 
-  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, mSTAR_STAR);
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType result = UnaryExpression.parse(builder);
-    if (result.equals(WRONGWAY)) {
+    if (!UnaryExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
@@ -69,7 +65,6 @@ public class PowerExpressionNotPlusMinus implements GroovyElementTypes {
     } else {
       newMarker.drop();
     }
-    return POWER_EXPRESSION_SIMPLE;
   }
 
 

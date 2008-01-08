@@ -32,29 +32,27 @@ public class PostfixExpression implements GroovyElementTypes {
           mDEC
   );
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = PathExpression.parse(builder);
-    if (!result.equals(WRONGWAY)) {
-      subParse(builder, marker, result);
+    if (PathExpression.parse(builder)) {
+      subParse(builder, marker);
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-    return result;
   }
 
-  private static GroovyElementType subParse(PsiBuilder builder,
-                                            PsiBuilder.Marker marker,
-                                            GroovyElementType result) {
+  private static void subParse(PsiBuilder builder,
+                               PsiBuilder.Marker marker
+  ) {
     if (ParserUtils.getToken(builder, POSTFIXES)) {
       PsiBuilder.Marker newMarker = marker.precede();
       marker.done(POSTFIX_EXPRESSION);
-      subParse(builder, newMarker, POSTFIX_EXPRESSION);
-      return POSTFIX_EXPRESSION;
+      subParse(builder, newMarker);
     } else {
       marker.drop();
-      return result;
     }
   }
 

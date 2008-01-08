@@ -70,7 +70,7 @@ public class AnnotationArguments implements GroovyElementTypes {
     }
 
     //check
-    return !WRONGWAY.equals(ConditionalExpression.parse(builder)) && !ParserUtils.getToken(builder, mASSIGN);
+    return ConditionalExpression.parse(builder) && !ParserUtils.getToken(builder, mASSIGN);
   }
 
   /*

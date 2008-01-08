@@ -45,23 +45,22 @@ public class AssignmentExpression implements GroovyElementTypes {
           mBSR_ASSIGN
   );
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     Marker marker = builder.mark();
-    GroovyElementType result = ConditionalExpression.parse(builder);
-    if (result != WRONGWAY && ParserUtils.getToken(builder, ASSIGNMENTS)) {
-      ParserUtils.getToken(builder, mNLS);
-      result = parse(builder);
-      if (result.equals(WRONGWAY)) {
-        builder.error(GroovyBundle.message("expression.expected"));
+    if (ConditionalExpression.parse(builder)) {
+      if (ParserUtils.getToken(builder, ASSIGNMENTS)) {
+        ParserUtils.getToken(builder, mNLS);
+        if (!parse(builder)) {
+          builder.error(GroovyBundle.message("expression.expected"));
+        }
+        marker.done(ASSIGNMENT_EXPRESSION);
+      } else {
+        marker.drop();
       }
-      marker.done(ASSIGNMENT_EXPRESSION);
-      return ASSIGNMENT_EXPRESSION;
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-
-    return result;
   }
-
-
 }

@@ -28,22 +28,26 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
  */
 public class ExpressionStatement implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
 
-    GroovyElementType result = AssignmentExpression.parse(builder);
-    if (!WRONGWAY.equals(result) && !TokenSets.SEPARATORS.contains(builder.getTokenType())) {
-      GroovyElementType res = CommandArguments.parse(builder);
-      if (!res.equals(WRONGWAY)) {
-        marker.done(CALL_EXPRESSION);
+    if (AssignmentExpression.parse(builder)) {
+      if (!TokenSets.SEPARATORS.contains(builder.getTokenType())) {
+        GroovyElementType res = CommandArguments.parse(builder);
+        if (!res.equals(WRONGWAY)) {
+          marker.done(CALL_EXPRESSION);
+        } else {
+          marker.drop();
+        }
       } else {
         marker.drop();
       }
-      return result;
+
+      return true;
     } else {
       marker.drop();
-      return result;
+      return false;
     }
   }
 
@@ -54,11 +58,10 @@ public class ExpressionStatement implements GroovyElementTypes {
    * @return type of parsing result
    */
   public static GroovyElementType argParse(PsiBuilder builder) {
-    GroovyElementType result = AssignmentExpression.parse(builder);
-    if (!WRONGWAY.equals(result)) {
+    if (AssignmentExpression.parse(builder)) {
       return CALL_EXPRESSION;
     }
-    return result;
+    return WRONGWAY;
   }
 
 

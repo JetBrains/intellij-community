@@ -34,11 +34,10 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PathExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = PrimaryExpression.parse(builder);
-    if (!WRONGWAY.equals(result)) {
+    if (PrimaryExpression.parse(builder)) {
       if (isPathElementStart(builder)) {
         PsiBuilder.Marker newMarker = marker.precede();
         marker.drop();
@@ -47,14 +46,14 @@ public class PathExpression implements GroovyElementTypes {
           argsMarker.done(ARGUMENTS);
         }
         pathElementParse(builder, newMarker);
-        return PATH_EXPRESSION;
       } else {
         marker.drop();
       }
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-    return result;
   }
 
   /**

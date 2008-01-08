@@ -32,71 +32,70 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PrimaryExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (kTHIS.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, THIS_REFERENCE_EXPRESSION);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (kSUPER.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, SUPER_REFERENCE_EXPRESSION);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (kNEW.equals(builder.getTokenType())) {
       newExprParse(builder);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (mIDENT.equals(builder.getTokenType())) {
       ParserUtils.eatElement(builder, REFERENCE_EXPRESSION);
-      return REFERENCE_EXPRESSION;
+      return true;
     }
     if (mGSTRING_SINGLE_BEGIN.equals(builder.getTokenType())) {
       StringConstructorExpression.parse(builder);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (mREGEX_BEGIN.equals(builder.getTokenType())) {
       RegexConstructorExpression.parse(builder);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (mLBRACK.equals(builder.getTokenType())) {
       ListOrMapConstructorExpression.parse(builder);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (mLPAREN.equals(builder.getTokenType())) {
       return parenthesizedExprParse(builder);
     }
     if (mLCURLY.equals(builder.getTokenType())) {
       OpenOrClosableBlock.parseClosableBlock(builder);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (TokenSets.CONSTANTS.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, LITERAL);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
     if (TokenSets.WRONG_CONSTANTS.contains(builder.getTokenType())) {
       PsiBuilder.Marker marker = builder.mark();
       builder.advanceLexer();
       builder.error(GroovyBundle.message("wrong.string"));
       marker.done(LITERAL);
-      return PRIMARY_EXPRESSION;
+      return true;
     }
 
     // TODO implement all cases!
 
-    return WRONGWAY;
+    return false;
   }
 
-  public static GroovyElementType parenthesizedExprParse(PsiBuilder builder) {
+  public static boolean parenthesizedExprParse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, mLPAREN);
-    GroovyElementType innerExprType = AssignmentExpression.parse(builder);
-    if (innerExprType == WRONGWAY) {
+    if (!AssignmentExpression.parse(builder)) {
       marker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN, GroovyBundle.message("rparen.expected"))) {
@@ -109,7 +108,7 @@ public class PrimaryExpression implements GroovyElementTypes {
       ParserUtils.getToken(builder, mRPAREN);
     }
     marker.done(PARENTHESIZED_EXPRESSION);
-    return PARENTHESIZED_EXPRESSION;
+    return true;
   }
 
   /**

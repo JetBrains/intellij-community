@@ -28,7 +28,7 @@ public class VariableInitializer implements GroovyElementTypes {
   public static void parse(PsiBuilder builder) {
     if (ParserUtils.getToken(builder, mASSIGN)) {
       ParserUtils.getToken(builder, mNLS);
-      if (AssignmentExpression.parse(builder).equals(WRONGWAY)) {
+      if (!AssignmentExpression.parse(builder)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
     }

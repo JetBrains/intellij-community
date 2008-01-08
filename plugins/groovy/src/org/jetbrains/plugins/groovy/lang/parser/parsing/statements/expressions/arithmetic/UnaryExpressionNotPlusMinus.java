@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
@@ -28,28 +27,25 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class UnaryExpressionNotPlusMinus implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
-
-    GroovyElementType result;
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker marker = builder.mark();
     if (builder.getTokenType() == mLPAREN) {
       if (parseTypeCast(builder)) {
-        result = UnaryExpression.parse(builder);
-        if (!result.equals(WRONGWAY)) {
+        if (UnaryExpression.parse(builder)) {
           marker.done(CAST_EXPRESSION);
+          return true;
         } else {
           marker.rollbackTo();
-          result = PostfixExpression.parse(builder);
+          return PostfixExpression.parse(builder);
         }
       } else {
         marker.drop();
-        result = PostfixExpression.parse(builder);
+        return PostfixExpression.parse(builder);
       }
     } else {
       marker.drop();
-      result = PostfixExpression.parse(builder);
+      return PostfixExpression.parse(builder);
     }
-    return result;
   }
 
   private static boolean parseTypeCast(PsiBuilder builder) {

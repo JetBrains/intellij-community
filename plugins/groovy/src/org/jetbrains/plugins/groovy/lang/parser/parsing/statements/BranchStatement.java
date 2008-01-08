@@ -82,7 +82,7 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static GroovyElementType throwParse(PsiBuilder builder) {
     ParserUtils.getToken(builder, kTHROW);
-    if (AssignmentExpression.parse(builder).equals(WRONGWAY)) {
+    if (!AssignmentExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     return THROW_STATEMENT;
@@ -96,13 +96,13 @@ public class BranchStatement implements GroovyElementTypes {
    */
   private static GroovyElementType assertParse(PsiBuilder builder) {
     ParserUtils.getToken(builder, kASSERT);
-    if (ConditionalExpression.parse(builder).equals(WRONGWAY)) {
+    if (!ConditionalExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     if (mCOLON.equals(builder.getTokenType()) ||
             mCOMMA.equals(builder.getTokenType())) {
       builder.advanceLexer();
-      if (AssignmentExpression.parse(builder).equals(WRONGWAY)) {
+      if (!AssignmentExpression.parse(builder)) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
     }

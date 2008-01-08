@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.logical.LogicalOrExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -27,16 +26,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class ConditionalExpression implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = LogicalOrExpression.parse(builder);
-    if (!result.equals(WRONGWAY)) {
+    if (LogicalOrExpression.parse(builder)) {
       if (ParserUtils.getToken(builder, mQUESTION)) {
-        result = CONDITIONAL_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
-        GroovyElementType res = AssignmentExpression.parse(builder);
-        if (res.equals(WRONGWAY)) {
+        if (!AssignmentExpression.parse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         if (ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"))) {
@@ -45,20 +41,19 @@ public class ConditionalExpression implements GroovyElementTypes {
         }
         marker.done(CONDITIONAL_EXPRESSION);
       } else if (ParserUtils.getToken(builder, mELVIS)) {
-        result = ELVIS_EXPRESSION;
         ParserUtils.getToken(builder, mNLS);
-        GroovyElementType res = parse(builder);
-        if (res.equals(WRONGWAY)) {
+        if (!parse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         marker.done(ELVIS_EXPRESSION);
       } else {
         marker.drop();
       }
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-    return result;
 
 
   }

@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.relational.EqualityExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -33,21 +32,17 @@ public class RegexExpression implements GroovyElementTypes {
           mREGEX_MATCH
   );
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = EqualityExpression.parse(builder);
-
-    if (!result.equals(WRONGWAY)) {
+    if (EqualityExpression.parse(builder)) {
       if (ParserUtils.getToken(builder, REGEX_DO)) {
         ParserUtils.getToken(builder, mNLS);
-        result = EqualityExpression.parse(builder);
-        if (result.equals(WRONGWAY)) {
+        if (!EqualityExpression.parse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
         PsiBuilder.Marker newMarker = marker.precede();
         marker.done(REGEX_EXPRESSION);
-        result = REGEX_EXPRESSION;
         if (REGEX_DO.contains(builder.getTokenType())) {
           subParse(builder, newMarker);
         } else {
@@ -56,17 +51,17 @@ public class RegexExpression implements GroovyElementTypes {
       } else {
         marker.drop();
       }
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-    return result;
   }
 
-  private static GroovyElementType subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
+  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, REGEX_DO);
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType result = EqualityExpression.parse(builder);
-    if (result.equals(WRONGWAY)) {
+    if (!EqualityExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     PsiBuilder.Marker newMarker = marker.precede();
@@ -76,7 +71,6 @@ public class RegexExpression implements GroovyElementTypes {
     } else {
       newMarker.drop();
     }
-    return REGEX_EXPRESSION;
   }
 
 }

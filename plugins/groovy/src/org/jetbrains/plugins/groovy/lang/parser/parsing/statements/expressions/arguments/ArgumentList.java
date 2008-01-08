@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
@@ -31,8 +30,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ArgumentList implements GroovyElementTypes {
 
   public static void parse(PsiBuilder builder, IElementType closingBrace) {
-    GroovyElementType result = argumentParse(builder, closingBrace);
-    if (result.equals(WRONGWAY)) {
+    if (!argumentParse(builder, closingBrace)) {
       if (!closingBrace.equals(builder.getTokenType())) {
         builder.error(GroovyBundle.message("expression.expected"));
       }
@@ -46,7 +44,7 @@ public class ArgumentList implements GroovyElementTypes {
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
       ParserUtils.getToken(builder, mCOMMA, GroovyBundle.message("comma.expected"));
       ParserUtils.getToken(builder, mNLS);
-      if (argumentParse(builder, closingBrace).equals(WRONGWAY)) {
+      if (!argumentParse(builder, closingBrace)) {
         if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
         }
@@ -67,7 +65,7 @@ public class ArgumentList implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType argumentParse(PsiBuilder builder, IElementType closingBrace) {
+  private static boolean argumentParse(PsiBuilder builder, IElementType closingBrace) {
 
     PsiBuilder.Marker argMarker = builder.mark();
     boolean labeled = argumentLabelStartCheck(builder);
@@ -75,18 +73,18 @@ public class ArgumentList implements GroovyElementTypes {
     if (labeled) {
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
     }
-    GroovyElementType result = AssignmentExpression.parse(builder);
 
     // If expression is wrong...
-    if (labeled && result.equals(WRONGWAY)) {
+    boolean exprParsed = AssignmentExpression.parse(builder);
+    if (labeled && !exprParsed) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
-    while (!builder.eof() && labeled && result.equals(WRONGWAY) &&
+    while (!builder.eof() && labeled &&
             !mCOMMA.equals(builder.getTokenType()) &&
             !closingBrace.equals(builder.getTokenType())) {
       builder.error(GroovyBundle.message("expression.expected"));
       builder.advanceLexer();
-      result = AssignmentExpression.parse(builder);
+      if (AssignmentExpression.parse(builder)) break;
     }
 
     if (labeled || expanded) {
@@ -95,11 +93,7 @@ public class ArgumentList implements GroovyElementTypes {
       argMarker.drop();
     }
 
-    if (labeled || !result.equals(WRONGWAY)) {
-      return ARGUMENT;
-    } else {
-      return WRONGWAY;
-    }
+    return labeled || exprParsed;
   }
 
   /**

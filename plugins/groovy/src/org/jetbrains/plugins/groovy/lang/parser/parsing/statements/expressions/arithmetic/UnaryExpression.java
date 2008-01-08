@@ -36,21 +36,21 @@ public class UnaryExpression implements GroovyElementTypes {
           mLNOT
   );
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
     if (ParserUtils.getToken(builder, PREFIXES)) {
       ParserUtils.getToken(builder, mNLS);
       parse(builder);
       marker.done(UNARY_EXPRESSION);
-      return UNARY_EXPRESSION;
+      return true;
     } else {
       marker.drop();
-      GroovyElementType result = UnaryExpressionNotPlusMinus.parse(builder);
-      if (result.equals(WRONGWAY)) {
+      if (!UnaryExpressionNotPlusMinus.parse(builder)) {
         builder.error(GroovyBundle.message("expression.expected"));
+        return false;
       }
-      return result;
+      return true;
     }
   }
 
