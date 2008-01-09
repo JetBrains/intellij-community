@@ -3,11 +3,14 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -24,14 +27,10 @@ public class DynamicReferenceUtils {
 
       psiClass = ((PsiClassType) type).resolve();
     } else {
-      PsiElement refParent = refExpr.getParent();
-
-      while (refParent != null && !(refParent instanceof GroovyFileBase)) {
-        refParent = refParent.getParent();
-      }
-
-      if (refParent == null) return null;
-      psiClass = ((GroovyFileBase) refParent).getScriptClass();
+      GroovyPsiElement context = PsiTreeUtil.getParentOfType(refExpr, GrTypeDefinition.class, GroovyFileBase.class);
+      if (context instanceof GrTypeDefinition) return (PsiClass) context;
+      else if (context instanceof GroovyFileBase) return ((GroovyFileBase) context).getScriptClass();
+      return null;
     }
     return psiClass;
   }
