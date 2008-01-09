@@ -504,7 +504,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     /************* body **********/
 
     final GrConstructorInvocation constructorInvocation = constructor.getChainingConstructorInvocation();
-    if (constructorInvocation != null && constructorInvocation.isSuperCall()) {
+    if (constructorInvocation != null) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           PsiMethod superConstructor = constructorInvocation.resolveConstructor();
