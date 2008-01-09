@@ -68,10 +68,10 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
     PsiElement element2 = file.findElementAt(endOffset - 1);
 
     if (element1 == null || element2 == null) return;
-    Language lang = getLanguage(element1);
+    Language lang1 = getLanguage(element1);
     Language lang2 = getLanguage(element2);
 
-    if (element1 instanceof PsiWhiteSpace && isLanguageWithWSSignificant(lang) ) {
+    if (element1 instanceof PsiWhiteSpace && isLanguageWithWSSignificant(lang1) ) {
       startOffset = element1.getTextRange().getEndOffset();
       element1 = file.findElementAt(startOffset);
     }
@@ -80,10 +80,10 @@ public class SurroundWithHandler implements CodeInsightActionHandler{
       element2 = file.findElementAt(endOffset);
     }
 
-    lang = getLanguage(element1);
+    lang1 = getLanguage(element1);
     lang2 = getLanguage(element2);
 
-    if(lang != lang2) return;
+    if(lang1 != lang2) return;
 
     final List<SurroundDescriptor> surroundDescriptors = LanguageSurrounders.INSTANCE.allForLanguage(element1.getLanguage());
     if (surroundDescriptors.isEmpty()) return;
