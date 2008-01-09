@@ -96,6 +96,21 @@ public class SuppressActionWrapper extends ActionGroup {
             }
           });
         }
+
+        public void update(final AnActionEvent e) {
+          super.update(e);
+          boolean available = false;
+          for (InspectionTreeNode node : myNodesToSuppress) {
+            final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
+            if (content.first == null) continue;
+            final PsiElement element = content.first;
+            if (suppressAction.isAvailable(myProject, null, element)) {
+              available = true;
+              break;
+            }
+          }
+          if (!available) e.getPresentation().setVisible(false);
+        }
       };
     }
     return actions;

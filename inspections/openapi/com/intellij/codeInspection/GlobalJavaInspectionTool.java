@@ -21,7 +21,7 @@ public abstract class GlobalJavaInspectionTool extends GlobalInspectionTool impl
   }
 
   @Nullable
-  public SuppressIntentionAction[] getSuppressActions() {
+  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 

@@ -184,7 +184,7 @@ public class GlobalInspectionToolWrapper extends DescriptorProviderInspection {
   @Nullable
   public SuppressIntentionAction[] getSuppressActions() {
     if (myTool instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)myTool).getSuppressActions();
+      return ((CustomSuppressableInspectionTool)myTool).getSuppressActions(null);
     }
     return super.getSuppressActions();
   }

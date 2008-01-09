@@ -119,7 +119,7 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
   }
 
   @Nullable
-  public SuppressIntentionAction[] getSuppressActions() {
+  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 

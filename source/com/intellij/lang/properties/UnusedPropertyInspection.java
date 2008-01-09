@@ -91,7 +91,7 @@ public class UnusedPropertyInspection extends LocalInspectionTool implements Cus
   }
 
 
-  public SuppressIntentionAction[] getSuppressActions() {
+  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return new SuppressIntentionAction[] {new SuppressSinglePropertyFix(), new SuppressForFile()};
   }
 

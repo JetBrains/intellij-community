@@ -164,7 +164,7 @@ public final class LocalInspectionToolWrapper extends DescriptorProviderInspecti
   @Nullable
   public SuppressIntentionAction[] getSuppressActions() {
     if (myTool instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)myTool).getSuppressActions();
+      return ((CustomSuppressableInspectionTool)myTool).getSuppressActions(null);
     }
     return super.getSuppressActions();
   }

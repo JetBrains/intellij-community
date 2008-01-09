@@ -40,7 +40,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   @NonNls private static final String SUPPRESS_SUFFIX = " -->\n";
   @NonNls private static final String ALL = "ALL";
 
-  public SuppressIntentionAction[] getSuppressActions() {
+  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
     return new SuppressIntentionAction[]{new SuppressTag(), new SuppressForFile(), new SuppressAllForFile()};
   }
 

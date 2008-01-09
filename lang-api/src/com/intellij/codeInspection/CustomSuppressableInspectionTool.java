@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public interface CustomSuppressableInspectionTool  {
 
   @Nullable
-  SuppressIntentionAction[] getSuppressActions();
+  SuppressIntentionAction[] getSuppressActions(@Nullable final PsiElement element);
 
-  boolean isSuppressedFor(PsiElement element);
+  boolean isSuppressedFor(final PsiElement element);
 }
