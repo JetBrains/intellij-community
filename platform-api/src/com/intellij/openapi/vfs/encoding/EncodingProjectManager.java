@@ -47,6 +47,7 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
     List<VirtualFile> files = new ArrayList<VirtualFile>(myMapping.keySet());
     Collections.sort(files, new Comparator<VirtualFile>() {
       public int compare(final VirtualFile o1, final VirtualFile o2) {
+        if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
         return o1.getPath().compareTo(o2.getPath());
       }
     });
