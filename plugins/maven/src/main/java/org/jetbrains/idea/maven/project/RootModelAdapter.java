@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -91,13 +90,17 @@ class RootModelAdapter {
   }
 
   public void useProjectOutput() {
-    CompilerModuleExtensionImpl.getInstance(myRootModel.getModule()).inheritCompilerOutputPath(true);
+    getCompilerExtension().inheritCompilerOutputPath(true);
   }
 
   public void useModuleOutput(String production, String test) {
-    CompilerModuleExtensionImpl.getInstance(myRootModel.getModule()).inheritCompilerOutputPath(false);
-    CompilerModuleExtension.getInstance(myRootModel.getModule()).setCompilerOutputPath(toUrl(production).getUrl());
-    CompilerModuleExtension.getInstance(myRootModel.getModule()).setCompilerOutputPathForTests(toUrl(test).getUrl());
+    getCompilerExtension().inheritCompilerOutputPath(false);
+    getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
+    getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
+  }
+
+  private CompilerModuleExtension getCompilerExtension() {
+    return CompilerModuleExtension.getInstance(myRootModel.getModule());
   }
 
   private Url toUrl(String path) {

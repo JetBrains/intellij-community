@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.ui.treeStructure.SimpleNode;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
@@ -186,25 +187,26 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
-    ModuleRootManager m = getRootManager(moduleName);
-    final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(m.getModule());
-    assertFalse(compilerModuleExtension.isCompilerOutputPathInherited());
-    assertEquals(output, getAbsolutePath(compilerModuleExtension.getCompilerOutputUrl()));
-    assertEquals(testOutput, getAbsolutePath(compilerModuleExtension.getCompilerOutputUrlForTests()));
+    CompilerModuleExtension e = getCompilerExtension(moduleName);
+
+    assertFalse(e.isCompilerOutputPathInherited());
+    assertEquals(output, getAbsolutePath(e.getCompilerOutputUrl()));
+    assertEquals(testOutput, getAbsolutePath(e.getCompilerOutputUrlForTests()));
   }
 
   private String getAbsolutePath(String path) {
-    try {
-      return FileUtil.toSystemIndependentName(new File(VfsUtil.urlToPath(path)).getCanonicalPath());
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    path = VfsUtil.urlToPath(path);
+    path = PathUtil.getCanonicalPath(path);
+    return FileUtil.toSystemIndependentName(path);
   }
 
   protected void assertProjectOutput(String module) {
+    assertTrue(getCompilerExtension(module).isCompilerOutputPathInherited());
+  }
+
+  private CompilerModuleExtension getCompilerExtension(String module) {
     ModuleRootManager m = getRootManager(module);
-    assertTrue(CompilerModuleExtension.getInstance(m.getModule()).isCompilerOutputPathInherited());
+    return CompilerModuleExtension.getInstance(m.getModule());
   }
 
   protected void assertModuleLibDep(String moduleName, String depName, String path) {
