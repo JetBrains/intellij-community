@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -32,42 +31,40 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 
 public class Annotation implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker annMarker = builder.mark();
 
     if (!ParserUtils.getToken(builder, mAT)) {
       annMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
 
     if (!ReferenceElement.parseReferenceElement(builder)) {
       annMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     AnnotationArguments.parse(builder);
 
     annMarker.done(ANNOTATION);
-    return ANNOTATION;
+    return true;
   }
 
-  public static GroovyElementType parseAnnotationOptional(PsiBuilder builder) {
+  public static void parseAnnotationOptional(PsiBuilder builder) {
     PsiBuilder.Marker annOptMarker = builder.mark();
 
     boolean hasAnnotations = false;
-    while (!WRONGWAY.equals(Annotation.parse(builder))) {
+    while (Annotation.parse(builder)) {
       ParserUtils.getToken(builder, mNLS);
       hasAnnotations = true;
     }
 
     if (hasAnnotations) {
       annOptMarker.done(MODIFIERS);
-      return MODIFIERS;
     } else {
       annOptMarker.rollbackTo();
-      return NONE;
     }
   }
 }

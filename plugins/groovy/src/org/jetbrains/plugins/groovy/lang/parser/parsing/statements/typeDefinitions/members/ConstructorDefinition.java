@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -79,20 +78,13 @@ public class ConstructorDefinition implements GroovyElementTypes {
   private static boolean parseModifiers(PsiBuilder builder) {
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
-    boolean parsedAnnotation;
-    boolean parsedModifier;
-    boolean parsedDef;
     do {
       if (kSTATIC.equals(builder.getTokenType())) {
         modifiersMarker.rollbackTo();
         return false;
       }
-
-      parsedAnnotation = Annotation.parse(builder) != WRONGWAY;
-      parsedModifier = Modifier.parse(builder) != WRONGWAY;
-      parsedDef = ParserUtils.getToken(builder, kDEF);
       ParserUtils.getToken(builder, mNLS);
-    } while(parsedAnnotation || parsedModifier | parsedDef);
+    } while(Annotation.parse(builder) || Modifier.parse(builder) || ParserUtils.getToken(builder, kDEF));
 
     modifiersMarker.done(MODIFIERS);
     return true;

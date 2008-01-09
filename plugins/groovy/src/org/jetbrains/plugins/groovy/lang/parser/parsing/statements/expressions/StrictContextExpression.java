@@ -37,7 +37,7 @@ public class StrictContextExpression implements GroovyElementTypes {
       return BranchStatement.parse(builder);
     }
     if (mAT.equals(builder.getTokenType())) {
-      return Annotation.parse(builder);
+      if(Annotation.parse(builder)) return ANNOTATION; else return WRONGWAY;
     }
     if (DeclarationStart.parse(builder)) {
       return singleDeclarationParse(builder);
