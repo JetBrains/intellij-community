@@ -109,14 +109,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       FileStatusMap fileStatusMap = ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).getFileStatusMap();
       refCountHolder = RefCountHolder.getInstance(file);
       success = refCountHolder.startAnalyzing();
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      PsiElement dirtyScope = document == null ? file : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
-      if (dirtyScope != null) {
-        if (dirtyScope instanceof PsiFile) {
-          refCountHolder.clear();
-        }
-        else {
-          refCountHolder.removeInvalidRefs();
+      if (success) {
+        Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        PsiElement dirtyScope = document == null ? file : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL);
+        if (dirtyScope != null) {
+          if (dirtyScope instanceof PsiFile) {
+            refCountHolder.clear();
+          }
+          else {
+            refCountHolder.removeInvalidRefs();
+          }
         }
       }
     }
