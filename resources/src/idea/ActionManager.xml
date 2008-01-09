@@ -465,6 +465,8 @@
       <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction"
               text="Mark File Dirty"/>
       <action id="DumpIntentions" internal="true" class="com.intellij.internal.DumpIntentionsAction" text="Dupm Intentions"/>
+      <separator/>
+      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction" text="Generate Hierarchy Visitor"/>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
