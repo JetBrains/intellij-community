@@ -143,18 +143,7 @@ public class GeneralCommandLine {
     if (myPassParentEnvs) {
       envParams.putAll(System.getenv());
     }
-    for (String envKey : myEnvParams.keySet()) {
-      String val = myEnvParams.get(envKey);
-      String parentValue = envParams.get(envKey);
-      if (parentValue != null) {
-        if (val != null) {
-          val = parentValue + File.pathSeparator + val;
-        } else {
-          val = parentValue;
-        }
-      }
-      envParams.put(envKey, val);
-    }
+    envParams.putAll(myEnvParams);
     final String[] result = new String[envParams.size()];
     int i=0;
     for (final String key : envParams.keySet()) {
