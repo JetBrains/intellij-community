@@ -113,11 +113,13 @@ public class Storage implements Disposable, Forceable {
           final int size = myRecordsTable.getSize(i);
 
           if (addr != 0 && size != 0) {
-            final long newaddr = newDataTable.allocateSpace(size);
+            final int capacity = calcCapacity(size);
+            final long newaddr = newDataTable.allocateSpace(capacity);
             final byte[] bytes = new byte[size];
             myDataTable.readBytes(addr, bytes);
             newDataTable.writeBytes(newaddr, bytes);
             myRecordsTable.setAddress(i, newaddr);
+            myRecordsTable.setCapacity(i, capacity);
           }
         }
 
@@ -178,21 +180,23 @@ public class Storage implements Disposable, Forceable {
   public void writeBytes(int record, byte[] bytes) {
     synchronized (lock) {
       final int requiredLength = bytes.length;
-      final int currentSize = myRecordsTable.getSize(record);
+      final int currentCapacity = myRecordsTable.getCapacity(record);
 
-      if (requiredLength == currentSize && currentSize == 0) return;
+      if (requiredLength == 0 && myRecordsTable.getSize(record) == 0) return;
 
       final long address;
-      if (currentSize >= requiredLength) {
+      if (currentCapacity >= requiredLength) {
         address = myRecordsTable.getAddress(record);
       }
       else {
-        if (currentSize > 0) {
-          myDataTable.reclaimSpace(currentSize);
+        if (currentCapacity > 0) {
+          myDataTable.reclaimSpace(currentCapacity);
         }
 
-        address = myDataTable.allocateSpace(requiredLength);
+        final int newCapacity = calcCapacity(requiredLength);
+        address = myDataTable.allocateSpace(newCapacity);
         myRecordsTable.setAddress(record, address);
+        myRecordsTable.setCapacity(record, newCapacity);
       }
 
       myDataTable.writeBytes(address, bytes);
@@ -200,6 +204,20 @@ public class Storage implements Disposable, Forceable {
     }
   }
 
+  private static int calcCapacity(int requiredLength) {
+    if (requiredLength < 2048) {
+      int capacity = 1;
+      while (requiredLength != 0) {
+        capacity *= 2;
+        requiredLength /= 2;
+      }
+      return capacity;
+    }
+    else {
+      return requiredLength * 3 / 2;
+    }
+  }
+  
   public StorageDataOutput writeStream(final int record) {
     return new StorageDataOutput(this, record);
   }
@@ -224,11 +242,6 @@ public class Storage implements Disposable, Forceable {
 
   public void deleteRecord(int record) {
     synchronized (lock) {
-      final int length = myRecordsTable.getSize(record);
-      if (length != 0) {
-        myDataTable.reclaimSpace(length);
-      }
-
       myRecordsTable.deleteRecord(record);
     }
   }

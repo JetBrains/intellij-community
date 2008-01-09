@@ -32,11 +32,13 @@ class RecordsTable implements Disposable, Forceable {
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_VERSION_OFFSET = 4;
   private static final int CONNECTED_MAGIC = 0x12ad34e4;
-  private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
+  private static final int VERSION = 2;
+  private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f + VERSION;
 
   private static final int ADDRESS_OFFSET = 0;
   private static final int SIZE_OFFSET = ADDRESS_OFFSET + 8;
-  private static final int RECORD_SIZE = SIZE_OFFSET + 4;
+  private static final int CAPACITY_OFFSET = SIZE_OFFSET + 4;
+  private static final int RECORD_SIZE = CAPACITY_OFFSET + 4;
   private static final byte[] ZEROES = new byte[RECORD_SIZE];
 
   private final RandomAccessDataFile myStorage;
@@ -117,9 +119,18 @@ class RecordsTable implements Disposable, Forceable {
     return myStorage.getInt(record * RECORD_SIZE + SIZE_OFFSET);
   }
 
+  public int getCapacity(int record) {
+    return myStorage.getInt(record * RECORD_SIZE + CAPACITY_OFFSET);
+  }
+
   public void setAddress(int record, long address) {
     markDirty();
     myStorage.putLong(record * RECORD_SIZE + ADDRESS_OFFSET, address);
+  }
+
+  public void setCapacity(int record, int capacity) {
+    markDirty();
+    myStorage.putInt(record * RECORD_SIZE + CAPACITY_OFFSET, capacity);
   }
 
   public void setSize(int record, int size) {
@@ -129,8 +140,7 @@ class RecordsTable implements Disposable, Forceable {
 
   public void deleteRecord(final int record) {
     ensureFreeRecordsScanned();
-
-    cleanRecord(record);
+    setSize(record, 0);
     myFreeRecordsList.add(record);
   }
 
