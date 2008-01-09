@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -27,38 +26,36 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CommandArguments implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     PsiBuilder.Marker marker = builder.mark();
-    GroovyElementType result = commandArgParse(builder);
-    if (!result.equals(WRONGWAY)) {
-      while (builder.getTokenType() == mCOMMA && !result.equals(WRONGWAY)) {
+    if (commandArgParse(builder)) {
+      while (builder.getTokenType() == mCOMMA) {
         ParserUtils.getToken(builder, mCOMMA);
         ParserUtils.getToken(builder, mNLS);
-        result = commandArgParse(builder);
-        if (result.equals(WRONGWAY)) {
+        if (!commandArgParse(builder)) {
           builder.error(GroovyBundle.message("expression.expected"));
+          break;
         }
       }
       marker.done(COMMAND_ARGUMENTS);
+      return true;
     } else {
       marker.drop();
+      return false;
     }
-
-    return result;
   }
 
-  private static GroovyElementType commandArgParse(PsiBuilder builder){
+  private static boolean commandArgParse(PsiBuilder builder){
     PsiBuilder.Marker commandMarker = builder.mark();
     if (ArgumentList.argumentLabelStartCheck(builder)){
       ParserUtils.getToken(builder, mCOLON, GroovyBundle.message("colon.expected"));
-      GroovyElementType result = ExpressionStatement.argParse(builder);
-      if (result.equals(WRONGWAY)){
+      if (!ExpressionStatement.argParse(builder)){
         commandMarker.error(GroovyBundle.message("expression.expected"));
       } else {
         commandMarker.done(COMMAND_ARGUMENT);
       }
-      return COMMAND_ARGUMENT;
+      return true;
     } else {
       commandMarker.drop();
       return ExpressionStatement.argParse(builder);

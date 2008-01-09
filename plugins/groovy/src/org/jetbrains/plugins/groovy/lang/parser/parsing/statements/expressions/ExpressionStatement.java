@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.CommandArguments;
@@ -34,8 +33,7 @@ public class ExpressionStatement implements GroovyElementTypes {
 
     if (AssignmentExpression.parse(builder)) {
       if (!TokenSets.SEPARATORS.contains(builder.getTokenType())) {
-        GroovyElementType res = CommandArguments.parse(builder);
-        if (!res.equals(WRONGWAY)) {
+        if (CommandArguments.parse(builder)) {
           marker.done(CALL_EXPRESSION);
         } else {
           marker.drop();
@@ -57,11 +55,8 @@ public class ExpressionStatement implements GroovyElementTypes {
    * @param builder - Given builder
    * @return type of parsing result
    */
-  public static GroovyElementType argParse(PsiBuilder builder) {
-    if (AssignmentExpression.parse(builder)) {
-      return CALL_EXPRESSION;
-    }
-    return WRONGWAY;
+  public static boolean argParse(PsiBuilder builder) {
+    return AssignmentExpression.parse(builder);
   }
 
 

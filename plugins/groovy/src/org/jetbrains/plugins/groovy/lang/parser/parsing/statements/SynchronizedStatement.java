@@ -38,7 +38,7 @@ public class SynchronizedStatement implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    if (StrictContextExpression.parse(builder).equals(WRONGWAY)) {
+    if (!StrictContextExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
 

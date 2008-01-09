@@ -36,30 +36,27 @@ public class BranchStatement implements GroovyElementTypes {
           kRETURN,
           kASSERT);
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
-    PsiBuilder.Marker marker = builder.mark();
     if (kTHROW.equals(builder.getTokenType())) {
-      marker.done(throwParse(builder));
-      return THROW_STATEMENT;
+      throwParse(builder);
+      return true;
     }
     if (kASSERT.equals(builder.getTokenType())) {
-      marker.done(assertParse(builder));
-      return ASSERT_STATEMENT;
+      assertParse(builder);
+      return true;
     }
     if (kRETURN.equals(builder.getTokenType())) {
-      marker.done(returnParse(builder));
-      return RETURN_STATEMENT;
+      returnParse(builder);
+      return true;
     }
     if (kBREAK.equals(builder.getTokenType()) ||
             kCONTINUE.equals(builder.getTokenType())) {
-      GroovyElementType result = breakOrContinueParse(builder);
-      marker.done(result);
-      return result;
+      breakOrContinueParse(builder);
+      return true;
     }
 
-    marker.drop();
-    return WRONGWAY;
+    return false;
   }
 
   /**
@@ -68,10 +65,11 @@ public class BranchStatement implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType returnParse(PsiBuilder builder) {
+  private static void returnParse(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kRETURN);
     AssignmentExpression.parse(builder);
-    return RETURN_STATEMENT;
+    marker.done(RETURN_STATEMENT);
   }
 
   /**
@@ -80,12 +78,13 @@ public class BranchStatement implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType throwParse(PsiBuilder builder) {
+  private static void throwParse(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kTHROW);
     if (!AssignmentExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
-    return THROW_STATEMENT;
+    marker.done(THROW_STATEMENT);
   }
 
   /**
@@ -94,7 +93,8 @@ public class BranchStatement implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType assertParse(PsiBuilder builder) {
+  private static void assertParse(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kASSERT);
     if (!ConditionalExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
@@ -106,7 +106,7 @@ public class BranchStatement implements GroovyElementTypes {
         builder.error(GroovyBundle.message("expression.expected"));
       }
     }
-    return ASSERT_STATEMENT;
+    marker.done(ASSERT_STATEMENT);
   }
 
   /**
@@ -115,7 +115,8 @@ public class BranchStatement implements GroovyElementTypes {
    * @param builder
    * @return
    */
-  private static GroovyElementType breakOrContinueParse(PsiBuilder builder) {
+  private static void breakOrContinueParse(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
     GroovyElementType result = kBREAK.equals(builder.getTokenType()) ?
             BREAK_STATEMENT : CONTINUE_STATEMENT;
 
@@ -124,7 +125,7 @@ public class BranchStatement implements GroovyElementTypes {
     // TODO How does it works?
     ParserUtils.getToken(builder, mIDENT);
 
-    return result;
+    marker.done(result);
   }
 
 

@@ -42,7 +42,7 @@ public class SwitchStatement implements GroovyElementTypes {
       marker.done(SWITCH_STATEMENT);
       return SWITCH_STATEMENT;
     }
-    if (StrictContextExpression.parse(builder).equals(WRONGWAY)) {
+    if (!StrictContextExpression.parse(builder)) {
       builder.error(GroovyBundle.message("expression.expected"));
     }
     ParserUtils.getToken(builder, mNLS);

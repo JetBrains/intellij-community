@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements;
 
 import com.intellij.lang.PsiBuilder;
+import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.S
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.ShiftExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeSpec;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.grails.lang.gsp.parsing.groovy.GspTemplateStmtParsing;
 
 /**
  * @autor: ilyas
@@ -132,10 +132,9 @@ public class ForStatement implements GroovyElementTypes {
    */
   private static void controlExpressionListParse(PsiBuilder builder) {
 
-    GroovyElementType result = StrictContextExpression.parse(builder);
-    if (result.equals(WRONGWAY)) return;
+    if (!StrictContextExpression.parse(builder)) return;
 
-    while (mCOMMA.equals(builder.getTokenType()) || !result.equals(WRONGWAY)) {
+    while (mCOMMA.equals(builder.getTokenType())) {
 
       if (ParserUtils.lookAhead(builder, mCOMMA, mNLS, mRPAREN) ||
               ParserUtils.lookAhead(builder, mCOMMA, mRPAREN)) {
@@ -145,8 +144,7 @@ public class ForStatement implements GroovyElementTypes {
         ParserUtils.getToken(builder, mCOMMA);
       }
       ParserUtils.getToken(builder, mNLS);
-      result = StrictContextExpression.parse(builder);
-      if (result.equals(WRONGWAY)) {
+      if (!StrictContextExpression.parse(builder)) {
         ParserUtils.getToken(builder, mNLS);
         if (!mRPAREN.equals(builder.getTokenType()) &&
                 !mSEMI.equals(builder.getTokenType())) {

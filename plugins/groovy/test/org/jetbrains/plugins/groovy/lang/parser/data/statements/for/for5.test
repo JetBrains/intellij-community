@@ -15,6 +15,8 @@ Groovy script
             PsiElement(identifier)('MyClass')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('c')
+      PsiErrorElement:';' expected
+        <empty list>
       PsiWhiteSpace('  ')
       Generalized list
         PsiElement([)('[')
