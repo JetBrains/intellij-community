@@ -267,10 +267,12 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
 
   @NotNull
   public PsiModifierList getModifierList() {
-    synchronized (PsiLock.LOCK) {
-      if (myModifierList == null) {
-        int flags = getAccessFlags();
-        myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_METHOD_MASK);
+    if (myModifierList == null) {
+      synchronized (PsiLock.LOCK) {
+        if (myModifierList == null) {
+          int flags = getAccessFlags();
+          myModifierList = new ClsModifierListImpl(this, flags & ClsUtil.ACC_METHOD_MASK);
+        }
       }
     }
     return myModifierList;

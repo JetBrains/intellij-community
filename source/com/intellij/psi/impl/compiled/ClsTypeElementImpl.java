@@ -22,7 +22,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   private ClsElementImpl myChild = null;
   private boolean myChildSet = false;
-  private PsiType myCachedType;
+  private volatile PsiType myCachedType;
   private char myVariance;
   @NonNls private static final String VARIANCE_EXTENDS_PREFIX = "? extends ";
   @NonNls private static final String VARIANCE_SUPER_PREFIX = "? super ";
@@ -117,12 +117,14 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   @NotNull
   public PsiType getType() {
-    synchronized (PsiLock.LOCK) {
-      if (myCachedType == null) {
-        myCachedType = calculateType();
+    if (myCachedType == null) {
+      synchronized (PsiLock.LOCK) {
+        if (myCachedType == null) {
+          myCachedType = calculateType();
+        }
       }
-      return myCachedType;
     }
+    return myCachedType;
   }
 
   public PsiJavaCodeReferenceElement getInnermostComponentReferenceElement() {
