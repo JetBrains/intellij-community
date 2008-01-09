@@ -87,7 +87,7 @@ public class TypeSpec implements GroovyElementTypes {
     PsiBuilder.Marker arrMarker = builder.mark();
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder, isUpper))) {
+    if (!ReferenceElement.parseReferenceElement(builder, isUpper)) {
       typeElementMarker.drop();
       arrMarker.rollbackTo();
       return WRONGWAY;
@@ -106,7 +106,7 @@ public class TypeSpec implements GroovyElementTypes {
   public static GroovyElementType parseClassOrInterfaceType(PsiBuilder builder) {
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder, true))) {
+    if (!ReferenceElement.parseReferenceElement(builder, true)) {
       typeElementMarker.drop();
       return WRONGWAY;
     }

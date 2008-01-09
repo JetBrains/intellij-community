@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -36,7 +35,7 @@ public class ExtendsClause implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
+    if (!ReferenceElement.parseReferenceElement(builder)) {
       sccMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -44,7 +43,7 @@ public class ExtendsClause implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
+      if (!ReferenceElement.parseReferenceElement(builder)) {
         sccMarker.rollbackTo();
         return WRONGWAY;
       }

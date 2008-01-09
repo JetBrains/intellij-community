@@ -33,17 +33,8 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class InterfaceMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder, String interfaceName) {
     //constructor
-    PsiBuilder.Marker constructorMarker = builder.mark();
+    if (ConstructorDefinition.parse(builder, interfaceName)) return CONSTRUCTOR_DEFINITION;
 
-    GroovyElementType constructorDef = ConstructorDefinition.parse(builder, interfaceName);
-
-    if (WRONGWAY.equals(constructorDef)) {
-      constructorMarker.rollbackTo();
-    } else {
-      constructorMarker.done(constructorDef);
-      return constructorDef;
-    }
-    
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
     GroovyElementType declType = Declaration.parse(builder, true);

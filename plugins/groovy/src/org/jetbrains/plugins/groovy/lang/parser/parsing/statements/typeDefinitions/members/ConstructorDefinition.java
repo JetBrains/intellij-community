@@ -33,13 +33,18 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class ConstructorDefinition implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder, String className) {
-    if (className == null) return WRONGWAY;
-    if (parseModifiers(builder) == WRONGWAY) return WRONGWAY;
+  public static boolean parse(PsiBuilder builder, String className) {
+    if (className == null) return false;
+    PsiBuilder.Marker constructorMarker = builder.mark();
+    if (!parseModifiers(builder)) {
+      constructorMarker.rollbackTo();
+      return false;
+    }
 
     if (builder.getTokenType() != mIDENT || !className.equals(builder.getTokenText())) {
       builder.error(GroovyBundle.message("identifier.expected"));
-      return WRONGWAY;
+      constructorMarker.rollbackTo();
+      return false;
     } else {
       builder.advanceLexer();
     }
@@ -52,11 +57,8 @@ public class ConstructorDefinition implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN)) {
-      /*ThrowClause.parse(builder);
-      ParserUtils.waitNextRCurly(builder);
-
-      builder.error(GroovyBundle.message("rparen.expected"));*/
-      return WRONGWAY;
+      constructorMarker.rollbackTo();
+      return false;
     }
 
     ThrowClause.parse(builder);
@@ -65,14 +67,16 @@ public class ConstructorDefinition implements GroovyElementTypes {
       ParserUtils.getToken(builder, mNLS);
       GroovyElementType methodBody = ConstructorBody.parse(builder);
       if (!WRONGWAY.equals(methodBody)) {
-        return CONSTRUCTOR_DEFINITION;
+        constructorMarker.done(CONSTRUCTOR_DEFINITION);
+        return true;
       }
     }
 
-    return WRONGWAY;
+    constructorMarker.rollbackTo();
+    return false;
   }
 
-  private static IElementType parseModifiers(PsiBuilder builder) {
+  private static boolean parseModifiers(PsiBuilder builder) {
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     boolean parsedAnnotation;
@@ -81,7 +85,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
     do {
       if (kSTATIC.equals(builder.getTokenType())) {
         modifiersMarker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
 
       parsedAnnotation = Annotation.parse(builder) != WRONGWAY;
@@ -91,7 +95,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
     } while(parsedAnnotation || parsedModifier | parsedDef);
 
     modifiersMarker.done(MODIFIERS);
-    return MODIFIERS;
+    return true;
   }
 
 }

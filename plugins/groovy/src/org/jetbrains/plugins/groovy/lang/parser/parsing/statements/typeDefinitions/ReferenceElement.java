@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -29,24 +28,21 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ReferenceElement implements GroovyElementTypes {
   public static final String DUMMY_IDENTIFIER = "IntellijIdeaRulezzz"; //inserted by completion
 
-  public static GroovyElementType parseForImport(PsiBuilder builder) {
+  public static boolean parseForImport(PsiBuilder builder) {
     return parse(builder, false, false, true, false);
   }
 
-  public static GroovyElementType parseForPackage(PsiBuilder builder) {
+  public static boolean parseForPackage(PsiBuilder builder) {
     return parse(builder, false, false, false, true);
   }
 
-//  public static GroovyElementType parseReferenceElement(PsiBuilder builder) {
-//    return parse(builder, false, true, false, false);
-//  }
 
   //it doesn't important first letter of identifier of ThrowClause, of Annotation, of new Expresion, of implements, extends, superclass clauses
-  public static GroovyElementType parseReferenceElement(PsiBuilder builder) {
+  public static boolean parseReferenceElement(PsiBuilder builder) {
     return parse(builder, false, true, false, false);
   }
 
-  public static GroovyElementType parseReferenceElement(PsiBuilder builder, boolean isUpperCase) {
+  public static boolean parseReferenceElement(PsiBuilder builder, boolean isUpperCase) {
     return parse(builder, isUpperCase, true, false, false);
   }
 
@@ -54,7 +50,7 @@ public class ReferenceElement implements GroovyElementTypes {
 //    return parse(builder, false, false, false, false);
 //  }
 
-  private static GroovyElementType parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
+  private static boolean parse(PsiBuilder builder, boolean checkUpperCase, boolean parseTypeArgs, boolean forImport, boolean forPackage) {
     PsiBuilder.Marker internalTypeMarker = builder.mark();
 
 //    char firstChar;
@@ -70,7 +66,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
       internalTypeMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     if (parseTypeArgs) TypeArguments.parse(builder);
@@ -84,7 +80,7 @@ public class ReferenceElement implements GroovyElementTypes {
           ParserUtils.lookAhead(builder, mDOT, mNLS, mSTAR)) &&
           forImport) {
         internalTypeMarker.drop();
-        return REFERENCE_ELEMENT;
+        return true;
       }
 
       ParserUtils.getToken(builder, mDOT);
@@ -97,7 +93,7 @@ public class ReferenceElement implements GroovyElementTypes {
 
       if (!ParserUtils.getToken(builder, mIDENT)) {
         internalTypeMarker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
 
       TypeArguments.parse(builder);
@@ -108,36 +104,21 @@ public class ReferenceElement implements GroovyElementTypes {
 
     char firstChar;
     if (lastIdentifier != null) firstChar = lastIdentifier.charAt(0);
-    else return WRONGWAY;
+    else return false;
 
     if (checkUpperCase && (!Character.isUpperCase(firstChar) || DUMMY_IDENTIFIER.equals(lastIdentifier))) { //hack to make completion work
       internalTypeMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     if (forPackage || forImport) {
       internalTypeMarker.drop();
-      return REFERENCE_ELEMENT;
+      return true;
     }
 
 //    internalTypeMarker.done(TYPE_ELEMENT);
     internalTypeMarker.drop();
-    return REFERENCE_ELEMENT;
+    return true;
   }
 
-//  public static GroovyElementType parseType(PsiBuilder builder) {
-//    return parseType(builder, false);
-//  }
-//
-//  public static GroovyElementType parseType(PsiBuilder builder, boolean isUpperCase) {
-//    PsiBuilder.Marker typeMarker = builder.mark();
-//
-//    if (!REFERENCE_ELEMENT.equals(parseReferenceElement(builder, isUpperCase))) {
-//      typeMarker.rollbackTo();
-//      return WRONGWAY;
-//    }
-//
-//    typeMarker.done(TYPE_ELEMENT);
-//    return TYPE_ELEMENT;
-//  }
 }

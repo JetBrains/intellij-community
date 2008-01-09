@@ -33,17 +33,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 public class ClassMember implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder, String className) {
 
-    //constructor
-    PsiBuilder.Marker constructorMarker = builder.mark();
-
-    GroovyElementType constructorDef = ConstructorDefinition.parse(builder, className);
-
-    if (WRONGWAY.equals(constructorDef)) {
-      constructorMarker.rollbackTo();
-    } else {
-      constructorMarker.done(constructorDef);
-      return constructorDef;
-    }
+    if (ConstructorDefinition.parse(builder, className)) return CONSTRUCTOR_DEFINITION;
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();

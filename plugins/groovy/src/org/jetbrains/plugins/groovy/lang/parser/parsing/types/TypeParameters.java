@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -80,15 +79,13 @@ public class TypeParameters implements GroovyElementTypes {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, kEXTENDS);
     ParserUtils.getToken(builder, mNLS);
-    GroovyElementType reference = ReferenceElement.parseReferenceElement(builder);
-    if (reference == WRONGWAY) {
+    if (!ReferenceElement.parseReferenceElement(builder)) {
       builder.error(GroovyBundle.message("identifier.expected"));
     } else {
-      while (mBAND == builder.getTokenType() && reference != WRONGWAY) {
+      while (mBAND == builder.getTokenType()) {
         ParserUtils.getToken(builder, mBAND);
         ParserUtils.getToken(builder, mNLS);
-        reference = ReferenceElement.parseReferenceElement(builder);
-        if (reference == WRONGWAY) {
+        if (!ReferenceElement.parseReferenceElement(builder)) {
           builder.error(GroovyBundle.message("type.argument.expected"));
         }
       }
