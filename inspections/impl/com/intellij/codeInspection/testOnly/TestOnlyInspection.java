@@ -32,7 +32,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder h, boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitMethodCallExpression(PsiMethodCallExpression e) {
+      @Override public void visitCallExpression(PsiCallExpression e) {
         validate(e, h);
       }
 
@@ -41,7 +41,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  private void validate(PsiMethodCallExpression e, ProblemsHolder h) {
+  private void validate(PsiCallExpression e, ProblemsHolder h) {
     if (!isTestOnlyMethodCalled(e)) return;
     if (isInsideTestOnlyMethod(e)) return;
     if (isInsideTestClass(e)) return;
@@ -50,13 +50,13 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     reportProblem(e, h);
   }
 
-  private boolean isTestOnlyMethodCalled(PsiMethodCallExpression e) {
+  private boolean isTestOnlyMethodCalled(PsiCallExpression e) {
     PsiMethod m = e.resolveMethod();
     if (m == null) return false;
     return isAnnotatedAsTestOnly(m);
   }
 
-  private boolean isInsideTestOnlyMethod(PsiMethodCallExpression e) {
+  private boolean isInsideTestOnlyMethod(PsiCallExpression e) {
     PsiMethod m = getTopLevelParentOfType(e, PsiMethod.class);
     return isAnnotatedAsTestOnly(m);
   }
@@ -65,12 +65,12 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false);
   }
 
-  private boolean isInsideTestClass(PsiMethodCallExpression e) {
+  private boolean isInsideTestClass(PsiCallExpression e) {
     PsiClass c = getTopLevelParentOfType(e, PsiClass.class);
     return TestUtil.isTestClass(c);
   }
 
-  public static <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {
+  private <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {
     T parent = PsiTreeUtil.getParentOfType(e, c);
     if (parent == null) return null;
 
@@ -82,14 +82,14 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     while (true);
   }
 
-  private boolean isUnderTestSources(PsiMethodCallExpression e) {
+  private boolean isUnderTestSources(PsiCallExpression e) {
     ProjectRootManager rm = ProjectRootManager.getInstance(e.getProject());
     VirtualFile f = e.getContainingFile().getVirtualFile();
     if (f == null) return false;
     return rm.getFileIndex().isInTestSourceContent(f);
   }
 
-  private void reportProblem(PsiMethodCallExpression e, ProblemsHolder h) {
+  private void reportProblem(PsiCallExpression e, ProblemsHolder h) {
     String message = InspectionsBundle.message("inspection.test.only.problems.test.only.method.call");
     h.registerProblem(e, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
