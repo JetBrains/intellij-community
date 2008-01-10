@@ -19,6 +19,12 @@ public abstract class TokenParser {
       return false;
     }
   };
+  public static final TokenParser FRESH_START_PARSER = new TokenParser() {
+    public boolean parseToken(final PrattBuilder builder) {
+      builder.createChildBuilder(builder.getPriority()).parse();
+      return true;
+    }
+  };
 
   public abstract boolean parseToken(PrattBuilder builder);
 
@@ -30,7 +36,7 @@ public abstract class TokenParser {
     return new ReducingParser() {
       @Nullable
       public IElementType parseFurther(final PrattBuilder builder) {
-        builder.parse(rightPriority, errorMessage);
+        builder.createChildBuilder(rightPriority, errorMessage).parse();
         return compositeType;
       }
     };

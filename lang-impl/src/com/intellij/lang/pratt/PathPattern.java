@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * @author peter
@@ -52,21 +52,25 @@ public class PathPattern {
   }
 
   public boolean accepts(PrattBuilder builder) {
-    final Iterator<Object> iterator = builder.getPath().iterator();
+    ListIterator<IElementType> iterator = null;
     for (final Pattern<? extends IElementType,?> pattern : myPath) {
-      if (!iterator.hasNext()) return false;
+      if (builder == null) return false;
 
-      final Object pathElement = iterator.next();
-      if (pattern == null) {
-        if (pathElement != Boolean.TRUE) {
-          return false;
-        }
+      if (iterator == null) {
+        iterator = builder.getBackResultIterator();
       }
-      else if (!pattern.accepts(pathElement)) {
-        return false;
+
+      if (pattern == null) {
+        if (iterator.hasPrevious()) return false;
+        builder = builder.getParent();
+        iterator = null;
+      } else {
+        if (!iterator.hasPrevious()) return false;
+        if (!pattern.accepts(iterator.previous())) return false;
       }
     }
 
     return true;
   }
+
 }

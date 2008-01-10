@@ -18,15 +18,15 @@ public abstract class PrattParser implements PsiParser {
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     builder.setDebugMode(true);
 
-    final PrattBuilder prattBuilder = new PrattBuilder(builder);
+    final PrattBuilderImpl prattBuilder = PrattBuilderImpl.createBuilder(builder);
     final MutableMarker marker = prattBuilder.mark();
     parse(prattBuilder);
     marker.finish(root);
     return builder.getTreeBuilt();
   }
 
-  protected void parse(final PrattBuilder builder) {
-    builder.parse(Integer.MIN_VALUE);
+  protected void parse(final PrattBuilderImpl builder) {
+    builder.parse();
     while (!builder.isEof()) builder.advance();
   }
 }

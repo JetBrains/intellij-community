@@ -37,7 +37,7 @@ public class PrattParsingUtil {
   @Nullable
   public static IElementType parseOption(final PrattBuilder builder, int rightPriority) {
     final MutableMarker marker = builder.mark();
-    final IElementType type = builder.parse(rightPriority);
+    final IElementType type = builder.createChildBuilder(rightPriority).parse();
     if (type == null) {
       marker.rollback();
     } else {
