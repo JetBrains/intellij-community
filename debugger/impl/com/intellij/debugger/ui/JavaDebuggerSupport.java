@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.*;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
@@ -9,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.editor.Document;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +24,19 @@ import java.util.Collection;
  */
 public class JavaDebuggerSupport extends DebuggerSupport {
   private JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
+  private StepOverActionHandler myStepOverActionHandler;
+  private StepIntoActionHandler myStepIntoActionHandler;
+  private StepOutActionHandler myStepOutActionHandler;
+  private ForceStepOverActionHandler myForceStepOverActionHandler;
+  private ForceStepIntoActionHandler myForceStepIntoActionHandler;
+
+  public JavaDebuggerSupport() {
+    myStepOverActionHandler = new StepOverActionHandler();
+    myStepIntoActionHandler = new StepIntoActionHandler();
+    myStepOutActionHandler = new StepOutActionHandler();
+    myForceStepOverActionHandler = new ForceStepOverActionHandler();
+    myForceStepIntoActionHandler = new ForceStepIntoActionHandler();
+  }
 
   @NotNull
   public BreakpointPanelProvider<?> getBreakpointPanelProvider() {
@@ -50,5 +65,30 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     public void onDialogClosed(final Project project) {
       DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().updateAllRequests();
     }
+  }
+
+  @NotNull
+  public DebuggerActionHandler getStepOverHandler() {
+    return myStepOverActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getStepIntoHandler() {
+    return myStepIntoActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getStepOutHandler() {
+    return myStepOutActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getForceStepOverHandler() {
+    return myForceStepOverActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getForceStepIntoHandler() {
+    return myForceStepIntoActionHandler;
   }
 }

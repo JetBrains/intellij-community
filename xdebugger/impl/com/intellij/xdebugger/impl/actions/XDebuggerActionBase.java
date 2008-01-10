@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -17,7 +18,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     if (project != null) {
       DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
       for (DebuggerSupport support : debuggerSupports) {
-        if (isEnabled(project, support)) {
+        if (isEnabled(project, e, support)) {
           e.getPresentation().setEnabled(true);
           return;
         }
@@ -26,8 +27,11 @@ public abstract class XDebuggerActionBase extends AnAction {
     e.getPresentation().setEnabled(false);
   }
 
-  protected boolean isEnabled(final Project project, final DebuggerSupport support) {
-    return true;
+  @NotNull
+  protected abstract DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport);
+
+  private boolean isEnabled(final Project project, final AnActionEvent event, final DebuggerSupport support) {
+    return getHandler(support).isEnabled(project, event);
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -38,11 +42,13 @@ public abstract class XDebuggerActionBase extends AnAction {
 
     DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
     for (DebuggerSupport support : debuggerSupports) {
-      if (isEnabled(project, support)) {
-        perform(project, support);
+      if (isEnabled(project, e, support)) {
+        perform(project, e, support);
       }
     }
   }
 
-  protected abstract void perform(final Project project, final DebuggerSupport support);
+  private void perform(final Project project, final AnActionEvent e, final DebuggerSupport support) {
+    getHandler(support).perform(project, e);
+  }
 }

@@ -391,12 +391,12 @@
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
       <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
       <separator/>
-      <action id="StepOver" class="com.intellij.debugger.actions.StepOverAction" icon="/actions/traceOver.png"/>
-      <action id="StepInto" class="com.intellij.debugger.actions.StepIntoAction" icon="/actions/traceInto.png"/>
+      <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="/actions/traceOver.png"/>
+      <action id="StepInto" class="com.intellij.xdebugger.impl.actions.StepIntoAction" icon="/actions/traceInto.png"/>
       <action id="SmartStepInto" class="com.intellij.debugger.actions.SmartStepIntoAction" icon="/actions/traceInto.png"/>
-      <action id="StepOut" class="com.intellij.debugger.actions.StepOutAction" icon="/actions/stepOut.png"/>
-      <action id="ForceStepOver" class="com.intellij.debugger.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
-      <action id="ForceStepInto" class="com.intellij.debugger.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
+      <action id="StepOut" class="com.intellij.xdebugger.impl.actions.StepOutAction" icon="/actions/stepOut.png"/>
+      <action id="ForceStepOver" class="com.intellij.xdebugger.impl.actions.ForceStepOverAction" icon="/actions/traceOver.png"/>
+      <action id="ForceStepInto" class="com.intellij.xdebugger.impl.actions.ForceStepIntoAction" icon="/actions/forceStepInto.png"/>
       <action id="RunToCursor" class="com.intellij.debugger.actions.RunToCursorAction" icon="/actions/runToCursor.png"/>
       <action id="ForceRunToCursor" class="com.intellij.debugger.actions.ForceRunToCursorAction"/>
       <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="/actions/popFrame.png"/>
