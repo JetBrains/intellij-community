@@ -7,13 +7,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.PsiBundle;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -40,7 +40,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
 
     if (myIncludeOtherModules) {
-      myModules = new HashSet<Module>();
+      myModules = new LinkedHashSet<Module>();
       myModules.add(myModule);
       Module[] dependencies = ModuleRootManager.getInstance(myModule).getDependencies();
       myModules.addAll(Arrays.asList(dependencies));
@@ -100,7 +100,15 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     LOG.assertTrue(orderEntry1 != null);
     OrderEntry orderEntry2 = myFileIndex.getOrderEntryForFile(file2);
     LOG.assertTrue(orderEntry2 != null);
-    return orderEntry2.compareTo(orderEntry1);
+    int ret = orderEntry2.compareTo(orderEntry1);
+    if (ret != 0) return ret;
+    //prefer file which is closer to our module
+    for (Module module : myModules) {
+      ModuleFileIndex fileIndex = ModuleRootManager.getInstance(module).getFileIndex();
+      ret = fileIndex.isInContent(file1) ? fileIndex.isInContent(file2) ? 0 : 1 : fileIndex.isInContent(file2) ? -1 : 0;
+      if (ret != 0) return ret;
+    }
+    return 0;
   }
 
   public boolean isSearchInModuleContent(@NotNull Module aModule) {

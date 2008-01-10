@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -26,7 +27,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -123,13 +123,13 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     if (!isModuleAdded) return;
 
     // IMPORTANT: should be the first listener!
-    ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).beforeRootsChange(false);
+    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject())).beforeRootsChange(false);
   }
 
   void fireRootsChanged() {
     if (!isModuleAdded) return;
 
-    ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myModule.getProject())).rootsChanged(false);
+    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myModule.getProject())).rootsChanged(false);
   }
 
 
@@ -155,7 +155,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   private VirtualFile[] getFiles(OrderRootType type, Set<Module> processed) {
     Set<VirtualFilePointer> cachedFiles = myCachedFiles.get(type);
     if (cachedFiles == null) {
-      cachedFiles = new THashSet<VirtualFilePointer>();
+      cachedFiles = new LinkedHashSet<VirtualFilePointer>();
       final Iterator orderIterator = myRootModel.getOrderIterator();
       while (orderIterator.hasNext()) {
         OrderEntry entry = (OrderEntry)orderIterator.next();
@@ -358,7 +358,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   VirtualFile[] getFilesForOtherModules(OrderRootType rootType, Set<Module> processed) {
     Set<VirtualFilePointer> files = myCachedExportedFiles.get(rootType);
     if (files == null) {
-      files = new THashSet<VirtualFilePointer>();
+      files = new LinkedHashSet<VirtualFilePointer>();
       List<String> result = new ArrayList<String>();
       if (OrderRootType.SOURCES.equals(rootType) || OrderRootType.COMPILATION_CLASSES.equals(rootType)) {
         myRootModel.addExportedUrs(rootType, result, processed);
