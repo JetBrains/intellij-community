@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -71,5 +72,9 @@ public class ConfigureFileEncodingConfigurable implements Configurable {
 
   public void selectFile(@NotNull VirtualFile virtualFile) {
     myTreeView.select(virtualFile);
+  }
+
+  private void createUIComponents() {
+    myTreePanel = ScrollPaneFactory.createScrollPane(new JTable());
   }
 }
