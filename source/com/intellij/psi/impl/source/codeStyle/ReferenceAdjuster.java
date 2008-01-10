@@ -221,8 +221,15 @@ public class ReferenceAdjuster implements Constants {
   private static ASTNode replaceReferenceWithShort(PsiQualifiedReference reference) {
     final ASTNode node = reference.getNode();
     assert node != null;
-    SourceUtil.dequalifyImpl((CompositeElement)node);
+    dequalifyImpl((CompositeElement)node);
     return node;
+  }
+
+  private static void dequalifyImpl(@NotNull CompositeElement reference) {
+    final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
+    if (qualifier != null) {
+      reference.deleteChildInternal(qualifier);
+    }
   }
 
   private static ASTNode replaceReferenceWithFQ(ASTNode reference, PsiClass refClass) {

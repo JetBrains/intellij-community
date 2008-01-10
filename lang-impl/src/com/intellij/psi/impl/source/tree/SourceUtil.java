@@ -11,7 +11,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -75,12 +74,5 @@ public class SourceUtil {
     // TODO remove explicit caches drop since this should be ok iff we will use ChangeUtil for the modification 
     TreeUtil.clearCaches(TreeUtil.getFileElement(newChild));
     return newChild;
-  }
-
-  public static void dequalifyImpl(@NotNull CompositeElement reference) {
-    final ASTNode qualifier = reference.findChildByRole(ChildRole.QUALIFIER);
-    if (qualifier != null) {
-      reference.deleteChildInternal(qualifier);
-    }
   }
 }
