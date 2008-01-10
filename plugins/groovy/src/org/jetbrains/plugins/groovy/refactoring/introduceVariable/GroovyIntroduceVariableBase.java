@@ -273,7 +273,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                 varDef.getName().equals(fieldName)) {
                 GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
                 try {
-                  ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
+                  ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText(), null), true);
                 } catch (IncorrectOperationException e) {
                   LOG.error(e);
                 }

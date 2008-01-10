@@ -28,10 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -77,9 +74,10 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GrReferenceExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrExpression createExpressionFromText(String text) {
-    PsiFile file = createGroovyFile(text);
-    assert ((GroovyFileBase) file).getTopStatements()[0] instanceof GrExpression;
+  public GrExpression createExpressionFromText(String text, PsiElement context) {
+    GroovyFileImpl file = (GroovyFileImpl) createGroovyFile(text);
+    file.setContext(context);
+    assert file.getTopStatements()[0] instanceof GrExpression;
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
@@ -157,11 +155,11 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GrClosableBlock) node.getPsi();
   }
 
-  private GroovyFileBase createDummyFile(String s, boolean  isPhisical) {
-    return (GroovyFileBase) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis() , isPhisical);
+  private GroovyFileImpl createDummyFile(String s, boolean  isPhisical) {
+    return (GroovyFileImpl) PsiManager.getInstance(myProject).getElementFactory().createFileFromText("__DUMMY." + GroovyFileType.GROOVY_FILE_TYPE.getDefaultExtension(), GroovyFileType.GROOVY_FILE_TYPE, s, System.currentTimeMillis() , isPhisical);
   }
 
-  private GroovyFileBase createDummyFile(String s) {
+  private GroovyFileImpl createDummyFile(String s) {
     return createDummyFile(s, false);
   }
 
@@ -172,7 +170,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     } else {
       fileText = "def foo(" + name + ") {}";
     }
-    GroovyFileImpl groovyFile = (GroovyFileImpl) createDummyFile(fileText);
+    GroovyFileImpl groovyFile = createDummyFile(fileText);
     groovyFile.setContext(context);
 
     ASTNode node = groovyFile.getFirstChild().getNode();
@@ -205,7 +203,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr) {
-    return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
+    return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")", null));
   }
 
   public PsiElement createStringLiteral(String text) {
@@ -255,7 +253,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
    return createGroovyFile(idText, false);
   }
 
-  public PsiFile createGroovyFile(String idText, boolean isPhisical) {
+  public GroovyFile createGroovyFile(String idText, boolean isPhisical) {
     return createDummyFile(idText, isPhisical);
   }
 

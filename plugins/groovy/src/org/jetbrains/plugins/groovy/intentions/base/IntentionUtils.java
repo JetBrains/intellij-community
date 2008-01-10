@@ -21,7 +21,7 @@ public class IntentionUtils {
     final PsiManager mgr = expression.getManager();
     final GroovyElementFactory factory = GroovyElementFactory.getInstance(expression.getProject());
     final GrExpression newCall =
-        factory.createExpressionFromText(newExpression);
+        factory.createExpressionFromText(newExpression, null);
     final PsiElement insertedElement = expression.replaceWithExpression(newCall, true);
     //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();
     // codeStyleManager.reformat(insertedElement);

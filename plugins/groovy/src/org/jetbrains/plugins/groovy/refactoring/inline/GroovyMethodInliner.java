@@ -142,7 +142,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
               qualifier = ((GrParenthesizedExpression) qualifier).getOperand();
             }
             qualifierDeclaration = factory.createVariableDeclaration(new String[0], qualName, qualifier, null, false);
-            innerQualifier = ((GrReferenceExpression) factory.createExpressionFromText(qualName));
+            innerQualifier = ((GrReferenceExpression) factory.createExpressionFromText(qualName, null));
           } else {
             innerQualifier = ((GrReferenceExpression) qualifier);
           }
@@ -171,14 +171,14 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (replaceCall && (!isTailMethodCall || hasTailExpr)) {
         GrExpression resultExpr;
         if (PsiType.VOID == methodType) {
-          resultExpr = factory.createExpressionFromText("null");
+          resultExpr = factory.createExpressionFromText("null", null);
         } else if (hasReturnStatements) {
-          resultExpr = factory.createExpressionFromText(resultName);
+          resultExpr = factory.createExpressionFromText(resultName, null);
         } else if (hasTailExpr) {
           GrExpression expr = (GrExpression) statements[statements.length - 1];
-          resultExpr = factory.createExpressionFromText(expr.getText());
+          resultExpr = factory.createExpressionFromText(expr.getText(), null);
         } else {
-          resultExpr = factory.createExpressionFromText("null");
+          resultExpr = factory.createExpressionFromText("null", null);
         }
         replaced = call.replaceWithExpression(resultExpr, false);
       }
@@ -214,10 +214,10 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
         for (GrReturnStatement returnStatement : returnStatements) {
           GrExpression value = returnStatement.getReturnValue();
           if (value != null) {
-            GrExpression assignment = factory.createExpressionFromText(resultName + " = " + value.getText());
+            GrExpression assignment = factory.createExpressionFromText(resultName + " = " + value.getText(), null);
             returnStatement.replaceWithStatement(assignment);
           } else {
-            returnStatement.replaceWithStatement(factory.createExpressionFromText(resultName + " = null"));
+            returnStatement.replaceWithStatement(factory.createExpressionFromText(resultName + " = null", null));
           }
         }
       }
@@ -359,7 +359,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
           for (PsiReference ref : refs) {
             PsiElement element = ref.getElement();
             if (element instanceof GrReferenceExpression) {
-              GrExpression newExpr = factory.createExpressionFromText(newName);
+              GrExpression newExpr = factory.createExpressionFromText(newName, null);
               ((GrReferenceExpression) element).replaceWithExpression(newExpr, false);
             }
           }
@@ -397,7 +397,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (statements[0] instanceof GrReturnStatement) {
         GrExpression value = ((GrReturnStatement) statements[0]).getReturnValue();
         if (value == null && (method.getReturnType() != PsiType.VOID)) {
-          return GroovyElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
+          return GroovyElementFactory.getInstance(method.getProject()).createExpressionFromText("null", null);
         }
         return value;
       }

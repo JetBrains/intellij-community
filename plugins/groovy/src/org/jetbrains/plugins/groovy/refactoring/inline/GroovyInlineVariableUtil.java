@@ -25,24 +25,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -88,7 +81,7 @@ public class GroovyInlineVariableUtil {
         }
         Project project = variable.getProject();
         GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
+        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText(), null);
 
         try {
           newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);

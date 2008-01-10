@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrFlowInterruptingStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrBreakStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
@@ -537,7 +536,7 @@ public abstract class GroovyRefactoringUtil {
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           if (element instanceof GrReferenceExpression) {
-            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(initializer.getText()), true);
+            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(initializer.getText(), null), true);
           }
         }
       }
@@ -569,7 +568,7 @@ public abstract class GroovyRefactoringUtil {
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           if (element instanceof GrReferenceExpression) {
-            GrExpression newExpr = factory.createExpressionFromText(value.getText());
+            GrExpression newExpr = factory.createExpressionFromText(value.getText(), null);
             ((GrReferenceExpression) element).replaceWithExpression(newExpr, true);
             System.out.println("");
           }
