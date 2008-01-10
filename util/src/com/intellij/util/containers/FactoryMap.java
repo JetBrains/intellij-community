@@ -19,9 +19,8 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
+import java.util.*;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author peter
@@ -77,6 +76,16 @@ public abstract class FactoryMap<K,V> {
       return hashSet;
     }
     return ts;
+  }
+
+  public Collection<V> notNullValues() {
+    final Collection<V> values = myMap.values();
+    for (Iterator<V> iterator = values.iterator(); iterator.hasNext();) {
+      if (iterator.next() == NULL) {
+        iterator.remove();
+      }
+    }
+    return values;
   }
 
   public void clear() {
