@@ -47,7 +47,7 @@ public abstract class FactoryMap<K,V> {
     V value = myMap.get(getKey(key));
     if (value == null) {
       value = create(key);
-      put(key, value);
+      myMap.put(getKey(key), value == null ? (V)NULL : value);
     }
     return value == NULL ? null : value;
   }
