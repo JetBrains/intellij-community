@@ -9,6 +9,7 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
@@ -108,23 +109,27 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
     else {
       myMapping.put(virtualFileOrDir, charset);
     }
-    saveOrReload(virtualFileOrDir, charset);
+    setAndSaveOrReload(virtualFileOrDir, charset);
   }
 
-  private static void saveOrReload(final VirtualFile virtualFileOrDir, final Charset charset) {
+  private static void setAndSaveOrReload(final VirtualFile virtualFileOrDir, final Charset charset) {
     if (virtualFileOrDir == null || virtualFileOrDir.isDirectory()) {
       return;
     }
     virtualFileOrDir.setCharset(charset);
+    saveOrReload(virtualFileOrDir);
+  }
+
+  private static void saveOrReload(final VirtualFile virtualFile) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
-    if (documentManager.isFileModified(virtualFileOrDir)) {
-      Document document = documentManager.getDocument(virtualFileOrDir);
+    if (documentManager.isFileModified(virtualFile)) {
+      Document document = documentManager.getDocument(virtualFile);
       if (document != null) {
         documentManager.saveDocument(document);
       }
     }
     else {
-      ((VirtualFileListener)documentManager).contentsChanged(new VirtualFileEvent(null, virtualFileOrDir, virtualFileOrDir.getName(), virtualFileOrDir.getParent()));
+      ((VirtualFileListener)documentManager).contentsChanged(new VirtualFileEvent(null, virtualFile, virtualFile.getName(), virtualFile.getParent()));
     }
   }
 
@@ -156,7 +161,12 @@ public class EncodingProjectManager extends EncodingManager implements ProjectCo
     for (VirtualFile virtualFile : map.keySet()) {
       Charset charset = map.get(virtualFile);
       assert charset != null;
-      saveOrReload(virtualFile, charset);
+      setAndSaveOrReload(virtualFile, charset);
+    }
+    for (VirtualFile open : FileEditorManager.getInstance(myProject).getOpenFiles()) {
+      if (!map.containsKey(open)) {
+        saveOrReload(open);
+      }
     }
   }
 }
