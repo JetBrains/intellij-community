@@ -1,10 +1,10 @@
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.injected.editor.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.impl.source.tree.PsiCommentImpl;
-import com.intellij.injected.editor.ProperTextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
