@@ -52,7 +52,7 @@ public class RedundantCastUtil {
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
     if (parent instanceof PsiExpressionList) parent = parent.getParent();
     if (parent instanceof PsiReferenceExpression) parent = parent.getParent();
-    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor();
+    MyIsRedundantVisitor visitor = new MyIsRedundantVisitor(false);
     parent.accept(visitor);
     return visitor.isRedundant;
   }
@@ -66,8 +66,8 @@ public class RedundantCastUtil {
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
     private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<PsiTypeCastExpression>();
 
-    @Override public void visitElement(PsiElement element) {
-      element.acceptChildren(this);
+    public MyCollectingVisitor() {
+      super(true);
     }
 
     @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -93,8 +93,21 @@ public class RedundantCastUtil {
     }
   }
 
-  private static class MyIsRedundantVisitor extends JavaElementVisitor {
+  private static class MyIsRedundantVisitor extends JavaRecursiveElementVisitor {
     private boolean isRedundant = false;
+    private final boolean myRecursive;
+
+    public MyIsRedundantVisitor(final boolean recursive) {
+      myRecursive = recursive;
+    }
+
+    @Override
+    public void visitElement(final PsiElement element) {
+      if (myRecursive) {
+        super.visitElement(element);
+      }
+    }
+
     protected void addToResults(PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantical(typeCast)) {
         isRedundant = true;

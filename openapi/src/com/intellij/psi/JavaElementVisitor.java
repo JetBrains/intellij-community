@@ -241,7 +241,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
    * of this method we can easily stuck with exponential algorithm if the derived visitor
    * extends visitElement() and accepts children there.
    * PsiRecursiveElement visitor works that around and implements this method accordingly.
-   * All other visitor must decide themselves what implementation (visitReferenceElement() or visitExpreission() or non or LOG.error())
+   * All other visitor must decide themselves what implementation (visitReferenceElement() or visitExpreission() or none or LOG.error())
    * is appropriate for them.
    * @param expression
    */
