@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.Key;
+
 /**
  * Represents an array of suggested variable names and allows to keep statistics on
  * which of the suggestions has been accepted.
@@ -22,6 +24,7 @@ package com.intellij.psi.codeStyle;
  * @see CodeStyleManager#suggestVariableName(VariableKind, String, com.intellij.psi.PsiExpression, com.intellij.psi.PsiType)
  */
 public abstract class SuggestedNameInfo {
+  public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");
   /**
    * The suggested names.
    */

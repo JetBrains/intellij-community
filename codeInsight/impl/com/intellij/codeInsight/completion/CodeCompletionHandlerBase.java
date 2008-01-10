@@ -23,8 +23,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.impl.PsiElementPattern;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -45,9 +43,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     Key.create("COMPLETION_HANDLER_CLASS_KEY");
 
   protected LookupItemPreferencePolicy myPreferencePolicy = null;
-  protected static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(
-    psiElement().whitespaceOrComment(),
-    psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
 
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
     final Document document = editor.getDocument();
@@ -306,44 +301,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
     if (ref != null) {
       completionData.completeReference(ref, lookupSet, context, lastElement);
-      return;
-    }
-
-    if (lastElement instanceof PsiIdentifier) {
-      final PsiElement parent = lastElement.getParent();
-      if (parent instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)parent;
-        if (lastElement.equals(psiClass.getNameIdentifier())) {
-          myPreferencePolicy = JavaCompletionUtil.completeClassName(lookupSet, context, psiClass);
-          return;
-        }
-      }
-
-      if (parent instanceof PsiLocalVariable || parent instanceof PsiParameter) {
-        final PsiVariable variable = (PsiVariable)parent;
-        if (lastElement.equals(variable.getNameIdentifier())) {
-          if (!INSIDE_TYPE_PARAMS_PATTERN.accepts(lastElement)) {
-            myPreferencePolicy = JavaCompletionUtil.completeLocalVariableName(lookupSet, context, variable);
-            return;
-          }
-        }
-      }
-
-      if (parent instanceof PsiField) {
-        final PsiVariable variable = (PsiVariable)parent;
-        if (lastElement.equals(variable.getNameIdentifier())) {
-          myPreferencePolicy = JavaCompletionUtil.completeFieldName(lookupSet, context, variable);
-          if (parent.getLastChild() instanceof PsiErrorElement) return;
-          myPreferencePolicy = JavaCompletionUtil.completeMethodName(lookupSet, context, variable);
-        }
-      }
-
-      if (parent instanceof PsiMethod) {
-        final PsiMethod psiMethod = (PsiMethod)parent;
-        if (lastElement.equals(psiMethod.getNameIdentifier())) {
-          myPreferencePolicy = JavaCompletionUtil.completeMethodName(lookupSet, context, psiMethod);
-        }
-      }
     }
   }
 
@@ -468,7 +425,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract boolean isAutocompleteCommonPrefixOnInvocation();
 
-  protected abstract void analyseItem(LookupItem item, PsiElement place, CompletionContext context);
+  protected void analyseItem(LookupItem item, PsiElement place, CompletionContext context) {}
 
   protected void handleEmptyLookup(CompletionContext context, LookupData lookupData) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;

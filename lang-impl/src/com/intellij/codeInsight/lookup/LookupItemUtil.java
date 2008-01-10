@@ -8,11 +8,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -59,11 +62,13 @@ public class LookupItemUtil{
     return null;
   }
 
-  public static void addLookupItems(Set<LookupItem> set, Object[] objects, String prefix) {
+  public static List<LookupItem> addLookupItems(Set<LookupItem> set, Object[] objects, String prefix) {
+    final ArrayList<LookupItem> list = new ArrayList<LookupItem>(objects.length);
     for (Object object : objects) {
       LOG.assertTrue(object != null, "Lookup item can't be null!");
-      addLookupItem(set, object, prefix);
+      ContainerUtil.addIfNotNull(addLookupItem(set, object, prefix), list);
     }
+    return list;
   }
 
   public static void removeLookupItem(Set<LookupItem> set, Object object) {

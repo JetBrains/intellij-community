@@ -1,6 +1,8 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.DefaultCharFilter;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.*;
@@ -403,20 +405,7 @@ public class TemplateState implements Disposable {
     final LookupItem[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
-      final LookupItemPreferencePolicy preferencePolicy = new LookupItemPreferencePolicy() {
-        public int compare(LookupItem i1, LookupItem i2) {
-          if (i1.equals(i2)) return 0;
-          if (i1.equals(lookupItems[0])) return -1;
-          if (i2.equals(lookupItems[0])) return +1;
-          return 0;
-        }
-
-        public void setPrefix(String prefix) {
-        }
-
-        public void itemSelected(LookupItem item) {
-        }
-      };
+      lookupItems[0].setPriority(Integer.MAX_VALUE);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
@@ -424,11 +413,12 @@ public class TemplateState implements Disposable {
 
           final LookupManager lookupManager = LookupManager.getInstance(myProject);
           if (lookupManager.isDisposed()) return;
-          final Lookup lookup = lookupManager.showLookup(myEditor, lookupItems, "", preferencePolicy,
+          final Lookup lookup = lookupManager.showLookup(myEditor,
+                                                         lookupItems,
+                                                         "",
+                                                         new CompletionPreferencePolicy(PsiManager.getInstance(myProject), lookupItems, ExpectedTypeInfo.EMPTY, "", psiFile),
                                                          new DefaultCharFilter(myEditor, psiFile, end));
-          lookup
-            .setCurrentItem(
-              lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
+          lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
           toProcessTab = false;
           lookup.addLookupListener(
             new LookupAdapter() {

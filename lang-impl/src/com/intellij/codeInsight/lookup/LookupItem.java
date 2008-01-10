@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -32,7 +33,7 @@ import java.util.Set;
 /**
  * This class represents an item of a lookup list.
  */
-public class LookupItem<T> implements Comparable, LookupElement<T>{
+public class LookupItem<T> extends UserDataHolderBase implements Comparable, LookupElement<T>{
   public static final Object HIGHLIGHTED_ATTR = Key.create("highlighted");
   public static final Object TYPE_ATTR = Key.create("type");
   public static final Object ICON_ATTR = Key.create("icon");

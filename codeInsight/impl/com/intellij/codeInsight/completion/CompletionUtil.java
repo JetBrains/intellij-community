@@ -2,11 +2,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemPreferencePolicy;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
@@ -17,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -34,6 +33,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import org.apache.oro.text.regex.MalformedPatternException;
 import org.apache.oro.text.regex.Pattern;
@@ -264,7 +264,7 @@ public class CompletionUtil {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo = codeStyleManager.suggestVariableName(varKind, null, null, varType);
     final String[] suggestedNames = suggestedNameInfo.names;
-    LookupItemUtil.addLookupItems(set, suggestedNames, prefix);
+    tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNames, prefix), suggestedNameInfo);
 
     if (set.isEmpty() && PsiType.VOID != varType) {
       // use suggested names as suffixes
@@ -281,10 +281,27 @@ public class CompletionUtil {
         }
       };
 
-      LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix);
+      tunePreferencePolicy(LookupItemUtil.addLookupItems(set, suggestedNameInfo.names, prefix), suggestedNameInfo);
     }
-
     return new NamePreferencePolicy(suggestedNameInfo);
+  }
+
+  public static void tunePreferencePolicy(final List<LookupItem> list, final SuggestedNameInfo suggestedNameInfo) {
+    final SimpleInsertHandler insertHandler = new SimpleInsertHandler() {
+        public int handleInsert(final Editor editor,
+                                final int startOffset,
+                                final LookupElement item,
+                                final LookupElement[] allItems,
+                                final TailType tailType) throws IncorrectOperationException {
+          suggestedNameInfo.nameChoosen(item.getLookupString());
+          return editor.getCaretModel().getOffset();
+        }
+      };
+
+    for (int i = 0; i < list.size(); i++) {
+      LookupItem item = list.get(i);
+      item.setPriority(list.size() - i).setInsertHandler(insertHandler);
+    }
   }
 
   public static String[] getOverlappedNameVersions(final String prefix, final String[] suggestedNames, String suffix) {
@@ -481,4 +498,6 @@ public class CompletionUtil {
       ? completionChar == Lookup.REPLACE_SELECT_CHAR
       : item.getAttribute(LookupItem.OVERWRITE_ON_AUTOCOMPLETE_ATTR) != null;
   }
+
+
 }
