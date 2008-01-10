@@ -19,6 +19,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
@@ -165,7 +166,7 @@ public class ChangeUtil {
 
   private static void repairRemovedElement(final CompositeElement oldParent, final CharTable newCharTable, final TreeElement oldChild) {
     if(oldChild == null) return;
-    final FileElement treeElement = new DummyHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
+    final FileElement treeElement = new JavaDummyHolder(oldParent.getManager(), newCharTable, false).getTreeElement();
     TreeUtil.addChildren(treeElement, oldChild);
   }
 
@@ -364,7 +365,7 @@ public class ChangeUtil {
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(original);
     registerLeafsInCharTab(table, element, charTableByTree);
     CompositeElement treeParent = original.getTreeParent();
-    new DummyHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
+    new JavaDummyHolder(manager, element, treeParent == null ? null : treeParent.getPsi(), table).getTreeElement();
     encodeInformation(element, original);
     TreeUtil.clearCaches(element);
     saveIndentationToCopy(original, element);
@@ -380,7 +381,7 @@ public class ChangeUtil {
   }
 
   public static TreeElement copyToElement(PsiElement original) {
-    final DummyHolder holder = new DummyHolder(original.getManager(), null);
+    final DummyHolder holder = new JavaDummyHolder(original.getManager(), null);
     holder.setLanguage(original.getLanguage());
     final FileElement holderElement = holder.getTreeElement();
     final TreeElement treeElement = generateTreeElement(original, holderElement.getCharTable(), original.getManager());
