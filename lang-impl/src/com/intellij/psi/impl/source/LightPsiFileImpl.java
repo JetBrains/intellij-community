@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -222,10 +222,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return true;
   }
 
-  public synchronized PsiElement getContext() {
-    return ResolveUtil.getContext(this);
-  }
-
   @NotNull
   public SearchScope getUseScope() {
     return ((PsiManagerEx) getManager()).getFileManager().getUseScope(this);
@@ -363,4 +359,9 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   public abstract LightPsiFileImpl copyLight(final FileViewProvider viewProvider);
+
+  @Override
+  public PsiElement getContext() {
+    return FileContextUtil.getFileContext(this);
+  }
 }

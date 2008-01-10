@@ -3,11 +3,10 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSu
       if (aClass == null) return null;
       return getSuperType(aClass);
     }
-    for(PsiElement scope = ResolveUtil.getContext(this); scope != null; scope = ResolveUtil.getContext(scope)){
+    for(PsiElement scope = getContext(); scope != null; scope = scope.getContext()){
       if (scope instanceof PsiClass){
         PsiClass aClass = (PsiClass)scope;
         return getSuperType(aClass);

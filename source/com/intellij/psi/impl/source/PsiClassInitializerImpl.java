@@ -50,6 +50,12 @@ public class PsiClassInitializerImpl extends NonSlaveRepositoryPsiElement implem
     return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, JspClass.class);
   }
 
+  @Override
+  public PsiElement getContext() {
+    final PsiClass cc = getContainingClass();
+    return cc != null ? cc : super.getContext();
+  }
+
   public PsiModifierList getModifierList(){
     long repositoryId = getRepositoryId();
     if (repositoryId >= 0){

@@ -27,7 +27,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -641,7 +641,7 @@ public class InjectedLanguageUtil {
           assert isInjectedFragment(psiFile) : psiFile.getViewProvider();
 
           SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = createHostSmartPointer(injectionHosts.get(0));
-          psiFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, pointer);
+          psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
           psiFile.putUserData(PsiManagerImpl.LANGUAGE_DIALECT, myLanguage instanceof LanguageDialect ? (LanguageDialect)myLanguage : null);
 
           final ASTNode parsedNode = psiFile.getNode();
@@ -761,7 +761,7 @@ public class InjectedLanguageUtil {
           oldDocument.dispose();
           continue;
         }
-        oldFile.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(ResolveUtil.INJECTED_IN_ELEMENT));
+        oldFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, injectedPsi.getUserData(FileContextUtil.INJECTED_IN_ELEMENT));
         if (!injectedNode.getText().equals(oldFileNode.getText())) {
           // replace psi
           FileElement newFileElement = (FileElement)injectedNode;//.copyElement();

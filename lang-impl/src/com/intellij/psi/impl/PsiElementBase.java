@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -84,7 +83,7 @@ public abstract class PsiElementBase extends ElementBase implements PsiElement {
   }
 
   public PsiElement getContext() {
-    return ResolveUtil.getContext(this);
+    return getParent();
   }
 
   public PsiElement getNavigationElement() {

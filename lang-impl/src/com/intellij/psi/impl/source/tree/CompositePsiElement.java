@@ -17,7 +17,6 @@ import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -195,7 +194,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Ps
   }
 
   public PsiElement getContext() {
-    return ResolveUtil.getContext(this);
+    return getParent();
   }
 
   public PsiElement getNavigationElement() {

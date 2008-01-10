@@ -13,6 +13,7 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -416,5 +417,10 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
 
   public boolean isTemplateDataFile() {
     return false;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return FileContextUtil.getFileContext(this);
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.MethodView;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
@@ -12,6 +11,7 @@ import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -103,6 +103,12 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, JspClass.class);
+  }
+
+  @Override
+  public PsiElement getContext() {
+    final PsiClass cc = getContainingClass();
+    return cc != null ? cc : super.getContext();
   }
 
   public PsiIdentifier getNameIdentifier() {

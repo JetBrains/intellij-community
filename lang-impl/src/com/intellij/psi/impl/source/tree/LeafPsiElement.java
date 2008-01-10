@@ -14,7 +14,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -167,7 +166,7 @@ public class LeafPsiElement extends CharTableBasedLeafElementImpl implements Psi
   }
 
   public PsiElement getContext() {
-    return ResolveUtil.getContext(this);
+    return getParent();
   }
 
   public PsiElement getNavigationElement() {

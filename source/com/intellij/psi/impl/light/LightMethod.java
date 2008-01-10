@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.ui.RowIcon;
@@ -179,5 +179,10 @@ public class LightMethod extends LightElement implements PsiMethod {
   @NotNull
   public SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return getContainingClass();
   }
 }

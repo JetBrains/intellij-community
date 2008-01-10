@@ -65,7 +65,7 @@ import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -618,7 +618,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   private static void setContext(final PsiFile file, final PsiElement context) {
     if (file != null && context != null) {
-      file.putUserData(ResolveUtil.INJECTED_IN_ELEMENT, new SmartPsiElementPointer() {
+      file.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, new SmartPsiElementPointer() {
         public PsiElement getElement() {
           return context;
         }

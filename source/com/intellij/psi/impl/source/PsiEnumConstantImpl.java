@@ -5,7 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -81,6 +84,12 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
     return parent instanceof PsiClass ? (PsiClass)parent : null;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    final PsiClass cc = getContainingClass();
+    return cc != null ? cc : super.getContext();
   }
 
   public PsiModifierList getModifierList() {

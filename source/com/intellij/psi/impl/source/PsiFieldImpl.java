@@ -89,6 +89,12 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
     return parent instanceof PsiClass ? (PsiClass)parent : PsiTreeUtil.getParentOfType(this, JspClass.class);
   }
 
+  @Override
+  public PsiElement getContext() {
+    final PsiClass cc = getContainingClass();
+    return cc != null ? cc : super.getContext();
+  }
+
   @NotNull
   public final PsiIdentifier getNameIdentifier(){
     return (PsiIdentifier)calcTreeElement().findChildByRoleAsPsiElement(ChildRole.NAME);

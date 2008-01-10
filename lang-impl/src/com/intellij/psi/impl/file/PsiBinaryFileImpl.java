@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -245,5 +246,10 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   @Nullable
   public LanguageDialect getLanguageDialect() {
     return null;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return FileContextUtil.getFileContext(this);
   }
 }

@@ -18,7 +18,6 @@ import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -387,7 +386,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     final ProviderBinding providerBinding = myBindingsMap.get(clazz);
     if (providerBinding != null) {
       List<PsiReferenceProvider> ret = new ArrayList<PsiReferenceProvider>(1);
-      for (PsiElement current = element; current != null; current = ResolveUtil.getContext(current)) {
+      for (PsiElement current = element; current != null; current = current.getContext()) {
         providerBinding.addAcceptableReferenceProviders(current, ret);
         if (isScopeFinal(current.getClass())) break;
       }
