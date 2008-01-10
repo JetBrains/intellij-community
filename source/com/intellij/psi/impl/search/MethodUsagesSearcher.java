@@ -3,10 +3,11 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -117,12 +118,27 @@ public class MethodUsagesSearcher implements QueryExecutor<PsiReference, MethodR
     final String propertyName = PropertyUtil.getPropertyName(method);
     if (propertyName != null) {
       if (searchScope instanceof GlobalSearchScope) {
-        searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
+        GlobalSearchScope restrictedSeachScope = GlobalSearchScope.getScopeRestrictedByFileTypes(
           (GlobalSearchScope)searchScope,
           StdFileTypes.JSP,
           StdFileTypes.JSPX,
           StdFileTypes.XML
         );
+        toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
+                                                                        restrictedSeachScope,
+                                                                        propertyName,
+                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+      } else {
+        toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
+                                                                        searchScope,
+                                                                        propertyName,
+                                                                        UsageSearchContext.IN_FOREIGN_LANGUAGES, true);
+      }
+      if (!toContinue) return false;
+
+      final CustomPropertyScopeProvider[] providers = Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME);
+      for (CustomPropertyScopeProvider provider : providers) {
+        searchScope.intersectWith(provider.getScope(psiManager.getProject()));
       }
       toContinue = psiManager.getSearchHelper().processElementsWithWord(processor1,
                                                                         searchScope,

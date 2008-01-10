@@ -6,6 +6,7 @@ package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
@@ -141,6 +142,10 @@ public class BeanProperty {
     @Nullable
     public Icon getIcon() {
       return getIcon(0);
+    }
+
+    public TextRange getTextRange() {
+      return TextRange.from(0, 0);
     }
   }
 }

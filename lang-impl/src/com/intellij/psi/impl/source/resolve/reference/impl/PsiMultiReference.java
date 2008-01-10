@@ -151,7 +151,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       }
     }
 
-    if (result.size() == 0) {
+    if (result.size() == 0 && selfReference != null) {
       result.add(selfReference); // if i the only one starring at the sun
     }
 
