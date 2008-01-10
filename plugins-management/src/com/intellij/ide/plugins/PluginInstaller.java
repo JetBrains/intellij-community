@@ -32,20 +32,18 @@ public class PluginInstaller {
   public static boolean prepareToInstall (List <PluginNode> plugins) {
     ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-    long total = 0;
+    final List<PluginId> pluginIds = new ArrayList<PluginId>();
     for (PluginNode pluginNode : plugins) {
-      total += Long.valueOf(pluginNode.getSize()).longValue();
+      pluginIds.add(pluginNode.getPluginId());
     }
 
-    long count = 0;
     boolean result = false;
 
     for (final PluginNode pluginNode : plugins) {
       if (pi != null) pi.setText(pluginNode.getName());
 
       try {
-        result |= prepareToInstall(pluginNode, true, count, total);
-        count += Integer.valueOf(pluginNode.getSize()).intValue();
+        result |= prepareToInstall(pluginNode, pluginIds);
       }
       catch (final IOException e) {
         SwingUtilities.invokeLater(new Runnable(){
@@ -58,7 +56,7 @@ public class PluginInstaller {
     return result;
   }
 
-  private static boolean prepareToInstall(final PluginNode pluginNode, boolean packet, long count, long available) throws IOException {
+  private static boolean prepareToInstall(final PluginNode pluginNode, final List<PluginId> pluginIds) throws IOException {
     // check for dependent plugins at first.
     if (pluginNode.getDepends() != null && pluginNode.getDepends().size() > 0) {
       // prepare plugins list for install
@@ -69,8 +67,8 @@ public class PluginInstaller {
       for (int i = 0; i < pluginNode.getDepends().size(); i++) {
         PluginId depPluginId = pluginNode.getDepends().get(i);
 
-        if (PluginManager.isPluginInstalled(depPluginId)) {
-        //  ignore installed plugins
+        if (PluginManager.isPluginInstalled(depPluginId) || (pluginIds != null && pluginIds.contains(depPluginId))) {
+        //  ignore installed or installing plugins
           continue;
         }
 
@@ -162,7 +160,7 @@ public class PluginInstaller {
    * @param pluginNode Plugin to install
    */
   public static boolean prepareToInstall (PluginNode pluginNode) throws IOException {
-    return prepareToInstall(pluginNode, false, 0, 0);
+    return prepareToInstall(pluginNode, null);
   }
 
   public static void prepareToUninstall (PluginId pluginId) throws IOException {
