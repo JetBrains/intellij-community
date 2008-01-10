@@ -101,7 +101,6 @@ public class ChildRole {
   public static final int STATEMENT = 94; // in LABELED_STATEMENT
   public static final int THIS_KEYWORD = 95; // in THIS_EXPRESSION
   public static final int SUPER_KEYWORD = 96; // in SUPER_EXPRESSION
-  public static final int DECLARED_ELEMENT = 97; // in /*DECLARATION_STATEMENT*/, JSP_DECLARATION
   public static final int IMPORT_KEYWORD = 98; // in IMPORT_STATEMENT
   public static final int IMPORT_REFERENCE = 99; // in IMPORT_STATEMENT
   public static final int IMPORT_ON_DEMAND_DOT = 100; // in IMPORT_STATEMENT
@@ -119,10 +118,8 @@ public class ChildRole {
   public static final int THEN_EXPRESSION = 112; // in CONDITIONAL_EXPRESSION
   public static final int ELSE_EXPRESSION = 113; // in CONDITIONAL_EXPRESSION
   public static final int QUEST = 114; // in CONDITIONAL_EXPRESSION
-  public static final int PRECEDING_COMMENT = 115; // in FIELD, METHOD, CLASS, CLASS_INITIALIZER
   public static final int ASSERT_KEYWORD = 116; // in ASSERT_STATEMENT
   public static final int ASSERT_DESCRIPTION = 117; // in ASSERT_DESCRIPTION
-  public static final int COMPONENT_TYPE = 118; // in TYPE
   public static final int CLASS_REFERENCE = 119; // in TYPE, ANNOTATION
   public static final int TYPE_IN_REFERENCE_PARAMETER_LIST = 120; // in REFERENCE_PARAMETER_LIST
   public static final int LT_IN_TYPE_LIST = 121;
@@ -133,32 +130,6 @@ public class ChildRole {
   public static final int FOR_ITERATION_PARAMETER = 125; // in FOREACH_STATEMENT
 
   public static final int ENUM_CONSTANT_LIST_DELIMITER = 126; // in CLASS
-  public static final int ENUM_CONSTANT_DELIMITER = 127; // in CLASS
-
-
-  public static final int JSP_DIRECTIVE_START = 200; // in JSP_DIRECTIVE
-  public static final int JSP_DIRECTIVE_END = 201; // in JSP_DIRECTIVE
-  public static final int JSP_DIRECTIVE_NAME = 202; // in JSP_DIRECTIVE
-  public static final int JSP_DIRECTIVE_ATTRIBUTE = 203; // in JSP_DIRECTIVE
-  public static final int JSP_ACTION_START = 204; // in JSP_ACTION
-  public static final int JSP_ACTION_END = 205; // in JSP_ACTION
-  public static final int JSP_ACTION_NAME = 206; // in JSP_ACTION
-  public static final int JSP_ACTION_ATTRIBUTE = 207; // in JSP_ACTION
-  public static final int JSP_ATTRIBUTE_NAME = 208; // in JSP_DIRECTIVE_ATTRIBUTE, JSP_ACTION_ATTRIBUTE
-  public static final int JSP_ATTRIBUTE_EQ = 209; // in JSP_DIRECTIVE_ATTRIBUTE, JSP_ACTION_ATTRIBUTE
-  public static final int JSP_ATTRIBUTE_VALUE_START_DELIMITER = 210; // in JSP_DIRECTIVE_ATTRIBUTE, JSP_ACTION_ATTRIBUTE
-  public static final int JSP_ATTRIBUTE_VALUE_END_DELIMITER = 211; // in JSP_DIRECTIVE_ATTRIBUTE, JSP_ACTION_ATTRIBUTE
-  public static final int JSP_ATTRIBUTE_VALUE = 212; // in JSP_DIRECTIVE_ATTRIBUTE, JSP_ACTION_ATTRIBUTE
-  public static final int JSP_IMPORT_REFERENCE = 213; // in JSP_IMPORT_VALUE
-  public static final int JSP_IMPORT_ON_DEMAND_DOT = 214; // in JSP_IMPORT_VALUE
-  public static final int JSP_IMPORT_ON_DEMAND_ASTERISK = 215; // in JSP_IMPORT_VALUE
-  public static final int JSP_ACTION = 216; // in JSP_FILE
-  public static final int JSP_DIRECTIVE = 217; // in JSP_FILE
-  public static final int JSP_DECLARATION = 218; // in JSP_FILE
-  public static final int JSP_EXPRESSION = 219; // in JSP_FILE
-  public static final int JSP_SCRIPTLET_START = 220; // in JSP_FILE
-  public static final int JSP_SCRIPTLET_END = 221; // in JSP_FILE
-  public static final int JSP_TEMPLATE_DATA = 222; // in JSP_FILE
 
   public static final int XML_DOCUMENT = 223;
   public static final int XML_TAG_NAME = 224;
@@ -191,9 +162,11 @@ public class ChildRole {
   public static final int CATCH_SECTION = 251; // in TRY_STATEMENT
 
   public static final int HTML_DOCUMENT = 252;
-  public static final int HTML_TAG = 253;
 
-  public static final int LAST = HTML_TAG;
+  public static final int LAST = HTML_DOCUMENT;
+
+  private ChildRole() {
+  }
 
   public static boolean isUnique(int role) {
     switch(role){
@@ -211,17 +184,6 @@ public class ChildRole {
       case EXPRESSION_IN_LIST:
       case ARRAY_DIMENSION:
       case STATEMENT_IN_BLOCK:
-      case JSP_DIRECTIVE_ATTRIBUTE:
-      case JSP_IMPORT_REFERENCE:
-      case JSP_IMPORT_ON_DEMAND_DOT:
-      case JSP_IMPORT_ON_DEMAND_ASTERISK:
-      case JSP_ACTION:
-      case JSP_DIRECTIVE:
-      case JSP_DECLARATION:
-      case JSP_EXPRESSION:
-      case JSP_SCRIPTLET_START:
-      case JSP_SCRIPTLET_END:
-      case JSP_TEMPLATE_DATA:
       case TYPE_PARAMETER_IN_LIST:
       case ANNOTATION_VALUE:
         return false;
