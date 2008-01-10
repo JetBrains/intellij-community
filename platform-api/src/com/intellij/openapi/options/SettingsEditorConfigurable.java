@@ -52,8 +52,10 @@ public abstract class SettingsEditorConfigurable<Settings> extends BaseConfigura
   }
 
   public void disposeUIResources() {
-    myEditor.removeSettingsEditorListener(myListener);
-    Disposer.dispose(myEditor);
+    if (myEditor != null) {
+      myEditor.removeSettingsEditorListener(myListener);
+      Disposer.dispose(myEditor);
+    }
     myEditor = null;
   }
 
