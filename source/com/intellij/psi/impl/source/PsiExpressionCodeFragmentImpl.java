@@ -24,7 +24,7 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
 
   public PsiExpression getExpression() {
     ChameleonTransforming.transformChildren(calcTreeElement());
-    ASTNode exprChild = TreeUtil.findChild(calcTreeElement(), EXPRESSION_BIT_SET);
+    ASTNode exprChild = TreeUtil.findChild(calcTreeElement(), Constants.EXPRESSION_BIT_SET);
     if (exprChild == null) return null;
     return (PsiExpression)SourceTreeToPsiMap.treeElementToPsi(exprChild);
   }

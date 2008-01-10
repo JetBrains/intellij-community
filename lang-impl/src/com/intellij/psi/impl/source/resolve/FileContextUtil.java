@@ -15,4 +15,17 @@ public class FileContextUtil {
     SmartPsiElementPointer pointer = file.getUserData(INJECTED_IN_ELEMENT);
     return pointer == null ? null : pointer.getElement();
   }
+
+  public static PsiFile getContextFile(PsiElement element){
+    if (!element.isValid()) return null;
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    PsiElement context = file.getContext();
+    if (context == null){
+      return file;
+    }
+    else{
+      return getContextFile(context);
+    }
+  }
 }

@@ -63,7 +63,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       myRepositoryStaticImports = null;
     }
     else {
-      myRepositoryImports = (PsiImportStatementBaseImpl[])bindIndexedSlaves(IMPORT_STATEMENT_BASE_BIT_SET,
+      myRepositoryImports = (PsiImportStatementBaseImpl[])bindIndexedSlaves(Constants.IMPORT_STATEMENT_BASE_BIT_SET,
                                                                             IMPORT_STATEMENT_BASE_IMPL_ARRAY_CONSTRUCTOR);
       myRepositoryClassImports = null;
       myRepositoryStaticImports = null;
@@ -80,7 +80,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   @NotNull
   public PsiImportStatement[] getImportStatements() {
     if (myOwner == null) {
-      return calcTreeElement().getChildrenAsPsiElements(IMPORT_STATEMENT_BIT_SET, PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(Constants.IMPORT_STATEMENT_BIT_SET, Constants.PSI_IMPORT_STATEMENT_ARRAY_CONSTRUCTOR);
     }
     else {
       PsiImportStatementImpl[] repositoryClassImports = myRepositoryClassImports;
@@ -101,7 +101,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
   @NotNull
   public PsiImportStaticStatement[] getImportStaticStatements() {
     if (myOwner == null) {
-      return calcTreeElement().getChildrenAsPsiElements(IMPORT_STATIC_STATEMENT_BIT_SET, PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(Constants.IMPORT_STATIC_STATEMENT_BIT_SET, Constants.PSI_IMPORT_STATIC_STATEMENT_ARRAY_CONSTRUCTOR);
     }
     else {
       PsiImportStaticStatementImpl[] repositoryStaticImports = myRepositoryStaticImports;
@@ -126,7 +126,7 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
       return calcRepositoryImports();
     }
     else {
-      return calcTreeElement().getChildrenAsPsiElements(IMPORT_STATEMENT_BASE_BIT_SET, PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(Constants.IMPORT_STATEMENT_BASE_BIT_SET, Constants.PSI_IMPORT_STATEMENT_BASE_ARRAY_CONSTRUCTOR);
     }
   }
 
@@ -153,15 +153,15 @@ public class PsiImportListImpl extends SlaveRepositoryPsiElement implements PsiI
         }
       }
       else {
-        final ASTNode[] imports = treeElement.getChildren(IMPORT_STATEMENT_BASE_BIT_SET);
+        final ASTNode[] imports = treeElement.getChildren(Constants.IMPORT_STATEMENT_BASE_BIT_SET);
         int count = imports.length;
         repositoryImports = count == 0 ? PsiImportStatementBaseImpl.EMPTY_ARRAY : new PsiImportStatementBaseImpl[count];
         for (int i = 0; i < repositoryImports.length; i++) {
           final IElementType type = imports[i].getElementType();
-          if (type == IMPORT_STATEMENT) {
+          if (type == Constants.IMPORT_STATEMENT) {
             repositoryImports[i] = new PsiImportStatementImpl(myManager, this, i);
           }
-          else if (imports[i].getElementType() == IMPORT_STATIC_STATEMENT) {
+          else if (imports[i].getElementType() == Constants.IMPORT_STATIC_STATEMENT) {
             repositoryImports[i] = new PsiImportStaticStatementImpl(myManager, this, i);
           }
           else {

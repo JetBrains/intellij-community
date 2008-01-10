@@ -30,7 +30,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   public DummyHolder(@NotNull PsiManager manager, PsiElement context) {
-    super(DUMMY_HOLDER, DUMMY_HOLDER, new DummyHolderViewProvider(manager));
+    super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
     myContext = context;
     if (context != null) {
@@ -96,7 +96,7 @@ public class DummyHolder extends PsiFileImpl {
 
   public FileElement getTreeElementNoLock() {
     if(myFileElement == null){
-      myFileElement = new FileElement(DUMMY_HOLDER);
+      myFileElement = new FileElement(TokenType.DUMMY_HOLDER);
       myFileElement.setPsiElement(this);
       if(myTable != null) myFileElement.setCharTable(myTable);
       clearCaches();

@@ -5,9 +5,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SlaveRepositoryPsiElement;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
-import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class PsiTypeParameterListImpl extends SlaveRepositoryPsiElement implements PsiTypeParameterList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl");
 
-  private static final TokenSet CLASS_PARAMETER_BIT_SET = TokenSet.create(TYPE_PARAMETER);
+  private static final TokenSet CLASS_PARAMETER_BIT_SET = TokenSet.create(Constants.TYPE_PARAMETER);
   private static final PsiElementArrayConstructor<PsiTypeParameter> CLASS_PARAMETER_ARRAY_CONSTRUCTOR = new PsiElementArrayConstructor<PsiTypeParameter>() {
     public PsiTypeParameter[] newPsiElementArray(int length) {
       return length > 0 ? new PsiTypeParameter[length] : PsiTypeParameter.EMPTY_ARRAY;

@@ -3,11 +3,14 @@ package com.intellij.psi.impl.source;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
@@ -172,7 +175,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
     final CompositeElement treeElement = getTreeElement();
     if (treeElement != null) {
       myCachedType = null;
-      return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), ELLIPSIS) != null;
+      return TreeUtil.findChild(SourceTreeToPsiMap.psiElementToTree(getTypeElement()), Constants.ELLIPSIS) != null;
     }
     else {
       if (myCachedIsVarArgs == null) {

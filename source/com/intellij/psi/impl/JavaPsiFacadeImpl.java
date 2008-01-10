@@ -22,8 +22,8 @@ import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.JavaChangeUtilSupport;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -332,7 +332,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   public boolean isInPackage(@NotNull PsiElement element, @NotNull PsiPackage aPackage) {
-    final PsiFile file = ResolveUtil.getContextFile(element);
+    final PsiFile file = FileContextUtil.getContextFile(element);
     if (file instanceof JavaDummyHolder) {
       return ((JavaDummyHolder) file).isInPackage(aPackage);
     }
@@ -344,8 +344,8 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   public boolean arePackagesTheSame(@NotNull PsiElement element1, @NotNull PsiElement element2) {
-    PsiFile file1 = ResolveUtil.getContextFile(element1);
-    PsiFile file2 = ResolveUtil.getContextFile(element2);
+    PsiFile file1 = FileContextUtil.getContextFile(element1);
+    PsiFile file2 = FileContextUtil.getContextFile(element2);
     if (Comparing.equal(file1, file2)) return true;
     if (file1 instanceof JavaDummyHolder && file2 instanceof JavaDummyHolder) return true;
     if (file1 instanceof JavaDummyHolder || file2 instanceof JavaDummyHolder) {

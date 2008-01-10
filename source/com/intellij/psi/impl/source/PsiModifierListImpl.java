@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements PsiModifierList {
+public class PsiModifierListImpl extends SlaveRepositoryPsiElement implements PsiModifierList, Constants {
   private static Map<String, IElementType> NAME_TO_KEYWORD_TYPE_MAP = new THashMap<String, IElementType>();
 
   static{

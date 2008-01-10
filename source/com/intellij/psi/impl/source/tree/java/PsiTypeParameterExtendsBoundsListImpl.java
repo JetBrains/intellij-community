@@ -44,7 +44,7 @@ public class PsiTypeParameterExtendsBoundsListImpl extends SlaveRepositoryPsiEle
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
     return calcTreeElement().getChildrenAsPsiElements(Constants.JAVA_CODE_REFERENCE_BIT_SET,
-                                                      PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
+                                                      Constants.PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   @NotNull

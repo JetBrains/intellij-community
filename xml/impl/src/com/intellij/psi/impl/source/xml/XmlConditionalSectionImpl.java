@@ -4,7 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlConditionalSection;
 import com.intellij.psi.xml.XmlElementType;
@@ -29,7 +29,7 @@ public class XmlConditionalSectionImpl extends XmlElementImpl implements XmlCond
     if (child != null) {
       child = child.getTreeNext();
 
-      if (child != null && child.getElementType() == Constants.WHITE_SPACE) {
+      if (child != null && child.getElementType() == TokenType.WHITE_SPACE) {
         child = child.getTreeNext();
       }
 

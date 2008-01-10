@@ -17,7 +17,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
                                  boolean allowEllipsis,
                                  @NonNls String name,
                                  CharSequence text) {
-    super(manager, TYPE_TEXT, isPhysical, name, text);
+    super(manager, Constants.TYPE_TEXT, isPhysical, name, text);
     myAllowEllipsis = allowEllipsis;
   }
 

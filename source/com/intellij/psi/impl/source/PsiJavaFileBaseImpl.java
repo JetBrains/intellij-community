@@ -96,7 +96,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (cachedClasses == null){
       if (getTreeElement() != null || getRepositoryId() < 0){
         LOG.debug("Loading tree for " + getName());
-        cachedClasses = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
+        cachedClasses = calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, Constants.PSI_CLASS_ARRAY_CONSTRUCTOR);
       }
       else{
         long[] classIds = getRepositoryManager().getFileView().getClasses(getRepositoryId());

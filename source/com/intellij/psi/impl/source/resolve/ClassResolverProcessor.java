@@ -121,7 +121,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
     }
 
     if (PsiUtil.isInJspFile(aClass.getContainingFile())) {
-      PsiFile file = ResolveUtil.getContextFile(myPlace);
+      PsiFile file = FileContextUtil.getContextFile(myPlace);
       if (PsiUtil.isInJspFile(file)) {
         return true;
       }

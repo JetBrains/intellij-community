@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiJavaFileImpl extends PsiJavaFileBaseImpl {
   public PsiJavaFileImpl(FileViewProvider file) {
-    super(JAVA_FILE, JAVA_FILE, file);
+    super(Constants.JAVA_FILE, Constants.JAVA_FILE, file);
   }
 
   public String toString(){

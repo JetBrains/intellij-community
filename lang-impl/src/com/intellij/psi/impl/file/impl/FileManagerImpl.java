@@ -27,7 +27,7 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ConcurrencyUtil;
@@ -286,7 +286,7 @@ public class FileManagerImpl implements FileManager {
         return getResolveScope(context);
       }
 
-      final PsiFile contextFile = containingFile != null ? ResolveUtil.getContextFile(containingFile) : null;
+      final PsiFile contextFile = containingFile != null ? FileContextUtil.getContextFile(containingFile) : null;
       if (contextFile == null || contextFile instanceof XmlFile) {
         return GlobalSearchScope.allScope(project);
       }

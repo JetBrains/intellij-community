@@ -55,11 +55,11 @@ public final class PsiReferenceListImpl extends SlaveRepositoryPsiElement implem
     myRepositoryTypesRef = null;
   }
 
-  private static final TokenSet REFERENCE_BIT_SET = TokenSet.create(JAVA_CODE_REFERENCE);
+  private static final TokenSet REFERENCE_BIT_SET = TokenSet.create(Constants.JAVA_CODE_REFERENCE);
 
   @NotNull
   public PsiJavaCodeReferenceElement[] getReferenceElements() {
-    return calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
+    return calcTreeElement().getChildrenAsPsiElements(REFERENCE_BIT_SET, Constants.PSI_REFERENCE_ELEMENT_ARRAY_CONSTRUCTOR);
   }
 
   @NotNull

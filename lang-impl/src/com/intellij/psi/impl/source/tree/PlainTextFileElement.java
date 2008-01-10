@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.TokenType;
 
 public class PlainTextFileElement extends FileElement{
   public PlainTextFileElement() {
-    super(Constants.PLAIN_TEXT_FILE);
+    super(TokenType.PLAIN_TEXT_FILE);
   }
 }

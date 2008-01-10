@@ -48,7 +48,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
       myRepositoryParameters = null;
     }
     else{
-      myRepositoryParameters = (PsiParameterImpl[])bindIndexedSlaves(PARAMETER_BIT_SET, PARAMETER_IMPL_ARRAY_CONSTRUCTOR);
+      myRepositoryParameters = (PsiParameterImpl[])bindIndexedSlaves(Constants.PARAMETER_BIT_SET, PARAMETER_IMPL_ARRAY_CONSTRUCTOR);
     }
   }
 
@@ -64,7 +64,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
           int count;
           CompositeElement treeElement = getTreeElement();
           if (treeElement != null) {
-            count = treeElement.countChildren(PARAMETER_BIT_SET);
+            count = treeElement.countChildren(Constants.PARAMETER_BIT_SET);
           }
           else {
             count = getRepositoryManager().getMethodView().getParameterCount(repositoryId);
@@ -78,7 +78,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
         return repositoryParameters;
       }
       else{
-        return calcTreeElement().getChildrenAsPsiElements(PARAMETER_BIT_SET, PSI_PARAMETER_ARRAY_CONSTRUCTOR);
+        return calcTreeElement().getChildrenAsPsiElements(Constants.PARAMETER_BIT_SET, Constants.PSI_PARAMETER_ARRAY_CONSTRUCTOR);
       }
     }
   }
@@ -95,7 +95,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
       if (repositoryParameters == null) {
         CompositeElement treeElement = getTreeElement();
         if (treeElement != null) {
-          return treeElement.countChildren(PARAMETER_BIT_SET);
+          return treeElement.countChildren(Constants.PARAMETER_BIT_SET);
         }
         else {
           return getRepositoryManager().getMethodView().getParameterCount(repositoryId);
@@ -104,7 +104,7 @@ public class PsiParameterListImpl extends SlaveRepositoryPsiElement implements P
       return repositoryParameters.length;
     }
     else{
-      return calcTreeElement().countChildren(PARAMETER_BIT_SET);
+      return calcTreeElement().countChildren(Constants.PARAMETER_BIT_SET);
     }
   }
 

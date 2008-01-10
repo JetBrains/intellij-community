@@ -21,7 +21,7 @@ public class PsiJavaCodeReferenceCodeFragmentImpl extends PsiCodeFragmentImpl im
                                               final @NonNls String name,
                                               final CharSequence text,
                                               boolean isClassesAccepted) {
-    super(project, REFERENCE_TEXT, isPhysical, name, text);
+    super(project, Constants.REFERENCE_TEXT, isPhysical, name, text);
     myIsClassesAccepted = isClassesAccepted;
   }
 

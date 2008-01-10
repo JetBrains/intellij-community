@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceByDocument;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -21,7 +22,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
                              boolean isPhysical,
                              @NonNls String name,
                              CharSequence text) {
-    super(CODE_FRAGMENT, contentElementType,
+    super(Constants.CODE_FRAGMENT, contentElementType,
           new SingleRootFileViewProvider(PsiManager.getInstance(project),
                                          new LightVirtualFile(
                                            name,

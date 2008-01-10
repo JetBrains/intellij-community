@@ -363,7 +363,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     PsiField[] cachedFields = myCachedFields;
     if (cachedFields == null){
         if (getTreeElement() != null){
-          cachedFields = calcTreeElement().getChildrenAsPsiElements(FIELD_BIT_SET, PSI_FIELD_ARRAY_CONSTRUCTOR);
+          cachedFields = calcTreeElement().getChildrenAsPsiElements(Constants.FIELD_BIT_SET, Constants.PSI_FIELD_ARRAY_CONSTRUCTOR);
         }
         else{
           long[] fieldIds = getRepositoryManager().getClassView().getFields(getRepositoryId());
@@ -383,7 +383,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   public PsiMethod[] getMethods() {
       if (myCachedMethods == null){
         if (getTreeElement() != null){
-          myCachedMethods = calcTreeElement().getChildrenAsPsiElements(METHOD_BIT_SET, PSI_METHOD_ARRAY_CONSTRUCTOR);
+          myCachedMethods = calcTreeElement().getChildrenAsPsiElements(Constants.METHOD_BIT_SET, Constants.PSI_METHOD_ARRAY_CONSTRUCTOR);
         }
         else{
           long[] methodIds = getRepositoryManager().getClassView().getMethods(getRepositoryId());
@@ -411,7 +411,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
     PsiClass[] cachedInners = myCachedInners;
     if (cachedInners == null) {
       if (getTreeElement() != null) {
-        cachedInners = calcTreeElement().getChildrenAsPsiElements(CLASS_BIT_SET, PSI_CLASS_ARRAY_CONSTRUCTOR);
+        cachedInners = calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, Constants.PSI_CLASS_ARRAY_CONSTRUCTOR);
       }
       else {
         long[] classIds = getRepositoryManager().getClassView().getInnerClasses(getRepositoryId());
@@ -430,7 +430,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
   @NotNull
   public PsiClassInitializer[] getInitializers() {
     if (getTreeElement() != null) {
-      return calcTreeElement().getChildrenAsPsiElements(CLASS_INITIALIZER_BIT_SET, PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
+      return calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_INITIALIZER_BIT_SET, Constants.PSI_CLASS_INITIALIZER_ARRAY_CONSTRUCTOR);
     }
     else {
       long[] initializerIds = getRepositoryManager().getClassView().getInitializers(getRepositoryId());
@@ -609,13 +609,13 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       boolean isInterface;
       if (getTreeElement() != null) {
         ASTNode keyword = calcTreeElement().findChildByRole(ChildRole.CLASS_OR_INTERFACE_KEYWORD);
-        if (keyword.getElementType() == CLASS_KEYWORD) {
+        if (keyword.getElementType() == Constants.CLASS_KEYWORD) {
           isInterface = false;
         }
-        else if (keyword.getElementType() == INTERFACE_KEYWORD) {
+        else if (keyword.getElementType() == Constants.INTERFACE_KEYWORD) {
           isInterface = true;
         }
-        else if (keyword.getElementType() == ENUM_KEYWORD) {
+        else if (keyword.getElementType() == Constants.ENUM_KEYWORD) {
           isInterface = false;
         }
         else {

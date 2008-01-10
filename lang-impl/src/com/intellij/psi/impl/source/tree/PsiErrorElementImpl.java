@@ -3,14 +3,14 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.TokenType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiErrorElementImpl extends CompositePsiElement implements PsiErrorElement{
   private String myErrorDescription;
 
   public PsiErrorElementImpl() {
-    super(Constants.ERROR_ELEMENT);
+    super(TokenType.ERROR_ELEMENT);
   }
 
   public void setErrorDescription(String errorDescription) {
