@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
@@ -104,6 +105,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final List<LanguageInjector> myLanguageInjectors = new CopyOnWriteArrayList<LanguageInjector>();
   private final ProgressManager myProgressManager;
 
+  private final RepositoryManager myRepositoryManager;
+  private final RepositoryElementsManager myRepositoryElementsManager;
+
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,
                         final ProjectRootManagerEx projectRootManagerEx,
@@ -144,6 +148,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       externalResourceManagerEx.addExteralResourceListener(myExternalResourceListener);
     }
 
+    myRepositoryManager = psiManagerConfiguration.createRepositoryManager(this);
+    myRepositoryElementsManager = psiManagerConfiguration.createRepositoryElementsManager(this, myRepositoryManager);
+
     if (startupManager != null) {
       ((StartupManagerEx)startupManager).registerPreStartupActivity(
         new Runnable() {
@@ -160,9 +167,21 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public void initComponent() {
   }
 
+  public RepositoryManager getRepositoryManager() {
+    if (myIsDisposed) {
+      LOG.error("Project is already disposed.");
+    }
+    return myRepositoryManager;
+  }
+
+  public RepositoryElementsManager getRepositoryElementsManager() {
+    return myRepositoryElementsManager;
+  }
+
   public void disposeComponent() {
     myFileManager.dispose();
     myCacheManager.dispose();
+    myRepositoryManager.dispose();
 
     ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
     if (externalResourceManager != null) {
@@ -303,6 +322,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       FileSystemSynchronizer synchronizer = startupManager.getFileSystemSynchronizer();
 
       if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
+        synchronizer.registerCacheUpdater(myRepositoryManager.getCacheUpdater());
         CacheUpdater[] updaters = myCacheManager.getCacheUpdaters();
         for (CacheUpdater updater : updaters) {
           synchronizer.registerCacheUpdater(updater);
@@ -312,6 +332,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void setAssertOnFileLoadingFilter(VirtualFileFilter filter) {
+    // Find something to ensure there's no changed files waiting to be processed in repository indicies.
+    myRepositoryManager.updateAll();
     myAssertOnFileLoadingFilter = filter;
   }
 

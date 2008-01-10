@@ -46,7 +46,7 @@
     </component>
     <component>
       <interface-class>com.intellij.psi.impl.PsiManagerConfiguration</interface-class>
-      <implementation-class>com.intellij.psi.impl.PsiManagerConfiguration</implementation-class>
+      <implementation-class>com.intellij.psi.impl.PsiManagerConfigurationImpl</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.refactoring.migration.MigrationMapSet</implementation-class>

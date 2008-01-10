@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,7 +37,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
   private static boolean processAllClassesInGlobalScope(final GlobalSearchScope searchScope, final Processor<PsiClass> processor, final Project project) {
     final PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-    final RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
+    final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
     repositoryManager.updateAll();
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiManager.getProject()).getFileIndex();
@@ -53,7 +52,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
                 if (fileId >= 0) {
                   long[] allClasses = repositoryManager.getFileView().getAllClasses(fileId);
                   for (long allClass : allClasses) {
-                    PsiClass psiClass = (PsiClass)JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
+                    PsiClass psiClass = (PsiClass)psiManager.getRepositoryElementsManager().findOrCreatePsiElementById(allClass);
                     if (!processor.process(psiClass)) return false;
                   }
                 }

@@ -765,7 +765,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
       else {
         long scopeId = ((PsiClassImpl)aClass).getParentId();
-        RepositoryElementType scopeType = JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryManager().getElementType(scopeId);
+        RepositoryElementType scopeType = myManager.getRepositoryManager().getElementType(scopeId);
         boolean isLocalClass = scopeType == RepositoryElementType.METHOD || scopeType == RepositoryElementType.FIELD || scopeType == RepositoryElementType.CLASS_INITIALIZER;
         if (isLocalClass){
           isAnonOrLocal = true;
@@ -781,7 +781,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
       }
 
       long classId = ((RepositoryPsiElement)aClass).getRepositoryId();
-    RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryManager();
+    RepositoryManager repositoryManager = myManager.getRepositoryManager();
       long scopeId = repositoryManager.getClassView().getParent(classId);
       long[] classesInScope = repositoryManager.getItemView(scopeId).getChildren(scopeId, RepositoryElementType.CLASS);
 
@@ -805,7 +805,7 @@ public class PsiClassImpl extends NonSlaveRepositoryPsiElement implements PsiCla
         return aClass.getParent();
       }
       else{
-        PsiElement context = JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryElementsManager().findOrCreatePsiElementById(scopeId);
+        PsiElement context = myManager.getRepositoryElementsManager().findOrCreatePsiElementById(scopeId);
         if (context instanceof PsiClass){
           return calcBasesResolveContext((PsiClass)context, className, false, defaultResolveContext);
         }

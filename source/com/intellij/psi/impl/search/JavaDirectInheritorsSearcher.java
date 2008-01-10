@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.RepositoryElementsManager;
 import com.intellij.psi.impl.RepositoryPsiElement;
@@ -60,9 +59,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       );
     }
     else {
-      final RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
-      final RepositoryElementsManager repositoryElementsManager =
-        JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryElementsManager();
+      final RepositoryManager repositoryManager = psiManager.getRepositoryManager();
+      final RepositoryElementsManager repositoryElementsManager = psiManager.getRepositoryElementsManager();
 
       long[] candidateIds = ApplicationManager.getApplication().runReadAction(new Computable<long[]>() {
         public long[] compute() {

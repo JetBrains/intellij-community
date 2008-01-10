@@ -15,7 +15,6 @@ import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.JavaPsiFacadeEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
@@ -281,7 +280,7 @@ public class ChangeUtil {
           final TreeChangeEvent destinationTreeChange = new TreeChangeEventImpl(treeAspect, changedFile);
           event.registerChangeSet(treeAspect, destinationTreeChange);
           final PsiManagerEx psiManager = (PsiManagerEx) manager;
-          RepositoryManager repositoryManager = JavaPsiFacadeEx.getInstanceEx(psiManager.getProject()).getRepositoryManager();
+          RepositoryManager repositoryManager = psiManager.getRepositoryManager();
           final PsiFile file = (PsiFile)changedFile.getPsi();
 
           if (file.isPhysical()) {
@@ -356,7 +355,7 @@ public class ChangeUtil {
       if (handled != null) return handled;
     }
 
-    return null;
+    return element;
   }
 
   public static TreeElement copyElement(TreeElement original, CharTable table) {

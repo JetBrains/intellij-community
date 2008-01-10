@@ -90,8 +90,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
     long[] classIds = getRepositoryIndex().getClassesByShortName(name, filter);
 
     if (classIds.length == 0) return PsiClass.EMPTY_ARRAY;
-    RepositoryElementsManager repositoryElementsManager =
-      JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryElementsManager();
+    RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
     ArrayList<PsiClass> list = new ArrayList<PsiClass>();
     IdLoop:
     for (long id : classIds) {
@@ -190,8 +189,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
   }
 
   private <T extends PsiMember> void addMembersByIds(ArrayList<T> list, long[] ids, final GlobalSearchScope scope) {
-    RepositoryElementsManager repositoryElementsManager =
-      JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryElementsManager();
+    RepositoryElementsManager repositoryElementsManager = myManager.getRepositoryElementsManager();
     Set<PsiMember> set = new THashSet<PsiMember>(ids.length, new TObjectHashingStrategy<PsiMember>() {
       public int computeHashCode(PsiMember member) {
         int code = 0;
@@ -330,7 +328,7 @@ class PsiShortNamesCacheImpl implements PsiShortNamesCache {
 
   private RepositoryIndex getRepositoryIndex() {
     if (myRepositoryIndex == null) {
-      myRepositoryIndex = JavaPsiFacadeEx.getInstanceEx(myManager.getProject()).getRepositoryManager().getIndex();
+      myRepositoryIndex = myManager.getRepositoryManager().getIndex();
     }
     return myRepositoryIndex;
   }

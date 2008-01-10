@@ -4,24 +4,18 @@
 package com.intellij.psi.impl;
 
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
-import com.intellij.ide.startup.FileSystemSynchronizer;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.cache.impl.RepositoryManagerImpl;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
@@ -50,7 +44,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaPsiFacadeImpl");
 
   private PsiMigrationImpl myCurrentMigration;
-  private LanguageLevel myLanguageLevel;
   private final PsiElementFinder[] myElementFinders;
   private PsiShortNamesCache myShortNamesCache;
   private final PsiResolveHelper myResolveHelper;
@@ -62,8 +55,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   private final Project myProject;
   private final JavaFileManager myFileManager;
   private final ProgressManager myProgressManager;
-  private final RepositoryManager myRepositoryManager;
-  private final RepositoryElementsManager myRepositoryElementsManager;
   private boolean myDisposed = false;
 
 
@@ -76,7 +67,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
   ) {
     myProject = project;
-    myLanguageLevel = LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel();
     myResolveHelper = new PsiResolveHelperImpl(PsiManager.getInstance(project));
     myJavadocManager = new JavadocManagerImpl();
     myNameHelper = new PsiNameHelperImpl(this);
@@ -94,7 +84,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       myShortNamesCache = new PsiShortNamesCacheImpl((PsiManagerEx)PsiManager.getInstance(project), projectRootManagerEx);
     }
     else {
-      myShortNamesCache = new EmptyRepository.PsiShortNamesCacheImpl();
+      myShortNamesCache = new EmptyShortNamesCacheImpl();
     }
 
     myFileManager = new JavaFileManagerImpl(psiManager, projectRootManagerEx, psiManager.getFileManager(), bus);
@@ -106,24 +96,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
     });
 
-    ((StartupManagerEx)startupManager).registerPreStartupActivity(new Runnable() {
-      public void run() {
-        StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
-        if (startupManager != null) {
-          FileSystemSynchronizer synchronizer = startupManager.getFileSystemSynchronizer();
-          if (PsiManagerConfiguration.getInstance().REPOSITORY_ENABLED) {
-            synchronizer.registerCacheUpdater(myRepositoryManager.getCacheUpdater());
-          }
-        }
-
-        // update effective language level before the project is opened because it might be changed
-        // e.g. while setting up newly created project
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          myLanguageLevel = LanguageLevelProjectExtension.getInstance(myProject).getLanguageLevel();
-        }
-      }
-    });
-
     startupManager.registerStartupActivity(
       new Runnable() {
         public void run() {
@@ -132,13 +104,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       }
     );
 
-    if (psiManagerConfiguration.REPOSITORY_ENABLED) {
-      myRepositoryManager = new RepositoryManagerImpl(psiManager);
-      myRepositoryElementsManager = new RepositoryElementsManager(psiManager, myRepositoryManager);
-    } else {
-      myRepositoryManager = new EmptyRepository.MyRepositoryManagerImpl();
-      myRepositoryElementsManager = new EmptyRepository.MyRepositoryElementsManager(psiManager, myRepositoryManager);
-    }
 
     JavaFindUsagesHandler.setupForProject(project);
     JavaChangeUtilSupport.setup();
@@ -154,7 +119,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   public void dispose() {
     myDisposed = true;
     myFileManager.dispose();
-    myRepositoryManager.dispose();
   }
 
   /**
@@ -206,16 +170,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
     return aPackage;
   }
 
-  public RepositoryManager getRepositoryManager() {
-    if (myDisposed) {
-      LOG.error("Project is already disposed.");
-    }
-    return myRepositoryManager;
-  }
-
-  public RepositoryElementsManager getRepositoryElementsManager() {
-    return myRepositoryElementsManager;
-  }
 
   public PsiMigrationImpl getCurrentMigration() {
     return myCurrentMigration;
@@ -455,8 +409,6 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
   }
 
   public void setAssertOnFileLoadingFilter(final VirtualFileFilter filter) {
-    // Find something to ensure there's no changed files waiting to be processed in repository indicies.
-    myRepositoryManager.updateAll();
     ((PsiManagerImpl)PsiManager.getInstance(myProject)).setAssertOnFileLoadingFilter(filter);
   }
 }

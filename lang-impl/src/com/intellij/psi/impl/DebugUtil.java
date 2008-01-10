@@ -2,7 +2,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,24 +53,6 @@ public class DebugUtil {
     StringBuffer buffer = new StringBuffer();
     treeToBufferWithUserData(buffer, root, 0, skipWhitespaces);
     return buffer.toString();
-  }
-
-  //TODO: remove this method. Necessary for debug purposes while we do not have PsiElement's for javascript
-  public static PsiElement treeElementToPsi(ASTNode element) {
-    ProgressManager.getInstance().checkCanceled();
-
-    if (element == null) return null;
-
-    if (element instanceof PsiElement) {
-      return (PsiElement)element;
-    }
-    else if (element instanceof RepositoryTreeElement) {
-      return RepositoryElementsManager.getOrFindPsiElement((RepositoryTreeElement)element);
-    }
-    else {
-      PsiElement psiElement = element.getUserData(TreeElement.PSI_ELEMENT_KEY);
-      return psiElement;
-    }
   }
 
   public static void treeToBuffer(StringBuffer buffer,

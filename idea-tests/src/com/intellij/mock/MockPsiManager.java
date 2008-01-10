@@ -1,32 +1,35 @@
 package com.intellij.mock;
 
 import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.CachedValuesManagerImpl;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
+import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
+import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
+import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
@@ -41,7 +44,9 @@ import java.util.List;
 import java.util.Map;
 
 public class MockPsiManager extends PsiManagerEx {
-  private Project myProject;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.mock.MockPsiManager");
+  
+  private final Project myProject;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new THashMap<VirtualFile, PsiDirectory>();
   private final Map<VirtualFile,PsiFile> myFiles = new THashMap<VirtualFile, PsiFile>();
   private CachedValuesManagerImpl myCachedValuesManager;
@@ -67,10 +72,6 @@ public class MockPsiManager extends PsiManagerEx {
     return myProject;
   }
 
-  public OrderEntry findOrderEntry(PsiElement element) {
-    return null;  //To change body of implemented methods use Options | File Templates.
-  }
-
   public PsiFile findFile(@NotNull VirtualFile file) {
     return myFiles.get(file);
   }
@@ -81,35 +82,12 @@ public class MockPsiManager extends PsiManagerEx {
     return null;
   }
 
-  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull Language aspect) {
-    return null;
-  }
-
-  public @NotNull Language[] getKnownAspects(@NotNull VirtualFile file) {
-    return new Language[0];
-  }
-
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     return myDirectories.get(file);
   }
 
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     return Comparing.equal(element1, element2);
-  }
-
-  @NotNull
-  public LanguageLevel getEffectiveLanguageLevel() {
-    return LanguageLevel.HIGHEST;
-  }
-
-  public void commit(PsiFile file) {
-  }
-
-  public void commitAll() {
-  }
-
-  public PsiFile[] getAllFilesToCommit() {
-    return PsiFile.EMPTY_ARRAY;
   }
 
   public void reloadFromDisk(@NotNull PsiFile file) {
@@ -134,6 +112,82 @@ public class MockPsiManager extends PsiManagerEx {
     return new PsiSearchHelperImpl(this);
   }
 
+  public RepositoryElementsManager getRepositoryElementsManager() {
+    return new EmptyRepositoryElementsManager() {
+      public SrcRepositoryPsiElement createRepositoryPsiElementByTreeElement(PsiManagerEx manager,
+                                                                              RepositoryTreeElement treeElement) {
+        IElementType elementType = treeElement.getElementType();
+        if (elementType == JavaElementType.CLASS) {
+          return new PsiClassImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
+          return new PsiAnonymousClassImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.ENUM_CONSTANT_INITIALIZER) {
+          return new PsiEnumConstantInitializerImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.METHOD) {
+          return new PsiMethodImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.ANNOTATION_METHOD) {
+          return new PsiAnnotationMethodImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.FIELD) {
+          return new PsiFieldImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.ENUM_CONSTANT) {
+          return new PsiEnumConstantImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.CLASS_INITIALIZER) {
+          return new PsiClassInitializerImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.MODIFIER_LIST) {
+          return new PsiModifierListImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.IMPORT_LIST) {
+          return new PsiImportListImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.EXTENDS_LIST ||
+                 elementType == JavaElementType.IMPLEMENTS_LIST ||
+                 elementType == JavaElementType.THROWS_LIST) {
+          return new PsiReferenceListImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.PARAMETER_LIST) {
+          return new PsiParameterListImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.IMPORT_STATEMENT) {
+          return new PsiImportStatementImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.IMPORT_STATIC_STATEMENT) {
+          return new PsiImportStaticStatementImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.PARAMETER) {
+          return new PsiParameterImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.TYPE_PARAMETER) {
+          return new PsiTypeParameterImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.TYPE_PARAMETER_LIST) {
+          return new PsiTypeParameterListImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.EXTENDS_BOUND_LIST) {
+          return new PsiTypeParameterExtendsBoundsListImpl(manager, treeElement);
+        }
+        else if (elementType == JavaElementType.ANNOTATION) {
+          return new PsiAnnotationImpl(manager, treeElement);
+        }
+        else {
+          LOG.error("Incorrect TreeElement:" + treeElement);
+          return null;
+        }
+      }
+    };
+
+  }
+
+  public RepositoryManager getRepositoryManager() {
+    return new EmptyRepositoryManagerImpl();
+  }
 
   @NotNull
   public PsiModificationTracker getModificationTracker() {
