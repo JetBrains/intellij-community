@@ -20,9 +20,6 @@ import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
-import com.intellij.psi.tree.jsp.IJspElementType;
-import com.intellij.psi.tree.jsp.el.IELElementType;
-import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -843,15 +840,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
     }
 
-    else if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) { // hack....
-      return Factory.createCompositeElement(type);
-    }
 
     if (type == null) {
       throw new RuntimeException(UNBALANCED_MESSAGE);
     }
 
-    return new CompositeElement(type);
+    final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
+    return factory.createComposite(type);
   }
 
   private class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
@@ -1039,17 +1034,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (type instanceof IChameleonElementType) {
       return new ChameleonElement(type, myText, start, end, myCharTable);
     }
+    
     if (type instanceof ILeafElementType) {
       return (LeafElement) ((ILeafElementType)type).createLeafNode(myText, start, end, myCharTable);
     }
-    if (type instanceof IXmlElementType || type instanceof IJspElementType && !(type instanceof IELElementType)) {
-      return Factory.createLeafElement(type, myText, start, end, myCharTable);
-    }
-    if (type instanceof LeafPsiElementType) {
-      return (LeafElement)((LeafPsiElementType)type).createLeafNode(myText, start, end, myCharTable);
-    }
 
-    return new LeafPsiElement(type, myText, start, end, myCharTable);
+    final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
+    return factory.createLeaf(type, myText, start, end, myCharTable);
   }
 
   /**
