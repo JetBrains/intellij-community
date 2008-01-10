@@ -62,9 +62,6 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor {
     else if (Event.SET_CURRENT_FILE_CONTEXT.equals(event)) {
       myCurrentFileContext = (PsiElement)associated;
     }
-    for (PsiConflictResolver myResolver : myResolvers) {
-      myResolver.handleProcessorEvent(event, associated);
-    }
   }
 
   public void setAccessClass(PsiClass accessClass) {

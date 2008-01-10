@@ -27,9 +27,6 @@ public interface FileReferenceHelper<T extends PsiFileSystemItem> {
 
   @Nullable PsiReference createDynamicReference(PsiElement element, String str);
 
-  @NotNull
-  Class<T> getDirectoryClass();
-
   @NotNull String getDirectoryTypeName();
 
   @Nullable

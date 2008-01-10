@@ -4,20 +4,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
-import com.intellij.psi.impl.source.resolve.reference.IncompatibleReferenceTypeException;
-import com.intellij.psi.impl.source.resolve.reference.ProcessorRegistry;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -321,9 +317,8 @@ public class FileReferenceSet {
     return Collections.emptyList();
   }
 
-  protected PsiScopeProcessor createProcessor(final List<CandidateInfo> result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
-    throws IncompatibleReferenceTypeException {
-    return ProcessorRegistry.getProcessorByType(myType, result, null, allowedClasses, resolvers);
+  protected Condition<PsiElement> createCondition() {
+    return Condition.TRUE;
   }
 
   public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {

@@ -4,13 +4,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.HashMap;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -44,5 +43,4 @@ public class DuplicateConflictResolver implements PsiConflictResolver{
     return null;
   }
 
-  public void handleProcessorEvent(PsiScopeProcessor.Event event, Object associatied){}
 }

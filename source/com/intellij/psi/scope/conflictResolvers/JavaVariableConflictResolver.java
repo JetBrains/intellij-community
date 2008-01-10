@@ -6,7 +6,6 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.scope.PsiScopeProcessor;
 
 import java.util.List;
 
@@ -97,5 +96,4 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
     return null;
   }
 
-  public void handleProcessorEvent(PsiScopeProcessor.Event event, Object associatied){}
 }

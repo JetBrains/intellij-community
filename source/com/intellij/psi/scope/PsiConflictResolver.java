@@ -13,5 +13,4 @@ import java.util.List;
  */
 public interface PsiConflictResolver {
   CandidateInfo resolveConflict(List<CandidateInfo> conflicts);
-  void handleProcessorEvent(PsiScopeProcessor.Event event, Object associatied);
 }

@@ -11,10 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReference;
-import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +26,6 @@ import java.util.List;
  * @author peter
  */
 public class FileReferenceHelperRegistrar {
-  
-  private static final ClassMap<FileReferenceHelper> ourHelpersMap = new ClassMap<FileReferenceHelper>();
   private static final LinkedList<FileReferenceHelper> ourHelpers = new LinkedList<FileReferenceHelper>();
 
   private FileReferenceHelperRegistrar() {
@@ -38,12 +34,10 @@ public class FileReferenceHelperRegistrar {
   static {
     final PsiFileReferenceHelper helper = new PsiFileReferenceHelper();
     registerHelper(helper);
-    ourHelpersMap.put(PsiFile.class, helper);
   }
 
   public static void registerHelper(FileReferenceHelper helper) {
     ourHelpers.addFirst(helper);
-    ourHelpersMap.put(helper.getDirectoryClass(), helper);
   }
 
   public static List<FileReferenceHelper> getHelpers() {
@@ -73,10 +67,6 @@ public class FileReferenceHelperRegistrar {
   }
 
   private static class NullFileReferenceHelper<T extends PsiFileSystemItem> implements FileReferenceHelper<T> {
-    @NotNull
-    public Class<T> getDirectoryClass() {
-      throw new UnsupportedOperationException("Method getDirectoryClass is not yet implemented in " + getClass().getName());
-    }
 
     @NotNull
     public String getDirectoryTypeName() {

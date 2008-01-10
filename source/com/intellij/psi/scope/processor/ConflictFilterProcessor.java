@@ -58,9 +58,6 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
     if(event == Event.CHANGE_LEVEL && myName != null){
       myCachedResult = getResult();
     }
-    for (PsiConflictResolver myResolver : myResolvers) {
-      myResolver.handleProcessorEvent(event, associated);
-    }
   }
 
   public JavaResolveResult[] getResult(){

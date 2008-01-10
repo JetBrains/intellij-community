@@ -30,11 +30,6 @@ import java.util.List;
 public class PsiFileReferenceHelper implements FileReferenceHelper<PsiDirectory> {
 
   @NotNull
-  public Class<PsiDirectory> getDirectoryClass() {
-    return PsiDirectory.class;
-  }
-
-  @NotNull
   public String getDirectoryTypeName() {
     return LangBundle.message("terms.directory");
   }

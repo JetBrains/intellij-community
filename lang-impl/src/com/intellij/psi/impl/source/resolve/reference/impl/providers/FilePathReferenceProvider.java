@@ -4,15 +4,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.IncompatibleReferenceTypeException;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,20 +40,11 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
         return FilePathReferenceProvider.this.createFileReference(this, range, index, text);
       }
 
-      protected PsiScopeProcessor createProcessor(final List<CandidateInfo> result, List<Class> allowedClasses, List<PsiConflictResolver> resolvers)
-        throws IncompatibleReferenceTypeException {
-        final PsiScopeProcessor baseProcessor = super.createProcessor(result, allowedClasses, resolvers);
-        return new PsiScopeProcessor() {
-          public boolean execute(PsiElement element, ResolveState state) {
-            return !isPsiElementAccepted(element, state) || baseProcessor.execute(element, state);
-          }
-
-          public <T> T getHint(Class<T> hintClass) {
-            return baseProcessor.getHint(hintClass);
-          }
-
-          public void handleEvent(Event event, Object associated) {
-            baseProcessor.handleEvent(event, associated);
+      @Override
+      protected Condition<PsiElement> createCondition() {
+        return new Condition<PsiElement>() {
+          public boolean value(final PsiElement element) {
+            return isPsiElementAccepted(element);
           }
         };
       }
@@ -63,12 +52,12 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
 
   }
 
-  protected boolean isPsiElementAccepted(PsiElement element, ResolveState state) {
+  protected boolean isPsiElementAccepted(PsiElement element) {
     return !(element instanceof PsiJavaFile && element instanceof PsiCompiledElement);
   }
 
   protected FileReference createFileReference(FileReferenceSet referenceSet, final TextRange range, final int index, final String text) {
-       return new FileReference(referenceSet, range, index, text);
+    return new FileReference(referenceSet, range, index, text);
   }
 
   @NotNull

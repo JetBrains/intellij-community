@@ -6,7 +6,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
@@ -356,5 +355,4 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return substitutor;
   }
 
-  public void handleProcessorEvent(PsiScopeProcessor.Event event, Object associatied){}
 }
