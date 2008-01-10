@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  *
  * @see MetaDataRegistrar#registerMetaData(ElementFilter, Class)
+ * @see PsiMetaOwner#getMetaData()
  */
 public interface PsiMetaData {
   PsiElement getDeclaration();
