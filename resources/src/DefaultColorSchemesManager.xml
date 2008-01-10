@@ -341,6 +341,13 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
+      <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
+        <value>
+          <option name="FOREGROUND" value="660e7a"/>
+          <option name="BACKGROUND"/>
+          <option name="EFFECT_COLOR"/>
+        </value>
+      </option>
       <option name="CLASS_NAME_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
