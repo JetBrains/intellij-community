@@ -43,4 +43,26 @@ public interface XmlChildRole {
                                                                               JspTokenType.JSP_EXPRESSION_START, JspTokenType.JSP_DECLARATION_START);
   RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
   RoleFinder PROLOG_FINDER = new DefaultRoleFinder(XmlElementType.XML_PROLOG);
+
+
+  int XML_DOCUMENT = 223;
+  int XML_TAG_NAME = 224;
+  int XML_PROLOG = 225;
+  int XML_DOCTYPE = 226;
+  int XML_DOCTYPE_PUBLIC = 227;
+  int XML_DOCTYPE_SYSTEM = 228;
+  int XML_NAME = 229;
+  int XML_ELEMENT_CONTENT_SPEC = 230;
+  int XML_CONTENT_ANY = 231;
+  int XML_CONTENT_EMPTY = 232;
+  int XML_PCDATA = 233;
+  int XML_ATT_REQUIRED = 234;
+  int XML_ATT_IMPLIED = 235;
+  int XML_ATT_FIXED = 236;
+  int XML_DEFAULT_VALUE = 237;
+  int XML_ENUMERATED_TYPE = 238;
+  int XML_ATTRIBUTE = 240;
+  int XML_TAG = 241;
+  int XML_ATTRIBUTE_VALUE = 243;
+  int HTML_DOCUMENT = 252;
 }

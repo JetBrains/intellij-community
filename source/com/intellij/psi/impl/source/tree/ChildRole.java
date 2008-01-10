@@ -131,26 +131,7 @@ public class ChildRole {
 
   public static final int ENUM_CONSTANT_LIST_DELIMITER = 126; // in CLASS
 
-  public static final int XML_DOCUMENT = 223;
-  public static final int XML_TAG_NAME = 224;
-  public static final int XML_PROLOG = 225;
-  public static final int XML_DOCTYPE = 226;
-  public static final int XML_DOCTYPE_PUBLIC = 227;
-  public static final int XML_DOCTYPE_SYSTEM = 228;
-  public static final int XML_NAME = 229;
-  public static final int XML_ELEMENT_CONTENT_SPEC = 230;
-  public static final int XML_CONTENT_ANY = 231;
-  public static final int XML_CONTENT_EMPTY = 232;
-  public static final int XML_PCDATA = 233;
-  public static final int XML_ATT_REQUIRED = 234;
-  public static final int XML_ATT_IMPLIED = 235;
-  public static final int XML_ATT_FIXED = 236;
-  public static final int XML_DEFAULT_VALUE = 237;
-  public static final int XML_ENUMERATED_TYPE = 238;
-  public static final int XML_ATTRIBUTE = 240;
-  public static final int XML_TAG = 241;
   public static final int DOC_TAG_VALUE = 242;
-  public static final int XML_ATTRIBUTE_VALUE = 243;
 
   public static final int TYPE_PARAMETER_IN_LIST = 244;
   public static final int TYPE_PARAMETER_LIST = 245;
@@ -160,10 +141,6 @@ public class ChildRole {
   public static final int ANNOTATION_VALUE = 249;  // in NAME_VALUE_PAIR, ANNOTATION_ARRAY_INITIALIZER
   public static final int ANNOTATION = 250;  // in MODIFIER_LIST
   public static final int CATCH_SECTION = 251; // in TRY_STATEMENT
-
-  public static final int HTML_DOCUMENT = 252;
-
-  public static final int LAST = HTML_DOCUMENT;
 
   private ChildRole() {
   }

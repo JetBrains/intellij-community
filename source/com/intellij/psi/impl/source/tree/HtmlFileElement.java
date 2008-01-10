@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElementType;
 
 public class HtmlFileElement extends FileElement implements XmlElementType  {
@@ -14,7 +15,7 @@ public class HtmlFileElement extends FileElement implements XmlElementType  {
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == HTML_DOCUMENT) {
-      return ChildRole.HTML_DOCUMENT;
+      return XmlChildRole.HTML_DOCUMENT;
     }
     else {
       return ChildRole.NONE;

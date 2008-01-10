@@ -34,22 +34,22 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_NAME) {
-      return ChildRole.XML_NAME;
+      return XmlChildRole.XML_NAME;
     }
     else if (i == XML_ATT_REQUIRED) {
-      return ChildRole.XML_ATT_REQUIRED;
+      return XmlChildRole.XML_ATT_REQUIRED;
     }
     else if (i == XML_ATT_FIXED) {
-      return ChildRole.XML_ATT_FIXED;
+      return XmlChildRole.XML_ATT_FIXED;
     }
     else if (i == XML_ATT_IMPLIED) {
-      return ChildRole.XML_ATT_IMPLIED;
+      return XmlChildRole.XML_ATT_IMPLIED;
     }
     else if (i == XML_ATTRIBUTE_VALUE) {
-      return ChildRole.XML_DEFAULT_VALUE;
+      return XmlChildRole.XML_DEFAULT_VALUE;
     }
     else if (i == XML_ENUMERATED_TYPE) {
-      return ChildRole.XML_ENUMERATED_TYPE;
+      return XmlChildRole.XML_ENUMERATED_TYPE;
     }
     else {
       return ChildRole.NONE;

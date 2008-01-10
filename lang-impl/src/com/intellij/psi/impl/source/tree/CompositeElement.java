@@ -219,7 +219,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   @Nullable
   public ASTNode findChildByRole(int role) {
-    assert ChildRole.isUnique(role);
+    // assert ChildRole.isUnique(role);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (getChildRole(child) == role) return child;
     }
@@ -228,7 +228,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public int getChildRole(ASTNode child) {
     assert child.getTreeParent() == this;
-    return ChildRole.NONE;
+    return 0; //ChildRole.NONE;
   }
 
   protected final int getChildRole(ASTNode child, int roleCandidate) {
@@ -236,7 +236,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
       return roleCandidate;
     }
     else {
-      return ChildRole.NONE;
+      return 0; //ChildRole.NONE;
     }
   }
 

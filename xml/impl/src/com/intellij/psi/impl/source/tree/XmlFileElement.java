@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElementType;
 
 public class XmlFileElement extends FileElement implements XmlElementType {
@@ -22,7 +23,7 @@ public class XmlFileElement extends FileElement implements XmlElementType {
     if (child.getElementType() == XML_DOCUMENT ||
         child.getElementType() == JspElementType.JSP_DOCUMENT ||
         child.getElementType() == HTML_DOCUMENT) {
-      return ChildRole.XML_DOCUMENT;
+      return XmlChildRole.XML_DOCUMENT;
     }
     else {
       return ChildRole.NONE;

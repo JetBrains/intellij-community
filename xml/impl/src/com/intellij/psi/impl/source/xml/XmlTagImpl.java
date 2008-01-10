@@ -35,9 +35,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DefinesXml;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.dom.DomElementXmlDescriptor;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.XmlTagTextUtil;
@@ -390,10 +390,10 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_NAME || i == XML_TAG_NAME) {
-      return ChildRole.XML_TAG_NAME;
+      return XmlChildRole.XML_TAG_NAME;
     }
     else if (i == XML_ATTRIBUTE) {
-      return ChildRole.XML_ATTRIBUTE;
+      return XmlChildRole.XML_ATTRIBUTE;
     }
     else {
       return ChildRole.NONE;

@@ -63,10 +63,10 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument, XmlE
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_PROLOG) {
-      return ChildRole.XML_PROLOG;
+      return XmlChildRole.XML_PROLOG;
     }
     else if (i == XML_TAG) {
-      return ChildRole.XML_TAG;
+      return XmlChildRole.XML_TAG;
     }
     else {
       return ChildRole.NONE;

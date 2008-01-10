@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDoctype;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlProlog;
@@ -32,7 +33,7 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
   public int getChildRole(ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_DOCTYPE) {
-      return ChildRole.XML_DOCTYPE;
+      return XmlChildRole.XML_DOCTYPE;
     }
     else {
       return ChildRole.NONE;
@@ -40,6 +41,6 @@ public class XmlPrologImpl extends XmlElementImpl implements XmlProlog, XmlEleme
   }
 
   public XmlDoctype getDoctype() {
-    return (XmlDoctype)findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE);
+    return (XmlDoctype)findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE);
   }
 }

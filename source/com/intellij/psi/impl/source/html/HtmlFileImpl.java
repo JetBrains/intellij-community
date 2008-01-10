@@ -1,25 +1,12 @@
 package com.intellij.psi.impl.source.html;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.xml.util.XmlUtil;
-
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -40,6 +27,6 @@ public class HtmlFileImpl extends XmlFileImpl {
   public XmlDocument getDocument() {
     CompositeElement treeElement = calcTreeElement();
     ChameleonTransforming.transformChildren(treeElement);
-    return (XmlDocument)treeElement.findChildByRoleAsPsiElement(ChildRole.HTML_DOCUMENT);
+    return (XmlDocument)treeElement.findChildByRoleAsPsiElement(XmlChildRole.HTML_DOCUMENT);
   }
 }

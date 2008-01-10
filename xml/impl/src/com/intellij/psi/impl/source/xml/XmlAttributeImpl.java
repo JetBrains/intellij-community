@@ -52,10 +52,10 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XmlTokenType.XML_NAME) {
-      return ChildRole.XML_NAME;
+      return XmlChildRole.XML_NAME;
     }
     else if (i == XmlElementType.XML_ATTRIBUTE_VALUE) {
-      return ChildRole.XML_ATTRIBUTE_VALUE;
+      return XmlChildRole.XML_ATTRIBUTE_VALUE;
     }
     else {
       return ChildRole.NONE;

@@ -11,10 +11,7 @@ import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlElementContentSpec;
-import com.intellij.psi.xml.XmlElementDecl;
-import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +30,10 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_NAME) {
-      return ChildRole.XML_NAME;
+      return XmlChildRole.XML_NAME;
     }
     else if (i == XML_ELEMENT_CONTENT_SPEC) {
-      return ChildRole.XML_ELEMENT_CONTENT_SPEC;
+      return XmlChildRole.XML_ELEMENT_CONTENT_SPEC;
     }
     else {
       return ChildRole.NONE;
@@ -49,11 +46,11 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   }
 
   public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(ChildRole.XML_NAME);
+    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
   }
 
   public XmlElementContentSpec getContentSpecElement() {
-    return (XmlElementContentSpec)findChildByRoleAsPsiElement(ChildRole.XML_ELEMENT_CONTENT_SPEC);
+    return (XmlElementContentSpec)findChildByRoleAsPsiElement(XmlChildRole.XML_ELEMENT_CONTENT_SPEC);
   }
 
   public PsiMetaData getMetaData() {

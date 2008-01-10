@@ -52,13 +52,13 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_DOCTYPE_PUBLIC) {
-      return ChildRole.XML_DOCTYPE_PUBLIC;
+      return XmlChildRole.XML_DOCTYPE_PUBLIC;
     }
     else if (i == XML_DOCTYPE_SYSTEM) {
-      return ChildRole.XML_DOCTYPE_SYSTEM;
+      return XmlChildRole.XML_DOCTYPE_SYSTEM;
     }
     else if (i == XML_NAME) {
-      return ChildRole.XML_NAME;
+      return XmlChildRole.XML_NAME;
     }
     else {
       return ChildRole.NONE;
@@ -78,7 +78,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
 
   @Nullable
   public XmlElement getDtdUrlElement() {
-    PsiElement docTypePublic = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_PUBLIC);
+    PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
 
     if (docTypePublic != null){
       PsiElement element = docTypePublic.getNextSibling();
@@ -101,7 +101,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
       }
     }
 
-    PsiElement docTypeSystem = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_SYSTEM);
+    PsiElement docTypeSystem = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_SYSTEM);
 
     if (docTypeSystem != null){
       PsiElement element = docTypeSystem.getNextSibling();
@@ -120,12 +120,12 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
   }
 
   public XmlElement getNameElement() {
-    return (XmlElement)findChildByRoleAsPsiElement(ChildRole.XML_NAME);
+    return (XmlElement)findChildByRoleAsPsiElement(XmlChildRole.XML_NAME);
   }
 
   @Nullable
   public String getPublicId() {
-    PsiElement docTypePublic = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_PUBLIC);
+    PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
 
     if (docTypePublic != null) {
       PsiElement element = docTypePublic.getNextSibling();
@@ -166,7 +166,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
   @NotNull
   public PsiReference[] getReferences() {
     final XmlElement dtdUrlElement = getDtdUrlElement();
-    final PsiElement docTypePublic = findChildByRoleAsPsiElement(ChildRole.XML_DOCTYPE_PUBLIC);
+    final PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
     PsiReference uriRefs[] = null;
 
     if (dtdUrlElement != null) {

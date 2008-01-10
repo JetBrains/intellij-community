@@ -10,11 +10,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.html.ScriptSupportUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlFile;
@@ -47,7 +47,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile, XmlElementType 
   public XmlDocument getDocument() {
     CompositeElement treeElement = calcTreeElement();
     ChameleonTransforming.transformChildren(treeElement);
-    return (XmlDocument)treeElement.findChildByRoleAsPsiElement(ChildRole.XML_DOCUMENT);
+    return (XmlDocument)treeElement.findChildByRoleAsPsiElement(XmlChildRole.XML_DOCUMENT);
   }
 
   public boolean processElements(PsiElementProcessor processor, PsiElement place){

@@ -8,6 +8,7 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElementContentSpec;
 import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
@@ -26,13 +27,13 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_CONTENT_ANY) {
-      return ChildRole.XML_CONTENT_ANY;
+      return XmlChildRole.XML_CONTENT_ANY;
     }
     else if (i == XML_CONTENT_EMPTY) {
-      return ChildRole.XML_CONTENT_EMPTY;
+      return XmlChildRole.XML_CONTENT_EMPTY;
     }
     else if (i == XML_PCDATA) {
-      return ChildRole.XML_PCDATA;
+      return XmlChildRole.XML_PCDATA;
     }
     else {
       return ChildRole.NONE;
