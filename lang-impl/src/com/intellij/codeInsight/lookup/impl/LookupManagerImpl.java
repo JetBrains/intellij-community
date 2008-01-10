@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
@@ -68,7 +69,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
         }
       }
     });
-    
+
   }
 
   @NotNull
@@ -186,17 +187,25 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
   }
 
-  private static boolean hasFewAbstractMethods(final PsiClass psiClass) {
-    int count = 0;
-    for (final PsiMethod method : psiClass.getAllMethods()) {
+  private static boolean shouldPrefer(final PsiClass psiClass) {
+    int toImplement = OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
+    if (toImplement > 2) return false;
+
+    for (final PsiMethod method : psiClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        count++;
-        if (count > 2) return false;
+        toImplement++;
+        if (toImplement > 2) return false;
       }
     }
-    return count != 0;
+
+    if (toImplement > 0) return true;
+
+    if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
+    if (CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName())) return false;
+    if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return false;
+    return true;
   }
-  
+
 
   protected void sortItems(PsiElement context, LookupItem[] items, final LookupItemPreferencePolicy itemPreferencePolicy) {
     if (context == null || shouldSortItems(context.getContainingFile(), items)) {
@@ -208,7 +217,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
             final THashSet<PsiClass> set = getFirstClasses(expectedInfos);
             for (final LookupItem item : items) {
               final Object o = item.getObject();
-              if (set.contains(o) && !hasFewAbstractMethods((PsiClass)o)) {
+              if (set.contains(o) && !shouldPrefer((PsiClass)o)) {
                 item.setAttribute(LookupItem.DONT_PREFER, "");
               }
             }
