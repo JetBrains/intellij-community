@@ -874,7 +874,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
       if (containingClass instanceof PsiAnonymousClass && !PsiTreeUtil.isAncestor(containingClass, variable, false)) {
-        myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.IMPLICIT_ANONYMOUS_CLASS_PARAMETER, ref, null));
+        final PsiExpressionList list = PsiTreeUtil.getParentOfType(ref, PsiExpressionList.class);
+        if (list == null || list.getParent() != containingClass) {
+          myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.IMPLICIT_ANONYMOUS_CLASS_PARAMETER, ref, null));
+        }
       }
 
       if (!variable.hasModifierProperty(PsiModifier.FINAL) && HighlightControlFlowUtil.isReassigned(variable, myFinalVarProblems, myParameterIsReassigned)) {
