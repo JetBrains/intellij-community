@@ -685,9 +685,9 @@ public class GroovyAnnotator implements Annotator {
       }
 
       if (isNeedsAddDynPropertiesAnnotation(refExpr) && refExpr.resolve() == null) {
-        annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
         addDynPropertyAnnotation(annotation, refExpr);
       }
+      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
 
 //      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
 
