@@ -5,8 +5,11 @@ import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -27,14 +30,14 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   */
 
   @Nullable
-  public abstract DynamicProperty addDynamicProperty(DynamicProperty dynamicProperty);
+  public abstract DynamicPropertyVirtual addDynamicProperty(DynamicPropertyVirtual dynamicPropertyReal);
 
   /*
   * Return dynamic property with be removed or null if not
   */
 
   @Nullable
-  public abstract DynamicProperty removeDynamicProperty(DynamicProperty dynamicProperty);
+  public abstract DynamicPropertyReal removeDynamicProperty(DynamicPropertyReal dynamicPropertyReal);
 
   /*
   * Find dynamic property in class with name
@@ -50,14 +53,51 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   protected abstract String getTypeOfDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, final String conatainingClassName, final String propertyName);
 
   /*
-  * Finds dynamic property
+  * Finds dynamic properties of class
   */
 
   @NotNull
   public abstract String[] findDynamicPropertiesOfClass(String moduleName, final String conatainingClassName);
 
   /*
+  * Finds dynamic property type
+  */
+
+  @NotNull
+  public abstract String findDynamicPropertyType(String moduleName, String className, String propertyName);
+
+  /*
+  * Returns all dynamic properties
+  */
+
+  @NotNull
+  public abstract DynamicPropertyVirtual[] getAllDynamicProperties(String moduleName);
+
+  /*
+  * Returns all containing classes
+  */
+
+  @NotNull
+  public abstract Set<String> getAllContainingClasses(String moduleName);
+
+  /*
    * Makes needed changes in xml file 
    */
   public abstract void fireChangeDynamicPropertyEnviroment();
+
+  /*
+   * Returns root element
+   */
+
+  public abstract Element getRootElement(String moduleName);
+
+  /*
+   * Adds dynamicPropertyChange listener
+   */
+  public abstract void addDynamicChangeListener(DynamicPropertyChangeListener listener);
+
+  /*
+   * Removes dynamicPropertyChange listener
+   */
+  public abstract void removeDynamicChangeListener(DynamicPropertyChangeListener listener);
 }

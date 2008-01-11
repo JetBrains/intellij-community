@@ -475,9 +475,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           return ((GrReferenceExpression) qualifierExpression).getCanonicalText() + dotToken.getText() +
               getName();       
       }
+    } else {
+      final PsiElement resolvedRefExpr = resolve();
+      if (resolvedRefExpr == null) return getName();
+
+      if (resolvedRefExpr instanceof PsiClass) return ((PsiClass) resolvedRefExpr).getQualifiedName();
+      if (resolvedRefExpr instanceof PsiMember) return ((PsiMember) resolvedRefExpr).getContainingClass().getQualifiedName() + "." + getName();
     }
 
-    return getText();
+    return getName();
   }
 
   public boolean isReferenceTo(PsiElement element) {

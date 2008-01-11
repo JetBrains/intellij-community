@@ -113,12 +113,12 @@ public class CompleteReferenceExpression {
       }
       final Set<PsiClass> supers = GroovyUtils.findAllSupers(psiClass);
 
-      for (PsiClass aSuper : supers) {
-        dynamicPropertiesOfClass = DynamicPropertiesManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), aSuper.getQualifiedName());
+      if (dynamicPropertiesOfClass.length != 0) {
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertiesOfClass, Object.class);
       }
 
-      if (dynamicPropertiesOfClass.length != 0) {
+      for (PsiClass aSuper : supers) {
+        dynamicPropertiesOfClass = DynamicPropertiesManager.getInstance(refExpr.getProject()).findDynamicPropertiesOfClass(module.getName(), aSuper.getQualifiedName());
         propertyVariants = ArrayUtil.mergeArrays(propertyVariants, dynamicPropertiesOfClass, Object.class);
       }
     }

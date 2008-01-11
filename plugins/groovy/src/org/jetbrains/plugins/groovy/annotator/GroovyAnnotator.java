@@ -46,8 +46,8 @@ import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicReferenceUtils;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicPropertyBase;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyRealBase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
@@ -684,19 +684,18 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refExpr, annotation);
       }
 
-//todo please, fix java.lang.IllegalArgumentException in GSP
-/*
-      if (isNeedsAddDynPropertiesAnnotation(refExpr)) {
+      if (isNeedsAddDynPropertiesAnnotation(refExpr) && refExpr.resolve() == null) {
+        annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
         addDynPropertyAnnotation(annotation, refExpr);
       }
-*/
-      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
+
+//      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
 
       //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
     }
   }
 
-  private boolean isNeedsAddDynPropertiesAnnotation(GrReferenceExpression referenceExpression) {
+  private boolean isNeedsAddDynPropertiesAnnotation(@NotNull GrReferenceExpression referenceExpression) {
     PsiClass containingClass = DynamicReferenceUtils.findDynamicValueContainingClass(referenceExpression);
     final PsiFile containingFile = referenceExpression.getContainingFile();
 
@@ -711,7 +710,10 @@ public class GroovyAnnotator implements Annotator {
     if (module == null) return false;
     if (containingClass == null) return false;
 
-    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(referenceExpression, module.getName(), containingClass.getQualifiedName(), referenceExpression.getName());
+    final String className = containingClass.getQualifiedName();
+    if (className == null) return false;
+
+    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(referenceExpression, module.getName(), className, referenceExpression.getName());
     if (propertyElement != null) return false;
 
     final Set<PsiClass> supers = GroovyUtils.findAllSupers(containingClass);
@@ -738,8 +740,8 @@ public class GroovyAnnotator implements Annotator {
 
     if (module == null) return;
 
-    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
-    annotation.registerFix(new DynamicPropertyIntention(dynamicProperty, referenceExpression));
+    DynamicPropertyReal dynamicPropertyReal = new DynamicPropertyRealBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
+    annotation.registerFix(new DynamicPropertyIntention(dynamicPropertyReal, referenceExpression));
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {

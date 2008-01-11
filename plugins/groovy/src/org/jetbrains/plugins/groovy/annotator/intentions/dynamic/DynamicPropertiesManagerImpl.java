@@ -13,9 +13,10 @@ import com.intellij.psi.PsiClassType;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.DynamicProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.*;
-import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement.PROPERTY_NAME_ATTRIBUTE;
+import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -31,6 +32,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
   private final Project myProject;
   private Map<Module, File> myPathsToXmls;
+  private List<DynamicPropertyChangeListener> myListeners = new ArrayList<DynamicPropertyChangeListener>();
 
   public DynamicPropertiesManagerImpl(Project project) {
     myProject = project;
@@ -114,21 +116,21 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  public DynamicProperty addDynamicProperty(final DynamicProperty dynamicProperty) {
-    final String moduleName = dynamicProperty.getModuleName();
+  public DynamicPropertyVirtual addDynamicProperty(final DynamicPropertyVirtual dynamicPropertyVirtual) {
+    final String moduleName = dynamicPropertyVirtual.getModuleName();
 
     Document document = loadModuleDynXML(moduleName);
     Element rootElement = document.getRootElement();
 
-    final Element propertyElement = findConcreateDynamicProperty(rootElement, dynamicProperty.getContainingClassQualifiedName(), dynamicProperty.getPropertyName());
+    final Element propertyElement = findConcreateDynamicProperty(rootElement, dynamicPropertyVirtual.getContainingClassQualifiedName(), dynamicPropertyVirtual.getPropertyName());
 
     if (propertyElement == null) {
-      final Element dynPropertyTypeElement = findDynamicPropertyClassElement(rootElement, dynamicProperty.getContainingClassQualifiedName());
+      final Element dynPropertyTypeElement = findDynamicPropertyClassElement(rootElement, dynamicPropertyVirtual.getContainingClassQualifiedName());
 
       if (dynPropertyTypeElement == null) {
-        rootElement.addContent(new DPContainigClassElement(dynamicProperty));
+        rootElement.addContent(new DPContainingClassElement(dynamicPropertyVirtual));
       } else {
-        dynPropertyTypeElement.addContent(new DPPropertyElement(dynamicProperty));
+        dynPropertyTypeElement.addContent(new DPPropertyElement(dynamicPropertyVirtual));
       }
     }
 
@@ -150,7 +152,9 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
       }
     }
 
-    return dynamicProperty;
+    fireChange();
+
+    return dynamicPropertyVirtual;
   }
 
   private Document loadModuleDynXML(String moduleName) {
@@ -170,7 +174,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  public DynamicProperty removeDynamicProperty(DynamicProperty dynamicProperty) {
+  public DynamicPropertyReal removeDynamicProperty(DynamicPropertyReal dynamicPropertyReal) {
     return null;
   }
 
@@ -234,11 +238,89 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     return result.toArray(new String[0]);
   }
 
+  @NotNull
+  public String findDynamicPropertyType(String moduleName, String className, String propertyName) {
+    final Element dynamicProperty = findConcreateDynamicProperty(getRootElement(moduleName), className, propertyName);
+
+    if (dynamicProperty == null) return "";
+
+    final List types = dynamicProperty.getContent(DynamicFiltersFactory.createPropertyTypeTagFilter());
+
+    if (types == null || types.isEmpty()) return "";
+    final Object typeTag = types.get(0);
+
+    if (typeTag == null || !(typeTag instanceof Element)) return "";
+
+    return ((Element) typeTag).getText();
+  }
+
+  @NotNull
+  public DynamicPropertyVirtual[] getAllDynamicProperties(String moduleName) {
+    Set<DynamicPropertyVirtual> result = new HashSet<DynamicPropertyVirtual>();
+    Document document = loadModuleDynXML(moduleName);
+
+    final List definedContainingClasses = document.getRootElement().getContent(DynamicFiltersFactory.createContainingClassTagFilter());
+
+    for (Object definedContainingClass : definedContainingClasses) {
+      final Element containingClass = (Element) definedContainingClass;
+
+      final String qualifiedName = containingClass.getAttributeValue(CONTAINIG_CLASS_TYPE_ATTRIBUTE);
+      final List propertyTags = containingClass.getContent(DynamicFiltersFactory.createPropertyTagFilter());
+
+      for (Object propertyTag : propertyTags) {
+        final String propertyName = ((Element) propertyTag).getAttributeValue(PROPERTY_NAME_ATTRIBUTE);
+        final String propertyType = findDynamicPropertyType(moduleName, qualifiedName, propertyName);
+        result.add(new DynamicPropertyVirtual(propertyName, qualifiedName, moduleName, propertyType));
+      }
+    }
+
+    return result.toArray(DynamicPropertyVirtual.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  public Set<String> getAllContainingClasses(String moduleName) {
+    final Element root = getRootElement(moduleName);
+    Set<String> result = new HashSet<String>();
+
+    final List definedContainingClasses = root.getContent(DynamicFiltersFactory.createContainingClassTagFilter());
+    for (Object definedContainingClass : definedContainingClasses) {
+      if (!(definedContainingClass instanceof Element)) continue;
+
+      result.add(((Element) definedContainingClass).getAttributeValue(CONTAINIG_CLASS_TYPE_ATTRIBUTE));
+    }
+
+    return result;
+  }
+
   public void fireChangeDynamicPropertyEnviroment() {
     //TODO this
     //change package
     //rename property
     // ... etc
+  }
+
+  public Element getRootElement(String moduleName) {
+    return loadModuleDynXML(moduleName).getRootElement();
+  }
+
+  /*
+  * Adds dynamicPropertyChange listener
+  */
+  public void addDynamicChangeListener(DynamicPropertyChangeListener listener) {
+    myListeners.add(listener);
+  }
+
+  /*
+  * Removes dynamicPropertyChange listener
+  */
+  public void removeDynamicChangeListener(DynamicPropertyChangeListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public void fireChange(){
+    for (DynamicPropertyChangeListener listener : myListeners) {
+      listener.dynamicPropertyChange();
+    }
   }
 
   @Nullable
