@@ -20,7 +20,10 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -122,7 +125,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     myInternalJres.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
         if (myFreeze) return;
-        final ProjectJdk javaJdk = (ProjectJdk)e.getItem();
+        final Sdk javaJdk = (Sdk)e.getItem();
         for (OrderRootType type : OrderRootType.getAllTypes()) {
           final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
           final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);

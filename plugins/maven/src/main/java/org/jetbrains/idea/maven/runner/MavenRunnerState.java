@@ -18,8 +18,8 @@
 
 package org.jetbrains.idea.maven.runner;
 
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -117,7 +117,7 @@ public class MavenRunnerState implements Cloneable {
   public List<Pair<String, String>> collectJdkNamesAndDescriptions() {
     List<Pair<String, String>> result = new ArrayList<Pair<String, String>>();
 
-    for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       String name = projectJdk.getName();
       result.add(new Pair<String, String>(name, name));
     }

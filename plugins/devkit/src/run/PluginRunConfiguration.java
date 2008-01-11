@@ -27,10 +27,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -77,12 +76,12 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    final ProjectJdk jdk = ModuleJdkUtil.getJdk(rootManager);
+    final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
     if (jdk == null) {
       throw CantRunException.noJdkForModule(getModule());
     }
 
-    final ProjectJdk ideaJdk = IdeaJdk.findIdeaJdk(jdk);
+    final Sdk ideaJdk = IdeaJdk.findIdeaJdk(jdk);
     if (ideaJdk == null) {
       throw new ExecutionException(DevKitBundle.message("jdk.type.incorrect.common"));
     }
@@ -137,20 +136,8 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         params.getClassPath().addFirst(libPath + File.separator + "bootstrap.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea_rt.jar");
-        params.getClassPath().addFirst(ideaJdk.getToolsPath());
+        params.getClassPath().addFirst(ideaJdk.getSdkType().getToolsPath(ideaJdk));
 
-        Sdk run = jdk;
-        while(ideaJdk != run) {
-          assert run != null;
-          if (run instanceof ProjectJdk) {
-            final String rtLibPath = ((ProjectJdk)run).getRtLibraryPath();
-            if (rtLibPath != null) {
-              params.getClassPath().addFirst(rtLibPath);
-            }
-          }
-          run = run.getSdkType().getEncapsulatedSdk(run);
-        }
-        
         params.setMainClass("com.intellij.idea.Main");
 
         return params;
@@ -162,7 +149,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     return state;
   }
 
-  private void fillParameterList(ParametersList list, String value) {
+  private static void fillParameterList(ParametersList list, String value) {
     final String[] parameters = value != null ? value.split(" ") : null;
     for (int i = 0; parameters != null && i < parameters.length; i++) {
       if (parameters[i] != null && parameters[i].length() > 0){
@@ -184,7 +171,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    final ProjectJdk jdk = ModuleJdkUtil.getJdk(rootManager);
+    final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
     if (jdk == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("jdk.no.specified", moduleName));
     }

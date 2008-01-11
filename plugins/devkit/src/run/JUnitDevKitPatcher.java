@@ -19,7 +19,7 @@ import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -37,7 +37,7 @@ import java.io.IOException;
 public class JUnitDevKitPatcher extends JUnitPatcher{
 
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
-    ProjectJdk jdk = javaParameters.getJdk();
+    Sdk jdk = javaParameters.getJdk();
     jdk = IdeaJdk.findIdeaJdk(jdk);
     if (jdk == null) return;
 
@@ -64,11 +64,11 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
 
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
-    javaParameters.getClassPath().addFirst(jdk.getToolsPath());
+    javaParameters.getClassPath().addFirst(jdk.getSdkType().getToolsPath(jdk));
   }
 
   @Nullable
-  private static String getSandboxPath(final ProjectJdk jdk) {
+  private static String getSandboxPath(final Sdk jdk) {
     String sandboxHome = ((Sandbox)jdk.getSdkAdditionalData()).getSandboxHome();
     if (sandboxHome != null) {
       try {

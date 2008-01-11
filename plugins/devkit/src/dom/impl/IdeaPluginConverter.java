@@ -4,10 +4,10 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -75,7 +75,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
         }
       }
 
-      final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
       if (jdk != null && jdk.getSdkType() instanceof IdeaJdk) {
         final VirtualFile pluginsHome = jdk.getHomeDirectory().findChild("plugins");
         final VirtualFile[] plugins = pluginsHome != null ? pluginsHome.getChildren() : VirtualFile.EMPTY_ARRAY;

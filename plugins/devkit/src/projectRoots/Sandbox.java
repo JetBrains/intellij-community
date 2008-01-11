@@ -17,7 +17,10 @@ package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -105,7 +108,7 @@ public class Sandbox implements SdkAdditionalData, JDOMExternalizable{
         myJavaSdkName = null;
       }
       else {
-        for (ProjectJdk jdk : jdkTable.getAllJdks()) {
+        for (Sdk jdk : jdkTable.getAllJdks()) {
           if (IdeaJdk.isValidInternalJdk(myCurrentJdk, jdk)) {
             myJavaSdk = jdk;
             break;

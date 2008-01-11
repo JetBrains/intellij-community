@@ -120,10 +120,10 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   }
 
   @Nullable
-  private static ProjectJdk getInternalJavaSdk(final Sdk sdk) {
+  private static Sdk getInternalJavaSdk(final Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof Sandbox) {
-      return (ProjectJdk)((Sandbox)data).getJavaSdk();
+      return ((Sandbox)data).getJavaSdk();
     }
     return null;
   }
@@ -339,8 +339,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   private static void addDocs(SdkModificator sdkModificator, final Sdk javaSdk) {
     if (!addOrderEntries(JavadocOrderRootType.INSTANCE, javaSdk, sdkModificator) &&
         SystemInfo.isMac){
-      ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
-      for (ProjectJdk jdk : jdks) {
+      Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
+      for (Sdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
           addOrderEntries(JavadocOrderRootType.INSTANCE, jdk, sdkModificator);
           break;
@@ -353,8 +353,8 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
     if (javaSdk != null) {
       if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)){
         if (SystemInfo.isMac) {
-          ProjectJdk [] jdks = ProjectJdkTable.getInstance().getAllJdks();
-          for (ProjectJdk jdk : jdks) {
+          Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
+          for (Sdk jdk : jdks) {
             if (jdk.getSdkType() instanceof JavaSdk) {
               addOrderEntries(OrderRootType.SOURCES, jdk, sdkModificator);
               break;
@@ -428,9 +428,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
 
   @Nullable
   public String getToolsPath(Sdk sdk) {
-    final ProjectJdk jdk = getInternalJavaSdk(sdk);
+    final Sdk jdk = getInternalJavaSdk(sdk);
     if (jdk != null && jdk.getVersionString() != null){
-      return jdk.getToolsPath();
+      return jdk.getSdkType().getToolsPath(jdk);
     }
     return null;
   }
@@ -439,15 +439,6 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public String getVMExecutablePath(Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk == null ? null : JavaSdk.getInstance().getVMExecutablePath(internalJavaSdk);
-  }
-
-  @Nullable
-  public String getRtLibraryPath(Sdk sdk) {
-    final ProjectJdk jdk = getInternalJavaSdk(sdk);
-    if (jdk != null && jdk.getVersionString() != null){
-      return jdk.getRtLibraryPath();
-    }
-    return null;
   }
 
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
@@ -486,14 +477,9 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public void disposeComponent() {}
 
   @Nullable
-  public static ProjectJdk findIdeaJdk(@Nullable ProjectJdk jdk) {
+  public static Sdk findIdeaJdk(@Nullable Sdk jdk) {
     if (jdk == null) return null;
-
-    while(true) {
-      if (jdk.getSdkType() instanceof IdeaJdk) return jdk;
-      final Sdk encapsulated = jdk.getSdkType().getEncapsulatedSdk(jdk);
-      if (!(encapsulated instanceof ProjectJdk)) return null;
-      jdk = (ProjectJdk)encapsulated;
-    }
+    if (jdk.getSdkType() instanceof IdeaJdk) return jdk;
+    return null;
   }
 }

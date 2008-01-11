@@ -27,7 +27,7 @@ import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleJdkUtil;
@@ -160,7 +160,7 @@ public class TestNGRunnableState extends JavaCommandLineState
 
     // Configure rest of jars
     JavaParametersUtil.configureConfiguration(javaParameters, config);
-    ProjectJdk jdk =
+    Sdk jdk =
         module == null ? ProjectRootManager.getInstance(project).getProjectJdk() : ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     javaParameters.setJdk(jdk);
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);

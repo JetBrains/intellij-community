@@ -21,16 +21,16 @@ package org.jetbrains.idea.maven.runner.executor;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.runner.RunnerBundle;
-import org.jetbrains.idea.maven.runner.MavenRunnerState;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
+import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.RunnerBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public class MavenExternalParameters {
   }
 
   @NotNull
-  private static ProjectJdk getJdk(final String name) throws ExecutionException {
+  private static Sdk getJdk(final String name) throws ExecutionException {
     if (name.equals(MavenRunnerState.USE_INTERNAL_JAVA)) {
       return ProjectJdkTable.getInstance().getInternalJdk();
     }
@@ -84,14 +84,14 @@ public class MavenExternalParameters {
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }
-      final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
+      final Sdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
       if (jdk == null) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.invalid", javaHome));
       }
       return jdk;
     }
 
-    for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName().equals(name)) {
         return projectJdk;
       }

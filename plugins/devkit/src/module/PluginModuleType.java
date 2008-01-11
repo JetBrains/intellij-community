@@ -22,9 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
@@ -74,7 +74,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
     steps.add(stepFactory.createSourcePathsStep(wizardContext, moduleBuilder, ADD_PLUGIN_MODULE_ICON, "project.creatingModules.page3"));
     steps.add(stepFactory.createProjectJdkStep(wizardContext, ApplicationManager.getApplication().getComponent(IdeaJdk.class), moduleBuilder, new Computable<Boolean>() {
       public Boolean compute() {
-        final ProjectJdk projectJdk = wizardContext.getProjectJdk();
+        final Sdk projectJdk = wizardContext.getProjectJdk();
         return IdeaJdk.findIdeaJdk(projectJdk) == null ? Boolean.TRUE : Boolean.FALSE;
       }
     }, ADD_PLUGIN_MODULE_ICON, "plugin.creation"));
@@ -130,7 +130,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public static List<Module> getCandidateModules(Module module) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
 
-    final ProjectJdk jdk = ModuleJdkUtil.getJdk(manager);
+    final Sdk jdk = ModuleJdkUtil.getJdk(manager);
     // don't allow modules that don't use an IDEA-JDK
     if (IdeaJdk.findIdeaJdk(jdk) == null) {
       return Collections.emptyList();
