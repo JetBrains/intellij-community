@@ -36,7 +36,7 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   private String myCompilerOutputForTests;
   private VirtualFilePointer myCompilerOutputPathForTestsPointer;
 
-  private boolean myInheritedCompilerOutput;
+  private boolean myInheritedCompilerOutput = true;
   private boolean myExcludeOutput = true;
   private Module myModule;
 
