@@ -807,7 +807,10 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (info == null) {
       info = new DirectoryInfo();
       myDirToInfoMap.put(dir, info);
-      putInfoById(((NewVirtualFile)dir).getId(), info);
+      if (dir instanceof NewVirtualFile) {
+        // need this check to filter out deprecated virtual file implementations
+        putInfoById(((NewVirtualFile)dir).getId(), info);
+      }
     }
     return info;
   }
