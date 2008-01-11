@@ -689,8 +689,6 @@ public class GroovyAnnotator implements Annotator {
       }
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
 
-//      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
-
       //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
     }
   }

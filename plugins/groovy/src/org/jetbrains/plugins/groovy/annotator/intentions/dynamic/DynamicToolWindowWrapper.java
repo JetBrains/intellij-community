@@ -58,7 +58,7 @@ public class DynamicToolWindowWrapper {
     myPanel = new JPanel(new BorderLayout());
     myPanel.setBackground(UIUtil.getFieldForegroundColor());
 
-    final DynamicFilterComponent filter = new DynamicFilterComponent(GroovyBundle.message("dynamic.toolwindow.property"), 10);
+    final DynamicFilterComponent filter = new DynamicFilterComponent(GroovyBundle.message("dynamic.toolwindow.property.fiter"), 10);
     filter.setBackground(UIUtil.getLabelBackground());
 
 //    myPanel.add(new Label(GroovyBundle.message("dynamic.toolwindow.search.property")), BorderLayout.NORTH);
