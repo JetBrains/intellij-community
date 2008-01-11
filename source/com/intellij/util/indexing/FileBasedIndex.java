@@ -193,6 +193,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     for (Disposable disposable : myDisposables) {
       disposable.dispose();
     }
+    myDisposables.clear();
+    myFlushStorages.clear();
   }
 
   public FileBasedIndexState getState() {

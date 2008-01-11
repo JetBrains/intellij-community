@@ -1,6 +1,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -11,8 +12,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -23,8 +22,14 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private final PersistentHashMap<Key, ValueContainerImpl<Value>> myMap;
   private final ObjectCache<Key, ValueContainerImpl<Value>> myCache;
   private Key myKeyBeingRemoved = null;
-  private Set<Key> myFlushedKeys = null;
   
+  private Alarm myCacheFlushingAlarm  = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Runnable myFlushCachesRequest = new Runnable() {
+    public void run() {
+      flush();
+    }
+  };
+
   //private final LinkedHashMap<Key, ValueContainerImpl<Value>> myUnsavedItems = new LinkedHashMap<Key, ValueContainerImpl<Value>>();
   //private final Object myPersistenceLock = new Object();
 
@@ -46,13 +51,6 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
           // No need to save it, because the cache contains the most recent data for the key.
           return;
         }
-        if (myFlushedKeys != null) {
-          if (myFlushedKeys.contains(_key)) {
-            return; // already flushed
-          }
-          myFlushedKeys.add(_key);
-        }
-        
         try {
           //myUniqueKeys.add(_key); // todo: for debugging only!!
           //noinspection unchecked
@@ -67,12 +65,12 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   
   public void flush() {
     //System.out.println("Cache hit rate = " + myCache.hitRate());
-    myFlushedKeys = new HashSet<Key>();
+    myCache.removeAll();
     try {
-      myCache.removeAll();
+      myMap.flush();
     }
-    finally {
-      myFlushedKeys = null;
+    catch (IOException e) {
+      LOG.error(e);
     }
     //System.out.println("Found " + myUniqueKeys.size() + " unique keys");
     //myUniqueKeys.clear();
@@ -96,16 +94,10 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       return container;
     }
     return readAndCache(key);
-    //return _load(key);
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    ValueContainerImpl<Value> container = myCache.get(key);
-    if (container == null) {
-      container = readAndCache(key);
-    }
-    container.addValue(inputId, value);
-    //_saveValue(key, inputId, value);
+    ((ValueContainerImpl<Value>)read(key)).addValue(inputId, value);
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
@@ -114,7 +106,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       if (container == null) {
         container = myMap.get(key);
         if (container != null) {
-          myCache.cacheObject(key, container);
+          cacheObject(key, container);
         }
       }
       if (container != null) {
@@ -124,7 +116,12 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     catch (IOException e) {
       throw new StorageException(e);
     }
-    //_removeValue(key, inputId, value);
+  }
+
+  private void cacheObject(final Key key, final ValueContainerImpl<Value> value) {
+    myCache.cacheObject(key, value);
+    myCacheFlushingAlarm.cancelAllRequests();
+    myCacheFlushingAlarm.addRequest(myFlushCachesRequest, 15000 /* 15 sec */);
   }
 
   @NotNull
@@ -134,7 +131,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       if (value == null) {
         value = new ValueContainerImpl<Value>();
       }
-      myCache.cacheObject(key, value);
+      cacheObject(key, value);
       return value;
     }
     catch (IOException e) {
@@ -142,39 +139,10 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
   }
 
-  /*
-  @NotNull
-  private ValueContainerImpl<Value> cachedRead(final Key key) throws StorageException {
-    synchronized (myCache) {
-      final ValueContainerImpl<Value> container = myCache.get(key);
-      if (container != null) {
-        return container;
-      }
-    }
-    try {
-      ValueContainerImpl<Value> valueContainer = myMap.get(key);
-      if (valueContainer == null) {
-        valueContainer = new ValueContainerImpl<Value>();
-      }
-      synchronized (myCache) {
-        myCache.cacheObject(key, valueContainer);
-      }
-      return valueContainer;
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-  }
-  */
-
   public void remove(final Key key) throws StorageException {
-    //_remove(key);
     myKeyBeingRemoved = key;
     try {
-      do {
-        myCache.remove(key);
-      }
-      while (myCache.isCached(key));
+      myCache.remove(key);
       myMap.remove(key);
     }
     catch (IOException e) {
@@ -200,121 +168,4 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       return new ValueContainerImpl<T>(in, myExternalizer);
     }
   }
-
-  /*
-  private void _saveValue(Key key, int inputId, Value value) throws StorageException {
-    synchronized (myPersistenceLock) {
-      final ValueContainerImpl<Value> valueContainer = myUnsavedItems.get(key);
-      if (valueContainer != null) {
-        valueContainer.addValue(inputId, value);
-        return;
-      }
-    }
-    final ValueContainerImpl<Value> valueContainer = cachedRead(key);
-    valueContainer.addValue(inputId, value);
-    scheduleSave(key, valueContainer);
-  }
-
-  private void _removeValue(Key key, int inputId, Value value) throws StorageException {
-    synchronized (myPersistenceLock) {
-      final ValueContainerImpl<Value> valueContainer = myUnsavedItems.get(key);
-      if (valueContainer != null) {
-        valueContainer.removeValue(inputId, value);
-        return;
-      }
-    }
-    final ValueContainerImpl<Value> valueContainer = cachedRead(key);
-    valueContainer.removeValue(inputId, value);
-    scheduleSave(key, valueContainer);
-  }
-
-  private PersistenceTask myCurrentTask = null;
-  private void scheduleSave(final Key key, final ValueContainerImpl<Value> valueContainer) {
-    synchronized (myPersistenceLock) {
-      myUnsavedItems.put(key, valueContainer);
-      if (myCurrentTask == null) {
-        myCurrentTask = new PersistenceTask();
-        ApplicationManager.getApplication().executeOnPooledThread(myCurrentTask);
-      }
-    }
-  }
-
-  private ValueContainerImpl<Value> _load(Key key) throws StorageException {
-    synchronized (myPersistenceLock) {
-      final ValueContainerImpl<Value> container = myUnsavedItems.get(key);
-      if (container != null) {
-        return container;
-      }
-    }
-    return cachedRead(key);
-  }
-
-  private void _remove(Key key) throws StorageException {
-    synchronized (myPersistenceLock) {
-      myUnsavedItems.remove(key);
-    }
-    synchronized (myCache) {
-      myCache.remove(key);
-    }
-    try {
-      myMap.remove(key);
-    }
-    catch (IOException e) {
-      throw new StorageException(e);
-    }
-  }
-  
-  private final class PersistenceTask implements Runnable {
-    public void run() {
-      boolean shouldStop = false;
-      while (true) {
-        Key key = null;
-        ValueContainerImpl<Value> container = null;
-        synchronized (myPersistenceLock) {
-          final Iterator<Key> it = myUnsavedItems.keySet().iterator();
-          if (it.hasNext()) {
-            key = it.next();
-            final ValueContainerImpl<Value> _container = myUnsavedItems.get(key);
-            final boolean isCached;
-            synchronized (myCache) {
-              isCached = myCache.isCached(key);
-            }
-            container = isCached ? _container.clone() : _container; // need clone to avoid concurrent data access exception
-            it.remove();
-          }
-          else {
-            if (shouldStop) {
-              myCurrentTask = null;
-              break;
-            }
-          }
-        }
-        
-        if (key == null) {
-          shouldStop = true;
-          try {
-            Thread.sleep(5000);
-          }
-          catch (InterruptedException ignored) {
-          }
-        }
-        else {
-          shouldStop = false;
-          try {
-            if (container.size() > 0) {
-              myMap.put(key, container);
-            }
-            else {
-              myMap.remove(key);
-            }
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
-      }
-    }
-  }
-  */
-  
 }
