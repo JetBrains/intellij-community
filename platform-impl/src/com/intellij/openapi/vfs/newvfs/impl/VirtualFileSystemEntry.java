@@ -223,7 +223,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void invalidate() {
-    myId = 0;
+    myId = -Math.abs(myId);
   }
 
   public Charset getCharset() {

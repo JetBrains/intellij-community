@@ -203,6 +203,10 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return (myRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
   }
 
+  public int getParent(final int id) {
+    return myRecords.getParent(id);
+  }
+
   private static boolean namesEqual(VirtualFileSystem fs, String n1, String n2) {
     return ((NewVirtualFileSystem)fs).isCaseSensitive() ? n1.equals(n2) : n1.equalsIgnoreCase(n2);
   }

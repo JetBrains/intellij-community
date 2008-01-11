@@ -53,14 +53,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  public static interface DataDescriptor<T> {
-    int getHashCode(T value);
-
-    boolean isEqual(final T val1, final T val2);
-
-    void save(DataOutput out, T value) throws IOException;
-
-    T read(DataInput in) throws IOException;
+  public static interface DataDescriptor<T> extends EqualityPolicy<T>, DataExternalizer<T> {
   }
   
   public PersistentEnumerator(File file, DataDescriptor<Data> dataDescriptor, int initialSize) throws IOException {

@@ -11,20 +11,21 @@ import java.io.*;
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
   private final Storage myValueStorage;
-  private final PersistentEnumerator.DataDescriptor<Value> myValueDescriptor;
+  private final DataExternalizer<Value> myValueExternalizer;
   @NonNls public static final String DATA_FILE_EXTENSION = ".values";
 
-  public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, PersistentEnumerator.DataDescriptor<Value> valueDescriptor) throws IOException {
-    this(file, keyDescriptor, valueDescriptor, 1024 * 4);
+  public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
+    this(file, keyDescriptor, valueExternalizer, 1024 * 4);
   }
   
-  public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, PersistentEnumerator.DataDescriptor<Value> valueDescriptor, final int initialSize) throws IOException {
-    super(file, new DescriptorWrapper<Key>(keyDescriptor), 1024 * 4);
-    myValueDescriptor = valueDescriptor;
+  public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
+    super(file, new DescriptorWrapper<Key>(keyDescriptor), initialSize);
+    myValueExternalizer = valueExternalizer;
     
     final File dataFile = new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
     myValueStorage = Storage.create(dataFile.getPath());
   }
+  
   
   public synchronized void put(Key key, Value value) throws IOException {
     final int id = enumerate(key);
@@ -33,15 +34,16 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
       valueId = myValueStorage.createNewRecord();
       updateValueId(id, valueId);
     }
-    final Storage.StorageDataOutput output = myValueStorage.writeStream(valueId);
+    final Storage.StorageDataOutput record = myValueStorage.writeStream(valueId);
     try {
-      myValueDescriptor.save(output, value);
+      myValueExternalizer.save(record, value);
     }
     finally {
-      output.close();
+      record.close();
     }
   }
 
+  
   public synchronized Value get(Key key) throws IOException {
     final int id = tryEnumerate(key);
     if (id == NULL_ID) {
@@ -53,7 +55,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
     final DataInputStream input = myValueStorage.readStream(valueId);
     try {
-      return myValueDescriptor.read(input);
+      return myValueExternalizer.read(input);
     }
     finally {
       input.close();
