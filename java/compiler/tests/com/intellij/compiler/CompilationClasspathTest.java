@@ -91,9 +91,10 @@ public class CompilationClasspathTest extends CompilerTestCase{
           else {
             myTestsOutput = myClassesDir;
           }
-          CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPathForTests(myTestsOutput);
+          final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+          compilerModuleExtension.setCompilerOutputPathForTests(myTestsOutput);
           if (removeProductionOutput) {
-            CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPath((String)null);
+            compilerModuleExtension.setCompilerOutputPath((String)null);
           }
           rootModel.commit();
         }

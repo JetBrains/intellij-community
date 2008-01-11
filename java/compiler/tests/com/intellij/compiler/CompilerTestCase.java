@@ -399,8 +399,9 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     // configure source and output path
     final ContentEntry contentEntry = rootModel.addContentEntry(myModuleRoot);
     contentEntry.addSourceFolder(mySourceDir, false);
-    CompilerModuleExtension.getInstance(rootModel.getModule()).setCompilerOutputPath(myClassesDir);
-    rootModel.setExcludeOutput(shouldExcludeOutputFromProject());
+    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+    compilerModuleExtension.setCompilerOutputPath(myClassesDir);
+    compilerModuleExtension.setExcludeOutput(shouldExcludeOutputFromProject());
 
     // Mock JDK is used by default. Uncomment in order to use 'real' JDK if needed
     //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
