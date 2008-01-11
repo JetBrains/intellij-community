@@ -23,6 +23,8 @@ import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -220,5 +222,16 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     b.y += 100;
     b.height -= 200;
     return b;
+  }
+
+  @Nullable
+  public static IdeFrameImpl findFrame(@NotNull Component c) {
+    Component eachParent = c;
+    while (eachParent != null) {
+      if (eachParent instanceof IdeFrameImpl) return (IdeFrameImpl)eachParent;
+      eachParent = eachParent.getParent();
+    }
+
+    return null;
   }
 }
