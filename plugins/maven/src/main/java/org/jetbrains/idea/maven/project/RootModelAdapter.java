@@ -36,7 +36,7 @@ class RootModelAdapter {
     }
 
     ModuleJdkUtil.inheritJdk(myRootModel);
-    myRootModel.setExcludeOutput(true);
+    getCompilerExtension().setExcludeOutput(true);
 
     for (OrderEntry entry : myRootModel.getOrderEntries()) {
       if (!(entry instanceof ModuleSourceOrderEntry) && !(entry instanceof JdkOrderEntry)) {
@@ -100,7 +100,7 @@ class RootModelAdapter {
   }
 
   private CompilerModuleExtension getCompilerExtension() {
-    return CompilerModuleExtension.getInstance(myRootModel.getModule());
+    return myRootModel.getModuleExtension(CompilerModuleExtension.class);
   }
 
   private Url toUrl(String path) {
@@ -221,7 +221,7 @@ class RootModelAdapter {
 
   public void setLanguageLevel(final LanguageLevel languageLevel) {
     try {
-      LanguageLevelModuleExtension.getInstance(myRootModel.getModule()).setLanguageLevel(languageLevel);
+      myRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(languageLevel);
     }
     catch (IllegalArgumentException e) {
       //bad value was stored

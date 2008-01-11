@@ -36,7 +36,7 @@ public class GenerateAntTest extends IdeaTestCase {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
         final VirtualFile parent = myModule.getModuleFile().getParent();
         assertTrue(parent != null);
-        CompilerModuleExtension.getInstance(model.getModule()).setCompilerOutputPath(parent.getUrl() + "/classes");
+        model.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(parent.getUrl() + "/classes");
         model.commit();
       }
     });
