@@ -17,6 +17,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
@@ -446,5 +447,10 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
   @Nullable
   public LanguageDialect getLanguageDialect() {
     return null;
+  }
+
+  @Override
+  public PsiElement getContext() {
+    return FileContextUtil.getFileContext(this);
   }
 }
