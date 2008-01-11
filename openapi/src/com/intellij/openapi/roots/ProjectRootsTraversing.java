@@ -49,6 +49,9 @@ public class ProjectRootsTraversing {
   public static final RootTraversePolicy FULL_CLASSPATH_WITHOUT_TESTS =
     new RootTraversePolicy(RootTraversePolicy.GENERAL_OUTPUT, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
 
+  public static final RootTraversePolicy FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS =
+    new RootTraversePolicy(RootTraversePolicy.GENERAL_OUTPUT, null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
+
   public static final RootTraversePolicy PROJECT_LIBRARIES =
     new RootTraversePolicy(null, null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
 
