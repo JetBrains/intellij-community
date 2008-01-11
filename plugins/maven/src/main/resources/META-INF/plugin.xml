@@ -9,9 +9,14 @@
     <![CDATA[]]>
   </change-notes>
   <idea-version since-build="6800"/>
+
   <extensionPoints>
     <extensionPoint name="facetImporter" interface="org.jetbrains.idea.maven.project.FacetImporter"/>
   </extensionPoints>
+
+  <depends optional="true" config-file="gwt-support.xml">com.intellij.gwt</depends>
+  <depends optional="true" config-file="jee-support.xml">com.intellij.javaee</depends>
+
   <extensions xmlns="com.intellij">
     <projectImportProvider implementation="org.jetbrains.idea.maven.project.action.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.project.action.MavenProjectOpenProcessor"/>
@@ -21,6 +26,7 @@
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
+
   <application-components>
     <component>
       <implementation-class>org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType</implementation-class>
