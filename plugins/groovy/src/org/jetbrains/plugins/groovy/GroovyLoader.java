@@ -55,7 +55,7 @@ import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
-import org.jetbrains.plugins.groovy.editor.GroovyLiteralSelectioner;
+import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.grails.GrailsLoader;
 
 import java.util.HashSet;

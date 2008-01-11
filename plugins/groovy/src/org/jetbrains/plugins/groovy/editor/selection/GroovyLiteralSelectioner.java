@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.editor;
+package org.jetbrains.plugins.groovy.editor.selection;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
