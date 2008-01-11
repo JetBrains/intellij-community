@@ -81,9 +81,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   void initModule(final Module module) {
     super.initModule(module);
 
-    if (myMockJdkLevel == MockJdkLevel.jdk15) {
-      LanguageLevelModuleExtension.getInstance(module).setLanguageLevel(LanguageLevel.JDK_1_5);
-    }
+
 
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     final LibraryTable libraryTable = model.getModuleLibraryTable();
@@ -125,6 +123,9 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
           break;
       }
       ModuleJdkUtil.setJdk(model, projectJdk);
+    }
+    if (myMockJdkLevel == MockJdkLevel.jdk15) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);
     }
     model.commit();
   }

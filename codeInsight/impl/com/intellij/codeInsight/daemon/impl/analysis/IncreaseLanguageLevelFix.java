@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -56,7 +57,13 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
     ProjectJdk jdk = getRelevantJdk(project, module);
     if (moduleLevel != null && isJdkSupportsLevel(jdk)) {
-      LanguageLevelModuleExtension.getInstance(module).setLanguageLevel(myLevel);
+      final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
+      rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        public void run() {
+          rootModel.commit();
+        }
+      });
     }
     else {
       LanguageLevelProjectExtension.getInstance(project).setLanguageLevel(myLevel);

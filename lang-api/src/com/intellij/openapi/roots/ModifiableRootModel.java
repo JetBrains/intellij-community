@@ -134,11 +134,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   @NotNull String[] getOrderedRootUrls(OrderRootType type);
 
-  boolean isExcludeOutput();
-
   boolean isExcludeExplodedDirectory();
-
-  void setExcludeOutput(boolean excludeOutput);
 
   void setExcludeExplodedDirectory(boolean excludeExplodedDir);
 

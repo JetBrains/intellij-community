@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ClonableOrderEntry;
-import com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
@@ -723,9 +722,9 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
                 ModuleJdkUtil.setJdk(modifiableRootModel, ModuleJdkUtil.getJdk(rootModel));
               }
 
-              CompilerModuleExtensionImpl.getInstance(modifiableRootModel.getModule()).inheritCompilerOutputPath(true);
+              modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);
 
-              LanguageLevelModuleExtension.getInstance(modifiableRootModel.getModule()).setLanguageLevel(LanguageLevelModuleExtension.getInstance(rootModel.getModule()).getLanguageLevel());
+              modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevelModuleExtension.getInstance(rootModel.getModule()).getLanguageLevel());
 
               for (OrderEntry entry : rootModel.getOrderEntries()) {
                 if (entry instanceof JdkOrderEntry) continue;

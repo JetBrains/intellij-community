@@ -1,6 +1,7 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -115,21 +116,24 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   private ExcludeFolder[] calculateExcludeFolders() {
-    if (!myRootModel.isExcludeOutput() && !myRootModel.isExcludeExplodedDirectory() && myExcludedOutputFolders.isEmpty()) { // optimization
+    final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
+    final CompilerModuleExtension compilerModuleExtension = myRootModel.getModuleExtension(CompilerModuleExtension.class);
+    final boolean excludeOutput = compilerModuleExtension.isExcludeOutput();
+    if (!excludeOutput && !myRootModel.isExcludeExplodedDirectory() && myExcludedOutputFolders.isEmpty()) { // optimization
       return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
     }
-    final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
+
     result.addAll(myExcludedOutputFolders);
-    if (myRootModel.isExcludeOutput()) {
-      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(myRootModel.getModule());
+    if (excludeOutput) {
       if (!compilerModuleExtension.isCompilerOutputPathInherited()) {
         addExcludeForOutputPath(compilerModuleExtension.getCompilerOutputPointer(), result);
         addExcludeForOutputPath(compilerModuleExtension.getCompilerOutputForTestsPointer(), result);
       } else {
-        CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myRootModel.getModule().getProject());
+        final Project project = myRootModel.getModule().getProject();
+        final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(project);
         final String outputUrl = compilerProjectExtension.getCompilerOutputUrl();
         if (outputUrl != null){
-          if (new File(VfsUtil.urlToPath(outputUrl)).exists()){
+          if (new File(VfsUtil.urlToPath(outputUrl)).exists()) {
             addExcludeForOutputPath(compilerProjectExtension.getCompilerOutputPointer(), result);
           }
         }

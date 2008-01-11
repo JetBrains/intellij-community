@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.impl.watcher.OrderEntryProperties;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -49,7 +50,7 @@ public class RootModelImpl implements ModifiableRootModel {
   ArrayList<RootModelComponentBase> myComponents = new ArrayList<RootModelComponentBase>();
   private List<VirtualFilePointer> myPointersToDispose = new ArrayList<VirtualFilePointer>();
 
-  private boolean myExcludeOutput;
+
   private boolean myExcludeExploded;
 
 
@@ -57,11 +58,13 @@ public class RootModelImpl implements ModifiableRootModel {
   @NonNls private static final String EXPLODED_TAG = "exploded";
   @NonNls private static final String ATTRIBUTE_URL = "url";
   @NonNls private static final String URL_ATTR = ATTRIBUTE_URL;
-  @NonNls private static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
+
   @NonNls private static final String EXCLUDE_EXPLODED_TAG = "exclude-exploded";
 
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
+
+  private final Set<ModuleExtension> myExtensions = new HashSet<ModuleExtension>();
 
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
 
@@ -101,6 +104,10 @@ public class RootModelImpl implements ModifiableRootModel {
     addSourceOrderEntries();
     myOrderEntryProperties = new OrderEntryProperties();
     myModuleLibraryTable = new ModuleLibraryTable(this, myProjectRootManager, myFilePointerManager);
+
+    for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
+      myExtensions.add(extension.getModifiableModel(false));
+    }
   }
 
   private void addSourceOrderEntries() {
@@ -141,7 +148,7 @@ public class RootModelImpl implements ModifiableRootModel {
       myOrderEntries.add(new ModuleSourceOrderEntryImpl(this));
     }
 
-    myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
+
     myExcludeExploded = element.getChild(EXCLUDE_EXPLODED_TAG) != null;
 
 
@@ -169,6 +176,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
     for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
       extension.readExternal(element);
+      myExtensions.add(extension.getModifiableModel(false));
     }
   }
 
@@ -197,7 +205,6 @@ public class RootModelImpl implements ModifiableRootModel {
     }
     myExplodedDirectory = rootModel.myExplodedDirectory;
 
-    myExcludeOutput = rootModel.myExcludeOutput;
     myExcludeExploded = rootModel.myExcludeExploded;
 
     final TreeSet<ContentEntry> thatContent = rootModel.myContent;
@@ -221,6 +228,12 @@ public class RootModelImpl implements ModifiableRootModel {
         container.addAll(otherContainer);
         myOrderRootPointerContainers.put(orderRootType, container);
       }
+    }
+
+   
+
+    for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
+      myExtensions.add(extension.getModifiableModel(writable));
     }
   }
 
@@ -450,6 +463,9 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void commit() {
+    for (ModuleExtension extension : myExtensions) {
+      extension.commit();
+    }
     myModuleRootManager.commitModel(this);
     myWritable = false;
   }
@@ -496,9 +512,6 @@ public class RootModelImpl implements ModifiableRootModel {
 
 
 
-    if (myExcludeOutput) {
-      element.addContent(new Element(EXCLUDE_OUTPUT_TAG));
-    }
 
     if (myExplodedDirectory != null) {
       final Element pathElement = new Element(EXPLODED_TAG);
@@ -673,7 +686,10 @@ public class RootModelImpl implements ModifiableRootModel {
       return true;
     }
 
-    if (myExcludeOutput != getSourceModel().myExcludeOutput) return true;
+    for (ModuleExtension moduleExtension : myExtensions) {
+      if (moduleExtension.isChanged()) return true;
+    }
+
     if (myExcludeExploded != getSourceModel().myExcludeExploded) return true;
 
     OrderEntry[] orderEntries = getOrderEntries();
@@ -802,8 +818,12 @@ public class RootModelImpl implements ModifiableRootModel {
 
   public void dispose() {
     assertWritable();
+    for (ModuleExtension extension : myExtensions) {
+      Disposer.dispose(extension);
+    }
     disposeModel();
     myWritable = false;
+    myExtensions.clear();
   }
 
   void disposeModel() {
@@ -821,11 +841,7 @@ public class RootModelImpl implements ModifiableRootModel {
     myDisposed = true;
   }
 
-  public boolean isExcludeOutput() { return myExcludeOutput; }
-
   public boolean isExcludeExplodedDirectory() { return myExcludeExploded; }
-
-  public void setExcludeOutput(boolean excludeOutput) { myExcludeOutput = excludeOutput; }
 
   public void setExcludeExplodedDirectory(boolean excludeExplodedDir) { myExcludeExploded = excludeExplodedDir; }
 
@@ -1010,5 +1026,11 @@ public class RootModelImpl implements ModifiableRootModel {
     return null;
   }
 
+  public <T> T getModuleExtension(final Class<T> klass) {
+    for (ModuleExtension extension : myExtensions) {
+      if (klass.isAssignableFrom(extension.getClass())) return (T)extension;
+    }
+    return null;
+  }
 }
 

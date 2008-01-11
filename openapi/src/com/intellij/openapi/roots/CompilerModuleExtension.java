@@ -4,7 +4,6 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -16,11 +15,7 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   @NonNls public static final String TEST = "test";
 
   public static CompilerModuleExtension getInstance(final Module module) {
-    final ModuleExtension[] extensions = Extensions.getExtensions(EP_NAME, module);
-    for (ModuleExtension extension : extensions) {
-      if (CompilerModuleExtension.class.isAssignableFrom(extension.getClass())) return (CompilerModuleExtension)extension;
-    }
-    return null;
+    return ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class);
   }
 
   /**
@@ -82,4 +77,8 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   public abstract VirtualFilePointer getCompilerOutputPointer();
 
   public abstract VirtualFilePointer getCompilerOutputForTestsPointer();
+
+  public abstract void setExcludeOutput(boolean exclude);
+
+  public abstract boolean isExcludeOutput();
 }

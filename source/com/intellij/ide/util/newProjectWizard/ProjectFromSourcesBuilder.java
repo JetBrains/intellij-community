@@ -11,7 +11,6 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -196,7 +195,8 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
   }
 
   private void setupRootModel(final ModuleDescriptor descriptor, final ModifiableRootModel rootModel, final Map<String, String> sourceRootToPrefixMap, final Map<LibraryDescriptor, Library> projectLibs) {
-    rootModel.setExcludeOutput(true);
+    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+    compilerModuleExtension.setExcludeOutput(true);
     ModuleJdkUtil.inheritJdk(rootModel);
 
     final Set<File> contentRoots = descriptor.getContentRoots();
@@ -221,9 +221,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
         }
       }
     }
-
-    CompilerModuleExtensionImpl.getInstance(rootModel.getModule()).inheritCompilerOutputPath(true);
-
+    compilerModuleExtension.inheritCompilerOutputPath(true);
     final LibraryTable moduleLibraryTable = rootModel.getModuleLibraryTable();
     for (LibraryDescriptor libDescriptor : myModuleInsight.getLibraryDependencies(descriptor)) {
       if (!isLibraryChosen(libDescriptor)) {

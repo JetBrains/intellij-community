@@ -303,6 +303,10 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
     return myRootModel.getRootUrls(rootType);
   }
 
+  public <T> T getModuleExtension(final Class<T> klass) {
+    return myRootModel.getModuleExtension(klass);
+  }
+
   public <R> R processOrder(RootPolicy<R> policy, R initialValue) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.processOrder(policy, initialValue);

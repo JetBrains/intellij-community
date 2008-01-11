@@ -137,4 +137,5 @@ public interface ModuleRootModel {
   @NotNull VirtualFile[] getRootPaths(OrderRootType rootType);
   @NotNull String[] getRootUrls(OrderRootType rootType);
 
+  <T> T getModuleExtension(Class<T> klass);
 }

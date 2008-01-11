@@ -4,7 +4,6 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.ProjectBundle;
@@ -14,6 +13,8 @@ import com.intellij.pom.java.LanguageLevel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * User: anna
@@ -25,11 +26,11 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   private JPanel myPanel = new JPanel(new GridBagLayout());
 
-  public Module myModule;
+  public LanguageLevelModuleExtension myLanguageLevelExtension;
 
 
   public LanguageLevelConfigurable(ModifiableRootModel rootModule) {
-    myModule = rootModule.getModule();
+    myLanguageLevelExtension = rootModule.getModuleExtension(LanguageLevelModuleExtension.class);
     init();
   }
 
@@ -39,37 +40,33 @@ public class LanguageLevelConfigurable implements UnnamedConfigurable {
 
   private void init() {
     myLanguageLevelCombo = new LanguageLevelCombo();
+    myLanguageLevelCombo.addActionListener(new ActionListener() {
+      public void actionPerformed(final ActionEvent e) {
+        final Object languageLevel = myLanguageLevelCombo.getSelectedItem();
+        myLanguageLevelExtension.setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
+      }
+    });
     myLanguageLevelCombo.insertItemAt(LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL, 0);
     myPanel.add(new JLabel(ProjectBundle.message("module.module.language.level")), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(8, 6, 6, 0), 0, 0));
     myPanel.add(myLanguageLevelCombo, new GridBagConstraints(1, 0, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 6, 6, 0), 0, 0));
   }
 
   public boolean isModified() {
-    if (myLanguageLevelCombo == null) return false;
-    final LanguageLevel moduleLanguageLevel = LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel();
-    if (moduleLanguageLevel == null) {
-      return myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL;
-    }
-    return !myLanguageLevelCombo.getSelectedItem().equals(moduleLanguageLevel);
+    return myLanguageLevelExtension.isChanged();
   }
 
   public void apply() throws ConfigurationException {
-    final LanguageLevel newLanguageLevel = myLanguageLevelCombo.getSelectedItem() != LanguageLevelCombo.USE_PROJECT_LANGUAGE_LEVEL ?
-      (LanguageLevel)myLanguageLevelCombo.getSelectedItem() : null;
-    if (newLanguageLevel != LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel()) {
-      LanguageLevelModuleExtension.getInstance(myModule).setLanguageLevel(newLanguageLevel);
-    }
+    myLanguageLevelExtension.commit();
   }
 
   public void reset() {
-    final LanguageLevel originalLanguageLevel = LanguageLevelModuleExtension.getInstance(myModule).getLanguageLevel();
-    myLanguageLevelCombo.setSelectedItem(originalLanguageLevel);
+    myLanguageLevelCombo.setSelectedItem(myLanguageLevelExtension.getLanguageLevel());
   }
 
   public void disposeUIResources() {
     myPanel = null;
     myLanguageLevelCombo = null;
-    myModule = null;
+    myLanguageLevelExtension = null;
   }
 
 }

@@ -104,7 +104,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   }
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
-    rootModel.setExcludeOutput(true);
+    final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
+    compilerModuleExtension.setExcludeOutput(true);
     if (myJdk != null){
       ModuleJdkUtil.setJdk(rootModel, myJdk);
     } else {
@@ -138,11 +139,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
       catch (IOException e) {
         canonicalPath = myCompilerOutputPath;
       }
-      CompilerModuleExtension.getInstance(rootModel.getModule())
+      compilerModuleExtension
         .setCompilerOutputPath(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(canonicalPath)));
     }
     else {
-      CompilerModuleExtension.getInstance(rootModel.getModule()).inheritCompilerOutputPath(true);
+      compilerModuleExtension.inheritCompilerOutputPath(true);
     }
 
     LibraryTable libraryTable = rootModel.getModuleLibraryTable();
