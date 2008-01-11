@@ -130,7 +130,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
   public void updateGridUI() {
     for (final GridCell cell : myPlaceInGrid2Cell.values()) {
-      cell.setHideTabs(myContents.size() == 1 && !cell.isDetached());
+      cell.setHideTabs(myContents.size() == 1 && !cell.isDetached() && !getTab().isDefault());
     }
   }
 

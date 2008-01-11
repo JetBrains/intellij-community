@@ -316,7 +316,7 @@ public class NewDebuggerContentUI
     }
 
 
-    tab.setText(title).setIcon(icon);
+    tab.setText(title).setIcon(grid.getTab().isDefault() ? null : icon);
   }
 
   private void restoreLastUiState() {
