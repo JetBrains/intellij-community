@@ -232,8 +232,8 @@ public class RootModelImpl implements ModifiableRootModel {
 
    
 
-    for (ModuleExtension extension : Extensions.getExtensions(ModuleExtension.EP_NAME, moduleRootManager.getModule())) {
-      myExtensions.add(extension.getModifiableModel(writable));
+    for (ModuleExtension extension : rootModel.myExtensions) {
+      myExtensions.add(writable ? extension.getModifiableModel(writable) : extension);
     }
   }
 
