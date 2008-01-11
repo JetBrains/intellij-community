@@ -76,19 +76,19 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void updateDiffs() {
-    final boolean[] cachedCanShowDiff = new boolean[1];
+    final boolean[] canShowDiffCached = new boolean[1];
 
     processRevisions(new RevisionProcessingTask() {
       public void run(RevisionProcessingProgress p) {
-        cachedCanShowDiff[0] = myModel.canShowDifference(p);
+        canShowDiffCached[0] = myModel.canShowDifference(p);
       }
     });
 
-    if (cachedCanShowDiff[0]) {
+    if (canShowDiffCached[0]) {
       myDiffPanel.setDiffRequest(createDifference(myModel.getDifferenceModel()));
     }
 
-    String card = cachedCanShowDiff[0] ? DIFF_CARD : MESSAGE_CARD;
+    String card = canShowDiffCached[0] ? DIFF_CARD : MESSAGE_CARD;
     ((CardLayout)myPanel.getLayout()).show(myPanel, card);
   }
 
