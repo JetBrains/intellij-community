@@ -90,7 +90,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public boolean isContextAccepted(PsiElement context) {
-    return context.getLanguage().equals(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
+    return context != null && context.getLanguage().equals(GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
   }
 
   public String getDisplayName() {
