@@ -505,8 +505,7 @@ public class RootModelImpl implements ModifiableRootModel {
 
 
   public void writeExternal(Element element) throws WriteExternalException {
-    for (ModuleExtension extension : Extensions
-      .getExtensions(ModuleExtension.EP_NAME, myModuleRootManager.getModule())) {
+    for (ModuleExtension extension : myExtensions) {
       extension.writeExternal(element);
     }
 
