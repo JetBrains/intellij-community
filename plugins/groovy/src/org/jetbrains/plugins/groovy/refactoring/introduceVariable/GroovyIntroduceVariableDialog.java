@@ -123,8 +123,11 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements Groo
   private void setUpDialog() {
 
     myCbReplaceAllOccurences.setMnemonic(KeyEvent.VK_A);
+    myCbReplaceAllOccurences.setFocusable(false);
     myCbIsFinal.setMnemonic(KeyEvent.VK_F);
+    myCbIsFinal.setFocusable(false);
     myCbTypeSpec.setMnemonic(KeyEvent.VK_T);
+    myCbTypeSpec.setFocusable(false);
     myNameLabel.setLabelFor(myNameComboBox);
     myTypeLabel.setLabelFor(myTypeComboBox);
 

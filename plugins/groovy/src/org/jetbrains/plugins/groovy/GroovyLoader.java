@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.editorActions.TypedHandler;
+import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.engine.DebugProcess;
@@ -54,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
+import org.jetbrains.plugins.groovy.editor.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.grails.GrailsLoader;
 
 import java.util.HashSet;
@@ -105,6 +107,8 @@ public class GroovyLoader implements ApplicationComponent {
     );
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new GroovyCompletionData());
+
+    SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
 
     MethodReferencesSearch.INSTANCE.registerExecutor(new AccessorReferencesSearcher());
     MethodReferencesSearch.INSTANCE.registerExecutor(new MethodLateBoundReferencesSearcher());

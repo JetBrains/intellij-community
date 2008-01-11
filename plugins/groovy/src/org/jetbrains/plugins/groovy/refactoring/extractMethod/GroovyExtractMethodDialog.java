@@ -89,6 +89,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper implements ExtractM
 
   private void setUpDialog() {
     myCbSpecifyType.setMnemonic(KeyEvent.VK_T);
+    myCbSpecifyType.setFocusable(false);
     myCbSpecifyType.setEnabled(myHelper.specifyType());
     myCbSpecifyType.setSelected(myHelper.specifyType());
     if (myCbSpecifyType.isEnabled() && GroovyApplicationSettings.getInstance().EXTRACT_METHOD_SPECIFY_TYPE != null) {
