@@ -16,11 +16,10 @@
 
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
-
-import com.intellij.openapi.module.Module;
 
 /**
  * @author nik

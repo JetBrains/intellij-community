@@ -22,7 +22,6 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleCircularDependencyException;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -118,8 +117,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
                                                                                                  ConfigurationException,
                                                                                                  IOException,
                                                                                                  JDOMException,
-                                                                                                 ModuleWithNameAlreadyExists,
-                                                                                                 ModuleCircularDependencyException {
+                                                                                                 ModuleWithNameAlreadyExists{
     final Module module = createModule(moduleModel);
     moduleModel.commit();
 
