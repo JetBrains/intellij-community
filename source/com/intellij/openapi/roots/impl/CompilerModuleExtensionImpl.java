@@ -62,15 +62,15 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
   }
 
   public void readExternal(final Element element) throws InvalidDataException {
+    final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
+    myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
+    myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
+
     myCompilerOutputPointer = getOutputPathValue(element, OUTPUT_TAG, !myInheritedCompilerOutput);
     myCompilerOutput = getOutputPathValue(element, OUTPUT_TAG);
 
     myCompilerOutputPathForTestsPointer = getOutputPathValue(element, TEST_OUTPUT_TAG, !myInheritedCompilerOutput);
     myCompilerOutputForTests = getOutputPathValue(element, TEST_OUTPUT_TAG);
-
-    final String value = element.getAttributeValue(INHERIT_COMPILER_OUTPUT);
-    myInheritedCompilerOutput = value != null && Boolean.parseBoolean(value);
-    myExcludeOutput = element.getChild(EXCLUDE_OUTPUT_TAG) != null;
   }
 
   public void writeExternal(final Element element) throws WriteExternalException {
