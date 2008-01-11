@@ -69,11 +69,9 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     String finalEvalText = imports + "\n" + text;
     PsiClass contextClass = getContextClass(context);
     assert contextClass != null;
-    String qName = contextClass.getQualifiedName();
-    javaText.append("org.codehaus.groovy.control.CompilerConfiguration c = new org.codehaus.groovy.control.CompilerConfiguration();\n");
-    //javaText.append("c.setScriptBaseClass(\"").append(qName).append("\");\n");
-    javaText.append("groovy.lang.Script s = new groovy.lang.GroovyShell(b, c).parse(\"").
+    javaText.append("groovy.lang.Script s = new groovy.lang.GroovyShell(b).parse(\"").
         append(StringUtil.escapeStringCharacters(finalEvalText)).append("\");\n");
+    javaText.append("s.setMetaClass(new groovy.lang.DelegatingMetaClass(((groovy.lang.GroovyObject)this).getMetaClass());\n");
     javaText.append("s.run();");
 
     PsiElementFactory elementFactory = toEval.getManager().getElementFactory();
