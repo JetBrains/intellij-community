@@ -1,8 +1,8 @@
 package com.intellij.compiler;
 
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 
 import java.io.File;
 
@@ -18,7 +18,7 @@ public abstract class Jdk15CompilerTestCase extends CompilerTestCase{
     super(groupName);
   }
 
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
