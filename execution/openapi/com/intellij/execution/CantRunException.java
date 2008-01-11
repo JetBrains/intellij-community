@@ -17,7 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 
 public class CantRunException extends ExecutionException {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.CantRunException");
@@ -38,7 +38,7 @@ public class CantRunException extends ExecutionException {
     return new CantRunException(ExecutionBundle.message("no.jdk.for.module.error.message", module.getName()));
   }
 
-  public static CantRunException jdkMisconfigured(final ProjectJdk jdk, final Module module) {
+  public static CantRunException jdkMisconfigured(final Sdk jdk, final Module module) {
     LOG.assertTrue(module != null);
     LOG.assertTrue(jdk != null);
     return new CantRunException(ExecutionBundle.message("jdk.is.bad.configured.error.message", jdk.getName()));

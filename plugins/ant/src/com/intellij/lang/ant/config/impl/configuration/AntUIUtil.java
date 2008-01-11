@@ -9,7 +9,7 @@ import com.intellij.lang.ant.config.impl.GlobalAntConfiguration;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.AntTarget;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -162,7 +162,7 @@ public class AntUIUtil {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String jdkName = (String)value;
       if (jdkName == null || jdkName.length() == 0) jdkName = "";
-      ProjectJdk jdk = myAntConfiguration.findJdk(jdkName);
+      Sdk jdk = myAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
           setIcon(CellAppearanceUtils.GENERIC_JDK_ICON);

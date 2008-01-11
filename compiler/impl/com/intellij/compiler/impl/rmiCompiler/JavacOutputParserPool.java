@@ -15,16 +15,16 @@
  */
 package com.intellij.compiler.impl.rmiCompiler;
 
-import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.compiler.OutputParser;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThread;
 import com.intellij.compiler.impl.javaCompiler.CompilerParsingThreadImpl;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,8 +36,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,14 +46,14 @@ import java.util.concurrent.ExecutionException;
 public class JavacOutputParserPool {
   protected final Project myProject;
   private final CompileContext myContext;
-  private final Map<ProjectJdk, OutputParser> myProjectToParserMap = new HashMap<ProjectJdk, OutputParser>();
+  private final Map<Sdk, OutputParser> myProjectToParserMap = new HashMap<Sdk, OutputParser>();
 
   protected JavacOutputParserPool(Project project, final CompileContext context) {
     myProject = project;
     myContext = context;
   }
 
-  public OutputParser getJavacOutputParser(ProjectJdk jdk) throws IOException {
+  public OutputParser getJavacOutputParser(Sdk jdk) throws IOException {
     OutputParser outputParser = myProjectToParserMap.get(jdk);
     if (outputParser == null) {
       outputParser = createJavacOutputParser(jdk);
@@ -62,7 +62,7 @@ public class JavacOutputParserPool {
     return outputParser;
   }
 
-  private OutputParser createJavacOutputParser(final ProjectJdk jdk) throws IOException {
+  private OutputParser createJavacOutputParser(final Sdk jdk) throws IOException {
     final JavacOutputParser outputParser = new JavacOutputParser(myProject);
     // first, need to setup the output parser
     final String[] setupCmdLine = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
@@ -84,7 +84,7 @@ public class JavacOutputParserPool {
     return outputParser;
   }
 
-  private static String[] createParserSetupCommand(final ProjectJdk jdk) {
+  private static String[] createParserSetupCommand(final Sdk jdk) {
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {
@@ -92,13 +92,13 @@ public class JavacOutputParserPool {
     }
 
     final List<String> commandLine = new ArrayList<String>();
-    commandLine.add(jdk.getVMExecutablePath());
+    commandLine.add(jdk.getSdkType().getVMExecutablePath(jdk));
 
     CompilerUtil.addLocaleOptions(commandLine, false);
 
     //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
-    commandLine.add(jdk.getToolsPath() + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
+    commandLine.add(jdk.getSdkType().getToolsPath(jdk) + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
 
     commandLine.add(JavacResourcesReader.class.getName());
 

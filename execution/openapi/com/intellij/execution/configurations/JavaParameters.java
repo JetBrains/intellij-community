@@ -19,10 +19,10 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
@@ -34,7 +34,7 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 public class JavaParameters {
-  private ProjectJdk myJdk;
+  private Sdk myJdk;
   private final PathsList myClassPath = new PathsList();
   private String myMainClass;
   private final ParametersList myVmParameters = new ParametersList();
@@ -57,12 +57,12 @@ public class JavaParameters {
    * If the instance of the JavaParameters is used to configure app server startup script, 
    * then null is returned.
    */
-  public @Nullable ProjectJdk getJdk() {
+  public @Nullable Sdk getJdk() {
     return myJdk;
   }
 
   public String getJdkPath() throws CantRunException {
-    final ProjectJdk jdk = getJdk();
+    final Sdk jdk = getJdk();
     if(jdk == null) {
       throw new CantRunException(ExecutionBundle.message("no.jdk.specified..error.message"));
     }
@@ -74,7 +74,7 @@ public class JavaParameters {
     return jdkHome;
   }
 
-  public void setJdk(final ProjectJdk jdk) {
+  public void setJdk(final Sdk jdk) {
     myJdk = jdk;
   }
 
@@ -96,7 +96,7 @@ public class JavaParameters {
   public static final int JDK_AND_CLASSES = JDK_ONLY | CLASSES_ONLY;
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
 
-  public void configureByModule(final Module module, final int classPathType, final ProjectJdk jdk) throws CantRunException {
+  public void configureByModule(final Module module, final int classPathType, final Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -115,8 +115,8 @@ public class JavaParameters {
     configureByModule(module, classPathType, getModuleJdk(module));
   }
 
-  public static ProjectJdk getModuleJdk(final Module module) throws CantRunException {
-    final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+  public static Sdk getModuleJdk(final Module module) throws CantRunException {
+    final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     if (jdk == null) {
       throw CantRunException.noJdkForModule(module);
     }
@@ -127,7 +127,7 @@ public class JavaParameters {
     return jdk;
   }
 
-  public void configureByProject(final Project project, final int classPathType, final ProjectJdk jdk ) throws CantRunException {
+  public void configureByProject(final Project project, final int classPathType, final Sdk jdk ) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();

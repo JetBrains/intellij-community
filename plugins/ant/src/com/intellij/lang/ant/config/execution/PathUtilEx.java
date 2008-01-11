@@ -3,10 +3,10 @@ package com.intellij.lang.ant.config.execution;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.rt.compiler.JavacRunner;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
@@ -26,14 +26,14 @@ import java.util.List;
 public class PathUtilEx {
   @NonNls private static final String IDEA_PREPEND_RTJAR = "idea.prepend.rtjar";
 
-  private static final Function<Module, ProjectJdk> MODULE_JDK = new Function<Module, ProjectJdk>() {
+  private static final Function<Module, Sdk> MODULE_JDK = new Function<Module, Sdk>() {
     @Nullable
-    public ProjectJdk fun(Module module) {
+    public Sdk fun(Module module) {
       return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     }
   };
-  private static final Convertor<ProjectJdk, String> JDK_VERSION = new Convertor<ProjectJdk, String>() {
-    public String convert(ProjectJdk jdk) {
+  private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {
+    public String convert(Sdk jdk) {
       return jdk.getVersionString();
     }
   };
@@ -56,20 +56,20 @@ public class PathUtilEx {
     return PathUtil.getJarPathForClass(aClass);
   }
 
-  public static ProjectJdk getAnyJdk(Project project) {
+  public static Sdk getAnyJdk(Project project) {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
-  public static ProjectJdk chooseJdk(Project project, Collection<Module> modules) {
-    ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+  public static Sdk chooseJdk(Project project, Collection<Module> modules) {
+    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
     if (projectJdk != null) {
       return projectJdk;
     }
     return chooseJdk(modules);
   }
 
-  public static ProjectJdk chooseJdk(Collection<Module> modules) {
-    List<ProjectJdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
+  public static Sdk chooseJdk(Collection<Module> modules) {
+    List<Sdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
     if (jdks.isEmpty()) {
       return null;
     }

@@ -6,7 +6,7 @@ package com.intellij.compiler.ant;
 
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtil;
 
@@ -38,8 +38,8 @@ public class PropertyFileGenerator extends Generator{
     }
     // jdk homes
     if (genOptions.forceTargetJdk) {
-      final ProjectJdk[] usedJdks = BuildProperties.getUsedJdks(project);
-      for (ProjectJdk jdk : usedJdks) {
+      final Sdk[] usedJdks = BuildProperties.getUsedJdks(project);
+      for (Sdk jdk : usedJdks) {
         if (jdk.getHomeDirectory() == null) {
           continue;
         }

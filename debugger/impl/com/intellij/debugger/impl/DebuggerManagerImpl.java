@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
@@ -301,7 +301,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
 
   /* Remoting */
   private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
-    final ProjectJdk jdk = parameters.getJdk();
+    final Sdk jdk = parameters.getJdk();
     if (jdk == null) {
       throw new ExecutionException(DebuggerBundle.message("error.jdk.not.specified"));
     }
@@ -329,7 +329,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   /**
    * for Target JDKs versions 1.2.x - 1.3.0 the Classic VM should be used for debugging
    */
-  private static boolean shouldForceClassicVM(ProjectJdk jdk) {
+  private static boolean shouldForceClassicVM(Sdk jdk) {
     if (SystemInfo.isMac) {
       return false;
     }
@@ -417,7 +417,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     return new RemoteConnection(useSockets, "127.0.0.1", address, debuggerInServerMode);
   }
 
-  private static boolean shouldForceNoJIT(ProjectJdk jdk) {
+  private static boolean shouldForceNoJIT(Sdk jdk) {
     if (DebuggerSettings.getInstance().DISABLE_JIT) {
       return true;
     }

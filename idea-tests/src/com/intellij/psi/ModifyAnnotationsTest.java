@@ -3,7 +3,7 @@ package com.intellij.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -38,7 +38,7 @@ public class ModifyAnnotationsTest extends PsiTestCase {
     );
   }
 
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("mock 1.5");
   }
 

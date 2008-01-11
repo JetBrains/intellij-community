@@ -5,7 +5,7 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -122,7 +122,7 @@ public class CompilerUtil {
     }
   }
 
-  public static void addSourceCommandLineSwitch(final ProjectJdk jdk, LanguageLevel chunkLanguageLevel, @NonNls final List<String> commandLine) {
+  public static void addSourceCommandLineSwitch(final Sdk jdk, LanguageLevel chunkLanguageLevel, @NonNls final List<String> commandLine) {
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));

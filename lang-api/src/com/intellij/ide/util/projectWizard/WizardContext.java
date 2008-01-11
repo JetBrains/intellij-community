@@ -19,7 +19,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class WizardContext {
   private String myProjectFileDirectory;
   private String myProjectName;
   private String myCompilerOutputDirectory;
-  private ProjectJdk myProjectJdk;
+  private Sdk myProjectJdk;
   private ProjectBuilder myProjectBuilder;
   private List<Listener> myListeners = new ArrayList<Listener>();
 
@@ -112,11 +112,11 @@ public class WizardContext {
     myListeners.remove(listener);
   }
 
-  public void setProjectJdk(ProjectJdk jdk) {
+  public void setProjectJdk(Sdk jdk) {
     myProjectJdk = jdk;
   }
 
-  public ProjectJdk getProjectJdk() {
+  public Sdk getProjectJdk() {
     return myProjectJdk;
   }
 

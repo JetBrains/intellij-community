@@ -28,7 +28,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -270,7 +270,7 @@ public class PeerFactoryImpl extends PeerFactory {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(syntaxHighlighter, colors);
   }
 
-  public ProjectJdk createProjectJdk(final String name, final String version, final String homePath, final SdkType sdkType) {
+  public Sdk createProjectJdk(final String name, final String version, final String homePath, final SdkType sdkType) {
     final ProjectJdkImpl projectJdk = new ProjectJdkImpl(name, sdkType);
     projectJdk.setHomePath(homePath);
     projectJdk.setVersionString(version);

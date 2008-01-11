@@ -6,7 +6,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.CharsetToolkit;
 
@@ -20,12 +20,12 @@ public class CommandLineBuilder {
         public GeneralCommandLine compute() {
           try {
             final GeneralCommandLine commandLine = new GeneralCommandLine();
-            final ProjectJdk jdk = javaParameters.getJdk();
+            final Sdk jdk = javaParameters.getJdk();
             if(jdk == null) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }
 
-            final String exePath = jdk.getVMExecutablePath();
+            final String exePath = jdk.getSdkType().getVMExecutablePath(jdk);
             if(exePath == null) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
             }

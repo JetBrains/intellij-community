@@ -20,7 +20,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -90,7 +90,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
         }
         Messages.showMessageDialog(project, InspectionsBundle.message("inspection.no.jdk.error.message"),
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
-        final ProjectJdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
+        final Sdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
         if (projectJdk == null) return false;
       }
     }
@@ -109,7 +109,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       final Module[] modules = ModuleManager.getInstance(project).getModules();
       for (Module module : modules) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ProjectJdk jdk = ModuleJdkUtil.getJdk(rootManager);
+        final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
         final OrderEntry[] entries = rootManager.getOrderEntries();
         for (OrderEntry entry : entries) {
           if (entry instanceof JdkOrderEntry) {

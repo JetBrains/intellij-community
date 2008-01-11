@@ -9,7 +9,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
@@ -24,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.util.Map;
+import java.util.HashMap;
 
 @State(
   name = "JdkListConfigurable.UI",
@@ -108,14 +107,14 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   protected void loadTree() {
-    final Map<ProjectJdk,ProjectJdk> sdks = myJdksTreeModel.getProjectJdks();
-    for (ProjectJdk sdk : sdks.keySet()) {
+    final HashMap<Sdk,Sdk> sdks = myJdksTreeModel.getProjectJdks();
+    for (Sdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myJdksTreeModel, TREE_UPDATER, myHistory);
       addNode(new MyNode(configurable), myRoot);
     }
   }
 
-  public boolean addJdkNode(final ProjectJdk jdk, final boolean selectInTree) {
+  public boolean addJdkNode(final Sdk jdk, final boolean selectInTree) {
     if (!myUiDisposed) {
       addNode(new MyNode(new JdkConfigurable((ProjectJdkImpl)jdk, myJdksTreeModel, TREE_UPDATER, myHistory)), myRoot);
       if (selectInTree) {
@@ -166,8 +165,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return new AbstractAddGroup(ProjectBundle.message("add.new.jdk.text")) {
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
-          public void consume(final ProjectJdk projectJdk) {
+        myJdksTreeModel.createAddActions(group, myTree, new Consumer<Sdk>() {
+          public void consume(final Sdk projectJdk) {
             addJdkNode(projectJdk, true);
           }
         });
@@ -176,7 +175,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     };
   }
 
-  protected void removeJdk(final ProjectJdk jdk) {
+  protected void removeJdk(final Sdk jdk) {
     myJdksTreeModel.removeJdk(jdk);
     myContext.myJdkDependencyCache.remove(jdk);
     myContext.myValidityCache.clear();

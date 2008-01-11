@@ -2,8 +2,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.util.BrowseFilesListener;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.util.io.FileUtil;
@@ -36,8 +36,8 @@ public class AlternativeJREPanel extends JPanel{
     myFieldWithHistory = new TextFieldWithHistory();
     myFieldWithHistory.setBorder(BorderFactory.createEtchedBorder());
     final ArrayList<String> foundJdks = new ArrayList<String>();
-    final ProjectJdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
-    for (ProjectJdk jdk : allJdks) {
+    final Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (Sdk jdk : allJdks) {
       foundJdks.add(jdk.getHomePath());
     }
     myFieldWithHistory.setHistory(foundJdks);

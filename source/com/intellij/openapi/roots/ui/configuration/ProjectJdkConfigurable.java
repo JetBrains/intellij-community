@@ -9,12 +9,11 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +60,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   @Nullable
-  public ProjectJdk getSelectedProjectJdk() {
+  public Sdk getSelectedProjectJdk() {
     return myJdksModel.findSdk(myCbProjectJdk.getSelectedJdk());
   }
 
@@ -71,11 +70,11 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
   private void reloadModel() {
     myFreeze = true;
-    final ProjectJdk projectJdk = myJdksModel.getProjectJdk();
+    final Sdk projectJdk = myJdksModel.getProjectJdk();
     myCbProjectJdk.reloadModel(new JdkComboBox.NoneJdkComboBoxItem(), myProject);
     final String sdkName = projectJdk == null ? ProjectRootManager.getInstance(myProject).getProjectJdkName() : projectJdk.getName();
     if (sdkName != null) {
-      final ProjectJdk jdk = (ProjectJdk)myJdksModel.findSdk(sdkName);
+      final Sdk jdk = myJdksModel.findSdk(sdkName);
       if (jdk != null) {
         myCbProjectJdk.setSelectedJdk(jdk);
       } else {
@@ -95,7 +94,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myCbProjectJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        final ProjectJdk oldJdk = myJdksModel.getProjectJdk();
+        final Sdk oldJdk = myJdksModel.getProjectJdk();
         myJdksModel.setProjectJdk(myCbProjectJdk.getSelectedJdk());
         clearCaches(oldJdk);
       }
@@ -104,15 +103,15 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
     myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
     final JButton setUpButton = myCbProjectJdk.createSetupButton(myProject, myJdksModel, new JdkComboBox.NoneJdkComboBoxItem());
     myJdkPanel.add(setUpButton, new GridBagConstraints(1, 1, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0));
-    myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<ProjectJdk>() {
+    myCbProjectJdk.appendEditButton(myProject, myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 4, 0, 0), 0, 0), new Computable<Sdk>() {
       @Nullable
-      public ProjectJdk compute() {
+      public Sdk compute() {
         return myJdksModel.getProjectJdk();
       }
     });
   }
 
-  private void clearCaches(final ProjectJdk oldJdk) {
+  private void clearCaches(final Sdk oldJdk) {
     final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(myProject);
     Module[] modules = rootConfigurable.getModules();
     for (Module module : modules) {
@@ -121,7 +120,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   }
 
   public boolean isModified() {
-    final ProjectJdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(myProject).getProjectJdk();
     return !Comparing.equal(projectJdk, getSelectedProjectJdk());
   }
 
@@ -134,7 +133,7 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
 
     final String sdkName = ProjectRootManager.getInstance(myProject).getProjectJdkName();
     if (sdkName != null) {
-      final ProjectJdk jdk = (ProjectJdk)myJdksModel.findSdk(sdkName);
+      final Sdk jdk = myJdksModel.findSdk(sdkName);
       if (jdk != null) {
         myCbProjectJdk.setSelectedJdk(jdk);
       } else {

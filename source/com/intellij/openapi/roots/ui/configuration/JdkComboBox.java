@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
@@ -24,8 +23,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * @author Eugene Zhuravlev
@@ -46,7 +47,7 @@ class JdkComboBox extends JComboBox{
           else if (value instanceof ProjectJdkComboBoxItem){
             final ProjectJdkComboBoxItem item = (ProjectJdkComboBoxItem)value;
             final String str = item.toString();
-            final ProjectJdk jdk = jdksModel.getProjectJdk();
+            final Sdk jdk = jdksModel.getProjectJdk();
             if (jdk != null){
               setIcon(jdk.getSdkType().getIcon());
               append(ProjectBundle.message("project.roots.project.jdk.inherited"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -71,15 +72,15 @@ class JdkComboBox extends JComboBox{
   public JButton createSetupButton(final Project project,
                                    final ProjectJdksModel jdksModel,
                                    final JdkComboBoxItem firstItem,
-                                   final Condition<ProjectJdk> additionalSetup,
+                                   final Condition<Sdk> additionalSetup,
                                    final boolean moduleJdkSetup) {
     final JButton setUpButton = new JButton(ApplicationBundle.message("button.new"));
     setUpButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final JdkListConfigurable configurable = JdkListConfigurable.getInstance(project);
         DefaultActionGroup group = new DefaultActionGroup();
-        jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<ProjectJdk>() {
-          public void consume(final ProjectJdk jdk) {
+        jdksModel.createAddActions(group, JdkComboBox.this, new Consumer<Sdk>() {
+          public void consume(final Sdk jdk) {
             configurable.addJdkNode(jdk, false);
             reloadModel(firstItem, project);
             setSelectedJdk(jdk); //restore selection
@@ -99,10 +100,10 @@ class JdkComboBox extends JComboBox{
     return setUpButton;
   }
 
-  public void appendEditButton(final Project project, final JPanel panel, GridBagConstraints gc, final Computable<ProjectJdk> retrieveJDK){
+  public void appendEditButton(final Project project, final JPanel panel, GridBagConstraints gc, final Computable<Sdk> retrieveJDK){
     myEditButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final ProjectJdk projectJdk = retrieveJDK.compute();
+        final Sdk projectJdk = retrieveJDK.compute();
         ProjectStructureConfigurable.getInstance(project).select(projectJdk, true);
       }
     });
@@ -123,12 +124,12 @@ class JdkComboBox extends JComboBox{
     return (JdkComboBoxItem)super.getSelectedItem();
   }
 
-  public ProjectJdk getSelectedJdk() {
+  public Sdk getSelectedJdk() {
     final JdkComboBoxItem selectedItem = (JdkComboBoxItem)super.getSelectedItem();
     return selectedItem != null? selectedItem.getJdk() : null;
   }
 
-  public void setSelectedJdk(ProjectJdk jdk) {
+  public void setSelectedJdk(Sdk jdk) {
     final int index = indexOf(jdk);
     if (index >= 0) {
       setSelectedIndex(index);
@@ -141,7 +142,7 @@ class JdkComboBox extends JComboBox{
     setSelectedIndex(getModel().getSize() - 1);
   }
   
-  private int indexOf(ProjectJdk jdk) {
+  private int indexOf(Sdk jdk) {
     final JdkComboBoxModel model = (JdkComboBoxModel)getModel();
     final int count = model.getSize();
     for (int idx = 0; idx < count; idx++) {
@@ -178,13 +179,13 @@ class JdkComboBox extends JComboBox{
     final DefaultComboBoxModel model = ((DefaultComboBoxModel)getModel());
     model.removeAllElements();
     model.addElement(firstItem);
-    final List<ProjectJdk> projectJdks = new ArrayList<ProjectJdk>(ProjectJdksModel.getInstance(project).getProjectJdks().values());
-    Collections.sort(projectJdks, new Comparator<ProjectJdk>() {
-      public int compare(final ProjectJdk o1, final ProjectJdk o2) {
+    final ArrayList<Sdk> projectJdks = new ArrayList<Sdk>(ProjectJdksModel.getInstance(project).getProjectJdks().values());
+    Collections.sort(projectJdks, new Comparator<Sdk>() {
+      public int compare(final Sdk o1, final Sdk o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
-    for (ProjectJdk projectJdk : projectJdks) {
+    for (Sdk projectJdk : projectJdks) {
       model.addElement(new JdkComboBox.JdkComboBoxItem(projectJdk));
     }
   }
@@ -199,7 +200,7 @@ class JdkComboBox extends JComboBox{
         }
       });
       for (Sdk jdk : jdks) {
-        addElement(new JdkComboBoxItem((ProjectJdk)jdk));
+        addElement(new JdkComboBoxItem(jdk));
       }
     }
 
@@ -210,13 +211,13 @@ class JdkComboBox extends JComboBox{
   }
   
   public static class JdkComboBoxItem {
-    private final ProjectJdk myJdk;
+    private final Sdk myJdk;
 
-    public JdkComboBoxItem(ProjectJdk jdk) {
+    public JdkComboBoxItem(Sdk jdk) {
       myJdk = jdk;
     }
 
-    public ProjectJdk getJdk() {
+    public Sdk getJdk() {
       return myJdk;
     }
 

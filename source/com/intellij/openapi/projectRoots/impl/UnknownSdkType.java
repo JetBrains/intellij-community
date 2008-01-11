@@ -4,9 +4,9 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.project.ProjectBundle;
 import org.jdom.Element;
 
 import javax.swing.*;
@@ -71,10 +71,6 @@ public class UnknownSdkType extends SdkType{
   }
 
   public String getVMExecutablePath(Sdk sdk) {
-    return null;
-  }
-
-  public String getRtLibraryPath(Sdk sdk) {
     return null;
   }
 

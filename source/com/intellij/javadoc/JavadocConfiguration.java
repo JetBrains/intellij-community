@@ -20,7 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.*;
@@ -133,15 +133,15 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
 
     protected GeneralCommandLine createCommandLine() throws ExecutionException {
       final GeneralCommandLine cmdLine = new GeneralCommandLine();
-      final ProjectJdk jdk = PathUtilEx.getAnyJdk(myProject);
+      final Sdk jdk = PathUtilEx.getAnyJdk(myProject);
       setupExeParams(jdk, cmdLine);
       setupProgramParameters(jdk, cmdLine);
       return cmdLine;
     }
 
 
-    private void setupExeParams(final ProjectJdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
-      final String jdkPath = jdk != null? new File(jdk.getVMExecutablePath()).getParent() : null;
+    private void setupExeParams(final Sdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
+      final String jdkPath = jdk != null? new File(jdk.getSdkType().getVMExecutablePath(jdk)).getParent() : null;
       if (jdkPath == null) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
       }
@@ -172,7 +172,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       }
     }
 
-    private void setupProgramParameters(final ProjectJdk jdk, final GeneralCommandLine cmdLine) throws CantRunException {
+    private void setupProgramParameters(final Sdk jdk, final GeneralCommandLine cmdLine) throws CantRunException {
       @NonNls final ParametersList parameters = cmdLine.getParametersList();
 
       if (LOCALE != null && LOCALE.length() > 0) {

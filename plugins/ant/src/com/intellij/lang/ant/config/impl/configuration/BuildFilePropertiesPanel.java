@@ -5,8 +5,8 @@ import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -333,7 +333,7 @@ public class BuildFilePropertiesPanel {
     private RawCommandLineEditor myAntCommandLine;
     private ComboboxWithBrowseButton myAnts;
     private ComboboxWithBrowseButton myJDKs;
-    private ChooseAndEditComboBoxController<ProjectJdk, String> myJDKsController;
+    private ChooseAndEditComboBoxController<Sdk, String> myJDKsController;
     private JButton mySetDefaultAnt;
     private SimpleColoredComponent myDefaultAnt;
     private JRadioButton myUseCastomAnt;
@@ -348,22 +348,22 @@ public class BuildFilePropertiesPanel {
       myAntCommandLine.setDialodCaption(AntBundle.message("run.execution.tab.ant.command.line.dialog.title"));
       setLabelFor(myJDKLabel, myJDKs);
 
-      myJDKsController = new ChooseAndEditComboBoxController<ProjectJdk, String>(myJDKs, new Convertor<ProjectJdk, String>() {
-        public String convert(ProjectJdk jdk) {
+      myJDKsController = new ChooseAndEditComboBoxController<Sdk, String>(myJDKs, new Convertor<Sdk, String>() {
+        public String convert(Sdk jdk) {
           return jdk != null ? jdk.getName() : "";
         }
       }, String.CASE_INSENSITIVE_ORDER) {
-        public Iterator<ProjectJdk> getAllListItems() {
+        public Iterator<Sdk> getAllListItems() {
           Application application = ApplicationManager.getApplication();
           if (application == null) {
-            return Collections.singletonList((ProjectJdk)null).iterator();
+            return Collections.singletonList((Sdk)null).iterator();
           }
-          ArrayList<ProjectJdk> allJdks = new ArrayList<ProjectJdk>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
+          ArrayList<Sdk> allJdks = new ArrayList<Sdk>(Arrays.asList(ProjectJdkTable.getInstance().getAllJdks()));
           allJdks.add(0, null);
           return allJdks.iterator();
         }
 
-        public ProjectJdk openConfigureDialog(ProjectJdk jdk, JComponent parent) {
+        public Sdk openConfigureDialog(Sdk jdk, JComponent parent) {
           ProjectJdksEditor editor = new ProjectJdksEditor(jdk, myJDKs.getComboBox());
           editor.show();
           return editor.getSelectedJdk();

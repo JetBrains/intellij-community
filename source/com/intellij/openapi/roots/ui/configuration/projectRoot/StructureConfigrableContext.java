@@ -4,12 +4,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
@@ -42,7 +42,7 @@ public class StructureConfigrableContext implements Disposable {
   public static final String DUPLICATE_MODULE_NAME = ProjectBundle.message("project.roots.module.duplicate.name.message");
 
   public final Map<Library, Set<String>> myLibraryDependencyCache = new HashMap<Library, Set<String>>();
-  public final Map<ProjectJdk, Set<String>> myJdkDependencyCache = new HashMap<ProjectJdk, Set<String>>();
+  public final Map<Sdk, Set<String>> myJdkDependencyCache = new HashMap<Sdk, Set<String>>();
   public final Map<Module, Map<String, Set<String>>> myValidityCache = new HashMap<Module, Map<String, Set<String>>>();
   public final Map<Library, Boolean> myLibraryPathValidityCache = new HashMap<Library, Boolean>(); //can be invalidated on startup only
   public final Map<Module, Set<String>> myModulesDependencyCache = new HashMap<Module, Set<String>>();
@@ -74,8 +74,8 @@ public class StructureConfigrableContext implements Disposable {
       if (myLibraryDependencyCache.containsKey(library)){
         return myLibraryDependencyCache.get(library);
       }
-    } else if (selectedObject instanceof ProjectJdk){
-      final ProjectJdk projectJdk = (ProjectJdk)selectedObject;
+    } else if (selectedObject instanceof Sdk){
+      final Sdk projectJdk = (Sdk)selectedObject;
       if (myJdkDependencyCache.containsKey(projectJdk)){
         return myJdkDependencyCache.get(projectJdk);
       }
@@ -112,8 +112,8 @@ public class StructureConfigrableContext implements Disposable {
     if (selectedObject instanceof Library) {
       myLibraryDependencyCache.put((Library)selectedObject, dep);
     }
-    else if (selectedObject instanceof ProjectJdk) {
-      myJdkDependencyCache.put((ProjectJdk)selectedObject, dep);
+    else if (selectedObject instanceof Sdk) {
+      myJdkDependencyCache.put((Sdk)selectedObject, dep);
     }
     else if (selectedObject instanceof Module) {
       myModulesDependencyCache.put((Module)selectedObject, dep);
@@ -170,7 +170,7 @@ public class StructureConfigrableContext implements Disposable {
         }
       });
     }
-    else if (selectedObject instanceof ProjectJdk) {
+    else if (selectedObject instanceof Sdk) {
       return getDependencies(new Condition<OrderEntry>() {
         public boolean value(final OrderEntry orderEntry) {
           return orderEntry instanceof JdkOrderEntry && Comparing.equal(((JdkOrderEntry)orderEntry).getJdk(), selectedObject);
@@ -221,7 +221,7 @@ public class StructureConfigrableContext implements Disposable {
     fireOnCacheChanged();
   }
 
-  public void clearCaches(final Module module, final ProjectJdk oldJdk, final ProjectJdk selectedModuleJdk) {
+  public void clearCaches(final Module module, final Sdk oldJdk, final Sdk selectedModuleJdk) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     myJdkDependencyCache.remove(oldJdk);
     myJdkDependencyCache.remove(selectedModuleJdk);
@@ -342,7 +342,7 @@ public class StructureConfigrableContext implements Disposable {
        getCachedDependencies(object, node, false);
        return false;
      }
-     if (object instanceof ProjectJdk) {
+     if (object instanceof Sdk) {
        return false;
      }
      if (object instanceof Library) {

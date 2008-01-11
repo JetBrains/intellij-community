@@ -8,13 +8,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleJdkUtil;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -32,7 +31,7 @@ import java.awt.event.ActionListener;
  */
 public class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
-  private ProjectJdk mySelectedModuleJdk = null;
+  private Sdk mySelectedModuleJdk = null;
   private ModifiableRootModel myRootModel;
   private JPanel myJdkPanel;
   private ClasspathEditor myModuleEditor;
@@ -68,7 +67,7 @@ public class ModuleJdkConfigurable implements Disposable {
    * @return null if JDK should be inherited
    */
   @Nullable
-  public ProjectJdk getSelectedModuleJdk() {
+  public Sdk getSelectedModuleJdk() {
     return myJdksModel.findSdk(mySelectedModuleJdk);
   }
 
@@ -94,9 +93,9 @@ public class ModuleJdkConfigurable implements Disposable {
     myCbModuleJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        final ProjectJdk oldJdk = ModuleJdkUtil.getJdk(myRootModel);
+        final Sdk oldJdk = ModuleJdkUtil.getJdk(myRootModel);
         mySelectedModuleJdk = myCbModuleJdk.getSelectedJdk();
-        final ProjectJdk selectedModuleJdk = getSelectedModuleJdk();
+        final Sdk selectedModuleJdk = getSelectedModuleJdk();
         if (selectedModuleJdk != null) {
           ModuleJdkUtil.setJdk(myRootModel, selectedModuleJdk);
         }
@@ -114,9 +113,9 @@ public class ModuleJdkConfigurable implements Disposable {
                                                          new Insets(6, 6, 12, 0), 0, 0));
     final Project project = myRootModel.getModule().getProject();
     final JButton setUpButton = myCbModuleJdk
-      .createSetupButton(project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<ProjectJdk>(){
-        public boolean value(ProjectJdk jdk) {
-          final ProjectJdk projectJdk = myJdksModel.getProjectJdk();
+      .createSetupButton(project, myJdksModel, new JdkComboBox.ProjectJdkComboBoxItem(), new Condition<Sdk>(){
+        public boolean value(Sdk jdk) {
+          final Sdk projectJdk = myJdksModel.getProjectJdk();
           if (projectJdk == null){
             final int res =
               Messages.showYesNoDialog(myJdkPanel,
@@ -134,15 +133,15 @@ public class ModuleJdkConfigurable implements Disposable {
     myJdkPanel.add(setUpButton, new GridBagConstraints(2, 0, 1, 1, 0, 0,
                                                        GridBagConstraints.WEST, GridBagConstraints.NONE,
                                                        new Insets(0, 4, 7, 0), 0, 0));
-    myCbModuleJdk.appendEditButton(myRootModel.getModule().getProject(), myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 7, 0), 0, 0) , new Computable<ProjectJdk>() {
+    myCbModuleJdk.appendEditButton(myRootModel.getModule().getProject(), myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 7, 0), 0, 0) , new Computable<Sdk>() {
       @Nullable
-      public ProjectJdk compute() {
+      public Sdk compute() {
         return ModuleJdkUtil.getJdk(myRootModel);
       }
     });
   }
 
-  private void clearCaches(final ProjectJdk oldJdk, final ProjectJdk selectedModuleJdk) {
+  private void clearCaches(final Sdk oldJdk, final Sdk selectedModuleJdk) {
     final Module module = myRootModel.getModule();
     final Project project = module.getProject();
     ModuleStructureConfigurable.getInstance(project).getContext().clearCaches(module, oldJdk, selectedModuleJdk);
@@ -152,7 +151,7 @@ public class ModuleJdkConfigurable implements Disposable {
     myFreeze = true;
     final String jdkName = ModuleJdkUtil.getJdkName(myRootModel);
     if (jdkName != null && !ModuleJdkUtil.isJdkInherited(myRootModel)) {
-      mySelectedModuleJdk = (ProjectJdk)myJdksModel.findSdk(jdkName);
+      mySelectedModuleJdk = myJdksModel.findSdk(jdkName);
       if (mySelectedModuleJdk != null) {
         myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);
       } else {

@@ -8,8 +8,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -124,7 +124,7 @@ public class GlobalAntConfiguration implements ApplicationComponent, JDOMExterna
     ANTS.getModifiableList(getProperties()).remove(ant);
   }
 
-  public static ProjectJdk findJdk(final String jdkName) {
+  public static Sdk findJdk(final String jdkName) {
     return ProjectJdkTable.getInstance().findJdk(jdkName);
   }
 

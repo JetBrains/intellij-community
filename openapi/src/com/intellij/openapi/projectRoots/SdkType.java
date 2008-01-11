@@ -69,9 +69,6 @@ public abstract class SdkType {
   @Nullable
   public abstract String getVMExecutablePath(Sdk sdk);
 
-  @Nullable
-  public abstract String getRtLibraryPath(Sdk sdk);
-
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Sdk getEncapsulatedSdk(Sdk sdk) {

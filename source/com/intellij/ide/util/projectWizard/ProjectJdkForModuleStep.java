@@ -5,13 +5,12 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.IconLoader;
@@ -68,8 +67,8 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
         final JdkListConfigurable jdkConfig = JdkListConfigurable.getInstance(project);
         final ProjectJdksModel projectJdksModel = projectConfig.getProjectJdksModel();
         final boolean[] successfullyAdded = new boolean[1];
-        projectJdksModel.doAdd(type, myPanel, new Consumer<ProjectJdk>() {
-          public void consume(final ProjectJdk jdk) {
+        projectJdksModel.doAdd(type, myPanel, new Consumer<Sdk>() {
+          public void consume(final Sdk jdk) {
             successfullyAdded[0] = jdkConfig.addJdkNode(jdk, false);
             myJdkChooser.updateList(jdk, type);
           }
@@ -116,7 +115,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   public void updateStep() {
     if (!myInitialized) { //lazy default project initialization
       myJdkChooser.fillList(myType);
-      ProjectJdk defaultJdk = getDefaultJdk();
+      Sdk defaultJdk = getDefaultJdk();
       if (defaultJdk != null) {
         myJdkChooser.selectJdk(defaultJdk);
       }
@@ -124,7 +123,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     }
   }
 
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     return myJdkChooser.getChosenJdk();
   }
 
@@ -133,14 +132,14 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
   }
 
   @Nullable
-  private static ProjectJdk getDefaultJdk() {
+  private static Sdk getDefaultJdk() {
     Project defaultProject = ProjectManagerEx.getInstanceEx().getDefaultProject();
     return ProjectRootManagerEx.getInstanceEx(defaultProject).getProjectJdk();
   }
 
 
   public boolean validate() {
-    final ProjectJdk jdk = myJdkChooser.getChosenJdk();
+    final Sdk jdk = myJdkChooser.getChosenJdk();
     if (jdk == null) {
       int result = Messages.showOkCancelDialog(IdeBundle.message("prompt.confirm.project.no.jdk"),
                                                IdeBundle.message("title.no.jdk.specified"), Messages.getWarningIcon());

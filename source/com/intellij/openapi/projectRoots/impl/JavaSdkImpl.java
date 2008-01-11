@@ -8,8 +8,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -93,11 +93,6 @@ public class JavaSdkImpl extends JavaSdk {
     }
     */
     return getBinPath(sdk) + File.separator + VM_EXE_NAME;
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public String getRtLibraryPath(Sdk sdk) {
-    return getConvertedHomePath(sdk) + "jre" + File.separator + "lib" + File.separator + "rt.jar";
   }
 
   private static String getConvertedHomePath(Sdk sdk) {
@@ -242,7 +237,7 @@ public class JavaSdkImpl extends JavaSdk {
     return getVersionNumber(versionString).compareTo(versionNumber);
   }
 
-  public ProjectJdk createJdk(final String jdkName, final String home, final boolean isJre) {
+  public Sdk createJdk(final String jdkName, final String home, final boolean isJre) {
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
@@ -259,23 +254,23 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static ProjectJdk getMockJdk(@NonNls String versionName) {
+  public static Sdk getMockJdk(@NonNls String versionName) {
     final String forcedPath = System.getProperty("idea.testingFramework.mockJDK");
     String jdkHome = forcedPath != null ? forcedPath : PathManager.getHomePath() + File.separator + "mockJDK";
     return createMockJdk(jdkHome, versionName, getInstance());
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static ProjectJdk getMockJdk15(@NonNls String versionName) {
+  public static Sdk getMockJdk15(@NonNls String versionName) {
     String jdkHome = PathManager.getHomePath() + File.separator + "mockJDK-1.5";
     return createMockJdk(jdkHome, versionName, getInstance());
   }
 
-  private static ProjectJdk createMockJdk(String jdkHome, final String versionName, JavaSdk javaSdk) {
+  private static Sdk createMockJdk(String jdkHome, final String versionName, JavaSdk javaSdk) {
     File jdkHomeFile = new File(jdkHome);
     if (!jdkHomeFile.exists()) return null;
 
-    final ProjectJdk jdk = new ProjectJdkImpl(versionName, javaSdk);
+    final Sdk jdk = new ProjectJdkImpl(versionName, javaSdk);
     final SdkModificator sdkModificator = jdk.getSdkModificator();
 
     String path = jdkHome.replace(File.separatorChar, '/');

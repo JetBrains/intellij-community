@@ -13,8 +13,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -79,22 +79,21 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
         wizardContext.setProjectName(IdeBundle.message("project.import.default.name", getName()) + ProjectFileType.DOT_DEFAULT_EXTENSION);
       }
       wizardContext.setProjectFileDirectory(virtualFile.getParent().getPath());
-      if (wizardContext.getProjectJdk() == null) {
-        for (ProjectJdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
-          if (projectJdk.getSdkType() instanceof JavaSdk) {
-            final String jdkVersion = projectJdk.getVersionString();
-            if (wizardContext.getProjectJdk() == null) {
+      for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+        if (projectJdk.getSdkType() instanceof JavaSdk) {
+          final String jdkVersion = projectJdk.getVersionString();
+          if (wizardContext.getProjectJdk() == null) {
+            wizardContext.setProjectJdk(projectJdk);
+          }
+          else {
+            final String version = wizardContext.getProjectJdk().getVersionString();
+            if (jdkVersion == null || (version != null && version.compareTo(jdkVersion) < 0)) {
               wizardContext.setProjectJdk(projectJdk);
-            }
-            else {
-              final String version = wizardContext.getProjectJdk().getVersionString();
-              if (jdkVersion == null || (version != null && version.compareTo(jdkVersion) < 0)) {
-                wizardContext.setProjectJdk(projectJdk);
-              }
             }
           }
         }
       }
+
 
       final String newProjectPath = wizardContext.getProjectFileDirectory() + File.separator + wizardContext.getProjectName() +
                                     ProjectFileType.DOT_DEFAULT_EXTENSION;

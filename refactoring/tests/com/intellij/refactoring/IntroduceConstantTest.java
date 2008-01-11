@@ -1,10 +1,10 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -24,7 +24,7 @@ public class IntroduceConstantTest extends CodeInsightTestCase {
     new MockLocalToFieldHandler(getProject(), true).convertLocalToField(local, getEditor());
   }
 
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 }

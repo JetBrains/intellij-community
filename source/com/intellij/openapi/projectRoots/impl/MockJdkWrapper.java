@@ -3,26 +3,26 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 
 /**
  * used to override JdkHome location in order to provide correct paths
  */
-public final class MockJdkWrapper implements ProjectJdk {
+public final class MockJdkWrapper implements Sdk {
   private final String myHomePath;
-  private final ProjectJdk myDelegate;
+  private final Sdk myDelegate;
 
-  public MockJdkWrapper(String homePath, ProjectJdk delegate) {
+  public MockJdkWrapper(String homePath, Sdk delegate) {
     myHomePath = homePath;
     myDelegate = delegate;
   }
@@ -46,22 +46,6 @@ public final class MockJdkWrapper implements ProjectJdk {
 
   public String getVersionString() {
     return myDelegate.getVersionString();
-  }
-
-  public String getBinPath() {
-    return getSdkType().getBinPath(this);
-  }
-
-  public String getToolsPath() {
-    return getSdkType().getToolsPath(this);
-  }
-
-  public String getVMExecutablePath() {
-    return getSdkType().getVMExecutablePath(this);
-  }
-
-  public String getRtLibraryPath() {
-    return getSdkType().getRtLibraryPath(this);
   }
 
   public RootProvider getRootProvider() {

@@ -15,7 +15,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -61,7 +61,7 @@ public class NewProjectUtil {
       final Project newProject =
         projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(projectFilePath, true, false) : projectToClose;
 
-      final ProjectJdk jdk = dialog.getNewProjectJdk();
+      final Sdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
         final String versionString = jdk.getVersionString();
         if (versionString != null) { //jdk is valid

@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.watcher.OrderEntryProperties;
 import com.intellij.openapi.roots.libraries.Library;
@@ -455,7 +455,7 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void clear() {
-    final ProjectJdk jdk = getJdk();
+    final Sdk jdk = getJdk();
     myContent.clear();
     myOrderEntries.clear();
     setJdk(jdk);
@@ -553,7 +553,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public void setJdk(ProjectJdk jdk) {
+  public void setJdk(Sdk jdk) {
     assertWritable();
     final JdkOrderEntry jdkLibraryEntry;
     if (jdk != null) {
@@ -584,7 +584,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {
         return ((JdkOrderEntry)orderEntry).getJdk();

@@ -2,8 +2,8 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
@@ -80,7 +80,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
     rootElement.addContent(orderEntryElement);
   }
 
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     if (!getRootModel().isWritable()){
       return myProjectRootManager.getProjectJdk();
     }
@@ -93,7 +93,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
     if (!getRootModel().isWritable() || ApplicationManager.getApplication().isUnitTestMode()){
       return projectJdkName;
     }
-    final ProjectJdk projectJdk = getJdk();
+    final Sdk projectJdk = getJdk();
     if (projectJdk != null) {
       return projectJdk.getName();
     }
@@ -104,7 +104,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   private RootProvider getRootProvider() {
-    final ProjectJdk projectJdk = myProjectRootManager.getProjectJdk();
+    final Sdk projectJdk = myProjectRootManager.getProjectJdk();
     if (projectJdk != null) {
       return projectJdk.getRootProvider();
     }
@@ -126,23 +126,23 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
 
 
   private class MyJdkTableListener implements ProjectJdkTable.Listener {
-    public void jdkRemoved(ProjectJdk jdk) {
+    public void jdkRemoved(Sdk jdk) {
       if (isAffectedByJdkAddition(jdk)) {
         updateFromRootProviderAndSubscribe(null);
       }
     }
 
-    private boolean isAffectedByJdkAddition(ProjectJdk jdk) {
+    private boolean isAffectedByJdkAddition(Sdk jdk) {
       return jdk.equals(getJdk());
     }
 
-    public void jdkAdded(ProjectJdk jdk) {
+    public void jdkAdded(Sdk jdk) {
       if (isAffectedByJdkRemoval(jdk)) {
         updateFromRootProviderAndSubscribe(getRootProvider());
       }
     }
 
-    public void jdkNameChanged(ProjectJdk jdk, String previousName) {
+    public void jdkNameChanged(Sdk jdk, String previousName) {
       String currentName = getJdkName();
       if (jdk.getName().equals(currentName)) {
         // if current name matches my name
@@ -150,7 +150,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
       }
     }
 
-    private boolean isAffectedByJdkRemoval(ProjectJdk jdk) {
+    private boolean isAffectedByJdkRemoval(Sdk jdk) {
       return jdk.getName().equals(getJdkName());
     }
   }

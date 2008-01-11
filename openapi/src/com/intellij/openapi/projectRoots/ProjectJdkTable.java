@@ -26,27 +26,27 @@ public abstract class ProjectJdkTable {
   }
 
   @Nullable
-  public abstract ProjectJdk findJdk(String name);
+  public abstract Sdk findJdk(String name);
 
   @Nullable
-  public abstract ProjectJdk findJdk(String name, String type);
+  public abstract Sdk findJdk(String name, String type);
 
-  public abstract ProjectJdk getInternalJdk();
+  public abstract Sdk getInternalJdk();
 
-  public abstract ProjectJdk[] getAllJdks();
+  public abstract Sdk[] getAllJdks();
 
-  public abstract void addJdk(ProjectJdk jdk);
+  public abstract void addJdk(Sdk jdk);
 
-  public abstract void removeJdk(ProjectJdk jdk);
+  public abstract void removeJdk(Sdk jdk);
 
-  public abstract void updateJdk(ProjectJdk originalJdk, ProjectJdk modifiedJdk);
+  public abstract void updateJdk(Sdk originalJdk, Sdk modifiedJdk);
 
   public static interface Listener extends EventListener {
-    void jdkAdded(ProjectJdk jdk);
+    void jdkAdded(Sdk jdk);
 
-    void jdkRemoved(ProjectJdk jdk);
+    void jdkRemoved(Sdk jdk);
 
-    void jdkNameChanged(ProjectJdk jdk, String previousName);
+    void jdkNameChanged(Sdk jdk, String previousName);
   }
 
   public abstract void addListener(Listener listener);

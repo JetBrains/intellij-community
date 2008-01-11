@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ProjectJdksConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -20,10 +20,10 @@ import java.awt.*;
  */
 public class ProjectJdksEditor extends DialogWrapper {
   private ProjectJdksConfigurable myConfigurable;
-  private ProjectJdk myProjectJdk;
+  private Sdk myProjectJdk;
 
 
-  public ProjectJdksEditor(final ProjectJdk jdk, Project project, Component parent) {
+  public ProjectJdksEditor(final Sdk jdk, Project project, Component parent) {
     super(parent, true);
     myConfigurable = new ProjectJdksConfigurable(project);
     SwingUtilities.invokeLater(new Runnable(){
@@ -43,7 +43,7 @@ public class ProjectJdksEditor extends DialogWrapper {
     init();
   }
 
-  public ProjectJdksEditor(ProjectJdk jdk, Component parent){
+  public ProjectJdksEditor(Sdk jdk, Component parent){
     this(jdk, PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()), parent);
   }
 
@@ -68,7 +68,7 @@ public class ProjectJdksEditor extends DialogWrapper {
     return "#com.intellij.openapi.projectRoots.ui.ProjectJdksEditor";
   }
 
-  public ProjectJdk getSelectedJdk(){
+  public Sdk getSelectedJdk(){
     return myProjectJdk;
   }
 

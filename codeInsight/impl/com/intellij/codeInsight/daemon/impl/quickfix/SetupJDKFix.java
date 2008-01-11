@@ -16,12 +16,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleJdkUtil;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 public class SetupJDKFix implements IntentionAction {
@@ -48,7 +48,7 @@ public class SetupJDKFix implements IntentionAction {
   }
 
   public void invoke(Project project, Editor editor, final PsiFile file) {
-    ProjectJdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
+    Sdk projectJdk = JdkChooserPanel.chooseAndSetJDK(project);
     if (projectJdk == null) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {

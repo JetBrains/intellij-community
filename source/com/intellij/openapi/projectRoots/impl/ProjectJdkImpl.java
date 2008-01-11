@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
 
-public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModificator {
+public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
   private final ProjectRootContainerImpl myRootContainer;
   private String myName;
@@ -179,22 +179,6 @@ public class ProjectJdkImpl implements JDOMExternalizable, ProjectJdk, SdkModifi
       myVersionString = null; // clear cached value if home path changed
       myVersionDefined = false;
     }
-  }
-
-  public final String getBinPath() {
-    return mySdkType.getBinPath(this);
-  }
-
-  public final String getToolsPath() {
-    return mySdkType.getToolsPath(this);
-  }
-
-  public final String getVMExecutablePath() {
-    return mySdkType.getVMExecutablePath(this);
-  }
-
-  public final String getRtLibraryPath() {
-    return mySdkType.getRtLibraryPath(this);
   }
 
   public Object clone() throws CloneNotSupportedException {

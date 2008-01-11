@@ -15,8 +15,8 @@ import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
@@ -265,19 +265,19 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   @Nullable
-  public static ProjectJdk getNewProjectJdk(WizardContext context) {
+  public static Sdk getNewProjectJdk(WizardContext context) {
     if (context.getProjectJdk() != null) {
       return context.getProjectJdk();
     }
     final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
-    final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
     if (projectJdk != null) {
       return projectJdk;
     }
     if (context.getProject() == null) {
-      final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
-      Arrays.sort(projectJdks, new Comparator<ProjectJdk>() {
-        public int compare(final ProjectJdk o1, final ProjectJdk o2) {
+      final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
+      Arrays.sort(projectJdks, new Comparator<Sdk>() {
+        public int compare(final Sdk o1, final Sdk o2) {
           final String version1 = o1.getVersionString();
           final String version2 = o2.getVersionString();
           return version1 != null && version2 != null ? version1.compareToIgnoreCase(version2) : 0;
@@ -291,7 +291,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep> {
   }
 
   @Nullable
-  public ProjectJdk getNewProjectJdk() {
+  public Sdk getNewProjectJdk() {
     return getNewProjectJdk(myWizardContext);
   }
 

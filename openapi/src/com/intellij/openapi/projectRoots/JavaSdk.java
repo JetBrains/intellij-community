@@ -34,13 +34,13 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
     return ApplicationManager.getApplication().getComponent(JavaSdk.class);
   }
 
-  public final ProjectJdk createJdk(final String jdkName, String jreHome) {
+  public final Sdk createJdk(final String jdkName, String jreHome) {
     return createJdk(jdkName, jreHome, true);
   }
 
   public abstract int compareTo(@NotNull String versionString, @NotNull String versionNumber);
 
-  public abstract ProjectJdk createJdk(@NonNls String jdkName, String home, boolean isJre);
+  public abstract Sdk createJdk(@NonNls String jdkName, String home, boolean isJre);
 
   public static boolean checkForJdk(File file) {
     file = new File(file.getAbsolutePath() + File.separator + "bin");

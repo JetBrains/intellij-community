@@ -3,8 +3,8 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
@@ -27,11 +27,11 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   @NonNls private static final String JDK_NAME_ATTR = "jdkName";
   @NonNls private static final String JDK_TYPE_ATTR = "jdkType";
 
-  private ProjectJdk myJdk;
+  private Sdk myJdk;
   private String myJdkName;
   private String myJdkType;
 
-  ModuleJdkOrderEntryImpl(ProjectJdk projectJdk,
+  ModuleJdkOrderEntryImpl(Sdk projectJdk,
                           RootModelImpl rootModel,
                           ProjectRootManagerImpl projectRootManager,
                           VirtualFilePointerManager filePointerManager) {
@@ -56,7 +56,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     final String jdkName = jdkNameAttribute.getValue();
     final String jdkType = element.getAttributeValue(JDK_TYPE_ATTR);
     final ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    final ProjectJdk jdkByName = projectJdkTable.findJdk(jdkName, jdkType);
+    final Sdk jdkByName = projectJdkTable.findJdk(jdkName, jdkType);
     if (jdkByName == null) {
       init ( null, jdkName, jdkType);
     }
@@ -84,7 +84,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     init(null, jdkName, jdkType);
   }
 
-  private void init(final ProjectJdk jdk, final String jdkName, final String jdkType) {
+  private void init(final Sdk jdk, final String jdkName, final String jdkType) {
     myJdk = jdk;
     setJdkName(jdkName);
     setJdkType(jdkType);
@@ -112,16 +112,16 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     if (ApplicationManager.getApplication().isUnitTestMode() || !myRootModel.isWritable()) return myJdk;
     final Project project = getRootModel().getModule().getProject();
     final ProjectJdksModel model = ProjectStructureConfigurable.getInstance(project).getJdkConfig().getJdksTreeModel();
-    return myJdkName != null ? (ProjectJdk)model.findSdk(myJdkName) : myJdk;
+    return myJdkName != null ? model.findSdk(myJdkName) : myJdk;
   }
 
   public String getJdkName() {
     if (myJdkName != null) return myJdkName;
-    ProjectJdk jdk = getJdk();
+    Sdk jdk = getJdk();
     if (jdk != null) {
       return jdk.getName();
     }
@@ -153,7 +153,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     return policy.visitOrderEntry(this, initialValue);
   }
 
-  public void jdkAdded(ProjectJdk jdk) {
+  public void jdkAdded(Sdk jdk) {
     if (myJdk == null && getJdkName().equals(jdk.getName())) {
       myJdk = jdk;
       setJdkName(null);
@@ -162,7 +162,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
-  public void jdkNameChanged(ProjectJdk jdk, String previousName) {
+  public void jdkNameChanged(Sdk jdk, String previousName) {
     if (myJdk == null && getJdkName().equals(jdk.getName())) {
       myJdk = jdk;
       setJdkName(null);
@@ -171,7 +171,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     }
   }
 
-  public void jdkRemoved(ProjectJdk jdk) {
+  public void jdkRemoved(Sdk jdk) {
     if (jdk == myJdk) {
       setJdkName(myJdk.getName());
       setJdkType(myJdk.getSdkType().getName());

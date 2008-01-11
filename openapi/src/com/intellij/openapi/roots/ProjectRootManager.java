@@ -18,7 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +103,7 @@ public abstract class ProjectRootManager implements ModificationTracker {
   /**
    * @deprecated
    */
-  public abstract ProjectJdk getJdk();
+  public abstract Sdk getJdk();
 
   /**
    * Returns the instance of the JDK selected for the project.
@@ -112,7 +112,7 @@ public abstract class ProjectRootManager implements ModificationTracker {
    * to any existing JDK instance.
    */
   @Nullable
-  public abstract ProjectJdk getProjectJdk();
+  public abstract Sdk getProjectJdk();
 
   /**
    * Returns the name of the JDK selected for the project.
@@ -126,7 +126,7 @@ public abstract class ProjectRootManager implements ModificationTracker {
    *
    * @param jdk the JDK instance.
    */
-  public abstract void setProjectJdk(@Nullable ProjectJdk jdk);
+  public abstract void setProjectJdk(@Nullable Sdk jdk);
 
   /**
    * Sets the name of the JDK to be used for the project.

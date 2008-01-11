@@ -6,7 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.LightFilePointer;
@@ -88,7 +88,7 @@ public class CellAppearanceUtils {
   public static CellAppearance forOrderEntry(OrderEntry orderEntry, boolean selected) {
     if (orderEntry instanceof JdkOrderEntry) {
       JdkOrderEntry jdkLibraryEntry = (JdkOrderEntry)orderEntry;
-      ProjectJdk jdk = jdkLibraryEntry.getJdk();
+      Sdk jdk = jdkLibraryEntry.getJdk();
       if (!orderEntry.isValid()) {
         final String oldJdkName = jdkLibraryEntry.getJdkName();
         return SimpleTextCellAppearance.invalid(oldJdkName != null ? oldJdkName : NO_JDK, INVALID_ICON);
@@ -193,7 +193,7 @@ public class CellAppearanceUtils {
     return new SimpleTextCellAppearance(relativePath, icon, textAttributes);
   }
 
-  public static CellAppearance forJdk(ProjectJdk jdk, boolean isInComboBox, final boolean selected) {
+  public static CellAppearance forJdk(Sdk jdk, boolean isInComboBox, final boolean selected) {
     if (jdk == null) {
       return SimpleTextCellAppearance.invalid(NO_JDK, INVALID_ICON);
     }
@@ -236,7 +236,7 @@ public class CellAppearanceUtils {
 
   public static CellAppearance forProjectJdk(final Project project) {
     final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    final ProjectJdk projectJdk = projectRootManager.getProjectJdk();
+    final Sdk projectJdk = projectRootManager.getProjectJdk();
     final CellAppearance appearance;
     if (projectJdk != null) {
       appearance = forJdk(projectJdk, false, false);

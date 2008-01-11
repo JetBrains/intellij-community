@@ -19,7 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
@@ -38,7 +38,10 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 @State(
   name = "ProjectJDKsConfigurable.UI",
@@ -80,8 +83,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     myProjectJdksModel.reset(myProject);
 
     myRoot.removeAllChildren();
-    final Map<ProjectJdk,ProjectJdk> sdks = myProjectJdksModel.getProjectJdks();
-    for (ProjectJdk sdk : sdks.keySet()) {
+    final HashMap<Sdk, Sdk> sdks = myProjectJdksModel.getProjectJdks();
+    for (Sdk sdk : sdks.keySet()) {
       final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory);
       addNode(new MyNode(configurable), myRoot);
     }
@@ -144,8 +147,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
     final ArrayList<AnAction> actions = new ArrayList<AnAction>();
     DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
     group.getTemplatePresentation().setIcon(Icons.ADD_ICON);
-    myProjectJdksModel.createAddActions(group, myTree, new Consumer<ProjectJdk>() {
-      public void consume(final ProjectJdk projectJdk) {
+    myProjectJdksModel.createAddActions(group, myTree, new Consumer<Sdk>() {
+      public void consume(final Sdk projectJdk) {
         addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory), false), myRoot);
         selectNodeInTree(findNodeByObject(myRoot, projectJdk));
       }
@@ -156,14 +159,14 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
   }
 
   protected void processRemovedItems() {
-    final Set<ProjectJdk> jdks = new HashSet<ProjectJdk>();
+    final Set<Sdk> jdks = new HashSet<Sdk>();
     for(int i = 0; i < myRoot.getChildCount(); i++){
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final NamedConfigurable namedConfigurable = (NamedConfigurable)node.getUserObject();
       jdks.add(((JdkConfigurable)namedConfigurable).getEditableObject());
     }
-    final Map<ProjectJdk, ProjectJdk> sdks = new HashMap<ProjectJdk, ProjectJdk>(myProjectJdksModel.getProjectJdks());
-    for (ProjectJdk sdk : sdks.values()) {
+    final HashMap<Sdk, Sdk> sdks = new HashMap<Sdk, Sdk>(myProjectJdksModel.getProjectJdks());
+    for (Sdk sdk : sdks.values()) {
       if (!jdks.contains(sdk)) {
         myProjectJdksModel.removeJdk(sdk);
       }
@@ -172,15 +175,15 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent implements C
 
   protected boolean wasObjectStored(Object editableObject) {
     //noinspection RedundantCast
-    return myProjectJdksModel.getProjectJdks().containsKey((ProjectJdk)editableObject);
+    return myProjectJdksModel.getProjectJdks().containsKey((Sdk)editableObject);
   }
 
   @Nullable
-  public ProjectJdk getSelectedJdk() {
-    return (ProjectJdk)getSelectedObject();
+  public Sdk getSelectedJdk() {
+    return (Sdk)getSelectedObject();
   }
 
-  public void selectJdk(final ProjectJdk projectJdk) {
+  public void selectJdk(final Sdk projectJdk) {
     selectNodeInTree(projectJdk);
   }
 

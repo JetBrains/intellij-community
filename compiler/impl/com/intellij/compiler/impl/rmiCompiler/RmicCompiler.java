@@ -17,7 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
@@ -198,7 +198,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
                                           final File outputDir
   ) throws IOException{
 
-    final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
 
     final Map<String, RmicProcessingItem> pathToItemMap = new HashMap<String, RmicProcessingItem>();
     final String[] cmdLine = ApplicationManager.getApplication().runReadAction(new Computable<String[]>() {
@@ -250,7 +250,7 @@ public class RmicCompiler implements ClassPostProcessingCompiler{
 
   // todo: Module -> ModuleChunk
   private String[] createStartupCommand(final Module module, final String outputPath, final RmicProcessingItem[] items) {
-    final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
 
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {

@@ -47,7 +47,7 @@ import java.util.Set;
 
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
-  private ProjectJdk mySdk;
+  private Sdk mySdk;
   private Map<OrderRootType, PathEditor> myPathEditors = new HashMap<OrderRootType, PathEditor>();
 
   private TextFieldWithBrowseButton myHomeComponent;
@@ -74,7 +74,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     createMainPanel();
   }
 
-  public void setSdk(ProjectJdk sdk){
+  public void setSdk(Sdk sdk){
     mySdk = sdk;
     if (mySdk != null) {
       myInitialName = mySdk.getName();
@@ -329,7 +329,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     ((ProjectJdkImpl)mySdk).setName(newSdkName);
 
     try {
-      final ProjectJdk dummySdk = (ProjectJdk)mySdk.clone();
+      final Sdk dummySdk = (Sdk)mySdk.clone();
       SdkModificator sdkModificator = dummySdk.getSdkModificator();
       sdkModificator.setHomePath(homePath);
       sdkModificator.removeAllRoots();

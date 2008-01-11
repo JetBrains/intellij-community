@@ -1,7 +1,7 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -31,7 +31,7 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     super.tearDown();
   }
 
-  protected ProjectJdk getProjectJDK() {
+  protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 

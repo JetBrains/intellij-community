@@ -16,6 +16,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,4 +39,8 @@ public interface Sdk {
   SdkAdditionalData getSdkAdditionalData();
 
   SdkModificator getSdkModificator();
+
+  VirtualFile getHomeDirectory();
+
+  Object clone() throws CloneNotSupportedException;
 }

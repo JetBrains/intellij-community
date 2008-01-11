@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -31,7 +31,7 @@ import java.util.*;
 public class JdkChooserPanel extends JPanel {
   private JList myList = null;
   private DefaultListModel myListModel = null;
-  private ProjectJdk myCurrentJdk;
+  private Sdk myCurrentJdk;
   private Project myProject;
   private SdkType[] myAllowedJdkTypes = null;
 
@@ -47,7 +47,7 @@ public class JdkChooserPanel extends JPanel {
 
     myList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
-        myCurrentJdk = (ProjectJdk)myList.getSelectedValue();
+        myCurrentJdk = (Sdk)myList.getSelectedValue();
       }
     });
     myList.addMouseListener(new MouseAdapter() {
@@ -76,29 +76,29 @@ public class JdkChooserPanel extends JPanel {
     myAllowedJdkTypes = allowedJdkTypes;
   }
 
-  public ProjectJdk getChosenJdk() {
+  public Sdk getChosenJdk() {
     return myCurrentJdk;
   }
 
   public void editJdkTable() {
-    ProjectJdksEditor editor = new ProjectJdksEditor((ProjectJdk)myList.getSelectedValue(),
+    ProjectJdksEditor editor = new ProjectJdksEditor((Sdk)myList.getSelectedValue(),
                                                      myProject != null ? myProject : ProjectManager.getInstance().getDefaultProject(),
                                                      myList);
     editor.show();
     if (editor.isOK()) {
-      ProjectJdk selectedJdk = editor.getSelectedJdk();
+      Sdk selectedJdk = editor.getSelectedJdk();
       updateList(selectedJdk, null);
     }
   }
 
-  public void updateList(final ProjectJdk selectedJdk, final SdkType type) {
+  public void updateList(final Sdk selectedJdk, final SdkType type) {
     final int[] selectedIndices = myList.getSelectedIndices();
     fillList(type);
     // restore selection
     if (selectedJdk != null) {
       TIntArrayList list = new TIntArrayList();
       for (int i = 0; i < myListModel.size(); i++) {
-        final ProjectJdk jdk = (ProjectJdk)myListModel.getElementAt(i);
+        final Sdk jdk = (Sdk)myListModel.getElementAt(i);
         if (Comparing.strEqual(jdk.getName(), selectedJdk.getName())){
           list.add(i);
         }
@@ -114,7 +114,7 @@ public class JdkChooserPanel extends JPanel {
       myList.setSelectedIndices(selectedIndices);
     }
 
-    myCurrentJdk = (ProjectJdk)myList.getSelectedValue();
+    myCurrentJdk = (Sdk)myList.getSelectedValue();
   }
 
   public JList getPreferredFocusedComponent() {
@@ -123,7 +123,7 @@ public class JdkChooserPanel extends JPanel {
 
   public void fillList(final SdkType type) {
     myListModel.clear();
-    final ProjectJdk[] jdks;
+    final Sdk[] jdks;
     if (myProject == null) {
       jdks = ProjectJdkTable.getInstance().getAllJdks();
     }
@@ -132,26 +132,26 @@ public class JdkChooserPanel extends JPanel {
       if (!projectJdksModel.isInitialized()){ //should be initialized
         projectJdksModel.reset(myProject);
       }
-      final Set<ProjectJdk> compatibleJdks = new HashSet<ProjectJdk>();
-      final Collection<ProjectJdk> collection = projectJdksModel.getProjectJdks().values();
-      for (ProjectJdk projectJdk : collection) {
+      final Set<Sdk> compatibleJdks = new HashSet<Sdk>();
+      final Collection<Sdk> collection = projectJdksModel.getProjectJdks().values();
+      for (Sdk projectJdk : collection) {
         if (isCompatibleJdk(projectJdk, type)) {
           compatibleJdks.add(projectJdk);
         }
       }
-      jdks = compatibleJdks.toArray(new ProjectJdk[compatibleJdks.size()]);
+      jdks = compatibleJdks.toArray(new Sdk[compatibleJdks.size()]);
     }
-    Arrays.sort(jdks, new Comparator<ProjectJdk>() {
-      public int compare(final ProjectJdk o1, final ProjectJdk o2) {
+    Arrays.sort(jdks, new Comparator<Sdk>() {
+      public int compare(final Sdk o1, final Sdk o2) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
-    for (ProjectJdk jdk : jdks) {
+    for (Sdk jdk : jdks) {
       myListModel.addElement(jdk);
     }
   }
 
-  private boolean isCompatibleJdk(final ProjectJdk projectJdk, final SdkType type) {
+  private boolean isCompatibleJdk(final Sdk projectJdk, final SdkType type) {
     if (type != null) {
       return projectJdk.getSdkType() == type;
     }
@@ -165,14 +165,14 @@ public class JdkChooserPanel extends JPanel {
     return myList;
   }
 
-  public void selectJdk(ProjectJdk defaultJdk) {
+  public void selectJdk(Sdk defaultJdk) {
     final int index = myListModel.indexOf(defaultJdk);
     if (index >= 0) {
       myList.setSelectedIndex(index);
     }
   }
 
-  private static ProjectJdk showDialog(final Project project, String title, final Component parent, ProjectJdk jdkToSelect) {
+  private static Sdk showDialog(final Project project, String title, final Component parent, Sdk jdkToSelect) {
     final JdkChooserPanel jdkChooserPanel = new JdkChooserPanel(project);
     jdkChooserPanel.fillList(null);
     final MyDialog dialog = jdkChooserPanel.new MyDialog(parent);
@@ -186,9 +186,9 @@ public class JdkChooserPanel extends JPanel {
     return dialog.isOK() ? jdkChooserPanel.getChosenJdk() : null;
   }
 
-  public static ProjectJdk chooseAndSetJDK(final Project project) {
-    final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    final ProjectJdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
+  public static Sdk chooseAndSetJDK(final Project project) {
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
     if (jdk == null) {
       return null;
     }

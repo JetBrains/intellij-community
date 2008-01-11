@@ -12,7 +12,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -334,7 +334,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
             final NamedConfigurable namedConfigurable = ((MyNode)object).getConfigurable();
             if (namedConfigurable != null) {
               final Object editableObject = namedConfigurable.getEditableObject();
-              if (editableObject instanceof ProjectJdk || editableObject instanceof Module || editableObject instanceof Facet) return true;
+              if (editableObject instanceof Sdk || editableObject instanceof Module || editableObject instanceof Facet) return true;
               if (editableObject instanceof Library) {
                 final LibraryTable table = ((Library)editableObject).getTable();
                 return table == null || table.isEditable();
@@ -365,8 +365,8 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       final MyNode node = (MyNode)last;
       final NamedConfigurable configurable = node.getConfigurable();
       final Object editableObject = configurable.getEditableObject();
-      if (editableObject instanceof ProjectJdk) {
-        removeJdk((ProjectJdk)editableObject);
+      if (editableObject instanceof Sdk) {
+        removeJdk((Sdk)editableObject);
       }
       else if (editableObject instanceof Module) {
         if (removeModule((Module)editableObject)) return false;
@@ -399,7 +399,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return false;
   }
 
-  protected void removeJdk(final ProjectJdk editableObject) {
+  protected void removeJdk(final Sdk editableObject) {
   }
 
   protected abstract class AbstractAddGroup extends ActionGroup implements MasterDetailsComponent.ActionGroupWithPreselection {

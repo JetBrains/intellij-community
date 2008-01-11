@@ -18,7 +18,7 @@ public class JdkUtil {
   /**
    * @return the specified attribute of the JDK (examines rt.jar) or null if cannot determine the value
    */
-  public static String getJdkMainAttribute(ProjectJdk jdk, Attributes.Name attributeName) {
+  public static String getJdkMainAttribute(Sdk jdk, Attributes.Name attributeName) {
     final VirtualFile homeDirectory = jdk.getHomeDirectory();
     if (homeDirectory == null) {
       return null;

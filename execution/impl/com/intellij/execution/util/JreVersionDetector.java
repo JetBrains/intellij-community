@@ -9,11 +9,11 @@ package com.intellij.execution.util;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JdkVersionUtil;
+import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 
 public class JreVersionDetector {
   private String myLastAlternativeJrePath = null; //awful hack
@@ -34,16 +34,16 @@ public class JreVersionDetector {
       final Module module = configuration.getConfigurationModule().getModule();
       if (module != null && !module.isDisposed()) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final ProjectJdk jdk = ModuleJdkUtil.getJdk(rootManager);
+        final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
         return isJre50(jdk);
       }
 
-      final ProjectJdk projectJdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectJdk();
+      final Sdk projectJdk = ProjectRootManager.getInstance(configuration.getProject()).getProjectJdk();
       return isJre50(projectJdk);
     }
   }
 
-  private static boolean isJre50(final ProjectJdk jdk) {
+  private static boolean isJre50(final Sdk jdk) {
     if (jdk == null) return false;
     final String versionString = jdk.getVersionString();
     return versionString != null && isJre50(versionString);

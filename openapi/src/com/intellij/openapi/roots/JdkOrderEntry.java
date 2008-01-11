@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public interface JdkOrderEntry extends OrderEntry {
-  ProjectJdk getJdk();
+  Sdk getJdk();
   String getJdkName();
   VirtualFile[] getRootFiles(OrderRootType type);
   String[] getRootUrls(OrderRootType type);

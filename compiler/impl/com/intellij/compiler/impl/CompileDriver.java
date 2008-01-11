@@ -24,13 +24,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
@@ -1742,7 +1742,7 @@ public class CompileDriver {
         // todo still there may be problems with this approach if some generated files are attributed by this module
         continue;
       }
-      final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
       if (jdk == null) {
         modulesWithoutJdkAssigned.add(module.getName());
       }
@@ -1825,10 +1825,10 @@ public class CompileDriver {
       if (chunkModules.size() <= 1) {
         continue; // no need to check one-module chunks
       }
-      ProjectJdk jdk = null;
+      Sdk jdk = null;
       LanguageLevel languageLevel = null;
       for (final Module module : chunkModules) {
-        final ProjectJdk moduleJdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+        final Sdk moduleJdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
         if (jdk == null) {
           jdk = moduleJdk;
         }

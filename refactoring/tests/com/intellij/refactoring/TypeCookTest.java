@@ -2,7 +2,7 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,7 +30,7 @@ import java.io.PrintWriter;
  */
 
 public class TypeCookTest extends MultiFileTestCase {
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 

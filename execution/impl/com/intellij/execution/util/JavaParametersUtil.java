@@ -11,7 +11,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -96,24 +96,24 @@ public class JavaParametersUtil {
     parameters.configureByProject(project, classPathType, createProjectJdk(project, jreHome));
   }
 
-  private static ProjectJdk createModuleJdk(final Module module, final String jreHome) throws CantRunException {
+  private static Sdk createModuleJdk(final Module module, final String jreHome) throws CantRunException {
     return jreHome == null ? JavaParameters.getModuleJdk(module) : createAlternativeJdk(jreHome);
   }
 
-  private static ProjectJdk createProjectJdk(final Project project, final String jreHome) throws CantRunException {
+  private static Sdk createProjectJdk(final Project project, final String jreHome) throws CantRunException {
     return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(jreHome);
   }
 
-  private static ProjectJdk createProjectJdk(final Project project) throws CantRunException {
-    final ProjectJdk jdk = PathUtilEx.getAnyJdk(project);
+  private static Sdk createProjectJdk(final Project project) throws CantRunException {
+    final Sdk jdk = PathUtilEx.getAnyJdk(project);
     if (jdk == null) {
       throw CantRunException.noJdkConfigured();
     }
     return jdk;
   }
 
-  private static ProjectJdk createAlternativeJdk(final String jreHome) throws CantRunException {
-    final ProjectJdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
+  private static Sdk createAlternativeJdk(final String jreHome) throws CantRunException {
+    final Sdk jdk = JavaSdk.getInstance().createJdk("", jreHome);
     if (jdk == null) throw CantRunException.noJdkConfigured();
     return jdk;
   }

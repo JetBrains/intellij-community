@@ -30,7 +30,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
@@ -88,7 +88,7 @@ import java.util.Map;
   private static IdeaTestApplication ourApplication;
   private static Project ourProject;
   private static Module ourModule;
-  private static ProjectJdk ourJDK;
+  private static Sdk ourJDK;
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
@@ -179,7 +179,7 @@ import java.util.Map;
   }
 
 
-  private static void initProject(final ProjectJdk projectJDK) throws Exception {
+  private static void initProject(final Sdk projectJDK) throws Exception {
     final File projectFile = File.createTempFile("temp", ".ipr");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
@@ -265,7 +265,7 @@ import java.util.Map;
     doSetup(getProjectJDK(), configureLocalInspectionTools(), myAvailableTools, myAvailableLocalTools);
   }
 
-  public static void doSetup(final ProjectJdk projectJDK,
+  public static void doSetup(final Sdk projectJDK,
                       final LocalInspectionTool[] localInspectionTools,
                       final Map<String, LocalInspectionTool> availableToolsMap,
                       final Map<String, LocalInspectionToolWrapper> availableLocalTools) throws Exception {
@@ -480,11 +480,11 @@ import java.util.Map;
     }
   }
 
-  private static boolean isJDKChanged(final ProjectJdk newJDK) {
+  private static boolean isJDKChanged(final Sdk newJDK) {
     return ourJDK == null || !Comparing.equal(ourJDK.getVersionString(), newJDK.getVersionString());
   }
 
-  protected ProjectJdk getProjectJDK() {
+  protected Sdk getProjectJDK() {
     return JavaSdkImpl.getMockJdk("java 1.4");
   }
 

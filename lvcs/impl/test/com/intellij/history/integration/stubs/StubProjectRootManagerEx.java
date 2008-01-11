@@ -4,7 +4,7 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -102,12 +102,12 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     throw new UnsupportedOperationException();
   }
 
   @Nullable
-  public ProjectJdk getProjectJdk() {
+  public Sdk getProjectJdk() {
     throw new UnsupportedOperationException();
   }
 
@@ -115,7 +115,7 @@ public class StubProjectRootManagerEx extends ProjectRootManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void setProjectJdk(@Nullable ProjectJdk jdk) {
+  public void setProjectJdk(@Nullable Sdk jdk) {
     throw new UnsupportedOperationException();
   }
 

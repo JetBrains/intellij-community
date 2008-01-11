@@ -15,11 +15,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,9 +44,9 @@ public class JavacCompiler extends ExternalCompiler {
 
   public boolean checkCompiler(final CompileScope scope) {
     final Module[] modules = scope.getAffectedModules();
-    final Set<ProjectJdk> checkedJdks = new HashSet<ProjectJdk>();
+    final Set<Sdk> checkedJdks = new HashSet<Sdk>();
     for (final Module module : modules) {
-      final ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      final Sdk jdk  = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
       if (jdk == null) {
         continue;
       }
@@ -59,7 +59,7 @@ public class JavacCompiler extends ExternalCompiler {
                                    CompilerBundle.message("compiler.javac.name"), Messages.getErrorIcon());
         return false;
       }
-      final String vmExecutablePath = jdk.getVMExecutablePath();
+      final String vmExecutablePath = jdk.getSdkType().getVMExecutablePath(jdk);
       if (vmExecutablePath == null) {
         Messages.showMessageDialog(myProject,
                                    CompilerBundle.message("javac.error.vm.executable.missing", jdk.getName()),
@@ -67,7 +67,7 @@ public class JavacCompiler extends ExternalCompiler {
         return false;
       }
       if (jdk instanceof JavaSdk) {
-        final String toolsJarPath = jdk.getToolsPath();
+        final String toolsJarPath = jdk.getSdkType().getToolsPath(jdk);
         if (toolsJarPath == null) {
           Messages.showMessageDialog(myProject,
                                      CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()), CompilerBundle.message("compiler.javac.name"),
@@ -153,14 +153,14 @@ public class JavacCompiler extends ExternalCompiler {
   }
 
   private void _createStartupCommand(final ModuleChunk chunk, @NonNls final ArrayList<String> commandLine, final String outputPath) throws IOException {
-    final ProjectJdk jdk = getJdkForStartupCommand(chunk);
+    final Sdk jdk = getJdkForStartupCommand(chunk);
     final String versionString = jdk.getVersionString();
     if (versionString == null || "".equals(versionString)) {
       throw new IllegalArgumentException(CompilerBundle.message("javac.error.unknown.jdk.version", jdk.getName()));
     }
     
     if (!(jdk instanceof JavaSdk)) {
-      final String toolsJarPath = jdk.getToolsPath();
+      final String toolsJarPath = jdk.getSdkType().getToolsPath(jdk);
       if (toolsJarPath == null) {
         throw new IllegalArgumentException(CompilerBundle.message("javac.error.tools.jar.missing", jdk.getName()));
       }
@@ -176,7 +176,7 @@ public class JavacCompiler extends ExternalCompiler {
 
     final JavacSettings javacSettings = JavacSettings.getInstance(myProject);
 
-    final String vmExePath = jdk.getVMExecutablePath();
+    final String vmExePath = jdk.getSdkType().getVMExecutablePath(jdk);
 
     commandLine.add(vmExePath);
     if (isVersion1_1 || isVersion1_0) {
@@ -213,10 +213,10 @@ public class JavacCompiler extends ExternalCompiler {
     commandLine.add("-classpath");
 
     if (isVersion1_0) {
-      commandLine.add(jdk.getToolsPath()); //  do not use JavacRunner for jdk 1.0
+      commandLine.add(jdk.getSdkType().getToolsPath(jdk)); //  do not use JavacRunner for jdk 1.0
     }
     else {
-      commandLine.add(jdk.getToolsPath() + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
+      commandLine.add(jdk.getSdkType().getToolsPath(jdk) + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
       commandLine.add(JavacRunner.class.getName());
       commandLine.add("\"" + versionString + "\"");
     }
@@ -297,14 +297,14 @@ public class JavacCompiler extends ExternalCompiler {
     }
   }
 
-  private void addClassPathValue(final ProjectJdk jdk,
+  private void addClassPathValue(final Sdk jdk,
                                  final boolean isVersion1_0,
                                  final ArrayList<String> commandLine,
                                  final String cpString,
                                  @NonNls final String tempFileName) throws IOException {
     // must include output path to classpath, otherwise javac will compile all dependent files no matter were they compiled before or not
     if (isVersion1_0) {
-      commandLine.add(jdk.getToolsPath() + File.pathSeparator + cpString);
+      commandLine.add(jdk.getSdkType().getToolsPath(jdk) + File.pathSeparator + cpString);
     }
     else {
       File cpFile = FileUtil.createTempFile(tempFileName, ".tmp");
@@ -321,8 +321,8 @@ public class JavacCompiler extends ExternalCompiler {
     }
   }
 
-  private ProjectJdk getJdkForStartupCommand(final ModuleChunk chunk) {
-    final ProjectJdk jdk = chunk.getJdk();
+  private Sdk getJdkForStartupCommand(final ModuleChunk chunk) {
+    final Sdk jdk = chunk.getJdk();
     if (ApplicationManager.getApplication().isUnitTestMode() && JavacSettings.getInstance(myProject).isTestsUseExternalCompiler()) {
       final String jdkHomePath = CompilerConfigurationImpl.getTestsExternalCompilerHome();
       if (jdkHomePath == null) {

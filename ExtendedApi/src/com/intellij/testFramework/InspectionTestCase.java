@@ -18,7 +18,7 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
@@ -160,7 +160,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
 
     // IMPORTANT! The jdk must be obtained in a way it is obtained in the normal program!
     //ProjectJdkEx jdk = ProjectJdkTable.getInstance().getInternalJdk();
-    ProjectJdk jdk;
+    Sdk jdk;
     if ("java 1.5".equals(jdkName)) {
       jdk = JavaSdkImpl.getMockJdk15(jdkName);
       LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);

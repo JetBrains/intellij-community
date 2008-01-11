@@ -23,9 +23,9 @@ package com.intellij.compiler.ant;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -55,16 +55,16 @@ public abstract class BuildProperties extends CompositeGenerator {
 
   protected abstract void createJdkGenerators(Project project);
 
-  public static ProjectJdk[] getUsedJdks(Project project) {
-    final Set<ProjectJdk> jdks = new HashSet<ProjectJdk>();
+  public static Sdk[] getUsedJdks(Project project) {
+    final Set<Sdk> jdks = new HashSet<Sdk>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      ProjectJdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
       if (jdk != null) {
         jdks.add(jdk);
       }
     }
-    return jdks.toArray(new ProjectJdk[jdks.size()]);
+    return jdks.toArray(new Sdk[jdks.size()]);
   }
 
   public static @NonNls

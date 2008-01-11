@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -94,13 +94,13 @@ public class BuildPropertiesImpl extends BuildProperties {
   }
 
   protected void createJdkGenerators(final Project project) {
-    final ProjectJdk[] jdks = getUsedJdks(project);
+    final Sdk[] jdks = getUsedJdks(project);
 
     if (jdks.length > 0) {
       add(new Comment(CompilerBundle.message("generated.ant.build.jdk.definitions.comment")), 1);
 
-      for (final ProjectJdk jdk : jdks) {
-        if (jdk.getHomeDirectory() == null || jdk.getBinPath() == null) {
+      for (final Sdk jdk : jdks) {
+        if (jdk.getHomeDirectory() == null || jdk.getSdkType().getBinPath(jdk) == null) {
           continue;
         }
         final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
@@ -125,7 +125,7 @@ public class BuildPropertiesImpl extends BuildProperties {
           }
         }
 
-        final File binPath = toCanonicalFile(new File(jdk.getBinPath()));
+        final File binPath = toCanonicalFile(new File(jdk.getSdkType().getBinPath(jdk)));
         final String relativePath = FileUtil.getRelativePath(homeDir, binPath);
         if (relativePath != null) {
           add(new Property(BuildProperties.getJdkBinProperty(jdkName), propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);
@@ -139,7 +139,7 @@ public class BuildPropertiesImpl extends BuildProperties {
       }
     }
 
-    final ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
     add(new Property(PROPERTY_PROJECT_JDK_HOME, projectJdk != null? propertyRef(getJdkHomeProperty(projectJdk.getName())) : ""), 1);
     add(new Property(PROPERTY_PROJECT_JDK_BIN, projectJdk != null? propertyRef(getJdkBinProperty(projectJdk.getName())) : ""));
     add(new Property(PROPERTY_PROJECT_JDK_CLASSPATH, projectJdk != null? getJdkPathId(projectJdk.getName()) : ""));

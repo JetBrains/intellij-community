@@ -6,7 +6,7 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.ui.SdkEditor;
 import com.intellij.openapi.ui.NamedConfigurable;
@@ -14,8 +14,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -23,7 +23,7 @@ import javax.swing.*;
  * User: anna
  * Date: 05-Jun-2006
  */
-public class JdkConfigurable extends NamedConfigurable<ProjectJdk> implements Place.Navigator {
+public class JdkConfigurable extends NamedConfigurable<Sdk> implements Place.Navigator {
   private ProjectJdkImpl myProjectJdk;
   private SdkEditor mySdkEditor;
 
@@ -40,7 +40,7 @@ public class JdkConfigurable extends NamedConfigurable<ProjectJdk> implements Pl
     myProjectJdk.setName(name);
   }
 
-  public ProjectJdk getEditableObject() {
+  public Sdk getEditableObject() {
     return myProjectJdk;
   }
 

@@ -12,8 +12,8 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -113,7 +113,8 @@ public class EclipseCompiler extends ExternalCompiler {
                                     final boolean useTempFile) throws IOException {
     EclipseCompilerSettings compilerSettings = EclipseCompilerSettings.getInstance(myProject);
 
-    final String vmExePath = ProjectJdkTable.getInstance().getInternalJdk().getVMExecutablePath();
+    final Sdk projectJdk = ProjectJdkTable.getInstance().getInternalJdk();
+    final String vmExePath = projectJdk.getSdkType().getVMExecutablePath(projectJdk);
     commandLine.add(vmExePath);
     commandLine.add("-Xmx" + compilerSettings.MAXIMUM_HEAP_SIZE + "m");
 
@@ -132,7 +133,7 @@ public class EclipseCompiler extends ExternalCompiler {
                                     final EclipseCompilerSettings compilerSettings,
                                     final boolean useTempFile,
                                     boolean quoteBootClasspath) throws IOException {
-    final ProjectJdk jdk = chunk.getJdk();
+    final Sdk jdk = chunk.getJdk();
     CompilerUtil.addSourceCommandLineSwitch(jdk, chunk.getLanguageLevel(), commandLine);
 
     final String bootCp = chunk.getCompilationBootClasspath();

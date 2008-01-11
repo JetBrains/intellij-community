@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.util.PathUtil;
 
@@ -25,7 +25,7 @@ public final class JdkPathMacro extends Macro {
     if (project == null) {
       return null;
     }
-    final ProjectJdk anyJdk = PathUtilEx.getAnyJdk(project);
+    final Sdk anyJdk = PathUtilEx.getAnyJdk(project);
     if (anyJdk == null) {
       return null;
     }

@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -184,7 +184,7 @@ public class JikesCompiler extends ExternalCompiler {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   private static void setupSourceVersion(final ModuleChunk chunk, final ArrayList<String> commandLine) {
-    final ProjectJdk jdk = chunk.getJdk();
+    final Sdk jdk = chunk.getJdk();
     final String versionString = jdk.getVersionString();
 
     final LanguageLevel applicableLanguageLevel = CompilerUtil.getApplicableLanguageLevel(versionString, chunk.getLanguageLevel());

@@ -18,7 +18,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -43,7 +43,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   private List<Pair<String,String>> mySourcePaths;
   // Pair<Library path, Source path>
   private List<Pair<String, String>> myModuleLibraries = new ArrayList<Pair<String, String>>();
-  private ProjectJdk myJdk;
+  private Sdk myJdk;
 
   @Nullable
   public final String getContentEntryPath() {
@@ -168,11 +168,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     myModuleLibraries.add(Pair.create(moduleLibraryPath,sourcePath));
   }
 
-  public void setModuleJdk(ProjectJdk jdk) {
+  public void setModuleJdk(Sdk jdk) {
     myJdk = jdk;
   }
 
-  public ProjectJdk getModuleJdk() {
+  public Sdk getModuleJdk() {
     return myJdk;
   }
 

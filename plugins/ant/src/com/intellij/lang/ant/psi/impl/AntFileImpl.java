@@ -21,8 +21,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -319,7 +319,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
   }
 
   @Nullable
-  public ProjectJdk getTargetJdk() {
+  public Sdk getTargetJdk() {
     final AntBuildFileImpl buildFile = (AntBuildFileImpl)getSourceElement().getCopyableUserData(XmlFile.ANT_BUILD_FILE);
     if (buildFile == null) {
       return ProjectRootManager.getInstance(getProject()).getProjectJdk();
@@ -486,7 +486,7 @@ public class AntFileImpl extends LightPsiFileBase implements AntFile {
       builder.append((name == null) ? "" : name);
       builder.append("\"/>");
       builder.append("<property name=\"ant.java.version\" value=\"");
-      final ProjectJdk jdkToRunWith = getTargetJdk();
+      final Sdk jdkToRunWith = getTargetJdk();
       final String version = jdkToRunWith != null? jdkToRunWith.getVersionString() : null;
       builder.append(version != null? version : SystemInfo.JAVA_VERSION);
       builder.append("\"/>");

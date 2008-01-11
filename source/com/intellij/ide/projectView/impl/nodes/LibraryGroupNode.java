@@ -5,14 +5,14 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Icons;
@@ -53,7 +53,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
         }
       }
       else if (orderEntry instanceof JdkOrderEntry) {
-        final ProjectJdk jdk = ((JdkOrderEntry)orderEntry).getJdk();
+        final Sdk jdk = ((JdkOrderEntry)orderEntry).getJdk();
         if (jdk != null) {
           children.add(new NamedLibraryElementNode(getProject(), new NamedLibraryElement(getValue(), orderEntry), getSettings()));
         }

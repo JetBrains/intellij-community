@@ -8,7 +8,7 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.ant.execution.AntMain2;
@@ -50,7 +50,7 @@ public class AntCommandLineBuilder {
 
   public void setBuildFile(AbstractProperty.AbstractPropertyContainer container, File buildFile) throws CantRunException {
     String jdkName = AntBuildFileImpl.CUSTOM_JDK_NAME.get(container);
-    ProjectJdk jdk;
+    Sdk jdk;
     if (jdkName != null && jdkName.length() > 0) {
       jdk = GlobalAntConfiguration.findJdk(jdkName);
     }
@@ -95,7 +95,7 @@ public class AntCommandLineBuilder {
     
     myCommandLine.getClassPath().addAllFiles(AntBuildFileImpl.getUserHomeLibraries());
     
-    final String toolsJar = jdk.getToolsPath();
+    final String toolsJar = jdk.getSdkType().getToolsPath(jdk);
     if (toolsJar != null) {
       myCommandLine.getClassPath().add(toolsJar);
     }

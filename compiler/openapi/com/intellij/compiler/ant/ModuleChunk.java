@@ -17,7 +17,7 @@ package com.intellij.compiler.ant;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -67,7 +67,7 @@ public class ModuleChunk {
   }
 
   @Nullable
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(myMainModule));
   }
 

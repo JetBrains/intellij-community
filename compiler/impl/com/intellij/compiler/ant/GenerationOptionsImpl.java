@@ -6,8 +6,8 @@ import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
@@ -154,9 +154,9 @@ public class GenerationOptionsImpl extends GenerationOptions {
     if (myJdkUrls != null) {
       return myJdkUrls;
     }
-    final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
+    final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
     myJdkUrls = new HashSet<String>();
-    for (ProjectJdk jdk : projectJdks) {
+    for (Sdk jdk : projectJdks) {
       myJdkUrls.addAll(Arrays.asList(jdk.getRootProvider().getUrls(OrderRootType.CLASSES)));
     }
     return myJdkUrls;

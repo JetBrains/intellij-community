@@ -8,7 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -36,7 +36,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     return CodeInsightBundle.message("set.language.level");
   }
 
-  private boolean isJdkSupportsLevel(ProjectJdk jdk) {
+  private boolean isJdkSupportsLevel(Sdk jdk) {
     final JavaSdk sdk = JavaSdk.getInstance();
     final String versionString = jdk.getVersionString();
     if (versionString == null) return false;
@@ -55,7 +55,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     Module module = ModuleUtil.findModuleForFile(file.getVirtualFile(), project);
     LanguageLevel moduleLevel = module == null ? null : LanguageLevelModuleExtension.getInstance(module).getLanguageLevel();
-    ProjectJdk jdk = getRelevantJdk(project, module);
+    Sdk jdk = getRelevantJdk(project, module);
     if (moduleLevel != null && isJdkSupportsLevel(jdk)) {
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
       rootModel.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLevel);
@@ -70,9 +70,9 @@ public class IncreaseLanguageLevelFix implements IntentionAction {
     }
   }
 
-  private static ProjectJdk getRelevantJdk(final Project project, @Nullable Module module) {
-    ProjectJdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
-    ProjectJdk moduleJdk = module == null ? null : ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+  private static Sdk getRelevantJdk(final Project project, @Nullable Module module) {
+    Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectJdk();
+    Sdk moduleJdk = module == null ? null : ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     return moduleJdk == null ? projectJdk : moduleJdk;
   }
 

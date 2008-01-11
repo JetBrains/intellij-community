@@ -3,10 +3,10 @@ package com.intellij.compiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleJdkUtil;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
@@ -29,7 +29,7 @@ public class PsiClassWriter extends ClassWriter {
   }
 
   private static boolean isJdk6(final Module module) {
-    final ProjectJdk projectJdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    final Sdk projectJdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
     if (projectJdk == null) return false;
     String versionString = projectJdk.getVersionString();
     return versionString.contains("1.6") || versionString.contains("6.0");

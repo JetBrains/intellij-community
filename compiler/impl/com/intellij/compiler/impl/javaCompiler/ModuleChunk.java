@@ -11,7 +11,7 @@ import com.intellij.openapi.compiler.ex.CompileContextEx;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -92,7 +92,7 @@ public class ModuleChunk extends Chunk<Module> {
   /**
    * @return the jdk. Assumes that the jdk is the same for all modules
    */
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     final Module module = getNodes().iterator().next();
     return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
   }

@@ -27,7 +27,10 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -36,12 +39,12 @@ import java.util.*;
 public class ProjectJdksModel implements NotifiableSdkModel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel");
 
-  private HashMap<ProjectJdk, ProjectJdk> myProjectJdks = new HashMap<ProjectJdk, ProjectJdk>();
+  private HashMap<Sdk, Sdk> myProjectJdks = new HashMap<Sdk, Sdk>();
   private EventDispatcher<Listener> mySdkEventsDispatcher = EventDispatcher.create(SdkModel.Listener.class);
 
   private boolean myModified = false;
 
-  private ProjectJdk myProjectJdk;
+  private Sdk myProjectJdk;
   private boolean myInitialized = false;
 
   public static ProjectJdksModel getInstance(Project project){
@@ -59,7 +62,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   @Nullable
   public Sdk findSdk(String sdkName) {
-    for (ProjectJdk projectJdk : myProjectJdks.values()) {
+    for (Sdk projectJdk : myProjectJdks.values()) {
       if (Comparing.strEqual(projectJdk.getName(), sdkName)) return projectJdk;
     }
     return null;
@@ -75,16 +78,16 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   public void reset(Project project) {
     myProjectJdks.clear();
-    final ProjectJdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
-    for (ProjectJdk jdk : projectJdks) {
+    final Sdk[] projectJdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (Sdk jdk : projectJdks) {
       try {
-        myProjectJdks.put(jdk, (ProjectJdk)jdk.clone());
+        myProjectJdks.put(jdk, (Sdk)jdk.clone());
       }
       catch (CloneNotSupportedException e) {
         //can't be
       }
     }
-    myProjectJdk = (ProjectJdk)findSdk(ProjectRootManager.getInstance(project).getProjectJdkName());
+    myProjectJdk = findSdk(ProjectRootManager.getInstance(project).getProjectJdkName());
     myModified = false;
     myInitialized = true;
   }
@@ -94,7 +97,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     myInitialized = false;
   }
 
-  public Map<ProjectJdk, ProjectJdk> getProjectJdks() {
+  public HashMap<Sdk, Sdk> getProjectJdks() {
     return myProjectJdks;
   }
 
@@ -107,13 +110,13 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     if (!canApply(errorString, configurable)) {
       throw new ConfigurationException(errorString[0]);
     }
-    final ProjectJdk[] allFromTable = ProjectJdkTable.getInstance().getAllJdks();
-    final ArrayList<ProjectJdk> itemsInTable = new ArrayList<ProjectJdk>();
+    final Sdk[] allFromTable = ProjectJdkTable.getInstance().getAllJdks();
+    final ArrayList<Sdk> itemsInTable = new ArrayList<Sdk>();
     // Delete removed and fill itemsInTable
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-        for (final ProjectJdk tableItem : allFromTable) {
+        for (final Sdk tableItem : allFromTable) {
           if (myProjectJdks.containsKey(tableItem)) {
             itemsInTable.add(tableItem);
           }
@@ -127,14 +130,14 @@ public class ProjectJdksModel implements NotifiableSdkModel {
       public void run() {
         // Now all removed items are deleted from table, itemsInTable contains all items in table
         final ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-        for (ProjectJdk originalJdk : itemsInTable) {
-          final ProjectJdk modifiedJdk = myProjectJdks.get(originalJdk);
+        for (Sdk originalJdk : itemsInTable) {
+          final Sdk modifiedJdk = myProjectJdks.get(originalJdk);
           LOG.assertTrue(modifiedJdk != null);
           jdkTable.updateJdk(originalJdk, modifiedJdk);
         }
         // Add new items to table
-        final ProjectJdk[] allJdks = jdkTable.getAllJdks();
-        for (final ProjectJdk projectJdk : myProjectJdks.keySet()) {
+        final Sdk[] allJdks = jdkTable.getAllJdks();
+        for (final Sdk projectJdk : myProjectJdks.keySet()) {
           LOG.assertTrue(projectJdk != null);
           if (ArrayUtil.find(allJdks, projectJdk) == -1) {
             jdkTable.addJdk(projectJdk);
@@ -147,8 +150,8 @@ public class ProjectJdksModel implements NotifiableSdkModel {
 
   private boolean canApply(String[] errorString, MasterDetailsComponent rootConfigurable) throws ConfigurationException {
     ArrayList<String> allNames = new ArrayList<String>();
-    ProjectJdk itemWithError = null;
-    for (ProjectJdk currItem : myProjectJdks.values()) {
+    Sdk itemWithError = null;
+    for (Sdk currItem : myProjectJdks.values()) {
       String currName = currItem.getName();
       if (currName.length() == 0) {
         itemWithError = currItem;
@@ -167,8 +170,8 @@ public class ProjectJdksModel implements NotifiableSdkModel {
         }
         catch (ConfigurationException e) {
           final Object projectJdk = rootConfigurable.getSelectedObject();
-          if (!(projectJdk instanceof ProjectJdk) ||
-              !Comparing.strEqual(((ProjectJdk)projectJdk).getName(), currName)){ //do not leave current item with current name
+          if (!(projectJdk instanceof Sdk) ||
+              !Comparing.strEqual(((Sdk)projectJdk).getName(), currName)){ //do not leave current item with current name
             rootConfigurable.selectNodeInTree(currName);
           }
           throw new ConfigurationException(ProjectBundle.message("sdk.configuration.exception", currName) + " " + e.getMessage());
@@ -181,9 +184,9 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     return false;
   }
 
-  public void removeJdk(final ProjectJdk editableObject) {
-    ProjectJdk projectJdk = null;
-    for (ProjectJdk jdk : myProjectJdks.keySet()) {
+  public void removeJdk(final Sdk editableObject) {
+    Sdk projectJdk = null;
+    for (Sdk jdk : myProjectJdks.keySet()) {
       if (myProjectJdks.get(jdk) == editableObject) {
         projectJdk = jdk;
         break;
@@ -196,7 +199,7 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     }
   }
 
-  public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<ProjectJdk> updateTree) {
+  public void createAddActions(DefaultActionGroup group, final JComponent parent, final Consumer<Sdk> updateTree) {
     final SdkType[] types = ApplicationManager.getApplication().getComponents(SdkType.class);
     for (final SdkType type : types) {
       final AnAction addAction = new AnAction(type.getPresentableName(),
@@ -210,14 +213,14 @@ public class ProjectJdksModel implements NotifiableSdkModel {
     }
   }
 
-  public void doAdd(final SdkType type, JComponent parent, final Consumer<ProjectJdk> updateTree) {
+  public void doAdd(final SdkType type, JComponent parent, final Consumer<Sdk> updateTree) {
     myModified = true;
     final String home = SdkEditor.selectSdkHome(parent, type);
     if (home == null) {
       return;
     }
     final Set<String> names = new HashSet<String>();
-    for (ProjectJdk jdk : myProjectJdks.values()) {
+    for (Sdk jdk : myProjectJdks.values()) {
       names.add(jdk.getName());
     }
     final String suggestedName = type.suggestSdkName(null, home);
@@ -242,20 +245,20 @@ public class ProjectJdksModel implements NotifiableSdkModel {
   }
 
   @Nullable
-  public ProjectJdk findSdk(@Nullable final ProjectJdk modelJdk) {
-    for (ProjectJdk jdk : myProjectJdks.keySet()) {
+  public Sdk findSdk(@Nullable final Sdk modelJdk) {
+    for (Sdk jdk : myProjectJdks.keySet()) {
       if (Comparing.equal(myProjectJdks.get(jdk), modelJdk)) return jdk;
     }
     return null;
   }
 
   @Nullable
-  public ProjectJdk getProjectJdk() {
+  public Sdk getProjectJdk() {
     if (!myProjectJdks.containsValue(myProjectJdk)) return null;
     return myProjectJdk;
   }
 
-  public void setProjectJdk(final ProjectJdk projectJdk) {
+  public void setProjectJdk(final Sdk projectJdk) {
     myProjectJdk = projectJdk;
   }
 

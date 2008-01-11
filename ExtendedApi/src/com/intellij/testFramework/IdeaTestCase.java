@@ -22,11 +22,11 @@ import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleJdkUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -359,7 +359,7 @@ import java.util.HashSet;
 
   protected void setUpJdk() {
     //final ProjectJdkEx jdk = ProjectJdkUtil.getDefaultJdk("java 1.4");
-    final ProjectJdk jdk = getTestProjectJdk();
+    final Sdk jdk = getTestProjectJdk();
 //    ProjectJdkImpl jdk = ProjectJdkTable.getInstance().addJdk(defaultJdk);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
@@ -374,7 +374,7 @@ import java.util.HashSet;
     }
   }
 
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk("java 1.4");
   }
 

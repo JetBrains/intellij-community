@@ -22,8 +22,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
@@ -212,7 +212,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return getFilesFromAllModules(OrderRootType.CLASSES_AND_OUTPUT);
   }
 
-  public ProjectJdk getJdk() {
+  public Sdk getJdk() {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     if (modules.length > 0) {
       return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(modules[0]));
@@ -222,7 +222,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     }
   }
 
-  public ProjectJdk getProjectJdk() {
+  public Sdk getProjectJdk() {
     if (myProjectJdkName != null) {
       return ProjectJdkTable.getInstance().findJdk(myProjectJdkName, myProjectJdkType);
     }
@@ -235,7 +235,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
     return myProjectJdkName;
   }
 
-  public void setProjectJdk(ProjectJdk projectJdk) {
+  public void setProjectJdk(Sdk projectJdk) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     if (projectJdk != null) {
       myProjectJdkName = projectJdk.getName();
@@ -731,7 +731,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       uninstallListner(true);
     }
 
-    public void jdkAdded(final ProjectJdk jdk) {
+    public void jdkAdded(final Sdk jdk) {
       doRootsChangedOnDemand(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().jdkAdded(jdk);
@@ -739,7 +739,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       });
     }
 
-    public void jdkRemoved(final ProjectJdk jdk) {
+    public void jdkRemoved(final Sdk jdk) {
       doRootsChangedOnDemand(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().jdkRemoved(jdk);
@@ -747,7 +747,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
       });
     }
 
-    public void jdkNameChanged(final ProjectJdk jdk, final String previousName) {
+    public void jdkNameChanged(final Sdk jdk, final String previousName) {
       doRootsChangedOnDemand(new Runnable() {
         public void run() {
           myDispatcher.getMulticaster().jdkNameChanged(jdk, previousName);

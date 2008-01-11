@@ -7,7 +7,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -51,7 +51,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   }
 
   private static Icon getJdkIcon(JdkOrderEntry entry, boolean isExpanded) {
-    final ProjectJdk jdk = entry.getJdk();
+    final Sdk jdk = entry.getJdk();
     if (jdk == null) {
       return CellAppearanceUtils.GENERIC_JDK_ICON;
     }
@@ -90,7 +90,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     presentation.setClosedIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, false) : LIB_ICON_CLOSED);
     if (orderEntry instanceof JdkOrderEntry) {
       final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
-      final ProjectJdk projectJdk = jdkOrderEntry.getJdk();
+      final Sdk projectJdk = jdkOrderEntry.getJdk();
       if (projectJdk != null) { //jdk not specified
         presentation.setLocationString(FileUtil.toSystemDependentName(projectJdk.getHomePath()));
       }

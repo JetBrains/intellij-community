@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.openapi.projectRoots.ProjectJdk;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +30,7 @@ public class InheritanceToDelegationTest extends MultiFileTestCase {
     super.tearDown();
   }
 
-  protected ProjectJdk getTestProjectJdk() {
+  protected Sdk getTestProjectJdk() {
     return JavaSdkImpl.getMockJdk15("java 1.5");
   }
 
