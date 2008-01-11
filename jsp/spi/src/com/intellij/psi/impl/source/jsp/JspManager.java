@@ -35,9 +35,9 @@ public abstract class JspManager {
 
   public abstract String[] getPossibleTldUris(JspFile file);
 
-  public abstract String[] getPossibleTldUris(Module module);
+  public abstract String[] getPossibleTldUris(@NotNull Module module);
 
-  public abstract Collection<PsiFile> getPossibleTldFiles(Module module);
+  public abstract Collection<XmlFile> getPossibleTldFiles(@NotNull Module module);
 
   @Nullable
   public abstract XmlFile getTldFileByUri(String uri, @NotNull JspFile jspFile);
