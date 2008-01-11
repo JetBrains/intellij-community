@@ -618,18 +618,39 @@ public class NewDebuggerContentUI
   }
 
   public void moveToTab(final Content content) {
-    myManager.removeContent(content, false);
-    getStateFor(content).assignTab(getLayoutSettings().createNewTab());
-    getStateFor(content).setPlaceInGrid(PlaceInGrid.center);
-    myManager.addContent(content);
+    setStateIsBeingRestored(true, this);
+    try {
+      myManager.removeContent(content, false);
+      getStateFor(content).assignTab(getLayoutSettings().createNewTab());
+      getStateFor(content).setPlaceInGrid(PlaceInGrid.center);
+      myManager.addContent(content);
+    }
+    finally {
+      setStateIsBeingRestored(false, this);
+    }
+
+    saveUiState();
   }
 
   public void moveToGrid(final Content content) {
-    myManager.removeContent(content, false);
-    getStateFor(content).assignTab(getLayoutSettings().getDefaultTab());
-    getStateFor(content).setPlaceInGrid(getLayoutSettings().getDefaultGridPlace(content));
-    myManager.addContent(content);
-    select(content, true);
+    setStateIsBeingRestored(true, this);
+
+    try {
+      myManager.removeContent(content, false);
+      getStateFor(content).assignTab(getLayoutSettings().getDefaultTab());
+      getStateFor(content).setPlaceInGrid(getLayoutSettings().getDefaultGridPlace(content));
+      myManager.addContent(content);
+    }
+    finally {
+      setStateIsBeingRestored(false, this);
+    }
+
+    select(content, true).doWhenDone(new Runnable() {
+      public void run() {
+        saveUiState();
+      }
+    });
+
   }
 
   private DebuggerLayoutSettings getLayoutSettings() {

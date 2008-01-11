@@ -133,7 +133,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
   public View getStateFor(Content content) {
     Key key = getContentID(content);
 
-    assert key != null : "Content for debugger UI must be specified with: " + DebuggerContentInfo.CONSOLE_CONTENT;
+    assert key != null : "Content id:" + content.getUserData(DebuggerContentInfo.CONTENT_ID);
 
     View state = myContentStates.get(key.toString());
     return state != null ? state : getDefaultContentState(content);

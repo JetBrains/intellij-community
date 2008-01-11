@@ -270,7 +270,8 @@ public class GridCell implements Disposable {
   public void updateSelection(final boolean isShowing) {
     for (Content each : myContents.getKeys()) {
       final TabInfo eachTab = getTabFor(each);
-      if (eachTab != null && myTabs.getSelectedInfo() == eachTab && isShowing) {
+      boolean isSelected = eachTab != null && myTabs.getSelectedInfo() == eachTab;
+      if (isSelected && (isShowing || isDetached())) {
         myContext.getContentManager().addSelectedContent(each);
       }
       else {

@@ -19,7 +19,12 @@ public class MoveToTabAction extends BaseDebuggerViewAction {
 
     Grid grid = context.findGridFor(content[0]);
     Tab tab = context.getTabFor(grid);
-    setEnabled(e, tab.isDefault());
+
+    if (ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace())) {
+      setEnabled(e, false);
+    } else {
+      setEnabled(e, tab.isDefault());
+    }
   }
 
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
