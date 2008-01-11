@@ -401,6 +401,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     contentEntry.addSourceFolder(mySourceDir, false);
     final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setCompilerOutputPath(myClassesDir);
+    compilerModuleExtension.inheritCompilerOutputPath(false);
     compilerModuleExtension.setExcludeOutput(shouldExcludeOutputFromProject());
 
     // Mock JDK is used by default. Uncomment in order to use 'real' JDK if needed
