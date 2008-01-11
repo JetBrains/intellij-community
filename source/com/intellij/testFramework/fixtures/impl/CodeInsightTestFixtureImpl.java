@@ -5,9 +5,11 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.completion.LookupData;
+import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -66,6 +68,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -393,33 +396,44 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Nullable
+  protected Editor getCompletionEditor() {
+    return InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile);
+  }
+
+
+  @Nullable
   public LookupItem[] completeBasic() {
     return new WriteCommandAction<LookupItem[]>(getProject()) {
       protected void run(final Result<LookupItem[]> result) throws Throwable {
-        new CodeCompletionHandler() {
-          protected PsiFile createFileCopy(final PsiFile file) {
-            final PsiFile copy = super.createFileCopy(file);
-            if (myFileContext != null) {
-              final PsiElement contextCopy = myFileContext.copy();
-              final PsiFile containingFile = contextCopy.getContainingFile();
-              if (containingFile instanceof PsiFileImpl) {
-                ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
+        new CodeCompletionAction() {
+          public CodeInsightActionHandler getHandler() {
+            return new CodeCompletionHandler() {
+              protected PsiFile createFileCopy(final PsiFile file) {
+                final PsiFile copy = super.createFileCopy(file);
+                if (myFileContext != null) {
+                  final PsiElement contextCopy = myFileContext.copy();
+                  final PsiFile containingFile = contextCopy.getContainingFile();
+                  if (containingFile instanceof PsiFileImpl) {
+                    ((PsiFileImpl)containingFile).setOriginalFile(myFileContext.getContainingFile());
+                  }
+                  setContext(copy, contextCopy);
+                }
+                return copy;
               }
-              setContext(copy, contextCopy);
-            }
-            return copy;
-          }
 
-          protected Lookup showLookup(final Project project,
-                                      final Editor editor,
-                                      final LookupItem[] items,
-                                      final String prefix,
-                                      final LookupData data,
-                                      final PsiFile file) {
-            result.setResult(items);
-            return super.showLookup(project, editor, items, prefix, data, file);
+              protected Lookup showLookup(final Project project,
+                                          final Editor editor,
+                                          final LookupItem[] items,
+                                          final String prefix,
+                                          final LookupData data,
+                                          final PsiFile file) {
+                result.setResult(items);
+                return super.showLookup(project, editor, items, prefix, data, file);
+              }
+            };
           }
-        }.invoke(getProject(), myEditor, myFile);
+        }.actionPerformedImpl(getProject(), InjectedLanguageUtil.getEditorForInjectedLanguage(myEditor, myFile));
+
       }
     }.execute().getResultObject();
   }
