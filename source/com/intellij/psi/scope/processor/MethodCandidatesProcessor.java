@@ -1,7 +1,7 @@
 package com.intellij.psi.scope.processor;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -32,7 +32,7 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     if (element instanceof PsiMethod){
       final PsiMethod currentMethod = (PsiMethod)element;
       boolean staticProblem = isInStaticScope() && !currentMethod.hasModifierProperty(PsiModifier.STATIC);
-      boolean isAccessible = ResolveUtil.isAccessible(currentMethod, currentMethod.getContainingClass(), currentMethod.getModifierList(),
+      boolean isAccessible = JavaResolveUtil.isAccessible(currentMethod, currentMethod.getContainingClass(), currentMethod.getModifierList(),
                                                       myPlace, myAccessClass, myCurrentFileContext);
       myHasAccessibleStaticCorrectCandidate |= isAccessible && !staticProblem;
 

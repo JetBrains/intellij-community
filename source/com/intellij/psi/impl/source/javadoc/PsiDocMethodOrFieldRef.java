@@ -4,10 +4,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -166,15 +166,15 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         final PsiKeyword keyword = (PsiKeyword)firstChildPsi;
 
         if (keyword.getTokenType().equals(JavaTokenType.THIS_KEYWORD)) {
-          return ResolveUtil.getContextClass(this);
+          return JavaResolveUtil.getContextClass(this);
         } else if (keyword.getTokenType().equals(JavaTokenType.SUPER_KEYWORD)) {
-          final PsiClass contextClass = ResolveUtil.getContextClass(this);
+          final PsiClass contextClass = JavaResolveUtil.getContextClass(this);
           if (contextClass != null) return contextClass.getSuperClass();
           return null;
         }
       }
     }
-    return ResolveUtil.getContextClass(this);
+    return JavaResolveUtil.getContextClass(this);
   }
 
   private class MyReference implements PsiReference {

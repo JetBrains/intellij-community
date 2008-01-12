@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceBase;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class AntFileReference extends FileReferenceBase implements AntReference {
+public class AntFileReference extends FileReference implements AntReference {
   public AntFileReference(final AntFileReferenceSet set, final TextRange range, final int index, final String text) {
     super(set, range, index, text);
   }

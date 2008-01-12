@@ -12,7 +12,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.scope.ElementClassHint;
@@ -178,7 +178,7 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
       }
 
       if (myContext == null) {
-        return ResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager());
+        return JavaResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager());
       }
     }
 

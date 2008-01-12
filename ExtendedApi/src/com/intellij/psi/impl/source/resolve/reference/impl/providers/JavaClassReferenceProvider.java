@@ -39,7 +39,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<String>("DEFAULT_PACKAGE");
 
   @Nullable private Map<CustomizationKey, Object> myOptions;
-  private boolean mySoft;
   private boolean myAllowEmpty;
   @Nullable private final GlobalSearchScope myScope;
 
@@ -62,14 +61,6 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   @Nullable
   public GlobalSearchScope getScope() {
     return myScope;
-  }
-
-  public boolean isSoft() {
-    return mySoft;
-  }
-
-  public void setSoft(final boolean soft) {
-    mySoft = soft;
   }
 
   @NotNull

@@ -4,7 +4,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
@@ -41,7 +41,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     myElement = element;
     myFilter = filter;
     myScope = element;
-    if (ResolveUtil.isInJavaDoc(myElement))
+    if (JavaResolveUtil.isInJavaDoc(myElement))
       myMembersFlag = true;
     while(myScope != null && !(myScope instanceof PsiFile || myScope instanceof PsiClass)){
       myScope = myScope.getContext();
@@ -54,7 +54,7 @@ public class CompletionProcessor extends BaseScopeProcessor
     if (elementParent instanceof PsiReferenceExpression) {
       PsiExpression qualifier = ((PsiReferenceExpression)elementParent).getQualifierExpression();
       if (qualifier instanceof PsiSuperExpression) {
-        myQualifierClass = ResolveUtil.getContextClass(myElement);
+        myQualifierClass = JavaResolveUtil.getContextClass(myElement);
         if (myQualifierClass != null) {
           myQualifierType = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory().createType(myQualifierClass);
         }

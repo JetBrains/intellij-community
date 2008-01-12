@@ -10,7 +10,7 @@ package com.intellij.psi.scope.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.MethodsProcessor;
@@ -163,7 +163,7 @@ public class PsiScopesUtil {
           final PsiKeyword keyword = (PsiKeyword)referenceNameElement;
 
           if (keyword.getTokenType() == JavaTokenType.THIS_KEYWORD){
-            final PsiClass aClass = ResolveUtil.getContextClass(methodCall);
+            final PsiClass aClass = JavaResolveUtil.getContextClass(methodCall);
             if (aClass == null) {
               throw new MethodProcessorSetupFailedException("Can't resolve class for this expression");
             }
@@ -177,7 +177,7 @@ public class PsiScopesUtil {
             }
           }
           else if (keyword.getTokenType() == JavaTokenType.SUPER_KEYWORD){
-            PsiClass aClass = ResolveUtil.getContextClass(methodCall);
+            PsiClass aClass = JavaResolveUtil.getContextClass(methodCall);
             if (aClass == null) {
               throw new MethodProcessorSetupFailedException("Can't resolve class for super expression");
             }
@@ -192,7 +192,7 @@ public class PsiScopesUtil {
                   substitutor = substitutor.putAll(superSubstitutor);
                 }
                 if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
-                aClass = ResolveUtil.getContextClass(aClass);
+                aClass = JavaResolveUtil.getContextClass(aClass);
                 if (aClass != null) runSuper = aClass.getSuperClass();
               } while (aClass != null);
 

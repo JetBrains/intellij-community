@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -186,7 +186,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           final PsiType argumentType = argument.getType();
           if (argumentType instanceof PsiClassType) accessObjectClass = ((PsiClassType)argumentType).resolve();
         }
-        if (!ResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
+        if (!JavaResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
           final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(myMethod) : myNewVisibility;
           String message = RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
                                                      ConflictsUtil.getDescription(myMethod, true), newVisibility,

@@ -1,13 +1,13 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.Language;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.CharTable;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -80,7 +80,7 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
       }
 
       if (myContext == null) {
-        if (!ResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager())) return false;
+        if (!JavaResolveUtil.processImplicitlyImportedPackages(processor, state, place, getManager())) return false;
       }
     }
     return true;

@@ -116,7 +116,7 @@ public class ClassResolverProcessor extends BaseScopeProcessor implements NameHi
   private boolean checkAccessibility(final PsiClass aClass) {
     //We don't care about accessibility in javadocs
 
-    if (ResolveUtil.isInJavaDoc(myPlace)) {
+    if (JavaResolveUtil.isInJavaDoc(myPlace)) {
       return true;
     }
 

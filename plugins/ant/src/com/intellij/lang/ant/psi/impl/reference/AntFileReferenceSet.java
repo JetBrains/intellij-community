@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetBase;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
-public class AntFileReferenceSet extends FileReferenceSetBase {
+public class AntFileReferenceSet extends FileReferenceSet {
 
   private final XmlAttributeValue myValue;
 

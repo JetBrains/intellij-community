@@ -168,8 +168,8 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
     HtmlReferenceProvider provider = new HtmlReferenceProvider();
     registerXmlAttributeValueReferenceProvider(
-      provider.getAttributeValues(),
-      provider.getFilter(),
+      HtmlReferenceProvider.getAttributeValues(),
+      HtmlReferenceProvider.getFilter(),
       false,
       provider
     );
@@ -294,7 +294,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
       return;
     }
 
-    for (;;) {
+    while (true) {
       final ProviderBinding providerBinding = myBindingsMap.get(scope);
       if (providerBinding != null) {
         ((SimpleProviderBinding)providerBinding).registerProvider(provider, elementFilter);
@@ -396,11 +396,13 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     return Collections.emptyList();
   }
 
+  @SuppressWarnings({"unchecked"})
   @Nullable
   public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     return (ElementManipulator<T>)getManipulator(element.getClass());
   }
 
+  @SuppressWarnings({"unchecked"})
   @Nullable
   public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull final Class<T> elementClass) {
     for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {

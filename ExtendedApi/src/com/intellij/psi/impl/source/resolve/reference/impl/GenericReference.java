@@ -1,6 +1,5 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.ElementManipulator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -20,26 +19,25 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use Options | File Templates.
  */
 public abstract class GenericReference extends CachingReference {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.GenericReference");
   public static final GenericReference[] EMPTY_ARRAY = new GenericReference[0];
 
   @Nullable
   private final GenericReferenceProvider myProvider;
 
-  public GenericReference(final GenericReferenceProvider provider){
+  public GenericReference(final GenericReferenceProvider provider) {
     myProvider = provider;
   }
 
-  public boolean isReferenceTo(final PsiElement element){
+  public boolean isReferenceTo(final PsiElement element) {
     return element.getManager().areElementsEquivalent(element, resolve());
   }
 
-  public void processVariants(final PsiScopeProcessor processor){
+  public void processVariants(final PsiScopeProcessor processor) {
     final PsiElement context = getContext();
-    if(context != null){
+    if (context != null) {
       context.processDeclarations(processor, ResolveState.initial(), getElement(), getElement());
     }
-    else if(getContextReference() == null && myProvider != null){
+    else if (getContextReference() == null && myProvider != null) {
       myProvider.handleEmptyContext(processor, getElement());
     }
   }
@@ -63,6 +61,7 @@ public abstract class GenericReference extends CachingReference {
 
   @Nullable
   public abstract PsiElement getContext();
+
   @Nullable
   public abstract PsiReference getContextReference();
 }

@@ -8,8 +8,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.codeStyle.ReferenceAdjuster;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -154,7 +154,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   protected boolean isAccessible(final PsiElement element) {
     if (element instanceof PsiMember) {
       final PsiMember member = (PsiMember)element;
-      return ResolveUtil.isAccessible(member, member.getContainingClass(), member.getModifierList(), this, null, null);
+      return JavaResolveUtil.isAccessible(member, member.getContainingClass(), member.getModifierList(), this, null, null);
     }
     return true;
   }

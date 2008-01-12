@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -365,7 +365,7 @@ class IntroduceConstantDialog extends DialogWrapper {
           try {
             final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier;
             final PsiField field = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + " int xxx;", myTargetClass);
-            if (!ResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
+            if (!JavaResolveUtil.isAccessible(field, myTargetClass, field.getModifierList(), occurrence, myTargetClass, null)) {
               iterator.remove();
             }
           }

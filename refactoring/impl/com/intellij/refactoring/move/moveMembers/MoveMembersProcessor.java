@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -348,7 +348,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
               accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass(qualifier).getElement();
             }
 
-            if (!ResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
+            if (!JavaResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               newVisibility = newVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : newVisibility;
               String message =
                 RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", ConflictsUtil.getDescription(member, true),
