@@ -4,13 +4,11 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.javaee.web.PsiReferenceConverter;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -129,7 +127,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     if (ReflectionCache.isAssignable(PsiPackage.class, clazz)) {
       final JavaClassReferenceProvider provider = new JavaClassReferenceProvider(getScope(domValue));
       provider.setSoft(true);
-      return provider.getReferencesByElement(psiElement, new ReferenceType(ReferenceType.JAVA_PACKAGE));
+      return provider.getReferencesByElement(psiElement);
     }
     if (ReflectionCache.isAssignable(Integer.class, clazz)) {
       return new PsiReference[]{new GenericDomValueReference<Integer>((GenericDomValue<Integer>)domValue) {
@@ -156,15 +154,8 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public final PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    return getReferencesByElement(element);
-  }
-
-  @NotNull
-  public final PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public final PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-  }
 }

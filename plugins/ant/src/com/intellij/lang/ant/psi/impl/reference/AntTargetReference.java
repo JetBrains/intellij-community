@@ -9,9 +9,8 @@ import com.intellij.lang.ant.quickfix.AntCreateTargetFix;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiLock;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -21,11 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AntTargetReference extends AntGenericReference {
-
-  private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_TARGET);
   private boolean myShouldBeSkippedByAnnotator;
 
   public AntTargetReference(final GenericReferenceProvider provider,
@@ -116,18 +114,6 @@ public class AntTargetReference extends AntGenericReference {
     return result;
   }
 
-  public static ReferenceType getReferenceType() {
-    return ourRefType;
-  }
-
-  public ReferenceType getType() {
-    return getReferenceType();
-  }
-
-  public ReferenceType getSoftenType() {
-    return getReferenceType();
-  }
-
   public String getUnresolvedMessagePattern() {
     return AntBundle.message("cannot.resolve.target", getCanonicalRepresentationText());
   }
@@ -154,7 +140,7 @@ public class AntTargetReference extends AntGenericReference {
           antFile = (AntFile)psiFile;
         }
         else {
-          antFile = (AntFile)AntSupport.getAntFile(psiFile);
+          antFile = AntSupport.getAntFile(psiFile);
         }
         final AntProject project = (antFile == null) ? null : antFile.getAntProject();
         if (project != null) {
@@ -162,7 +148,20 @@ public class AntTargetReference extends AntGenericReference {
         }
       }
     }
-    return super.getVariants();
+
+    List<AntTarget> result = new ArrayList<AntTarget>();
+
+    final AntProject project = element.getAntProject();
+    final AntTarget[] targets = project.getTargets();
+    for (final AntTarget target : targets) {
+      if (target != element) {
+        result.add(target);
+      }
+    }
+
+    result.addAll(Arrays.asList(project.getImportedTargets()));
+    
+    return result.toArray();
   }
 
   @NotNull

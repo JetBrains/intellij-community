@@ -65,16 +65,11 @@ public class CacheUtil {
         }
 
         FileType fileType = psiFile.getFileType();
-        /* No longer necessary?
-        if (psiFile instanceof PsiPlainTextFile && (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.ASPECT)) { // fixes problem with java&aspect files outside sourcepath
-          fileType = StdFileTypes.PLAIN_TEXT;
-        }
-        */
         final String name = psiFile.getName();
-        assert name != null;
         fileCopy =
           PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(name, fileType, text, psiFile.getModificationStamp(), false, false);
         fileCopy.putUserData(CACHE_COPY_KEY, Boolean.TRUE);
+
         ((PsiFileImpl)fileCopy).setOriginalFile(psiFile);
       }
     }

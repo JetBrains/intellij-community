@@ -18,8 +18,6 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -646,15 +644,8 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-  }
 }

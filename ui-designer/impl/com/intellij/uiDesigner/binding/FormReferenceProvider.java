@@ -11,9 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiReferenceProcessor;
 import com.intellij.psi.util.CachedValue;
@@ -128,7 +126,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
       // reference to class
       final String className = classToBind.getValue().replace('$','.');
       final XmlAttributeValue valueElement = classToBind.getValueElement();
-      final PsiReference[] referencesByString = new JavaClassReferenceProvider().getReferencesByString(className, file, new ReferenceType(ReferenceType.JAVA_CLASS), valueElement.getTextRange().getStartOffset() + 1);
+      final PsiReference[] referencesByString = new JavaClassReferenceProvider().getReferencesByString(className, file, valueElement.getTextRange().getStartOffset() + 1);
       if(referencesByString.length < 1){
         // There are no references there
         return;
@@ -185,7 +183,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
     {
       if (clsAttribute != null) {
         final JavaClassReferenceProvider provider = new JavaClassReferenceProvider();
-        final PsiReference[] referencesByString = provider.getReferencesByString(classNameStr, file, new ReferenceType(ReferenceType.JAVA_CLASS), clsAttribute.getValueElement().getTextRange().getStartOffset() + 1);
+        final PsiReference[] referencesByString = provider.getReferencesByString(classNameStr, file, clsAttribute.getValueElement().getTextRange().getStartOffset() + 1);
         if(referencesByString.length < 1){
           // There are no references there
           return;
@@ -316,16 +314,8 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
   }
 
   public void projectOpened() {

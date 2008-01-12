@@ -3,7 +3,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +26,7 @@ public class JavaClassListReferenceProvider extends JavaClassReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition){
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition){
     final Set<String> knownTopLevelPackages = new HashSet<String>();
     final List<PsiElement> defaultPackages = getDefaultPackages(position);
     for (final PsiElement pack : defaultPackages) {

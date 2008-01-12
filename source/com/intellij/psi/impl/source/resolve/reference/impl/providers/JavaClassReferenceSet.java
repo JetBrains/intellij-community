@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -221,5 +220,10 @@ public class JavaClassReferenceSet {
   @Nullable
   public Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
     return myProvider.getOptions();
+  }
+
+  public String getUnresolvedMessagePattern(int index){
+    final ReferenceType type = getType(index);
+    return type.getUnresolvedMessage();
   }
 }

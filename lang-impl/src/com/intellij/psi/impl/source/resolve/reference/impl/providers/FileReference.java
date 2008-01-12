@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
@@ -381,7 +382,7 @@ public class FileReference
 
   public String getUnresolvedMessagePattern() {
     final StringBuilder builder = new StringBuilder(JavaErrorMessages.message("error.cannot.resolve"));
-    builder.append(" ").append(myFileReferenceSet.getTypeName());
+    builder.append(" ").append(LangBundle.message("terms.file"));
     if (!isLast()) {
       for (final FileReferenceHelper helper : getHelpers()) {
         builder.append(" ").append(JavaErrorMessages.message("error.cannot.resolve.infix")).append(" ")

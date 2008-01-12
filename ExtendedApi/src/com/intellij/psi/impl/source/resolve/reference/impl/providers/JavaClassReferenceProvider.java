@@ -4,7 +4,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
@@ -75,23 +74,18 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
-    return getReferencesByElement(element, CLASS_REFERENCE_TYPE);
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
     final String text = element.getText();
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(element);
     if (manipulator != null) {
       final TextRange textRange = manipulator.getRangeInElement(element);
       final String valueString = text.substring(textRange.getStartOffset(), textRange.getEndOffset());
-      return getReferencesByString(valueString, element, type, textRange.getStartOffset());
+      return getReferencesByString(valueString, element, textRange.getStartOffset());
     }
-    return getReferencesByString(text, element, type, 0);
+    return getReferencesByString(text, element, 0);
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     if (myAllowEmpty && StringUtil.isEmpty(str)) {
       return PsiReference.EMPTY_ARRAY;
     }

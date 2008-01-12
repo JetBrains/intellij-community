@@ -19,7 +19,9 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -836,17 +838,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       }
       return childNode;
     }
-    if (type instanceof ICompositeElementType) {
-      return (CompositeElement)((ICompositeElementType)type).createCompositeNode();
-    }
-
 
     if (type == null) {
       throw new RuntimeException(UNBALANCED_MESSAGE);
     }
 
-    final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
-    return factory.createComposite(type);
+    return ASTFactory.composite(type);
   }
 
   private class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
@@ -1028,19 +1025,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     if (myWhitespaces.contains(type)) {
       return new PsiWhiteSpaceImpl(myText, start, end, myCharTable);
     }
+
     if (myComments.contains(type)) {
       return new PsiCommentImpl(type, myText, start, end, myCharTable);
     }
-    if (type instanceof IChameleonElementType) {
-      return new ChameleonElement(type, myText, start, end, myCharTable);
-    }
-    
-    if (type instanceof ILeafElementType) {
-      return (LeafElement) ((ILeafElementType)type).createLeafNode(myText, start, end, myCharTable);
-    }
 
-    final ASTFactory factory = LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
-    return factory.createLeaf(type, myText, start, end, myCharTable);
+    return ASTFactory.leaf(type, myText, start, end, myCharTable);
   }
 
   /**

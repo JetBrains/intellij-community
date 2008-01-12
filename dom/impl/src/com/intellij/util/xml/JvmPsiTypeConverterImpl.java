@@ -126,7 +126,8 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
     final int dimensions = getArrayDimensions(s);
     if (dimensions > 0) {
       if (s.charAt(dimensions) == 'L' && s.endsWith(";")) {
-        return JVM_REFERENCE_PROVIDER.getReferencesByString(s.substring(dimensions + 1), element, JavaClassReferenceProvider.CLASS_REFERENCE_TYPE, element.getText().indexOf(s) + dimensions + 1);
+        return JVM_REFERENCE_PROVIDER.getReferencesByString(s.substring(dimensions + 1), element,
+                                                            element.getText().indexOf(s) + dimensions + 1);
       }
       if (psiType != null) return PsiReference.EMPTY_ARRAY;
     }

@@ -15,8 +15,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -24,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.Arrays;
 
 /**
  * @by Maxim.Mossienko
@@ -126,7 +124,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     }
 
     s = s.substring(getPrefixLength(s));
-    return new FileReferenceSet(s,element,text.indexOf(s), ReferenceType.FILE_TYPE, this,true).getAllReferences();
+    return new FileReferenceSet(s,element,text.indexOf(s), this,true).getAllReferences();
   }
 
   public static int getPrefixLength(@NotNull final String s) {
@@ -149,15 +147,8 @@ public class URIReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-  }
 }

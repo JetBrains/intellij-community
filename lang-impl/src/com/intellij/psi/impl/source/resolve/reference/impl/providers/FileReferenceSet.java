@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspContextManager;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -47,7 +46,6 @@ public class FileReferenceSet {
   private FileReference[] myReferences;
   private PsiElement myElement;
   private final int myStartInElement;
-  @NotNull private final ReferenceType myType;
   private boolean myCaseSensitive;
   private final String myPathString;
   private Collection<PsiFileSystemItem> myDefaultContexts;
@@ -81,7 +79,7 @@ public class FileReferenceSet {
       text = helper.trimUrl(text);
     }
 
-    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, null, true, endingSlashNotAllowed) {
+    return new FileReferenceSet(text, element, offset, null, true, endingSlashNotAllowed) {
       protected boolean isUrlEncoded() {
         return urlEncoded;
       }
@@ -98,26 +96,16 @@ public class FileReferenceSet {
                           int startInElement,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive) {
-    this(str, element, startInElement, ReferenceType.FILE_TYPE, provider, isCaseSensitive, true);
+    this(str, element, startInElement, provider, isCaseSensitive, true);
   }
 
-  public FileReferenceSet(String str,
-                          PsiElement element,
-                          int startInElement,
-                          @NotNull ReferenceType type,
-                          PsiReferenceProvider provider,
-                          final boolean isCaseSensitive) {
-    this(str, element, startInElement, type, provider, isCaseSensitive, true);
-  }
 
   public FileReferenceSet(@NotNull String str,
                           PsiElement element,
                           int startInElement,
-                          @NotNull ReferenceType type,
                           PsiReferenceProvider provider,
                           final boolean isCaseSensitive,
                           boolean endingSlashNotAllowed) {
-    myType = type;
     myElement = element;
     myStartInElement = startInElement;
     myCaseSensitive = isCaseSensitive;
@@ -197,10 +185,6 @@ public class FileReferenceSet {
   @NotNull
   public FileReference[] getAllReferences() {
     return myReferences;
-  }
-
-  @NotNull final String getTypeName() {
-    return ReferenceType.getUnresolvedMessage(myType.getPrimitives()[0]);
   }
 
   protected boolean isSoft() {

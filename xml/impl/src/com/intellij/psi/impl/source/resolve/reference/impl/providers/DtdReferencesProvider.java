@@ -9,11 +9,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -295,16 +293,8 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
   }
 
   public ElementFilter getSystemReferenceFilter() {

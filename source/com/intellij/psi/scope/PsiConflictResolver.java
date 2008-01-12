@@ -1,6 +1,7 @@
 package com.intellij.psi.scope;
 
 import com.intellij.psi.infos.CandidateInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -12,5 +13,6 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public interface PsiConflictResolver {
+  @Nullable 
   CandidateInfo resolveConflict(List<CandidateInfo> conflicts);
 }

@@ -3,12 +3,11 @@ package com.intellij.lang.ant.psi.impl;
 import com.intellij.lang.ant.AntElementRole;
 import com.intellij.lang.ant.misc.PsiElementSetSpinAllocator;
 import com.intellij.lang.ant.psi.*;
+import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.LocalTimeCounter;
@@ -115,9 +114,8 @@ public class AntProjectImpl extends AntStructuredElementImpl implements AntProje
   @Nullable
   public AntTarget getDefaultTarget() {
     for (final PsiReference ref : getReferences()) {
-      final GenericReference reference = (GenericReference)ref;
-      if (reference.getType().isAssignableTo(ReferenceType.ANT_TARGET)) {
-        return (AntTarget)reference.resolve();
+      if (ref instanceof AntTargetReference) {
+        return (AntTarget)ref.resolve();
       }
     }
     return null;

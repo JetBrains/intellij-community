@@ -10,8 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -22,7 +20,7 @@ import java.util.*;
 public class FilePathReferenceProvider implements PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
-    return new FileReferenceSet(text, element, offset, ReferenceType.FILE_TYPE, this, true) {
+    return new FileReferenceSet(text, element, offset, this, true) {
       protected boolean isSoft() {
         return soft;
       }
@@ -77,12 +75,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    return getReferencesByElement(element);
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 
@@ -127,9 +120,6 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
       }
     }
     return result;
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
   }
 
 }

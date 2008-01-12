@@ -1,12 +1,12 @@
 package com.intellij.lang.ant.psi.impl.reference;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AntGenericReference extends GenericReference implements AntReference {
-
-  private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.UNKNOWN);
-
   private final AntElement myAntElement;
   private final String myText;
   private final TextRange myTextRange;
@@ -59,24 +56,12 @@ public abstract class AntGenericReference extends GenericReference implements An
     return null;
   }
 
-  public boolean needToCheckAccessibility() {
-    return false;
-  }
-
   public TextRange getRangeInElement() {
     return myTextRange;
   }
 
   public String getCanonicalText() {
     return myText;
-  }
-
-  public ReferenceType getType() {
-    return ourRefType;
-  }
-
-  public ReferenceType getSoftenType() {
-    return ourRefType;
   }
 
   public boolean shouldBeSkippedByAnnotator() {
@@ -102,5 +87,14 @@ public abstract class AntGenericReference extends GenericReference implements An
       return ((AntStructuredElement)element).computeAttributeValue(value);
     }
     return element.getAntProject().computeAttributeValue(value);
+  }
+
+  @Override
+  public PsiElement resolveInner() {
+    throw new UnsupportedOperationException();
+  }
+
+  public String getUnresolvedMessagePattern() {
+    return CodeInsightBundle.message("error.cannot.resolve.default.message");
   }
 }

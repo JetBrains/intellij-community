@@ -26,7 +26,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ClassResolverProcessor;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.ClassCandidateInfo;
@@ -135,16 +134,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return myIndex > 0 ? myJavaClassReferenceSet.getReference(myIndex - 1) : null;
   }
 
-  public ReferenceType getType() {
+  private ReferenceType getType() {
     return myJavaClassReferenceSet.getType(myIndex);
-  }
-
-  public ReferenceType getSoftenType() {
-    return new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
-  }
-
-  public boolean needToCheckAccessibility() {
-    return false;
   }
 
   public PsiElement getElement() {
@@ -533,5 +524,9 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
 
     PsiMethod[] methods = aClass.findMethodsByName(memberName, true);
     return methods.length == 0 ? null : methods[0];
+  }
+
+  public String getUnresolvedMessagePattern() {
+    return myJavaClassReferenceSet.getUnresolvedMessagePattern(myIndex);
   }
 }

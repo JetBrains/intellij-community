@@ -2,8 +2,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,25 +39,11 @@ public class CustomizingReferenceProvider implements CustomizableReferenceProvid
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     myProvider.setOptions(myOptions);
-    final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element, type);
+    final PsiReference[] referencesByElement = myProvider.getReferencesByString(str,position, offsetInPosition);
     myProvider.setOptions(null);
     return referencesByElement;
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
-    myProvider.setOptions(myOptions);
-    final PsiReference[] referencesByElement = myProvider.getReferencesByString(str,position, type, offsetInPosition);
-    myProvider.setOptions(null);
-    return referencesByElement;
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
-    myProvider.setOptions(myOptions);
-    myProvider.handleEmptyContext(processor, position);
-    myProvider.setOptions( null );
   }
 
   public void setOptions(@Nullable Map<CustomizationKey, Object> options) {

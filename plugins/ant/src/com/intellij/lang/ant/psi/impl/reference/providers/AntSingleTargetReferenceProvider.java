@@ -8,7 +8,7 @@ import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class AntSingleTargetReferenceProvider extends AntTargetReferenceProviderBase {
+public class AntSingleTargetReferenceProvider extends GenericReferenceProvider {
 
   @NonNls private static final Map<Class,String> ourTypesToAttributeNames;
 
@@ -51,12 +51,7 @@ public class AntSingleTargetReferenceProvider extends AntTargetReferenceProvider
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    return getReferencesByElement(element);
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return getReferencesByElement(position);
   }
 }

@@ -5,9 +5,7 @@ import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -80,16 +78,8 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element, ReferenceType type) {
-    return getReferencesByElement(element);
-  }
-
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, ReferenceType type, int offsetInPosition) {
+  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
     return getReferencesByElement(position);
-  }
-
-  public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {
   }
 
 }

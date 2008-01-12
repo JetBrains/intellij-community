@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceType;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -29,9 +28,6 @@ import java.util.List;
 import java.util.Set;
 
 public class AntPropertyReference extends AntGenericReference {
-
-  private static final ReferenceType ourRefType = new ReferenceType(ReferenceType.ANT_PROPERTY);
-
   public AntPropertyReference(final GenericReferenceProvider provider,
                               final AntElement antElement,
                               final String str,
@@ -77,14 +73,6 @@ public class AntPropertyReference extends AntGenericReference {
   @Nullable
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return handleElementRename(((PsiNamedElement)element).getName());
-  }
-
-  public ReferenceType getType() {
-    return getReferenceType();
-  }
-
-  public ReferenceType getSoftenType() {
-    return getReferenceType();
   }
 
   public PsiElement resolve() {
@@ -166,7 +154,4 @@ public class AntPropertyReference extends AntGenericReference {
     return result.toArray(new IntentionAction[result.size()]);
   }
 
-  private static ReferenceType getReferenceType() {
-    return ourRefType;
-  }
 }
