@@ -163,7 +163,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
     });
     
-    final MapReduceIndex<K, V, FileContent> index = new MapReduceIndex<K, V, FileContent>(indexer, storage);
+    final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(indexer, storage);
     myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, filter));
     myCompositeFilter.addFilter(filter);
     myFlushStorages.add(new Runnable() {
@@ -211,8 +211,51 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     if (index == null) {
       return Collections.emptyList();
     }
-    final ValueContainer<V> data = index.getData(dataKey);
-    return project == null? data.toValueList() : new ProjectContentFilter<V>(project).apply(data);
+    
+    final ValueContainer<V> container = index.getData(dataKey);
+    final List<V> valueList = container.toValueList();
+    
+    if (project != null) {
+      final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+      final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+      
+      for (Iterator<V> it = valueList.iterator(); it.hasNext();) {
+        final V value = it.next();
+        if (!belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
+          it.remove();
+        }
+      }
+    }
+    
+    return valueList;
+  }
+
+  // todo: return the list of virtual files instead of IDs
+  @NotNull
+  public <K> Collection<Integer> getContainingFiles(final String indexId, K dataKey, Project project) throws StorageException {
+    final AbstractIndex<K, ?> index = getIndex(indexId);
+    if (index == null) {
+      return Collections.emptyList();
+    }
+
+    final Set<Integer> files = new HashSet<Integer>();
+
+    final DirectoryIndex dirIndex = project != null? DirectoryIndex.getInstance(project) : null;
+    final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+
+    final ValueContainer container = index.getData(dataKey);
+    for (Iterator it = container.getValueIterator(); it.hasNext();) {
+      final Object value = it.next();
+      //noinspection unchecked
+      if (dirIndex == null || belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
+        for (//noinspection unchecked
+          final ValueContainer.IntIterator idIt = container.getInputIdsIterator(value); idIt.hasNext();) {
+          files.add(idIt.next());
+        }
+      }
+    }
+
+    return files;
   }
 
   // called for initial content scan on opening a project
@@ -286,40 +329,19 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return pair != null? pair.getSecond() : null;
   }
   
-  private static class ProjectContentFilter<T> {
-    private final Project myProject;
-
-    public ProjectContentFilter(Project project) {
-      myProject = project;
-    }
-
-    public List<T> apply(final ValueContainer<T> container) {
-      final List<T> valueList = container.toValueList();
-      final DirectoryIndex dirIndex = DirectoryIndex.getInstance(myProject);
-      final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-      for (Iterator<T> it = valueList.iterator(); it.hasNext();) {
-        final T value = it.next();
-        if (!belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
-          it.remove();
-        }
+  private static boolean belongsToProject(final ValueContainer.IntIterator inputIdsIterator, final DirectoryIndex dirIndex, final PersistentFS fs) {
+    while (inputIdsIterator.hasNext()) {
+      final int id = inputIdsIterator.next();
+      final DirectoryInfo directoryInfo = fs.isDirectory(id)?
+                                          dirIndex.getInfoForDirectoryId(id) :
+                                          dirIndex.getInfoForDirectoryId(fs.getParent(id));
+      if (directoryInfo != null && directoryInfo.contentRoot != null) {
+        return true; // the directory is under the content
       }
-      return valueList;
     }
-
-    private static boolean belongsToProject(final ValueContainer.IntIterator inputIdsIterator, final DirectoryIndex dirIndex, final PersistentFS fs) {
-      while (inputIdsIterator.hasNext()) {
-        final int id = inputIdsIterator.next();
-        final DirectoryInfo directoryInfo = fs.isDirectory(id)? 
-                                            dirIndex.getInfoForDirectoryId(id) : 
-                                            dirIndex.getInfoForDirectoryId(fs.getParent(id));
-        if (directoryInfo != null && directoryInfo.contentRoot != null) {
-          return true; // the directory is under the content
-        }
-      }
-      return false;
-    }
+    return false;
   }
-  
+
   private static File getStorageFile(final String indexName) {
     return new File(getPersistenceRoot(), indexName.toLowerCase(Locale.US) + ".vfi");
   }
