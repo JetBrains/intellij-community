@@ -126,6 +126,8 @@ abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implements Modu
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
       assert virtualFile != null : "cannot find output path: " + myOutputPath;
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
+      rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
+      rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
     }
     rootModel.commit();
   }
