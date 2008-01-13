@@ -16,3 +16,4 @@ public class MyTestClass extends groovy.lang.GroovyObjectSupport {
     this((java.lang.String)null);
   }
 }
+---
