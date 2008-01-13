@@ -353,10 +353,10 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
       PsiElement other = file1 instanceof JavaDummyHolder ? file2 : file1;
       return dummyHolder.isSamePackage(other);
     }
-    if (!(file1 instanceof PsiJavaFile)) return false;
-    if (!(file2 instanceof PsiJavaFile)) return false;
-    String package1 = ((PsiJavaFile) file1).getPackageName();
-    String package2 = ((PsiJavaFile) file2).getPackageName();
+    if (!(file1 instanceof PsiClassOwner)) return false;
+    if (!(file2 instanceof PsiClassOwner)) return false;
+    String package1 = ((PsiClassOwner) file1).getPackageName();
+    String package2 = ((PsiClassOwner) file2).getPackageName();
     return Comparing.equal(package1, package2);
   }
 
