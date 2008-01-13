@@ -81,7 +81,7 @@ public class GroovyInlineVariableUtil {
         }
         Project project = variable.getProject();
         GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText(), null);
+        GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
 
         try {
           newExpr = exprToBeReplaced.replaceWithExpression(newExpr, true);

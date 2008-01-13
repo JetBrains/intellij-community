@@ -74,7 +74,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
     return (GrReferenceExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrExpression createExpressionFromText(String text, PsiElement context) {
+  public GrExpression createExpressionFromText(String text) {
     GroovyFileImpl file = (GroovyFileImpl) createGroovyFile(text);
     file.setContext(context);
     assert file.getTopStatements()[0] instanceof GrExpression;
@@ -203,7 +203,7 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr) {
-    return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")", null));
+    return ((GrParenthesizedExpression) getInstance(myProject).createExpressionFromText("(" + newExpr.getText() + ")"));
   }
 
   public PsiElement createStringLiteral(String text) {
@@ -250,10 +250,10 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public PsiFile createGroovyFile(String idText) {
-   return createGroovyFile(idText, false);
+   return createGroovyFile(idText, false, null);
   }
 
-  public GroovyFile createGroovyFile(String idText, boolean isPhisical) {
+  public GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context) {
     return createDummyFile(idText, isPhisical);
   }
 

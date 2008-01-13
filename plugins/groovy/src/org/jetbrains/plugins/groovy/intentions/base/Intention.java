@@ -62,7 +62,7 @@ public abstract class Intention implements IntentionAction {
       expString = "!(" + newExpression + ')';
     }
     final GrExpression newCall =
-        factory.createExpressionFromText(expString, null);
+        factory.createExpressionFromText(expString);
     assert expressionToReplace != null;
     final PsiElement insertedElement = expressionToReplace.replaceWithExpression(newCall, true);
     //  final CodeStyleManager codeStyleManager = mgr.getCodeStyleManager();

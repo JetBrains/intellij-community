@@ -79,7 +79,7 @@ public class ExtractMethodUtil {
     } else if (name != null && mustAddVariableDeclaration(statements, name)) {
       return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type, false);
     } else {
-      return factory.createExpressionFromText(name + "= " + callExpression.getText(), null);
+      return factory.createExpressionFromText(name + "= " + callExpression.getText());
     }
   }
 
@@ -176,7 +176,7 @@ public class ExtractMethodUtil {
             }
           });
           for (GrExpression expr : result) {
-            expr.replaceWithExpression(factory.createExpressionFromText(newName, null), false);
+            expr.replaceWithExpression(factory.createExpressionFromText(newName), false);
           }
         }
       }
@@ -358,7 +358,7 @@ public class ExtractMethodUtil {
     buffer.append(")");
     String callText = buffer.toString();
     GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
-    GrExpression expr = factory.createExpressionFromText(callText, null);
+    GrExpression expr = factory.createExpressionFromText(callText);
     assert expr instanceof GrMethodCallExpression;
     return ((GrMethodCallExpression) expr);
   }

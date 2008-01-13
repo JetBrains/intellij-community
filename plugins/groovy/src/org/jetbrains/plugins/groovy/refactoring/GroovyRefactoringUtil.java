@@ -536,7 +536,7 @@ public abstract class GroovyRefactoringUtil {
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           if (element instanceof GrReferenceExpression) {
-            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(initializer.getText(), null), true);
+            ((GrReferenceExpression) element).replaceWithExpression(factory.createExpressionFromText(initializer.getText()), true);
           }
         }
       }
@@ -568,7 +568,7 @@ public abstract class GroovyRefactoringUtil {
         for (PsiReference ref : refs) {
           PsiElement element = ref.getElement();
           if (element instanceof GrReferenceExpression) {
-            GrExpression newExpr = factory.createExpressionFromText(value.getText(), null);
+            GrExpression newExpr = factory.createExpressionFromText(value.getText());
             ((GrReferenceExpression) element).replaceWithExpression(newExpr, true);
             System.out.println("");
           }

@@ -82,7 +82,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   private Document createDocument(final String text) {
-    final PsiFile groovyFile = GroovyElementFactory.getInstance(myProject).createGroovyFile(text, true);
+    final PsiFile groovyFile = GroovyElementFactory.getInstance(myProject).createGroovyFile(text, true, null);
     return PsiDocumentManager.getInstance(myReferenceExpression.getProject()).getDocument(groovyFile);
   }
 

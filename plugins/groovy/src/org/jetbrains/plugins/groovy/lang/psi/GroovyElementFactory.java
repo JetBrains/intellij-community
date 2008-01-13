@@ -76,7 +76,7 @@ public abstract class GroovyElementFactory {
 
   public abstract GrReferenceExpression createReferenceExpressionFromText(String exprText);
 
-  public abstract GrExpression createExpressionFromText(String exprText, PsiElement context);
+  public abstract GrExpression createExpressionFromText(String exprText);
 
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
 
@@ -112,5 +112,5 @@ public abstract class GroovyElementFactory {
 
   public abstract GrMethod createMethodFromText(String methodText);
 
-  public abstract GroovyFile createGroovyFile(String idText, boolean isPhisical);
+  public abstract GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context);
 }
