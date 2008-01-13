@@ -167,7 +167,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.setRootVisible(false);
 
     // todo [Dimaskin] please, rewrite using JDK 1.5 
-    myTreeTable.setAutoCreateRowSorter(true);
+    //myTreeTable.setAutoCreateRowSorter(true);
 
 //    myTreeTable.setDefaultRenderer(Boolean.class, new BooleanTableCellRenderer());
     myTreeTable.getTree().setShowsRootHandles(true);
