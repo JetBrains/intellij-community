@@ -365,4 +365,9 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
     assertFalse(resolved instanceof AccessorMethod);
 
   }
+
+  public void testGroovyAndJavaSamePackage() throws Exception {
+    PsiReference ref = configureByFile("groovyAndJavaSamePackage/Ha.groovy");
+    assertTrue(ref.resolve() instanceof PsiMethod);
+  }
 }
