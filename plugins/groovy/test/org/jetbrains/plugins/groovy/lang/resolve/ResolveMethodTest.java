@@ -367,7 +367,7 @@ public class ResolveMethodTest extends GroovyResolveTestCase {
   }
 
   public void testGroovyAndJavaSamePackage() throws Exception {
-    PsiReference ref = configureByFile("groovyAndJavaSamePackage/Ha.groovy");
+    PsiReference ref = configureByFile("groovyAndJavaSamePackage/p/Ha.groovy");
     assertTrue(ref.resolve() instanceof PsiMethod);
   }
 }
