@@ -76,7 +76,6 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
 
   public GrExpression createExpressionFromText(String text) {
     GroovyFileImpl file = (GroovyFileImpl) createGroovyFile(text);
-    file.setContext(context);
     assert file.getTopStatements()[0] instanceof GrExpression;
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
