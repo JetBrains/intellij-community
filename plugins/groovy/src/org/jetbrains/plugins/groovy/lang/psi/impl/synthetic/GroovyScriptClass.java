@@ -42,7 +42,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class GroovyScriptClass extends LightElement implements PsiClass{
+public class GroovyScriptClass extends LightElement implements PsiClass {
   private String myQualifiedName;
   private String myName;
   private GroovyFile myFile;
@@ -150,7 +150,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   @NotNull
   public PsiClassType[] getSuperTypes() {
-    return new PsiClassType[] {getManager().getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
+    return new PsiClassType[]{getManager().getElementFactory().createTypeByFQClassName(GroovyFileBase.SCRIPT_BASE_CLASS_NAME, getResolveScope())};
   }
 
   public PsiClass getContainingClass() {
@@ -232,12 +232,12 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(String name, boolean checkBases) {
-    return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
+    return new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
   }
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
-    return new ArrayList<Pair<PsiMethod,PsiSubstitutor>>();
+    return new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
   }
 
   public PsiClass findInnerClassByName(String name, boolean checkBases) {
@@ -315,22 +315,13 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
     return false;
   }
 
-  public PsiElement getContext() {
-    return myFile;
-  }
-
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    if (lastParent == null) { //otherwise should be processed by file
-      for (PsiMethod method : getMethods()) {
-        if (!ResolveUtil.processElement(processor, method)) return false;
-      }
+    for (PsiMethod method : getMethods()) {
+      if (!ResolveUtil.processElement(processor, method)) return false;
+    }
 
-      for (GrVariable variable : myFile.getTopLevelVariables()) {
-        if (!ResolveUtil.processElement(processor, variable)) return false;
-      }
-    } else {
-      if (!ResolveUtil.processElement(processor, myMainMethod)) return false;
-      if (!ResolveUtil.processElement(processor, myRunMethod)) return false;
+    for (GrVariable variable : myFile.getTopLevelVariables()) {
+      if (!ResolveUtil.processElement(processor, variable)) return false;
     }
 
     return true;
@@ -366,7 +357,8 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
     return myFile.getIcon(flags);
   }
 
-  public void checkDelete() throws IncorrectOperationException {}
+  public void checkDelete() throws IncorrectOperationException {
+  }
 
   public void delete() throws IncorrectOperationException {
     myFile.delete();

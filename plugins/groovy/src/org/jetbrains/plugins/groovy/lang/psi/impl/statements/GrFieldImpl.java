@@ -141,4 +141,8 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     PsiField originalField = originalClass.findFieldByName(getName(), false);
     return originalField != null ? originalField : this;
   }
+
+  public PsiElement getContext() {
+    return getParent();
+  }
 }
