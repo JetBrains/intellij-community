@@ -315,13 +315,22 @@ public class GroovyScriptClass extends LightElement implements PsiClass{
     return false;
   }
 
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
-    for (PsiMethod method : getMethods()) {
-      if (!ResolveUtil.processElement(processor, method)) return false;
-    }
+  public PsiElement getContext() {
+    return myFile;
+  }
 
-    for (GrVariable variable : myFile.getTopLevelVariables()) {
-      if (!ResolveUtil.processElement(processor, variable)) return false;
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull PsiSubstitutor substitutor, PsiElement lastParent, @NotNull PsiElement place) {
+    if (lastParent == null) { //otherwise should be processed by file
+      for (PsiMethod method : getMethods()) {
+        if (!ResolveUtil.processElement(processor, method)) return false;
+      }
+
+      for (GrVariable variable : myFile.getTopLevelVariables()) {
+        if (!ResolveUtil.processElement(processor, variable)) return false;
+      }
+    } else {
+      if (!ResolveUtil.processElement(processor, myMainMethod)) return false;
+      if (!ResolveUtil.processElement(processor, myRunMethod)) return false;
     }
 
     return true;
