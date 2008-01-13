@@ -50,18 +50,18 @@ import java.util.*;
 )
 public class FileBasedIndex implements ApplicationComponent, PersistentStateComponent<FileBasedIndexState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndex");
-  
+
   private final Map<String, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<String, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
-  private final CompositeInputFiler myCompositeFilter = new CompositeInputFiler();  
+  private final CompositeInputFiler myCompositeFilter = new CompositeInputFiler();
   private List<Disposable> myDisposables = new ArrayList<Disposable>();
   private FileBasedIndexState myPreviouslyRegistered;
   private Set<String> myProcessedProjects = new HashSet<String>(); // stores locationHash of all projects opened projets during this session
   private List<Runnable> myFlushStorages = new ArrayList<Runnable>();
-  
+
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
   }
-  
+
   public static final class FileContent {
     final VirtualFile file;
     final CharSequence content;
@@ -77,17 +77,17 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
     for (FileBasedIndexExtension extension : extensions) {
       final boolean _requiresRebuild = registerIndexer(
-        extension.getName(), 
-        extension.getIndexer(), 
-        extension.getKeyDescriptor(), 
-        extension.getValueExternalizer(), 
+        extension.getName(),
+        extension.getIndexer(),
+        extension.getKeyDescriptor(),
+        extension.getValueExternalizer(),
         extension.getInputFilter()
       );
       if (_requiresRebuild) {
         requiresRebuild.add(extension.getName());
       }
     }
-    
+
     dropUnregisteredIndices();
 
     final VirtualFileListener vfsListener = new MyVFSListener();
@@ -122,13 +122,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   /**
    * @return true if registered index requires full rebuild for some reason, e.g. is just created or corrupted
    */
-  private <K, V> boolean registerIndexer(final String name, 
-                                     final DataIndexer<K, V, FileContent> indexer, 
-                                     final PersistentEnumerator.DataDescriptor<K> keyDescriptor, 
-                                     final DataExternalizer<V> valueExternalizer, 
-                                     final InputFilter filter) throws IOException {
+  private <K, V> boolean registerIndexer(final String name,
+                                         final DataIndexer<K, V, FileContent> indexer,
+                                         final PersistentEnumerator.DataDescriptor<K> keyDescriptor,
+                                         final DataExternalizer<V> valueExternalizer,
+                                         final InputFilter filter) throws IOException {
     final File storageFile = getStorageFile(name);
-    
+
     MapIndexStorage<K, V> _storage = null;
     boolean requiresRebuild = false;
 
@@ -162,7 +162,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         }
       }
     });
-    
+
     final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(indexer, storage);
     myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, filter));
     myCompositeFilter.addFilter(filter);
@@ -173,13 +173,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     });
     return requiresRebuild;
   }
-  
+
   private void flushStorages() {
     for (Runnable flushStorage : myFlushStorages) {
       flushStorage.run();
     }
   }
-  
+
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -211,14 +211,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     if (index == null) {
       return Collections.emptyList();
     }
-    
+
     final ValueContainer<V> container = index.getData(dataKey);
     final List<V> valueList = container.toValueList();
-    
+
     if (project != null) {
       final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
       final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-      
+
       for (Iterator<V> it = valueList.iterator(); it.hasNext();) {
         final V value = it.next();
         if (!belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
@@ -226,7 +226,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         }
       }
     }
-    
+
     return valueList;
   }
 
@@ -247,10 +247,19 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     for (Iterator it = container.getValueIterator(); it.hasNext();) {
       final Object value = it.next();
       //noinspection unchecked
-      if (dirIndex == null || belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
-        for (//noinspection unchecked
-          final ValueContainer.IntIterator idIt = container.getInputIdsIterator(value); idIt.hasNext();) {
-          files.add(idIt.next());
+      final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
+      while (inputIdsIterator.hasNext()) {
+        final int id = inputIdsIterator.next();
+        if (dirIndex != null) {
+          final DirectoryInfo directoryInfo = fs.isDirectory(id)?
+                                              dirIndex.getInfoForDirectoryId(id) :
+                                              dirIndex.getInfoForDirectoryId(fs.getParent(id));
+          if (directoryInfo != null && directoryInfo.contentRoot != null) {
+            files.add(id);
+          }
+        }
+        else {
+          files.add(id);
         }
       }
     }
@@ -328,7 +337,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     return pair != null? pair.getSecond() : null;
   }
-  
+
   private static boolean belongsToProject(final ValueContainer.IntIterator inputIdsIterator, final DirectoryIndex dirIndex, final PersistentFS fs) {
     while (inputIdsIterator.hasNext()) {
       final int id = inputIdsIterator.next();
@@ -356,13 +365,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     file.mkdirs();
     return file;
   }
-  
+
   private void updateIndicesForFile(final VirtualFile file, final @Nullable CharSequence oldContent) {
     final FileContent oldFC = oldContent != null ? new FileContent(file, oldContent) : null;
     final boolean isValidFile = file.isValid();
     FileContent currentFC = null;
     boolean fileContentLoaded = false;
-    
+
     for (String indexKey : myIndices.keySet()) {
       if (!isValidFile || getInputFilter(indexKey).acceptInput(file)) {
         if (!fileContentLoaded) {
@@ -379,9 +388,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private void updateSingleIndex(final String indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC) 
+  private void updateSingleIndex(final String indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
-    
+
     final int inputId = Math.abs(((NewVirtualFile)file).getId());
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     index.update(inputId, currentFC, oldFC);
@@ -401,7 +410,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private static final class CompositeInputFiler implements InputFilter {
     private final Set<InputFilter> myFilters = new HashSet<InputFilter>();
-    
+
     public void addFilter(InputFilter filter) {
       myFilters.add(filter);
     }
@@ -409,7 +418,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     public void removeFilter(InputFilter filter) {
       myFilters.remove(filter);
     }
-    
+
     public boolean acceptInput(final VirtualFile file) {
       for (InputFilter filter : myFilters) {
         if (filter.acceptInput(file)) {
@@ -419,7 +428,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       return false;
     }
   }
-  
+
   private static final com.intellij.openapi.util.Key<CharSequence> CONTENT_KEY = com.intellij.openapi.util.Key.create("FileContent");
   private final class MyVFSListener extends VirtualFileAdapter {
     public void contentsChanged(final VirtualFileEvent event) {
@@ -473,7 +482,5 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         updateIndicesForFile(file, oldContent);
       }
     }
-
-
   }
 }
