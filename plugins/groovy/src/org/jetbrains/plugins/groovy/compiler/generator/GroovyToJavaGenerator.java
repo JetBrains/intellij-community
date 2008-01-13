@@ -529,7 +529,11 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           text.append("{\n");
 
           text.append("    ");
-          text.append("super");
+          if (constructorInvocation.isSuperCall()) {
+            text.append("super");
+          } else {
+            text.append("this");
+          }
           text.append("(");
 
           if (superConstructor != null) {
@@ -537,7 +541,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
             for (int i = 0; i < superParams.length; i++) {
               if (i > 0) text.append(", ");
               String typeText = getTypeText(superParams[i].getType());
-              text.append("(" + typeText + ")" + getDefaultValueText(typeText));
+              text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
             }
           }
 

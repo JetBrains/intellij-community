@@ -1,0 +1,18 @@
+class MyTestClass {
+
+    public MyTestClass(String s) {}
+
+    public MyTestClass() {
+        this('some value')
+    }
+}
+-----
+public class MyTestClass extends groovy.lang.GroovyObjectSupport {
+  public MyTestClass(java.lang.String s) {
+
+  }
+
+  public MyTestClass() {
+    this((java.lang.String)null);
+  }
+}
