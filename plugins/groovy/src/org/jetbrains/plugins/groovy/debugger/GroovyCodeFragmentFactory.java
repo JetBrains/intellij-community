@@ -15,7 +15,6 @@
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,13 +40,14 @@ import java.util.Set;
  * @author ven
  */
 public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
+  private static final String EVAL_PROPERTY_NAME = "JETGROOVY_EVAL_PROP_NAME";
+
   public PsiCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     String text = textWithImports.getText();
     String imports = textWithImports.getImports();
     GroovyPsiElement toEval;
     GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
-    toEval = textWithImports.getKind() == CodeFragmentKind.EXPRESSION ?
-        factory.createExpressionFromText(text, context) : factory.createStatementFromText(text);
+    toEval = factory.createGroovyFile(text, false, context);
 
     final Set<String> locals = new HashSet<String>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
@@ -60,19 +60,21 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       }
     });
 
+    PsiClass contextClass = getContextClass(context);
+    assert contextClass != null;
     StringBuffer javaText = new StringBuffer();
     javaText.append("java.util.Map m = org.codehaus.groovy.runtime.DefaultGroovyMethods.getProperties(this);\n");
     for (String local : locals) {
       javaText.append("m.put(\"").append(local).append("\", ").append(local).append(");\n");
     }
     javaText.append("groovy.lang.Binding b = new groovy.lang.Binding(m);\n");
-    String finalEvalText = imports + "\n" + text;
-    PsiClass contextClass = getContextClass(context);
-    assert contextClass != null;
+    String text1 = "def " + EVAL_PROPERTY_NAME + " = { " + text + "}";
+
+    String finalEvalText = imports + "\n" + text1;
     javaText.append("groovy.lang.Script s = new groovy.lang.GroovyShell(b).parse(\"").
         append(StringUtil.escapeStringCharacters(finalEvalText)).append("\");\n");
-    javaText.append("s.setMetaClass(new groovy.lang.DelegatingMetaClass(((groovy.lang.GroovyObject)this).getMetaClass());\n");
-    javaText.append("s.run();");
+    javaText.append("((groovy.lang.GroovyObject)this).setProperty(\"").append(EVAL_PROPERTY_NAME).append("\", s.getProperty(\"").append(EVAL_PROPERTY_NAME).append("\"));\n");
+    javaText.append("((groovy.lang.GroovyObject)this).invokeMethod(\"").append(EVAL_PROPERTY_NAME).append("\", new Object[0])");
 
     PsiElementFactory elementFactory = toEval.getManager().getElementFactory();
     PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
