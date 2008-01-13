@@ -647,7 +647,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append("{\n");
       text.append("    return ");
 
-      text.append(getDefaultValueText(getTypeText(method.getReturnType())));
+      text.append(getDefaultValueText(getTypeText(retType)));
 
       text.append(";");
 
