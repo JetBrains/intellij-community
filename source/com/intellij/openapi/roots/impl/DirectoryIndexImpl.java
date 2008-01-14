@@ -805,7 +805,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
   private DirectoryInfo getOrCreateDirInfo(VirtualFile dir) {
     DirectoryInfo info = myDirToInfoMap.get(dir);
     if (info == null) {
-      info = new DirectoryInfo();
+      info = new DirectoryInfo(dir);
       myDirToInfoMap.put(dir, info);
       if (dir instanceof NewVirtualFile) {
         // need this check to filter out deprecated virtual file implementations

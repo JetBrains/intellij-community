@@ -243,18 +243,17 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return valueList;
   }
 
-  // todo: return the list of virtual files instead of IDs
   @NotNull
-  public <K> Collection<Integer> getContainingFiles(final String indexId, K dataKey, Project project) throws StorageException {
+  public <K> Collection<VirtualFile> getContainingFiles(final String indexId, K dataKey, @NotNull Project project) throws StorageException {
     indexUnsavedDocuments();
     final AbstractIndex<K, ?> index = getIndex(indexId);
     if (index == null) {
       return Collections.emptyList();
     }
 
-    final Set<Integer> files = new HashSet<Integer>();
+    final Set<VirtualFile> files = new HashSet<VirtualFile>();
 
-    final DirectoryIndex dirIndex = project != null? DirectoryIndex.getInstance(project) : null;
+    final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
     final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
 
     final ValueContainer container = index.getData(dataKey);
@@ -264,16 +263,18 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
       while (inputIdsIterator.hasNext()) {
         final int id = inputIdsIterator.next();
-        if (dirIndex != null) {
-          final DirectoryInfo directoryInfo = fs.isDirectory(id)?
-                                              dirIndex.getInfoForDirectoryId(id) :
-                                              dirIndex.getInfoForDirectoryId(fs.getParent(id));
-          if (directoryInfo != null && directoryInfo.contentRoot != null) {
-            files.add(id);
+        final boolean isDirectory = fs.isDirectory(id);
+        final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
+        if (directoryInfo != null && directoryInfo.contentRoot != null) {
+          if (isDirectory) {
+            files.add(directoryInfo.directory);
           }
-        }
-        else {
-          files.add(id);
+          else {
+            final VirtualFile child = directoryInfo.directory.findChild(fs.getName(id));
+            if (child != null) {
+              files.add(child);
+            }
+          }
         }
       }
     }

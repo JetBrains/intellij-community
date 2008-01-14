@@ -19,6 +19,11 @@ public class DirectoryInfo {
   public VirtualFile libraryClassRoot; // class root in library
   public VirtualFile contentRoot;
   public VirtualFile sourceRoot;
+  public final VirtualFile directory;
+
+  public DirectoryInfo(final VirtualFile directory) {
+    this.directory = directory;
+  }
 
   /**
    *  orderEntry to (classes of) which a directory belongs
@@ -31,6 +36,7 @@ public class DirectoryInfo {
 
     final DirectoryInfo info = (DirectoryInfo)o;
 
+    if (!Comparing.equal(directory, info.directory)) return false;
     if (isInLibrarySource != info.isInLibrarySource) return false;
     if (isInModuleSource != info.isInModuleSource) return false;
     if (isTestSource != info.isTestSource) return false;
