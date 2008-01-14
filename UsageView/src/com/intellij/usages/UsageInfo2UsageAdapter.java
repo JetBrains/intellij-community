@@ -110,7 +110,8 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInLibrary, Us
   }
 
   public boolean isValid() {
-    if (getElement() == null) {
+    PsiElement element = getElement();
+    if (element == null || !element.isValid()) {
       return false;
     }
     for (RangeMarker rangeMarker : myRangeMarkers) {
