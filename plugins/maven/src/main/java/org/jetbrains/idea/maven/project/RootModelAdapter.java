@@ -148,7 +148,7 @@ class RootModelAdapter {
     final Library.ModifiableModel libraryModel = library.getModifiableModel();
     setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
     setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
-    setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.INSTANCE);
+    setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
 
     if (exportable) setExported(myRootModel, library);
     libraryModel.commit();
@@ -184,7 +184,7 @@ class RootModelAdapter {
     if (library != null) {
       final Library.ModifiableModel libraryModel = library.getModifiableModel();
       setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
-      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.INSTANCE);
+      setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
       libraryModel.commit();
     }
   }

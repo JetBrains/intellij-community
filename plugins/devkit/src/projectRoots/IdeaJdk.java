@@ -316,7 +316,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType, ApplicationComponen
     if (docFile.exists() && docFile.isDirectory()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(docFile), JavadocOrderRootType.INSTANCE);}
+          sdkModificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(docFile), JavadocOrderRootType.getInstance());}
         }
       );
       return;
@@ -328,7 +328,7 @@ public class IdeaJdk extends SdkType implements JavaSdkType, ApplicationComponen
       String path = jarfile.getAbsolutePath().replace(File.separatorChar, '/') + JarFileSystem.JAR_SEPARATOR + openapi;
       jarFileSystem.setNoCopyJarForPath(path);
       VirtualFile vFile = jarFileSystem.findFileByPath(path);
-      sdkModificator.addRoot(vFile, JavadocOrderRootType.INSTANCE);
+      sdkModificator.addRoot(vFile, JavadocOrderRootType.getInstance());
     }
   }
 
@@ -337,12 +337,12 @@ public class IdeaJdk extends SdkType implements JavaSdkType, ApplicationComponen
   }
 
   private static void addDocs(SdkModificator sdkModificator, final Sdk javaSdk) {
-    if (!addOrderEntries(JavadocOrderRootType.INSTANCE, javaSdk, sdkModificator) &&
+    if (!addOrderEntries(JavadocOrderRootType.getInstance(), javaSdk, sdkModificator) &&
         SystemInfo.isMac){
       Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
       for (Sdk jdk : jdks) {
         if (jdk.getSdkType() instanceof JavaSdk) {
-          addOrderEntries(JavadocOrderRootType.INSTANCE, jdk, sdkModificator);
+          addOrderEntries(JavadocOrderRootType.getInstance(), jdk, sdkModificator);
           break;
         }
       }
