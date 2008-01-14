@@ -16,6 +16,6 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   }
 
   public PathEditor createPathEditor() {
-    return new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.INSTANCE, new FileChooserDescriptor(false, true, true, false, true, true), true);
+    return new MyPathsEditor(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), new FileChooserDescriptor(false, true, true, false, true, true), true);
   }
 }

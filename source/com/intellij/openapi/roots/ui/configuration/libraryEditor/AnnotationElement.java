@@ -16,7 +16,7 @@ class AnnotationElement extends LibraryTableTreeContentElement {
     }
 
   public OrderRootType getOrderRootType() {
-    return AnnotationOrderRootType.INSTANCE;
+    return AnnotationOrderRootType.getInstance();
   }
 
   public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {

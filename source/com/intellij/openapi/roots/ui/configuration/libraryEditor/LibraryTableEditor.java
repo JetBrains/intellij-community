@@ -687,7 +687,7 @@ public class LibraryTableEditor implements Disposable {
     }
 
     protected OrderRootType getRootType() {
-      return AnnotationOrderRootType.INSTANCE;
+      return AnnotationOrderRootType.getInstance();
     }
   }
 
@@ -701,7 +701,7 @@ public class LibraryTableEditor implements Disposable {
     }
 
     protected OrderRootType getRootType() {
-      return JavadocOrderRootType.INSTANCE;
+      return JavadocOrderRootType.getInstance();
     }
   }
 
@@ -711,7 +711,7 @@ public class LibraryTableEditor implements Disposable {
       if (library != null) {
         final VirtualFile vFile = Util.showSpecifyJavadocUrlDialog(myPanel);
         if (vFile != null) {
-          attachFiles(library, new VirtualFile[] {vFile}, JavadocOrderRootType.INSTANCE, false);
+          attachFiles(library, new VirtualFile[] {vFile}, JavadocOrderRootType.getInstance(), false);
         }
       }
       myTree.requestFocus();

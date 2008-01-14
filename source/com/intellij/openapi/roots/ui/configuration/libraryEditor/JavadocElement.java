@@ -16,7 +16,7 @@ class JavadocElement extends LibraryTableTreeContentElement {
     }
 
   public OrderRootType getOrderRootType() {
-    return JavadocOrderRootType.INSTANCE;
+    return JavadocOrderRootType.getInstance();
   }
 
   public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryTableEditor parentEditor) {

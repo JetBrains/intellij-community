@@ -13,7 +13,9 @@ public class AnnotationOrderRootType extends OrderRootType {
   /**
    * External annotations path
    */
-  public static final OrderRootType INSTANCE = new AnnotationOrderRootType();
+  public static OrderRootType getInstance() {
+    return getOrderRootType(AnnotationOrderRootType.class);
+  }
 
   private AnnotationOrderRootType() {
     super("ANNOTATIONS", "annotationsPath", "annotation-paths", true);
@@ -23,18 +25,18 @@ public class AnnotationOrderRootType extends OrderRootType {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     JavaRecursiveRootPolicy<List<VirtualFile>> policy = new JavaRecursiveRootPolicy<List<VirtualFile>>() {
       public List<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootFiles(INSTANCE));
+        Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
       }
 
       public List<VirtualFile> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootFiles(INSTANCE));
+        Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
         return value;
       }
 
       public List<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getRootPaths(INSTANCE));
+        Collections.addAll(value, orderEntry.getRootModel().getRootPaths(getInstance()));
         return value;
       }
     };
@@ -46,18 +48,18 @@ public class AnnotationOrderRootType extends OrderRootType {
     List<String> result = new ArrayList<String>();
     JavaRecursiveRootPolicy<List<String>> policy = new JavaRecursiveRootPolicy<List<String>>() {
       public List<String> visitLibraryOrderEntry(final LibraryOrderEntry orderEntry, final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootUrls(INSTANCE));
+        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;
       }
 
       public List<String> visitJdkOrderEntry(final JdkOrderEntry orderEntry, final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootUrls(INSTANCE));
+        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
         return value;
       }
 
       public List<String> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry orderEntry,
                                                            final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getRootUrls(INSTANCE));
+        Collections.addAll(value, orderEntry.getRootModel().getRootUrls(getInstance()));
         return value;
       }
     };

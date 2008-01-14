@@ -66,7 +66,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
       final TableItem item = ((MyTableModel)myTable.getModel()).getTableItemAt(row);
       urls[row] = item.getUrl();
     }
-    myModel.setRootUrls(AnnotationOrderRootType.INSTANCE, urls);
+    myModel.setRootUrls(AnnotationOrderRootType.getInstance(), urls);
   }
 
   public JComponent createComponentImpl() {
@@ -127,7 +127,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
 
   protected DefaultTableModel createModel() {
     final MyTableModel tableModel = new MyTableModel();
-    final String[] urls = myModel.getRootUrls(AnnotationOrderRootType.INSTANCE);
+    final String[] urls = myModel.getRootUrls(AnnotationOrderRootType.getInstance());
     for (String javadocUrl : urls) {
       tableModel.addTableItem(new TableItem(javadocUrl));
     }

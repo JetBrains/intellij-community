@@ -15,13 +15,15 @@
  */
 package com.intellij.openapi.roots;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * Root types that can be queried from OrderEntry.
@@ -33,6 +35,9 @@ public class OrderRootType {
   private String mySdkRootName;
   private String myModulePathsName;
   private static OrderRootType[] ourPersistentOrderRootTypes = new OrderRootType[0];
+  private static boolean ourExtensionsLoaded = false;
+
+  public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 
   protected OrderRootType(@NonNls String name, @NonNls String sdkRootName, @NonNls String modulePathsName, boolean persistent) {
     myName = name;
@@ -82,7 +87,11 @@ public class OrderRootType {
     return myModulePathsName;
   }
 
-  public static OrderRootType[] getAllTypes() {
+  public static synchronized OrderRootType[] getAllTypes() {
+    if (!ourExtensionsLoaded) {
+      ourExtensionsLoaded = true;
+      Extensions.getExtensions(EP_NAME);
+    }
     return ourPersistentOrderRootTypes;
   }
 
@@ -95,5 +104,16 @@ public class OrderRootType {
       }
     });
     return allTypes;
+  }
+
+  protected static <T> T getOrderRootType(final Class<? extends T> orderRootTypeClass) {
+    for(OrderRootType rootType: Extensions.getExtensions(EP_NAME)) {
+      if (orderRootTypeClass.isInstance(rootType)) {
+        //noinspection unchecked
+        return (T)rootType;
+      }
+    }
+    assert false;
+    return null;
   }
 }

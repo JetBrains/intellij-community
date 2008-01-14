@@ -259,18 +259,18 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
       LOG.assertTrue(library != null);
       final ModifiableRootModel rootModel = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
       final Library.ModifiableModel model = library.getModifiableModel();
-      model.addRoot(vFile, AnnotationOrderRootType.INSTANCE);
+      model.addRoot(vFile, AnnotationOrderRootType.getInstance());
       model.commit();
       rootModel.commit();
     }
     else if (entry instanceof ModuleSourceOrderEntry) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(entry.getOwnerModule()).getModifiableModel();
-      model.setRootUrls(AnnotationOrderRootType.INSTANCE, ArrayUtil.mergeArrays(model.getRootUrls(AnnotationOrderRootType.INSTANCE), new String[]{vFile.getUrl()}, String.class));
+      model.setRootUrls(AnnotationOrderRootType.getInstance(), ArrayUtil.mergeArrays(model.getRootUrls(AnnotationOrderRootType.getInstance()), new String[]{vFile.getUrl()}, String.class));
       model.commit();
     }
     else if (entry instanceof JdkOrderEntry) {
       final SdkModificator sdkModificator = ((JdkOrderEntry)entry).getJdk().getSdkModificator();
-      sdkModificator.addRoot(vFile, AnnotationOrderRootType.INSTANCE);
+      sdkModificator.addRoot(vFile, AnnotationOrderRootType.getInstance());
       sdkModificator.commitChanges();
     }
     myExternalAnotations.clear();

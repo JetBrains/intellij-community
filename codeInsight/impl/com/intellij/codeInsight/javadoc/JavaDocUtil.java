@@ -54,7 +54,7 @@ public class JavaDocUtil {
   public static String[] getDocPaths(Project project) {
     ArrayList<String> result = new ArrayList<String>();
 
-    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getFilesFromAllModules(JavadocOrderRootType.INSTANCE);
+    final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getFilesFromAllModules(JavadocOrderRootType.getInstance());
     for (VirtualFile root : roots) {
       if (!(root.getFileSystem() instanceof HttpFileSystem)) {
         result.add(root.getUrl());

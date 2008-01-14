@@ -557,14 +557,14 @@ public class JavaDocManager implements ProjectComponent {
       }
     }
     if (module != null) {
-      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getRootPaths(JavadocOrderRootType.INSTANCE);
+      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getRootPaths(JavadocOrderRootType.getInstance());
       List<String> httpRoot = getHttpRoots(javadocPaths, relPath);
       if (httpRoot != null) return httpRoot;
     }
 
     final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
     for (OrderEntry orderEntry : orderEntries) {
-      final VirtualFile[] files = orderEntry.getFiles(JavadocOrderRootType.INSTANCE);
+      final VirtualFile[] files = orderEntry.getFiles(JavadocOrderRootType.getInstance());
       final List<String> httpRoot = getHttpRoots(files, relPath);
       if (httpRoot != null) return httpRoot;
     }

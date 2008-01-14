@@ -179,7 +179,7 @@ public class JavaSdkImpl extends JavaSdk {
       sdkModificator.addRoot(sources, OrderRootType.SOURCES);
     }
     if(docs != null){
-      sdkModificator.addRoot(docs, JavadocOrderRootType.INSTANCE);
+      sdkModificator.addRoot(docs, JavadocOrderRootType.getInstance());
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
@@ -187,7 +187,7 @@ public class JavaSdkImpl extends JavaSdk {
         commonDocs = findInJar(new File(jdkHome, "docs.jar"), "doc/api");
       }
       if (commonDocs != null) {
-        sdkModificator.addRoot(commonDocs, JavadocOrderRootType.INSTANCE);
+        sdkModificator.addRoot(commonDocs, JavadocOrderRootType.getInstance());
       }
 
       VirtualFile appleDocs = findDocs(jdkHome, "appledocs");
@@ -195,7 +195,7 @@ public class JavaSdkImpl extends JavaSdk {
         appleDocs = findInJar(new File(jdkHome, "appledocs.jar"), "appledoc/api");
       }
       if (appleDocs != null) {
-        sdkModificator.addRoot(appleDocs, JavadocOrderRootType.INSTANCE);
+        sdkModificator.addRoot(appleDocs, JavadocOrderRootType.getInstance());
       }
     }
     sdkModificator.commitChanges();
@@ -381,7 +381,7 @@ public class JavaSdkImpl extends JavaSdk {
   private static void addDocs(File file, SdkModificator rootContainer) {
     VirtualFile vFile = findDocs(file, "docs/api");
     if (vFile != null) {
-      rootContainer.addRoot(vFile, JavadocOrderRootType.INSTANCE);
+      rootContainer.addRoot(vFile, JavadocOrderRootType.getInstance());
     }
   }
 

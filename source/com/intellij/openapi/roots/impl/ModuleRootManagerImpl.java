@@ -327,7 +327,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       myRootModel.addExportedUrs(rootType, result, processed);
       return result.toArray(new String[result.size()]);
     }
-    else if (JavadocOrderRootType.INSTANCE.equals(rootType)) {
+    else if (JavadocOrderRootType.getInstance().equals(rootType)) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     else if (OrderRootType.CLASSES.equals(rootType)) {
@@ -382,8 +382,8 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       else if (OrderRootType.CLASSES_AND_OUTPUT.equals(rootType)) {
         return getFiles(OrderRootType.CLASSES_AND_OUTPUT, processed);
       }
-      else if (JavadocOrderRootType.INSTANCE.equals(rootType)) {
-        return getFiles(JavadocOrderRootType.INSTANCE, processed);
+      else if (JavadocOrderRootType.getInstance().equals(rootType)) {
+        return getFiles(JavadocOrderRootType.getInstance(), processed);
       }
       else {
         return VirtualFile.EMPTY_ARRAY;

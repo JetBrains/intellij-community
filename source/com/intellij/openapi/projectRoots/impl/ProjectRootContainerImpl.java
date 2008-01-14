@@ -222,7 +222,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
         addRoot(projectRoot, OrderRootType.SOURCES);
       }
       else if (type.equals("javadocPathEntry")) {
-        addRoot(projectRoot, JavadocOrderRootType.INSTANCE);
+        addRoot(projectRoot, JavadocOrderRootType.getInstance());
       }
       else if (type.equals("classPathEntry")) {
         addRoot(projectRoot, OrderRootType.CLASSES);
