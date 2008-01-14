@@ -28,7 +28,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import org.jdom.Element;
@@ -76,7 +75,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       throw new ExecutionException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
+    final Sdk jdk = rootManager.getSdk();
     if (jdk == null) {
       throw CantRunException.noJdkForModule(getModule());
     }
@@ -171,7 +170,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
+    final Sdk jdk = rootManager.getSdk();
     if (jdk == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("jdk.no.specified", moduleName));
     }

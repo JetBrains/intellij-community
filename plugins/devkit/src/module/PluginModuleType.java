@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
@@ -130,7 +129,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public static List<Module> getCandidateModules(Module module) {
     final ModuleRootManager manager = ModuleRootManager.getInstance(module);
 
-    final Sdk jdk = ModuleJdkUtil.getJdk(manager);
+    final Sdk jdk = manager.getSdk();
     // don't allow modules that don't use an IDEA-JDK
     if (IdeaJdk.findIdeaJdk(jdk) == null) {
       return Collections.emptyList();

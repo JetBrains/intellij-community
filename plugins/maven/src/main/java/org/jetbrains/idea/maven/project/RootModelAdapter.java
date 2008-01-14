@@ -35,7 +35,7 @@ class RootModelAdapter {
       myRootModel.addContentEntry(virtualFile);
     }
 
-    ModuleJdkUtil.inheritJdk(myRootModel);
+    myRootModel.inheritSdk();
     getCompilerExtension().setExcludeOutput(true);
 
     for (OrderEntry entry : myRootModel.getOrderEntries()) {

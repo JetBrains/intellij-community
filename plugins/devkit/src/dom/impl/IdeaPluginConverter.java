@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -75,7 +74,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
         }
       }
 
-      final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
       if (jdk != null && jdk.getSdkType() instanceof IdeaJdk) {
         final VirtualFile pluginsHome = jdk.getHomeDirectory().findChild("plugins");
         final VirtualFile[] plugins = pluginsHome != null ? pluginsHome.getChildren() : VirtualFile.EMPTY_ARRAY;

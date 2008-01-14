@@ -16,7 +16,6 @@ import com.intellij.openapi.deployment.PackagingMethod;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -54,7 +53,7 @@ public class PluginBuildParticipant extends BuildParticipantBase {
   }
 
   protected void registerBuildInstructions(final BuildRecipe instructions, final CompileContext context) {
-    Sdk jdk = IdeaJdk.findIdeaJdk(ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(getModule())));
+    Sdk jdk = IdeaJdk.findIdeaJdk(ModuleRootManager.getInstance(getModule()).getSdk());
     if (jdk != null && IdeaJdk.isFromIDEAProject(jdk.getHomePath())) {
       return;
     }
