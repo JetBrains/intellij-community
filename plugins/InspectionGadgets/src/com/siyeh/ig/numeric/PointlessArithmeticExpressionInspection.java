@@ -116,7 +116,7 @@ public class PointlessArithmeticExpressionInspection
             return "true";
         } else if (tokenType.equals(JavaTokenType.LT) ||
                 tokenType.equals(JavaTokenType.GT)) {
-            return "true";
+            return "false";
         } else {
             return "";
         }
@@ -186,10 +186,6 @@ public class PointlessArithmeticExpressionInspection
                     tokenType.equals(JavaTokenType.GT) ||
                     tokenType.equals(JavaTokenType.LT)) {
                 isPointless = comparisonExpressionIsPointless(lhs, rhs, tokenType);
-                if(isPointless)
-                {
-                    //System.out.println("pointless comparison!");
-                }
             } else {
                 isPointless = false;
             }

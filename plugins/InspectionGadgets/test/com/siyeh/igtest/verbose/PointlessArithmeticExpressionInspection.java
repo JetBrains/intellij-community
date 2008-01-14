@@ -64,4 +64,24 @@ public class PointlessArithmeticExpressionInspection
     double boom(double d){
         return 1.1 * d;
     }
+
+    void doubleDoom(int i) {
+
+        if (i > Integer.MAX_VALUE) {
+            System.out.println("always false!");
+        }
+        if (i < Integer.MAX_VALUE) {
+            System.out.println("do nothing");
+        }
+        if (i <= Integer.MAX_VALUE) {
+            System.out.println("always true");
+        }
+
+        if (i >= Integer.MIN_VALUE) {
+            System.out.println("sometimes possible");
+        }
+        if (i < Integer.MIN_VALUE) {
+            System.out.println("always false");
+        }
+    }
 }
