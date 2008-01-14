@@ -8,7 +8,9 @@ import com.intellij.ide.macro.MacroManager;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.impl.*;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.ant.execution.AntMain2;
@@ -94,10 +96,13 @@ public class AntCommandLineBuilder {
     myCommandLine.getClassPath().addAllFiles(AntBuildFileImpl.ALL_CLASS_PATH.get(container));
     
     myCommandLine.getClassPath().addAllFiles(AntBuildFileImpl.getUserHomeLibraries());
-    
-    final String toolsJar = jdk.getSdkType().getToolsPath(jdk);
-    if (toolsJar != null) {
-      myCommandLine.getClassPath().add(toolsJar);
+
+    final SdkType sdkType = jdk.getSdkType();
+    if (sdkType instanceof JavaSdkType) {
+      final String toolsJar = ((JavaSdkType)sdkType).getToolsPath(jdk);
+      if (toolsJar != null) {
+        myCommandLine.getClassPath().add(toolsJar);
+      }
     }
     PathUtilEx.addRtJar(myCommandLine.getClassPath());
 

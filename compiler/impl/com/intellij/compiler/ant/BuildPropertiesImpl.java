@@ -9,7 +9,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -100,7 +102,11 @@ public class BuildPropertiesImpl extends BuildProperties {
       add(new Comment(CompilerBundle.message("generated.ant.build.jdk.definitions.comment")), 1);
 
       for (final Sdk jdk : jdks) {
-        if (jdk.getHomeDirectory() == null || jdk.getSdkType().getBinPath(jdk) == null) {
+        if (jdk.getHomeDirectory() == null) {
+          continue;
+        }
+        final SdkType sdkType = jdk.getSdkType();
+        if (!(sdkType instanceof JavaSdkType) || ((JavaSdkType)sdkType).getBinPath(jdk) == null) {
           continue;
         }
         final File home = VfsUtil.virtualToIoFile(jdk.getHomeDirectory());
@@ -125,7 +131,7 @@ public class BuildPropertiesImpl extends BuildProperties {
           }
         }
 
-        final File binPath = toCanonicalFile(new File(jdk.getSdkType().getBinPath(jdk)));
+        final File binPath = toCanonicalFile(new File(((JavaSdkType)sdkType).getBinPath(jdk)));
         final String relativePath = FileUtil.getRelativePath(homeDir, binPath);
         if (relativePath != null) {
           add(new Property(BuildProperties.getJdkBinProperty(jdkName), propertyRef(jdkHomeProperty) + "/" + FileUtil.toSystemIndependentName(relativePath)), 1);

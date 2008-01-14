@@ -60,21 +60,6 @@ public abstract class SdkType {
    */
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator);
 
-  @Nullable
-  public abstract String getBinPath(Sdk sdk);
-
-  @Nullable
-  public abstract String getToolsPath(Sdk sdk);
-
-  @Nullable
-  public abstract String getVMExecutablePath(Sdk sdk);
-
-  @SuppressWarnings({"MethodMayBeStatic"})
-  @Nullable
-  public Sdk getEncapsulatedSdk(Sdk sdk) {
-    return null;
-  }
-
   public abstract void saveAdditionalData(SdkAdditionalData additionalData, Element additional);
 
   @Nullable

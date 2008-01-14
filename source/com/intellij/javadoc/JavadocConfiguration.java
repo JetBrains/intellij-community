@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.roots.*;
@@ -141,7 +142,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
 
 
     private void setupExeParams(final Sdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
-      final String jdkPath = jdk != null? new File(jdk.getSdkType().getVMExecutablePath(jdk)).getParent() : null;
+      final String jdkPath = jdk != null && jdk.getSdkType() instanceof JavaSdkType ? ((JavaSdkType)jdk.getSdkType()).getBinPath(jdk) : null;
       if (jdkPath == null) {
         throw new CantRunException(JavadocBundle.message("javadoc.generate.no.jdk.path"));
       }

@@ -6,7 +6,9 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.CharsetToolkit;
 
@@ -25,7 +27,12 @@ public class CommandLineBuilder {
               throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
             }
 
-            final String exePath = jdk.getSdkType().getVMExecutablePath(jdk);
+            final SdkType sdkType = jdk.getSdkType();
+            if (!(sdkType instanceof JavaSdkType)) {
+              throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
+            }
+            
+            final String exePath = ((JavaSdkType)sdkType).getVMExecutablePath(jdk);
             if(exePath == null) {
               throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
             }

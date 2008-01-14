@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileFilter;
 
-public abstract class JavaSdk extends SdkType implements ApplicationComponent {
+public abstract class JavaSdk extends SdkType implements JavaSdkType, ApplicationComponent {
   public JavaSdk(@NonNls String name) {
     super(name);
   }
@@ -72,4 +72,6 @@ public abstract class JavaSdk extends SdkType implements ApplicationComponent {
     File[] children = ioFile.listFiles(fileFilter);
     return (children != null && children.length >= 1);
   }
+
+
 }
