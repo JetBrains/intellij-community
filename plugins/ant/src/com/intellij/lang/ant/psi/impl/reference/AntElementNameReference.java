@@ -6,9 +6,8 @@ import com.intellij.lang.ant.psi.*;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.lang.ant.psi.introspection.AntTypeId;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
@@ -19,12 +18,12 @@ import java.util.Set;
 
 public class AntElementNameReference extends AntGenericReference {
 
-  public AntElementNameReference(final GenericReferenceProvider provider, final AntStructuredElement element) {
-    super(provider, element);
+  public AntElementNameReference(final AntStructuredElement element) {
+    super(element);
   }
 
-  public AntElementNameReference(final GenericReferenceProvider provider, final AntStructuredElement element, final XmlAttribute attr) {
-    super(provider, element, attr);
+  public AntElementNameReference(final AntStructuredElement element, final XmlAttribute attr) {
+    super(element, attr);
   }
 
   public AntStructuredElement getElement() {

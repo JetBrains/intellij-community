@@ -4,7 +4,7 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntFileReferenceSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AntFileReferenceProvider extends GenericReferenceProvider {
+public class AntFileReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {

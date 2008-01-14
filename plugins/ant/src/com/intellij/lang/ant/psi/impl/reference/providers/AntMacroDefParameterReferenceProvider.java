@@ -8,7 +8,7 @@ import com.intellij.lang.ant.psi.impl.reference.AntMacroDefParameterReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvider {
+public class AntMacroDefParameterReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -45,7 +45,7 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
     }
   }
 
-  private void getXmlElementReferences(final XmlElement element, final List<PsiReference> refs, final AntStructuredElement antElement) {
+  private static void getXmlElementReferences(final XmlElement element, final List<PsiReference> refs, final AntStructuredElement antElement) {
     if (element == null) return;
     final String text = element.getText();
     final int offsetInPosition = element.getTextRange().getStartOffset() - antElement.getTextRange().getStartOffset();
@@ -71,7 +71,7 @@ public class AntMacroDefParameterReferenceProvider extends GenericReferenceProvi
       if(nestedBrackets > 0 || endIndex == text.length()) return;
       if (endIndex >= startIndex) {
         final String name = text.substring(startIndex, endIndex);
-        refs.add(new AntMacroDefParameterReference(this, antElement, name,
+        refs.add(new AntMacroDefParameterReference(antElement, name,
                                                    new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), element));
       }
       endIndex = startIndex; 

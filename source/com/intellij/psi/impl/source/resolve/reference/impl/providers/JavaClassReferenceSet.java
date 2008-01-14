@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -23,8 +24,6 @@ public class JavaClassReferenceSet {
   public static final char SEPARATOR2 = '$';
   private static final char SEPARATOR3 = '<';
   private static final char SEPARATOR4 = ',';
-  private static final ReferenceType PACKAGE_OR_CLASS_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS, ReferenceType.JAVA_PACKAGE);
-  private static final ReferenceType CLASS_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   private PsiReference[] myReferences;
   private List<JavaClassReferenceSet> myNestedGenericParameterReferences;
@@ -198,11 +197,8 @@ public class JavaClassReferenceSet {
     return result;
   }
 
-  public ReferenceType getType(int index) {
-    if (index != myReferences.length - 1) {
-      return PACKAGE_OR_CLASS_TYPE;
-    }
-    return CLASS_TYPE;
+  public boolean canReferencePackage(int index) {
+    return index < myReferences.length - 1;
   }
 
   public boolean isSoft() {
@@ -223,7 +219,9 @@ public class JavaClassReferenceSet {
   }
 
   public String getUnresolvedMessagePattern(int index){
-    final ReferenceType type = getType(index);
-    return type.getUnresolvedMessage();
+    if (canReferencePackage(index)) {
+      return JavaErrorMessages.message("error.cannot.resolve.class.or.package");
+    }
+    return JavaErrorMessages.message("error.cannot.resolve.class");
   }
 }

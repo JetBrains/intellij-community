@@ -7,7 +7,6 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
@@ -21,12 +20,11 @@ public class AntMacroDefParameterReference extends AntGenericReference {
 
   private final XmlElement myXmlElement;
 
-  public AntMacroDefParameterReference(final GenericReferenceProvider provider,
-                                       final AntElement antElement,
+  public AntMacroDefParameterReference(final AntElement antElement,
                                        final String str,
                                        final TextRange textRange,
                                        final XmlElement xmlElement) {
-    super(provider, antElement, str, textRange, null);
+    super(antElement, str, textRange, null);
     myXmlElement = xmlElement;
   }
 

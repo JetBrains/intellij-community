@@ -20,7 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
   private final String myCanonicalText;
   private final boolean myCreateInterface;
 
-  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final GenericReference reference, boolean createClass,
+  public CreateClassOrPackageFix(final List<PsiDirectory> writableDirectoryList, final JavaClassReference reference, boolean createClass,
                                              @Nullable String superClass) {
     this(writableDirectoryList, reference.getElement(), reference.getCanonicalText(), createClass, false, superClass);
   }

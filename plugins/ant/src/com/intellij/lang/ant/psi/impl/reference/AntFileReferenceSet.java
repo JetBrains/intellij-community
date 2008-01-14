@@ -8,8 +8,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public class AntFileReferenceSet extends FileReferenceSet {
 
   private final XmlAttributeValue myValue;
 
-  public AntFileReferenceSet(final AntStructuredElement element, final XmlAttributeValue value, final GenericReferenceProvider provider) {
+  public AntFileReferenceSet(final AntStructuredElement element, final XmlAttributeValue value, final PsiReferenceProvider provider) {
     super(cutTrailingSlash(FileUtil.toSystemIndependentName(StringUtil.stripQuotesAroundValue(value.getText()))), element,
           value.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1, provider, true);
     myValue = value;

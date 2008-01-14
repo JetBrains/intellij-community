@@ -7,15 +7,16 @@ import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AntRefIdReferenceProvider extends GenericReferenceProvider {
+public class AntRefIdReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -37,17 +38,17 @@ public class AntRefIdReferenceProvider extends GenericReferenceProvider {
       if (attrValue == null || attrValue.indexOf("@{") >= 0) {
         continue;
       }
-      refs.add(new AntRefIdReference(this, se, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), attr));
+      refs.add(new AntRefIdReference(se, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), attr));
     }
     return refs.toArray(new PsiReference[refs.size()]);
   }
 
-  private static boolean isRefAttribute(AntStructuredElement element, final String attribName) {
+  private static boolean isRefAttribute(AntStructuredElement element, @NonNls final String attribName) {
     if ("refid".equals(attribName)) {
       return true;
     }
     final AntTypeDefinition typeDef = element.getTypeDefinition();
-    return typeDef != null? AntAttributeType.ID_REFERENCE == typeDef.getAttributeType(attribName) : false;
+    return typeDef != null && AntAttributeType.ID_REFERENCE == typeDef.getAttributeType(attribName);
   }
 
   @NotNull

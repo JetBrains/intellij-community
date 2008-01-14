@@ -28,10 +28,6 @@ public abstract class GenericReference extends CachingReference {
     myProvider = provider;
   }
 
-  public boolean isReferenceTo(final PsiElement element) {
-    return element.getManager().areElementsEquivalent(element, resolve());
-  }
-
   public void processVariants(final PsiScopeProcessor processor) {
     final PsiElement context = getContext();
     if (context != null) {

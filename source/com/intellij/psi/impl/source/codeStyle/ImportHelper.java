@@ -14,7 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings.ImportLayoutTable.PackageEnt
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveClassUtil;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.jsp.JspSpiUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -560,8 +560,8 @@ public class ImportHelper{
       for(final PsiReference reference : child.getReferences()){
         if (!(reference instanceof PsiJavaReference)) continue;
         final PsiJavaReference javaReference = (PsiJavaReference)reference;
-        if (javaReference instanceof GenericReference){
-          if(((GenericReference)javaReference).getContextReference() != null) continue;
+        if (javaReference instanceof JavaClassReference){
+          if(((JavaClassReference)javaReference).getContextReference() != null) continue;
         }
         PsiJavaCodeReferenceElement referenceElement = null;
         if (reference instanceof PsiJavaCodeReferenceElement) {

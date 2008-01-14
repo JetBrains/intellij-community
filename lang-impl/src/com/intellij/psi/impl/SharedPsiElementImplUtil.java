@@ -6,9 +6,9 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.GenericReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +41,8 @@ public class SharedPsiElementImplUtil {
     if (referencesList.size() > 1) {
       for (Iterator<PsiReference> i = referencesList.iterator(); i.hasNext();) {
         final PsiReference reference = i.next();
-        if (reference instanceof GenericReference) {
-          if (((GenericReference)reference).getProvider() instanceof JavaClassListReferenceProvider) {
+        if (reference instanceof JavaClassReference) {
+          if (((JavaClassReference)reference).getProvider() instanceof JavaClassListReferenceProvider) {
             i.remove();
           }
         }

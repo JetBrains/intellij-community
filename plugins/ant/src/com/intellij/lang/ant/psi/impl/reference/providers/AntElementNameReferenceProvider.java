@@ -6,13 +6,13 @@ import com.intellij.lang.ant.psi.AntTask;
 import com.intellij.lang.ant.psi.impl.reference.AntElementNameReference;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntElementNameReferenceProvider extends GenericReferenceProvider {
+public class AntElementNameReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -20,7 +20,7 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
     final AntStructuredElement se = (AntStructuredElement)element;
-    final AntElementNameReference nameReference = new AntElementNameReference(this, se);
+    final AntElementNameReference nameReference = new AntElementNameReference(se);
     if (element instanceof AntTask) {
       final AntTask task = (AntTask)element;
       if (task.isMacroDefined()) {
@@ -32,7 +32,7 @@ public class AntElementNameReferenceProvider extends GenericReferenceProvider {
         try {
           result.add(nameReference);
           for (XmlAttribute attr : attrs) {
-            result.add(new AntElementNameReference(this, task, attr));
+            result.add(new AntElementNameReference(task, attr));
           }
           return result.toArray(new PsiReference[result.size()]);
         }

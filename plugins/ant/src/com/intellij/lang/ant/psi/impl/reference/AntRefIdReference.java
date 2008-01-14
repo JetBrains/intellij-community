@@ -9,22 +9,17 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class AntRefIdReference extends AntGenericReference {
 
-  public AntRefIdReference(final GenericReferenceProvider provider,
-                           final AntElement antElement,
-                           final String str,
-                           final TextRange textRange,
-                           final XmlAttribute attribute) {
-    super(provider, antElement, str, textRange, attribute);
+  public AntRefIdReference(final AntElement antElement, final String str, final TextRange textRange, final XmlAttribute attribute) {
+    super(antElement, str, textRange, attribute);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
@@ -26,12 +25,8 @@ import java.util.List;
 public class AntTargetReference extends AntGenericReference {
   private boolean myShouldBeSkippedByAnnotator;
 
-  public AntTargetReference(final GenericReferenceProvider provider,
-                            final AntElement antElement,
-                            final String str,
-                            final TextRange textRange,
-                            final XmlAttribute attribute) {
-    super(provider, antElement, str, textRange, attribute);
+  public AntTargetReference(final AntElement antElement, final String str, final TextRange textRange, final XmlAttribute attribute) {
+    super(antElement, str, textRange, attribute);
     setShouldBeSkippedByAnnotator(false);
   }
 

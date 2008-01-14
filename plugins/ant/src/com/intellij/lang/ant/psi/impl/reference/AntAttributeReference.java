@@ -4,7 +4,6 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.introspection.AntTypeDefinition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +13,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class AntAttributeReference extends AntGenericReference {
 
-  public AntAttributeReference(final GenericReferenceProvider provider,
-                               final AntStructuredElement element,
+  public AntAttributeReference(final AntStructuredElement element,
                                final String str,
                                final TextRange textRange,
                                final XmlAttribute attribute) {
-    super(provider, element, str, textRange, attribute);
+    super(element, str, textRange, attribute);
   }
 
   public AntStructuredElement getElement() {

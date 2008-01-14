@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.IncorrectOperationException;
@@ -28,12 +27,8 @@ import java.util.List;
 import java.util.Set;
 
 public class AntPropertyReference extends AntGenericReference {
-  public AntPropertyReference(final GenericReferenceProvider provider,
-                              final AntElement antElement,
-                              final String str,
-                              final TextRange textRange,
-                              final XmlAttribute attribute) {
-    super(provider, antElement, str, textRange, attribute);
+  public AntPropertyReference(final AntElement antElement, final String str, final TextRange textRange, final XmlAttribute attribute) {
+    super(antElement, str, textRange, attribute);
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {

@@ -26,7 +26,6 @@ import java.util.Map;
  * To change this template use Options | File Templates.
  */
 public class JavaClassReferenceProvider extends GenericReferenceProvider implements CustomizableReferenceProvider {
-  public static final ReferenceType CLASS_REFERENCE_TYPE = new ReferenceType(ReferenceType.JAVA_CLASS);
 
   public static final CustomizationKey<Boolean> RESOLVE_QUALIFIED_CLASS_NAME =
     new CustomizationKey<Boolean>(PsiBundle.message("qualified.resolve.class.reference.provider.option"));

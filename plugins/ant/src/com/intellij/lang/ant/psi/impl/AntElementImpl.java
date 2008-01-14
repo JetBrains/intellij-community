@@ -16,7 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -215,12 +215,11 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     if (myReferences != null) {
       return myReferences;
     }
-    final GenericReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);
+    final PsiReferenceProvider[] providers = AntReferenceProvidersRegistry.getProvidersByElement(this);
     final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
     try {
-      for (final GenericReferenceProvider provider : providers) {
-        final PsiReference[] refs = provider.getReferencesByElement(this);
-        result.addAll(Arrays.asList(refs));
+      for (final PsiReferenceProvider provider : providers) {
+        result.addAll(Arrays.asList(provider.getReferencesByElement(this)));
       }
       return myReferences = result.toArray(new PsiReference[result.size()]);
     }

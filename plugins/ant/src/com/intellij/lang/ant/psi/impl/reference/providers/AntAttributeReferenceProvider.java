@@ -7,14 +7,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlToken;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntAttributeReferenceProvider extends GenericReferenceProvider {
+public class AntAttributeReferenceProvider implements PsiReferenceProvider {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
@@ -36,14 +36,14 @@ public class AntAttributeReferenceProvider extends GenericReferenceProvider {
         }
         else if (child instanceof PsiWhiteSpace) {
           final int off = child.getTextRange().getStartOffset() - elementStartOffset + 1;
-          list.add(new AntAttributeReference(this, se, " ", new TextRange(off, off), null));
+          list.add(new AntAttributeReference(se, " ", new TextRange(off, off), null));
         }
         else if (child instanceof XmlAttribute) {
           final PsiElement nameElement = child.getFirstChild();
           if (nameElement != null) {
             final int off = nameElement.getTextRange().getStartOffset() - elementStartOffset;
             final String text = nameElement.getText();
-            list.add(new AntAttributeReference(this, se, text, new TextRange(off, off + text.length()), null));
+            list.add(new AntAttributeReference(se, text, new TextRange(off, off + text.length()), null));
           }
         }
       }

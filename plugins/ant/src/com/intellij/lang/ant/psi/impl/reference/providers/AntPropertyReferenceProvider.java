@@ -10,7 +10,7 @@ import com.intellij.lang.ant.psi.impl.reference.AntPropertyReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntPropertyReferenceProvider extends GenericReferenceProvider {
+public class AntPropertyReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -61,7 +61,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
    * @param attr
    * @param refs
    */
-  private void getAttributeReferences(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
+  private static void getAttributeReferences(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
     final AntFile antFile = element.getAntFile();
     final String value = attr.getValue();
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
@@ -97,7 +97,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
           if (antFile.isEnvironmentProperty(propName) && antFile.getProperty(propName) == null) {
             continue;
           }
-          refs.add(new AntPropertyReference(this, element, propName,
+          refs.add(new AntPropertyReference(element, propName,
                                             new TextRange(offsetInPosition + startIndex, offsetInPosition + endIndex), attr));
         }
         endIndex = startIndex;
@@ -112,7 +112,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
    * @param attr
    * @param refs
    */
-  private void getAttributeReference(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
+  private static void getAttributeReference(final AntElement element, final XmlAttribute attr, final List<PsiReference> refs) {
     final AntFile antFile = element.getAntFile();
     final String value = attr.getValue();
     if (value == null) {
@@ -124,7 +124,7 @@ public class AntPropertyReferenceProvider extends GenericReferenceProvider {
     final XmlAttributeValue xmlAttributeValue = attr.getValueElement();
     if (xmlAttributeValue != null) {
       final int offsetInPosition = xmlAttributeValue.getTextRange().getStartOffset() - element.getTextRange().getStartOffset() + 1;
-      refs.add(new AntPropertyReference(this, element, value, new TextRange(offsetInPosition, offsetInPosition + value.length()), attr) {
+      refs.add(new AntPropertyReference(element, value, new TextRange(offsetInPosition, offsetInPosition + value.length()), attr) {
         public boolean shouldBeSkippedByAnnotator() {
           return getCanonicalText().length() > 0;
         }

@@ -6,7 +6,7 @@ import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
+import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntTargetListReferenceProvider extends GenericReferenceProvider {
+public class AntTargetListReferenceProvider implements PsiReferenceProvider {
 
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element) {
@@ -50,7 +50,7 @@ public class AntTargetListReferenceProvider extends GenericReferenceProvider {
             if (!Character.isWhitespace(builder.charAt(j))) break;
           }
           final String targetName = (len == 0 || j == len) ? "" : builder.substring(j);
-          result.add(new AntTargetReference(this, target, targetName,
+          result.add(new AntTargetReference(target, targetName,
                                             new TextRange(offsetInPosition + i + j, offsetInPosition + i + j + targetName.length()), attr));
           i = rightBound + 1;
         }

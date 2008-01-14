@@ -134,8 +134,8 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return myIndex > 0 ? myJavaClassReferenceSet.getReference(myIndex - 1) : null;
   }
 
-  private ReferenceType getType() {
-    return myJavaClassReferenceSet.getType(myIndex);
+  private boolean canReferencePackage() {
+    return myJavaClassReferenceSet.canReferencePackage(myIndex);
   }
 
   public PsiElement getElement() {
@@ -402,9 +402,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     PsiElement context = contextReference != null ? contextReference.resolve() : null;
 
     if (context != null || contextReference == null) {
-      final int[] primitives = getType().getPrimitives();
-      boolean createJavaClass = JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.getPrimitives().length == primitives.length &&
-                                JavaClassReferenceProvider.CLASS_REFERENCE_TYPE.isAssignableTo(primitives[0]);
+      boolean createJavaClass = !canReferencePackage();
       final List<PsiDirectory> writableDirectoryList = getWritableDirectoryList(context);
       if (!writableDirectoryList.isEmpty() && checkCreateClassOrPackage(writableDirectoryList, createJavaClass)) {
         final CreateClassOrPackageFix fix = doRegisterQuickFix(info, writableDirectoryList, createJavaClass, extendClass);
