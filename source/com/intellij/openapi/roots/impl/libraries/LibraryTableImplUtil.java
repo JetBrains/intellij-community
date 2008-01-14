@@ -2,7 +2,6 @@ package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTableUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -12,8 +11,11 @@ import java.util.List;
 /**
  *  @author dsl
  */
-public class LibraryTableImplUtil extends LibraryTableUtil {
+public class LibraryTableImplUtil {
   @NonNls public static final String MODULE_LEVEL = "module";
+
+  private LibraryTableImplUtil() {
+  }
 
   public static Library loadLibrary(Element rootElement, final LibraryTable libraryTable) throws InvalidDataException {
     final LibraryImpl library = new LibraryImpl(libraryTable);
