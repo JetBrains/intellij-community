@@ -1742,7 +1742,7 @@ public class CompileDriver {
         // todo still there may be problems with this approach if some generated files are attributed by this module
         continue;
       }
-      final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
       if (jdk == null) {
         modulesWithoutJdkAssigned.add(module.getName());
       }
@@ -1828,7 +1828,7 @@ public class CompileDriver {
       Sdk jdk = null;
       LanguageLevel languageLevel = null;
       for (final Module module : chunkModules) {
-        final Sdk moduleJdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+        final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
         if (jdk == null) {
           jdk = moduleJdk;
         }

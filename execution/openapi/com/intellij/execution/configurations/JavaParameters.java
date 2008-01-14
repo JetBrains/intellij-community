@@ -20,7 +20,6 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -116,7 +115,7 @@ public class JavaParameters {
   }
 
   public static Sdk getModuleJdk(final Module module) throws CantRunException {
-    final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) {
       throw CantRunException.noJdkForModule(module);
     }

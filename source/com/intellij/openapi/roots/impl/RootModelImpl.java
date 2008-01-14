@@ -455,10 +455,10 @@ public class RootModelImpl implements ModifiableRootModel {
   }
 
   public void clear() {
-    final Sdk jdk = getJdk();
+    final Sdk jdk = getSdk();
     myContent.clear();
     myOrderEntries.clear();
-    setJdk(jdk);
+    setSdk(jdk);
     addSourceOrderEntries();
   }
 
@@ -552,7 +552,7 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public void setJdk(Sdk jdk) {
+  public void setSdk(Sdk jdk) {
     assertWritable();
     final JdkOrderEntry jdkLibraryEntry;
     if (jdk != null) {
@@ -564,6 +564,17 @@ public class RootModelImpl implements ModifiableRootModel {
     replaceEntryOfType(JdkOrderEntry.class, jdkLibraryEntry);
 
   }
+
+  public void setInvalidSdk(String jdkName, String jdkType) {
+    assertWritable();
+    replaceEntryOfType(JdkOrderEntry.class, new ModuleJdkOrderEntryImpl(jdkName, jdkType, this, myProjectRootManager, myFilePointerManager));
+  }
+
+  public void inheritSdk() {
+    assertWritable();
+    replaceEntryOfType(JdkOrderEntry.class, new InheritedJdkOrderEntryImpl(this, myProjectRootManager, myFilePointerManager));
+  }
+
 
   public <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, final T entry) {
     assertWritable();
@@ -583,10 +594,28 @@ public class RootModelImpl implements ModifiableRootModel {
     }
   }
 
-  public Sdk getJdk() {
+  public Sdk getSdk() {
     for (OrderEntry orderEntry : getOrderEntries()) {
       if (orderEntry instanceof JdkOrderEntry) {
         return ((JdkOrderEntry)orderEntry).getJdk();
+      }
+    }
+    return null;
+  }
+
+  public boolean isSdkInherited() {
+    for (OrderEntry orderEntry : getOrderEntries()) {
+      if (orderEntry instanceof InheritedJdkOrderEntry) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public String getSdkName() {
+    for (OrderEntry orderEntry : getOrderEntries()) {
+      if (orderEntry instanceof JdkOrderEntry) {
+        return ((JdkOrderEntry)orderEntry).getJdkName();
       }
     }
     return null;

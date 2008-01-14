@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.rt.compiler.JavacRunner;
@@ -32,7 +31,7 @@ public class PathUtilEx {
 
   private static final Function<Module, Sdk> MODULE_JDK = new Function<Module, Sdk>() {
     public Sdk fun(Module module) {
-      return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      return ModuleRootManager.getInstance(module).getSdk();
     }
   };
   private static final Convertor<Sdk, String> JDK_VERSION = new Convertor<Sdk, String>() {

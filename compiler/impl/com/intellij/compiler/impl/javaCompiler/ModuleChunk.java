@@ -94,7 +94,7 @@ public class ModuleChunk extends Chunk<Module> {
    */
   public Sdk getJdk() {
     final Module module = getNodes().iterator().next();
-    return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    return ModuleRootManager.getInstance(module).getSdk();
   }
 
   public VirtualFile[] getSourceRoots() {

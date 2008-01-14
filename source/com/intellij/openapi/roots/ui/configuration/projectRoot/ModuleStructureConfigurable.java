@@ -715,11 +715,11 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           final String path = component.getPath();
           final ModuleBuilder builder = new ModuleBuilder() {
             public void setupRootModel(final ModifiableRootModel modifiableRootModel) throws ConfigurationException {
-              if (ModuleJdkUtil.isJdkInherited(rootModel)) {
-                ModuleJdkUtil.inheritJdk(modifiableRootModel);
+              if (rootModel.isSdkInherited()) {
+                modifiableRootModel.inheritSdk();
               }
               else {
-                ModuleJdkUtil.setJdk(modifiableRootModel, ModuleJdkUtil.getJdk(rootModel));
+                modifiableRootModel.setSdk(rootModel.getSdk());
               }
 
               modifiableRootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(true);

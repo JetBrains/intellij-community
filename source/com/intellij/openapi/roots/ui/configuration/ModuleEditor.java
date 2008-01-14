@@ -316,7 +316,7 @@ public class ModuleEditor implements Place.Navigator {
     @NonNls private final Set<String> myCheckedNames = new HashSet<String>(
       Arrays.asList(
         new String[]{"addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry",
-                     "removeOrderEntry", "setJdk", "inheritJdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType"}
+                     "removeOrderEntry", "setJdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType"}
       ));
 
     ModifiableRootModelInvocationHandler(ModifiableRootModel model) {

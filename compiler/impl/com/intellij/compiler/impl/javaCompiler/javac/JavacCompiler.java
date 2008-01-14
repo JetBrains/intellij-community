@@ -18,7 +18,6 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,7 +45,7 @@ public class JavacCompiler extends ExternalCompiler {
     final Module[] modules = scope.getAffectedModules();
     final Set<Sdk> checkedJdks = new HashSet<Sdk>();
     for (final Module module : modules) {
-      final Sdk jdk  = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      final Sdk jdk  = ModuleRootManager.getInstance(module).getSdk();
       if (jdk == null) {
         continue;
       }

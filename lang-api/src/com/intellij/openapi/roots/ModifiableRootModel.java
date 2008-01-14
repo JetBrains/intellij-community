@@ -17,6 +17,7 @@ package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -122,6 +123,26 @@ public interface ModifiableRootModel extends ModuleRootModel {
   @NotNull
   LibraryTable getModuleLibraryTable();
 
+  /**
+   * Sets JDK for this module to a specific value
+   *
+   * @param jdk
+   */
+  void setSdk(Sdk jdk);
+
+  /**
+   * Sets JDK name and type for this module.
+   * To be used when JDK with this name and type does not exist (e.g. when importing module configuration).
+   *
+   * @param sdkName JDK name
+   * @param sdkType JDK type
+   */
+  void setInvalidSdk(String sdkName, String sdkType);
+
+  /**
+   * Makes this module inheriting JDK from its project
+   */
+  void inheritSdk();
 
   @NotNull VirtualFile[] getOrderedRoots(OrderRootType type);
 
@@ -145,4 +166,6 @@ public interface ModifiableRootModel extends ModuleRootModel {
   void setRootUrls(OrderRootType orderRootType, String[] urls);
 
   <T extends OrderEntry> void replaceEntryOfType(Class<T> entryClass, T entry);
+
+  String getSdkName();
 }

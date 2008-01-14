@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JdkVersionUtil;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 
@@ -34,7 +33,7 @@ public class JreVersionDetector {
       final Module module = configuration.getConfigurationModule().getModule();
       if (module != null && !module.isDisposed()) {
         final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-        final Sdk jdk = ModuleJdkUtil.getJdk(rootManager);
+        final Sdk jdk = rootManager.getSdk();
         return isJre50(jdk);
       }
 

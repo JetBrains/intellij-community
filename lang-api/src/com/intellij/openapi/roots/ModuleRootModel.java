@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,26 @@ public interface ModuleRootModel {
   @NotNull
   OrderEntry[] getOrderEntries();
 
+ /*
+  * Returns the JDK used by the module.
+  *
+  * @return either module-specific or inherited JDK
+  * @see #isSdkInherited()
+  */
+ @Nullable
+ Sdk getSdk();
+
+ /**
+  * Returns <code>true</code> if JDK for this module is inherited from a project.
+  *
+  * @return true if the JDK is inherited, false otherwise
+  * @see ProjectRootManager#getProjectJdk()
+  * @see ProjectRootManager#setProjectJdk(com.intellij.openapi.projectRoots.ProjectJdk)
+  */
+ boolean isSdkInherited();
+
+
+ /**
 
   /**
    * Returns an array of content roots from all content entries. A helper method.

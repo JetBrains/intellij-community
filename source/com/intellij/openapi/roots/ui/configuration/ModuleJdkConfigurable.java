@@ -11,7 +11,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -93,14 +92,14 @@ public class ModuleJdkConfigurable implements Disposable {
     myCbModuleJdk.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (myFreeze) return;
-        final Sdk oldJdk = ModuleJdkUtil.getJdk(myRootModel);
+        final Sdk oldJdk = myRootModel.getSdk();
         mySelectedModuleJdk = myCbModuleJdk.getSelectedJdk();
         final Sdk selectedModuleJdk = getSelectedModuleJdk();
         if (selectedModuleJdk != null) {
-          ModuleJdkUtil.setJdk(myRootModel, selectedModuleJdk);
+          myRootModel.setSdk(selectedModuleJdk);
         }
         else {
-          ModuleJdkUtil.inheritJdk(myRootModel);
+          myRootModel.inheritSdk();
         }
         clearCaches(oldJdk, selectedModuleJdk);
         myModuleEditor.flushChangesToModel();
@@ -136,7 +135,7 @@ public class ModuleJdkConfigurable implements Disposable {
     myCbModuleJdk.appendEditButton(myRootModel.getModule().getProject(), myJdkPanel, new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1.0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 4, 7, 0), 0, 0) , new Computable<Sdk>() {
       @Nullable
       public Sdk compute() {
-        return ModuleJdkUtil.getJdk(myRootModel);
+        return myRootModel.getSdk();
       }
     });
   }
@@ -149,8 +148,8 @@ public class ModuleJdkConfigurable implements Disposable {
 
   public void reset() {
     myFreeze = true;
-    final String jdkName = ModuleJdkUtil.getJdkName(myRootModel);
-    if (jdkName != null && !ModuleJdkUtil.isJdkInherited(myRootModel)) {
+    final String jdkName = myRootModel.getSdkName();
+    if (jdkName != null && !myRootModel.isSdkInherited()) {
       mySelectedModuleJdk = myJdksModel.findSdk(jdkName);
       if (mySelectedModuleJdk != null) {
         myCbModuleJdk.setSelectedJdk(mySelectedModuleJdk);

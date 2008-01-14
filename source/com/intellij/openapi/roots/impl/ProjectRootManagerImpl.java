@@ -215,7 +215,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Proj
   public Sdk getJdk() {
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
     if (modules.length > 0) {
-      return ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(modules[0]));
+      return ModuleRootManager.getInstance(modules[0]).getSdk();
     }
     else {
       return null;

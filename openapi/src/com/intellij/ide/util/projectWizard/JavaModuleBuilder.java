@@ -107,9 +107,9 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     final CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setExcludeOutput(true);
     if (myJdk != null){
-      ModuleJdkUtil.setJdk(rootModel, myJdk);
+      rootModel.setSdk(myJdk);
     } else {
-      ModuleJdkUtil.inheritJdk(rootModel);
+      rootModel.inheritSdk();
     }
 
     final String moduleRootPath = getContentEntryPath();

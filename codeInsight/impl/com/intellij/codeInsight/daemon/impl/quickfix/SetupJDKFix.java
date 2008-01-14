@@ -18,7 +18,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
@@ -55,7 +54,7 @@ public class SetupJDKFix implements IntentionAction {
         Module module = ModuleUtil.findModuleForPsiElement(file);
         if (module != null) {
           ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-          ModuleJdkUtil.inheritJdk(modifiableModel);
+          modifiableModel.inheritSdk();
           modifiableModel.commit();
         }
       }

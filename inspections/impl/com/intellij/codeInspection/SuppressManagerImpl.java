@@ -15,7 +15,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -243,7 +242,7 @@ public class SuppressManagerImpl extends SuppressManager {
   public boolean canHave15Suppressions(final PsiElement file) {
     final Module module = ModuleUtil.findModuleForPsiElement(file);
     if (module == null) return false;
-    final Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
     final boolean is_1_5 = JavaSdk.getInstance().compareTo(jdk.getVersionString(), "1.5") >= 0;
     return  DaemonCodeAnalyzerSettings.getInstance().SUPPRESS_WARNINGS && is_1_5 && LanguageLevel.JDK_1_5.compareTo(PsiUtil.getLanguageLevel(file)) <= 0;

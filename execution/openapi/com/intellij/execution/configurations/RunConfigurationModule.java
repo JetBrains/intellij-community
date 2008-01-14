@@ -23,7 +23,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -157,7 +156,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   public void checkForWarning() throws RuntimeConfigurationException {
     final Module module = getModule();
     if (module != null) {
-      if (ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module)) == null) {
+      if (ModuleRootManager.getInstance(module).getSdk() == null) {
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("no.jdk.specified.for.module.warning.text", module.getName()));
       }
     }

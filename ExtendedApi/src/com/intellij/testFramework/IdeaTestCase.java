@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -367,7 +366,7 @@ import java.util.HashSet;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
           final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-          ModuleJdkUtil.setJdk(rootModel, jdk);
+          rootModel.setSdk(jdk);
           rootModel.commit();
         }
       });

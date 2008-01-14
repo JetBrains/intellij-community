@@ -24,7 +24,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -59,7 +58,7 @@ public abstract class BuildProperties extends CompositeGenerator {
     final Set<Sdk> jdks = new HashSet<Sdk>();
     Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      Sdk jdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+      Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
       if (jdk != null) {
         jdks.add(jdk);
       }

@@ -4,7 +4,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ModuleJdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
@@ -29,7 +28,7 @@ public class PsiClassWriter extends ClassWriter {
   }
 
   private static boolean isJdk6(final Module module) {
-    final Sdk projectJdk = ModuleJdkUtil.getJdk(ModuleRootManager.getInstance(module));
+    final Sdk projectJdk = ModuleRootManager.getInstance(module).getSdk();
     if (projectJdk == null) return false;
     String versionString = projectJdk.getVersionString();
     return versionString.contains("1.6") || versionString.contains("6.0");

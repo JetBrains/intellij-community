@@ -111,7 +111,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
     }
 
     if (myJdk != null) {
-      ModuleJdkUtil.setJdk(model, JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
+      model.setSdk(JavaSdkImpl.getInstance().createJdk(module.getName() + "_jdk", myJdk, false));
     } else {
       final Sdk projectJdk;
       switch (myMockJdkLevel) {
@@ -122,7 +122,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
           projectJdk = JavaSdkImpl.getMockJdk15("java 1.5");
           break;
       }
-      ModuleJdkUtil.setJdk(model, projectJdk);
+      model.setSdk(projectJdk);
     }
     if (myMockJdkLevel == MockJdkLevel.jdk15) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_5);

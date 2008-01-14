@@ -169,7 +169,7 @@ public abstract class InspectionTestCase extends PsiTestCase {
       jdk = JavaSdkImpl.getMockJdk(jdkName);
     }
 
-    ModuleJdkUtil.setJdk(rootModel, jdk);
+    rootModel.setSdk(jdk);
 
     rootModel.commit();
   }

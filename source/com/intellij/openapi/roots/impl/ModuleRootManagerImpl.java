@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -144,6 +145,14 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
   @NotNull
   public OrderEntry[] getOrderEntries() {
     return myRootModel.getOrderEntries();
+  }
+
+  public Sdk getSdk() {
+    return myRootModel.getSdk();
+  }
+
+  public boolean isSdkInherited() {
+    return myRootModel.isSdkInherited();
   }
 
   @NotNull
