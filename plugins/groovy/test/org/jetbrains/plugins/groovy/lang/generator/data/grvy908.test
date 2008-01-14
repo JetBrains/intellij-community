@@ -1,0 +1,20 @@
+class MyClass {
+    MyClass(int i) {
+        this('something')
+    }
+
+    MyClass(Object o) {
+
+    }
+}
+-----
+public class MyClass extends groovy.lang.GroovyObjectSupport {
+  public MyClass(int i) {
+    this((java.lang.Object)null);
+  }
+
+  public MyClass(java.lang.Object o) {
+
+  }
+}
+---
