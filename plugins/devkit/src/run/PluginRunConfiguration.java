@@ -27,6 +27,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
@@ -135,7 +136,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
         params.getClassPath().addFirst(libPath + File.separator + "bootstrap.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea.jar");
         params.getClassPath().addFirst(libPath + File.separator + "idea_rt.jar");
-        params.getClassPath().addFirst(ideaJdk.getSdkType().getToolsPath(ideaJdk));
+        params.getClassPath().addFirst(((JavaSdkType)ideaJdk.getSdkType()).getToolsPath(ideaJdk));
 
         params.setMainClass("com.intellij.idea.Main");
 

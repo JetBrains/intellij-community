@@ -52,7 +52,7 @@ import java.util.List;
  * User: anna
  * Date: Nov 22, 2004
  */
-public class IdeaJdk extends SdkType implements ApplicationComponent {
+public class IdeaJdk extends SdkType implements JavaSdkType, ApplicationComponent {
   private static final Icon ADD_SDK = IconLoader.getIcon("/add_sdk.png");
   private static final Icon SDK_OPEN = IconLoader.getIcon("/sdk_open.png");
   private static final Icon SDK_CLOSED = IconLoader.getIcon("/sdk_closed.png");
@@ -430,7 +430,7 @@ public class IdeaJdk extends SdkType implements ApplicationComponent {
   public String getToolsPath(Sdk sdk) {
     final Sdk jdk = getInternalJavaSdk(sdk);
     if (jdk != null && jdk.getVersionString() != null){
-      return jdk.getSdkType().getToolsPath(jdk);
+      return JavaSdk.getInstance().getToolsPath(jdk);
     }
     return null;
   }

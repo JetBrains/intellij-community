@@ -19,6 +19,7 @@ import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher{
 
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
-    javaParameters.getClassPath().addFirst(jdk.getSdkType().getToolsPath(jdk));
+    javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
   }
 
   @Nullable
