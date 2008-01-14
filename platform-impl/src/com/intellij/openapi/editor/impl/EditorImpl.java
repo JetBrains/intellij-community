@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelEvent;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -3829,7 +3830,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
       Editor editor = getEditor(comp);
       if (editor.isViewer()) return false;
-      if (!editor.getDocument().isWritable()) return false;
 
       int offset = editor.getCaretModel().getOffset();
       if (editor.getDocument().getRangeGuard(offset, offset) != null) return false;
@@ -3863,12 +3863,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       if (last != null && !(last instanceof EditorComponentImpl)) return;
 
-      if (action == MOVE && !getEditor(source).isViewer() && getEditor(source).getDocument().isWritable()) {
-        CommandProcessor.getInstance().executeCommand(((EditorImpl)getEditor(source)).myProject, new Runnable() {
+      final Editor editor = getEditor(source);
+      if (action == MOVE && !editor.isViewer()) {
+        if (!editor.getDocument().isWritable()) {
+          if (!FileDocumentManager.fileForDocumentCheckedOutSuccessfully(editor.getDocument(), editor.getProject())){
+            return;
+          }
+        }
+        CommandProcessor.getInstance().executeCommand(((EditorImpl)editor).myProject, new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
-                Document doc = getEditor(source).getDocument();
+                Document doc = editor.getDocument();
                 doc.startGuardedBlockChecking();
                 try {
                   doc.deleteString(myDraggedRange.getStartOffset(), myDraggedRange.getEndOffset());
