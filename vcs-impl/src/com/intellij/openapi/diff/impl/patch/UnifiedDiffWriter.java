@@ -25,7 +25,9 @@ public class UnifiedDiffWriter {
   }
 
   public static void write(Collection<FilePatch> patches, Writer writer, final String lineSeparator) throws IOException {
-    for(FilePatch patch: patches) {
+    for(FilePatch filePatch: patches) {
+      if (!(filePatch instanceof TextFilePatch)) continue;
+      TextFilePatch patch = (TextFilePatch) filePatch;
       writeFileHeading(patch, writer, lineSeparator);
       for(PatchHunk hunk: patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),

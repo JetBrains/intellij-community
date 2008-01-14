@@ -113,7 +113,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     }
 
     public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
-      if (PATCH_PATH == "") {
+      if (PATCH_PATH.length() == 0) {
         PATCH_PATH = myProject.getBaseDir().getPresentableUrl();
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(commitMessage, new File(PATCH_PATH)));
@@ -128,8 +128,7 @@ public class CreatePatchCommitExecutor implements CommitExecutor, ProjectCompone
     public void execute(Collection<Change> changes, String commitMessage) {
       int binaryCount = 0;
       for(Change change: changes) {
-        if (ChangesUtil.isBinaryContentRevision(change.getBeforeRevision()) ||
-            ChangesUtil.isBinaryContentRevision(change.getAfterRevision())) {
+        if (ChangesUtil.isBinaryChange(change)) {
           binaryCount++;
         }
       }

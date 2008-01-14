@@ -1,13 +1,3 @@
-/*
- * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
- */
-
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 03.11.2006
- * Time: 16:25:44
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
@@ -24,6 +14,7 @@ import com.intellij.openapi.vcs.changes.BinaryContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.text.MessageFormat;
@@ -32,6 +23,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * @author yole
+ */
 public class PatchBuilder {
   private static final int CONTEXT_LINES = 3;
   @NonNls private static final String REVISION_NAME_TEMPLATE = "(revision {0})";
@@ -53,14 +47,15 @@ public class PatchBuilder {
         beforeRevision = c.getBeforeRevision();
         afterRevision = c.getAfterRevision();
       }
-      if (beforeRevision instanceof BinaryContentRevision || afterRevision instanceof BinaryContentRevision) {
-        continue;
-      }
-
       if (beforeRevision != null && beforeRevision.getFile().isDirectory()) {
         continue;
       }
       if (afterRevision != null && afterRevision.getFile().isDirectory()) {
+        continue;
+      }
+
+      if (beforeRevision instanceof BinaryContentRevision || afterRevision instanceof BinaryContentRevision) {
+        result.add(buildBinaryPatch(basePath, (BinaryContentRevision) beforeRevision, (BinaryContentRevision) afterRevision));
         continue;
       }
 
@@ -95,7 +90,7 @@ public class PatchBuilder {
       ArrayList<LineFragment> fragments = new DiffFragmentsProcessor().process(step1lineFragments);
 
       if (fragments.size() > 1 || (fragments.size() == 1 && fragments.get(0).getType() != null && fragments.get(0).getType() != TextDiffType.NONE)) {
-        FilePatch patch = buildPatchHeading(basePath, beforeRevision, afterRevision);
+        TextFilePatch patch = buildPatchHeading(basePath, beforeRevision, afterRevision);
         result.add(patch);
 
         int lastLine1 = 0;
@@ -121,7 +116,7 @@ public class PatchBuilder {
 
             for(LineFragment fragment: adjacentFragments) {
               for(int i=contextStart1; i<fragment.getStartingLine1(); i++) {
-                hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, beforeLines [i]));
+                addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
               }
               for(int i=fragment.getStartingLine1(); i<fragment.getStartingLine1()+fragment.getModifiedLines1(); i++) {
                 addLineToHunk(hunk, beforeLines [i], PatchLine.Type.REMOVE);
@@ -132,7 +127,7 @@ public class PatchBuilder {
               contextStart1 = fragment.getStartingLine1()+fragment.getModifiedLines1();
             }
             for(int i=contextStart1; i<contextEnd1; i++) {
-              hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, beforeLines [i]));
+              addLineToHunk(hunk, beforeLines [i], PatchLine.Type.CONTEXT);
             }
           }
         }
@@ -141,21 +136,39 @@ public class PatchBuilder {
     return result;
   }
 
+
+
+  private static FilePatch buildBinaryPatch(final String basePath,
+                                            final BinaryContentRevision beforeRevision,
+                                            final BinaryContentRevision afterRevision) throws VcsException {
+    ContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
+    ContentRevision headingAfterRevision = afterRevision != null ? afterRevision : beforeRevision;
+    byte[] beforeContent = beforeRevision != null ? beforeRevision.getBinaryContent() : null;
+    byte[] afterContent = afterRevision != null ? afterRevision.getBinaryContent() : null;
+    BinaryFilePatch patch = new BinaryFilePatch(beforeContent, afterContent);
+    setPatchHeading(patch, basePath, headingBeforeRevision, headingAfterRevision);
+    return patch;
+  }
+
   private static void addLineToHunk(final PatchHunk hunk, final String line, final PatchLine.Type type) {
-    final PatchLine patchLine = new PatchLine(type, line);
+    final PatchLine patchLine;
     if (!line.endsWith("\n")) {
+      patchLine = new PatchLine(type, line);
       patchLine.setSuppressNewLine(true);
+    }
+    else {
+      patchLine = new PatchLine(type, line.substring(0, line.length()-1));
     }
     hunk.addLine(patchLine);
   }
 
-  private static FilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) throws VcsException {
+  private static TextFilePatch buildAddedFile(final String basePath, final ContentRevision afterRevision) throws VcsException {
     final String content = afterRevision.getContent();
     if (content == null) {
       throw new VcsException("Failed to fetch content for added file " + afterRevision.getFile().getPath());
     }
     String[] lines = DiffUtil.convertToLines(content);
-    FilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
+    TextFilePatch result = buildPatchHeading(basePath, afterRevision, afterRevision);
     PatchHunk hunk = new PatchHunk(-1, -1, 0, lines.length);
     for(String line: lines) {
       addLineToHunk(hunk, line, PatchLine.Type.ADD);
@@ -164,13 +177,13 @@ public class PatchBuilder {
     return result;
   }
 
-  private static FilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) throws VcsException {
+  private static TextFilePatch buildDeletedFile(String basePath, ContentRevision beforeRevision) throws VcsException {
     final String content = beforeRevision.getContent();
     if (content == null) {
       throw new VcsException("Failed to fetch old content for deleted file " + beforeRevision.getFile().getPath());
     }
     String[] lines = DiffUtil.convertToLines(content);
-    FilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
+    TextFilePatch result = buildPatchHeading(basePath, beforeRevision, beforeRevision);
     PatchHunk hunk = new PatchHunk(0, lines.length, -1, -1);
     for(String line: lines) {
       addLineToHunk(hunk, line, PatchLine.Type.REMOVE);
@@ -215,8 +228,15 @@ public class PatchBuilder {
     return new Date(ioFile.lastModified()).toString();
   }
 
-  private static FilePatch buildPatchHeading(final String basePath, final ContentRevision beforeRevision, final ContentRevision afterRevision) {
-    FilePatch result = new FilePatch();
+  private static TextFilePatch buildPatchHeading(final String basePath, final ContentRevision beforeRevision, final ContentRevision afterRevision) {
+    TextFilePatch result = new TextFilePatch();
+    setPatchHeading(result, basePath, beforeRevision, afterRevision);
+    return result;
+  }
+
+  private static void setPatchHeading(final FilePatch result, final String basePath,
+                                      @NotNull final ContentRevision beforeRevision,
+                                      @NotNull final ContentRevision afterRevision) {
     File beforeFile = beforeRevision.getFile().getIOFile();
     result.setBeforeName(getRelativePath(basePath, beforeFile));
     result.setBeforeVersionId(getRevisionName(beforeRevision, beforeFile));
@@ -224,7 +244,5 @@ public class PatchBuilder {
     File afterFile = afterRevision.getFile().getIOFile();
     result.setAfterName(getRelativePath(basePath, afterFile));
     result.setAfterVersionId(getRevisionName(afterRevision, afterFile));
-
-    return result;
   }
 }

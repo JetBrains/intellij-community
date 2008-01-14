@@ -201,6 +201,10 @@ public class ChangesUtil {
     return revision != null && !revision.getFile().isDirectory() && revision instanceof BinaryContentRevision;
   }
 
+  public static boolean isBinaryChange(final Change change) {
+    return isBinaryContentRevision(change.getBeforeRevision()) || isBinaryContentRevision(change.getAfterRevision());
+  }
+
   public interface PerVcsProcessor<T> {
     void process(AbstractVcs vcs, List<T> items);
   }

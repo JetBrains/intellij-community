@@ -10,10 +10,6 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -22,16 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
-public class FilePatch {
+public abstract class FilePatch {
   private String myBeforeName;
   private String myAfterName;
   private String myBeforeVersionId;
   private String myAfterVersionId;
-  private final List<PatchHunk> myHunks = new ArrayList<PatchHunk>();
 
   public String getBeforeName() {
     return myBeforeName;
@@ -75,17 +67,9 @@ public class FilePatch {
     myAfterVersionId = afterVersionId;
   }
 
-  public void addHunk(final PatchHunk hunk) {
-    myHunks.add(hunk);
-  }
-
   public String getAfterNameRelative(int skipDirs) {
     String[] components = myAfterName.split("/");
     return StringUtil.join(components, skipDirs, components.length, "/");
-  }
-
-  public List<PatchHunk> getHunks() {
-    return Collections.unmodifiableList(myHunks);
   }
 
   public ApplyPatchStatus apply(ApplyPatchContext context) throws ApplyPatchException, IOException {
@@ -112,52 +96,19 @@ public class FilePatch {
         throw new ApplyPatchException("File " + getBeforeFileName() + " already exists");
       }
       VirtualFile newFile = fileToPatch.createChildData(this, getBeforeFileName());
-      final Document document = FileDocumentManager.getInstance().getDocument(newFile);
-      if (document == null) {
-        throw new ApplyPatchException("Failed to set contents for new file " + fileToPatch.getPath());
-      }
-      document.setText(getNewFileText());
-      FileDocumentManager.getInstance().saveDocument(document);
+      applyCreate(newFile);
     }
     else if (isDeletedFile()) {
       fileToPatch.delete(this);
     }
     else {
-      byte[] fileContents = fileToPatch.contentsToByteArray();
-      CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
-      StringBuilder newText = new StringBuilder();
-      ApplyPatchStatus status = applyModifications(text, newText);
-      if (status != ApplyPatchStatus.ALREADY_APPLIED) {
-        final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
-        if (document == null) {
-          throw new ApplyPatchException("Failed to set contents for updated file " + fileToPatch.getPath());
-        }
-        document.setText(newText.toString());
-        FileDocumentManager.getInstance().saveDocument(document);
-      }
-      return status;
+      return applyChange(fileToPatch);
     }
     return ApplyPatchStatus.SUCCESS;
   }
 
-  public ApplyPatchStatus applyModifications(final CharSequence text, final StringBuilder newText) throws ApplyPatchException {
-    if (myHunks.size() == 0) {
-      return ApplyPatchStatus.SUCCESS;
-    }
-    List<String> lines = new ArrayList<String>();
-    Collections.addAll(lines, LineTokenizer.tokenize(text, false));
-    ApplyPatchStatus result = null;
-    for(PatchHunk hunk: myHunks) {
-      result = ApplyPatchStatus.and(result, hunk.apply(lines));
-    }
-    for(int i=0; i<lines.size(); i++) {
-      newText.append(lines.get(i));
-      if (i < lines.size()-1 || !myHunks.get(myHunks.size()-1).isNoNewLineAtEnd()) {
-        newText.append("\n");
-      }
-    }
-    return result;
-  }
+  protected abstract void applyCreate(VirtualFile newFile) throws IOException, ApplyPatchException;
+  protected abstract ApplyPatchStatus applyChange(VirtualFile fileToPatch) throws IOException, ApplyPatchException;
 
   @Nullable
   public VirtualFile findFileToPatch(@NotNull ApplyPatchContext context) throws IOException {
@@ -261,15 +212,7 @@ public class FilePatch {
     return patchedDir;
   }
 
-  public boolean isNewFile() {
-    return myHunks.size() == 1 && myHunks.get(0).isNewContent();
-  }
+  public abstract boolean isNewFile();
 
-  public String getNewFileText() {
-    return myHunks.get(0).getText();
-  }
-
-  public boolean isDeletedFile() {
-    return myHunks.size() == 1 && myHunks.get(0).isDeletedContent();
-  }
+  public abstract boolean isDeletedFile();
 }

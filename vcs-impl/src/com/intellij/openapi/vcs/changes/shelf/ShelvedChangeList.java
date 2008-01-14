@@ -12,6 +12,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -78,7 +79,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
   public List<ShelvedChange> getChanges() {
     if (myChanges == null) {
       try {
-        final List<FilePatch> list = ShelveChangesManager.loadPatches(PATH);
+        final List<TextFilePatch> list = ShelveChangesManager.loadPatches(PATH);
         myChanges = new ArrayList<ShelvedChange>();
         for(FilePatch patch: list) {
           FileStatus status;

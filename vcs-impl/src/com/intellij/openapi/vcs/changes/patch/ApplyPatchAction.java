@@ -21,10 +21,7 @@ import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
 import com.intellij.openapi.diff.MergeRequest;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -68,8 +65,8 @@ public class ApplyPatchAction extends AnAction {
     applyPatch(project, dialog.getPatches(), dialog.getApplyPatchContext(), dialog.getSelectedChangeList());
   }
 
-  private static void applyPatch(final Project project, final List<FilePatch> patches,
-                                 final ApplyPatchContext context, final LocalChangeList targetChangeList) {
+  public static void applyPatch(final Project project, final List<? extends FilePatch> patches,
+                                final ApplyPatchContext context, final LocalChangeList targetChangeList) {
     List<VirtualFile> filesToMakeWritable = new ArrayList<VirtualFile>();
     if (!prepareFiles(project, patches, context, filesToMakeWritable)) {
       return;
@@ -83,7 +80,7 @@ public class ApplyPatchAction extends AnAction {
     moveChangesToList(project, context.getAffectedFiles(), targetChangeList);
   }
 
-  public static ApplyPatchStatus applyFilePatches(final Project project, final List<FilePatch> patches,
+  public static ApplyPatchStatus applyFilePatches(final Project project, final List<? extends FilePatch> patches,
                                                   final ApplyPatchContext context) {
     final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -118,7 +115,7 @@ public class ApplyPatchAction extends AnAction {
     return statusRef.get();
   }
 
-  public static boolean prepareFiles(final Project project, final List<FilePatch> patches,
+  public static boolean prepareFiles(final Project project, final List<? extends FilePatch> patches,
                                      final ApplyPatchContext context,
                                      final List<VirtualFile> filesToMakeWritable) {
     for(FilePatch patch: patches) {
@@ -141,7 +138,7 @@ public class ApplyPatchAction extends AnAction {
       if (fileToPatch != null && !fileToPatch.isDirectory()) {
         filesToMakeWritable.add(fileToPatch);
         FileType fileType = fileToPatch.getFileType();
-        if (fileType == FileTypes.UNKNOWN) {
+        if (fileType == FileTypes.UNKNOWN && patch instanceof TextFilePatch) {
           fileType = FileTypeChooser.associateFileType(fileToPatch.getPresentableName());
           if (fileType == null) {
             return false;
@@ -150,7 +147,7 @@ public class ApplyPatchAction extends AnAction {
       }
       else if (patch.isNewFile()) {
         FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(patch.getBeforeFileName());
-        if (fileType == FileTypes.UNKNOWN) {
+        if (fileType == FileTypes.UNKNOWN && patch instanceof TextFilePatch) {
           fileType = FileTypeChooser.associateFileType(patch.getBeforeFileName());
           if (fileType == null) {
             return false;
@@ -190,7 +187,7 @@ public class ApplyPatchAction extends AnAction {
       if (!patch.isNewFile() && !patch.isDeletedFile()) {
         FilePath pathBeforeRename = context.getPathBeforeRename(file);
         final DefaultPatchBaseVersionProvider provider = new DefaultPatchBaseVersionProvider(project);
-        if (provider.canProvideContent(file, patch.getBeforeVersionId())) {
+        if (provider.canProvideContent(file, patch.getBeforeVersionId()) && patch instanceof TextFilePatch) {
           final StringBuilder newText = new StringBuilder();
           final Ref<CharSequence> contentRef = new Ref<CharSequence>();
           final Ref<ApplyPatchStatus> statusRef = new Ref<ApplyPatchStatus>();
@@ -199,7 +196,7 @@ public class ApplyPatchAction extends AnAction {
               public boolean process(final CharSequence text) {
                 newText.setLength(0);
                 try {
-                  statusRef.set(patch.applyModifications(text, newText));
+                  statusRef.set(((TextFilePatch) patch).applyModifications(text, newText));
                 }
                 catch(ApplyPatchException ex) {
                   return true;  // continue to older versions

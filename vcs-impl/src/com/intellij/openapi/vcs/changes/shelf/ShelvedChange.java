@@ -12,8 +12,8 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -131,8 +131,8 @@ public class ShelvedChange {
 
     @Nullable
     private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
-      List<FilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
-      for(FilePatch patch: filePatches) {
+      List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(myPatchPath);
+      for(TextFilePatch patch: filePatches) {
         if (myBeforePath.equals(patch.getBeforeName())) {
           if (patch.isNewFile()) {
             return patch.getNewFileText();

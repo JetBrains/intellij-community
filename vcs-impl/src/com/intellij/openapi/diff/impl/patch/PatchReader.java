@@ -46,10 +46,10 @@ public class PatchReader {
     myLines = LineTokenizer.tokenize(patchContent, false);
   }
 
-  public List<FilePatch> readAllPatches() throws PatchSyntaxException {
-    List<FilePatch> result = new ArrayList<FilePatch>();
+  public List<TextFilePatch> readAllPatches() throws PatchSyntaxException {
+    List<TextFilePatch> result = new ArrayList<TextFilePatch>();
     while(true) {
-      FilePatch patch = readNextPatch();
+      TextFilePatch patch = readNextPatch();
       if (patch == null) break;
       result.add(patch);
     }
@@ -57,7 +57,7 @@ public class PatchReader {
   }
 
   @Nullable
-  public FilePatch readNextPatch() throws PatchSyntaxException {
+  public TextFilePatch readNextPatch() throws PatchSyntaxException {
     while (myLineIndex < myLines.length) {
       String curLine = myLines [myLineIndex];
       if (curLine.startsWith("--- ") && (myDiffFormat == null || myDiffFormat == DiffFormat.UNIFIED)) {
@@ -73,9 +73,9 @@ public class PatchReader {
     return null;
   }
 
-  private FilePatch readPatch(String curLine) throws PatchSyntaxException {
-    final FilePatch curPatch;
-    curPatch = new FilePatch();
+  private TextFilePatch readPatch(String curLine) throws PatchSyntaxException {
+    final TextFilePatch curPatch;
+    curPatch = new TextFilePatch();
     extractFileName(curLine, curPatch, true);
     myLineIndex++;
     curLine = myLines [myLineIndex];

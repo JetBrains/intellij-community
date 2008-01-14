@@ -54,6 +54,12 @@ public class CreatePatchFromChangesAction extends AnAction {
     if (!sessionDialog.isOK()) {
       return;
     }
+    preloadContent(project, changes);
+
+    commitSession.execute(changeCollection, commitMessage);
+  }
+
+  private static void preloadContent(final Project project, final Change[] changes) {
     // to avoid multiple progress dialogs, preload content under one progress
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
@@ -74,7 +80,6 @@ public class CreatePatchFromChangesAction extends AnAction {
         }
       }
     }, VcsBundle.message("create.patch.loading.content.progress"), false, project);
-    commitSession.execute(changeCollection, commitMessage);
   }
 
   public void update(final AnActionEvent e) {

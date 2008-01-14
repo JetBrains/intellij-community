@@ -205,11 +205,11 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     List<FilePatch> remainingPatches = new ArrayList<FilePatch>();
     ApplyPatchContext context = new ApplyPatchContext(myProject.getBaseDir(), 0, true, true);
     try {
-      List<FilePatch> patches = loadPatches(changeList.PATH);
+      List<TextFilePatch> patches = loadPatches(changeList.PATH);
       if (changes != null) {
-        final Iterator<FilePatch> iterator = patches.iterator();
+        final Iterator<TextFilePatch> iterator = patches.iterator();
         while (iterator.hasNext()) {
-          FilePatch patch = iterator.next();
+          TextFilePatch patch = iterator.next();
           if (!needUnshelve(patch, changes)) {
             remainingPatches.add(patch);
             iterator.remove();
@@ -373,7 +373,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
     notifyStateChanged();
   }
 
-  public static List<FilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {
+  public static List<TextFilePatch> loadPatches(final String patchPath) throws IOException, PatchSyntaxException {
     char[] text = FileUtil.loadFileText(new File(patchPath));
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
     return reader.readAllPatches();
