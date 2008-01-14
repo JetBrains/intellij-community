@@ -115,6 +115,13 @@ public final class AnActionEvent {
     return key.getData(getDataContext());
   }
 
+  @NotNull
+  public <T> T getRequiredData(@NotNull DataKey<T> key) {
+    T data = getData(key);
+    assert data != null;
+    return data;
+  }
+
   /**
    * Returns the identifier of the place in the IDEA user interface from where the action is invoked
    * or updated.
