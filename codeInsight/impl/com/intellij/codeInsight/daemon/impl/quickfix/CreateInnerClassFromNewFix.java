@@ -31,7 +31,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
       public void run() {
         try {
           PsiNewExpression newExpression = getNewExpression();
-          PsiJavaCodeReferenceElement ref = newExpression.getClassReference();
+          PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
           assert ref != null;
           String refName = ref.getReferenceName();
           LOG.assertTrue(refName != null);
