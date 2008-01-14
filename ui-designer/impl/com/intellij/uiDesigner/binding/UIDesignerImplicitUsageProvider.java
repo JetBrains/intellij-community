@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiVariable;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 
 /**
@@ -27,11 +26,11 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
     return false;
   }
 
-  public boolean isImplicitRead(PsiVariable element) {
+  public boolean isImplicitRead(PsiElement element) {
     return false;
   }
 
-  public boolean isImplicitWrite(PsiVariable element) {
+  public boolean isImplicitWrite(PsiElement element) {
     return element instanceof PsiField && FormReferenceProvider.getFormFile((PsiField)element) != null;
   }
 }

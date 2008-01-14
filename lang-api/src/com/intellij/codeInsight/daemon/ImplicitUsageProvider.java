@@ -16,9 +16,8 @@
 
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiVariable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 
 /**
  * Allows to disable highlighting of certain elements as unused when such elements are not referenced
@@ -31,6 +30,6 @@ public interface ImplicitUsageProvider {
   ExtensionPointName<ImplicitUsageProvider> EP_NAME = new ExtensionPointName<ImplicitUsageProvider>("com.intellij.implicitUsageProvider");
 
   boolean isImplicitUsage(PsiElement element);
-  boolean isImplicitRead(PsiVariable element);
-  boolean isImplicitWrite(PsiVariable element);
+  boolean isImplicitRead(PsiElement element);
+  boolean isImplicitWrite(PsiElement element);
 }
