@@ -8,7 +8,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -53,10 +55,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private final Map<String, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>> myIndices = new HashMap<String, Pair<UpdatableIndex<?, ?, FileContent>, InputFilter>>();
   private final CompositeInputFiler myCompositeFilter = new CompositeInputFiler();
-  private List<Disposable> myDisposables = new ArrayList<Disposable>();
   private FileBasedIndexState myPreviouslyRegistered;
   private Set<String> myProcessedProjects = new HashSet<String>(); // stores locationHash of all projects opened projets during this session
-  private List<Runnable> myFlushStorages = new ArrayList<Runnable>();
+  private Map<Document, Pair<CharSequence, Long>> myIndexingHistory = new HashMap<Document, Pair<CharSequence, Long>>();
+  
+  private List<Disposable> myDisposables = new ArrayList<Disposable>();
+
+  private CompositeCommand myFlushStorages = new CompositeCommand();
+  private CompositeCommand myStartDataBuffering = new CompositeCommand();
+  private CompositeCommand myStopDataBuffering = new CompositeCommand();
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -163,21 +170,26 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
     });
 
-    final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(indexer, storage);
+    final MemoryIndexStorage<K, V> wbStorage = new MemoryIndexStorage<K, V>(storage);
+    myStartDataBuffering.addTask(new Runnable() {
+      public void run() {
+        wbStorage.setBufferingEnabled(true);
+      }
+    });
+    myStopDataBuffering.addTask(new Runnable() {
+      public void run() {
+        wbStorage.setBufferingEnabled(false);
+      }
+    });
+    final MapReduceIndex<?, ?, FileContent> index = new MapReduceIndex<K, V, FileContent>(indexer, wbStorage);
     myIndices.put(name, new Pair<UpdatableIndex<?,?, FileContent>, InputFilter>(index, filter));
     myCompositeFilter.addFilter(filter);
-    myFlushStorages.add(new Runnable() {
+    myFlushStorages.addTask(new Runnable() {
       public void run() {
         storage.flush();
       }
     });
     return requiresRebuild;
-  }
-
-  private void flushStorages() {
-    for (Runnable flushStorage : myFlushStorages) {
-      flushStorage.run();
-    }
   }
 
   @NonNls
@@ -207,6 +219,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   @NotNull
   public <K, V> List<V> getData(final String indexId, K dataKey, Project project) throws StorageException {
+    indexUnsavedDocuments();
     final AbstractIndex<K, V> index = getIndex(indexId);
     if (index == null) {
       return Collections.emptyList();
@@ -233,6 +246,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   // todo: return the list of virtual files instead of IDs
   @NotNull
   public <K> Collection<Integer> getContainingFiles(final String indexId, K dataKey, Project project) throws StorageException {
+    indexUnsavedDocuments();
     final AbstractIndex<K, ?> index = getIndex(indexId);
     if (index == null) {
       return Collections.emptyList();
@@ -267,6 +281,37 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return files;
   }
 
+  private void indexUnsavedDocuments() throws StorageException {
+    final FileDocumentManager fdManager = FileDocumentManager.getInstance();
+    final Document[] documents = fdManager.getUnsavedDocuments();
+    if (documents.length > 0) {
+      // now index unsaved data
+      myStartDataBuffering.execute();
+      for (Document document : documents) {
+        final VirtualFile vFile = fdManager.getFile(document);
+        if (!(vFile instanceof NewVirtualFile)) {
+          continue;
+        }
+        final Pair<CharSequence, Long> indexingInfo = myIndexingHistory.get(document);
+        final long documentStamp = document.getModificationStamp();
+        if (indexingInfo == null || documentStamp != indexingInfo.getSecond().longValue()) {
+          final FileContent oldFc = new FileContent(
+            vFile,
+            indexingInfo != null? indexingInfo.getFirst() : loadContent(vFile)
+          );
+          final FileContent newFc = new FileContent(vFile, document.getText());
+          for (String indexId : myIndices.keySet()) {
+            if (getInputFilter(indexId).acceptInput(vFile)) {
+              final int inputId = Math.abs(((NewVirtualFile)vFile).getId());
+              getIndex(indexId).update(inputId, newFc, oldFc);
+            }
+          }
+          myIndexingHistory.put(document, new Pair<CharSequence, Long>(newFc.content, documentStamp));
+        }
+      }
+    }
+  }
+  
   // called for initial content scan on opening a project
   private void scanContent(final Project project, final Set<String> requiresRebuild) {
     final Set<String> indicesToUpdate = new HashSet<String>(myIndices.keySet());
@@ -299,7 +344,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       });
     }
     finally {
-      flushStorages();
+      myFlushStorages.execute();
     }
   }
 
@@ -371,7 +416,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final boolean isValidFile = file.isValid();
     FileContent currentFC = null;
     boolean fileContentLoaded = false;
-
+    
     for (String indexKey : myIndices.keySet()) {
       if (!isValidFile || getInputFilter(indexKey).acceptInput(file)) {
         if (!fileContentLoaded) {
@@ -382,7 +427,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           updateSingleIndex(indexKey, file, currentFC, oldFC);
         }
         catch (StorageException e) {
-          // todo
+          LOG.error(e);
         }
       }
     }
@@ -479,8 +524,30 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       if (myCompositeFilter.acceptInput(file)) {
         final @Nullable CharSequence oldContent = file.getUserData(CONTENT_KEY);
         file.putUserData(CONTENT_KEY, null);
+
+        myStopDataBuffering.execute();
+        myIndexingHistory.clear();
+
         updateIndicesForFile(file, oldContent);
       }
+    }
+  }
+  
+  private static class CompositeCommand {
+    private final List<Runnable> myTasks = new ArrayList<Runnable>();
+    
+    void addTask(Runnable task) {
+      myTasks.add(task);
+    }
+    
+    void execute() {
+      for (Runnable task : myTasks) {
+        task.run();
+      }
+    }
+
+    void clear() {
+      myTasks.clear();
     }
   }
 }
