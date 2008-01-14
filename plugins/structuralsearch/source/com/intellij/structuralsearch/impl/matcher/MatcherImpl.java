@@ -426,6 +426,7 @@ public class MatcherImpl {
       options.setScope( new LocalSearchScope(elements) );
       testFindMatches(sink,options);
     } catch (IncorrectOperationException e) {
+      e.printStackTrace();
       throw new MalformedPatternException();
     }
 

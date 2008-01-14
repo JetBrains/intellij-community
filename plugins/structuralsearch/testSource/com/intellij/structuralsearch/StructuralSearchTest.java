@@ -1181,7 +1181,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s133_2 = "class C { int a() {} int A() { a(1); }}";
     final String s134 = "a";
 
-    List<MatchResult> results = findMatches(s133, s134);
+    List<MatchResult> results = findMatches(s133, s134, true, StdFileTypes.JAVA);
     assertEquals(
       "find sym finds declaration",
       4, results.size()
@@ -1189,8 +1189,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals(
       "find sym finds declaration",
-      2,
-      findMatchesCount(s133_2,s134)
+      2, findMatchesCount(s133_2, s134, true)
     );
   }
 
