@@ -23,19 +23,32 @@ import java.util.Collection;
  * @author nik
  */
 public class JavaDebuggerSupport extends DebuggerSupport {
-  private JavaBreakpointPanelProvider myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
+  private JavaBreakpointPanelProvider myBreakpointPanelProvider;
   private StepOverActionHandler myStepOverActionHandler;
   private StepIntoActionHandler myStepIntoActionHandler;
   private StepOutActionHandler myStepOutActionHandler;
   private ForceStepOverActionHandler myForceStepOverActionHandler;
   private ForceStepIntoActionHandler myForceStepIntoActionHandler;
+  private RunToCursorActionHandler myRunToCursorActionHandler;
+  private ForceRunToCursorActionHandler myForceRunToCursorActionHandler;
+  private ResumeActionHandler myResumeActionHandler;
+  private PauseActionHandler myPauseActionHandler;
+  private ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
+  private ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
 
   public JavaDebuggerSupport() {
+    myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
     myStepOverActionHandler = new StepOverActionHandler();
     myStepIntoActionHandler = new StepIntoActionHandler();
     myStepOutActionHandler = new StepOutActionHandler();
     myForceStepOverActionHandler = new ForceStepOverActionHandler();
     myForceStepIntoActionHandler = new ForceStepIntoActionHandler();
+    myRunToCursorActionHandler = new RunToCursorActionHandler();
+    myForceRunToCursorActionHandler = new ForceRunToCursorActionHandler();
+    myResumeActionHandler = new ResumeActionHandler();
+    myPauseActionHandler = new PauseActionHandler();
+    myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler();
+    myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
   }
 
   @NotNull
@@ -90,5 +103,35 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getForceStepIntoHandler() {
     return myForceStepIntoActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getRunToCursorHandler() {
+    return myRunToCursorActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getForceRunToCursorHandler() {
+    return myForceRunToCursorActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getResumeActionHandler() {
+    return myResumeActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getPauseHandler() {
+    return myPauseActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getToggleLineBreakpointHandler() {
+    return myToggleLineBreakpointActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getShowExecutionPointHandler() {
+    return myShowExecutionPointActionHandler;
   }
 }

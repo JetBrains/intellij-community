@@ -26,7 +26,7 @@ public abstract class AbstractSteppingActionHandler extends DebuggerActionHandle
     return (DebuggerManagerEx.getInstanceEx(project)).getContext();
   }
 
-  public boolean isEnabled(final Project project, final AnActionEvent event) {
+  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
     final DebuggerContextImpl context = getContext(project);
     if (context == null) {
       return false;

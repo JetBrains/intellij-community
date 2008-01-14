@@ -1,12 +1,13 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -15,64 +16,38 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleLineBreakpointAction extends AnAction {
+public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
-  public void update(AnActionEvent event){
-    boolean toEnable = false;
-    PlaceInDocument place = getPlace(event);
+  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+    PlaceInDocument place = getPlace(project, event);
     if (place != null) {
-      final Project project = event.getData(PlatformDataKeys.PROJECT);
       final Document document = place.getDocument();
       final int offset = place.getOffset();
       int line = document.getLineNumber(offset);
 
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
-      for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-        if (breakpointType.canPutAt(file, line)) {
-          toEnable = true;
-          break;
-        }
-      }
-      if (!toEnable && DebuggerUtils.supportsJVMDebugging(file.getFileType())) {
+      if (DebuggerUtils.supportsJVMDebugging(file.getFileType())) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
-        toEnable = breakpointManager.findBreakpoint(document, offset, LineBreakpoint.CATEGORY) != null ||
+        return breakpointManager.findBreakpoint(document, offset, LineBreakpoint.CATEGORY) != null ||
                    LineBreakpoint.canAddLineBreakpoint(project, document, line);
       }
     }
 
-    final Presentation presentation = event.getPresentation();
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      presentation.setVisible(toEnable);
-    }
-    else {
-      presentation.setEnabled(toEnable);
-    }
+    return false;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      return;
-    }
-    PlaceInDocument place = getPlace(e);
+  public void perform(@NotNull final Project project, final AnActionEvent event) {
+    PlaceInDocument place = getPlace(project, event);
     if(place == null) {
       return;
     }
 
     Document document = place.getDocument();
     int line = document.getLineNumber(place.getOffset());
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    for (XLineBreakpointType<?> type : XDebuggerUtil.getInstance().getLineBreakpointTypes()) {
-      if (type.canPutAt(file, line)) {
-        XDebuggerUtil.getInstance().toggleLineBreakpoint(project, type, file, line);
-        return;
-      }
-    }
 
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
     if (debugManager == null) {
@@ -91,11 +66,7 @@ public class ToggleLineBreakpointAction extends AnAction {
   }
 
   @Nullable
-  public static PlaceInDocument getPlace(AnActionEvent event) {
-    Project project = event.getData(PlatformDataKeys.PROJECT);
-    if(project == null) {
-      return null;
-    }
+  private static PlaceInDocument getPlace(@NotNull final Project project, AnActionEvent event) {
     Editor editor = event.getData(DataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();

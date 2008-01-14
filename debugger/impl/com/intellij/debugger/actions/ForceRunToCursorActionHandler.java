@@ -8,8 +8,8 @@ package com.intellij.debugger.actions;
  * @author Eugene Zhuravlev
  *         Date: Sep 12, 2006
  */
-public class ForceRunToCursorAction extends RunToCursorAction{
-  public ForceRunToCursorAction() {
+public class ForceRunToCursorActionHandler extends RunToCursorActionHandler {
+  public ForceRunToCursorActionHandler() {
     super(true);
   }
 }

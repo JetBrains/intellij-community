@@ -2,8 +2,8 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,6 +20,7 @@ public abstract class DebuggerSupport {
   @NotNull
   public abstract BreakpointPanelProvider<?> getBreakpointPanelProvider();
 
+
   @NotNull
   public abstract DebuggerActionHandler getStepOverHandler();
 
@@ -34,4 +35,26 @@ public abstract class DebuggerSupport {
 
   @NotNull
   public abstract DebuggerActionHandler getForceStepIntoHandler();
+
+
+  @NotNull
+  public abstract DebuggerActionHandler getRunToCursorHandler();
+
+  @NotNull
+  public abstract DebuggerActionHandler getForceRunToCursorHandler();
+
+
+  @NotNull
+  public abstract DebuggerActionHandler getResumeActionHandler();
+
+  @NotNull
+  public abstract DebuggerActionHandler getPauseHandler();
+
+
+  @NotNull
+  public abstract DebuggerActionHandler getToggleLineBreakpointHandler();
+
+
+  @NotNull
+  public abstract DebuggerActionHandler getShowExecutionPointHandler();
 }

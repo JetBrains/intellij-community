@@ -1,8 +1,6 @@
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -12,19 +10,38 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class XDebuggerActionBase extends AnAction {
+  private boolean myHideDisabledInPopup;
 
-  public void update(final AnActionEvent e) {
+  protected XDebuggerActionBase() {
+    this(false);
+  }
+
+  protected XDebuggerActionBase(final boolean hideDisabledInPopup) {
+    myHideDisabledInPopup = hideDisabledInPopup;
+  }
+
+  public void update(final AnActionEvent event) {
+    boolean enabled = isEnabled(event);
+    Presentation presentation = event.getPresentation();
+    if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace())) {
+      presentation.setVisible(enabled);
+    }
+    else {
+      presentation.setEnabled(enabled);
+    }
+  }
+
+  private boolean isEnabled(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null) {
       DebuggerSupport[] debuggerSupports = XDebuggerSupport.getDebuggerSupports();
       for (DebuggerSupport support : debuggerSupports) {
         if (isEnabled(project, e, support)) {
-          e.getPresentation().setEnabled(true);
-          return;
+          return true;
         }
       }
     }
-    e.getPresentation().setEnabled(false);
+    return false;
   }
 
   @NotNull
