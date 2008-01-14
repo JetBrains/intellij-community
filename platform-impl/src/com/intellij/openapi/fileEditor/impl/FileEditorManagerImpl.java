@@ -60,7 +60,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = new FileEditorProvider[]{};
 
   private final JPanel myPanels;
-  public Project myProject;
+  private final Project myProject;
 
   private final MergingUpdateQueue myQueue = new MergingUpdateQueue("FileEditorManagerUpdateQueue", 50, true, null);
 
@@ -85,7 +85,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   final EditorsSplitters mySplitters;
   private boolean myDoNotTransferFocus = false;
 
-  private List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
+  private final List<EditorDataProvider> myDataProviders = new ArrayList<EditorDataProvider>();
   private MessageBusConnection myConnection;
 
   public FileEditorManagerImpl(final Project project) {
@@ -150,7 +150,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    * Updates tab icon for the specified <code>file</code>. The <code>file</code>
    * should be opened in the myEditor, otherwise the method throws an assertion.
    */
-  public void updateFileIcon(final VirtualFile file) {
+  protected void updateFileIcon(final VirtualFile file) {
     mySplitters.updateFileIcon(file);
   }
 
@@ -1316,7 +1316,7 @@ private final class MyVirtualFileListener extends VirtualFileAdapter {
     return getOpenFiles();
   }
 
-  public void queueUpdateFile(final VirtualFile file) {
+  protected void queueUpdateFile(final VirtualFile file) {
     myQueue.queue(new Update(file) {
       public void run() {
         if (isFileOpen(file)) {

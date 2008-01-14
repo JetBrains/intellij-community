@@ -58,7 +58,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
   public String getFileTooltipText(final VirtualFile file) {
     final StringBuilder tooltipText = new StringBuilder();
-    final Module module = ModuleUtil.findModuleForFile(file, myProject);
+    final Module module = ModuleUtil.findModuleForFile(file, getProject());
     if (module != null) {
       tooltipText.append("[");
       tooltipText.append(module.getName());
@@ -70,7 +70,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
 
   @Override
   protected String getFileTitle(final VirtualFile file) {
-    return ProjectUtil.calcRelativeToProjectPath(file, myProject);
+    return ProjectUtil.calcRelativeToProjectPath(file, getProject());
   }
 
   @Override

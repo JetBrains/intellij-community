@@ -64,7 +64,7 @@ public class EditorWindow {
 
   private void createTabs(int tabPlacement) {
     LOG.assertTrue (myTabbedPane == null);
-    myTabbedPane = new EditorTabbedContainer(this, getManager().myProject, tabPlacement);
+    myTabbedPane = new EditorTabbedContainer(this, getManager().getProject(), tabPlacement);
     myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
   }
 
@@ -152,7 +152,7 @@ public class EditorWindow {
     }
     if (UISettings.getInstance().ACTIVATE_MRU_EDITOR_ON_CLOSE) {
       // try to open last visited file
-      final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
+      final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
       for (int idx = histFiles.length - 1; idx >= 0; idx--) {
         final VirtualFile histFile = histFiles[idx];
         if (histFile.equals(fileBeingClosed)) {
@@ -238,7 +238,7 @@ public class EditorWindow {
         }
       }
       else if (myTabbedPane != null) {
-        final boolean focusEditor = ToolWindowManager.getInstance(getManager().myProject).isEditorComponentActive();
+        final boolean focusEditor = ToolWindowManager.getInstance(getManager().getProject()).isEditorComponentActive();
         final VirtualFile currentFile = getSelectedFile();
         final VirtualFile[] files = getFiles();
         for (VirtualFile file : files) {
@@ -497,7 +497,7 @@ public class EditorWindow {
       return fakeIcon;
     }
 
-    Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().myProject);
+    Icon icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, getManager().getProject());
     List<Icon> icons = Collections.singletonList(icon);
 
     // Pinned
@@ -710,7 +710,7 @@ public class EditorWindow {
         if (closeNonModifiedFilesFirst) {
           // Search in history
           final VirtualFile[] allFiles = getFiles();
-          final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
+          final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
 
           // first, we search for files not in history
           for (int i = 0; i != allFiles.length; ++ i) {
@@ -766,7 +766,7 @@ public class EditorWindow {
         // Search in history from less frequently used.
         {
           final VirtualFile[]  allFiles = getFiles();
-          final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().myProject).getFiles();
+          final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
 
           // first, we search for files not in history
           for (int i = 0; i != allFiles.length; ++ i) {

@@ -131,7 +131,7 @@ public class ShowImplementationsAction extends AnAction {
         }
       }
 
-      if (implsList.size() > 0) {
+      if (!implsList.isEmpty()) {
         implsList.toArray( impls = new PsiElement[implsList.size()] );
       }
     }

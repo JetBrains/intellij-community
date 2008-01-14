@@ -35,7 +35,7 @@ public final class EditorsSplitters extends JPanel {
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
   int myInsideChange;
-  private MyFocusWatcher myFocusWatcher;
+  private final MyFocusWatcher myFocusWatcher;
   private EditorWithProviderComposite myCurrentSelectedEditor;
   private final Alarm myIconUpdaterAlarm = new Alarm();
 
@@ -132,7 +132,7 @@ public final class EditorsSplitters extends JPanel {
           LOG.assertTrue(selectedProviderIndex != -1);
           final FileEditorProvider[] providers = composite.getProviders();
           final HistoryEntry entry = new HistoryEntry(file, providers, states, providers[selectedProviderIndex]); // TODO
-          entry.writeExternal(fileElement, getManager().myProject);
+          entry.writeExternal(fileElement, getManager().getProject());
           fileElement.setAttribute("pinned",         Boolean.toString(window.isFilePinned(file)));
           fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));
           fileElement.setAttribute("current-in-tab", Boolean.toString(composite.equals (window.getSelectedEditor())));
@@ -185,43 +185,41 @@ public final class EditorsSplitters extends JPanel {
       res.add(splitter, BorderLayout.CENTER);
       return res;
     }
-    else {
-      final Element leaf = element.getChild("leaf");
-      if (leaf != null) {
-        final EditorWindow window = new EditorWindow(this);
-        try {
-          window.myInsideTabChange++;
-          //noinspection unchecked
-          final List<Element> children = leaf.getChildren("file");
-          VirtualFile currentFile = null;
-          for (final Element file : children) {
-            final HistoryEntry entry = new HistoryEntry(getManager().myProject, file.getChild(HistoryEntry.TAG));
-            getManager().openFileImpl3(window, entry.myFile, false, entry);
-            if (getManager().isFileOpen(entry.myFile)) {
-              window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
-              if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
-                currentFile = entry.myFile;
-              }
-              if (Boolean.valueOf(file.getAttributeValue("current")).booleanValue()) {
-                setCurrentWindow(window, false);
-              }
+    final Element leaf = element.getChild("leaf");
+    if (leaf != null) {
+      final EditorWindow window = new EditorWindow(this);
+      try {
+        window.myInsideTabChange++;
+        //noinspection unchecked
+        final List<Element> children = leaf.getChildren("file");
+        VirtualFile currentFile = null;
+        for (final Element file : children) {
+          final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG));
+          getManager().openFileImpl3(window, entry.myFile, false, entry);
+          if (getManager().isFileOpen(entry.myFile)) {
+            window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
+            if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
+              currentFile = entry.myFile;
             }
-          }
-          if (currentFile != null) {
-            final EditorComposite editor = window.findFileComposite(currentFile);
-            if (editor != null) {
-              window.setSelectedEditor(editor, true);
+            if (Boolean.valueOf(file.getAttributeValue("current")).booleanValue()) {
+              setCurrentWindow(window, false);
             }
           }
         }
-        catch (InvalidDataException e) {
-          // OK
+        if (currentFile != null) {
+          final EditorComposite editor = window.findFileComposite(currentFile);
+          if (editor != null) {
+            window.setSelectedEditor(editor, true);
+          }
         }
-        finally {
-          window.myInsideTabChange--;
-        }
-        return window.myPanel;
       }
+      catch (InvalidDataException e) {
+        // OK
+      }
+      finally {
+        window.myInsideTabChange--;
+      }
+      return window.myPanel;
     }
     return null;
   }
@@ -291,13 +289,14 @@ public final class EditorsSplitters extends JPanel {
     }
   }
 
-  private Set<VirtualFile> myFilesToUpdateIconsFor = new HashSet<VirtualFile>();
+  private final Set<VirtualFile> myFilesToUpdateIconsFor = new HashSet<VirtualFile>();
 
   private void updateFileIconLater(VirtualFile file) {
     myFilesToUpdateIconsFor.add(file);
     myIconUpdaterAlarm.cancelAllRequests();
     myIconUpdaterAlarm.addRequest(new Runnable() {
       public void run() {
+        if (myManager.getProject().isDisposed()) return;
         for (VirtualFile file : myFilesToUpdateIconsFor) {
           updateFileIconImmediately(file);
         }
@@ -379,11 +378,10 @@ public final class EditorsSplitters extends JPanel {
     return getCurrentWindow();
   }
 
-  private EditorWindow createCurrentWindow() {
+  private void createCurrentWindow() {
     LOG.assertTrue(myCurrentWindow == null);
     myCurrentWindow = new EditorWindow(this);
     add(myCurrentWindow.myPanel, BorderLayout.CENTER);
-    return myCurrentWindow;
   }
 
   /**
@@ -408,7 +406,7 @@ public final class EditorsSplitters extends JPanel {
     if (window != null) {
       final EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
       if (selectedEditor != null) {
-        final boolean shouldAssureFocus = ToolWindowManager.getInstance(myManager.myProject).isEditorComponentActive() &&
+        final boolean shouldAssureFocus = ToolWindowManager.getInstance(myManager.getProject()).isEditorComponentActive() &&
                                     !window.getManager().isFocusingBlocked();
 
 
@@ -433,9 +431,7 @@ public final class EditorsSplitters extends JPanel {
 
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
-      for (final EditorWithProviderComposite editor : editors) {
-        res.add(editor);
-      }
+      res.addAll(Arrays.asList(editors));
     }
     return res.toArray(new EditorWithProviderComposite[res.size()]);
   }
