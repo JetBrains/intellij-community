@@ -82,10 +82,6 @@ public class OrderRootType {
     return myModulePathsName;
   }
 
-  public static final OrderRootType[] ALL_TYPES = {
-    CLASSES, CLASSES_AND_OUTPUT, COMPILATION_CLASSES, SOURCES, JavadocOrderRootType.INSTANCE, AnnotationOrderRootType.INSTANCE
-  };
-
   public static OrderRootType[] getAllTypes() {
     return ourPersistentOrderRootTypes;
   }
