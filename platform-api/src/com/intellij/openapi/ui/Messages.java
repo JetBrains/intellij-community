@@ -184,11 +184,11 @@ public class Messages {
     return showDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon);
   }
 
-  public static void showErrorDialog(Project project, String message, String title) {
+  public static void showErrorDialog(Project project, String message, @Nls String title) {
     showDialog(project, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
-  public static void showErrorDialog(Component component, String message, String title) {
+  public static void showErrorDialog(Component component, String message, @Nls String title) {
     showDialog(component, message, title, new String[]{OK_BUTTON}, 0, getErrorIcon());
   }
 
