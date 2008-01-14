@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -75,6 +74,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private boolean myCanceled = true;
   private boolean myDisposed = false;
   private int myIndex;
+  private JLabel myBottomLabel;
 
   public LookupImpl(Project project,
                     Editor editor,
@@ -112,8 +112,11 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
     JScrollPane scrollPane = new JScrollPane(myList);
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scrollPane.setBorder(new BegPopupMenuBorder());
     getComponent().add(scrollPane, BorderLayout.CENTER);
+    scrollPane.setBorder(null);
+    myBottomLabel = new JLabel();
+    getComponent().add(myBottomLabel, BorderLayout.SOUTH);
+    getComponent().setBorder(new BegPopupMenuBorder());
 
     myEditorCaretListener = new CaretListener() {
       public void caretPositionChanged(CaretEvent e){
@@ -192,6 +195,12 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public int getPreferredItemsCount() {
     return myPreferredItemsCount;
+  }
+
+  public void setBottomText(String s) {
+    myBottomLabel.setText(s);
+    myBottomLabel.setFont(myBottomLabel.getFont().deriveFont((float) (CodeInsightSettings.getInstance().LOOKUP_HEIGHT*10.0/11)));
+    updateList();
   }
 
   private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {

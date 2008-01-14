@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
@@ -141,7 +142,11 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     }
     myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter);
     myActiveLookupEditor = editor;
-    ((LookupImpl)myActiveLookup).show();
+    ApplicationManager.getApplication().invokeLater(new Runnable() { //to set bottom hint text
+      public void run() {
+        ((LookupImpl)myActiveLookup).show();
+      }
+    });
     myActiveLookup.addLookupListener(
       new LookupAdapter(){
         public void itemSelected(LookupEvent event) {

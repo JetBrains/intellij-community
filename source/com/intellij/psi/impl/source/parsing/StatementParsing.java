@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.AbstractJspJavaLexer;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -124,7 +125,36 @@ public class StatementParsing extends Parsing {
           lexer.advance();
           break;
         }
-        lexer.advance();
+
+        if (braceCount == 1 && (tokenType == SEMICOLON || tokenType == RBRACE)) {
+          lexer.advance();
+
+          final LexerPosition position = lexer.getCurrentPosition();
+          List<IElementType> list = new SmartList<IElementType>();
+          while (true) {
+            final IElementType type = lexer.getTokenType();
+            if (PRIMITIVE_TYPE_BIT_SET.contains(type) || type == IDENTIFIER || MODIFIER_BIT_SET.contains(type) ||
+                   type == LT || type == GT || type == GTGT || type == GTGTGT || type == COMMA || type == DOT ||
+                   type == EXTENDS_KEYWORD || type == IMPLEMENTS_KEYWORD) {
+              list.add(type);
+              lexer.advance();
+            } else {
+              break;
+            }
+          }
+          if (lexer.getTokenType() == LPARENTH && list.size() >= 2) {
+            final IElementType last = list.get(list.size() - 1);
+            final IElementType prevLast = list.get(list.size() - 2);
+            if (last == IDENTIFIER && (prevLast == IDENTIFIER || PRIMITIVE_TYPE_BIT_SET.contains(prevLast))) {
+              lexer.restore(position);
+              end = lexer.getTokenStart();
+              break;
+            }
+          }
+        }
+        else {
+          lexer.advance();
+        }
       }
       final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBufferSequence(), start, end, myContext.getCharTable());
       if (braceCount != 0){

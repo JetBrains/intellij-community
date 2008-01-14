@@ -108,8 +108,35 @@ public class DeclarationParsing extends Parsing {
         lexer.restore(startPos);
         return null;
       }
-    } else if (CLASS_KEYWORD_BIT_SET.contains(tokenType)){
-      return parseClassFromKeyword(lexer, modifierList, null);
+    }
+    else if (CLASS_KEYWORD_BIT_SET.contains(tokenType)) {
+      final CompositeElement root = parseClassFromKeyword(lexer, modifierList, null);
+
+      if (context == Context.FILE_CONTEXT) {
+        final CompositeElement classExpected = Factory.createErrorElement(JavaErrorMessages.message("expected.class.or.interface"));
+        TreeUtil.addChildren(root, classExpected);
+        boolean declsAfterEnd = false;
+
+        while (lexer.getTokenType() != null && lexer.getTokenType() != RBRACE) {
+          LexerPosition position = lexer.getCurrentPosition();
+          final TreeElement element = parseDeclaration(lexer, Context.CLASS_CONTEXT);
+          if (element != null && (element.getElementType() == METHOD || element.getElementType() == FIELD)) {
+            declsAfterEnd = true;
+            TreeUtil.addChildren(root, element);
+          } else {
+            lexer.restore(position);
+            break;
+          }
+        }
+
+        if (!declsAfterEnd) {
+          TreeUtil.remove(classExpected);
+        } else {
+          expectRBrace(root, lexer);
+        }
+      }
+
+      return root;
     }
 
     TreeElement classParameterList = null;
@@ -469,20 +496,15 @@ public class DeclarationParsing extends Parsing {
           TreeUtil.addChildren(parameterList, comma);
           TreeUtil.addChildren(parameterList, param);
         }
-        else if (tokenType == BAD_CHARACTER || KEYWORD_BIT_SET.contains(tokenType)) {
+        else if (!afterBad) {
           TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.comma.or.rparen")));
           TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
           lexer.advance();
           afterBad = true;
         }
-        else if (afterBad) {
+        else {
           afterBad = false;
           TreeUtil.addChildren(parameterList, parseAnnotationParameter(lexer, false));
-        }
-        else {
-          TreeUtil.addChildren(parameterList, Factory.createErrorElement(JavaErrorMessages.message("expected.rparen")));
-          parameterList.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
-          return parameterList;
         }
       }
     }
@@ -580,7 +602,7 @@ public class DeclarationParsing extends Parsing {
     }
   }
 
-  private TreeElement parseClassFromKeyword(Lexer lexer, TreeElement modifierList, TreeElement atToken) {
+  private CompositeElement parseClassFromKeyword(Lexer lexer, TreeElement modifierList, TreeElement atToken) {
     CompositeElement aClass = Factory.createCompositeElement(CLASS);
     TreeUtil.addChildren(aClass, modifierList);
 
@@ -597,7 +619,7 @@ public class DeclarationParsing extends Parsing {
     if (lexer.getTokenType() != IDENTIFIER){
       TreeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("expected.identifier"));
       TreeUtil.addChildren(aClass, errorElement);
-      return aClass.getFirstChildNode();
+      return (CompositeElement)aClass.getFirstChildNode();
     }
 
     TreeUtil.addChildren(aClass, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -741,6 +763,11 @@ public class DeclarationParsing extends Parsing {
     final int context = annotationInterface ? ClassBodyParsing.ANNOTATION : isEnum ? ClassBodyParsing.ENUM : ClassBodyParsing.CLASS;
     myContext.getClassBodyParsing().parseClassBody(root, classLexer, context);
 
+    expectRBrace(root, lexer);
+    return lbrace;
+  }
+
+  private void expectRBrace(final CompositeElement root, final Lexer lexer) {
     if (lexer.getTokenType() == RBRACE){
       TreeUtil.addChildren(root, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
@@ -748,8 +775,6 @@ public class DeclarationParsing extends Parsing {
     else{
       TreeUtil.addChildren(root, Factory.createErrorElement(JavaErrorMessages.message("expected.rbrace")));
     }
-
-    return lbrace;
   }
 
   @Nullable

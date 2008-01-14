@@ -95,8 +95,6 @@ public interface JavaTokenType extends TokenType{
   IElementType RPARENTH = new IJavaElementType("RPARENTH");
   IElementType LBRACE = new IJavaElementType("LBRACE");
   IElementType RBRACE = new IJavaElementType("RBRACE");
-  IElementType MOCK_LBRACE = new IJavaElementType("MOCK_LBRACE");
-  IElementType MOCK_RBRACE = new IJavaElementType("MOCK_RBRACE");
   IElementType LBRACKET = new IJavaElementType("LBRACKET");
   IElementType RBRACKET = new IJavaElementType("RBRACKET");
   IElementType SEMICOLON = new IJavaElementType("SEMICOLON");

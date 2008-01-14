@@ -128,24 +128,28 @@ public class CompletionUtil {
 
   static void highlightMembersOfContainer(Set<LookupItem> set) {
     for (final LookupItem item : set) {
-      Object o = item.getObject();
-      PsiType qualifierType = getQualifierType(item);
-      if (qualifierType == null) continue;
-      if (qualifierType instanceof PsiArrayType) {
-        if (o instanceof PsiField || o instanceof PsiMethod || o instanceof PsiClass) {
-          PsiElement parent = ((PsiElement)o).getParent();
-          if (parent instanceof PsiClass && parent.getContainingFile().getVirtualFile() == null) { //?
-            item.setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
-          }
+      highlightMemberOfContainer(item);
+    }
+  }
+
+  public static void highlightMemberOfContainer(final LookupItem item) {
+    Object o = item.getObject();
+    PsiType qualifierType = getQualifierType(item);
+    if (qualifierType == null) return;
+    if (qualifierType instanceof PsiArrayType) {
+      if (o instanceof PsiField || o instanceof PsiMethod || o instanceof PsiClass) {
+        PsiElement parent = ((PsiElement)o).getParent();
+        if (parent instanceof PsiClass && parent.getContainingFile().getVirtualFile() == null) { //?
+          item.setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
         }
       }
-      else if (qualifierType instanceof PsiClassType) {
-        PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
-        if (o instanceof PsiField || o instanceof PsiMethod || o instanceof PsiClass) {
-          PsiElement parent = ((PsiElement)o).getParent();
-          if (parent != null && parent.equals(qualifierClass)) {
-            item.setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
-          }
+    }
+    else if (qualifierType instanceof PsiClassType) {
+      PsiClass qualifierClass = ((PsiClassType)qualifierType).resolve();
+      if (o instanceof PsiField || o instanceof PsiMethod || o instanceof PsiClass) {
+        PsiElement parent = ((PsiElement)o).getParent();
+        if (parent != null && parent.equals(qualifierClass)) {
+          item.setAttribute(LookupItem.HIGHLIGHTED_ATTR, "");
         }
       }
     }

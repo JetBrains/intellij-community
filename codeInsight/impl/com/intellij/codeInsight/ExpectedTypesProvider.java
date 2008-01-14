@@ -90,6 +90,10 @@ public class ExpectedTypesProvider {
                                              ExpectedClassProvider classProvider) {
     if (expr == null) return null;
     PsiElement parent = expr.getParent();
+    while (parent instanceof PsiParenthesizedExpression) {
+      expr = (PsiExpression)parent;
+      parent = parent.getParent();
+    }
     MyParentVisitor visitor = new MyParentVisitor(expr, forCompletion, classProvider);
     parent.accept(visitor);
     return visitor.getResult();

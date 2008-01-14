@@ -20,8 +20,8 @@ import com.intellij.util.QueryResultSet;
  * @author peter
  */
 public class CompletionService {
-  private final PrioritizedQueryFactory<LookupElement, CompletionParameters> myBasicCompletionQueryFactory =
-    new PrioritizedQueryFactory<LookupElement, CompletionParameters>();
+  private final PrioritizedQueryFactory<LookupElement, CompletionParameters> myBasicCompletionQueryFactory = new PrioritizedQueryFactory<LookupElement, CompletionParameters>();
+  private final PrioritizedQueryFactory<LookupElement, CompletionParameters> mySmartCompletionQueryFactory = new PrioritizedQueryFactory<LookupElement, CompletionParameters>();
 
   public CompletionService() {
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
@@ -29,12 +29,20 @@ public class CompletionService {
         public CompletionPlace<LookupElement, CompletionParameters> extendBasicCompletion(final Pattern<? extends PsiElement, ?> place) {
           return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, myBasicCompletionQueryFactory);
         }
+
+        public CompletionPlace<LookupElement, CompletionParameters> extendSmartCompletion(final Pattern<? extends PsiElement, ?> place) {
+          return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, mySmartCompletionQueryFactory);
+        }
       });
     }
   }
 
   public PrioritizedQueryFactory<LookupElement, CompletionParameters> getBasicCompletionQueryFactory() {
     return myBasicCompletionQueryFactory;
+  }
+
+  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getSmartCompletionQueryFactory() {
+    return mySmartCompletionQueryFactory;
   }
 
   public static CompletionService getCompletionService() {

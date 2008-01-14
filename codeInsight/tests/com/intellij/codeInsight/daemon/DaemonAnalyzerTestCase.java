@@ -145,8 +145,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile);
 
+    return checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile));
+  }
+
+  protected Collection<HighlightInfo> checkHighlighting(final ExpectedHighlightingData data) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     ((PsiFileImpl)myFile).calcTreeElement(); //to load text

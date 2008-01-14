@@ -78,7 +78,7 @@ public class ClassBodyParsing extends Parsing {
 
     while(true){
       IElementType tokenType = filterLexer.getTokenType();
-      if (tokenType == null) break;
+      if (tokenType == null || tokenType == RBRACE) break;
 
       if (tokenType == SEMICOLON){
         TreeUtil.addChildren(dummyRoot, ParseUtil.createTokenElement(filterLexer, myContext.getCharTable()));

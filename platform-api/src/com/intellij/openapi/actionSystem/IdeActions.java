@@ -58,6 +58,8 @@ public interface IdeActions {
   @NonNls String ACTION_VIEW_SOURCE = "ViewSource";
   @NonNls String ACTION_SHOW_INTENTION_ACTIONS = "ShowIntentionActions";
   @NonNls String ACTION_CODE_COMPLETION = "CodeCompletion";
+  @NonNls String ACTION_SMART_TYPE_COMPLETION = "SmartTypeCompletion";
+  @NonNls String ACTION_CLASS_NAME_COMPLETION = "ClassNameCompletion";
 
   @NonNls String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 

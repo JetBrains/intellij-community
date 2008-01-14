@@ -23,11 +23,14 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 /**
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor{
+  private static final JavaSmartCompletionData myData = new JavaSmartCompletionData();
   private static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(
     psiElement().whitespaceOrComment(),
     psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
@@ -72,6 +75,8 @@ public class JavaCompletionContributor extends CompletionContributor{
         result.processResults(new Processor<LookupElement>() {
           public boolean process(final LookupElement lookupElement) {
             LookupItem item = (LookupItem) lookupElement;
+            CompletionUtil.highlightMemberOfContainer(item);
+
             if (item.getInsertHandler() != null) return true;
 
             item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, new InsertHandler() {
@@ -85,6 +90,24 @@ public class JavaCompletionContributor extends CompletionContributor{
             return true;
           }
         });
+      }
+    });
+
+    registrar.extendSmartCompletion(psiElement()).onPriority(Double.POSITIVE_INFINITY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
+        final Set<LookupItem> set = new LinkedHashSet<LookupItem>();
+        final PsiElement identifierCopy = parameters.getPosition();
+        final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+        final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+
+        final PsiReference ref = identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
+        if (ref != null) {
+          myData.completeReference(ref, set, context, identifierCopy);
+        }
+        myData.addKeywordVariants(keywordVariants, context, identifierCopy);
+        CompletionData.completeKeywordsBySet(set, keywordVariants, context, identifierCopy);
+        CompletionUtil.highlightMembersOfContainer(set);
+        result.addAllElements(set);
       }
     });
 
