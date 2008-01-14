@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -18,14 +17,14 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.MavenRunnerState;
-import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreState;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
+import org.jetbrains.idea.maven.runner.MavenRunner;
+import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
@@ -93,14 +92,6 @@ public class MavenArtifactDownloader {
       LOG.info("Maven Embedder initialization failed: " + e.getMessage());
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        for (Map.Entry<MavenProject, Module> entry : projectsToModules.entrySet()) {
-          MavenToIdeaConverter.updateModel(entry.getValue(), entry.getKey());
-        }
-      }
-    });
-
     VirtualFileManager.getInstance().refresh(false);
   }
 
@@ -114,13 +105,13 @@ public class MavenArtifactDownloader {
     myProgress.checkCanceled();
 
     if (isEnabled(myPreferences.getDownloadSources(), demand)) {
-      download(libraryArtifacts, MavenToIdeaConverter.SOURCES_CLASSIFIER);
+      download(libraryArtifacts, Constants.SOURCES_CLASSIFIER);
     }
 
     myProgress.checkCanceled();
 
     if (isEnabled(myPreferences.getDownloadJavadoc(), demand)) {
-      download(libraryArtifacts, MavenToIdeaConverter.JAVADOC_CLASSIFIER);
+      download(libraryArtifacts, Constants.JAVADOC_CLASSIFIER);
     }
 
     myProgress.checkCanceled();
@@ -167,7 +158,7 @@ public class MavenArtifactDownloader {
         if (artifacts != null) {
           final List remoteRepositories = mavenProject.getRemoteArtifactRepositories();
           for (Artifact artifact : artifacts) {
-            if (artifact.getType().equalsIgnoreCase(MavenToIdeaConverter.JAR_TYPE) &&
+            if (artifact.getType().equalsIgnoreCase(Constants.JAR_TYPE) &&
                 !artifact.getScope().equalsIgnoreCase(Artifact.SCOPE_SYSTEM)) {
               MavenId id = new MavenId(artifact);
               if (!mappedToModules.contains(id)) {
@@ -202,7 +193,7 @@ public class MavenArtifactDownloader {
         Artifact a = myEmbedder.createArtifactWithClassifier(id.groupId,
                                                              id.artifactId,
                                                              id.version,
-                                                             MavenToIdeaConverter.JAR_TYPE,
+                                                             Constants.JAR_TYPE,
                                                              classifier);
         List<ArtifactRepository> remoteRepos = new ArrayList<ArtifactRepository>(entry.getValue());
         myEmbedder.resolve(a, remoteRepos, myEmbedder.getLocalRepository());
