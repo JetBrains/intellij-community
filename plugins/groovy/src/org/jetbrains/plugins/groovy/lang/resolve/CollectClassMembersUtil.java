@@ -116,28 +116,6 @@ public class CollectClassMembersUtil {
       methods = new ArrayList<CandidateInfo>();
       allMethods.put(name, methods);
       methods.add(new CandidateInfo(method, substitutor));
-    } else if (!isSuperMethodDominated(method, methods)) methods.add(new CandidateInfo(method, substitutor));
-  }
-
-  private static boolean isSuperMethodDominated(PsiMethod method, List<CandidateInfo> worklist) {
-    PsiParameter[] params = method.getParameterList().getParameters();
-    PsiModifierList modifierList = method.getModifierList();
-
-    NextMethod:
-    for (CandidateInfo info : worklist) {
-      PsiMethod other = (PsiMethod) info.getElement();
-      assert other != null;
-      PsiParameter[] otherParams = other.getParameterList().getParameters();
-      if (otherParams.length != params.length) continue;
-      if (PsiUtil.getAccessLevel(other.getModifierList()) > PsiUtil.getAccessLevel(modifierList)) continue;
-      for (int i = 0; i < params.length; i++) {
-        PsiType type = TypeConversionUtil.erasure(params[i].getType());
-        PsiType otherType = TypeConversionUtil.erasure(otherParams[i].getType());
-        if (!type.isAssignableFrom(otherType)) continue NextMethod;
-      }
-      return true;
-    }
-
-    return false;
+    } else methods.add(new CandidateInfo(method, substitutor));
   }
 }
