@@ -7,10 +7,17 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author nik
@@ -26,12 +33,14 @@ import org.jetbrains.annotations.NotNull;
 )
 public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
   @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
-  private Project myProject;
-  private XBreakpointManagerImpl myBreakpointManager;
+  private final Project myProject;
+  private final XBreakpointManagerImpl myBreakpointManager;
+  private final List<XDebugSessionImpl> mySessions;
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager) {
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(myProject, startupManager);
+    mySessions = new ArrayList<XDebugSessionImpl>();
   }
 
   @NotNull
@@ -56,6 +65,30 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public void disposeComponent() {
     myBreakpointManager.dispose();
+  }
+
+
+  @NotNull
+  public XDebugSessionImpl startSession(@NotNull XDebugProcessStarter processStarter) {
+    XDebugSessionImpl session = new XDebugSessionImpl(this);
+    XDebugProcess process = processStarter.start(session);
+    session.init(process);
+    mySessions.add(session);
+    return session;
+  }
+
+  public void disposeSession(@NotNull XDebugSession session) {
+    mySessions.remove((XDebugSessionImpl)session);
+  }
+
+  @NotNull
+  public XDebugSession[] getDebugSessions() {
+    return mySessions.toArray(new XDebugSession[mySessions.size()]);
+  }
+
+  @Nullable
+  public XDebugSession getCurrentSession() {
+    return !mySessions.isEmpty() ? mySessions.get(0) : null;
   }
 
   public XDebuggerState getState() {

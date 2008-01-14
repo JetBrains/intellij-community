@@ -25,4 +25,21 @@ public interface XDebugSession {
 
   @NotNull XDebugProcess getDebugProcess();
 
+  boolean isPaused();
+
+
+  void stepOver();
+
+  void stepInto();
+
+  void stepOut();
+
+  void forceStepInto();
+
+  void forceStepOver();
+
+
+  void resume();
+
+  void showExecutionPoint();
 }

@@ -2,7 +2,6 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -12,16 +11,19 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * @author nik
  */
 public class XDebuggerUtilImpl extends XDebuggerUtil {
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
+  private Map<Class<? extends XBreakpointType<?,?>>, XBreakpointType<?,?>> myTypeByClass;
 
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
-      XBreakpointType[] types = Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME);
+      XBreakpointType[] types = XBreakpointType.getBreakpointTypes();
       List<XLineBreakpointType<?>> lineBreakpointTypes = new ArrayList<XLineBreakpointType<?>>();
       for (XBreakpointType type : types) {
         if (type instanceof XLineBreakpointType<?>) {
@@ -65,5 +67,19 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
+  }
+
+  public <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
+    if (myTypeByClass == null) {
+      myTypeByClass = new HashMap<Class<? extends XBreakpointType<?,?>>, XBreakpointType<?,?>>();
+      for (XBreakpointType<?, ?> breakpointType : XBreakpointType.getBreakpointTypes()) {
+        if (breakpointType.getClass().equals(typeClass)) {
+          myTypeByClass.put(typeClass, breakpointType);
+        }
+      }
+    }
+    XBreakpointType<?, ?> type = myTypeByClass.get(typeClass);
+    //noinspection unchecked
+    return (XBreakpointType<B, ?>)type;
   }
 }

@@ -19,6 +19,7 @@ package com.intellij.xdebugger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -31,4 +32,16 @@ public abstract class XDebuggerManager {
 
   @NotNull
   public abstract XBreakpointManager getBreakpointManager();
+
+
+  @NotNull
+  public abstract XDebugSession[] getDebugSessions();
+
+  @Nullable
+  public abstract XDebugSession getCurrentSession();
+
+  @NotNull 
+  public abstract XDebugSession startSession(@NotNull XDebugProcessStarter processStarter);
+
+  public abstract void disposeSession(@NotNull XDebugSession session);
 }

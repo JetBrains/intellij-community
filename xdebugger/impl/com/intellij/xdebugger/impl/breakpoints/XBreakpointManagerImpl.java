@@ -22,12 +22,14 @@ import java.util.*;
 public class XBreakpointManagerImpl implements XBreakpointManager, PersistentStateComponent<XBreakpointManagerImpl.BreakpointManagerState> {
   private MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>> myBreakpoints = new MultiValuesMap<XBreakpointType, XBreakpointBase<?,?,?>>(true);
   private Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<XBreakpointType, EventDispatcher<XBreakpointListener>>();
+  private EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
 
   public XBreakpointManagerImpl(final Project project, StartupManager startupManager) {
     myProject = project;
     myLineBreakpointManager = new XLineBreakpointManager(project, startupManager);
+    myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
   }
 
   public void dispose() {
@@ -58,6 +60,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       //noinspection unchecked
       dispatcher.getMulticaster().breakpointAdded(breakpoint);
     }
+    getBreakpointDispatcherMulticaster().breakpointAdded(breakpoint);
+  }
+
+  private XBreakpointListener<XBreakpoint<?>> getBreakpointDispatcherMulticaster() {
+    //noinspection unchecked
+    return myAllBreakpointsDispatcher.getMulticaster();
   }
 
   public void fireBreakpointChanged(XBreakpointBase<?, ?, ?> breakpoint) {
@@ -69,6 +77,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       //noinspection unchecked
       dispatcher.getMulticaster().breakpointChanged(breakpoint);
     }
+    getBreakpointDispatcherMulticaster().breakpointChanged(breakpoint);
   }
 
   public void removeBreakpoint(@NotNull final XBreakpoint<?> breakpoint) {
@@ -85,6 +94,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       //noinspection unchecked
       dispatcher.getMulticaster().breakpointRemoved(breakpoint);
     }
+    getBreakpointDispatcherMulticaster().breakpointRemoved(breakpoint);
   }
 
   @NotNull
@@ -151,6 +161,18 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   public <B extends XBreakpoint<P>, P extends XBreakpointProperties> void addBreakpointListener(@NotNull final XBreakpointType<B,P> type, @NotNull final XBreakpointListener<B> listener,
                                                                                                 final Disposable parentDisposable) {
     getOrCreateDispatcher(type).addListener(listener, parentDisposable);
+  }
+
+  public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
+    myAllBreakpointsDispatcher.addListener(listener);
+  }
+
+  public void removeBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
+    myAllBreakpointsDispatcher.removeListener(listener);
+  }
+
+  public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener, @NotNull final Disposable parentDisposable) {
+    myAllBreakpointsDispatcher.addListener(listener, parentDisposable);
   }
 
   public BreakpointManagerState getState() {

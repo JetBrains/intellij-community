@@ -56,4 +56,8 @@ public interface XBreakpointManager {
   <B extends XBreakpoint<P>, P extends XBreakpointProperties>
   void addBreakpointListener(@NotNull XBreakpointType<B,P> type, @NotNull XBreakpointListener<B> listener, Disposable parentDisposable);
 
+
+  void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
+  void removeBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener);
+  void addBreakpointListener(@NotNull XBreakpointListener<XBreakpoint<?>> listener, @NotNull Disposable parentDisposable);
 }
