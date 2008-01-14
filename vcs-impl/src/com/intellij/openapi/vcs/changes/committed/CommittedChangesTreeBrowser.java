@@ -236,7 +236,9 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         ContentRevision rev = oldChange.getAfterRevision();
         if (rev != null && rev.getFile().equals(beforeRev.getFile())) {
           changes.remove(oldChange);
-          changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
+          if (oldChange.getBeforeRevision() != null || c.getAfterRevision() != null) {
+            changes.add(new Change(oldChange.getBeforeRevision(), c.getAfterRevision()));
+          }
           return;
         }
       }
