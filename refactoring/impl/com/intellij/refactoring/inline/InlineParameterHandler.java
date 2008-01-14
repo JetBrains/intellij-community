@@ -55,6 +55,7 @@ public class InlineParameterHandler {
     final Ref<PsiCallExpression> refMethodCall = new Ref<PsiCallExpression>();
     final List<PsiReference> occurrences = new ArrayList<PsiReference>();
     final Collection<PsiFile> containingFiles = new HashSet<PsiFile>();
+    containingFiles.add(psiParameter.getContainingFile());
     boolean result = ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference psiReference) {
         PsiElement element = psiReference.getElement();
