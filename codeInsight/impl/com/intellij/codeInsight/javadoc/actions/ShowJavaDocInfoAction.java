@@ -112,10 +112,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       actionPerformedImpl(project, editor);
     }
     else if (project != null) {
-      if (element instanceof PsiMethod ||
-          element instanceof PsiClass ||
-          element instanceof PsiField ||
-          element instanceof PsiVariable) {
+      if (JavaDocManager.getProviderFromElement(element) != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
         CommandProcessor.getInstance().executeCommand(project,
                                                       new Runnable() {
