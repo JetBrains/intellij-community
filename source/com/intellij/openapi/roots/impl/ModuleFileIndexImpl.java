@@ -7,11 +7,8 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.FilteredQuery;
-import com.intellij.util.Query;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,11 +20,6 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
   private final FileTypeManager myFileTypeManager;
   private final DirectoryIndex myDirectoryIndex;
   private final ContentFilter myContentFilter;
-  private final Condition<VirtualFile> myDirCondition = new Condition<VirtualFile>() {
-    public boolean value(final VirtualFile dir) {
-      return getOrderEntryForFile(dir) != null;
-    }
-  };
 
   public ModuleFileIndexImpl(Module module, DirectoryIndex directoryIndex) {
     myModule = module;
@@ -127,14 +119,6 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
       VirtualFile parent = fileOrDir.getParent();
       return parent != null && isInTestSourceContent(parent);
     }
-  }
-
-  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return new FilteredQuery<VirtualFile>(myDirectoryIndex.getDirectoriesByPackageName(packageName, includeLibrarySources), myDirCondition);
-  }
-
-  public VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   private class ContentFilter implements VirtualFileFilter {

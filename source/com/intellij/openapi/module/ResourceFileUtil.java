@@ -1,15 +1,16 @@
 package com.intellij.openapi.module;
 
-import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.FilteredQuery;
+import org.jetbrains.annotations.Nullable;
 
 public class ResourceFileUtil {
   private ResourceFileUtil() {
@@ -51,7 +52,7 @@ public class ResourceFileUtil {
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
 
     final VirtualFile dir = new FilteredQuery<VirtualFile>(
-      ProjectRootManager.getInstance(project).getFileIndex().getDirsByPackageName(packageName, false), new Condition<VirtualFile>() {
+      PackageIndex.getInstance(project).getDirsByPackageName(packageName, false), new Condition<VirtualFile>() {
       public boolean value(final VirtualFile file) {
         final VirtualFile child = file.findChild(fileName);
         return child != null && scope.contains(child);

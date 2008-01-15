@@ -106,7 +106,7 @@ public class JavaFileManagerImpl implements JavaFileManager {
 
   @Nullable
   public PsiPackage findPackage(@NotNull String packageName) {
-    Query<VirtualFile> dirs = myProjectRootManager.getFileIndex().getDirsByPackageName(packageName, false);
+    Query<VirtualFile> dirs = PackageIndex.getInstance(myManager.getProject()).getDirsByPackageName(packageName, false);
     if (dirs.findFirst() == null) return null;
     return new PsiPackageImpl(myManager, packageName);
   }

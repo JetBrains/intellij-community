@@ -5,8 +5,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,8 +25,7 @@ public class PackageScope extends GlobalSearchScope {
     myIncludeSubpackages = includeSubpackages;
 
     Project project = myPackage.getProject();
-    FileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myDirs = fileIndex.getDirsByPackageName(myPackage.getQualifiedName(), true).findAll();
+    myDirs = PackageIndex.getInstance(project).getDirsByPackageName(myPackage.getQualifiedName(), true).findAll();
     myIncludeLibraries = includeLibraries;
   }
 

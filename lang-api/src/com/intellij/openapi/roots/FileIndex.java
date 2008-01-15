@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -79,16 +78,4 @@ public interface FileIndex {
    * @return true if the file or directory belongs to a test source root, false otherwise.
    */
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
-
-  /**
-   * Returns all directories in content sources and libraries (and optionally library sources)
-   * corresponding to the given package name.
-   *
-   * @param packageName           the name of the package for which directories are requested.
-   * @param includeLibrarySources if true, directories under library sources are included in the returned list.
-   * @return the list of directories.
-   */
-  VirtualFile[] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources);
-
-  Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 }

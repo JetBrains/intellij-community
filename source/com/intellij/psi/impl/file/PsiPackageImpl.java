@@ -89,8 +89,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     public DirectoriesSearch() {
       registerExecutor(new QueryExecutor<PsiDirectory, GlobalSearchScope>() {
         public boolean execute(final GlobalSearchScope scope, final Processor<PsiDirectory> consumer) {
-          FileIndex projectFileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
-          projectFileIndex.getDirsByPackageName(myQualifiedName, false).forEach(new ReadActionProcessor<VirtualFile>() {
+          PackageIndex.getInstance(getProject()).getDirsByPackageName(myQualifiedName, false).forEach(new ReadActionProcessor<VirtualFile>() {
             public boolean processInReadAction(final VirtualFile dir) {
               if (!scope.contains(dir)) return true;
               PsiDirectory psiDir = myManager.findDirectory(dir);

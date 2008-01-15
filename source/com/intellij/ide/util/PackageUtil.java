@@ -229,10 +229,8 @@ public class PackageUtil {
   private static PsiDirectory[] getPackageDirectoriesInModule(PsiPackage rootPackage, Module module) {
     final PsiManager manager = PsiManager.getInstance(module.getProject());
     final String packageName = rootPackage.getQualifiedName();
-    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    final ModuleFileIndex moduleFileIndex = moduleRootManager.getFileIndex();
     final List<PsiDirectory> moduleDirectoryList = new ArrayList<PsiDirectory>();
-    moduleFileIndex.getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
+    PackageIndex.getInstance(module).getDirsByPackageName(packageName, false).forEach(new Processor<VirtualFile>() {
       public boolean process(final VirtualFile directory) {
         moduleDirectoryList.add(manager.findDirectory(directory));
         return true;
@@ -279,12 +277,11 @@ public class PackageUtil {
   }
 
   private static PsiPackage findLongestExistingPackage(Module module, String packageName) {
-    final ModuleFileIndex moduleFileIndex = ModuleRootManager.getInstance(module).getFileIndex();
     final PsiManager manager = PsiManager.getInstance(module.getProject());
 
     String nameToMatch = packageName;
     while (true) {
-      Query<VirtualFile> vFiles = moduleFileIndex.getDirsByPackageName(nameToMatch, false);
+      Query<VirtualFile> vFiles = PackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false);
       PsiDirectory directory = getWritableDirectory(vFiles, manager);
       if (directory != null) return JavaDirectoryService.getInstance().getPackage(directory);
 
