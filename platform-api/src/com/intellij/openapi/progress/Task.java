@@ -88,7 +88,7 @@ public abstract class Task implements TaskInfo {
   }
 
   public boolean isHeadless() {
-    return ApplicationManager.getApplication().isUnitTestMode();
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   public final Task setCancelTooltipText(final String cancelTooltipText) {
