@@ -3,9 +3,10 @@
  */
 package com.intellij.jsp.impl;
 
-import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlNSDescriptor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -13,7 +14,14 @@ import com.intellij.psi.xml.XmlFile;
 public interface TldDescriptor extends XmlNSDescriptor {
   XmlElementDescriptor getElementDescriptor(String name);
 
+  @Nullable
   String getUri();
+
+  /**
+   *
+   * @return short name, or empty string if not present
+   */
+  String getDefaultPrefix();
 
   int getFunctionsCount();
 

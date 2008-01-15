@@ -16,8 +16,10 @@ import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -72,6 +74,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   @NonNls private static final String URI_ATT = "uri";
   @NonNls private static final String TAGDIR_ATT = "tagdir";
   @NonNls private static final String IMPORT_ATTR_NAME = "import";
+
+  public static final HighlightInfoType UNKNOWN_NS_ERROR = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+  public static final HighlightInfoType UNKNOWN_NS_WARNING = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
     myRefCountHolder = refCountHolder;
@@ -194,7 +199,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
                                 containingFile.getFileType() == StdFileTypes.XML;
 
           final int messageLength = namespacePrefix.length();
-          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
+          final HighlightInfoType infoType = error ? UNKNOWN_NS_ERROR : UNKNOWN_NS_WARNING;
 
           if (element instanceof XmlTag) {
             bindMessageToTag(

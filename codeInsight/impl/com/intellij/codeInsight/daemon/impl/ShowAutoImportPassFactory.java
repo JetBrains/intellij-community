@@ -39,7 +39,7 @@ public class ShowAutoImportPassFactory extends AbstractProjectComponent implemen
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    if (!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
+    if (!file.getLanguage().equals(StdLanguages.JAVA)) return null;
     return new ShowAutoImportPass(myProject, editor);
   }
 }

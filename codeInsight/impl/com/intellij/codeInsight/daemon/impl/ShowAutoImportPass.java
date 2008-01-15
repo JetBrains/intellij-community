@@ -43,14 +43,14 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
-  private final Editor myEditor;
+  protected final Editor myEditor;
 
-  private final PsiFile myFile;
+  protected final PsiFile myFile;
 
   private final int myStartOffset;
   private final int myEndOffset;
 
-  ShowAutoImportPass(@NotNull Project project, @NotNull Editor editor) {
+  public ShowAutoImportPass(@NotNull Project project, @NotNull Editor editor) {
     super(project, editor.getDocument());
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -107,7 +107,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
+  private HighlightInfo[] getVisibleHighlights(int startOffset, int endOffset, Project project, Editor editor) {
     HighlightInfo[] highlights = DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), project);
     if (highlights == null) return HighlightInfo.EMPTY_ARRAY;
 
@@ -122,7 +122,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return array.toArray(new HighlightInfo[array.size()]);
   }
 
-  private boolean showAddImportHint(HighlightInfo info, PsiElement element) {
+  protected boolean showAddImportHint(HighlightInfo info, PsiElement element) {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
     if (!element.isValid()) return false;
@@ -134,7 +134,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return isWrongRef(infoType) && handleWrongRefInfo(myEditor, (PsiJavaCodeReferenceElement)element, true);
   }
 
-  private static boolean isWrongRef(final HighlightInfoType infoType) {
+  protected boolean isWrongRef(final HighlightInfoType infoType) {
     return infoType.getAttributesKey() == HighlightInfoType.WRONG_REF.getAttributesKey();
   }
 
@@ -218,14 +218,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     }
     classes = availableClasses.toArray(new PsiClass[availableClasses.size()]);
     CodeInsightUtil.sortIdenticalShortNameClasses(classes, psiFile);
-    @NonNls String messageKey = classes.length > 1 ? "import.popup.multiple" : "import.popup.text";
 
-    String hintText = QuickFixBundle.message(messageKey, classes[0].getQualifiedName());
-
-    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-
-    int offset1 = ref.getTextOffset();
-    int offset2 = ref.getTextRange().getEndOffset();
     final QuestionAction action = new AddImportAction(manager.getProject(), ref, editor, classes);
 
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(manager.getProject());
@@ -243,11 +236,21 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       });
       return false;
     }
+
     if (showAddImportHint) {
-      HintManager hintManager = HintManager.getInstance();
-      hintManager.showQuestionHint(editor, hintText, offset1, offset2, action);
+      String hintText = getMessage(classes.length > 1, classes[0].getQualifiedName());
+      final int offset1 = ref.getTextOffset();
+      final int offset2 = ref.getTextRange().getEndOffset();
+      HintManager.getInstance().showQuestionHint(editor, hintText, offset1, offset2, action);
     }
     return true;
+  }
+
+  protected static String getMessage(final boolean multiple, final String name) {
+    final @NonNls String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
+    String hintText = QuickFixBundle.message(messageKey, name);
+    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    return hintText;
   }
 
   private static boolean isFromDefaultPackage(PsiClass aClass) {
@@ -300,7 +303,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static boolean isCaretNearRef(Editor editor, PsiJavaCodeReferenceElement ref) {
+  protected static boolean isCaretNearRef(Editor editor, PsiElement ref) {
     TextRange range = ref.getTextRange();
     int offset = editor.getCaretModel().getOffset();
 

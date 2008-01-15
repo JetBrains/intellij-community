@@ -26,10 +26,7 @@ import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
@@ -134,7 +131,10 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
       new StringToAttributeProcessor() {
         @NotNull
         public TextRange doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
-          final XmlAttribute attribute = insertNsDeclaration(file, attrName, project);
+
+          final XmlAttribute attribute = myTaglibDeclaration ?
+                                         insertTaglibDeclaration((XmlFile)file, attrName, project, myNamespacePrefix) :
+                                         insertNsDeclaration((XmlFile)file, attrName, project, myNamespacePrefix);
           final TextRange range = attribute.getValueTextRange();
           return range.shiftRight(attribute.getValueElement().getTextRange().getStartOffset());
         }
@@ -146,42 +146,52 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
     );
   }
 
-  private XmlAttribute insertNsDeclaration(final PsiFile file, final String namespace, final Project project)
+  public static XmlAttribute insertTaglibDeclaration(final XmlFile file, final String namespace, final Project project, final String prefix)
     throws IncorrectOperationException {
-    final XmlTag rootTag = ((XmlFile)file).getDocument().getRootTag();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(rootTag.getProject()).getElementFactory();
+    final XmlDocument document = file.getDocument();
+    assert document != null;
+    final XmlTag rootTag = document.getRootTag();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-    if (myTaglibDeclaration) {
-      final XmlTag childTag = rootTag.createChildTag("directive.taglib", XmlUtil.JSP_URI, null, false);
-      PsiElement element = childTag.add(elementFactory.createXmlAttribute("prefix", myNamespacePrefix));
+    assert rootTag != null;
+    final XmlTag childTag = rootTag.createChildTag("directive.taglib", XmlUtil.JSP_URI, null, false);
+    PsiElement element = childTag.add(elementFactory.createXmlAttribute("prefix", prefix));
 
-      childTag.addAfter(
-        elementFactory.createXmlAttribute(URI_ATTR_NAME,namespace),
-        element
+    childTag.addAfter(
+      elementFactory.createXmlAttribute(URI_ATTR_NAME,namespace),
+      element
+    );
+
+    final XmlTag[] directives = ((JspFile)file).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
+
+    if (directives == null || directives.length == 0) {
+      element = rootTag.addBefore(
+        childTag, rootTag.getFirstChild()
       );
-
-      final XmlTag[] directives = ((JspFile)file).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
-
-      if (directives == null || directives.length == 0) {
-        element = rootTag.addBefore(
-          childTag, rootTag.getFirstChild()
-        );
-      } else {
-        element = rootTag.addAfter(
-          childTag, directives[directives.length - 1]
-        );
-      }
-
-      CodeStyleManager.getInstance(project).reformat(element);
-      return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
-    }
-    else {
-      @NonNls final String name = "xmlns" + (myNamespacePrefix.length() > 0 ? ":"+myNamespacePrefix:"");
-      rootTag.add(
-        elementFactory.createXmlAttribute(name,namespace)
+    } else {
+      element = rootTag.addAfter(
+        childTag, directives[directives.length - 1]
       );
-      return rootTag.getAttribute(name, null);
     }
+
+    CodeStyleManager.getInstance(project).reformat(element);
+    return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
+  }
+
+
+  public static XmlAttribute insertNsDeclaration(final XmlFile file, final String namespace, final Project project, final String prefix)
+    throws IncorrectOperationException {
+
+    final XmlDocument document = file.getDocument();
+    assert document != null;
+    final XmlTag rootTag = document.getRootTag();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+
+    @NonNls final String name = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
+    rootTag.add(
+      elementFactory.createXmlAttribute(name,namespace)
+    );
+    return rootTag.getAttribute(name, null);
   }
 
   public boolean startInWriteAction() {
