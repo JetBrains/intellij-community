@@ -8,6 +8,9 @@
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
     <action id="CloseWindow" class="com.intellij.ide.actions.CloseWindowAction"/>
 
+    <action id="NextEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectNextEditorTabAction"/>
+    <action id="PreviousEditorTab" class="com.intellij.openapi.fileEditor.impl.SelectPreviousEditorTabAction"/>
+    
     <action id="TextComponent.ClearAction" class="com.intellij.ui.ClearTextAction"/>
 
     <group id="EditorActions">

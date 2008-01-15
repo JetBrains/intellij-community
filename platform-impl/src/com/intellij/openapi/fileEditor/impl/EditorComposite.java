@@ -2,6 +2,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
+import com.intellij.ui.PrevNextActionsDescriptor;
 import com.intellij.ui.TabbedPaneWrapper;
 import org.jetbrains.annotations.NotNull;
 
@@ -85,7 +87,8 @@ public abstract class EditorComposite{
     myInitialFileModificationStamp = myFile.getModificationStamp();
 
     if(editors.length > 1){
-      final TabbedPaneWrapper wrapper = new TabbedPaneWrapper(SwingConstants.BOTTOM, false);
+      final TabbedPaneWrapper wrapper = new TabbedPaneWrapper(SwingConstants.BOTTOM, new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB,
+                                                                                                                   IdeActions.ACTION_PREVIOUS_EDITOR_TAB));
       myTabbedPaneWrapper=wrapper;
       myComponent=new MyComponent(wrapper.getComponent()){
         public boolean requestFocusInWindow() {

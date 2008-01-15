@@ -86,6 +86,8 @@ public interface IdeActions {
   @NonNls String ACTION_PREVIOUS_OCCURENCE = "PreviousOccurence";
   @NonNls String ACTION_NEXT_TAB = "NextTab";
   @NonNls String ACTION_PREVIOUS_TAB = "PreviousTab";
+  @NonNls String ACTION_NEXT_EDITOR_TAB = "NextEditorTab";
+  @NonNls String ACTION_PREVIOUS_EDITOR_TAB = "PreviousEditorTab";
   @NonNls String ACTION_FIND = "Find";
   @NonNls String ACTION_FIND_NEXT = "FindNext";
   @NonNls String ACTION_FIND_PREVIOUS = "FindPrevious";

@@ -3,6 +3,7 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.util.IJSwingUtilities;
 import org.jetbrains.annotations.NonNls;
@@ -28,6 +29,10 @@ import java.lang.reflect.Method;
  * @author Vladimir Kondratyev
  */
 public class TabbedPaneWrapper {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.TabbedPaneWrapper");
+
+  private final static PrevNextActionsDescriptor DEFAULT_SHORTCUTS = new PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_TAB,
+                                                                                                   IdeActions.ACTION_NEXT_TAB);
   protected final TabbedPane myTabbedPane;
   protected final JComponent myTabbedPaneHolder;
 
@@ -43,11 +48,11 @@ public class TabbedPaneWrapper {
    * <code>SwingConstants.RIGHT</code>.
    */
   public TabbedPaneWrapper(final int tabPlacement) {
-    this(tabPlacement, true);
+    this(tabPlacement, DEFAULT_SHORTCUTS);
   }
 
 
-  public TabbedPaneWrapper(int tabPlacement, boolean installKeyboardNavigation) {
+  public TabbedPaneWrapper(int tabPlacement, PrevNextActionsDescriptor installKeyboardNavigation) {
     assertIsDispatchThread();
 
     myTabbedPane = createTabbedPane(tabPlacement);
@@ -357,7 +362,7 @@ public class TabbedPaneWrapper {
     private ScrollableTabSupport myScrollableTabSupport;
     private AnAction myNextTabAction = null;
     private AnAction myPreviousTabAction = null;
-    private boolean myInstallKeyboardNavigation = true;
+    private PrevNextActionsDescriptor myInstallKeyboardNavigation = null;
 
     public TabbedPane(final int tabPlacement) {
       super(tabPlacement);
@@ -374,21 +379,21 @@ public class TabbedPaneWrapper {
     @Override
     public void addNotify() {
       super.addNotify();
-      if (myInstallKeyboardNavigation) {
-        installKeyboardNavigation();
+      if (myInstallKeyboardNavigation != null) {
+        installKeyboardNavigation(myInstallKeyboardNavigation);
       }
     }
 
     @Override
     public void removeNotify() {
       super.removeNotify();
-      if (myInstallKeyboardNavigation) {
+      if (myInstallKeyboardNavigation != null) {
         uninstallKeyboardNavigation();
       }
     }
 
     @SuppressWarnings({"NonStaticInitializer"})
-    private void installKeyboardNavigation(){
+    private void installKeyboardNavigation(final PrevNextActionsDescriptor installKeyboardNavigation){
       myNextTabAction = new AnAction() {
         {
           setEnabledInModalContext(true);
@@ -402,8 +407,10 @@ public class TabbedPaneWrapper {
           setSelectedIndex(index);
         }
       };
+      final AnAction nextAction = ActionManager.getInstance().getAction(installKeyboardNavigation.getNextActionId());
+      LOG.assertTrue(nextAction != null, "Cannot find action with specified id: " + installKeyboardNavigation.getNextActionId());
       myNextTabAction.registerCustomShortcutSet(
-        ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB).getShortcutSet(),
+        nextAction.getShortcutSet(),
         this
       );
 
@@ -420,8 +427,10 @@ public class TabbedPaneWrapper {
           setSelectedIndex(index);
         }
       };
+      final AnAction prevAction = ActionManager.getInstance().getAction(installKeyboardNavigation.getPrevActionId());
+      LOG.assertTrue(prevAction != null, "Cannot find action with specified id: " + installKeyboardNavigation.getPrevActionId());
       myPreviousTabAction.registerCustomShortcutSet(
-        ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB).getShortcutSet(),
+        prevAction.getShortcutSet(),
         this
       );
     }
