@@ -92,7 +92,10 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
     }
     PsiElement parent = orig.getParent();
     if (parent == null) return;
-    if (statement instanceof PsiBlockStatement) {
+    if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock) {
+      // See IDEADEV-24277
+      // Code block can only be inlined into another (parent) code block.
+      // Code blocks, which are if or loop statement branches should not be inlined.
       PsiCodeBlock codeBlock = ((PsiBlockStatement)statement).getCodeBlock();
       PsiJavaToken lBrace = codeBlock.getLBrace();
       PsiJavaToken rBrace = codeBlock.getRBrace();
