@@ -16,7 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.psi.tree.IElementType;
 
 /**
@@ -42,8 +42,8 @@ public interface TokenType {
 
   IElementType ERROR_ELEMENT = new IElementType("ERROR_ELEMENT", Language.ANY);
 
-  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", StdLanguages.TEXT);
-  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", StdLanguages.TEXT);
+  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", FileTypes.PLAIN_TEXT.getLanguage());
+  IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", FileTypes.PLAIN_TEXT.getLanguage());
   IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
   IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", Language.ANY);
 }

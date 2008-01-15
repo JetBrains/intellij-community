@@ -84,7 +84,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
     final FileType fileType = file.getFileType();
     if (fileType instanceof LanguageFileType) {
-      if (fileType != StdFileTypes.JAVA && isTooLarge(file)) return StdLanguages.TEXT;
+      if (fileType != StdFileTypes.JAVA && isTooLarge(file)) return FileTypes.PLAIN_TEXT.getLanguage();
 
       final LanguageFileType languageFileType = (LanguageFileType)fileType;
       return languageFileType.getLanguage();
@@ -94,7 +94,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
              fileType == StdFileTypes.IDEA_MODULE ||
              fileType == StdFileTypes.IDEA_PROJECT ||
              fileType == StdFileTypes.IDEA_WORKSPACE) {
-      return StdLanguages.TEXT;
+      return FileTypes.PLAIN_TEXT.getLanguage();
     }
     return Language.ANY;
   }
