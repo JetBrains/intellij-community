@@ -9,18 +9,17 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -535,23 +534,6 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements ModuleCo
       for (VirtualFilePointer pointer : pointers) {
         manager.kill(pointer, null);
       }
-    }
-  }
-
-  static void checkCircularDependencies(ModifiableRootModel[] _rootModels, ModifiableModuleModel moduleModel)
-    throws ModuleCircularDependencyException {
-    List<RootModelImpl> rootModels = new ArrayList<RootModelImpl>();
-    for (ModifiableRootModel _rootModel : _rootModels) {
-      RootModelImpl rootModel = (RootModelImpl)_rootModel;
-      if (rootModel.isChanged()) {
-        rootModels.add(rootModel);
-      }
-    }
-    DFSTBuilder<RootModelImpl> dfstBuilder = createDFSTBuilder(rootModels, moduleModel);
-    Pair<RootModelImpl, RootModelImpl> circularDependency = dfstBuilder.getCircularDependency();
-    if (circularDependency != null) {
-      throw new ModuleCircularDependencyException(circularDependency.first.getModule().getName(),
-                                                  circularDependency.second.getModule().getName());
     }
   }
 

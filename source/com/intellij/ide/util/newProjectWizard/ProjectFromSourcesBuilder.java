@@ -169,7 +169,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
   @NotNull
   public Module createModule(final Project project, final ModuleDescriptor descriptor, final Map<String, String> sourceRootToPrefixMap,
                              final Map<LibraryDescriptor, Library> projectLibs, final ModifiableModuleModel moduleModel) 
-    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException, ModuleCircularDependencyException {
+    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
 
     final String name = descriptor.getName();
     final String moduleFilePath;
