@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -321,9 +320,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     try {
-      final String projectLocationHash = project.getLocationHash();
-      final boolean projectAlreadyProcessed = myProcessedProjects.contains(projectLocationHash);
-      myProcessedProjects.add(projectLocationHash);
+      final boolean projectAlreadyProcessed = !myProcessedProjects.add(project.getLocationHash());
 
       ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
         public boolean processFile(final VirtualFile file) {
@@ -355,21 +352,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       indicesToDrop.remove(key);
     }
     for (String s : indicesToDrop) {
-      final File file = getStorageFile(s);
-      final String filename = file.getName();
-      final File[] toDelete = file.getParentFile().listFiles(new FileFilter() {
-        public boolean accept(final File pathname) {
-          if (pathname.isFile()) {
-            if (pathname.getName().startsWith(filename)) {
-              return true;
-            }
-          }
-          return false;
-        }
-      });
-      for (File f : toDelete) {
-        FileUtil.delete(f);
-      }
+      FileUtil.delete(getIndexRootDir(s));
     }
   }
 
@@ -398,7 +381,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   private static File getStorageFile(final String indexName) {
-    return new File(getPersistenceRoot(), indexName.toLowerCase(Locale.US) + ".vfi");
+    return new File(getIndexRootDir(indexName), indexName);
+  }
+
+  private static File getIndexRootDir(final String indexName) {
+    final File indexDir = new File(getPersistenceRoot(), indexName.toLowerCase(Locale.US));
+    indexDir.mkdirs();
+    return indexDir;
   }
 
   private static File getPersistenceRoot() {
