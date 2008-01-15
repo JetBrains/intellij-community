@@ -242,7 +242,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   protected void assertExportedModuleLibDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<String>();
 
-    getRootManager(moduleName).processOrder(new JavaRootPolicy<Object>() {
+    getRootManager(moduleName).processOrder(new RootPolicy<Object>() {
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
         if (e.isExported()) actual.add(e.getLibraryName());
