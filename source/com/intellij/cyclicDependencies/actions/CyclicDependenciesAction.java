@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.packageDependencies.JavaAnalysisScope;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.IdeBorderFactory;
@@ -102,7 +103,7 @@ public class CyclicDependenciesAction extends AnAction{
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs == null || dirs.length == 0) return null;
-      return new AnalysisScope(pack);
+      return new JavaAnalysisScope(pack, DataKeys.MODULE.getData(dataContext));
     } else if (psiTarget != null){
       return null;
     }

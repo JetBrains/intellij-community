@@ -4,10 +4,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.packageDependencies.BackwardDependenciesBuilder;
-import com.intellij.packageDependencies.DependenciesBuilder;
-import com.intellij.packageDependencies.FindDependencyUtil;
-import com.intellij.packageDependencies.ForwardDependenciesBuilder;
+import com.intellij.packageDependencies.*;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -49,7 +46,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
 
   public void testForwardPackageScope(){
     final PsiPackage bPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("com.b");
-    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
+    final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, new JavaAnalysisScope(bPackage, null));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
     searchFor.add(myJavaFacade.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());
@@ -80,7 +77,7 @@ public class UsagesInAnalyzingDependenciesTest extends PsiTestCase{
 
    public void testBackwardPackageScope(){
      final PsiPackage bPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("com.a");
-    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new AnalysisScope(bPackage));
+    final DependenciesBuilder builder = new BackwardDependenciesBuilder(myProject, new JavaAnalysisScope(bPackage, null));
     builder.analyze();
     final Set<PsiFile> searchFor = new HashSet<PsiFile>();
     searchFor.add(myJavaFacade.findClass("com.a.A", GlobalSearchScope.allScope(myProject)).getContainingFile());

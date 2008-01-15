@@ -16,6 +16,7 @@
 
 package com.intellij.analysis;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -39,7 +40,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -54,11 +54,12 @@ import java.util.*;
 public class AnalysisScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.AnalysisScope");
 
+  public static final DataKey<AnalysisScope> KEY = DataKey.create("analysisScope"); 
+
   public static final int PROJECT = 1;
   public static final int DIRECTORY = 2;
   public static final int FILE = 3;
   public static final int MODULE = 4;
-  public static final int PACKAGE = 5;
   public static final int INVALID = 6;
   public static final int MODULES = 7;
 
@@ -68,14 +69,14 @@ public class AnalysisScope {
   public static int UNCOMMITED_FILES = 10;
 
   private final Project myProject;
-  private final List<Module> myModules;
-  private final Module myModule;
-  private final PsiElement myElement;
+  protected List<Module> myModules;
+  protected Module myModule;
+  protected PsiElement myElement;
   private final SearchScope myScope;
   private boolean mySearchInLibraries = false;
-  private final int myType;
+  protected int myType;
 
-  private HashSet<VirtualFile> myFilesSet;
+  protected HashSet<VirtualFile> myFilesSet;
 
   private boolean myIncludeTestSource = true;
 
@@ -115,15 +116,6 @@ public class AnalysisScope {
     myType = DIRECTORY;    
   }
 
-  public AnalysisScope(PsiPackage psiPackage) {
-    myProject = null;
-    myModule = null;
-    myModules = null;
-    myScope = null;
-    myElement = psiPackage;
-    myType = PACKAGE;
-  }
-
   public AnalysisScope(PsiFile psiFile) {
     myProject = null;
     myElement = psiFile;
@@ -160,16 +152,16 @@ public class AnalysisScope {
     myIncludeTestSource = includeTestSource;
   }
 
-  private PsiElementVisitor createFileSearcher() {
+  protected PsiElementVisitor createFileSearcher() {
     final FileIndex fileIndex;
-    if (myProject != null){
-      fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    } else if (myModule != null){
+    if (myModule != null){
       fileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
     } else if (myModules != null && !myModules.isEmpty()){
       fileIndex = ProjectRootManager.getInstance(myModules.get(0).getProject()).getFileIndex();
     } else if (myElement != null){
       fileIndex = ProjectRootManager.getInstance(myElement.getProject()).getFileIndex();
+    } else if (myProject != null){
+      fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     } else {
       //can't be
       fileIndex = null;
@@ -212,117 +204,23 @@ public class AnalysisScope {
     return myFilesSet.contains(file);
   }
 
-  private void initFilesSet() {
+  protected void initFilesSet() {
     if (myType == FILE) {
       myFilesSet = new HashSet<VirtualFile>(1);
       myFilesSet.add(((PsiFileSystemItem)myElement).getVirtualFile());
     }
-    else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == PACKAGE || myType == CUSTOM) {
+    else if (myType == DIRECTORY || myType == PROJECT || myType == MODULES || myType == MODULE || myType == CUSTOM) {
       myFilesSet = new HashSet<VirtualFile>();
       accept(createFileSearcher());
     }
   }
 
-  public AnalysisScope[] getNarrowedComplementaryScope(Project defaultProject) {
-    if (myType == PROJECT || myType == CUSTOM) {
-      return new AnalysisScope[]{new AnalysisScope(defaultProject)};
-    }
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
-    final HashSet<Module> modules = new HashSet<Module>();
-    if (myType == FILE) {
-      if (myElement instanceof PsiJavaFile && !PsiUtil.isInJspFile(myElement)) {
-        PsiJavaFile psiJavaFile = (PsiJavaFile)myElement;
-        final PsiClass[] classes = psiJavaFile.getClasses();
-        boolean onlyPackLocalClasses = true;
-        for (final PsiClass aClass : classes) {
-          if (aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-            onlyPackLocalClasses = false;
-          }
-        }
-        if (onlyPackLocalClasses) {
-          final PsiDirectory psiDirectory = psiJavaFile.getContainingDirectory();
-          if (psiDirectory != null) {
-            return new AnalysisScope[]{new AnalysisScope(JavaDirectoryService.getInstance().getPackage(psiDirectory))};
-          }
-        }
-      }
-      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
-      modules.addAll(getAllInterestingModules(fileIndex, vFile));
-    }
-    else if (myType == DIRECTORY) {
-      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
-      modules.addAll(getAllInterestingModules(fileIndex, vFile));
-    }
-    else if (myType == PACKAGE) {
-      final PsiDirectory[] directories = ((PsiPackage)myElement).getDirectories();
-      for (PsiDirectory directory : directories) {
-        modules.addAll(getAllInterestingModules(fileIndex, directory.getVirtualFile()));
-      }
-    }
-    else if (myType == MODULE) {
-      modules.add(myModule);
-    } else if (myType == MODULES){
-      modules.addAll(myModules);
-    }
-
-    if (modules.isEmpty()) {
-      return new AnalysisScope[]{new AnalysisScope(defaultProject)};
-    }
-    HashSet<AnalysisScope> result = new HashSet<AnalysisScope>();
-    final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
-    for (final Module module : modules) {
-      Set<Module> modulesToAnalyze = getDirectBackwardDependencies(module, allModules);
-      modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
-      modulesToAnalyze.add(module);
-      result.add(new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()])));
-    }
-    return result.toArray(new AnalysisScope[result.size()]);
-  }
-
-
-  private static Set<Module> getExportBackwardDependencies(Module fromModule, Module [] allModules) {
-    Set<Module> result = new HashSet<Module>();
-    for (Module module : allModules) {
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
-      for (OrderEntry orderEntry : orderEntries) {
-        if (orderEntry instanceof ModuleOrderEntry && ((ExportableOrderEntry)orderEntry).isExported() &&
-            fromModule == ((ModuleOrderEntry)orderEntry).getModule()) {
-          result.addAll(getDirectBackwardDependencies(module, allModules));
-        }
-      }
-    }
-    return result;
-  }
-
-  private static Set<Module> getDirectBackwardDependencies(Module module, Module [] allModules) {
-    Set<Module> result = new HashSet<Module>();
-    for (Module dependency : allModules) {
-      if (ArrayUtil.find(ModuleRootManager.getInstance(dependency).getDependencies(), module) > -1) {
-        result.add(dependency);
-      }
-    }
-    return result;
-  }
-
-  private static HashSet<Module> getAllInterestingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
-    final HashSet<Module> modules = new HashSet<Module>();
-    if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
-      for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
-        modules.add(orderEntry.getOwnerModule());
-      }
-    }
-    else {
-      modules.add(fileIndex.getModuleForFile(vFile));
-    }
-    return modules;
-  }
 
   public void accept(final PsiElementVisitor visitor) {
     accept(visitor, !ApplicationManager.getApplication().isReadAccessAllowed());
   }
 
-  private void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
+  protected void accept(final PsiElementVisitor visitor, final boolean needReadAction) {
     if (myType == VIRTUAL_FILES) {
       final PsiManager psiManager = PsiManager.getInstance(myProject);
       for (final VirtualFile file : myFilesSet) {
@@ -337,7 +235,7 @@ public class AnalysisScope {
           if (fileOrDir.isDirectory()) return true;
           final boolean isInScope = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
             public Boolean compute() {
-              return Boolean.valueOf(((GlobalSearchScope)myScope).contains(fileOrDir));
+              return ((GlobalSearchScope)myScope).contains(fileOrDir);
             }
           }).booleanValue();
           if (isInScope && (myIncludeTestSource || !projectFileIndex.isInTestSourceContent(fileOrDir))) {
@@ -362,14 +260,6 @@ public class AnalysisScope {
           }
         }
       });
-    } else if (myProject != null) {
-      final PsiManager psiManager = PsiManager.getInstance(myProject);
-      final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      projectFileIndex.iterateContent(new ContentIterator() {
-        public boolean processFile(final VirtualFile fileOrDir) {
-          return AnalysisScope.this.processFile(fileOrDir, visitor, projectFileIndex, psiManager, needReadAction);
-        }
-      });
     }
     else if (myModule != null) {
       final FileIndex moduleFileIndex = ModuleRootManager.getInstance(myModule).getFileIndex();
@@ -391,25 +281,21 @@ public class AnalysisScope {
         });
       }
     }
-    else if (myElement instanceof PsiPackage) {
-      final PsiPackage pack = (PsiPackage)myElement;
-      final Set<PsiDirectory> dirs = new HashSet<PsiDirectory>();
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          dirs.addAll(Arrays.asList(pack.getDirectories(GlobalSearchScope.projectScope(myElement.getProject()))));
-        }
-      });
-      for (PsiDirectory dir : dirs) {
-        accept(dir, visitor, needReadAction);
-      }
-    }
     else if (myElement instanceof PsiDirectory) {
       accept((PsiDirectory)myElement, visitor, needReadAction);
     }
-    else {
+    else if (myElement != null){
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           myElement.accept(visitor);
+        }
+      });
+    } else if (myProject != null) {
+      final PsiManager psiManager = PsiManager.getInstance(myProject);
+      final FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
+      projectFileIndex.iterateContent(new ContentIterator() {
+        public boolean processFile(final VirtualFile fileOrDir) {
+          return AnalysisScope.this.processFile(fileOrDir, visitor, projectFileIndex, psiManager, needReadAction);
         }
       });
     }
@@ -449,7 +335,7 @@ public class AnalysisScope {
     return indicator == null || !indicator.isCanceled();
   }
 
-  private void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor, final boolean needReadAction) {
+  protected void accept(@NotNull final PsiDirectory dir, @NotNull final PsiElementVisitor visitor, final boolean needReadAction) {
     final Project project = dir.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
@@ -508,9 +394,6 @@ public class AnalysisScope {
 
       case DIRECTORY:
         return AnalysisScopeBundle.message("scope.directory", ((PsiFileSystemItem)myElement).getVirtualFile().getPresentableUrl());
-
-      case PACKAGE:
-        return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
     }
 
     return "";
@@ -541,8 +424,6 @@ public class AnalysisScope {
       case DIRECTORY:
         return AnalysisScopeBundle.message("scope.directory", ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject()));
 
-      case PACKAGE:
-        return AnalysisScopeBundle.message("scope.package", ((PsiPackage)myElement).getQualifiedName());
 
       case VIRTUAL_FILES:
         return AnalysisScopeBundle.message("scope.selected.files");
@@ -610,11 +491,6 @@ public class AnalysisScope {
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
       LOG.assertTrue(profileManager != null);
       processDirectories(new PsiDirectory[]{(PsiDirectory)myElement}, result, profileManager);
-    } else if (myType == PACKAGE){
-      final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myElement.getProject(), Profile.INSPECTION);
-      LOG.assertTrue(profileManager != null);
-      final PsiDirectory[] psiDirectories = ((PsiPackage)myElement).getDirectories();
-      processDirectories(psiDirectories, result, profileManager);
     } else if (myType == VIRTUAL_FILES){
       final ProjectProfileManager profileManager = ProjectProfileManager.getProjectProfileManager(myProject, Profile.INSPECTION);
       final PsiManager psiManager = PsiManager.getInstance(myProject);
@@ -638,7 +514,7 @@ public class AnalysisScope {
     });
   }
 
-  private static void processDirectories(final PsiDirectory[] psiDirectories,
+  protected static void processDirectories(final PsiDirectory[] psiDirectories,
                                          final Set<String> result,
                                          final ProjectProfileManager profileManager) {
     for (final PsiDirectory directory : psiDirectories) {
@@ -694,5 +570,75 @@ public class AnalysisScope {
       }
     }
     return true;
+  }
+
+  public AnalysisScope[] getNarrowedComplementaryScope(Project defaultProject) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
+    final HashSet<Module> modules = new HashSet<Module>();
+    if (myType == FILE) {
+      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
+      modules.addAll(getAllInterestingModules(fileIndex, vFile));
+    } else if (myType == DIRECTORY) {
+      final VirtualFile vFile = ((PsiFileSystemItem)myElement).getVirtualFile();
+      modules.addAll(getAllInterestingModules(fileIndex, vFile));
+    } else if (myType == MODULE) {
+      modules.add(myModule);
+    } else if (myType == MODULES) {
+      modules.addAll(myModules);
+    }
+    return collectScopes(defaultProject, modules);
+  }
+
+  protected static AnalysisScope[] collectScopes(final Project defaultProject, final HashSet<Module> modules) {
+    if (modules.isEmpty()) {
+      return new AnalysisScope[]{new AnalysisScope(defaultProject)};
+    }
+    final HashSet<AnalysisScope> result = new HashSet<AnalysisScope>();
+    final Module[] allModules = ModuleManager.getInstance(defaultProject).getModules();
+    for (final Module module : modules) {
+      Set<Module> modulesToAnalyze = getDirectBackwardDependencies(module, allModules);
+      modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
+      modulesToAnalyze.add(module);
+      result.add(new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()])));
+    }
+    return result.toArray(new AnalysisScope[result.size()]);
+  }
+
+  private static Set<Module> getExportBackwardDependencies(Module fromModule, Module [] allModules) {
+    Set<Module> result = new HashSet<Module>();
+    for (Module module : allModules) {
+      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
+      for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof ModuleOrderEntry && ((ExportableOrderEntry)orderEntry).isExported() &&
+            fromModule == ((ModuleOrderEntry)orderEntry).getModule()) {
+          result.addAll(getDirectBackwardDependencies(module, allModules));
+        }
+      }
+    }
+    return result;
+  }
+
+  private static Set<Module> getDirectBackwardDependencies(Module module, Module [] allModules) {
+    Set<Module> result = new HashSet<Module>();
+    for (Module dependency : allModules) {
+      if (ArrayUtil.find(ModuleRootManager.getInstance(dependency).getDependencies(), module) > -1) {
+        result.add(dependency);
+      }
+    }
+    return result;
+  }
+
+  protected static HashSet<Module> getAllInterestingModules(final ProjectFileIndex fileIndex, final VirtualFile vFile) {
+    final HashSet<Module> modules = new HashSet<Module>();
+    if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
+      for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
+        modules.add(orderEntry.getOwnerModule());
+      }
+    }
+    else {
+      modules.add(fileIndex.getModuleForFile(vFile));
+    }
+    return modules;
   }
 }

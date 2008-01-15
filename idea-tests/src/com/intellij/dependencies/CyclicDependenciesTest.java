@@ -5,6 +5,7 @@ import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.packageDependencies.JavaAnalysisScope;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.PsiTestCase;
@@ -49,8 +50,8 @@ public class CyclicDependenciesTest extends PsiTestCase {
   public void testPackageScope1(){
     // com.a<->com.b
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(JavaPsiFacade
-                                                                              .getInstance(myPsiManager.getProject()).findPackage("com")));
+                                                                            new JavaAnalysisScope(JavaPsiFacade
+                                                                              .getInstance(myPsiManager.getProject()).findPackage("com"), null));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();
@@ -78,9 +79,9 @@ public class CyclicDependenciesTest extends PsiTestCase {
     //com.b<->com.a  - find
     //com.c<->com.d  - not in scope
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject,
-                                                                            new AnalysisScope(JavaPsiFacade
+                                                                            new JavaAnalysisScope(JavaPsiFacade
                                                                               .getInstance(myPsiManager.getProject()).findPackage(
-                                                                              "com.subscope1")));
+                                                                              "com.subscope1"), null));
     builder.analyze();
     final HashMap<PsiPackage, Set<List<PsiPackage>>> cyclicDependencies = builder.getCyclicDependencies();
     HashMap<String, String[][]> expected = new HashMap<String, String[][]>();

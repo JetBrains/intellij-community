@@ -11,8 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,14 +43,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Module module = e.getData(LangDataKeys.MODULE);
     if (project != null) {
-      AnalysisScope scope;
-      PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
-      if (psiFile != null) {
-        scope = new AnalysisScope(psiFile);
-      }
-      else {
-        scope = getInspectionScope(dataContext);
-      }
+      AnalysisScope scope = getInspectionScope(dataContext);
       LOG.assertTrue(scope != null);
       /*if (scope.getScopeType() == AnalysisScope.VIRTUAL_FILES){
         FileDocumentManager.getInstance().saveAllDocuments();
@@ -124,6 +118,11 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(projectContext);
     }
 
+    final AnalysisScope analysisScope = AnalysisScope.KEY.getData(dataContext);
+    if (analysisScope != null) {
+      return analysisScope;
+    }
+
     Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     if (moduleContext != null) {
       return new AnalysisScope(moduleContext);
@@ -135,7 +134,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     }
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
-      return psiFile instanceof PsiJavaFile ? new AnalysisScope(psiFile) : null;
+      return new AnalysisScope(psiFile);
     }
 
     PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -143,13 +142,6 @@ public abstract class BaseAnalysisAction extends AnAction {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
       return new AnalysisScope(psiDirectory);
-    }
-    else if (psiTarget instanceof PsiPackage) {
-      PsiPackage pack = (PsiPackage)psiTarget;
-      if (!pack.getManager().isInProject(pack)) return null;
-      PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
-      if (dirs.length == 0) return null;
-      return new AnalysisScope(pack);
     }
     else if (psiTarget != null) {
       return null;
