@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import java.awt.datatransfer.DataFlavor;
 import java.io.Serializable;
 
-public class FoldingTransferableData implements TextBlockTransferableData {
+public class FoldingTransferableData implements TextBlockTransferableData, Serializable {
   private FoldingData[] myFoldingDatas;
 
   public FoldingTransferableData(final FoldingData[] foldingDatas) {

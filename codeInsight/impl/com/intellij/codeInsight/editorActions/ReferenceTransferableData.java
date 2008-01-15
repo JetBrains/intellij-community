@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author yole
  */
-public class ReferenceTransferableData implements TextBlockTransferableData, Cloneable {
+public class ReferenceTransferableData implements TextBlockTransferableData, Cloneable, Serializable {
   private ReferenceData[] myReferenceDatas;
 
   public ReferenceTransferableData(final ReferenceData[] referenceDatas) {
