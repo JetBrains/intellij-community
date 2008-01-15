@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ClassFilter;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.scope.processor.FilterElementProcessor;
 import com.intellij.psi.xml.*;
@@ -56,7 +56,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,XmlAttlistDecl.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlAttlistDecl.class);
   }
 
   public String getName() {

@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;
@@ -58,7 +58,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,XmlElementContentSpec.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlElementContentSpec.class);
   }
 
   public void accept(@NotNull final PsiElementVisitor visitor) {

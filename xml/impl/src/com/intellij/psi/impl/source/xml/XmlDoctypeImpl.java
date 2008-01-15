@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.IElementType;
@@ -188,7 +188,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype, XmlEle
       };
     }
 
-    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this,XmlDoctype.class);
+    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlDoctype.class);
 
     return ArrayUtil.mergeArrays(
       uriRefs != null? uriRefs: PsiReference.EMPTY_ARRAY,

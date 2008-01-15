@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.tree.IElementType;
@@ -65,7 +65,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,XmlElementDecl.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlElementDecl.class);
   }
   
   public PsiElement getOriginalElement() {

@@ -6,7 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
 import com.intellij.psi.xml.XmlAttribute;
@@ -66,7 +66,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     if (cachedReferences != null && myModCount == curModCount) {
       return cachedReferences;
     }
-    cachedReferences = ResolveUtil.getReferencesFromProviders(this, XmlAttributeValue.class);
+    cachedReferences = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlAttributeValue.class);
     myCachedReferences = cachedReferences;
     myModCount = curModCount;
     return cachedReferences;

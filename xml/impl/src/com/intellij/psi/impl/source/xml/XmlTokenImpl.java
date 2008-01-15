@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -55,7 +55,7 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     if (elementType == XmlTokenType.XML_DATA_CHARACTERS ||
         elementType == XmlTokenType.XML_CHAR_ENTITY_REF
       ) {
-      return ResolveUtil.getReferencesFromProviders(this, XmlToken.class);
+      return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlToken.class);
     } else if (elementType == XmlTokenType.XML_NAME && getParent() instanceof PsiErrorElement) {
       final PsiElement element = getPrevSibling();
       

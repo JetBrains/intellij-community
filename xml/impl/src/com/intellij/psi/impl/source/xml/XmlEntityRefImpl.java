@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.xml;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -214,7 +214,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,XmlEntityRef.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlEntityRef.class);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

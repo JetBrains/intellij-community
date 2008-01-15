@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -425,7 +425,7 @@ public class PsiLiteralExpressionImpl extends CompositePsiElement implements Psi
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this, PsiLiteralExpression.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiLiteralExpression.class);
   }
 
   @Nullable

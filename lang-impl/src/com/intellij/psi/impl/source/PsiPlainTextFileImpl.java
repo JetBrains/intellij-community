@@ -2,7 +2,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFile{
@@ -28,6 +28,6 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this,PsiPlainTextFile.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this,PsiPlainTextFile.class);
   }
 }

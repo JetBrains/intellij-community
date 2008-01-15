@@ -9,7 +9,7 @@ import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.PsiElementArrayConstructor;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -88,7 +88,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
 
   @NotNull
   public PsiReference[] getReferences() {
-    return ResolveUtil.getReferencesFromProviders(this, PsiDocTag.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiDocTag.class);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {

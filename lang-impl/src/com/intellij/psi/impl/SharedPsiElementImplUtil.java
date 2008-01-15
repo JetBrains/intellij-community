@@ -7,14 +7,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassListReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 public class SharedPsiElementImplUtil {
@@ -37,17 +34,6 @@ public class SharedPsiElementImplUtil {
       element = element.getParent();
     }
 
-    // filter out optional references
-    if (referencesList.size() > 1) {
-      for (Iterator<PsiReference> i = referencesList.iterator(); i.hasNext();) {
-        final PsiReference reference = i.next();
-        if (reference instanceof JavaClassReference) {
-          if (((JavaClassReference)reference).getProvider() instanceof JavaClassListReferenceProvider) {
-            i.remove();
-          }
-        }
-      }
-    }
     if (referencesList.isEmpty()) return null;
     if (referencesList.size() == 1) return referencesList.get(0);
     return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),

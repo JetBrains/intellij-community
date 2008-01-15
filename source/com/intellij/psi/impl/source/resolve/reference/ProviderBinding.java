@@ -1,6 +1,8 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.openapi.util.Trinity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,5 +15,5 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public interface ProviderBinding {
-  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list);
+  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider,ElementFilter,Double>> list);
 }

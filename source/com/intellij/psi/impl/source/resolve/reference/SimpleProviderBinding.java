@@ -1,10 +1,11 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -18,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class SimpleProviderBinding implements ProviderBinding {
   private final Class myScope;
-  private final List<Pair<PsiReferenceProvider,ElementFilter>> myProviderPairs = new CopyOnWriteArrayList<Pair<PsiReferenceProvider, ElementFilter>>();
+  private final List<Trinity<PsiReferenceProvider,ElementFilter,Double>> myProviderPairs = new CopyOnWriteArrayList<Trinity<PsiReferenceProvider,ElementFilter,Double>>();
 
   public SimpleProviderBinding(Class scope){
     myScope = scope;
@@ -34,19 +35,19 @@ public class SimpleProviderBinding implements ProviderBinding {
     return false;
   }
 
-  public void registerProvider(PsiReferenceProvider provider,ElementFilter elementFilter){
-    myProviderPairs.add(Pair.create(provider, elementFilter));
+  public void registerProvider(PsiReferenceProvider provider,ElementFilter elementFilter,@Nullable Double priority){
+    myProviderPairs.add(Trinity.create(provider, elementFilter,priority == null ? ReferenceProvidersRegistry.DEFAULT_PRIORITY : priority));
   }
 
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<PsiReferenceProvider> list) {
-    for(Pair<PsiReferenceProvider,ElementFilter> pair:myProviderPairs) {
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ElementFilter, Double>> list) {
+    for(Trinity<PsiReferenceProvider,ElementFilter,Double> pair:myProviderPairs) {
       if (isAcceptable(position,pair.second)) {
-        list.add(pair.first);
+        list.add(pair);
       }
     }
   }
 
   public void unregisterProvider(PsiReferenceProvider provider, ElementFilter elementFilter) {
-    myProviderPairs.remove(Pair.create(provider, elementFilter));
+    myProviderPairs.remove(Trinity.create(provider, elementFilter, ReferenceProvidersRegistry.DEFAULT_PRIORITY));
   }
 }

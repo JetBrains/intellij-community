@@ -15,7 +15,7 @@ import com.intellij.pom.xml.impl.events.XmlAttributeSetImpl;
 import com.intellij.pom.xml.impl.events.XmlTagNameChangedImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.resolve.ResolveUtil;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -94,7 +94,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(this);
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(this);
-    final PsiReference[] referencesFromProviders = ResolveUtil.getReferencesFromProviders(this, XmlTag.class);
+    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlTag.class);
 
     if (endTagName != null){
       final PsiReference[] psiReferences = new PsiReference[referencesFromProviders.length + 2];
