@@ -12,6 +12,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -22,20 +24,15 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private final PersistentHashMap<Key, ValueContainerImpl<Value>> myMap;
   private final ObjectCache<Key, ValueContainerImpl<Value>> myCache;
   private Key myKeyBeingRemoved = null;
+  private Lock myFlushingLock = new ReentrantLock();
   
-  private Alarm myCacheFlushingAlarm  = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private Alarm myCacheFlushingAlarm  = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private Runnable myFlushCachesRequest = new Runnable() {
     public void run() {
       flush();
     }
   };
 
-  //private final LinkedHashMap<Key, ValueContainerImpl<Value>> myUnsavedItems = new LinkedHashMap<Key, ValueContainerImpl<Value>>();
-  //private final Object myPersistenceLock = new Object();
-
-  // todo: for debugging only:
-  //private final HashSet<Key> myUniqueKeys = new HashSet<Key>();
-  
   public MapIndexStorage(
     File storageFile, 
     final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, 
@@ -46,13 +43,10 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     myCache.addDeletedPairsListener(new ObjectCache.DeletedPairsListener() {
       public void objectRemoved(final Object key, final Object value) {
         final Key _key = (Key)key;
-        if (myCache.isCached(_key) || _key.equals(myKeyBeingRemoved)) {
-          // If the cache still contains the key, the value we see in this listener is just an outdated value.
-          // No need to save it, because the cache contains the most recent data for the key.
+        if (_key.equals(myKeyBeingRemoved)) {
           return;
         }
         try {
-          //myUniqueKeys.add(_key); // todo: for debugging only!!
           //noinspection unchecked
           myMap.put(_key, (ValueContainerImpl<Value>)value);
         }
@@ -65,6 +59,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   
   public void flush() {
     //System.out.println("Cache hit rate = " + myCache.hitRate());
+    myFlushingLock.lock();
     myCache.removeAll();
     try {
       myMap.flush();
@@ -72,8 +67,9 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     catch (IOException e) {
       LOG.error(e);
     }
-    //System.out.println("Found " + myUniqueKeys.size() + " unique keys");
-    //myUniqueKeys.clear();
+    finally {
+      myFlushingLock.unlock();
+    }
   }
   
   public void close() throws StorageException {
@@ -89,18 +85,31 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    final ValueContainer<Value> container = myCache.get(key);
-    if (container != null) {
-      return container;
+    myFlushingLock.lock();
+    try {
+      final ValueContainer<Value> container = myCache.get(key);
+      if (container != null) {
+        return container;
+      }
+      return readAndCache(key);
     }
-    return readAndCache(key);
+    finally {
+      myFlushingLock.unlock();
+    }
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    ((ValueContainerImpl<Value>)read(key)).addValue(inputId, value);
+    myFlushingLock.lock();
+    try {
+      ((ValueContainerImpl<Value>)read(key)).addValue(inputId, value);
+    }
+    finally {
+      myFlushingLock.unlock();
+    }
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
+    myFlushingLock.lock();
     ValueContainerImpl<Value> container = myCache.get(key);
     try {
       if (container == null) {
@@ -115,6 +124,9 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
     catch (IOException e) {
       throw new StorageException(e);
+    }
+    finally {
+      myFlushingLock.unlock();
     }
   }
 
@@ -140,6 +152,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   }
 
   public void remove(final Key key) throws StorageException {
+    myFlushingLock.lock();
     myKeyBeingRemoved = key;
     try {
       myCache.remove(key);
@@ -150,6 +163,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
     finally {
       myKeyBeingRemoved = null;
+      myFlushingLock.unlock();
     }
   }
   

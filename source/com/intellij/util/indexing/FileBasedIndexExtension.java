@@ -21,4 +21,6 @@ public interface FileBasedIndexExtension<K, V> {
   DataExternalizer<V> getValueExternalizer();
   
   FileBasedIndex.InputFilter getInputFilter();
+  
+  int getVersion();
 }

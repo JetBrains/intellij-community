@@ -20,7 +20,7 @@ public class IndexingStamp {
   
   private static final Map<String, FileAttribute> ourAttributes = new HashMap<String, FileAttribute>();
 
-  public static boolean isFileIndexed(VirtualFile file, String indexName) {
+  public static boolean isFileIndexed(VirtualFile file, String indexName, final long indexCreationStamp) {
     try {
       if (!file.isValid()) {
         return false;
@@ -30,9 +30,7 @@ public class IndexingStamp {
         return false;
       }
       try {
-        if (!stream.readBoolean()) {
-          return false;
-        }
+        return stream.readLong() == indexCreationStamp;
       }
       finally {
         stream.close();
@@ -42,15 +40,14 @@ public class IndexingStamp {
       LOG.info(e);
       return false;
     }
-    return true;
   }
 
-  public static void update(VirtualFile file, String indexName) {
+  public static void update(VirtualFile file, String indexName, final long indexCreationStamp) {
     try {
       if (file.isValid()) {
         final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
         try {
-          stream.writeBoolean(true);
+          stream.writeLong(indexCreationStamp);
         }
         finally {
           stream.close();
@@ -66,7 +63,7 @@ public class IndexingStamp {
   private static FileAttribute getAttribute(String indexName) {
     FileAttribute attrib = ourAttributes.get(indexName);
     if (attrib == null) {
-      attrib = new FileAttribute("_indexing_stamp_" + indexName, 1);
+      attrib = new FileAttribute("_indexing_stamp_" + indexName, 2);
       ourAttributes.put(indexName, attrib);
     }
     return attrib;
