@@ -5,6 +5,7 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -48,6 +49,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
   private VirtualFileListener myVirtualFileListener;
   private final MessageBusConnection myConnection;
+  private final DirectoryIndexExcludePolicy[] myExcludePolicies;
 
   public DirectoryIndexImpl(Project project, PsiManagerConfiguration psiManagerConfiguration, StartupManager startupManager) {
     myProject = project;
@@ -59,6 +61,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         initialize();
       }
     });
+    myExcludePolicies = Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject);
   }
 
   @NotNull
@@ -403,7 +406,6 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     Map<VirtualFile, Set<VirtualFile>> excludeRootsMap = new THashMap<VirtualFile, Set<VirtualFile>>();
     for (Module module : modules) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-      final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       ContentEntry[] contentEntries = rootManager.getContentEntries();
       for (ContentEntry contentEntry : contentEntries) {
         VirtualFile contentRoot = contentEntry.getFile();
@@ -413,7 +415,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
         for (VirtualFile excludeRoot : excludeRoots) {
           // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
           if (!VfsUtil.isAncestor(contentRoot, excludeRoot, false)) {
-            if (compilerModuleExtension.getCompilerOutputPath() == excludeRoot || compilerModuleExtension.getCompilerOutputPathForTests() == excludeRoot) {
+            if (isExcludeRootForModule(module, excludeRoot)) {
               putForFileAndAllAncestors(excludeRootsMap, excludeRoot, excludeRoot);
             }
           }
@@ -423,10 +425,19 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    VirtualFile outputPath = CompilerProjectExtension.getInstance(myProject).getCompilerOutput();
-    if (outputPath != null) putForFileAndAllAncestors(excludeRootsMap, outputPath, outputPath);
-
+    for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
+      for(VirtualFile file: policy.getExcludeRootsForProject()) {
+        putForFileAndAllAncestors(excludeRootsMap, file, file);
+      }
+    }
     return excludeRootsMap;
+  }
+
+  private boolean isExcludeRootForModule(final Module module, final VirtualFile excludeRoot) {
+    for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
+      if (policy.isExcludeRootForModule(module, excludeRoot)) return true;
+    }
+    return false;
   }
 
   private static void putForFileAndAllAncestors(Map<VirtualFile, Set<VirtualFile>> map, VirtualFile file, VirtualFile value) {
@@ -924,7 +935,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
       Module module = parentInfo.module;
 
-      if (isOutputPathOfAnyModule(file)) return;
+      for(DirectoryIndexExcludePolicy policy: myExcludePolicies) {
+        if (policy.isExcludeRoot(file)) return;
+      }
       if (module != null && isExcludedFromModule(file, module)) return;
 
       if (!LAZY_MODE) {
@@ -953,34 +966,12 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       }
     }
 
-    private boolean isOutputPathOfAnyModule(VirtualFile f) {
-      CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(myProject);
-      if (isEqualWithFileOrUrl(f, compilerProjectExtension.getCompilerOutput(), compilerProjectExtension.getCompilerOutputUrl())) return true;
-
-      for (Module m : getModules()) {
-        CompilerModuleExtension rm = CompilerModuleExtension.getInstance(m);
-        if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPath(), rm.getCompilerOutputUrl())) return true;
-        if (isEqualWithFileOrUrl(f, rm.getCompilerOutputPathForTests(), rm.getCompilerOutputUrlForTests())) return true;
-      }
-      return false;
-    }
-
     private boolean isExcludedFromModule(VirtualFile f, Module module) {
       ModuleRootManager rm = ModuleRootManager.getInstance(module);
       for (ContentEntry e : rm.getContentEntries()) {
         for (ExcludeFolder folder : e.getExcludeFolders()) {
           if (isEqualWithFileOrUrl(f, folder.getFile(), folder.getUrl())) return true;
         }
-      }
-      return false;
-    }
-
-    private boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
-      if (fileToCompareWith != null) {
-        if (fileToCompareWith == f) return true;
-      }
-      else if (url != null) {
-        if (FileUtil.pathsEqual(url, f.getUrl())) return true;
       }
       return false;
     }
@@ -1049,5 +1040,15 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
 
     public void beforeContentsChange(VirtualFileEvent event) {
     }
+  }
+
+  public static boolean isEqualWithFileOrUrl(VirtualFile f, VirtualFile fileToCompareWith, String url) {
+    if (fileToCompareWith != null) {
+      if (fileToCompareWith == f) return true;
+    }
+    else if (url != null) {
+      if (FileUtil.pathsEqual(url, f.getUrl())) return true;
+    }
+    return false;
   }
 }
