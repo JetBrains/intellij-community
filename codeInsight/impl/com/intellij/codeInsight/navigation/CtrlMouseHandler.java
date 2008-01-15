@@ -338,7 +338,7 @@ public class CtrlMouseHandler implements ProjectComponent {
           });
           return found.toArray(new PsiElement[found.size()]);
         }
-      }.searchImplementations(editor, file, element, offset);
+      }.searchImplementations(editor, element, offset);
       if ( targetElements.length > 1) {
         PsiElement elementAtPointer = findElementAtPointer(file, offset);
         if (elementAtPointer != null) {

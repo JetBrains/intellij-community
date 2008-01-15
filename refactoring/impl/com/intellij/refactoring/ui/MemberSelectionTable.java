@@ -8,6 +8,10 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
@@ -31,7 +35,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class MemberSelectionTable extends Table {
+public class MemberSelectionTable extends Table implements TypeSafeDataProvider {
   private static final int CHECKED_COLUMN = 0;
   private static final int DISPLAY_NAME_COLUMN = 1;
   private static final int ABSTRACT_COLUMN = 2;
@@ -46,7 +50,6 @@ public class MemberSelectionTable extends Table {
   private final boolean myAbstractEnabled;
   private MemberInfoModel myMemberInfoModel;
   private MyTableModel myTableModel;
-
 
   private static class DefaultMemberInfoModel implements MemberInfoModel {
     public boolean isMemberEnabled(MemberInfo member) {
@@ -173,6 +176,15 @@ public class MemberSelectionTable extends Table {
     for (Object element : list) {
       if (element instanceof MemberInfoChangeListener) {
         ((MemberInfoChangeListener)element).memberInfoChanged(event);
+      }
+    }
+  }
+
+  public void calcData(final DataKey key, final DataSink sink) {
+    if (key == LangDataKeys.PSI_ELEMENT) {
+      final MemberInfo[] memberInfos = getSelectedMemberInfos();
+      if (memberInfos.length > 0) {
+        sink.put(LangDataKeys.PSI_ELEMENT, memberInfos [0].getMember());
       }
     }
   }

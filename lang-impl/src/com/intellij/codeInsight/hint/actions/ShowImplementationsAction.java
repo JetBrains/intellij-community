@@ -67,7 +67,7 @@ public class ShowImplementationsAction extends AnAction {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
 
-    if (project == null || file == null) return;
+    if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -83,10 +83,12 @@ public class ShowImplementationsAction extends AnAction {
     }
     else {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-      final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file.getVirtualFile());
-      if (fileEditor instanceof TextEditor) {
-        editor = ((TextEditor)fileEditor).getEditor();
-      } 
+      if (file != null) {
+        final FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file.getVirtualFile());
+        if (fileEditor instanceof TextEditor) {
+          editor = ((TextEditor)fileEditor).getEditor();
+        }
+      }
     }
 
     final PsiReference ref;
@@ -114,7 +116,7 @@ public class ShowImplementationsAction extends AnAction {
     if (element != null) {
       if (element instanceof PsiPackage) return;
 
-      impls = getSelfAndImplementations(editor, file, element);
+      impls = getSelfAndImplementations(editor, element);
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
     else if (ref instanceof PsiPolyVariantReference) {
@@ -145,7 +147,7 @@ public class ShowImplementationsAction extends AnAction {
     if (element != null) {
       if (element instanceof PsiPackage) return;
 
-      impls = getSelfAndImplementations(editor, element.getContainingFile(), element);
+      impls = getSelfAndImplementations(editor, element);
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
     }
 
@@ -184,9 +186,9 @@ public class ShowImplementationsAction extends AnAction {
 
   }
 
-  private static PsiElement[] getSelfAndImplementations(Editor editor, PsiFile file, PsiElement element) {
+  private static PsiElement[] getSelfAndImplementations(Editor editor, PsiElement element) {
     GotoImplementationHandler handler = new GotoImplementationHandler() {
-      protected PsiElement[] filterElements(Editor editor, PsiFile file, PsiElement element, PsiElement[] targetElements, final int offset) {
+      protected PsiElement[] filterElements(Editor editor, PsiElement element, PsiElement[] targetElements, final int offset) {
         Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
         for (PsiElement elt : targetElements) {
           PsiFile psiFile = elt.getContainingFile();
@@ -199,7 +201,7 @@ public class ShowImplementationsAction extends AnAction {
     };
 
     int offset = editor == null ? 0 : editor.getCaretModel().getOffset();
-    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, file, element, offset, true, true);
+    final PsiElement[] handlerImplementations = handler.searchImplementations(editor, element, offset, true, true);
     if (handlerImplementations.length > 0) return handlerImplementations;
 
     PsiFile psiFile = element.getContainingFile();
