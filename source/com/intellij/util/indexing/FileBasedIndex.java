@@ -319,28 +319,41 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     indicator.pushState();
     try {
-      indicator.setText("Indexing project content");
+      indicator.setText("Building indices...");
+      final int[] fileCount = new int[] {0};
       ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+        public boolean processFile(final VirtualFile file) {
+          if (!file.isDirectory()) {
+            fileCount[0]++;
+          }
+          return true;
+        }
+      });
+      
+      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+        private int myProcessed = 0;
+        private final double myTotalCount = (double)fileCount[0]; 
         public boolean processFile(final VirtualFile file) {
           if (!file.isDirectory()) {
             for (String indexId : indicesToUpdate) {
               if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
                 try {
-                  indicator.setText2(file.getPresentableUrl());
+                  //indicator.setText2(file.getPresentableUrl());
                   updateSingleIndex(indexId, file, new FileContent(file, loadContent(file)), null);
                 }
                 catch (StorageException e) {
-                  // todo
+                  LOG.error(e);
                 }
               }
             }
+            indicator.setFraction(((double)++myProcessed)/ myTotalCount);
           }
           return true;
         }
       });
     }
     finally {
-      indicator.setText2("Saving caches");
+      indicator.setText("Saving caches...");
       myFlushStorages.execute();
       indicator.popState();
     }
@@ -433,6 +446,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private void rewriteVersion(final File file, final int version) throws IOException {
     FileUtil.delete(file);
     file.getParentFile().mkdirs();
+    file.createNewFile();
     final DataOutputStream os = new DataOutputStream(new FileOutputStream(file));
     try {
       os.writeInt(version);
