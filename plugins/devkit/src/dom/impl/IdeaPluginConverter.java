@@ -6,7 +6,7 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -43,7 +43,7 @@ public class IdeaPluginConverter extends ResolvingConverter<IdeaPlugin> {
     final Project project = xmlFile.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
 
-    final Iterable<VirtualFile> metaInfs = ProjectRootManager.getInstance(project).getFileIndex().getDirsByPackageName("META-INF", true);
+    final Iterable<VirtualFile> metaInfs = PackageIndex.getInstance(project).getDirsByPackageName("META-INF", true);
 
     for (VirtualFile metaInf : metaInfs) {
       final VirtualFile pluginXml = metaInf.findChild("plugin.xml");
