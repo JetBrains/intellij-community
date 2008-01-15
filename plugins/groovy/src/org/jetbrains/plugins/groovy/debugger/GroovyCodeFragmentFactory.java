@@ -85,8 +85,10 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
     javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(emc);\n");
     javaText.append("emc.initialize();\n");
-    javaText.append("((groovy.lang.MetaClassImpl)((groovy.lang.GroovyObject)this).getMetaClass()).invokeMethod(this, \"").append(EVAL_NAME).append("\", new Object[]{").
-        append(getCommaSeparatedNamesList(names)).append("});");
+    javaText.append("Object res = ((groovy.lang.MetaClassImpl)((groovy.lang.GroovyObject)this).getMetaClass()).invokeMethod(this, \"").append(EVAL_NAME).append("\", new Object[]{").
+        append(getCommaSeparatedNamesList(names)).append("});\n");
+    javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(mc);"); //try/finally is not supported
+    javaText.append("res");
 
     PsiElementFactory elementFactory = toEval.getManager().getElementFactory();
     PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
