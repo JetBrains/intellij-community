@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -112,11 +111,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       public void projectOpened(final Project project) {
         StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
           public void run() {
-            ProgressManager.getInstance().run(new Task.Modal(project, "Indexing", false) {
+            new Task.Modal(project, "Indexing", false) {
               public void run(@NotNull final ProgressIndicator indicator) {
                 scanContent(project, indicator);
               }
-            });
+            }.queue();
           }
         });
       }
