@@ -1,5 +1,6 @@
 package com.intellij.historyPerfTests;
 
+import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.changes.Change;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.CacheUpdaterHelper;
@@ -68,7 +69,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     assertExecutionTime(60, new RunnableAdapter() {
       public void doRun() {
         for (int i = 0; i < 10000; i++) {
-          vcs.getEntry("root/dir" + rand(10) + "/dir" + rand(10) + "/dir" + rand(10) + "/file" + rand(10));
+          vcs.getEntry(createRandomPath());
         }
       }
     });
@@ -151,6 +152,28 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
         vcs.getChain(c);
       }
     });
+  }
+
+  @Test
+  public void testSearchingForByteContent() {
+    buildVcsTree();
+    updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 1);
+    updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 2);
+    updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 3);
+
+    assertExecutionTime(1, new RunnableAdapter() {
+      public void doRun() throws Exception {
+        vcs.getByteContent(createRandomPath(), new FileRevisionTimestampComparator() {
+          public boolean isSuitable(long fileTimestamp, long revisionTimestamp) {
+            return false;
+          }
+        });
+      }
+    });
+  }
+
+  private String createRandomPath() {
+    return "root/dir" + rand(10) + "/dir" + rand(10) + "/dir" + rand(10) + "/file" + rand(10);
   }
 
   private void updateFromTreeWithTimestamp(long timestamp) {

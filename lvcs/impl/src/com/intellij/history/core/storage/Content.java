@@ -10,6 +10,10 @@ public abstract class Content {
 
   public abstract byte[] getBytes();
 
+  public byte[] getBytesIfAvailable() {
+    return isAvailable() ? getBytes() : null;
+  }
+
   public String getString() {
     return CharsetToolkit.bytesToString(getBytes());
   }

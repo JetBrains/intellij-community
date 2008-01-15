@@ -3,7 +3,10 @@ package com.intellij.history.core;
 import com.intellij.history.Clock;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.core.changes.*;
-import com.intellij.history.core.revisions.*;
+import com.intellij.history.core.revisions.RecentChange;
+import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.revisions.RevisionAfterChange;
+import com.intellij.history.core.revisions.RevisionBeforeChange;
 import com.intellij.history.core.storage.Content;
 import com.intellij.history.core.storage.Storage;
 import com.intellij.history.core.tree.Entry;
@@ -12,7 +15,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class LocalVcs implements ILocalVcs {
@@ -200,33 +202,11 @@ public class LocalVcs implements ILocalVcs {
   }
 
   public List<Revision> getRevisionsFor(String path) {
-    Entry e = getEntry(path);
+    return new RevisionsCollector(this, path, myRoot, myChangeList).getResult();
+  }
 
-    List<Change> cc = myChangeList.getChangesFor(myRoot, e.getPath());
-
-    if (cc.isEmpty()) {
-      Revision r = new CurrentRevision(e, getCurrentTimestamp());
-      return Collections.singletonList(r);
-    }
-
-    List<Revision> result = new ArrayList<Revision>();
-    for (Change c : cc) {
-      Revision r;
-      if (c.isLabel()) {
-        r = new LabeledRevision(e, myRoot, myChangeList, c);
-      }
-      else {
-        r = new RevisionAfterChange(e, myRoot, myChangeList, c);
-      }
-      result.add(r);
-    }
-
-    Change lastChange = cc.get(cc.size() - 1);
-    if (!lastChange.isLabel() && !lastChange.isCreationalFor(e)) {
-      result.add(new RevisionBeforeChange(e, myRoot, myChangeList, lastChange));
-    }
-
-    return result;
+  public byte[] getByteContent(String path, FileRevisionTimestampComparator c) {
+    return new ByteContentRetriever(this, path, c).getResult();
   }
 
   public List<RecentChange> getRecentChanges() {
@@ -248,25 +228,11 @@ public class LocalVcs implements ILocalVcs {
     return result;
   }
 
-  public byte[] getByteContent(String path, FileRevisionTimestampComparator c) {
-    for (Revision r : getRevisionsFor(path)) {
-      if (c.isSuitable(r.getEntry().getTimestamp(), r.getTimestamp())){
-        return getByteContentOf(r);
-      }
-    }
-    return null;
-  }
-
   public void accept(ChangeVisitor v) throws IOException {
     myChangeList.accept(myRoot, v);
   }
 
-  private byte[] getByteContentOf(Revision r) {
-    Content c = r.getEntry().getContent();
-    return c.isAvailable() ? c.getBytes() : null;
-  }
-
-  private long getCurrentTimestamp() {
+  protected long getCurrentTimestamp() {
     return Clock.getCurrentTimestamp();
   }
 

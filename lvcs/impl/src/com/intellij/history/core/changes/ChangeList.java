@@ -104,10 +104,10 @@ public class ChangeList {
     v.finished();
   }
 
-  public List<Change> getChangesFor(Entry r, String path) {
+  public List<Change> getChangesFor(Entry root, String path) {
     try {
       ChangeCollectingVisitor v = new ChangeCollectingVisitor(path);
-      accept(r, v);
+      accept(root, v);
       return v.getResult();
     }
     catch (IOException ex) {
