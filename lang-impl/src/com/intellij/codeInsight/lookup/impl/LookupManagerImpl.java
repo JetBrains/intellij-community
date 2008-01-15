@@ -144,6 +144,8 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myActiveLookupEditor = editor;
     ApplicationManager.getApplication().invokeLater(new Runnable() { //to set bottom hint text
       public void run() {
+        if (myActiveLookup == null) return;
+        
         ((LookupImpl)myActiveLookup).show();
         myActiveLookup.addLookupListener(
           new LookupAdapter(){
