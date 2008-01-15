@@ -47,7 +47,7 @@ public class ModuleRuntimeClasspathScope extends GlobalSearchScope {
     final Set<Module> processedModules = new HashSet<Module>();
     processedModules.add(module);
 
-    ModuleRootManager.getInstance(module).processOrder(new JavaRootPolicy<LinkedHashSet<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).processOrder(new RootPolicy<LinkedHashSet<VirtualFile>>() {
       private boolean myJDKProcessed = false;
 
       public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,

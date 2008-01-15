@@ -115,10 +115,7 @@ class ModuleLibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
-    if (policy instanceof JavaRootPolicy) {
-      return ((JavaRootPolicy<R>) policy).visitLibraryOrderEntry(this, initialValue);
-    }
-    return policy.visitOrderEntry(this, initialValue);
+    return policy.visitLibraryOrderEntry(this, initialValue);
   }
 
   public boolean isSynthetic() {

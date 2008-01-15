@@ -3,7 +3,10 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -162,10 +165,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
-    if (policy instanceof JavaRootPolicy) {
-      return ((JavaRootPolicy<R>) policy).visitLibraryOrderEntry(this, initialValue);
-    }
-    return policy.visitOrderEntry(this, initialValue);
+    return policy.visitLibraryOrderEntry(this, initialValue);
   }
 
   public OrderEntry cloneEntry(RootModelImpl rootModel,

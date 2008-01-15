@@ -69,10 +69,7 @@ public class InheritedJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implem
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
-    if (policy instanceof JavaRootPolicy) {
-      return ((JavaRootPolicy<R>) policy).visitInheritedJdkOrderEntry(this, initialValue);
-    }
-    return policy.visitOrderEntry(this, initialValue);
+    return policy.visitInheritedJdkOrderEntry(this, initialValue);
   }
 
   public void writeExternal(Element rootElement) throws WriteExternalException {

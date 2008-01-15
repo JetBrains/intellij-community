@@ -48,7 +48,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
     processedModules.add(module);
 
-    ModuleRootManager.getInstance(module).processOrder(new JavaRootPolicy<LinkedHashSet<VirtualFile>>() {
+    ModuleRootManager.getInstance(module).processOrder(new RootPolicy<LinkedHashSet<VirtualFile>>() {
       public LinkedHashSet<VirtualFile> visitLibraryOrderEntry(final LibraryOrderEntry libraryOrderEntry,
                                                                final LinkedHashSet<VirtualFile> value) {
         value.addAll(Arrays.asList(libraryOrderEntry.getFiles(OrderRootType.CLASSES)));

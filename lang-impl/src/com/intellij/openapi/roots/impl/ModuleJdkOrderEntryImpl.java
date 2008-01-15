@@ -5,7 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleJdkOrderEntry;
+import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.RootPolicy;
+import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectJdksModel;
 import com.intellij.openapi.util.InvalidDataException;
@@ -147,10 +150,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
-    if (policy instanceof JavaRootPolicy) {
-      return ((JavaRootPolicy<R>) policy).visitModuleJdkOrderEntry(this, initialValue);
-    }
-    return policy.visitOrderEntry(this, initialValue);
+    return policy.visitModuleJdkOrderEntry(this, initialValue);
   }
 
   public void jdkAdded(Sdk jdk) {

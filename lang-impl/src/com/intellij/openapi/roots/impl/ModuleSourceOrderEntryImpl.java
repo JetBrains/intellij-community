@@ -55,10 +55,7 @@ public class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements Mo
   }
 
   public <R> R accept(RootPolicy<R> policy, R initialValue) {
-    if (policy instanceof JavaRootPolicy) {
-      return ((JavaRootPolicy<R>) policy).visitModuleSourceOrderEntry(this, initialValue);
-    }
-    return policy.visitOrderEntry(this, initialValue);
+    return policy.visitModuleSourceOrderEntry(this, initialValue);
   }
 
   public String getPresentableName() {

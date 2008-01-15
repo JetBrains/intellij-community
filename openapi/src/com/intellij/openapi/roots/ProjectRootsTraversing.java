@@ -157,7 +157,7 @@ public class ProjectRootsTraversing {
     }
   }
 
-  public static class RootTraversePolicy extends JavaRootPolicy<TraverseState> {
+  public static class RootTraversePolicy extends RootPolicy<TraverseState> {
     private static final Key<Boolean> JDK_PROCESSED = Key.create("jdkProcessed");
     private final Visit<ModuleSourceOrderEntry> myVisitSource;
     private final Visit<OrderEntry> myVisitJdk;
