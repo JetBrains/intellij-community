@@ -161,7 +161,7 @@ public class BasicsTest extends LocalVcsPerformanceTestCase {
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 2);
     updateFromTreeWithTimestamp(VCS_ENTRIES_TIMESTAMP + 3);
 
-    assertExecutionTime(1, new RunnableAdapter() {
+    assertExecutionTime(250, new RunnableAdapter() {
       public void doRun() throws Exception {
         vcs.getByteContent(createRandomPath(), new FileRevisionTimestampComparator() {
           public boolean isSuitable(long fileTimestamp, long revisionTimestamp) {
