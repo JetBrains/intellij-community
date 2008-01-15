@@ -40,7 +40,20 @@ import java.util.Set;
  * @author ven
  */
 public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
-  private static final String EVAL_PROPERTY_NAME = "JETGROOVY_EVAL_PROP_NAME";
+  private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
+
+  private String createProperty(String text, String imports, String[] names) {
+    String classText = "\"" + imports + "class QQQ { public groovy.lang.Closure " + EVAL_NAME + " = {" + getCommaSeparatedNamesList(names) + "->" + text + "}}\"";
+
+    return "final java.lang.ClassLoader parentLoader = this.getClass().getClassLoader();\n" +
+        "   final groovy.lang.GroovyClassLoader loader = new groovy.lang.GroovyClassLoader(parentLoader);\n" +
+        "   final java.lang.Class c = loader.parseClass(" + classText + ", \"QQQ.groovy\");\n" +
+        "   int i;\n" +
+        "   java.lang.reflect.Field[] fields = c.getFields();\n" +
+        "   for (int j = 0; j < fields.length; j++) if (fields[j].getName().equals(\"_JETGROOVY_EVAL_\")) {i = j; break;}\n" +
+        "   final java.lang.reflect.Field field = fields[i];\n" +
+        "   final java.lang.Object closure = field.get(c.newInstance())";
+  }
 
   public PsiCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     String text = textWithImports.getText();
@@ -49,37 +62,46 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
     toEval = factory.createGroovyFile(text, false, context);
 
-    final Set<String> locals = new HashSet<String>();
+    final Set<String> namesList = new HashSet<String>();
     toEval.accept(new GroovyRecursiveElementVisitor() {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof GrVariable && !(resolved instanceof GrField)) {
-          locals.add(((GrVariable) resolved).getName());
+          namesList.add(((GrVariable) resolved).getName());
         }
       }
     });
 
+    String[] names = namesList.toArray(new String[namesList.size()]);
+
     PsiClass contextClass = getContextClass(context);
     assert contextClass != null;
     StringBuffer javaText = new StringBuffer();
-    javaText.append("java.util.Map m = org.codehaus.groovy.runtime.DefaultGroovyMethods.getProperties(this);\n");
-    for (String local : locals) {
-      javaText.append("m.put(\"").append(local).append("\", ").append(local).append(");\n");
-    }
-    javaText.append("groovy.lang.Binding b = new groovy.lang.Binding(m);\n");
-    String text1 = "def " + EVAL_PROPERTY_NAME + " = { " + text + "}";
 
-    String finalEvalText = imports + "\n" + text1;
-    javaText.append("groovy.lang.Script s = new groovy.lang.GroovyShell(b).parse(\"").
-        append(StringUtil.escapeStringCharacters(finalEvalText)).append("\");\n");
-    javaText.append("((groovy.lang.GroovyObject)this).setProperty(\"").append(EVAL_PROPERTY_NAME).append("\", s.getProperty(\"").append(EVAL_PROPERTY_NAME).append("\"));\n");
-    javaText.append("((groovy.lang.GroovyObject)this).invokeMethod(\"").append(EVAL_PROPERTY_NAME).append("\", new Object[0])");
+    javaText.append(createProperty(StringUtil.escapeStringCharacters(text), imports, names));
+    javaText.append("groovy.lang.MetaClass mc = ((groovy.lang.GroovyObject)this).getMetaClass();\n");
+    javaText.append("groovy.lang.ExpandoMetaClass emc = new groovy.lang.ExpandoMetaClass(this.getClass());\n");
+    javaText.append("emc.setMetaClass(mc);\n");
+    javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
+    javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(emc);\n");
+    javaText.append("emc.initialize();\n");
+    javaText.append("((groovy.lang.MetaClassImpl)((groovy.lang.GroovyObject)this).getMetaClass()).invokeMethod(this, \"").append(EVAL_NAME).append("\", new Object[]{").
+        append(getCommaSeparatedNamesList(names)).append("});");
 
     PsiElementFactory elementFactory = toEval.getManager().getElementFactory();
     PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
     result.setThisType(elementFactory.createType(contextClass));
     return result;
+  }
+
+  private String getCommaSeparatedNamesList(String[] names) {
+    StringBuffer buffer = new StringBuffer();
+    for (int i = 0; i < names.length; i++) {
+      if (i > 0) buffer.append(", ");
+      buffer.append(names[i]);
+    }
+    return buffer.toString();
   }
 
   private PsiClass getContextClass(PsiElement context) {

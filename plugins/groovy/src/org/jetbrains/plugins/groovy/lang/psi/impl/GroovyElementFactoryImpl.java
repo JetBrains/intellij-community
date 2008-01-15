@@ -253,7 +253,9 @@ public class GroovyElementFactoryImpl extends GroovyElementFactory implements Pr
   }
 
   public GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context) {
-    return createDummyFile(idText, isPhisical);
+    GroovyFileImpl file = createDummyFile(idText, isPhisical);
+    file.setContext(context);
+    return file;
   }
 
   public void projectOpened() {
