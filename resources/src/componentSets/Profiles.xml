@@ -3,17 +3,10 @@
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProfileManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProfileManager</implementation-class>
-    </component>
   </application-components>
   <project-components>
     <component>
       <implementation-class>com.intellij.profile.codeInspection.InspectionProjectProfileManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.profile.codeStyle.CodeStyleProjectProfileManager</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>
