@@ -35,7 +35,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.navigation.GotoImplementationHandler;
+import com.intellij.codeInsight.navigation.ImplementationSearcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -187,7 +187,7 @@ public class ShowImplementationsAction extends AnAction {
   }
 
   private static PsiElement[] getSelfAndImplementations(Editor editor, PsiElement element) {
-    GotoImplementationHandler handler = new GotoImplementationHandler() {
+    ImplementationSearcher handler = new ImplementationSearcher() {
       protected PsiElement[] filterElements(Editor editor, PsiElement element, PsiElement[] targetElements, final int offset) {
         Set<PsiElement> unique = new LinkedHashSet<PsiElement>(Arrays.asList(targetElements));
         for (PsiElement elt : targetElements) {
