@@ -16,6 +16,7 @@ package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
@@ -25,6 +26,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -95,6 +97,12 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     PsiCodeFragment result = elementFactory.createCodeBlockCodeFragment(javaText.toString(), null, true);
     result.setThisType(elementFactory.createType(contextClass));
     return result;
+  }
+
+  public PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
+    GroovyCodeFragment fragment = new GroovyCodeFragment(project, item.getText());
+    fragment.setContext(context);
+    return fragment;
   }
 
   private String getCommaSeparatedNamesList(String[] names) {
