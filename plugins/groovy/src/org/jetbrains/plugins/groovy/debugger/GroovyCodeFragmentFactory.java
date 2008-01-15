@@ -82,7 +82,6 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     javaText.append(createProperty(StringUtil.escapeStringCharacters(text), imports, names));
     javaText.append("groovy.lang.MetaClass mc = ((groovy.lang.GroovyObject)this).getMetaClass();\n");
     javaText.append("groovy.lang.ExpandoMetaClass emc = new groovy.lang.ExpandoMetaClass(this.getClass());\n");
-    javaText.append("emc.setMetaClass(mc);\n");
     javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
     javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(emc);\n");
     javaText.append("emc.initialize();\n");
