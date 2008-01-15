@@ -10,13 +10,13 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.xml.XmlFile;
@@ -145,40 +145,40 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     ApplicationManager.getApplication().invokeLater(new Runnable() { //to set bottom hint text
       public void run() {
         ((LookupImpl)myActiveLookup).show();
+        myActiveLookup.addLookupListener(
+          new LookupAdapter(){
+            public void itemSelected(LookupEvent event) {
+              dispose();
+            }
+
+            public void lookupCanceled(LookupEvent event) {
+              dispose();
+            }
+
+            public void currentItemChanged(LookupEvent event) {
+              alarm.cancelAllRequests();
+              if (settings.AUTO_POPUP_JAVADOC_INFO){
+                alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
+              }
+            }
+
+            private void dispose(){
+              alarm.cancelAllRequests();
+              if (daemonCodeAnalyzer != null) {
+                daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+              }
+              if (myActiveLookup == null) return;
+              myActiveLookup.removeLookupListener(this);
+              Lookup lookup = myActiveLookup;
+              myActiveLookup = null;
+              myActiveLookupEditor = null;
+              myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, myActiveLookup);
+            }
+          }
+        );
+        myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
       }
     });
-    myActiveLookup.addLookupListener(
-      new LookupAdapter(){
-        public void itemSelected(LookupEvent event) {
-          dispose();
-        }
-
-        public void lookupCanceled(LookupEvent event) {
-          dispose();
-        }
-
-        public void currentItemChanged(LookupEvent event) {
-          alarm.cancelAllRequests();
-          if (settings.AUTO_POPUP_JAVADOC_INFO){
-            alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
-          }
-        }
-
-        private void dispose(){
-          alarm.cancelAllRequests();
-          if (daemonCodeAnalyzer != null) {
-            daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-          }
-          if (myActiveLookup == null) return;
-          myActiveLookup.removeLookupListener(this);
-          Lookup lookup = myActiveLookup;
-          myActiveLookup = null;
-          myActiveLookupEditor = null;
-          myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, myActiveLookup);
-        }
-      }
-    );
-    myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return myActiveLookup;
   }
 
