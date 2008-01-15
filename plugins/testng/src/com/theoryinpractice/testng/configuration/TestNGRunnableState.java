@@ -29,11 +29,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.PathUtilEx;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.util.PathUtil;
@@ -340,7 +343,10 @@ public class TestNGRunnableState extends JavaCommandLineState
       if (psiPackage == null) {
         throw CantRunException.packageNotFound(packageName);
       } else {
-        TestClassFilter filter = getFilter(psiPackage);
+        TestSearchScope scope = config.getPersistantData().getScope();
+        //TODO we should narrow this down by module really, if that's what's specified
+        TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
+        TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
         classes.putAll(calculateDependencies(data, true, TestNGUtil.getAllTestClasses(filter)));
         if (classes.size() == 0) {
           throw new CantRunException("No tests found in the package \"" + packageName + '\"');
@@ -349,7 +355,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     } else if (data.TEST_OBJECT.equals(TestType.CLASS.getType())) {
       //it's a class
       PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-        .findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
+        .findClass(data.getMainClassName(), getSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
@@ -357,7 +363,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     } else if (data.TEST_OBJECT.equals(TestType.METHOD.getType())) {
       //it's a method
       PsiClass psiClass = JavaPsiFacade.getInstance(psiManager.getProject())
-        .findClass(data.getMainClassName(), data.getScope().getSourceScope(config).getGlobalSearchScope());
+        .findClass(data.getMainClassName(), getSearchScope());
       if (psiClass == null) {
         throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
       }
@@ -446,7 +452,7 @@ public class TestNGRunnableState extends JavaCommandLineState
         final Project project = classes[0].getProject();
         PsiManager psiManager = PsiManager.getInstance(project);
         //we get all classes in the module to figure out which are in the groups we depend on
-        Collection<PsiClass> allClasses = AllClassesSearch.search(data.getScope().getSourceScope(config).getGlobalSearchScope(), project).findAll();
+        Collection<PsiClass> allClasses = AllClassesSearch.search(getSearchScope(), project).findAll();
         Map<PsiClass, Collection<PsiMethod>> filteredClasses = TestNGUtil.filterAnnotations("groups", dependencies, allClasses);
         //we now have a list of dependencies, and a list of classes that match those dependencies
         results.putAll(filteredClasses);
@@ -460,11 +466,11 @@ public class TestNGRunnableState extends JavaCommandLineState
     return results;
   }
 
-  private TestClassFilter getFilter(PsiPackage psiPackage) {
-    TestSearchScope scope = config.getPersistantData().getScope();
-    //TODO we should narrow this down by module really, if that's what's specified
-    TestClassFilter projectFilter = new TestClassFilter(scope.getSourceScope(config).getGlobalSearchScope(), config.getProject(), true);
-    return projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
+  private GlobalSearchScope getSearchScope() {
+    final TestData data = config.getPersistantData();
+    final Module module = config.getConfigurationModule().getModule();
+    return data.TEST_OBJECT.equals(TestType.PACKAGE.getType())
+           ? config.getPersistantData().getScope().getSourceScope(config).getGlobalSearchScope()
+           : module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(config.getProject());
   }
-
 }
