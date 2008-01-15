@@ -313,11 +313,6 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
     return data.getValue();
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
   public void projectOpened() {
   }
 

@@ -146,9 +146,4 @@ public class URIReferenceProvider implements PsiReferenceProvider {
     return new URLReference[] { new URLReference(element, null, soft)};
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
 }

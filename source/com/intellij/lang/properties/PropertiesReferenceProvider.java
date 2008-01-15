@@ -77,9 +77,4 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
     return PsiTreeUtil.getChildOfAnyType(element, ELExpressionHolder.class,JspXmlTagBase.class) == null;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
-
 }

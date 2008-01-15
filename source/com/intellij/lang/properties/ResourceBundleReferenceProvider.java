@@ -26,9 +26,4 @@ public class ResourceBundleReferenceProvider implements PsiReferenceProvider {
         return new PsiReference[] { reference };
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
-
 }

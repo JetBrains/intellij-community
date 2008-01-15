@@ -643,9 +643,4 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
     return new TypeOrElementOrAttributeReference(element);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
 }

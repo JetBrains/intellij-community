@@ -44,8 +44,4 @@ public class AntElementNameReferenceProvider implements PsiReferenceProvider {
     return new PsiReference[]{nameReference};
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

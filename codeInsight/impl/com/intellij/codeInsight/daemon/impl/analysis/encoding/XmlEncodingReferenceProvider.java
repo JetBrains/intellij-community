@@ -34,11 +34,6 @@ public class XmlEncodingReferenceProvider implements PsiReferenceProvider {
     return childRange.shiftRight(-range.getStartOffset());
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
-
   public static PsiReference[] extractFromContentAttribute(final XmlAttributeValue value) {
     String text = value.getValue();
     int start = text.indexOf(CHARSET_PREFIX);

@@ -55,8 +55,4 @@ public class AntAttributeReferenceProvider implements PsiReferenceProvider {
     }
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

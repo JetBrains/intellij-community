@@ -75,11 +75,6 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
-
-  @NotNull
   public static Collection<PsiFileSystemItem> getRoots(final Module thisModule, boolean includingClasses) {
     if (thisModule == null) return Collections.emptyList();
     List<Module> modules = new ArrayList<Module>();

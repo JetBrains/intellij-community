@@ -51,8 +51,4 @@ public class AntRefIdReferenceProvider implements PsiReferenceProvider {
     return typeDef != null && AntAttributeType.ID_REFERENCE == typeDef.getAttributeType(attribName);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

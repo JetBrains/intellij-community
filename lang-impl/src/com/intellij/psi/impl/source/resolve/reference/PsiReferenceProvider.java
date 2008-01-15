@@ -17,9 +17,4 @@ public interface PsiReferenceProvider {
   @NotNull
   PsiReference[] getReferencesByElement(PsiElement element);
 
-  /**
-   * @deprecated
-   */
-  @NotNull
-  PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition);
 }

@@ -38,14 +38,6 @@ public class CustomizingReferenceProvider implements CustomizableReferenceProvid
     return referencesByElement;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    myProvider.setOptions(myOptions);
-    final PsiReference[] referencesByElement = myProvider.getReferencesByString(str,position, offsetInPosition);
-    myProvider.setOptions(null);
-    return referencesByElement;
-  }
-
   public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
     myOptions = options;  // merge ?
   }

@@ -46,8 +46,4 @@ public class AntFileReferenceProvider implements PsiReferenceProvider {
     return "/".equals(attrValue) || "\\".equals(attrValue);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

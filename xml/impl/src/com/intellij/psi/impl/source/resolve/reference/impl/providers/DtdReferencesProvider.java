@@ -292,11 +292,6 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return PsiReference.EMPTY_ARRAY;
-  }
-
   public ElementFilter getSystemReferenceFilter() {
     return new ElementFilter() {
       public boolean isAcceptable(Object element, PsiElement context) {

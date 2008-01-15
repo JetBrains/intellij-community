@@ -136,8 +136,4 @@ public class AntPropertyReferenceProvider implements PsiReferenceProvider {
     }
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

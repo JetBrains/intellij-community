@@ -78,8 +78,4 @@ public class AntMacroDefParameterReferenceProvider implements PsiReferenceProvid
     }
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

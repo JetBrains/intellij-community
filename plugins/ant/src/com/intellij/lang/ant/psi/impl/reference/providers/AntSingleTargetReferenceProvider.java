@@ -50,8 +50,4 @@ public class AntSingleTargetReferenceProvider implements PsiReferenceProvider {
       new AntTargetReference(antElement, attrValue, new TextRange(offsetInPosition, offsetInPosition + attrValue.length()), attr)};
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
 }

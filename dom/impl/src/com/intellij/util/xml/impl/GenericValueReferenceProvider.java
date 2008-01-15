@@ -153,9 +153,4 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
     return module == null ? null : GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
   }
 
-  @NotNull
-  public final PsiReference[] getReferencesByString(String str, PsiElement position, int offsetInPosition) {
-    return getReferencesByElement(position);
-  }
-
 }
