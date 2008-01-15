@@ -15,4 +15,5 @@ public class LangDataKeys extends PlatformDataKeys {
   public static final DataKey<PsiElement> PSI_ELEMENT = DataKey.create(DataConstants.PSI_ELEMENT);
   public static final DataKey<PsiFile> PSI_FILE = DataKey.create(DataConstants.PSI_FILE);
   public static final DataKey<Language> LANGUAGE = DataKey.create(DataConstants.LANGUAGE);
+  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create(DataConstants.PSI_ELEMENT_ARRAY);
 }

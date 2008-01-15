@@ -26,7 +26,6 @@ import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.psi.PsiElement;
 
 @SuppressWarnings({"deprecation"})
 public final class DataKeys extends LangDataKeys {
@@ -40,7 +39,6 @@ public final class DataKeys extends LangDataKeys {
   public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);
   @Deprecated
   public static final DataKey<Change[]> CHANGES = DataKey.create(DataConstants.CHANGES);
-  public static final DataKey<PsiElement[]> PSI_ELEMENT_ARRAY = DataKey.create(DataConstants.PSI_ELEMENT_ARRAY);
 
 }
 
