@@ -58,7 +58,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   public PsiCodeFragment createCodeFragment(TextWithImports textWithImports, PsiElement context, Project project) {
     String text = textWithImports.getText();
     String imports = textWithImports.getImports();
-    GroovyPsiElement toEval;
+    final GroovyPsiElement toEval;
     GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
     toEval = factory.createGroovyFile(text, false, context);
 
@@ -67,7 +67,8 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
-        if (resolved instanceof GrVariable && !(resolved instanceof GrField)) {
+        if (resolved instanceof GrVariable && !(resolved instanceof GrField) &&
+            !PsiTreeUtil.isAncestor(toEval, resolved, false)) {
           namesList.add(((GrVariable) resolved).getName());
         }
       }
