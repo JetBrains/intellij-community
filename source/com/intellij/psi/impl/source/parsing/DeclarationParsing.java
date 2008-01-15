@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,8 +84,8 @@ public class DeclarationParsing extends Parsing {
       if (context == Context.FILE_CONTEXT) return null;
     }
     else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
-                                                          myContext.getCharTable());
+      LeafElement declaration =
+        ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
       lexer.advance();
       return declaration;
     }
@@ -170,10 +171,10 @@ public class DeclarationParsing extends Parsing {
           return null;
         }
         lexer.restore(idPos);
-        CompositeElement method = Factory.createCompositeElement(METHOD);
+        CompositeElement method = ASTFactory.composite(METHOD);
         TreeUtil.addChildren(method, first);
         if (classParameterList == null){
-          classParameterList = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
+          classParameterList = ASTFactory.composite(TYPE_PARAMETER_LIST);
         }
         TreeUtil.addChildren(method, classParameterList);
         TreeUtil.addChildren(method, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -196,7 +197,7 @@ public class DeclarationParsing extends Parsing {
       TreeElement codeBlock = myContext.getStatementParsing().parseCodeBlock(lexer, false);
       LOG.assertTrue(codeBlock != null);
 
-      CompositeElement initializer = Factory.createCompositeElement(CLASS_INITIALIZER);
+      CompositeElement initializer = ASTFactory.composite(CLASS_INITIALIZER);
       TreeUtil.addChildren(initializer, modifierList);
       if (classParameterList != null){
         final CompositeElement errorElement = Factory.createErrorElement(JavaErrorMessages.message("unexpected.token"));
@@ -242,18 +243,18 @@ public class DeclarationParsing extends Parsing {
 
     if (lexer.getTokenType() == LPARENTH){
       if (context == Context.CLASS_CONTEXT){ //method
-        CompositeElement method = Factory.createCompositeElement(METHOD);
+        CompositeElement method = ASTFactory.composite(METHOD);
         if (classParameterList == null){
-          classParameterList = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
+          classParameterList = ASTFactory.composite(TYPE_PARAMETER_LIST);
         }
         TreeUtil.insertAfter(first, classParameterList);
         TreeUtil.addChildren(method, first);
         parseMethodFromLparenth(lexer, method, false);
         return method;
       } else if (context == Context.ANNOTATION_INTERFACE_CONTEXT) {
-        CompositeElement method = Factory.createCompositeElement(ANNOTATION_METHOD);
+        CompositeElement method = ASTFactory.composite(ANNOTATION_METHOD);
         if (classParameterList == null){
-          classParameterList = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
+          classParameterList = ASTFactory.composite(TYPE_PARAMETER_LIST);
         }
         TreeUtil.insertAfter(first, classParameterList);
         TreeUtil.addChildren(method, first);
@@ -279,11 +280,11 @@ public class DeclarationParsing extends Parsing {
     }
     CompositeElement variable;
     if (context == Context.CLASS_CONTEXT || context == Context.ANNOTATION_INTERFACE_CONTEXT){
-      variable = Factory.createCompositeElement(FIELD);
+      variable = ASTFactory.composite(FIELD);
       TreeUtil.addChildren(variable, first);
     }
     else if (context == Context.CODE_BLOCK_CONTEXT){
-      variable = Factory.createCompositeElement(LOCAL_VARIABLE);
+      variable = ASTFactory.composite(LOCAL_VARIABLE);
       TreeUtil.addChildren(variable, first);
     }
     else{
@@ -336,7 +337,7 @@ public class DeclarationParsing extends Parsing {
         break;
       }
 
-      CompositeElement variable2 = Factory.createCompositeElement(variable1.getElementType());
+      CompositeElement variable2 = ASTFactory.composite(variable1.getElementType());
       TreeUtil.insertAfter(comma, variable2);
       TreeUtil.addChildren(variable2, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
@@ -379,7 +380,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   public CompositeElement parseAnnotationList (FilterLexer lexer) {
-    CompositeElement modifierList = Factory.createCompositeElement(MODIFIER_LIST);
+    CompositeElement modifierList = ASTFactory.composite(MODIFIER_LIST);
     while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
@@ -403,7 +404,7 @@ public class DeclarationParsing extends Parsing {
 
   @NotNull
   private CompositeElement parseModifierList (Lexer lexer) {
-    CompositeElement modifierList = Factory.createCompositeElement(MODIFIER_LIST);
+    CompositeElement modifierList = ASTFactory.composite(MODIFIER_LIST);
     while (true) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
@@ -445,7 +446,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   private CompositeElement parseAnnotation(Lexer lexer) {
-    CompositeElement annotation = Factory.createCompositeElement(ANNOTATION);
+    CompositeElement annotation = ASTFactory.composite(ANNOTATION);
     if (lexer.getTokenType() == null) return annotation;
     
     TreeUtil.addChildren(annotation, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -463,7 +464,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   private CompositeElement parseAnnotationParameterList(Lexer lexer) {
-    CompositeElement parameterList = Factory.createCompositeElement(ANNOTATION_PARAMETER_LIST);
+    CompositeElement parameterList = ASTFactory.composite(ANNOTATION_PARAMETER_LIST);
     if (lexer.getTokenType() == LPARENTH) {
       TreeUtil.addChildren(parameterList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
@@ -514,7 +515,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   private CompositeElement parseAnnotationParameter(Lexer lexer, boolean mayBeSimple) {
-    CompositeElement pair = Factory.createCompositeElement(NAME_VALUE_PAIR);
+    CompositeElement pair = ASTFactory.composite(NAME_VALUE_PAIR);
     if (mayBeSimple) {
       final LexerPosition pos = lexer.getCurrentPosition();
       TreeElement value = parseAnnotationMemberValue(lexer);
@@ -566,7 +567,7 @@ public class DeclarationParsing extends Parsing {
 
   private ASTNode parseArrayMemberValue(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == LBRACE);
-    CompositeElement memberList = Factory.createCompositeElement(ANNOTATION_ARRAY_INITIALIZER);
+    CompositeElement memberList = ASTFactory.composite(ANNOTATION_ARRAY_INITIALIZER);
     TreeUtil.addChildren(memberList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -603,7 +604,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   private CompositeElement parseClassFromKeyword(Lexer lexer, TreeElement modifierList, TreeElement atToken) {
-    CompositeElement aClass = Factory.createCompositeElement(CLASS);
+    CompositeElement aClass = ASTFactory.composite(CLASS);
     TreeUtil.addChildren(aClass, modifierList);
 
     if (atToken != null) {
@@ -630,13 +631,13 @@ public class DeclarationParsing extends Parsing {
 
     TreeElement extendsList = (TreeElement)parseExtendsList(lexer);
     if (extendsList == null){
-      extendsList = Factory.createCompositeElement(EXTENDS_LIST);
+      extendsList = ASTFactory.composite(EXTENDS_LIST);
     }
     TreeUtil.addChildren(aClass, extendsList);
 
     TreeElement implementsList = (TreeElement)parseImplementsList(lexer);
     if (implementsList == null){
-      implementsList = Factory.createCompositeElement(IMPLEMENTS_LIST);
+      implementsList = ASTFactory.composite(IMPLEMENTS_LIST);
     }
     TreeUtil.addChildren(aClass, implementsList);
 
@@ -661,7 +662,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   private TreeElement parseTypeParameterList(Lexer lexer) {
-    final CompositeElement result = Factory.createCompositeElement(TYPE_PARAMETER_LIST);
+    final CompositeElement result = ASTFactory.composite(TYPE_PARAMETER_LIST);
     if (lexer.getTokenType() != LT){
       return result;
     }
@@ -727,12 +728,12 @@ public class DeclarationParsing extends Parsing {
   @Nullable
   private CompositeElement parseTypeParameter(Lexer lexer) {
     if (lexer.getTokenType() != IDENTIFIER) return null;
-    final CompositeElement result = Factory.createCompositeElement(TYPE_PARAMETER);
+    final CompositeElement result = ASTFactory.composite(TYPE_PARAMETER);
     TreeUtil.addChildren(result, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
     CompositeElement extendsBound = parseReferenceList(lexer, EXTENDS_BOUND_LIST, AND, EXTENDS_KEYWORD);
     if (extendsBound == null){
-      extendsBound = Factory.createCompositeElement(EXTENDS_BOUND_LIST);
+      extendsBound = ASTFactory.composite(EXTENDS_BOUND_LIST);
     }
     TreeUtil.addChildren(result, extendsBound);
     return result;
@@ -782,14 +783,14 @@ public class DeclarationParsing extends Parsing {
     final LexerPosition pos = lexer.getCurrentPosition();
     CompositeElement modifierList = parseModifierList(lexer);
     if (lexer.getTokenType() == IDENTIFIER) {
-      final CompositeElement element = Factory.createCompositeElement(ENUM_CONSTANT);
+      final CompositeElement element = ASTFactory.composite(ENUM_CONSTANT);
       TreeUtil.addChildren(element, modifierList);
       TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
       CompositeElement argumentList = myContext.getExpressionParsing().parseArgumentList(lexer);
       TreeUtil.addChildren(element, argumentList);
       if (lexer.getTokenType() == LBRACE) {
-        CompositeElement classElement = Factory.createCompositeElement(ENUM_CONSTANT_INITIALIZER);
+        CompositeElement classElement = ASTFactory.composite(ENUM_CONSTANT_INITIALIZER);
         TreeUtil.addChildren(element, classElement);
         parseClassBodyWithBraces(classElement, lexer, false, false);
       }
@@ -817,7 +818,7 @@ public class DeclarationParsing extends Parsing {
 
     TreeElement throwsList = (TreeElement)parseThrowsList(lexer);
     if (throwsList == null){
-      throwsList = Factory.createCompositeElement(THROWS_LIST);
+      throwsList = ASTFactory.composite(THROWS_LIST);
     }
     TreeUtil.addChildren(method, throwsList);
 
@@ -865,7 +866,7 @@ public class DeclarationParsing extends Parsing {
   }
 
   private CompositeElement parseParameterList(Lexer lexer) {
-    CompositeElement paramList = Factory.createCompositeElement(PARAMETER_LIST);
+    CompositeElement paramList = ASTFactory.composite(PARAMETER_LIST);
     LOG.assertTrue(lexer.getTokenType() == LPARENTH);
     TreeUtil.addChildren(paramList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
@@ -963,7 +964,7 @@ public class DeclarationParsing extends Parsing {
   private CompositeElement parseReferenceList(Lexer lexer, IElementType elementType, IElementType referenceDelimiter, IElementType keyword) {
     if (lexer.getTokenType() != keyword) return null;
 
-    CompositeElement list = Factory.createCompositeElement(elementType);
+    CompositeElement list = ASTFactory.composite(elementType);
     TreeUtil.addChildren(list, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -1007,7 +1008,7 @@ public class DeclarationParsing extends Parsing {
       return null;
     }
 
-    CompositeElement param = Factory.createCompositeElement(PARAMETER);
+    CompositeElement param = ASTFactory.composite(PARAMETER);
     TreeUtil.addChildren(param, modifierList);
     TreeUtil.addChildren(param, type);
 

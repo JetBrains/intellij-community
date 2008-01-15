@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
@@ -18,7 +19,6 @@ import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
@@ -107,7 +107,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
     Lexer lexer = getLexer(context, value);
     final XmlParsingContext parsingContext = new XmlParsingContext(holderElement.getCharTable());
-    final CompositeElement element = Factory.createCompositeElement(XML_ELEMENT_DECL);
+    final CompositeElement element = ASTFactory.composite(XML_ELEMENT_DECL);
     TreeUtil.addChildren(holderElement, element);
 
     switch (context) {

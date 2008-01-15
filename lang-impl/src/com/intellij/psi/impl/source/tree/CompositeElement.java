@@ -1,10 +1,7 @@
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageParserDefinitions;
-import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
@@ -379,7 +376,7 @@ public class CompositeElement extends TreeElement implements Cloneable {
 
   public void addLeaf(@NotNull final IElementType leafType, final CharSequence leafText, final ASTNode anchorBefore) {
     FileElement holder = new DummyHolder(getManager(), null).getTreeElement();
-    final LeafElement leaf = Factory.createLeafElement(leafType, leafText, 0, leafText.length(), holder.getCharTable());
+    final LeafElement leaf = ASTFactory.leaf(leafType, leafText, 0, leafText.length(), holder.getCharTable());
     CodeEditUtil.setNodeGenerated(leaf, true);
     TreeUtil.addChildren(holder, leaf);
 

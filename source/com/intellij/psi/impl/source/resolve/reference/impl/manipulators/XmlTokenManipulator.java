@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.impl.source.JavaDummyHolder;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -21,7 +21,7 @@ public class XmlTokenManipulator extends AbstractElementManipulator<XmlToken> {
     IElementType tokenType = xmlToken.getTokenType();
 
     FileElement holder = new JavaDummyHolder(xmlToken.getManager(), null).getTreeElement();
-    LeafElement leaf = Factory.createLeafElement(tokenType, newText, 0, newText.length(), holder.getCharTable());
+    LeafElement leaf = ASTFactory.leaf(tokenType, newText, 0, newText.length(), holder.getCharTable());
     TreeUtil.addChildren(holder, leaf);
     return (XmlToken)xmlToken.replace(leaf.getPsi());
   }

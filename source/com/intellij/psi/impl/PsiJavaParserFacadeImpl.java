@@ -6,6 +6,7 @@ package com.intellij.psi.impl;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -64,12 +65,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   @NotNull
   public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     final FileElement holderElement = new JavaDummyHolder(myManager, null).getTreeElement();
-    final LeafElement newElement = Factory.createLeafElement(
-      TokenType.WHITE_SPACE,
-      text,
-      0,
-      text.length(), holderElement.getCharTable()
-    );
+    final LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, text, 0, text.length(), holderElement.getCharTable());
     TreeUtil.addChildren(holderElement, newElement);
     return newElement.getPsi();
   }

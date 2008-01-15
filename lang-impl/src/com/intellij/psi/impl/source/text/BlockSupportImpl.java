@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.text;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -162,10 +163,10 @@ public class BlockSupportImpl extends BlockSupport {
       // best reparseable available
       final ASTNode treeElement = bestReparseable;
       final TextRange textRange = treeElement.getTextRange();
-      final ChameleonElement chameleon = (ChameleonElement)Factory.createLeafElement(bestReparseable.getElementType(), newFileText,
-                                                                                     textRange.getStartOffset(),
-                                                                                     textRange.getEndOffset() + lengthShift,
-                                                                                     treeFileElement.getCharTable());
+      final ChameleonElement chameleon = (ChameleonElement)ASTFactory.leaf(bestReparseable.getElementType(), newFileText,
+                                                                           textRange.getStartOffset(),
+                                                                           textRange.getEndOffset() + lengthShift,
+                                                                           treeFileElement.getCharTable());
       chameleon.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
       chameleon.setTreeParent((CompositeElement)parent);
       treeElement.replaceAllChildrenToChildrenOf(
@@ -217,9 +218,8 @@ public class BlockSupportImpl extends BlockSupport {
     final LeafElement leafElementToChange = treeFileElement.findLeafElementAt(changedOffset);
     if (leafElementToChange == null) return false;
     TextRange leafRangeToChange = leafElementToChange.getTextRange();
-    LeafElement newElement = Factory.createLeafElement(leafElementToChange.getElementType(), newFileText,
-                                                       leafRangeToChange.getStartOffset(), leafRangeToChange.getEndOffset() + lengthDiff,
-                                                       treeFileElement.getCharTable());
+    LeafElement newElement = ASTFactory.leaf(leafElementToChange.getElementType(), newFileText, leafRangeToChange.getStartOffset(),
+                                             leafRangeToChange.getEndOffset() + lengthDiff, treeFileElement.getCharTable());
     newElement.putUserData(CharTable.CHAR_TABLE_KEY, treeFileElement.getCharTable());
     ChangeUtil.replaceChild(leafElementToChange.getTreeParent(), leafElementToChange, newElement);
     return true;

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -442,7 +443,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   public XmlText createDisplayText(@NotNull String s) throws IncorrectOperationException {
     final XmlTag tagFromText = createTagFromText("<a>" + XmlTagTextUtil.getCDATAQuote(s) + "</a>");
     final XmlText[] textElements = tagFromText.getValue().getTextElements();
-    if (textElements.length == 0) return (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+    if (textElements.length == 0) return (XmlText)ASTFactory.composite(XmlElementType.XML_TEXT);
     return textElements[0];
   }
 

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaLexer;
@@ -63,12 +64,12 @@ public class ImportsTextParsing extends Parsing {
     final CompositeElement statement;
     final boolean isStatic;
     if (lexer.getTokenType() != STATIC_KEYWORD) {
-      statement = Factory.createCompositeElement(IMPORT_STATEMENT);
+      statement = ASTFactory.composite(IMPORT_STATEMENT);
       TreeUtil.addChildren(statement, importToken);
       isStatic = false;
     }
     else {
-      statement = Factory.createCompositeElement(IMPORT_STATIC_STATEMENT);
+      statement = ASTFactory.composite(IMPORT_STATIC_STATEMENT);
       TreeUtil.addChildren(statement, importToken);
       TreeUtil.addChildren(statement, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
       lexer.advance();
@@ -118,7 +119,7 @@ public class ImportsTextParsing extends Parsing {
   }
 
   public CompositeElement convertToImportStaticReference(CompositeElement refElement) {
-    final CompositeElement importStaticReference = Factory.createCompositeElement(IMPORT_STATIC_REFERENCE);
+    final CompositeElement importStaticReference = ASTFactory.composite(IMPORT_STATIC_REFERENCE);
     final CompositeElement referenceParameterList = (CompositeElement)refElement.findChildByRole(ChildRole.REFERENCE_PARAMETER_LIST);
     TreeUtil.addChildren(importStaticReference, (TreeElement)refElement.getFirstChildNode());
     if (referenceParameterList != null) {

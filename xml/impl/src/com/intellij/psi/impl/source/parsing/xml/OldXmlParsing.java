@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
@@ -49,7 +50,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
 
     final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
-    CompositeElement root = Factory.createCompositeElement(XML_DOCUMENT);
+    CompositeElement root = ASTFactory.composite(XML_DOCUMENT);
     TreeUtil.addChildren(dummyRoot, root);
     TreeUtil.addChildren(root, parseProlog(lexer));
     parseGenericXml(lexer, root, new HashSet<String>());
@@ -130,7 +131,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   public TreeElement parseNotationDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(XML_NOTATION_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_NOTATION_DECL);
 
     if (lexer.getTokenType() != XML_NOTATION_DECL_START) {
       return decl;
@@ -152,7 +153,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseEntityDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(XML_ENTITY_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_ENTITY_DECL);
 
     if (lexer.getTokenType() != XML_ENTITY_DECL_START) {
       return decl;
@@ -212,7 +213,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     if (lexer.getTokenType() != XML_CONDITIONAL_SECTION_START) {
       return false;
     }
-    CompositeElement conditionalSection = Factory.createCompositeElement(XML_CONDITIONAL_SECTION);
+    CompositeElement conditionalSection = ASTFactory.composite(XML_CONDITIONAL_SECTION);
     TreeUtil.addChildren(parent, conditionalSection);
 
     addToken(conditionalSection, lexer);
@@ -246,7 +247,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     if (lexer.getTokenType() != XML_PI_START) {
       return false;
     }
-    CompositeElement tag = Factory.createCompositeElement(XML_PROCESSING_INSTRUCTION);
+    CompositeElement tag = ASTFactory.composite(XML_PROCESSING_INSTRUCTION);
     TreeUtil.addChildren(parent, tag);
 
     addToken(tag, lexer);
@@ -266,7 +267,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       return false;
     }
 
-    CompositeElement tag = Factory.createCompositeElement(XML_TAG);
+    CompositeElement tag = ASTFactory.composite(XML_TAG);
     TreeUtil.addChildren(parent, tag);
 
     addToken(tag, lexer);
@@ -301,7 +302,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
         }
         else if (lexer.getTokenType() == XML_DATA_CHARACTERS) {
           if (text == null) {
-            text = Factory.createCompositeElement(XML_TEXT);
+            text = ASTFactory.composite(XML_TEXT);
             TreeUtil.addChildren(tag, text);
           }
           addToken(text, lexer);
@@ -377,7 +378,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseEntityRef(Lexer lexer) {
-    CompositeElement ref = Factory.createCompositeElement(XML_ENTITY_REF);
+    CompositeElement ref = ASTFactory.composite(XML_ENTITY_REF);
 
     if (lexer.getTokenType() == XML_ENTITY_REF_TOKEN) {
       addToken(ref, lexer);
@@ -387,7 +388,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseProlog(Lexer lexer) {
-    CompositeElement prolog = Factory.createCompositeElement(XML_PROLOG);
+    CompositeElement prolog = ASTFactory.composite(XML_PROLOG);
 
     while (parseProcessingInstruction(prolog, lexer)) {
     }
@@ -410,7 +411,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseDocType(Lexer lexer) {
-    CompositeElement docType = Factory.createCompositeElement(XML_DOCTYPE);
+    CompositeElement docType = ASTFactory.composite(XML_DOCTYPE);
 
     if (lexer.getTokenType() != XML_DOCTYPE_START) {
       return docType;
@@ -457,7 +458,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseMarkupDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(XML_MARKUP_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_MARKUP_DECL);
 
     parseMarkupContent(lexer, decl);
 
@@ -500,7 +501,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseElementDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(XML_ELEMENT_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_ELEMENT_DECL);
 
     if (lexer.getTokenType() != XML_ELEMENT_DECL_START) {
       return decl;
@@ -555,7 +556,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       }
     }
 
-    CompositeElement spec = Factory.createCompositeElement(XML_ELEMENT_CONTENT_SPEC);
+    CompositeElement spec = ASTFactory.composite(XML_ELEMENT_CONTENT_SPEC);
     TreeUtil.addChildren(parent, spec);
 
     parseElementContentSpecInner(lexer, spec, topLevel);
@@ -640,7 +641,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private TreeElement parseAttlistDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(XML_ATTLIST_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_ATTLIST_DECL);
 
     if (lexer.getTokenType() != XML_ATTLIST_DECL_START) {
       return decl;
@@ -685,7 +686,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       return false;
     }
 
-    CompositeElement decl = Factory.createCompositeElement(XML_ATTRIBUTE_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_ATTRIBUTE_DECL);
     TreeUtil.addChildren(parent, decl);
 
     addToken(decl, lexer);
@@ -724,7 +725,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   private CompositeElement parseEnumeratedType(Lexer lexer) {
-    CompositeElement enumeratedType = Factory.createCompositeElement(XML_ENUMERATED_TYPE);
+    CompositeElement enumeratedType = ASTFactory.composite(XML_ENUMERATED_TYPE);
     addToken(enumeratedType, lexer);
 
     parseEnumeratedTypeContent(enumeratedType, lexer);
@@ -749,7 +750,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
   }
 
   TreeElement parseDecl(Lexer lexer) {
-    CompositeElement decl = Factory.createCompositeElement(XML_DECL);
+    CompositeElement decl = ASTFactory.composite(XML_DECL);
 
     if (lexer.getTokenType() != XML_DECL_START) {
       return decl;
@@ -789,7 +790,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       }
 
       if (tag instanceof XmlTag) {
-        CompositeElement attribute = Factory.createCompositeElement(XML_ATTRIBUTE);
+        CompositeElement attribute = ASTFactory.composite(XML_ATTRIBUTE);
         TreeUtil.addChildren(tag, attribute);
         parent = attribute;
       }
@@ -804,7 +805,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       addToken(parent, lexer);
       
       if (tag instanceof XmlTag) {
-        CompositeElement attributeValue = Factory.createCompositeElement(XML_ATTRIBUTE_VALUE);
+        CompositeElement attributeValue = ASTFactory.composite(XML_ATTRIBUTE_VALUE);
         TreeUtil.addChildren(parent,attributeValue);
         parent = attributeValue;
       }
@@ -845,7 +846,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
       return -1;
     }
 
-    CompositeElement value = Factory.createCompositeElement(XML_ATTRIBUTE_VALUE);
+    CompositeElement value = ASTFactory.composite(XML_ATTRIBUTE_VALUE);
 
     TreeUtil.addChildren(parent, value);
 
@@ -954,7 +955,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     }
 
     private TreeElement parseComment(Lexer lexer, ParsingContext context) {
-      final CompositeElement comment = Factory.createCompositeElement(XML_COMMENT);
+      final CompositeElement comment = ASTFactory.composite(XML_COMMENT);
 
       while (lexer.getTokenType() != null && XML_COMMENT_BIT_SET.contains(lexer.getTokenType())) {
         final TreeElement tokenElement = ParseUtil.createTokenElement(lexer, context.getCharTable());

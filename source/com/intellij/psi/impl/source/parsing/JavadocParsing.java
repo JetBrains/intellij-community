@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.JavaDocLexer;
@@ -96,7 +97,7 @@ public class JavadocParsing extends Parsing {
 
   private CompositeElement parseTag(PsiManager manager, Lexer lexer) {
     if (lexer.getTokenType() != JavaDocTokenType.DOC_TAG_NAME) return null;
-    CompositeElement tag = Factory.createCompositeElement(DOC_TAG);
+    CompositeElement tag = ASTFactory.composite(DOC_TAG);
     TreeUtil.addChildren(tag, createTokenElement(lexer));
     String tagName = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
     lexer.advance();
@@ -111,13 +112,11 @@ public class JavadocParsing extends Parsing {
 
   private TreeElement parseDataItem(PsiManager manager, Lexer lexer, String tagName, boolean isInlineItem) {
     if (lexer.getTokenType() == JavaDocTokenType.DOC_INLINE_TAG_START) {
-      LeafElement justABrace = Factory.createLeafElement(JavaDocTokenType.DOC_COMMENT_DATA,
-                                                         lexer.getBufferSequence(),
-                                                         lexer.getTokenStart(),
-                                                         lexer.getTokenEnd(), myContext.getCharTable());
-      CompositeElement tag = Factory.createCompositeElement(DOC_INLINE_TAG);
-      final LeafElement leafElement = Factory.createLeafElement(JavaDocTokenType.DOC_INLINE_TAG_START, lexer.getBufferSequence(),
-                                                                lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
+      LeafElement justABrace = ASTFactory.leaf(JavaDocTokenType.DOC_COMMENT_DATA, lexer.getBufferSequence(), lexer.getTokenStart(),
+                                               lexer.getTokenEnd(), myContext.getCharTable());
+      CompositeElement tag = ASTFactory.composite(DOC_INLINE_TAG);
+      final LeafElement leafElement = ASTFactory.leaf(JavaDocTokenType.DOC_INLINE_TAG_START, lexer.getBufferSequence(),
+                                                      lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
       TreeUtil.addChildren(tag, leafElement);
 
       lexer.advance();
@@ -167,7 +166,7 @@ public class JavadocParsing extends Parsing {
         else if (!isInlineItem && (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName))) {
           final LeafElement element = parseReferenceOrType(lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), false);
           lexer.advance();
-          final CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
+          final CompositeElement tagValue = ASTFactory.composite(DOC_TAG_VALUE_TOKEN);
           TreeUtil.addChildren(tagValue, element);
           return tagValue;
         }
@@ -192,7 +191,7 @@ public class JavadocParsing extends Parsing {
   }
 
   private TreeElement parseParamTagValue(Lexer lexer) {
-    CompositeElement tagValue = Factory.createCompositeElement(DOC_PARAMETER_REF);
+    CompositeElement tagValue = ASTFactory.composite(DOC_PARAMETER_REF);
 
     while (TAG_VALUE.contains(lexer.getTokenType())) {
       TreeElement value = createTokenElement(lexer);
@@ -204,7 +203,7 @@ public class JavadocParsing extends Parsing {
   }
 
   private TreeElement parseSimpleTagValue(Lexer lexer) {
-    CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
+    CompositeElement tagValue = ASTFactory.composite(DOC_TAG_VALUE_TOKEN);
 
     while (TAG_VALUE.contains(lexer.getTokenType())) {
       TreeElement value = createTokenElement(lexer);
@@ -216,7 +215,7 @@ public class JavadocParsing extends Parsing {
   }
 
   private ASTNode parseMethodRef(Lexer lexer) {
-    CompositeElement ref = Factory.createCompositeElement(DOC_METHOD_OR_FIELD_REF);
+    CompositeElement ref = ASTFactory.composite(DOC_METHOD_OR_FIELD_REF);
 
     TreeElement sharp = createTokenElement(lexer);
     TreeUtil.addChildren(ref, sharp);
@@ -232,7 +231,7 @@ public class JavadocParsing extends Parsing {
       lexer.advance();
       TreeUtil.addChildren(ref, lparen);
 
-      CompositeElement subValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
+      CompositeElement subValue = ASTFactory.composite(DOC_TAG_VALUE_TOKEN);
       TreeUtil.addChildren(ref, subValue);
 
       while (TAG_VALUE.contains(lexer.getTokenType())) {
@@ -285,7 +284,7 @@ public class JavadocParsing extends Parsing {
       }
     }
     else {
-      CompositeElement tagValue = Factory.createCompositeElement(DOC_TAG_VALUE_TOKEN);
+      CompositeElement tagValue = ASTFactory.composite(DOC_TAG_VALUE_TOKEN);
       TreeElement element = createTokenElement(lexer);
       lexer.advance();
       TreeUtil.addChildren(tagValue, element);
@@ -294,8 +293,8 @@ public class JavadocParsing extends Parsing {
   }
 
   private LeafElement parseReferenceOrType(CharSequence buffer, int startOffset, int endOffset, boolean isType) {
-    return Factory.createLeafElement(isType ? JavaDocElementType.DOC_TYPE_HOLDER : JavaDocElementType.DOC_REFERENCE_HOLDER, buffer, startOffset,
-                                     endOffset, myContext.getCharTable());
+    IElementType type = isType ? JavaDocElementType.DOC_TYPE_HOLDER : JavaDocElementType.DOC_REFERENCE_HOLDER;
+    return ASTFactory.leaf(type, buffer, startOffset, endOffset, myContext.getCharTable());
   }
 
   private LeafElement createTokenElement(Lexer lexer) {
@@ -307,7 +306,7 @@ public class JavadocParsing extends Parsing {
       tokenType = JavaDocTokenType.DOC_COMMENT_DATA;
     }
 
-    return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
+    return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
   }
 
   private static class TokenProcessor implements ParseUtil.TokenProcessor {

@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
@@ -59,7 +60,7 @@ public class StatementParsing extends Parsing {
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
     final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
-    CompositeElement block = Factory.createCompositeElement(CODE_BLOCK);
+    CompositeElement block = ASTFactory.composite(CODE_BLOCK);
     TreeUtil.addChildren(dummyRoot, block);
     parseCodeBlockDeep(block, filterLexer, true);
     if (block.getFirstChildNode() == null) return null;
@@ -156,14 +157,14 @@ public class StatementParsing extends Parsing {
           lexer.advance();
         }
       }
-      final TreeElement chameleon = Factory.createLeafElement(CODE_BLOCK, lexer.getBufferSequence(), start, end, myContext.getCharTable());
+      final TreeElement chameleon = ASTFactory.leaf(CODE_BLOCK, lexer.getBufferSequence(), start, end, myContext.getCharTable());
       if (braceCount != 0){
         chameleon.putUserData(TreeUtil.UNCLOSED_ELEMENT_PROPERTY, "");
       }
       return chameleon;
     }
     else{
-      CompositeElement codeBlock = Factory.createCompositeElement(CODE_BLOCK);
+      CompositeElement codeBlock = ASTFactory.composite(CODE_BLOCK);
       parseCodeBlockDeep(codeBlock, lexer, false);
       return codeBlock;
     }
@@ -314,14 +315,14 @@ public class StatementParsing extends Parsing {
       return parseBlockStatement(lexer);
     }
     else if (tokenType instanceof IChameleonElementType) {
-      LeafElement declaration = Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(),
-                                                          myContext.getCharTable());
+      LeafElement declaration =
+        ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), myContext.getCharTable());
       lexer.advance();
       return declaration;
     }
     else if (tokenType == SEMICOLON) {
       {
-        CompositeElement element = Factory.createCompositeElement(EMPTY_STATEMENT);
+        CompositeElement element = ASTFactory.composite(EMPTY_STATEMENT);
         TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
         lexer.advance();
         return element;
@@ -338,7 +339,7 @@ public class StatementParsing extends Parsing {
           if (suspectedLT == LT) {
             final TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer,
                                                                                         DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
-            CompositeElement declStatement = Factory.createCompositeElement(DECLARATION_STATEMENT);
+            CompositeElement declStatement = ASTFactory.composite(DECLARATION_STATEMENT);
             if (decl != null) {
               TreeUtil.addChildren(declStatement, decl);
             }
@@ -359,8 +360,8 @@ public class StatementParsing extends Parsing {
           int count = 1;
           CompositeElement element = null;
           while (lexer.getTokenType() == COMMA) {
-            CompositeElement list = Factory.createCompositeElement(EXPRESSION_LIST);
-            element = Factory.createCompositeElement(EXPRESSION_LIST_STATEMENT);
+            CompositeElement list = ASTFactory.composite(EXPRESSION_LIST);
+            element = ASTFactory.composite(EXPRESSION_LIST_STATEMENT);
             TreeUtil.addChildren(element, list);
             TreeUtil.addChildren(list, expr);
             final LexerPosition commaPos = lexer.getCurrentPosition();
@@ -380,7 +381,7 @@ public class StatementParsing extends Parsing {
             return element;
           }
           if (expr.getElementType() != REFERENCE_EXPRESSION) {
-            element = Factory.createCompositeElement(EXPRESSION_STATEMENT);
+            element = ASTFactory.composite(EXPRESSION_STATEMENT);
             TreeUtil.addChildren(element, expr);
             processClosingSemicolon(element, lexer);
             return element;
@@ -390,7 +391,7 @@ public class StatementParsing extends Parsing {
 
         TreeElement decl = myContext.getDeclarationParsing().parseDeclaration(lexer, DeclarationParsing.Context.CODE_BLOCK_CONTEXT);
         if (decl != null) {
-          CompositeElement declStatement = Factory.createCompositeElement(DECLARATION_STATEMENT);
+          CompositeElement declStatement = ASTFactory.composite(DECLARATION_STATEMENT);
           TreeUtil.addChildren(declStatement, decl);
           return declStatement;
         }
@@ -402,7 +403,7 @@ public class StatementParsing extends Parsing {
             lexer.restore(pos);
           }
           else {
-            CompositeElement element = Factory.createCompositeElement(LABELED_STATEMENT);
+            CompositeElement element = ASTFactory.composite(LABELED_STATEMENT);
             TreeUtil.addChildren(element, identifier);
             TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
             lexer.advance();
@@ -416,7 +417,7 @@ public class StatementParsing extends Parsing {
 
         if (expr != null) {
           lexer.restore(pos1);
-          CompositeElement element = Factory.createCompositeElement(EXPRESSION_STATEMENT);
+          CompositeElement element = ASTFactory.composite(EXPRESSION_STATEMENT);
           TreeUtil.addChildren(element, expr);
           processClosingSemicolon(element, lexer);
           return element;
@@ -444,7 +445,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseIfStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == IF_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(IF_STATEMENT);
+    CompositeElement element = ASTFactory.composite(IF_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -477,7 +478,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseWhileStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == WHILE_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(WHILE_STATEMENT);
+    CompositeElement element = ASTFactory.composite(WHILE_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -501,7 +502,7 @@ public class StatementParsing extends Parsing {
     lexer.advance();
 
     if (lexer.getTokenType() != LPARENTH){
-      CompositeElement errorForElement = Factory.createCompositeElement(FOR_STATEMENT);
+      CompositeElement errorForElement = ASTFactory.composite(FOR_STATEMENT);
       TreeUtil.addChildren(errorForElement, forKeyword);
       TreeUtil.addChildren(errorForElement, Factory.createErrorElement(JavaErrorMessages.message("expected.lparen")));
       return errorForElement;
@@ -526,7 +527,7 @@ public class StatementParsing extends Parsing {
                                                  TreeElement parameter,
                                                  Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == COLON);
-    final CompositeElement element = Factory.createCompositeElement(Factory.FOREACH_STATEMENT);
+    final CompositeElement element = ASTFactory.composite(FOREACH_STATEMENT);
     TreeUtil.addChildren(element, forKeyword);
     TreeUtil.addChildren(element, lparenth);
     TreeUtil.addChildren(element, parameter);
@@ -558,7 +559,7 @@ public class StatementParsing extends Parsing {
   private CompositeElement parseForLoopFromInitialization(final TreeElement forKeyword,
                                                           final TreeElement lparenth,
                                                           Lexer lexer) {// parsing normal for statement for statement
-    CompositeElement element = Factory.createCompositeElement(FOR_STATEMENT);
+    CompositeElement element = ASTFactory.composite(FOR_STATEMENT);
     TreeUtil.addChildren(element, forKeyword);
     TreeUtil.addChildren(element, lparenth);
     TreeElement init = parseStatement(lexer);
@@ -612,11 +613,11 @@ public class StatementParsing extends Parsing {
     if (expression != null) {
       final CompositeElement expressionStatement;
       if (lexer.getTokenType() != COMMA) {
-        expressionStatement = Factory.createCompositeElement(EXPRESSION_STATEMENT);
+        expressionStatement = ASTFactory.composite(EXPRESSION_STATEMENT);
         TreeUtil.addChildren(expressionStatement, expression);
       } else {
-        expressionStatement = Factory.createCompositeElement(EXPRESSION_LIST_STATEMENT);
-        final CompositeElement expressionList = Factory.createCompositeElement(EXPRESSION_LIST);
+        expressionStatement = ASTFactory.composite(EXPRESSION_LIST_STATEMENT);
+        final CompositeElement expressionList = ASTFactory.composite(EXPRESSION_LIST);
         TreeUtil.addChildren(expressionList, expression);
         do {
           TreeUtil.addChildren(expressionList, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
@@ -636,7 +637,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseDoWhileStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == DO_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(DO_WHILE_STATEMENT);
+    CompositeElement element = ASTFactory.composite(DO_WHILE_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -667,7 +668,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseSwitchStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == SWITCH_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(SWITCH_STATEMENT);
+    CompositeElement element = ASTFactory.composite(SWITCH_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -690,7 +691,7 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(lexer.getTokenType() == CASE_KEYWORD || lexer.getTokenType() == DEFAULT_KEYWORD);
     IElementType tokenType = lexer.getTokenType();
     final LexerPosition pos = lexer.getCurrentPosition();
-    CompositeElement element = Factory.createCompositeElement(SWITCH_LABEL_STATEMENT);
+    CompositeElement element = ASTFactory.composite(SWITCH_LABEL_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
     if (tokenType == CASE_KEYWORD){
@@ -713,7 +714,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseBreakStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == BREAK_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(BREAK_STATEMENT);
+    CompositeElement element = ASTFactory.composite(BREAK_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -728,7 +729,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseContinueStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == CONTINUE_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(CONTINUE_STATEMENT);
+    CompositeElement element = ASTFactory.composite(CONTINUE_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -743,7 +744,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseReturnStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == RETURN_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(RETURN_STATEMENT);
+    CompositeElement element = ASTFactory.composite(RETURN_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -759,7 +760,7 @@ public class StatementParsing extends Parsing {
   private CompositeElement parseThrowStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == THROW_KEYWORD);
 
-    CompositeElement element = Factory.createCompositeElement(THROW_STATEMENT);
+    CompositeElement element = ASTFactory.composite(THROW_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -778,7 +779,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseSynchronizedStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == SYNCHRONIZED_KEYWORD);
-    CompositeElement element = Factory.createCompositeElement(SYNCHRONIZED_STATEMENT);
+    CompositeElement element = ASTFactory.composite(SYNCHRONIZED_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -800,7 +801,7 @@ public class StatementParsing extends Parsing {
     LOG.assertTrue(lexer.getTokenType() == TRY_KEYWORD);
 
     //int pos = ParseUtil.savePosition(lexer);
-    CompositeElement element = Factory.createCompositeElement(TRY_STATEMENT);
+    CompositeElement element = ASTFactory.composite(TRY_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -841,7 +842,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseCatchSection(Lexer lexer) {
     TreeElement codeBlock;
-    CompositeElement catchSection = Factory.createCompositeElement(CATCH_SECTION);
+    CompositeElement catchSection = ASTFactory.composite(CATCH_SECTION);
     TreeUtil.addChildren(catchSection, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -880,7 +881,7 @@ public class StatementParsing extends Parsing {
   private CompositeElement parseAssertStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == ASSERT_KEYWORD);
 
-    CompositeElement element = Factory.createCompositeElement(ASSERT_STATEMENT);
+    CompositeElement element = ASTFactory.composite(ASSERT_STATEMENT);
     TreeUtil.addChildren(element, ParseUtil.createTokenElement(lexer, myContext.getCharTable()));
     lexer.advance();
 
@@ -911,7 +912,7 @@ public class StatementParsing extends Parsing {
 
   private CompositeElement parseBlockStatement(Lexer lexer) {
     LOG.assertTrue(lexer.getTokenType() == LBRACE);
-    CompositeElement element = Factory.createCompositeElement(BLOCK_STATEMENT);
+    CompositeElement element = ASTFactory.composite(BLOCK_STATEMENT);
     TreeElement codeBlock = parseCodeBlock(lexer, DEEP_PARSE_BLOCKS_IN_STATEMENTS);
     TreeUtil.addChildren(element, codeBlock);
     return element;

@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.CharTableBasedLeafElementImpl;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -36,7 +35,7 @@ public class PlainTextParserDefinition implements ParserDefinition {
     return new IFileElementType(StdLanguages.TEXT) {
       public ASTNode parseContents(ASTNode chameleon) {
         final CharSequence chars = ((CharTableBasedLeafElementImpl)chameleon).getInternedText();
-        return Factory.createLeafElement(ElementType.PLAIN_TEXT, chars,0,chars.length(), SharedImplUtil.findCharTableByTree(chameleon));
+        return ASTFactory.leaf(ElementType.PLAIN_TEXT, chars, 0, chars.length(), SharedImplUtil.findCharTableByTree(chameleon));
       }
     };
   }

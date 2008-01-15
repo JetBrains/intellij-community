@@ -3,6 +3,7 @@
  */
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -121,7 +122,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
           table,
           manager);
         if (componentTypeCopy == null) return null;
-        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
+        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
         TreeUtil.addChildren(element, createLeafFromText("...", table, manager, original, JavaTokenType.ELLIPSIS));
@@ -133,7 +134,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
           table,
           manager);
         if (componentTypeCopy == null) return null;
-        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
+        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, componentTypeCopy);
         TreeUtil.addChildren(element, createLeafFromText("[", table, manager, original, JavaTokenType.LBRACKET));
@@ -147,7 +148,7 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         lexer.start(text,0, text.length(),0);
         TreeElement keyword = ParseUtil.createTokenElement(lexer, table);
         CodeEditUtil.setNodeGenerated(keyword, generated);
-        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
+        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, keyword);
         return element;
@@ -166,14 +167,14 @@ public class JavaChangeUtilSupport implements TreeGenerator, TreeCopyHandler {
         }
         else {
           final CompositeElement reference = createReference(original.getManager(), classType.getPresentableText(), table, generated);
-          final CompositeElement immediateTypeElement = Factory.createCompositeElement(JavaElementType.TYPE);
+          final CompositeElement immediateTypeElement = ASTFactory.composite(JavaElementType.TYPE);
           CodeEditUtil.setNodeGenerated(immediateTypeElement, generated);
           TreeUtil.addChildren(immediateTypeElement, reference);
           encodeInfoInTypeElement(immediateTypeElement, classType);
           return immediateTypeElement;
         }
 
-        CompositeElement element = Factory.createCompositeElement(JavaElementType.TYPE);
+        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
         CodeEditUtil.setNodeGenerated(element, generated);
         TreeUtil.addChildren(element, ChangeUtil.generateTreeElement(ref, table,manager));
         return element;

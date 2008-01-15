@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -399,7 +400,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           FileElement holder = new JavaDummyHolder(getManager(), null).getTreeElement();
 
           int splitOffset = physicalOffset - childElement.getStartOffsetInParent();
-          myRight = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+          myRight = (XmlTextImpl)ASTFactory.composite(XmlElementType.XML_TEXT);
           CodeEditUtil.setNodeGenerated(myRight, true);
           TreeUtil.addChildren(holder, myRight);
 
@@ -413,10 +414,11 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
           String rightText = childElement.getText().substring(splitOffset);
 
 
-          LeafElement rightElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, rightText, 0, rightText.length(), holder.getCharTable());
+          LeafElement rightElement =
+            ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, rightText, 0, rightText.length(), holder.getCharTable());
           CodeEditUtil.setNodeGenerated(rightElement, true);
 
-          LeafElement leftElement = Factory.createLeafElement(XmlTokenType.XML_DATA_CHARACTERS, leftText, 0, leftText.length(), holder.getCharTable());
+          LeafElement leftElement = ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, leftText, 0, leftText.length(), holder.getCharTable());
           CodeEditUtil.setNodeGenerated(leftElement, true);
 
           TreeUtil.insertAfter(XmlTextImpl.this, myRight);
@@ -431,7 +433,7 @@ public class XmlTextImpl extends XmlElementImpl implements XmlText, PsiLanguageI
         else {
           final PsiFile containingFile = xmlTag.getContainingFile();
           final FileElement holder = new JavaDummyHolder(containingFile.getManager(), null, ((PsiFileImpl)containingFile).getTreeElement().getCharTable()).getTreeElement();
-          final XmlTextImpl rightText = (XmlTextImpl)Factory.createCompositeElement(XmlElementType.XML_TEXT);
+          final XmlTextImpl rightText = (XmlTextImpl)ASTFactory.composite(XmlElementType.XML_TEXT);
           CodeEditUtil.setNodeGenerated(rightText, true);
 
           TreeUtil.addChildren(holder, rightText);

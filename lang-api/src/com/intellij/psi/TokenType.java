@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 
 /**
  * The standard lexer token types common to all languages.
@@ -42,8 +43,8 @@ public interface TokenType {
 
   IElementType ERROR_ELEMENT = new IElementType("ERROR_ELEMENT", Language.ANY);
 
-  IElementType PLAIN_TEXT_FILE = new IElementType("PLAIN_TEXT_FILE", FileTypes.PLAIN_TEXT.getLanguage());
+  IElementType PLAIN_TEXT_FILE = new IFileElementType("PLAIN_TEXT_FILE", FileTypes.PLAIN_TEXT.getLanguage());
   IElementType PLAIN_TEXT = new IElementType("PLAIN_TEXT", FileTypes.PLAIN_TEXT.getLanguage());
-  IElementType CODE_FRAGMENT = new IElementType("CODE_FRAGMENT", Language.ANY);
-  IElementType DUMMY_HOLDER = new IElementType("DUMMY_HOLDER", Language.ANY);
+  IElementType CODE_FRAGMENT = new IFileElementType("CODE_FRAGMENT", Language.ANY);
+  IElementType DUMMY_HOLDER = new IFileElementType("DUMMY_HOLDER", Language.ANY);
 }

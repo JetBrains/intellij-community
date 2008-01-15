@@ -1,11 +1,15 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.JavaDummyHolder;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.xml.XmlPsiPolicy;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.*;
@@ -59,18 +63,10 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
                                       final CharSequence chars) {
     if(startOffset != endOffset){
       if(isWhitespace){
-        return Factory.createLeafElement(
-          XmlTokenType.XML_WHITE_SPACE,
-          chars,
-          startOffset,
-          endOffset, dummyParent.getCharTable());
+        return ASTFactory.leaf(XmlTokenType.XML_WHITE_SPACE, chars, startOffset, endOffset, dummyParent.getCharTable());
       }
       else{
-        return Factory.createLeafElement(
-          XmlTokenType.XML_DATA_CHARACTERS,
-          chars,
-          startOffset,
-          endOffset, dummyParent.getCharTable());
+        return ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, chars, startOffset, endOffset, dummyParent.getCharTable());
       }
     }
     return null;

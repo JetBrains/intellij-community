@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
@@ -14,7 +15,7 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -87,7 +88,7 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   public TreeElement createContentLeafElement(final CharSequence text, final int startOffset, final int endOffset, final CharTable table) {
-    return Factory.createLeafElement(myContentElementType, text, startOffset, endOffset, table);
+    return ASTFactory.leaf(myContentElementType, text, startOffset, endOffset, table);
   }
 
   public long getRepositoryId() {
@@ -198,7 +199,12 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   }
 
   protected FileElement createFileElement(final CharSequence docText) {
-    final FileElement treeElement = (FileElement)Factory.createCompositeElement(myElementType);
+
+    final CompositeElement xxx = ASTFactory.composite(myElementType);
+    if (!(xxx instanceof FileElement)) {
+      LOG.error("BUMM!");
+    }
+    final FileElement treeElement = (FileElement)xxx;
     if (CacheUtil.isCopy(this)) {
       treeElement.setCharTable(new IdentityCharTable());
     }

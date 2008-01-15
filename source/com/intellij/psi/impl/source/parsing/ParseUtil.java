@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.parsing;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.JavaWithJspTemplateDataLexer;
@@ -29,12 +30,10 @@ public class ParseUtil implements Constants {
     IElementType tokenType = lexer.getTokenType();
     if (tokenType == null) return null;
     if (tokenType == JavaTokenType.DOC_COMMENT) {
-      LeafElement chameleon = Factory.createLeafElement(JavaDocElementType.DOC_COMMENT, lexer.getBufferSequence(), lexer.getTokenStart(),
-                                                        lexer.getTokenEnd(), table);
-      return chameleon;
+      return ASTFactory.leaf(JavaDocElementType.DOC_COMMENT, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
     }
     else {
-      return Factory.createLeafElement(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
+      return ASTFactory.leaf(tokenType, lexer.getBufferSequence(), lexer.getTokenStart(), lexer.getTokenEnd(), table);
     }
   }
 

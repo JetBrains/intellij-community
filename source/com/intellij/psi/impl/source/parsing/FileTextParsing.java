@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.parsing;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FilterLexer;
 import com.intellij.lexer.Lexer;
@@ -76,7 +77,7 @@ public class FileTextParsing extends Parsing {
   }
 
   public ASTNode parseImportList(Lexer lexer) {
-    CompositeElement importList = Factory.createCompositeElement(IMPORT_LIST);
+    CompositeElement importList = ASTFactory.composite(IMPORT_LIST);
     if (lexer.getTokenType() == IMPORT_KEYWORD) {
       int startPos = lexer.getTokenStart();
       int lastPos = lexer.getTokenEnd();
@@ -96,7 +97,7 @@ public class FileTextParsing extends Parsing {
         lastPos = lexer.getTokenEnd();
         lexer.advance();
       }
-      return Factory.createLeafElement(IMPORT_LIST, lexer.getBufferSequence(), startPos, lastPos, myContext.getCharTable());
+      return ASTFactory.leaf(IMPORT_LIST, lexer.getBufferSequence(), startPos, lastPos, myContext.getCharTable());
     }
 
     return importList;
@@ -104,7 +105,7 @@ public class FileTextParsing extends Parsing {
 
   public ASTNode parsePackageStatement(Lexer lexer) {
     final LexerPosition startPos = lexer.getCurrentPosition();
-    CompositeElement packageStatement = Factory.createCompositeElement(PACKAGE_STATEMENT);
+    CompositeElement packageStatement = ASTFactory.composite(PACKAGE_STATEMENT);
 
     if (lexer.getTokenType() != PACKAGE_KEYWORD) {
       FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));

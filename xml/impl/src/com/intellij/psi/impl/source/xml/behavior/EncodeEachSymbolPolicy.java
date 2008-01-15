@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.JavaDummyHolder;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -41,42 +41,21 @@ public class EncodeEachSymbolPolicy extends DefaultXmlPsiPolicy{
   private static TreeElement createCharEntity(char ch, CharTable charTable) {
     switch (ch) {
       case '<':
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&lt;",
-          0, 4, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&lt;", 0, 4, charTable);
       case '\'':
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&apos;",
-          0, 6, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&apos;", 0, 6, charTable);
       case '"':
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&quot;",
-          0, 6, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&quot;", 0, 6, charTable);
       case '>':
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&gt;",
-          0, 4, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&gt;", 0, 4, charTable);
       case '&':
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&amp;",
-          0, 5, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&amp;", 0, 5, charTable);
       case '\u00a0':
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          "&nbsp;",
-          0, 6, charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, "&nbsp;", 0, 6, charTable);
 
       default:
         final String charEncoding = "&#" + (int)ch + ";";
-        return Factory.createLeafElement(
-          XmlTokenType.XML_CHAR_ENTITY_REF,
-          charEncoding,
-          0, charEncoding.length(), charTable);
+        return ASTFactory.leaf(XmlTokenType.XML_CHAR_ENTITY_REF, charEncoding, 0, charEncoding.length(), charTable);
     }
   }
 

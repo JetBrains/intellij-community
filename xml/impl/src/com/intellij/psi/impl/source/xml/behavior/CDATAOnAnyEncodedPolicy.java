@@ -1,11 +1,11 @@
 package com.intellij.psi.impl.source.xml.behavior;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.xml.XmlElementType;
@@ -30,26 +30,14 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static FileElement createCDATAElement(final PsiManager manager, final CharTable charTableByTree, final String displayText) {
     final FileElement dummyParent = new JavaDummyHolder(manager, null, charTableByTree).getTreeElement();
-    final CompositeElement cdata = Factory.createCompositeElement(XmlElementType.XML_CDATA);
+    final CompositeElement cdata = ASTFactory.composite(XmlElementType.XML_CDATA);
     TreeUtil.addChildren(dummyParent, cdata);
     TreeUtil.addChildren(
-      cdata,
-      Factory.createLeafElement(
-        XmlTokenType.XML_CDATA_START,
-        "<![CDATA[",
-        0, 9, dummyParent.getCharTable()));
+      cdata, ASTFactory.leaf(XmlTokenType.XML_CDATA_START, "<![CDATA[", 0, 9, dummyParent.getCharTable()));
     TreeUtil.addChildren(
-      cdata,
-      Factory.createLeafElement(
-        XmlTokenType.XML_DATA_CHARACTERS,
-        displayText,
-        0, displayText.length(), dummyParent.getCharTable()));
+      cdata, ASTFactory.leaf(XmlTokenType.XML_DATA_CHARACTERS, displayText, 0, displayText.length(), dummyParent.getCharTable()));
     TreeUtil.addChildren(
-      cdata,
-      Factory.createLeafElement(
-        XmlTokenType.XML_CDATA_END,
-        "]]>",
-        0, 3, dummyParent.getCharTable()));
+      cdata, ASTFactory.leaf(XmlTokenType.XML_CDATA_END, "]]>", 0, 3, dummyParent.getCharTable()));
     dummyParent.acceptTree(new GeneratedMarkerVisitor());
     return dummyParent;
   }

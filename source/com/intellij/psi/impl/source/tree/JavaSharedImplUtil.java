@@ -1,14 +1,15 @@
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.PsiTypeElementImpl;
-import com.intellij.psi.impl.GeneratedMarkerVisitor;
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.GeneratedMarkerVisitor;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.diagnostic.Logger;
 
 public class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaSharedImplUtil");
@@ -88,11 +89,11 @@ public class JavaSharedImplUtil {
       CompositeElement newType = (CompositeElement)type.clone();
       final CharTable treeCharTable = SharedImplUtil.findCharTableByTree(type);
       for (int i = 0; i < arrayCount; i++) {
-        CompositeElement newType1 = Factory.createCompositeElement(ElementType.TYPE);
+        CompositeElement newType1 = ASTFactory.composite(ElementType.TYPE);
         TreeUtil.addChildren(newType1, newType);
 
-        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.LBRACKET, "[", 0, 1, treeCharTable));
-        TreeUtil.addChildren(newType1, Factory.createLeafElement(ElementType.RBRACKET, "]", 0, 1, treeCharTable));
+        TreeUtil.addChildren(newType1, ASTFactory.leaf(ElementType.LBRACKET, "[", 0, 1, treeCharTable));
+        TreeUtil.addChildren(newType1, ASTFactory.leaf(ElementType.RBRACKET, "]", 0, 1, treeCharTable));
         newType = newType1;
         newType.acceptTree(new GeneratedMarkerVisitor());
       }

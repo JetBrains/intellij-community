@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
@@ -47,15 +48,15 @@ public class SourceUtil {
   public static TreeElement addParenthToReplacedChild(final IElementType parenthType,
                                                       TreeElement newChild,
                                                       PsiManager manager) {
-    CompositeElement parenthExpr = Factory.createCompositeElement(parenthType);
+    CompositeElement parenthExpr = ASTFactory.composite(parenthType);
 
     TreeElement dummyExpr = (TreeElement)newChild.clone();
     final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(newChild);
     new DummyHolder(manager, parenthExpr, null, charTableByTree);
     parenthExpr.putUserData(CharTable.CHAR_TABLE_KEY, charTableByTree);
-    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
+    TreeUtil.addChildren(parenthExpr, ASTFactory.leaf(JavaTokenType.LPARENTH, "(", 0, 1, charTableByTree));
     TreeUtil.addChildren(parenthExpr, dummyExpr);
-    TreeUtil.addChildren(parenthExpr, Factory.createLeafElement(JavaTokenType.RPARENTH, ")", 0, 1, charTableByTree));
+    TreeUtil.addChildren(parenthExpr, ASTFactory.leaf(JavaTokenType.RPARENTH, ")", 0, 1, charTableByTree));
 
     try {
       CodeStyleManager codeStyleManager = manager.getCodeStyleManager();
