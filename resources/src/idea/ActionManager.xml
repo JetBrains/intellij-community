@@ -64,7 +64,7 @@
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
     </group>
 
-    <group id="NewGroup1" popup="true">
+    <group id="NewGroup1">
       <action id="NewClass" class="com.intellij.ide.actions.CreateClassAction"/>
       <action id="NewInterface" class="com.intellij.ide.actions.CreateInterfaceAction"/>
       <action id="NewEnum" class="com.intellij.ide.actions.CreateEnumAction"/>
