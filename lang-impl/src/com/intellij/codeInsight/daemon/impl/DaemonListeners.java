@@ -179,7 +179,7 @@ public class DaemonListeners {
     InspectionProfileManager.getInstance().addProfileChangeListener(myProfileChangeListener);
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
-    ExternalResourceManagerEx.getInstanceEx().addExteralResourceListener(myExternalResourceListener);
+    ExternalResourceManagerEx.getInstanceEx().addExternalResourceListener(myExternalResourceListener);
     myVirtualFileListener = new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {

@@ -6,8 +6,6 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.j2ee.extResources.ExternalResourceListener;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +77,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final List<Runnable> myRunnablesOnAnyChange = new CopyOnWriteArrayList<Runnable>();
   private final List<Runnable> myRunnablesAfterAnyChange = new CopyOnWriteArrayList<Runnable>();
 
-  private final ExternalResourceListener myExternalResourceListener;
   private boolean myIsDisposed;
 
   private VirtualFileFilter myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
@@ -111,7 +108,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public PsiManagerImpl(Project project,
                         PsiManagerConfiguration psiManagerConfiguration,
                         final ProjectRootManagerEx projectRootManagerEx,
-                        ExternalResourceManagerEx externalResourceManagerEx,
                         StartupManager startupManager,
                         FileTypeManager fileTypeManager,
                         VirtualFileManager virtualFileManager,
@@ -139,14 +135,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     myCacheManager = cacheManager;
 
-    myExternalResourceListener = new MyExternalResourceListener();
     myModificationTracker = new PsiModificationTrackerImpl(this);
     myResolveCache = new ResolveCache(this);
     myCachedValuesManager = new CachedValuesManagerImpl(this);
-
-    if (externalResourceManagerEx != null) {
-      externalResourceManagerEx.addExteralResourceListener(myExternalResourceListener);
-    }
 
     myRepositoryManager = psiManagerConfiguration.createRepositoryManager(this);
     myRepositoryElementsManager = psiManagerConfiguration.createRepositoryElementsManager(this, myRepositoryManager);
@@ -183,10 +174,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myCacheManager.dispose();
     myRepositoryManager.dispose();
 
-    ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
-    if (externalResourceManager != null) {
-      externalResourceManager.removeExternalResourceListener(myExternalResourceListener);
-    }
     myIsDisposed = true;
   }
 
@@ -829,11 +816,5 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   @NotNull
   public String getComponentName() {
     return "PsiManager";
-  }
-
-  private class MyExternalResourceListener implements ExternalResourceListener {
-    public void externalResourceChanged() {
-      onChange(true);
-    }
   }
 }

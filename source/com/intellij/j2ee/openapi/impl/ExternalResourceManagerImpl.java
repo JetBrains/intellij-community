@@ -333,7 +333,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     return "ExternalResourceManagerImpl";
   }
 
-  public void addExteralResourceListener(ExternalResourceListener listener) {
+  public void addExternalResourceListener(ExternalResourceListener listener) {
     myListeners.add(listener);
   }
 

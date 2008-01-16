@@ -26,7 +26,7 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
 
   public abstract String[] getIgnoredResources();
 
-  public abstract void addExteralResourceListener(ExternalResourceListener listener);
+  public abstract void addExternalResourceListener(ExternalResourceListener listener);
 
   public abstract void removeExternalResourceListener(ExternalResourceListener listener);
 
