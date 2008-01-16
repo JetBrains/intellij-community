@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwne
 /**
  * @author ven
  */
-public interface GroovyFile extends GroovyFileBase, GrMethodOwner, PsiCodeFragment {
+public interface GroovyFile extends GroovyFileBase, GrMethodOwner/*, PsiCodeFragment*/ {
 
   GrImportStatement[] getImportStatements();
 

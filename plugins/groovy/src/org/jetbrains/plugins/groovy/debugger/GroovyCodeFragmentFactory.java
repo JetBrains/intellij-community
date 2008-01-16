@@ -115,7 +115,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
-    return GroovyElementFactory.getInstance(project).createGroovyFile(item.getText(), true, context);
+    return /*GroovyElementFactory.getInstance(project).createGroovyFile(item.getText(), true, context)*/null;
   }
 
   private String getCommaSeparatedNamesList(String[] names) {
