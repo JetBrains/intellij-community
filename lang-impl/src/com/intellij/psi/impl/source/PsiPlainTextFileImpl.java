@@ -9,7 +9,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
   private final FileType myFileType;
 
   public PsiPlainTextFileImpl(FileViewProvider viewProvider) {
-    super(TokenType.PLAIN_TEXT_FILE, TokenType.PLAIN_TEXT, viewProvider);
+    super(PlainTextTokenTypes.PLAIN_TEXT_FILE, PlainTextTokenTypes.PLAIN_TEXT, viewProvider);
     myFileType = viewProvider.getVirtualFile().getFileType();
   }
 

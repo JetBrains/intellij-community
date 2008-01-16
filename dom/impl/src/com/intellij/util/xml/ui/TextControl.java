@@ -9,8 +9,8 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.psi.impl.source.PsiCodeFragmentImpl;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.ui.UIBundle;
@@ -51,7 +51,7 @@ public class TextControl extends EditorTextFieldControl<TextPanel> {
     boundedComponent.removeAll();
     final Function<String, Document> factory = new Function<String, Document>() {
       public Document fun(final String s) {
-        return PsiDocumentManager.getInstance(project).getDocument(new PsiCodeFragmentImpl(project, ElementType.PLAIN_TEXT, true, "a.txt", s));
+        return PsiDocumentManager.getInstance(project).getDocument(new PsiCodeFragmentImpl(project, PlainTextTokenTypes.PLAIN_TEXT, true, "a.txt", s));
       }
     };
     final TextPanel boundedComponent1 = boundedComponent;

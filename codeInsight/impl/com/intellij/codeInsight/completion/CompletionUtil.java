@@ -26,7 +26,6 @@ import com.intellij.psi.filters.ClassFilter;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.filters.position.SuperParentFilter;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
@@ -174,7 +173,7 @@ public class CompletionUtil {
       ASTNode textContainer = element != null ? element.getNode() : null;
       while (textContainer != null) {
         final IElementType elementType = textContainer.getElementType();
-        if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == ElementType.PLAIN_TEXT) {
+        if (LanguageWordCompletion.INSTANCE.isEnabledIn(elementType) || elementType == PlainTextTokenTypes.PLAIN_TEXT) {
           wordCompletionData = ourWordCompletionData;
         }
         textContainer = textContainer.getTreeParent();

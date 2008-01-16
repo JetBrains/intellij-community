@@ -462,7 +462,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (element.getElementType() == TokenType.WHITE_SPACE) {
       return false;
     }
-    if (element.getElementType() == ElementType.PLAIN_TEXT) {
+    if (element.getElementType() == PlainTextTokenTypes.PLAIN_TEXT) {
       return false;
     }
     /*

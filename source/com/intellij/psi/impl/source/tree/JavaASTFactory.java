@@ -11,6 +11,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.java.IJavaDocElementType;
 import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.PlainTextTokenTypes;
 import com.intellij.util.CharTable;
 
 public class JavaASTFactory extends ASTFactory implements Constants {
@@ -32,7 +33,7 @@ public class JavaASTFactory extends ASTFactory implements Constants {
     else if (type == JAVA_FILE) {
       element = new JavaFileElement();
     }
-    else if (type == PLAIN_TEXT_FILE) {
+    else if (type == PlainTextTokenTypes.PLAIN_TEXT_FILE) {
       element = new PlainTextFileElement();
     }
     else if (type == CODE_FRAGMENT) {
