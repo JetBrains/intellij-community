@@ -104,4 +104,7 @@
 
   <extensionPoint name="usageTargetProvider"
                   interface="com.intellij.usages.UsageTargetProvider"/>
+
+  <extensionPoint name="scopeDescriptorProvider" interface="com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider"/>
+  <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 </extensionPoints>
