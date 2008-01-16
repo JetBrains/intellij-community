@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.StdLanguages;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -17,26 +18,32 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context) {
     super(manager, contentElement, context);
+    setLanguage(StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, CharTable table, boolean validity) {
     super(manager, table, validity);
+    setLanguage(StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context) {
     super(manager, context);
+    setLanguage(StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, TreeElement contentElement, PsiElement context, CharTable table) {
     super(manager, contentElement, context, table);
+    setLanguage(StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, PsiElement context, CharTable table) {
     super(manager, context, table);
+    setLanguage(StdLanguages.JAVA);
   }
 
   public JavaDummyHolder(@NotNull PsiManager manager, final CharTable table, final Language language) {
     super(manager, table, language);
+    setLanguage(StdLanguages.JAVA);
   }
 
   public boolean importClass(PsiClass aClass) {
@@ -105,4 +112,5 @@ public class JavaDummyHolder extends DummyHolder implements PsiImportHolder {
     if (aPackage == null) return true;
     return "".equals(aPackage.getQualifiedName());
   }
+
 }

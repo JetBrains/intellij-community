@@ -3,7 +3,6 @@ package com.intellij.psi.impl.compiled;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
-import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -17,7 +16,7 @@ public class ClsParsingUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.impl.compiled.ClsParsingUtil");
   public static PsiExpression createExpressionFromText(String exprText, PsiManager manager, ClsElementImpl parent) {
     PsiJavaFile dummyJavaFile = ((PsiElementFactoryImpl)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()).getDummyJavaFile(); // kind of hack - we need to resolve classes from java.lang
-    final FileElement holderElement = new JavaDummyHolder(manager, dummyJavaFile).getTreeElement();
+    final FileElement holderElement = com.intellij.psi.impl.source.DummyHolderFactory.createHolder(manager, dummyJavaFile).getTreeElement();
     CompositeElement _expr = ExpressionParsing.parseExpressionText(manager, exprText, 0, exprText.length(), holderElement.getCharTable());
     if (_expr == null){
       LOG.error("Could not parse expression:'" + exprText + "'");

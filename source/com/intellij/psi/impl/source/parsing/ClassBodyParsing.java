@@ -6,7 +6,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.ANNOTATION_INTERFACE_CONTEXT;
 import static com.intellij.psi.impl.source.parsing.DeclarationParsing.Context.CLASS_CONTEXT;
 import com.intellij.psi.impl.source.tree.*;
@@ -39,7 +39,7 @@ public class ClassBodyParsing extends Parsing {
     else filterLexer.start(buffer, startOffset, endOffset, lexerState);
 
     CharTable table = myContext.getCharTable();
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, table).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     parseClassBody(dummyRoot, filterLexer, context);
     ParseUtil.insertMissingTokens(dummyRoot, lexer, startOffset, endOffset, lexerState, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
     return (TreeElement)dummyRoot.getFirstChildNode();

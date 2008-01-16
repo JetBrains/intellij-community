@@ -7,7 +7,7 @@ import com.intellij.lexer.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
@@ -50,7 +50,7 @@ public class DeclarationParsing extends Parsing {
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);
@@ -65,7 +65,7 @@ public class DeclarationParsing extends Parsing {
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     TreeUtil.addChildren(dummyRoot, first);
 
@@ -438,7 +438,7 @@ public class DeclarationParsing extends Parsing {
     if (first == null) return null;
     if (lexer.getTokenType() != null) return null;
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
     TreeUtil.addChildren(dummyRoot, first);
 
     ParseUtil.insertMissingTokens(dummyRoot, originalLexer, 0, text.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, myContext);

@@ -4,7 +4,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -29,7 +29,7 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static FileElement createCDATAElement(final PsiManager manager, final CharTable charTableByTree, final String displayText) {
-    final FileElement dummyParent = new JavaDummyHolder(manager, null, charTableByTree).getTreeElement();
+    final FileElement dummyParent = DummyHolderFactory.createHolder(manager, null, charTableByTree).getTreeElement();
     final CompositeElement cdata = ASTFactory.composite(XmlElementType.XML_CDATA);
     TreeUtil.addChildren(dummyParent, cdata);
     TreeUtil.addChildren(

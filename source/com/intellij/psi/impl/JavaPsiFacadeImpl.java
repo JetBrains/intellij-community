@@ -20,7 +20,9 @@ import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.file.impl.JavaFileManagerImpl;
 import com.intellij.psi.impl.migration.PsiMigrationImpl;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.JavaDummyHolderFactory;
 import com.intellij.psi.impl.source.javadoc.JavadocManagerImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
@@ -107,6 +109,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx implements Disposable {
 
     JavaFindUsagesHandler.setupForProject(project);
     JavaChangeUtilSupport.setup();
+    DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
 
     Disposer.register(project, this);
   }

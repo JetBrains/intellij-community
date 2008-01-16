@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -18,7 +18,7 @@ import com.intellij.util.CharTable;
 public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, XmlText text, CharTable table) {
     final PsiFile containingFile = text.getContainingFile();
-    final FileElement dummyParent = new JavaDummyHolder(text.getManager(), null, table).getTreeElement();
+    final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, table).getTreeElement();
 
     if (containingFile instanceof JspFile) {
       boolean wsChars = false;

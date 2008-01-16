@@ -3,11 +3,9 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.light.LightEmptyImplementsList;
 import com.intellij.psi.impl.meta.MetaRegistry;
-import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.IndexedRepositoryPsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
@@ -17,6 +15,7 @@ import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -152,7 +151,7 @@ public class PsiTypeParameterImpl extends IndexedRepositoryPsiElement implements
       try{
         PsiTypeParameter typeParameter = JavaPsiFacade.getInstance(myManager.getProject()).getParserFacade().createTypeParameterFromText(text, this);
         myParsedFromRepository = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(typeParameter);
-        new JavaDummyHolder(myManager, myParsedFromRepository, getParent());
+        com.intellij.psi.impl.source.DummyHolderFactory.createHolder(myManager, myParsedFromRepository, getParent());
       }
       catch(IncorrectOperationException e){
         LOG.error(e);

@@ -1,8 +1,8 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -16,7 +16,7 @@ public class DummyHolder extends PsiFileImpl {
   protected PsiElement myContext;
   private CharTable myTable = null;
   private Boolean myExplicitlyValid = null;
-  private Language myLanguage = StdLanguages.JAVA;
+  private Language myLanguage = FileTypes.PLAIN_TEXT.getLanguage();
 
   private FileElement myFileElement = null;
 

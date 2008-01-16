@@ -9,7 +9,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 
 /**
@@ -33,7 +33,7 @@ public class ImportsTextParsing extends Parsing {
     if (state < 0) filterLexer.start(buffer, startOffset, endOffset,0);
     else filterLexer.start(buffer, startOffset, endOffset, state);
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     CompositeElement invalidElementsGroup = null;
     while(filterLexer.getTokenType() != null){

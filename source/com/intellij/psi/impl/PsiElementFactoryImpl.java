@@ -217,7 +217,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     if (type == PsiType.NULL) {
       throw new IncorrectOperationException("Cannot create field with type \"<null_type>\".");
     }
-    final FileElement treeHolder = new JavaDummyHolder(myManager, null).getTreeElement();
+    final FileElement treeHolder = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     final CompositeElement treeElement =
     getJavaParsingContext(treeHolder).getDeclarationParsing().parseParameterText(PsiKeyword.INT + " " + name);
     TreeUtil.addChildren(treeHolder, treeElement);

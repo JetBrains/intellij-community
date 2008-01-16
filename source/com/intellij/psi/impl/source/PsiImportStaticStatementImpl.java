@@ -92,7 +92,7 @@ public class PsiImportStaticStatementImpl extends PsiImportStatementBaseImpl imp
           refElement = (PsiJavaCodeReferenceElement)treeElement.findChildByRole(ChildRole.IMPORT_REFERENCE);
         }
         else{
-          final FileElement holderElement = new JavaDummyHolder(myManager, this).getTreeElement();
+          final FileElement holderElement = DummyHolderFactory.createHolder(myManager, this).getTreeElement();
           final JavaParsingContext context = new JavaParsingContext(holderElement.getCharTable(), PsiUtil.getLanguageLevel(this));
           final String refText = getRepositoryManager().getFileView().getImportQualifiedName(getRepositoryId(), getIndex());
           if (refText == null) return null;

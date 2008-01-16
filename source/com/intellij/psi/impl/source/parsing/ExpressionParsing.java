@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -36,7 +36,7 @@ public class ExpressionParsing extends Parsing {
     if (lexer.getTokenType() != null) return null;
 
     ParseUtil.insertMissingTokens(expression, originalLexer, 0, buffer.length(), -1, ParseUtil.WhiteSpaceAndCommentsProcessor.INSTANCE, context);
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, table).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     TreeUtil.addChildren(dummyRoot, expression);
     return expression;
   }
@@ -49,7 +49,7 @@ public class ExpressionParsing extends Parsing {
     FilterLexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset,0);
     CharTable table = myContext.getCharTable();
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, table).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, table).getTreeElement();
     CompositeElement expression = parseExpression(lexer);
     if (expression != null)
       TreeUtil.addChildren(dummyRoot, expression);
@@ -82,7 +82,7 @@ public class ExpressionParsing extends Parsing {
       lexer.start(buffer, startOffset, endOffset, 0);
     }
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     CompositeElement expression = parseExpression(lexer);
     if (expression != null) {

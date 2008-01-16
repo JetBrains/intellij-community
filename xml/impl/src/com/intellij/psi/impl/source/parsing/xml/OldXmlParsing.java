@@ -9,7 +9,7 @@ import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.parsing.ParseUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -48,7 +48,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(buffer, startOffset, endOffset, 0);
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
 
     CompositeElement root = ASTFactory.composite(XML_DOCUMENT);
     TreeUtil.addChildren(dummyRoot, root);
@@ -67,7 +67,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     XmlParsingContext context = new XmlParsingContext(table);
     FilterLexer filterLexer = new FilterLexer(lexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     filterLexer.start(buffer, startOffset, endOffset);
-    final FileElement holderElement = new JavaDummyHolder(SharedImplUtil.getManagerByTree(parent), null, table).getTreeElement();
+    final FileElement holderElement = DummyHolderFactory.createHolder(SharedImplUtil.getManagerByTree(parent), null, table).getTreeElement();
     final Set<String> names = new HashSet<String>();
     while (parent instanceof XmlTag) {
       names.add(((XmlTag)parent).getName());
@@ -890,7 +890,7 @@ public class OldXmlParsing implements ElementType, XmlElementType {
     final Lexer lexer = new FilterLexer(originalLexer, new FilterLexer.SetFilter(XML_WHITE_SPACE_OR_COMMENT_BIT_SET));
     lexer.start(text, start, end, _OldXmlLexer.DOCTYPE);
 
-    final FileElement dummyRoot = new JavaDummyHolder(manager, null, myContext.getCharTable()).getTreeElement();
+    final FileElement dummyRoot = DummyHolderFactory.createHolder(manager, null, myContext.getCharTable()).getTreeElement();
     parseMarkupContent(lexer, dummyRoot);
     while (lexer.getTokenType() != null) {
       final TreeElement children;

@@ -14,7 +14,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
@@ -53,7 +53,7 @@ public class TemplateDataElementType extends IFileElementType {
 
   public ASTNode parseContents(ASTNode chameleon) {
     final CharTable table = SharedImplUtil.findCharTableByTree(chameleon);
-    final FileElement treeElement = new JavaDummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
+    final FileElement treeElement = new DummyHolder(((TreeElement)chameleon).getManager(), null, table).getTreeElement();
     final PsiFile file = (PsiFile)TreeUtil.getFileElement((TreeElement)chameleon).getPsi();
     PsiFile originalFile = file.getOriginalFile();
     if (originalFile == null) originalFile = file;

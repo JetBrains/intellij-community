@@ -11,7 +11,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.source.JavaDummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
@@ -103,7 +103,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     }
 
     if (value == null) return null;
-    final FileElement holderElement = new JavaDummyHolder(originalElement.getManager(), originalElement).getTreeElement();
+    final FileElement holderElement = DummyHolderFactory.createHolder(originalElement.getManager(), originalElement).getTreeElement();
 
     Lexer lexer = getLexer(context, value);
     final XmlParsingContext parsingContext = new XmlParsingContext(holderElement.getCharTable());
