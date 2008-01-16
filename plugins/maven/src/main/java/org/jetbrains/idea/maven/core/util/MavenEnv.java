@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.project.MavenException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -176,8 +177,7 @@ public class MavenEnv {
     ConfigurationValidationResult result = MavenEmbedder.validateConfiguration(configuration);
 
     if (!result.isValid()) {
-      throw new MavenException(Arrays.asList(result.getGlobalSettingsException(),
-                                             result.getUserSettingsException()));
+      throw new MavenException(collectExceptions(result));
     }
 
     System.setProperty(PROP_MAVEN_HOME, mavenHome);
@@ -189,6 +189,17 @@ public class MavenEnv {
       LOG.info(e);
       throw new MavenException(e);
     }
+  }
+
+  private static List<Exception> collectExceptions(ConfigurationValidationResult result) {
+    List<Exception> ee = new ArrayList<Exception>();
+
+    Exception ex1 = result.getGlobalSettingsException();
+    Exception ex2 = result.getUserSettingsException();
+    if (ex1 != null) ee.add(ex1);
+    if (ex2 != null) ee.add(ex2);
+
+    return ee;
   }
 
   public static void releaseEmbedder(MavenEmbedder mavenEmbedder) {
