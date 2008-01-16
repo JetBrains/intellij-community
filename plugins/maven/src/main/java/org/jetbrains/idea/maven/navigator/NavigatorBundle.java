@@ -8,7 +8,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.ResourceBundle;
 
-class NavigatorBundle {
+public class NavigatorBundle {
   private static Reference<ResourceBundle> ourBundle;
 
   @NonNls

@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.List;
 
 
-class MavenNavigatorPanel extends JPanel implements DataProvider {
+public class MavenNavigatorPanel extends JPanel implements DataProvider {
 
   private final Project myProject;
   private final MavenProjectsState myProjectsState;

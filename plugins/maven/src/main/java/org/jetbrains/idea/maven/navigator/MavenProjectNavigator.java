@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
@@ -17,8 +16,6 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,19 +213,6 @@ public class MavenProjectNavigator extends PomTreeStructure implements ProjectCo
     ToolWindow pomToolWindow = ToolWindowManager.getInstance(project)
       .registerToolWindow(MAVEN_NAVIGATOR_TOOLWINDOW_ID, navigatorPanel, ToolWindowAnchor.RIGHT, project);
     pomToolWindow.setIcon(myIcon);
-
-    new UiNotifyConnector(navigatorPanel, new Activatable() {
-      public void showNotify() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            myProjectsState.activate();
-          }
-        });
-      }
-
-      public void hideNotify() {
-      }
-    });
   }
 
   public void projectClosed() {
