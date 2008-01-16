@@ -10,7 +10,6 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.javadoc.JavaDocManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -26,6 +25,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -99,12 +99,18 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     myIsDisposed = true;
   }
 
+  public Lookup showLookup(final Editor editor, final LookupItem[] items, final String prefix, final LookupItemPreferencePolicy itemPreferencePolicy,
+                           final CharFilter filter) {
+    return showLookup(editor, items, prefix, itemPreferencePolicy, filter, null);
+  }
+
   public Lookup showLookup(
     final Editor editor,
     LookupItem[] items,
     String prefix,
     LookupItemPreferencePolicy itemPreferencePolicy,
-    CharFilter filter
+    CharFilter filter,
+    @Nullable final String bottomText
   ) {
     hideActiveLookup();
 
@@ -140,47 +146,41 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     if (daemonCodeAnalyzer != null) {
       daemonCodeAnalyzer.setUpdateByTimerEnabled(false);
     }
-    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter);
+    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter, bottomText);
     myActiveLookupEditor = editor;
-    ApplicationManager.getApplication().invokeLater(new Runnable() { //to set bottom hint text
-      public void run() {
-        if (myActiveLookup == null) return;
-        
-        ((LookupImpl)myActiveLookup).show();
-        myActiveLookup.addLookupListener(
-          new LookupAdapter(){
-            public void itemSelected(LookupEvent event) {
-              dispose();
-            }
+    ((LookupImpl)myActiveLookup).show();
+    myActiveLookup.addLookupListener(
+      new LookupAdapter(){
+        public void itemSelected(LookupEvent event) {
+          dispose();
+        }
 
-            public void lookupCanceled(LookupEvent event) {
-              dispose();
-            }
+        public void lookupCanceled(LookupEvent event) {
+          dispose();
+        }
 
-            public void currentItemChanged(LookupEvent event) {
-              alarm.cancelAllRequests();
-              if (settings.AUTO_POPUP_JAVADOC_INFO){
-                alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
-              }
-            }
-
-            private void dispose(){
-              alarm.cancelAllRequests();
-              if (daemonCodeAnalyzer != null) {
-                daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-              }
-              if (myActiveLookup == null) return;
-              myActiveLookup.removeLookupListener(this);
-              Lookup lookup = myActiveLookup;
-              myActiveLookup = null;
-              myActiveLookupEditor = null;
-              myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, myActiveLookup);
-            }
+        public void currentItemChanged(LookupEvent event) {
+          alarm.cancelAllRequests();
+          if (settings.AUTO_POPUP_JAVADOC_INFO){
+            alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
           }
-        );
-        myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
+        }
+
+        private void dispose(){
+          alarm.cancelAllRequests();
+          if (daemonCodeAnalyzer != null) {
+            daemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+          }
+          if (myActiveLookup == null) return;
+          myActiveLookup.removeLookupListener(this);
+          Lookup lookup = myActiveLookup;
+          myActiveLookup = null;
+          myActiveLookupEditor = null;
+          myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, myActiveLookup);
+        }
       }
-    });
+    );
+    myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, null, myActiveLookup);
     return myActiveLookup;
   }
 

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.messages.MessageBus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -32,7 +33,8 @@ public class TestLookupManager extends LookupManagerImpl{
       LookupItem[] items,
       String prefix,
       LookupItemPreferencePolicy itemPreferencePolicy,
-      CharFilter filter) {
+      CharFilter filter,
+      @Nullable String bottomText) {
     hideActiveLookup();
 
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
@@ -52,7 +54,7 @@ public class TestLookupManager extends LookupManagerImpl{
     }
     sortItems(context, items, itemPreferencePolicy);
 
-    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter);
+    myActiveLookup = new LookupImpl(myProject, editor, items, prefix, itemPreferencePolicy, filter, bottomText);
     myActiveLookupEditor = editor;
     ((LookupImpl)myActiveLookup).show();
     return myActiveLookup;

@@ -81,7 +81,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
                     LookupItem[] items,
                     String prefix,
                     LookupItemPreferencePolicy itemPreferencePolicy,
-                    CharFilter filter){
+                    CharFilter filter, final String bottomText){
     super(new JPanel(new BorderLayout()));
     myProject = project;
     myEditor = editor;
@@ -96,6 +96,10 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       myPrefix = "";
     }
     myInitialPrefix = myPrefix;
+
+    myBottomLabel = new JLabel();
+    myBottomLabel.setText(bottomText);
+    myBottomLabel.setFont(myBottomLabel.getFont().deriveFont((float) (CodeInsightSettings.getInstance().LOOKUP_HEIGHT*10.0/11)));
 
     myList = new JList() ;
     myList.setFocusable(false);
@@ -114,7 +118,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     getComponent().add(scrollPane, BorderLayout.CENTER);
     scrollPane.setBorder(null);
-    myBottomLabel = new JLabel();
     getComponent().add(myBottomLabel, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
 
@@ -195,12 +198,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
 
   public int getPreferredItemsCount() {
     return myPreferredItemsCount;
-  }
-
-  public void setBottomText(String s) {
-    myBottomLabel.setText(s);
-    myBottomLabel.setFont(myBottomLabel.getFont().deriveFont((float) (CodeInsightSettings.getInstance().LOOKUP_HEIGHT*10.0/11)));
-    updateList();
   }
 
   private SortedMap<LookupItemWeightComparable, List<LookupItem>> initWeightMap(final LookupItemPreferencePolicy itemPreferencePolicy) {

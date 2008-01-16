@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 
@@ -12,12 +13,20 @@ public abstract class LookupManager {
     return project.getComponent(LookupManager.class);
   }
 
+  @Deprecated
   public abstract Lookup showLookup(
       Editor editor,
       LookupItem[] items,
       String prefix,
       LookupItemPreferencePolicy itemPreferencePolicy,
       CharFilter filter);
+  public abstract Lookup showLookup(
+      Editor editor,
+      LookupItem[] items,
+      String prefix,
+      LookupItemPreferencePolicy itemPreferencePolicy,
+      CharFilter filter,
+      @Nullable String bottomText);
   public abstract void hideActiveLookup();
   public abstract Lookup getActiveLookup();
 

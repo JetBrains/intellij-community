@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
@@ -190,15 +189,10 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       final RangeMarker startOffsetMarker = document.createRangeMarker(startOffset, startOffset);
-      final Lookup lookup = showLookup(project, editor, items, prefix, data, file);
+      final Lookup lookup = showLookup(project, editor, items, prefix, data, file, appendSuggestion(null));
       
       if (lookup != null) {
         lookup.putUserData(COMPLETION_HANDLER_CLASS_KEY, getClass());
-
-        final String s = appendSuggestion(null);
-        if (StringUtil.isNotEmpty(s) && lookup instanceof LookupImpl) {
-          ((LookupImpl) lookup).setBottomText(s);
-        }
 
         lookup.addLookupListener(new LookupAdapter() {
           public void itemSelected(LookupEvent event) {
@@ -443,9 +437,9 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
                               final LookupItem[] items,
                               String prefix,
                               final LookupData data,
-                              PsiFile file) {
+                              PsiFile file, final String bottomText) {
     return LookupManager.getInstance(project)
-      .showLookup(editor, items, prefix, data.itemPreferencePolicy, new DefaultCharFilter(editor, file, editor.getCaretModel().getOffset()));
+      .showLookup(editor, items, prefix, data.itemPreferencePolicy, new DefaultCharFilter(editor, file, editor.getCaretModel().getOffset()), bottomText);
   }
 
   protected abstract boolean isAutocompleteOnInvocation();
