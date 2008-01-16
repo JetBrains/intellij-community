@@ -93,7 +93,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
 
   private void updateSelection(boolean isShowing) {
     for (GridCell each: myPlaceInGrid2Cell.values()) {
-      each.updateSelection(isShowing);     
+      each.updateSelection(isShowing);
     }
   }
 
@@ -139,6 +139,7 @@ public class Grid extends Wrapper implements Disposable, CellTransform.Facade, D
   }
 
   public void restoreLastUiState() {
+    myLastUiStateWasRestored = true;
     for (final GridCell cell : myPlaceInGrid2Cell.values()) {
       cell.restoreLastUiState();
     }

@@ -316,7 +316,7 @@ public class GridCell implements Disposable {
       targetBounds.setSize(storedSize);
     }
 
-    if (!myTabs.isShowing() && (storedLocation == null || storedSize == null)) {
+    if (storedLocation == null || storedSize == null) {
       if (myContents.size() > 0) {
         myContext.validate(myContents.getKeys().iterator().next(), new ActionCallback.Runnable() {
           public ActionCallback run() {

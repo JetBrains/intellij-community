@@ -66,6 +66,18 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
       if (isToShowBorder()) {
         myComponent.setBorder(BorderFactory.createEmptyBorder(2,2,2,2));
       }
+
+      Dimension size = popupWindow.getSize();
+      Dimension minSize = popupWindow.getMinimumSize();
+      if (size.width < minSize.width) {
+        size.width = minSize.width;
+      }
+      if (size.height < minSize.height) {
+        size.height = minSize.height;
+      }
+
+      popupWindow.setSize(size);
+
       popupWindow.validate();
       popupWindow.repaint();
       popupWindow.setCursor(Cursor.getDefaultCursor());
@@ -149,7 +161,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
         popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
-      } 
+      }
       e.consume();
     } else {
       clearBorder(popupWindow);
