@@ -12,7 +12,6 @@ import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -27,7 +26,7 @@ public class MockFileManager implements FileManager {
   };
 
   public FileViewProvider createFileViewProvider(final VirtualFile file, final boolean physical) {
-    return new SingleRootFileViewProvider(myManager, file, true);
+    return new SingleRootFileViewProvider(myManager, file, physical);
   }
 
   public MockFileManager(final PsiManagerEx manager) {
@@ -52,20 +51,6 @@ public class MockFileManager implements FileManager {
     throw new UnsupportedOperationException("Method findDirectory is not yet implemented in " + getClass().getName());
   }
 
-  @Nullable
-  public PsiPackage findPackage(@NotNull String packageName) {
-    throw new UnsupportedOperationException("Method findPackage is not yet implemented in " + getClass().getName());
-  }
-
-  @Nullable
-  public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    throw new UnsupportedOperationException("Method findClass is not yet implemented in " + getClass().getName());
-  }
-
-  public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    throw new UnsupportedOperationException("Method findClasses is not yet implemented in " + getClass().getName());
-  }
-
   public void reloadFromDisk(@NotNull PsiFile file) //Q: move to PsiFile(Impl)?
   {
     throw new UnsupportedOperationException("Method reloadFromDisk is not yet implemented in " + getClass().getName());
@@ -85,10 +70,6 @@ public class MockFileManager implements FileManager {
   @NotNull
   public GlobalSearchScope getUseScope(@NotNull PsiElement element) {
     return GlobalSearchScope.allScope(element.getProject());
-  }
-
-  public Collection<String> getNonTrivialPackagePrefixes() {
-    throw new UnsupportedOperationException("Method getNonTrivialPackagePrefixes is not yet implemented in " + getClass().getName());
   }
 
   public void cleanupForNextTest() {
