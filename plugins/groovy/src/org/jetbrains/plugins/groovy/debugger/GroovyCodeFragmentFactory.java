@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -115,7 +116,9 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
-    return /*GroovyElementFactory.getInstance(project).createGroovyFile(item.getText(), true, context)*/null;
+    GroovyCodeFragment result = new GroovyCodeFragment(project, item.getText());
+    result.setContext(context);
+    return result;
   }
 
   private String getCommaSeparatedNamesList(String[] names) {
