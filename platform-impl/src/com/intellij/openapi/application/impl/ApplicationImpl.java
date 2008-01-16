@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -373,7 +374,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myExceptionalThreadWithReadAccessRunnable != null ||
         ApplicationManager.getApplication().isUnitTestMode() ||
         ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      process.run();
+      try {
+        ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
+      }
+      catch (ProcessCanceledException e) {
+        // ok to ignore.
+      }
       return true;
     }
 
