@@ -284,11 +284,14 @@ public class DeadCodeInspection extends FilteringInspectionTool {
   public void runInspection(AnalysisScope scope, final InspectionManager manager) {
     getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(final RefEntity refEntity) {
-        if (refEntity instanceof RefElement) {
+        if (refEntity instanceof RefJavaElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           final PsiElement element = refElement.getElement();
           if (element == null) return;
-          if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) return;
+          if (!getContext().isToCheckMember(refElement, DeadCodeInspection.this)) {
+            getEntryPointsManager().addEntryPoint(refElement, false);
+            return;
+          }
           if (!refElement.isSuspicious()) return;
           refElement.accept(new RefJavaVisitor() {
             @Override public void visitElement(final RefEntity elem) {
