@@ -18,6 +18,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
@@ -131,5 +132,9 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
   public String getDisplayName() {
     return "Groovy";
+  }
+
+  public LanguageFileType getFileType() {
+    return GroovyFileType.GROOVY_FILE_TYPE;
   }
 }
