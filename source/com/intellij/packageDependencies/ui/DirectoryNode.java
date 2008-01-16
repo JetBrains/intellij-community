@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
+import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public class DirectoryNode extends PackageDependenciesNode {
         }
       }
       else {
-        myFQName = PatternPackageSet.getLibRelativePath(directory, index);
+        myFQName = FilePatternPackageSet.getLibRelativePath(directory, index);
       }
       myDirName = myFQName;
     }

@@ -16,13 +16,10 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -35,7 +32,6 @@ public class PatternPackageSet implements PackageSet {
   public static final @NonNls String SCOPE_TEST = "test";
   public static final @NonNls String SCOPE_SOURCE = "src";
   public static final @NonNls String SCOPE_LIBRARY = "lib";
-  public static final @NonNls String SCOPE_FILE = "file";
   public static final @NonNls String SCOPE_PROBLEM = "problem";
   public static final String SCOPE_ANY = "";
 
@@ -43,19 +39,14 @@ public class PatternPackageSet implements PackageSet {
   private Pattern myModulePattern;
   private Pattern myModuleGroupPattern;
   private String myAspectJSyntaxPattern;
-  private String myPathPattern;
-  private Pattern myFilePattern;
   private String myScope;
   private String myModulePatternText;
   private static final Logger LOG = Logger.getInstance("com.intellij.psi.search.scope.packageSet.PatternPackageSet");
 
   public PatternPackageSet(@Nullable String aspectPattern,
                            String scope,
-                           @NonNls String modulePattern,
-                           @NonNls String filePattern) {
-    LOG.assertTrue((scope == SCOPE_FILE && filePattern != null) || (scope != SCOPE_FILE && aspectPattern != null));
+                           @NonNls String modulePattern) {
     myAspectJSyntaxPattern = aspectPattern;
-    myPathPattern = filePattern;
     myScope = scope;
     myModulePatternText = modulePattern;
     if (modulePattern == null || modulePattern.length() == 0) {
@@ -73,8 +64,7 @@ public class PatternPackageSet implements PackageSet {
         myModulePattern = Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
       }
     }
-    myPattern = aspectPattern != null ? Pattern.compile(convertToRegexp(aspectPattern, '.')) : null;
-    myFilePattern = filePattern != null ? Pattern.compile(convertToRegexp(filePattern, '/')) : null;
+    myPattern = aspectPattern != null ? Pattern.compile(FilePatternPackageSet.convertToRegexp(aspectPattern, '.')) : null;
   }
 
   public boolean contains(PsiFile file, NamedScopesHolder holder) {
@@ -88,47 +78,24 @@ public class PatternPackageSet implements PackageSet {
     if (vFile == null) return false;
     boolean isSource = fileIndex.isInSourceContent(vFile);
     if (myScope == SCOPE_ANY) {
-      return fileIndex.isInContent(vFile) && matchesModule(vFile, fileIndex);
+      return fileIndex.isInContent(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
     }
     if (myScope == SCOPE_SOURCE) {
-      return isSource && !fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
+      return isSource && !fileIndex.isInTestSourceContent(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
       return fileIndex.isInLibraryClasses(vFile) || fileIndex.isInLibrarySource(vFile);
     }
-    if (myScope == SCOPE_FILE){
-      return fileIndex.isInContent(vFile) && fileMatcher(vFile, fileIndex) && matchesModule(vFile, fileIndex);
-    }
     if (myScope == SCOPE_TEST) {
-      return isSource && fileIndex.isInTestSourceContent(vFile) && matchesModule(vFile, fileIndex);
+      return isSource && fileIndex.isInTestSourceContent(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
     }
     if (myScope == SCOPE_PROBLEM) {
-      return isSource && WolfTheProblemSolver.getInstance(file.getProject()).isProblemFile(vFile) && matchesModule(vFile, fileIndex);
+      return isSource && WolfTheProblemSolver.getInstance(file.getProject()).isProblemFile(vFile) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, vFile, fileIndex);
     }
     throw new RuntimeException("Unknown scope: " + myScope);
   }
 
-  private boolean fileMatcher(VirtualFile virtualFile, ProjectFileIndex fileIndex){
-    if (myModulePattern != null) {
-      final VirtualFile contentRoot = fileIndex.getContentRootForFile(virtualFile);
-      return myFilePattern.matcher(VfsUtil.getRelativePath(virtualFile, contentRoot, '/')).matches();
-    } else {
-      return myFilePattern.matcher(getRelativePath(virtualFile, fileIndex, true)).matches();
-    }
-  }
 
-  private boolean matchesModule(VirtualFile file, ProjectFileIndex fileIndex) {
-    final Module module = fileIndex.getModuleForFile(file);
-    LOG.assertTrue(module != null);
-    if (myModulePattern != null && myModulePattern.matcher(module.getName()).matches()) return true;
-    final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
-    if (groupPath != null){
-      for (String node : groupPath) {
-        if (myModuleGroupPattern != null && myModuleGroupPattern.matcher(node).matches()) return true;
-      }
-    }
-    return myModulePattern == null && myModuleGroupPattern == null;
-  }
 
   private static String getPackageName(PsiFile file, ProjectFileIndex fileIndex) {
     VirtualFile vFile = file.getVirtualFile();
@@ -142,55 +109,8 @@ public class PatternPackageSet implements PackageSet {
     return aPackage == null ? file.getName() : aPackage.getQualifiedName() + "." + file.getVirtualFile().getNameWithoutExtension();
   }
 
-  //public for tests only
-  public static String convertToRegexp(String aspectsntx, char separator) {
-    StringBuffer buf = new StringBuffer(aspectsntx.length());
-    int cur = 0;
-    boolean isAfterSeparator = false;
-    boolean isAfterAsterix = false;
-    while (cur < aspectsntx.length()) {
-      char curChar = aspectsntx.charAt(cur);
-      if (curChar != separator && isAfterSeparator) {
-        buf.append("\\" + separator);
-        isAfterSeparator = false;
-      }
-
-      if (curChar != '*' && isAfterAsterix) {
-        buf.append(".*");
-        isAfterAsterix = false;
-      }
-
-      if (curChar == '*') {
-        if (!isAfterAsterix){
-          isAfterAsterix = true;
-        } else {
-          buf.append("[^\\" + separator + "]*");
-          isAfterAsterix = false;
-        }
-      }
-      else if (curChar == separator) {
-        if (isAfterSeparator) {
-          buf.append("\\" +separator+ "(.*\\" + separator + ")?");
-          isAfterSeparator = false;
-        }
-        else {
-          isAfterSeparator = true;
-        }
-      }
-      else {
-        buf.append(curChar);
-      }
-      cur++;
-    }
-    if (isAfterAsterix){
-      buf.append("[^\\" + separator + "]*");      
-    }
-
-    return buf.toString();
-  }
-
   public PackageSet createCopy() {
-    return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText, myPathPattern);
+    return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText);
   }
 
   public int getNodePriority() {
@@ -211,38 +131,8 @@ public class PatternPackageSet implements PackageSet {
       buf.append(':');
     }
 
-    buf.append(myAspectJSyntaxPattern != null ? myAspectJSyntaxPattern : myPathPattern);
+    buf.append(myAspectJSyntaxPattern);
     return buf.toString();
   }
 
-  public static String getRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index, final boolean useFQName) {
-    final Module module = index.getModuleForFile(virtualFile);
-    if (module != null) {
-      final VirtualFile projectParent = module.getProject().getBaseDir();
-      if (projectParent != null) {
-        if (VfsUtil.isAncestor(projectParent, virtualFile, false)){
-          final String projectRelativePath = VfsUtil.getRelativePath(virtualFile, projectParent, '/');
-          return useFQName ? projectRelativePath : projectRelativePath.substring(projectRelativePath.indexOf('/') + 1);
-        }
-      }
-      return virtualFile.getPath();
-    } else {
-      final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
-      if (contentRootForFile != null) {
-        return VfsUtil.getRelativePath(virtualFile, contentRootForFile, '/');
-      }
-      return getLibRelativePath(virtualFile, index);
-    }
-  }
-
-  public static String getLibRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index) {
-    StringBuilder relativePath = new StringBuilder(100);
-    VirtualFile directory = virtualFile;
-    while (directory != null && index.isInLibraryClasses(directory)) {
-      relativePath.insert(0, '/');
-      relativePath.insert(0, directory.getName());
-      directory = directory.getParent();
-    }
-    return relativePath.toString();
-  }
 }

@@ -76,10 +76,9 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         myLexer.advance();
       }
 
-      String pattern = scope != PatternPackageSet.SCOPE_FILE ? parseAspectJPattern() : null;
-
-      String filePattern = scope == PatternPackageSet.SCOPE_FILE ? parseFilePattern() : null;
-      return new PatternPackageSet(pattern, scope, modulePattern, filePattern);
+      return scope == FilePatternPackageSet.SCOPE_FILE
+             ? new FilePatternPackageSet(modulePattern, parseFilePattern())
+             : new PatternPackageSet(parseAspectJPattern(), scope, modulePattern);
     }
 
     private String parseFilePattern() throws ParsingException {
@@ -138,8 +137,8 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
         scope = PatternPackageSet.SCOPE_LIBRARY;
       }
-      if (PatternPackageSet.SCOPE_FILE.equals(id)){
-        scope = PatternPackageSet.SCOPE_FILE;
+      if (FilePatternPackageSet.SCOPE_FILE.equals(id)){
+        scope = FilePatternPackageSet.SCOPE_FILE;
       }
       final CharSequence buf = myLexer.getBufferSequence();
       int end = myLexer.getTokenEnd();

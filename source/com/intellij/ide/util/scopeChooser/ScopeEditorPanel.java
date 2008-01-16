@@ -253,11 +253,11 @@ public class ScopeEditorPanel {
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
       @NonNls final String modulePattern = "group:" + ((ModuleGroupNode)node).getModuleGroup().toString();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+      return scope == FilePatternPackageSet.SCOPE_FILE ? new FilePatternPackageSet(modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern);
     } else if (node instanceof ModuleNode) {
       if (!recursively) return null;
       final String modulePattern = ((ModuleNode)node).getModuleName();
-      return scope == PatternPackageSet.SCOPE_FILE ? new PatternPackageSet(null, scope, modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern, null);
+      return scope == FilePatternPackageSet.SCOPE_FILE ? new FilePatternPackageSet(modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern);
     }
     else if (node instanceof PackageNode) {
       String pattern = ((PackageNode)node).getPackageQName();
@@ -284,11 +284,11 @@ public class ScopeEditorPanel {
     else if (node instanceof FileNode) {
       if (recursively) return null;
       FileNode fNode = (FileNode)node;
-      String fqName = fNode.getFQName(scope == PatternPackageSet.SCOPE_FILE);
+      String fqName = fNode.getFQName(scope == FilePatternPackageSet.SCOPE_FILE);
       if (fqName != null) return getPatternSet(node, fqName, scope);
     }
     else if (node instanceof GeneralGroupNode) {
-      return new PatternPackageSet("*..*", scope, null, null);
+      return new PatternPackageSet("*..*", scope, null);
     }
 
     return null;
@@ -297,7 +297,7 @@ public class ScopeEditorPanel {
   private static PackageSet getPatternSet(PackageDependenciesNode node, String pattern, final String scope) {
     String modulePattern = getSelectedModulePattern(node);
 
-    return new PatternPackageSet(scope != PatternPackageSet.SCOPE_FILE ? pattern : null, scope, modulePattern, scope == PatternPackageSet.SCOPE_FILE ? pattern : null);
+    return scope != FilePatternPackageSet.SCOPE_FILE ? new PatternPackageSet( pattern, scope, modulePattern) : new FilePatternPackageSet(modulePattern, pattern);
   }
 
   @Nullable
@@ -311,7 +311,7 @@ public class ScopeEditorPanel {
   }
 
   private static String getSelectedScopeType(PackageDependenciesNode node) {
-    if (DependencyUISettings.getInstance().UI_GROUP_BY_FILES) return PatternPackageSet.SCOPE_FILE;
+    if (DependencyUISettings.getInstance().UI_GROUP_BY_FILES) return FilePatternPackageSet.SCOPE_FILE;
     GeneralGroupNode groupParent = getGroupParent(node);
     String scope = PatternPackageSet.SCOPE_ANY;
     if (groupParent != null) {
