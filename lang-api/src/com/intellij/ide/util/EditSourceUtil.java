@@ -6,8 +6,13 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.Nullable;
 
 public class EditSourceUtil {
+  private EditSourceUtil() {
+  }
+
+  @Nullable
   public static Navigatable getDescriptor(final PsiElement element) {
     if (!canNavigate(element)) {
       return null;
