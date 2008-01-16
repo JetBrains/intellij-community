@@ -16,17 +16,12 @@ package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -45,11 +40,11 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   private static final String EVAL_NAME = "_JETGROOVY_EVAL_";
 
   private String createProperty(String text, String imports, String[] names) {
-    String classText = "\"" + imports + "class QQQ { public groovy.lang.Closure " + EVAL_NAME + " = {" + getCommaSeparatedNamesList(names) + "->" + text + "}}\"";
+    String classText = "\"" + imports + "class DUMMY { public groovy.lang.Closure " + EVAL_NAME + " = {" + getCommaSeparatedNamesList(names) + "->" + text + "}}\"";
 
     return "final java.lang.ClassLoader parentLoader = this.getClass().getClassLoader();\n" +
         "   final groovy.lang.GroovyClassLoader loader = new groovy.lang.GroovyClassLoader(parentLoader);\n" +
-        "   final java.lang.Class c = loader.parseClass(" + classText + ", \"QQQ.groovy\");\n" +
+        "   final java.lang.Class c = loader.parseClass(" + classText + ", \"DUMMY.groovy\");\n" +
         "   int i;\n" +
         "   java.lang.reflect.Field[] fields = c.getFields();\n" +
         "   for (int j = 0; j < fields.length; j++) if (fields[j].getName().equals(\"_JETGROOVY_EVAL_\")) {i = j; break;}\n" +
@@ -79,7 +74,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     String[] names = namesList.toArray(new String[namesList.size()]);
 
     PsiClass contextClass = getContextClass(context);
-    assert contextClass != null;
+    boolean isStatic = isStaticContext(context);
     StringBuffer javaText = new StringBuffer();
 
     javaText.append(createProperty(StringUtil.escapeStringCharacters(text), imports, names));
@@ -100,9 +95,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
   }
 
   public PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project) {
-    GroovyCodeFragment fragment = new GroovyCodeFragment(project, item.getText());
-    fragment.setContext(context);
-    return fragment;
+    return GroovyElementFactory.getInstance(project).createGroovyFile(item.getText(), true, context);
   }
 
   private String getCommaSeparatedNamesList(String[] names) {
@@ -119,6 +112,17 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     if (parent instanceof GrTypeDefinition) return (PsiClass) parent;
     else if (parent instanceof GroovyFile) return ((GroovyFile) parent).getScriptClass();
     return null;
+  }
+
+  private boolean isStaticContext(PsiElement context) {
+    PsiElement parent = context;
+    while (parent != null) {
+      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner) parent).hasModifierProperty(PsiModifier.STATIC)) return true;
+      if (parent instanceof GrTypeDefinition || parent instanceof GroovyFile) return false;
+      parent = parent.getParent();
+    }
+
+    return false;
   }
 
   public boolean isContextAccepted(PsiElement context) {

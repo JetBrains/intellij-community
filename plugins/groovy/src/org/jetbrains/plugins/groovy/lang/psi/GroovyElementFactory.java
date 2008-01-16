@@ -112,5 +112,5 @@ public abstract class GroovyElementFactory {
 
   public abstract GrMethod createMethodFromText(String methodText);
 
-  public abstract GroovyFile createGroovyFile(String idText, boolean isPhisical, PsiElement context);
+  public abstract GroovyFile createGroovyFile(String text, boolean isPhisical, PsiElement context);
 }

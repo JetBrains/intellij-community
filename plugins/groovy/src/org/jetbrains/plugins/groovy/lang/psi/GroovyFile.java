@@ -15,6 +15,7 @@
 package org.jetbrains.plugins.groovy.lang.psi;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeFragment;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwne
 /**
  * @author ven
  */
-public interface GroovyFile extends GroovyFileBase, GrMethodOwner {
+public interface GroovyFile extends GroovyFileBase, GrMethodOwner, PsiCodeFragment {
 
   GrImportStatement[] getImportStatements();
 
