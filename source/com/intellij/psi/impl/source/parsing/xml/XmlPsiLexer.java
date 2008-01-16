@@ -1,9 +1,9 @@
 package com.intellij.psi.impl.source.parsing.xml;
 
 import com.intellij.lexer.OldXmlLexer;
-import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 /**
  * @author Mike
@@ -16,7 +16,7 @@ public class XmlPsiLexer extends OldXmlLexer{
     IElementType type = super.getTokenType();
 
     if (type == XmlTokenType.XML_WHITE_SPACE) {
-      return ElementType.WHITE_SPACE;
+      return TokenType.WHITE_SPACE;
     }
 
     return type;

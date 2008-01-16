@@ -32,8 +32,7 @@ public class JavaSharedImplUtil {
       if (i == ElementType.LBRACKET) {
         arrayCount++;
       }
-      else if (i != ElementType.RBRACKET &&
-               i != ElementType.WHITE_SPACE &&
+      else if (i != ElementType.RBRACKET && i != TokenType.WHITE_SPACE &&
                i != ElementType.C_STYLE_COMMENT &&
                i != JavaDocElementType.DOC_COMMENT &&
                i != JavaTokenType.DOC_COMMENT &&

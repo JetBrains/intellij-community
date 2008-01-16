@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -241,14 +242,14 @@ public class Helper {
         int leafOffset = getStartOffset(element, leaf);
         if (leaf.getElementType() == ElementType.DOC_COMMENT_DATA && leafOffset + leaf.getTextLength() == offset + 1) {
           ASTNode next = element.findLeafElementAt(offset + 1);
-          if (next.getElementType() == ElementType.WHITE_SPACE) {
+          if (next.getElementType() == TokenType.WHITE_SPACE) {
             leaf = next;
             leafOffset = getStartOffset(element, leaf);
           }
           else {
             if (newSpace.length() > 0) {
-              LeafElement newLeaf = Factory.createSingleLeafElement(ElementType.WHITE_SPACE, newSpace, 0,
-                                                                    newSpace.length(), charTableByTree, SharedImplUtil.getManagerByTree(next));
+              LeafElement newLeaf = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, newSpace, 0, newSpace.length(), charTableByTree,
+                                                                    SharedImplUtil.getManagerByTree(next));
               next.getTreeParent().addChild(newLeaf, next);
             }
             text = text.substring(0, offset + 1) + newSpace + text.substring(offset1);
@@ -287,7 +288,7 @@ public class Helper {
 
   public static boolean mayShiftIndentInside(final ASTNode leaf) {
     return (isComment(leaf) && !checkJspTexts(leaf))
-           || leaf.getElementType() == ElementType.WHITE_SPACE
+           || leaf.getElementType() == TokenType.WHITE_SPACE
            || leaf.getElementType() == XmlElementType.XML_DATA_CHARACTERS
            || leaf.getElementType() == JspElementType.JAVA_CODE
            || leaf.getElementType() == JspElementType.JSP_SCRIPTLET

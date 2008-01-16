@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
@@ -38,7 +39,7 @@ public class MethodElement extends RepositoryTreeElement implements Constants {
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (child.getElementType() == CODE_BLOCK){
       final ASTNode prevWS = TreeUtil.prevLeaf(child);
-      if (prevWS != null && prevWS.getElementType() == ElementType.WHITE_SPACE) {
+      if (prevWS != null && prevWS.getElementType() == TokenType.WHITE_SPACE) {
         removeChild(prevWS);
       }
       super.deleteChildInternal(child);

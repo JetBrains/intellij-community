@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -403,7 +404,7 @@ public class TreeUtil {
   }
 
   public static boolean containsErrors(final TreeElement treeNext) {
-    if(treeNext.getElementType() == ElementType.ERROR_ELEMENT) return true;
+    if(treeNext.getElementType() == TokenType.ERROR_ELEMENT) return true;
     if(treeNext instanceof CompositeElement){
       final CompositeElement composite = (CompositeElement)treeNext;
       ASTNode firstChildNode = composite.getFirstChildNode();

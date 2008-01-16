@@ -2,6 +2,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -48,7 +49,7 @@ public class FileElement extends RepositoryTreeElement{
       LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
       if (newElement.getFirstChildNode() == null) { //empty import list
         ASTNode next = child.getTreeNext();
-        if (next != null && next.getElementType() == ElementType.WHITE_SPACE) {
+        if (next != null && next.getElementType() == TokenType.WHITE_SPACE) {
           removeChild(next);
         }
       }

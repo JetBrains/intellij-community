@@ -15,6 +15,7 @@ import com.intellij.pom.tree.TreeAspect;
 import com.intellij.pom.tree.TreeAspectEvent;
 import com.intellij.pom.tree.events.TreeChangeEvent;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.text.ASTDiffBuilder;
 import com.intellij.psi.impl.source.tree.*;
@@ -253,7 +254,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public void error(String message) {
-      myType = ElementType.ERROR_ELEMENT;
+      myType = TokenType.ERROR_ELEMENT;
       myBuilder.error(this, message);
     }
 
@@ -392,7 +393,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
 
     public IElementType getTokenType() {
-      return ElementType.ERROR_ELEMENT;
+      return TokenType.ERROR_ELEMENT;
     }
 
     public void clean() {
@@ -831,7 +832,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private static CompositeElement createComposite(final StartMarker marker) {
     final IElementType type = marker.myType;
-    if (type == ElementType.ERROR_ELEMENT) {
+    if (type == TokenType.ERROR_ELEMENT) {
       CompositeElement childNode = new PsiErrorElementImpl();
       if (marker.myDoneMarker instanceof DoneWithErrorMarker) {
         ((PsiErrorElementImpl)childNode).setErrorDescription(((DoneWithErrorMarker)marker.myDoneMarker).myMessage);
@@ -866,7 +867,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (node instanceof ErrorItem) return ((ErrorItem)node).myMessage;
       if (node instanceof StartMarker) {
         final StartMarker marker = (StartMarker)node;
-        if (marker.myType == ElementType.ERROR_ELEMENT && marker.myDoneMarker instanceof DoneWithErrorMarker) {
+        if (marker.myType == TokenType.ERROR_ELEMENT && marker.myDoneMarker instanceof DoneWithErrorMarker) {
           return ((DoneWithErrorMarker)marker.myDoneMarker).myMessage;
         }
       }
@@ -887,7 +888,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return ((LeafElement)n1).textMatches(myText, ((Token)n2).myTokenStart, ((Token)n2).myTokenEnd);
       }
 
-      if (n1 instanceof PsiErrorElement && n2.getTokenType() == ElementType.ERROR_ELEMENT) {
+      if (n1 instanceof PsiErrorElement && n2.getTokenType() == TokenType.ERROR_ELEMENT) {
         final PsiErrorElement e1 = ((PsiErrorElement)n1);
         if (!Comparing.equal(e1.getErrorDescription(), getErrorMessage(n2))) return false;
       }

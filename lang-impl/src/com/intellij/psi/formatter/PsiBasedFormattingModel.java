@@ -1,6 +1,5 @@
 package com.intellij.psi.formatter;
 
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingDocumentModel;
 import com.intellij.formatting.FormattingModel;
@@ -12,9 +11,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.Helper;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -83,13 +82,13 @@ public class PsiBasedFormattingModel implements FormattingModel {
 
     if (leafElement != null) {
       if (!myCanModifyAllWhiteSpaces) {
-        if (leafElement.getElementType() == ElementType.WHITE_SPACE) return null;
+        if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;
         LOG.assertTrue(leafElement.getPsi().isValid());
         ASTNode prevNode = TreeUtil.prevLeaf(leafElement);
 
         if (prevNode != null) {
           IElementType type = prevNode.getElementType();
-          if(type == ElementType.WHITE_SPACE) {
+          if(type == TokenType.WHITE_SPACE) {
             final String text = prevNode.getText();
 
             final @NonNls String cdataStartMarker = "<![CDATA[";
@@ -119,7 +118,7 @@ public class PsiBasedFormattingModel implements FormattingModel {
           }
         }
       }
-      FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, ElementType.WHITE_SPACE, textRange);
+      FormatterUtil.replaceWhiteSpace(whiteSpace, leafElement, TokenType.WHITE_SPACE, textRange);
       return whiteSpace;
     } else if (textRange.getEndOffset() == myASTNode.getTextLength()){
       FormatterUtil.replaceLastWhiteSpace(myASTNode, whiteSpace, textRange);

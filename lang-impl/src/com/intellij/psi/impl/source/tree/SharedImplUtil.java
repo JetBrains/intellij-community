@@ -2,7 +2,10 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -107,7 +110,7 @@ public class SharedImplUtil {
         parent = elementCopy.getTreeParent();
       }
       else {
-        if(elementCopy.getElementType() == ElementType.WHITE_SPACE)
+        if(elementCopy.getElementType() == TokenType.WHITE_SPACE)
           CodeEditUtil.setNodeGenerated(elementCopy, true);
         parent.addChild(elementCopy, null);
       }

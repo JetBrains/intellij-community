@@ -1,6 +1,6 @@
 package com.intellij.lexer;
 
-import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.el.ELTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -68,8 +68,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     return (tokenType == XmlTokenType.XML_DATA_CHARACTERS ||
             tokenType == XmlTokenType.XML_CDATA_START ||
             tokenType == XmlTokenType.XML_COMMENT_START ||
-            tokenType == XmlTokenType.XML_REAL_WHITE_SPACE ||
-            tokenType == ElementType.WHITE_SPACE
+            tokenType == XmlTokenType.XML_REAL_WHITE_SPACE || tokenType == TokenType.WHITE_SPACE
     );
   }
 

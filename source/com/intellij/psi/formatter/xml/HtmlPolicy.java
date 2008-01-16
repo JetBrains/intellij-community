@@ -5,10 +5,10 @@ import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -78,7 +78,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
 
   private boolean containsWhiteSpacesOnly(final ASTNode node) {
     if (node == null) return false;
-    if (node.getElementType() == ElementType.WHITE_SPACE) return true;
+    if (node.getElementType() == TokenType.WHITE_SPACE) return true;
     if (node instanceof LeafElement) return false;
     ChameleonTransforming.transformChildren(node);
     ASTNode child = node.getFirstChildNode();

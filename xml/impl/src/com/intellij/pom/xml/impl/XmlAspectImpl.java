@@ -15,9 +15,9 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.impl.events.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.ChameleonElement;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
@@ -138,7 +138,7 @@ public class XmlAspectImpl implements XmlAspect {
             final ChangeInfo changeByChild = myChange.getChangeByChild(treeElement);
             final int changeType = changeByChild.getChangeType();
             final IElementType type = treeElement.getElementType();
-            if (type == ElementType.WHITE_SPACE) continue;
+            if (type == TokenType.WHITE_SPACE) continue;
             /*
             if (type == ElementType.XML_NAME) {
               final XmlToken xmlToken = (XmlToken)((ReplaceChangeInfo)changeByChild).getReplaced();

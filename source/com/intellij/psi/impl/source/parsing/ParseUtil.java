@@ -8,6 +8,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.ParsingContext;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
@@ -380,7 +381,7 @@ public class ParseUtil implements Constants {
           if (count > 1) toStart = null;
         }
         else {
-          if (child.getTreePrev() != null && child.getTreePrev().getElementType() == ElementType.WHITE_SPACE) {
+          if (child.getTreePrev() != null && child.getTreePrev().getElementType() == TokenType.WHITE_SPACE) {
             LeafElement prev = (LeafElement)child.getTreePrev();
             char lastC = prev.charAt(prev.getTextLength() - 1);
             if (lastC == '\n' || lastC == '\r') toStart = isBindingComment(child) ? child : null;
@@ -409,7 +410,7 @@ public class ParseUtil implements Constants {
   private static boolean isBindingComment(final ASTNode node) {
     ASTNode prev = node.getTreePrev();
     if (prev != null) {
-      if (prev.getElementType() != ElementType.WHITE_SPACE) {
+      if (prev.getElementType() != TokenType.WHITE_SPACE) {
         return false;
       }
       else {

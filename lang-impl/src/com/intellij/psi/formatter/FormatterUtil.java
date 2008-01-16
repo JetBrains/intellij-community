@@ -35,6 +35,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
@@ -98,7 +99,7 @@ public class FormatterUtil {
   }
 
   private static boolean isWhiteSpaceElement(ASTNode treePrev) {
-    return treePrev.getElementType() == ElementType.WHITE_SPACE;
+    return treePrev.getElementType() == TokenType.WHITE_SPACE;
   }
 
   private static boolean isSpaceTextElement(ASTNode treePrev) {
@@ -243,7 +244,7 @@ public class FormatterUtil {
     final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
     if (found == null) return null;
     final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(found);
-    if (treeElement.getElementType() == ElementType.WHITE_SPACE) return treeElement;
+    if (treeElement.getElementType() == TokenType.WHITE_SPACE) return treeElement;
     return null;
   }
 
@@ -272,17 +273,17 @@ public class FormatterUtil {
 
   public static boolean isIncompleted(final ASTNode treeNode) {
     ASTNode lastChild = treeNode.getLastChildNode();
-    while (lastChild != null && lastChild.getElementType() == ElementType.WHITE_SPACE) {
+    while (lastChild != null && lastChild.getElementType() == TokenType.WHITE_SPACE) {
       lastChild = lastChild.getTreePrev();
     }
     if (lastChild == null) return false;
-    if (lastChild.getElementType() == ElementType.ERROR_ELEMENT) return true;
+    if (lastChild.getElementType() == TokenType.ERROR_ELEMENT) return true;
     return isIncompleted(lastChild);
   }
 
   public static void replaceLastWhiteSpace(final ASTNode astNode, final String whiteSpace, final TextRange textRange) {
     LeafElement lastWS = TreeUtil.findLastLeaf(astNode);
-    if (lastWS.getElementType() != ElementType.WHITE_SPACE) {
+    if (lastWS.getElementType() != TokenType.WHITE_SPACE) {
       lastWS = null;
     }
     if (lastWS != null && !lastWS.getTextRange().equals(textRange)) {
@@ -295,8 +296,7 @@ public class FormatterUtil {
       lastWS.getTreeParent().removeRange(lastWS, null);
       return;
     }
-    LeafElement whiteSpaceElement = Factory.createSingleLeafElement(ElementType.WHITE_SPACE,
-                                                                    whiteSpace, 0, whiteSpace.length(),
+    LeafElement whiteSpaceElement = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, whiteSpace, 0, whiteSpace.length(),
                                                                     SharedImplUtil.findCharTableByTree(astNode), SharedImplUtil.getManagerByTree(astNode));
 
     if (lastWS == null) {
@@ -319,7 +319,7 @@ public class FormatterUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormatterUtil");
 
   public static boolean containsWhiteSpacesOnly(final ASTNode node) {
-    if (node.getElementType() == ElementType.WHITE_SPACE) return true;
+    if (node.getElementType() == TokenType.WHITE_SPACE) return true;
     if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
       return true;
       //EnterActionTest && JavaDocParamTest
