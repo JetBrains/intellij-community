@@ -31,6 +31,11 @@
       <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
       <implementation-class>com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.formatting.FormatterEx</interface-class>
+      <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -112,6 +117,14 @@
       <implementation-class>com.intellij.codeInsight.problems.WolfTheProblemSolverImpl</implementation-class>
       <headless-implementation-class>com.intellij.codeInsight.problems.MockWolfTheProblemSolver</headless-implementation-class>
       <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.pom.tree.TreeAspect</interface-class>
+      <implementation-class>com.intellij.pom.tree.TreeAspect</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.psi.impl.source.PostprocessReformattingAspect</implementation-class>
     </component>
   </project-components>
 
