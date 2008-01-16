@@ -4,7 +4,10 @@ import com.intellij.ProjectTopics;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
@@ -76,7 +79,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
   private DnDAwareTree myTree = new DnDAwareTree();
   private final Project myProject;
-  private TreeModelBuilder myBuilder;
+  private FileTreeModelBuilder myBuilder;
 
   @SuppressWarnings({"WeakerAccess"})
   public String CURRENT_SCOPE_NAME;
@@ -111,7 +114,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   public void dispose() {
-    TreeModelBuilder.clearCaches(myProject);
+    FileTreeModelBuilder.clearCaches(myProject);
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
@@ -189,7 +192,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   }
 
   private void refreshScope(@Nullable NamedScope scope, boolean showProgress) {
-    TreeModelBuilder.clearCaches(myProject);
+    FileTreeModelBuilder.clearCaches(myProject);
     myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
       scope = myDependencyValidationManager.getProjectProductionScope();
@@ -205,7 +208,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     final ProjectView projectView = ProjectView.getInstance(myProject);
     settings.UI_FLATTEN_PACKAGES = projectView.isFlattenPackages(ScopeViewPane.ID);
     settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);
-    myBuilder = new TreeModelBuilder(myProject, false, new TreeModelBuilder.Marker() {
+    myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
       public boolean isMarked(PsiFile file) {
         return packageSet.contains(file, holder);
       }
@@ -213,7 +216,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     myTree.setModel(myBuilder.build(myProject, showProgress, projectView.isSortByType(ScopeViewPane.ID)));
     ((DefaultTreeModel)myTree.getModel()).reload();
     myTreeExpansionMonitor.restore();
-    TreeModelBuilder.clearCaches(myProject);
+    FileTreeModelBuilder.clearCaches(myProject);
   }
 
   public void readExternal(Element element) throws InvalidDataException {

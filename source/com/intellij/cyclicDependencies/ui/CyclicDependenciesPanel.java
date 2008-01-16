@@ -248,7 +248,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     mySettings.UI_FLATTEN_PACKAGES = true;
     mySettings.UI_SHOW_FILES = false;
     myLeftTreeExpansionMonitor.freeze();
-    myLeftTree.setModel(TreeModelBuilder.createTreeModel(myProject, false, psiFiles, new TreeModelBuilder.Marker() {
+    myLeftTree.setModel(TreeModelBuilder.createTreeModel(myProject, false, psiFiles, new Marker() {
       public boolean isMarked(PsiFile file) {
         return false;
       }
@@ -283,7 +283,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
           final Set<PsiFile> dependentFilesInPackage = myBuilder.getDependentFilesInPackage(prevPackage, psiPackage, nextPackage);
 
           final PackageDependenciesNode pack = (PackageDependenciesNode)TreeModelBuilder
-            .createTreeModel(myProject, false, dependentFilesInPackage, new TreeModelBuilder.Marker() {
+            .createTreeModel(myProject, false, dependentFilesInPackage, new Marker() {
               public boolean isMarked(PsiFile file) {
                 return false;
               }
@@ -301,7 +301,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
       mySettings.UI_GROUP_BY_SCOPE_TYPE = group;
     }
     myRightTreeExpansionMonitor.freeze();
-    myRightTree.setModel(new TreeModelBuilder.TreeModel(root, -1, -1));
+    myRightTree.setModel(new TreeModel(root, -1, -1));
     myRightTreeExpansionMonitor.restore();
     expandFirstLevel(myRightTree);
   }

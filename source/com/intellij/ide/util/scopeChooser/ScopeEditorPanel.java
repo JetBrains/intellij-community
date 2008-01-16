@@ -52,7 +52,7 @@ public class ScopeEditorPanel {
 
   private final Project myProject;
   private final TreeExpansionMonitor myTreeExpansionMonitor;
-  private final TreeModelBuilder.Marker myTreeMarker;
+  private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
   private String myErrorMessage;
@@ -83,7 +83,7 @@ public class ScopeEditorPanel {
 
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
 
-    myTreeMarker = new TreeModelBuilder.Marker() {
+    myTreeMarker = new Marker() {
       public boolean isMarked(PsiFile file) {
         return myCurrentScope != null && myCurrentScope.contains(file, getHolder());
       }
@@ -440,7 +440,9 @@ public class ScopeEditorPanel {
           public void run() {
             try {
               myTreeExpansionMonitor.freeze();
-              final TreeModelBuilder.TreeModel model = TreeModelBuilder.createTreeModel(myProject, false, false, myTreeMarker);
+              final TreeModel model = DependencyUISettings.getInstance().UI_GROUP_BY_FILES
+                                      ? FileTreeModelBuilder.createTreeModel(myProject, false, myTreeMarker)
+                                      : TreeModelBuilder.createTreeModel(myProject, false, false, myTreeMarker);
 
               if (myErrorMessage == null) {
                 myMatchingCountLabel

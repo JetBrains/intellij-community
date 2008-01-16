@@ -67,8 +67,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final TreeExpansionMonitor myRightTreeExpansionMonitor;
   private final TreeExpansionMonitor myLeftTreeExpansionMonitor;
 
-  private final TreeModelBuilder.Marker myRightTreeMarker;
-  private final TreeModelBuilder.Marker myLeftTreeMarker;
+  private final Marker myRightTreeMarker;
+  private final Marker myLeftTreeMarker;
   private Set<PsiFile> myIllegalsInRightTree = new HashSet<PsiFile>();
 
   private final Project myProject;
@@ -128,13 +128,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
     myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
 
-    myRightTreeMarker = new TreeModelBuilder.Marker() {
+    myRightTreeMarker = new Marker() {
       public boolean isMarked(PsiFile file) {
         return myIllegalsInRightTree.contains(file);
       }
     };
 
-    myLeftTreeMarker = new TreeModelBuilder.Marker() {
+    myLeftTreeMarker = new Marker() {
       public boolean isMarked(PsiFile file) {
         return myIllegalDependencies.containsKey(file);
       }
@@ -178,14 +178,14 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
             final Set<PsiFile> searchFor = getSelectedScope(myRightTree);
             if (searchIn.isEmpty() || searchFor.isEmpty()) {
               myUsagesPanel.setToInitialPosition();
-            }
-            else {
-              processDependencies(searchIn, searchFor, new Processor<List<PsiFile>>() {
+              processDependencies(searchIn, searchFor, new Processor<List<PsiFile>>() { //todo do not show too many usages
                 public boolean process(final List<PsiFile> path) {
                   searchFor.add(path.get(1));
                   return true;
                 }
               });
+            }
+            else {
               myUsagesPanel.findUsages(searchIn, searchFor);
             }
           }
@@ -358,7 +358,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     return group;
   }
 
-  private TreeModelBuilder.TreeModel buildTreeModel(Set<PsiFile> deps, TreeModelBuilder.Marker marker) {
+  private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
     return TreeModelBuilder.createTreeModel(myProject, false, deps, marker, mySettings);
   }
 
