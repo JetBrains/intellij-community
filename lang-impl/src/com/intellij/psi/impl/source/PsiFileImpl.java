@@ -1,11 +1,14 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.ide.startup.FileContent;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -428,5 +431,37 @@ public abstract class PsiFileImpl extends NonSlaveRepositoryPsiElement implement
   @Override
   public PsiElement getContext() {
     return FileContextUtil.getFileContext(this);
+  }
+
+  public void onContentReload() {
+    subtreeChanged(); // important! otherwise cached information is not released
+    if (isContentsLoaded()) {
+      unloadContent();
+    }
+  }
+
+  public PsiFile cacheCopy(final FileContent content) {
+    if (isContentsLoaded()) {
+      return this;
+    }
+    else {
+      CharSequence text;
+      if (content == null) {
+        Document document = FileDocumentManager.getInstance().getDocument(getVirtualFile());
+        text = document.getCharsSequence();
+      }
+      else {
+        text = CacheUtil.getContentText(content);
+      }
+
+      FileType fileType = getFileType();
+      final String name = getName();
+      PsiFile fileCopy =
+        PsiFileFactory.getInstance(getProject()).createFileFromText(name, fileType, text, getModificationStamp(), false, false);
+      fileCopy.putUserData(CacheUtil.CACHE_COPY_KEY, Boolean.TRUE);
+
+      ((PsiFileImpl)fileCopy).setOriginalFile(this);
+      return fileCopy;
+    }
   }
 }

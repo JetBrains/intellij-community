@@ -16,6 +16,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.RepositoryManager;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -61,6 +62,23 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
 
   public boolean isContentsLoaded() {
     return myClass != null && myClass.isContentsLoaded();
+  }
+
+  public void onContentReload() {
+    unloadContent();
+  }
+
+  public PsiFile cacheCopy(final FileContent content) {
+    if (isRepositoryIdInitialized()) {
+      return this;
+    }
+    else {
+      PsiFile fileCopy = new ClsFileImpl((PsiManagerImpl)getManager(), getViewProvider());
+      fileCopy.putUserData(CacheUtil.CACHE_COPY_KEY, Boolean.TRUE);
+      ((ClsFileImpl)fileCopy).setContent(content);
+      ((ClsFileImpl)fileCopy).setRepositoryId(-1);
+      return fileCopy;
+    }
   }
 
   public void unloadContent() {

@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.source;
 
+import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -269,6 +270,13 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
 
   public boolean isContentsLoaded() {
     return true;
+  }
+
+  public void onContentReload() {    
+  }
+
+  public PsiFile cacheCopy(final FileContent content) {
+    return this;
   }
 
   public boolean isWritable() {
