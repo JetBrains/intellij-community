@@ -6,17 +6,16 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerMessage;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -50,12 +48,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final Project myProject;
   private final List<ProblemListener> myProblemListeners = new CopyOnWriteArrayList<ProblemListener>();
   private final List<Condition<VirtualFile>> myFilters =
-    new CopyOnWriteArrayList<Condition<VirtualFile>>(Arrays.asList(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile file) {
-        return FileIndexUtil.isJavaSourceFile(myProject, file)
-          && !CompilerManager.getInstance(myProject).isExcludedFromCompilation(file);
-      }
-    }));
+    new CopyOnWriteArrayList<Condition<VirtualFile>>();
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     public void problemsAppeared(VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
@@ -347,26 +340,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     }
   }
 
-  public boolean hasProblemFilesBeneath(final PsiElement scope) {
-    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile virtualFile) {
-        if (scope instanceof PsiDirectory) {
-          final PsiDirectory directory = (PsiDirectory)scope;
-          return VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false);
-        }
-        else if (scope instanceof PsiPackage) {
-          final PsiDirectory[] psiDirectories = ((PsiPackage)scope).getDirectories();
-          for (PsiDirectory directory : psiDirectories) {
-            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-    });
-  }
-
   public boolean hasProblemFilesBeneath(final Module scope) {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
@@ -463,18 +436,12 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     doRemove(virtualFile);
   }
 
-  public Problem convertToProblem(final CompilerMessage message) {
-    VirtualFile virtualFile = message.getVirtualFile();
-    if (virtualFile == null) {
-      Navigatable navigatable = message.getNavigatable();
-      if (navigatable instanceof OpenFileDescriptor) {
-        virtualFile = ((OpenFileDescriptor)navigatable).getFile();
-      }
-    }
+  public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity,
+                                  final TextRange textRange, final String messageText) {
     if (virtualFile == null) return null;
     HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
       public HighlightInfo compute() {
-        return HighlightInfo.createHighlightInfo(convertToHighlightInfoType(message), getTextRange(message), message.getMessage());
+        return HighlightInfo.createHighlightInfo(HighlightInfo.convertSeverity(severity), textRange, messageText);
       }
     });
     return new ProblemImpl(virtualFile, info, false);
@@ -527,29 +494,5 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     line = line <= 0 ? 0 : line - 1;
     int offset = document.getLineStartOffset(line) + (column <= 0 ? 0 : column - 1);
     return new TextRange(offset, offset);
-  }
-
-  private static TextRange getTextRange(final CompilerMessage message) {
-    Navigatable navigatable = message.getNavigatable();
-    if (navigatable instanceof OpenFileDescriptor) {
-      int offset = ((OpenFileDescriptor)navigatable).getOffset();
-      return new TextRange(offset, offset);
-    }
-    return new TextRange(0, 0);
-  }
-
-  private static HighlightInfoType convertToHighlightInfoType(final CompilerMessage message) {
-    CompilerMessageCategory category = message.getCategory();
-    switch (category) {
-      case ERROR:
-        return HighlightInfoType.ERROR;
-      case WARNING:
-        return HighlightInfoType.WARNING;
-      case INFORMATION:
-        return HighlightInfoType.INFORMATION;
-      case STATISTICS:
-        return HighlightInfoType.INFORMATION;
-    }
-    return null;
   }
 }

@@ -1,13 +1,14 @@
 package com.intellij.codeInsight.problems;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,8 +90,9 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     if (myDelegate != null) myDelegate.clearProblems(virtualFile);
   }
 
-  public Problem convertToProblem(CompilerMessage message) {
-    return myDelegate == null ? null : myDelegate.convertToProblem(message);
+  public Problem convertToProblem(final VirtualFile virtualFile, final HighlightSeverity severity, final TextRange textRange,
+                                  final String messageText) {
+    return myDelegate == null ? null : myDelegate.convertToProblem(virtualFile, severity, textRange, messageText);
   }
 
   public Problem convertToProblem(VirtualFile virtualFile, int line, int column, String[] message) {

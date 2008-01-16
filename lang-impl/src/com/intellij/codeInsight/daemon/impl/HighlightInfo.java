@@ -300,10 +300,14 @@ public class HighlightInfo {
     if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
     if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
     if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    return annotation.getSeverity() == HighlightSeverity.ERROR
+    return convertSeverity(annotation.getSeverity());
+  }
+
+  public static HighlightInfoType convertSeverity(final HighlightSeverity severity) {
+    return severity == HighlightSeverity.ERROR
            ? HighlightInfoType.ERROR
-           : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
-             : annotation.getSeverity() == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
+           : severity == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
+             : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
   }
 
   public static class IntentionActionDescriptor {

@@ -314,8 +314,8 @@ public class NavBarModel {
                                                    : SimpleTextAttributes.STYLE_PLAIN);
       }
       else {
-        return new SimpleTextAttributes(null, null, Color.red, WolfTheProblemSolver.getInstance(myProject)
-          .hasProblemFilesBeneath((PsiElement)object)
+        return new SimpleTextAttributes(null, null, Color.red,
+          NavBarPanel.wolfHasProblemFilesBeneath((PsiElement)object)
                                                                ? SimpleTextAttributes.STYLE_WAVED
                                                                : SimpleTextAttributes.STYLE_PLAIN);
       }

@@ -12,6 +12,7 @@ import com.intellij.compiler.impl.CompilerErrorTreeView;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +20,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -30,6 +32,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -206,7 +209,8 @@ public class CompilerTask extends Task.Backgroundable {
 
   private void informWolf(final CompilerMessage message, final CompileContext compileContext) {
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    Problem problem = wolf.convertToProblem(message);
+    Problem problem = wolf.convertToProblem(getVirtualFile(message), convertToHighlightSeverity(message), getTextRange(message),
+                                            message.getMessage());
     if (problem != null && problem.getVirtualFile() != null) {
       final VirtualFile virtualFile = problem.getVirtualFile();
       Document document = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
@@ -468,6 +472,41 @@ public class CompilerTask extends Task.Backgroundable {
 
   private boolean isHeadlessMode() {
     return myHeadlessMode;
+  }
+
+  private static VirtualFile getVirtualFile(final CompilerMessage message) {
+    VirtualFile virtualFile = message.getVirtualFile();
+    if (virtualFile == null) {
+      Navigatable navigatable = message.getNavigatable();
+      if (navigatable instanceof OpenFileDescriptor) {
+        virtualFile = ((OpenFileDescriptor)navigatable).getFile();
+      }
+    }
+    return virtualFile;
+  }
+
+  private static HighlightSeverity convertToHighlightSeverity(final CompilerMessage message) {
+    CompilerMessageCategory category = message.getCategory();
+    switch (category) {
+      case ERROR:
+        return HighlightSeverity.ERROR;
+      case WARNING:
+        return HighlightSeverity.WARNING;
+      case INFORMATION:
+        return HighlightSeverity.INFORMATION;
+      case STATISTICS:
+        return HighlightSeverity.INFORMATION;
+    }
+    return null;
+  }
+
+  public static TextRange getTextRange(final CompilerMessage message) {
+    Navigatable navigatable = message.getNavigatable();
+    if (navigatable instanceof OpenFileDescriptor) {
+      int offset = ((OpenFileDescriptor)navigatable).getOffset();
+      return new TextRange(offset, offset);
+    }
+    return new TextRange(0, 0);
   }
 
   private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {

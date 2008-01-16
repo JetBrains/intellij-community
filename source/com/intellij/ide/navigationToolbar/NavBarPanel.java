@@ -47,10 +47,12 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
@@ -841,6 +843,26 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     });
   }
 
+  public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
+    return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile virtualFile) {
+        if (scope instanceof PsiDirectory) {
+          final PsiDirectory directory = (PsiDirectory)scope;
+          return VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false);
+        }
+        else if (scope instanceof PsiPackage) {
+          final PsiDirectory[] psiDirectories = ((PsiPackage)scope).getDirectories();
+          for (PsiDirectory directory : psiDirectories) {
+            if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    });
+  }
+
   protected class MyCompositeLabel extends JPanel {
     private JLabel myLabel;
     private SimpleColoredComponent myColoredComponent;
@@ -1076,7 +1098,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           }
         }
         else {
-          isProblemFile = WolfTheProblemSolver.getInstance(myProject).hasProblemFilesBeneath(psiElement);
+          isProblemFile = wolfHasProblemFilesBeneath(psiElement);
         }
       }
       else if (value instanceof Module) {

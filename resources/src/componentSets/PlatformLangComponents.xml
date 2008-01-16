@@ -32,10 +32,6 @@
 
   <application-components>
     <component>
-      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.platform.PlatformProjectStarter</implementation-class>
     </component>
     <component>
@@ -45,14 +41,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
-      <implementation-class>com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-
     <component>
       <interface-class>com.intellij.history.LocalHistory</interface-class>
       <implementation-class>com.intellij.history.DeafLocalHistory</implementation-class>
