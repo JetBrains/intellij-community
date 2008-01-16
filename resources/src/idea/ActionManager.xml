@@ -189,10 +189,6 @@
       <add-to-group group-id="ViewRecentActions" anchor="last"/>
     </action>
 
-    <action id="QuickChangeScheme" class="com.intellij.ide.actions.QuickChangeSchemesAction">
-      <add-to-group group-id="ViewModeActions" anchor="last"/>
-    </action>
-
     <group id="HierarchyGroup">
       <separator/>
       <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
@@ -597,16 +593,6 @@
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CloseEditor" anchor="after"/>
     </group>
 
-
-    <group id="ChangeScheme">
-      <action id="ChangeColorScheme" class="com.intellij.ide.actions.QuickChangeColorSchemeAction"/>
-      <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction"/>
-      <action id="ChangeKeymap" class="com.intellij.ide.actions.QuickChangeKeymapAction"/>
-      <action id="ChangeLaf" class="com.intellij.ide.actions.QuickChangeLookAndFeel"/>
-      <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction"/>
-      <action id="ChangeCustomizationSchema" class="com.intellij.ide.ui.customization.QuickChangeCustomizationSchemaAction"/>
-
-    </group>
 
     <group id="EditorTabPopupMenuEx">
       <separator/>
@@ -1248,6 +1234,5 @@
       <reference ref="Find"/>
       <add-to-group group-id="DiffPanel.Toolbar" anchor="after" relative-to-action="$Copy"/>
     </group>
-
   </actions>
 </component>

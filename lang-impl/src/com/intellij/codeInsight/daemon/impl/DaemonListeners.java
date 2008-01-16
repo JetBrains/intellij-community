@@ -6,8 +6,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.ide.todo.TodoConfiguration;
-import com.intellij.j2ee.extResources.ExternalResourceListener;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -73,7 +71,6 @@ public class DaemonListeners {
   private final EditorColorsListener myEditorColorsListener = new MyEditorColorsListener();
   private final AnActionListener myAnActionListener = new MyAnActionListener();
   private final PropertyChangeListener myTodoListener = new MyTodoListener();
-  private final ExternalResourceListener myExternalResourceListener = new MyExternalResourceListener();
   private final EditorMouseMotionListener myEditorMouseMotionListener = new MyEditorMouseMotionListener();
   private final EditorMouseListener myEditorMouseListener = new MyEditorMouseListener();
   private final ProfileChangeAdapter myProfileChangeListener = new MyProfileChangeListener();
@@ -179,7 +176,6 @@ public class DaemonListeners {
     InspectionProfileManager.getInstance().addProfileChangeListener(myProfileChangeListener);
     TodoConfiguration.getInstance().addPropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().addAnActionListener(myAnActionListener);
-    ExternalResourceManagerEx.getInstanceEx().addExternalResourceListener(myExternalResourceListener);
     myVirtualFileListener = new VirtualFileAdapter() {
       public void propertyChanged(VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
@@ -231,7 +227,6 @@ public class DaemonListeners {
     InspectionProfileManager.getInstance().removeProfileChangeListener(myProfileChangeListener);
     TodoConfiguration.getInstance().removePropertyChangeListener(myTodoListener);
     ActionManagerEx.getInstanceEx().removeAnActionListener(myAnActionListener);
-    ExternalResourceManagerEx.getInstanceEx().removeExternalResourceListener(myExternalResourceListener);
     VirtualFileManager.getInstance().removeVirtualFileListener(myVirtualFileListener);
 
     ((EditorEventMulticasterEx)eventMulticaster).removeErrorStripeListener(myErrorStripeHandler);
@@ -350,12 +345,6 @@ public class DaemonListeners {
       if (LangDataKeys.PSI_FILE.getData(dataContext) == null) return; //no need to stop daemon if something happened in the console
 
       stopDaemon(true);
-    }
-  }
-
-  private class MyExternalResourceListener implements ExternalResourceListener {
-    public void externalResourceChanged() {
-      myDaemonCodeAnalyzer.restart();
     }
   }
 

@@ -36,6 +36,14 @@
       <interface-class>com.intellij.formatting.FormatterEx</interface-class>
       <implementation-class>com.intellij.formatting.FormatterImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInspection.ex.InspectionToolRegistrar</implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -125,6 +133,30 @@
     </component>
     <component>
       <implementation-class>com.intellij.psi.impl.source.PostprocessReformattingAspect</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.codeInspection.InspectionManager</interface-class>
+      <implementation-class>com.intellij.codeInspection.ex.InspectionManagerEx</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <interface-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</interface-class>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
     </component>
   </project-components>
 

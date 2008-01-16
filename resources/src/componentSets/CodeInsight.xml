@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.codeInsight.template.impl.TemplateSettings</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingSettings</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
     </component>
@@ -37,16 +34,6 @@
     <component>
       <interface-class>com.intellij.codeInsight.javadoc.JavaDocManager</interface-class>
       <implementation-class>com.intellij.codeInsight.javadoc.JavaDocManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.EditorTracker</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
@@ -89,12 +76,6 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
     </component>
 
-    <component>
-      <interface-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</interface-class>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider</implementation-class>
       <skipForDummyProject/>

@@ -68,5 +68,13 @@
     <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
       <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
     </action>
+
+    <action id="ChangeCodeStyleScheme" class="com.intellij.ide.actions.QuickChangeCodeStyleSchemeAction">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeColorScheme"/>
+    </action>
+
+    <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
+      <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeLaf"/>
+    </action>
   </actions>
 </component>
