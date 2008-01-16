@@ -31,9 +31,9 @@
   <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="LocalHistory.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Core.xml" xpointer="xpointer(/components/*)"/>
-  <xi:include href="Lang.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Lang.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Configurables.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Toolwindows.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>

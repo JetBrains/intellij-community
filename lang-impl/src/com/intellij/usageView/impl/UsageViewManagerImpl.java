@@ -2,7 +2,6 @@ package com.intellij.usageView.impl;
 
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.components.ProjectComponent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
@@ -20,11 +19,11 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   private final Key<Boolean> REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.REUSABLE_CONTENT_KEY");
   private final Key<Boolean> NOT_REUSABLE_CONTENT_KEY = Key.create("UsageTreeManager.NOT_REUSABLE_CONTENT_KEY");        //todo[myakovlev] dont use it
   private final Key<UsageView> NEW_USAGE_VIEW_KEY = Key.create("NEW_USAGE_VIEW_KEY");
-  private final Project myProject;
+  private ToolWindowManager myToolWindowManager;
   private ContentManager myFindContentManager;
 
-  public UsageViewManagerImpl(Project project) {
-    myProject = project;
+  public UsageViewManagerImpl(final ToolWindowManager toolWindowManager) {
+    myToolWindowManager = toolWindowManager;
   }
 
   public void disposeComponent() {
@@ -34,8 +33,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public void projectOpened() {
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-    ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM);
+    ToolWindow toolWindow = myToolWindowManager.registerToolWindow(ToolWindowId.FIND, true, ToolWindowAnchor.BOTTOM);
     toolWindow.setToHideOnEmptyContent(true);
     toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowFind.png"));
     myFindContentManager = toolWindow.getContentManager();
@@ -48,7 +46,7 @@ public class UsageViewManagerImpl extends UsageViewManager implements ProjectCom
   }
 
   public void projectClosed() {
-    ToolWindowManager.getInstance(myProject).unregisterToolWindow(ToolWindowId.FIND);
+    myToolWindowManager.unregisterToolWindow(ToolWindowId.FIND);
     myFindContentManager = null;
   }
 
