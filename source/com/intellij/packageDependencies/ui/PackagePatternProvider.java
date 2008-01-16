@@ -4,10 +4,12 @@
  */
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.GroupByScopeTypeAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
@@ -17,9 +19,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaPatternDialectProvider extends PatternDialectProvider {
-  @NonNls private static final String PACKAGES = "Packages";
-  private static final Logger LOG = Logger.getInstance("#" + JavaPatternDialectProvider.class.getName());
+import javax.swing.*;
+
+public class PackagePatternProvider extends PatternDialectProvider {
+  @NonNls private static final String PACKAGES = "package";
+  private static final Logger LOG = Logger.getInstance("#" + PackagePatternProvider.class.getName());
+   public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
 
   @Nullable
   private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
@@ -89,12 +94,16 @@ public class JavaPatternDialectProvider extends PatternDialectProvider {
     return null;
   }
 
+  public Icon getIcon() {
+    return ICON;
+  }
+
   public TreeModel createTreeModel(final Project project, final Marker marker) {
     return TreeModelBuilder.createTreeModel(project, false, false, marker);
   }
 
   public String getDisplayName() {
-    return getShortName();
+    return IdeBundle.message("title.packages");
   }
 
   @NotNull

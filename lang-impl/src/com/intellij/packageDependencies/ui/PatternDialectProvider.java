@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public abstract class PatternDialectProvider {
   public static final ExtensionPointName<PatternDialectProvider> EP_NAME = ExtensionPointName.create("com.intellij.patternDialectProvider");
 
@@ -48,4 +50,6 @@ public abstract class PatternDialectProvider {
     if (node == null || node instanceof RootNode) return null;
     return getModuleParent((PackageDependenciesNode)node.getParent());
   }
+
+  public abstract Icon getIcon();
 }

@@ -24,12 +24,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FilePatternDialectProvider extends PatternDialectProvider {
+public class ProjectPatternProvider extends PatternDialectProvider {
 
   @NonNls public static final String FILE = "file";
 
   private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
-  private static final Logger LOG = Logger.getInstance("#" + FilePatternDialectProvider.class.getName());
+  private static final Icon ICON = IconLoader.getIcon("/general/projectTab.png");
+  private static final Logger LOG = Logger.getInstance("#" + ProjectPatternProvider.class.getName());
 
 
   public TreeModel createTreeModel(final Project project, final Marker marker) {
@@ -37,7 +38,7 @@ public class FilePatternDialectProvider extends PatternDialectProvider {
   }
 
   public String getDisplayName() {
-    return getShortName();
+    return IdeBundle.message("title.project");
   }
 
   @NotNull
@@ -86,6 +87,10 @@ public class FilePatternDialectProvider extends PatternDialectProvider {
       if (fqName != null) return new FilePatternPackageSet(getModulePattern(node), fqName);
     }
     return null;
+  }
+
+  public Icon getIcon() {
+    return ICON;
   }
 
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {

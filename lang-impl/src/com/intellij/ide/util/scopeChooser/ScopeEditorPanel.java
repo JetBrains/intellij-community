@@ -491,6 +491,13 @@ public class ScopeEditorPanel {
       }
       return group;
     }
+
+    public void update(final AnActionEvent e) {
+      super.update(e);
+      final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+      e.getPresentation().setText(provider.getDisplayName());
+      e.getPresentation().setIcon(provider.getIcon());
+    }
   }
 
   private final class FilterLegalsAction extends ToggleAction {
