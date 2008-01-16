@@ -4,16 +4,16 @@
  */
 package com.intellij.codeInsight.completion.impl;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.MatchingContext;
+import com.intellij.patterns.impl.Pattern;
 import com.intellij.patterns.impl.TraverseContext;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.PrioritizedQueryFactory;
 import com.intellij.util.PrioritizedQueryExecutor;
+import com.intellij.util.PrioritizedQueryFactory;
 import com.intellij.util.QueryResultSet;
 
 /**
@@ -22,6 +22,7 @@ import com.intellij.util.QueryResultSet;
 public class CompletionService {
   private final PrioritizedQueryFactory<LookupElement, CompletionParameters> myBasicCompletionQueryFactory = new PrioritizedQueryFactory<LookupElement, CompletionParameters>();
   private final PrioritizedQueryFactory<LookupElement, CompletionParameters> mySmartCompletionQueryFactory = new PrioritizedQueryFactory<LookupElement, CompletionParameters>();
+  private final PrioritizedQueryFactory<LookupElement, CompletionParameters> myClassNameCompletionQueryFactory = new PrioritizedQueryFactory<LookupElement, CompletionParameters>();
 
   public CompletionService() {
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
@@ -33,6 +34,10 @@ public class CompletionService {
         public CompletionPlace<LookupElement, CompletionParameters> extendSmartCompletion(final Pattern<? extends PsiElement, ?> place) {
           return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, mySmartCompletionQueryFactory);
         }
+
+        public CompletionPlace<LookupElement, CompletionParameters> extendClassNameCompletion(final Pattern<? extends PsiElement, ?> place) {
+          return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, myClassNameCompletionQueryFactory);
+        }
       });
     }
   }
@@ -43,6 +48,10 @@ public class CompletionService {
 
   public PrioritizedQueryFactory<LookupElement, CompletionParameters> getSmartCompletionQueryFactory() {
     return mySmartCompletionQueryFactory;
+  }
+
+  public PrioritizedQueryFactory<LookupElement, CompletionParameters> getClassNameCompletionQueryFactory() {
+    return myClassNameCompletionQueryFactory;
   }
 
   public static CompletionService getCompletionService() {

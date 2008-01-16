@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -35,8 +34,6 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -323,51 +320,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
     }
   }
 
-  protected LookupData getLookupData(final CompletionContext _context) {
-    final PsiFile file = _context.file;
-    final PsiManager manager = file.getManager();
-    final PsiElement lastElement = file.findElementAt(_context.startOffset - 1);
-
-    final Pair<CompletionContext, PsiElement> insertedInfo =
-      ApplicationManager.getApplication().runWriteAction(new Computable<Pair<CompletionContext, PsiElement>>() {
-        public Pair<CompletionContext, PsiElement> compute() {
-          return insertDummyIdentifier(_context);
-        }
-      });
-
-    PsiElement insertedElement = insertedInfo.getSecond();
-    final CompletionContext context = insertedInfo.getFirst();
-
-    CompletionData completionData = getCompletionData(context, lastElement);
-
-    context.setPrefix(insertedElement, context.startOffset, completionData);
-    if (completionData == null) {
-      // some completion data may depend on prefix
-      completionData = getCompletionData(context, lastElement);
-    }
-
-    mySuggestSmartCompletion = shouldSuggestSmartCompletion(insertedElement, context);
-
-    if (completionData == null) return new LookupData(LookupItem.EMPTY_ARRAY, context.getPrefix());
-
-    final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
-    complete(context, insertedElement, completionData, lookupSet);
-    if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
-      final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
-      completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-      CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
-      CompletionUtil.highlightMembersOfContainer(lookupSet);
-    }
-
-    final LookupItem[] items = lookupSet.toArray(new LookupItem[lookupSet.size()]);
-    final LookupData data = new LookupData(items, context.getPrefix());
-    if (myPreferencePolicy == null) {
-      myPreferencePolicy = new CompletionPreferencePolicy(manager, items, null, context.getPrefix(), insertedElement);
-    }
-    data.itemPreferencePolicy = myPreferencePolicy;
-    myPreferencePolicy = null;
-    return data;
-  }
+  protected abstract LookupData getLookupData(final CompletionContext _context);
 
   protected Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {
     PsiFile oldFileCopy = createFileCopy(context.file);

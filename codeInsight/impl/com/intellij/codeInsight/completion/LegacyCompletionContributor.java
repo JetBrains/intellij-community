@@ -24,6 +24,8 @@ import java.util.Set;
  * @author peter
  */
 public class LegacyCompletionContributor extends CompletionContributor{
+  private static final CompletionData CLASS_NAME_DATA = new ClassNameCompletionData();
+
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     final PsiElementPattern._PsiElementPattern<PsiElement> everywhere = StandardPatterns.psiElement();
     registrar.extendBasicCompletion(everywhere).onPriority(Double.POSITIVE_INFINITY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
@@ -41,6 +43,28 @@ public class LegacyCompletionContributor extends CompletionContributor{
 
         if (completionData == null) return;
         if (insertedElement == null) return;
+
+        final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
+        final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
+        if (ref != null) {
+          completionData.completeReference(ref, lookupSet, context, insertedElement);
+        }
+        if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
+          final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
+          completionData.addKeywordVariants(keywordVariants, context, insertedElement);
+          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+        }
+        result.addAllElements(lookupSet);
+      }
+    });
+
+    registrar.extendClassNameCompletion(everywhere).onPriority(Double.POSITIVE_INFINITY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+      public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
+        CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+        final PsiFile file = context.file;
+        PsiElement insertedElement = parameters.getPosition();
+        CompletionData completionData = CLASS_NAME_DATA;
+        context.setPrefix(insertedElement, context.startOffset, completionData);
 
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
