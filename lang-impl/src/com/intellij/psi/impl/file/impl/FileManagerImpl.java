@@ -22,9 +22,9 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -105,7 +105,7 @@ public class FileManagerImpl implements FileManager {
   public FileViewProvider findViewProvider(final VirtualFile file) {
     FileViewProvider viewProvider = myVFileToViewProviderMap.get(file);
     if(viewProvider == null) {
-      viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file));
+      viewProvider = ConcurrencyUtil.cacheOrGet(myVFileToViewProviderMap, file, createFileViewProvider(file, true));
     }
     return viewProvider;
   }
@@ -123,15 +123,19 @@ public class FileManagerImpl implements FileManager {
     }
   }
 
-  private FileViewProvider createFileViewProvider(final VirtualFile file) {
-    FileViewProvider viewProvider = null;
+  public FileViewProvider createFileViewProvider(final VirtualFile file, boolean physical) {
+    FileViewProvider viewProvider;
     Language language = getLanguage(file);
     if (language != null) {
       final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      viewProvider = factory != null ? factory.createFileViewProvider(file, language, myManager, true) : null;
+      viewProvider = factory != null ? factory.createFileViewProvider(file, language, myManager, physical) : null;
     }
-    if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, file);
-    return viewProvider;
+    else {
+      final FileViewProviderFactory factory = FileTypeFileViewProviders.INSTANCE.forFileType(file.getFileType());
+      viewProvider = factory != null ? factory.createFileViewProvider(file, null, myManager, physical) : null;
+    }
+
+    return viewProvider != null ? viewProvider : new SingleRootFileViewProvider(myManager, file, physical);
   }
 
   @Nullable
@@ -501,19 +505,10 @@ public class FileManagerImpl implements FileManager {
         }
         myManager.beforeChildrenChange(event);
 
-        if (file instanceof PsiFileImpl) {
-          PsiFileImpl fileImpl = (PsiFileImpl)file;
-          fileImpl.subtreeChanged(); // important! otherwise cached information is not released
-          if (fileImpl.isContentsLoaded()) {
-            ((PsiFileImpl)file).unloadContent();
-          }
+        if (file instanceof PsiFileEx) {
+          ((PsiFileEx)file).onContentReload();
         }
-        else if (file instanceof ClsFileImpl) {
-          //if (((ClsFileImpl)file).isContentsLoaded()) {
-            ((ClsFileImpl)file).unloadContent();
-          //}
-        }
-
+        
         myManager.childrenChanged(event);
       }
     }
@@ -783,7 +778,7 @@ public class FileManagerImpl implements FileManager {
                 }
               }
               else if (fileViewProvider != null){
-                final FileViewProvider fileViewProvider = createFileViewProvider(vFile);
+                final FileViewProvider fileViewProvider = createFileViewProvider(vFile, true);
                 final PsiFile newPsiFile = fileViewProvider.getPsi(fileViewProvider.getBaseLanguage());
                 if(oldPsiFile != null) {
                   if (newPsiFile == null) {
@@ -897,7 +892,7 @@ public class FileManagerImpl implements FileManager {
       final PsiElement newElement;
       final FileViewProvider newViewProvider;
       if (!vFile.isDirectory()){
-        newViewProvider = createFileViewProvider(vFile);
+        newViewProvider = createFileViewProvider(vFile, true);
         newElement = newViewProvider.getPsi(viewProvider.getBaseLanguage());
       }
       else {

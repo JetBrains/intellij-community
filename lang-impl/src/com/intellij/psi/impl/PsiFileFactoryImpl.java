@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -36,7 +37,10 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
   public PsiFile createFileFromText(@NotNull String name, @NotNull Language language, @NotNull String text) {
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-    SingleRootFileViewProvider viewProvider = new SingleRootFileViewProvider(myManager, new LightVirtualFile(name, language, text));
+
+    final LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
+    final FileManager fileManager = ((PsiManagerEx)myManager).getFileManager();
+    final SingleRootFileViewProvider viewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(virtualFile, true);
     assert parserDefinition != null;
     final PsiFile psiFile = parserDefinition.createFile(viewProvider);
     viewProvider.forceCachedPsi(psiFile);
@@ -62,9 +66,8 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
-      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+      final FileViewProvider viewProvider = ((PsiManagerEx)myManager).getFileManager().createFileViewProvider(virtualFile, physical);
+
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
         if (psiFile != null) {
@@ -98,9 +101,7 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
     if(fileType instanceof LanguageFileType){
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
-      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
-      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
+      final FileViewProvider viewProvider = ((PsiManagerEx)myManager).getFileManager().createFileViewProvider(virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
         if (psiFile != null) {

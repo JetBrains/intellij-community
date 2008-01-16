@@ -454,7 +454,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement implements PsiJavaFile,
     }
 
     if (psiFile == null) {
-      psiFile = new ClsFileImpl((PsiManagerImpl)manager, new SingleRootFileViewProvider(manager, file), true);
+      psiFile = new ClsFileImpl((PsiManagerImpl)manager, new ClassFileViewProvider(manager, file), true);
     }
 
     StringBuffer buffer = new StringBuffer();

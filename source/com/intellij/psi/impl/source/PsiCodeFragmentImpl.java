@@ -12,6 +12,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
@@ -44,12 +46,11 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
                              boolean isPhysical,
                              @NonNls String name,
                              CharSequence text) {
-    super(Constants.CODE_FRAGMENT, contentElementType,
-          new SingleRootFileViewProvider(PsiManager.getInstance(project),
-                                         new LightVirtualFile(
-                                           name,
-                                           FileTypeManager.getInstance().getFileTypeByFileName(name),
-                                           text), isPhysical));
+    super(Constants.CODE_FRAGMENT,
+          contentElementType,
+          ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().createFileViewProvider(
+            new LightVirtualFile(name, FileTypeManager.getInstance().getFileTypeByFileName(name), text), isPhysical)
+    );
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
     myPhysical = isPhysical;
   }
@@ -64,11 +65,10 @@ public class PsiCodeFragmentImpl extends PsiFileImpl implements PsiCodeFragment 
     clone.myPhysical = false;
     clone.myOriginalFile = this;
     clone.myPseudoImports = new LinkedHashMap<String, String>(myPseudoImports);
-    final SingleRootFileViewProvider dummyHolderViewProvider = new SingleRootFileViewProvider(
-      getManager(),
-      new LightVirtualFile(getName(), getLanguage(), getText()), false);
-    dummyHolderViewProvider.forceCachedPsi(clone);
-    clone.myViewProvider = dummyHolderViewProvider;
+    FileManager fileManager = ((PsiManagerEx)getManager()).getFileManager();
+    SingleRootFileViewProvider cloneViewProvider = (SingleRootFileViewProvider)fileManager.createFileViewProvider(new LightVirtualFile(getName(), getLanguage(), getText()), false);
+    cloneViewProvider.forceCachedPsi(clone);
+    clone.myViewProvider = cloneViewProvider;
     return clone;
   }
 

@@ -26,6 +26,10 @@ public class MockFileManager implements FileManager {
     }
   };
 
+  public FileViewProvider createFileViewProvider(final VirtualFile file, final boolean physical) {
+    return new SingleRootFileViewProvider(myManager, file, true);
+  }
+
   public MockFileManager(final PsiManagerEx manager) {
     myManager = manager;
   }

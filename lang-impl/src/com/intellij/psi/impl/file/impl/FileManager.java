@@ -39,4 +39,6 @@ public interface FileManager {
   void setViewProvider(VirtualFile virtualFile, FileViewProvider fileViewProvider);
 
   List<PsiFile> getAllCachedFiles();
+
+  FileViewProvider createFileViewProvider(VirtualFile file, boolean physical);
 }

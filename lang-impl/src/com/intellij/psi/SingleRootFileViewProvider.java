@@ -3,12 +3,10 @@
  */
 package com.intellij.psi;
 
-import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -17,15 +15,12 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -208,7 +203,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     try {
       if (vFile.isDirectory()) return null;
       final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-      final String name = getVirtualFile().getName();
+      final String name = vFile.getName();
       if (fileTypeManager.isFileIgnored(name)) return null; // cannot use ProjectFileIndex because of "name"!
 
       final Project project = myManager.getProject();
@@ -219,33 +214,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
         if (psiDir == null) return null;
       }
 
-      FileType fileType = getRealFileType();
-
-      if (fileType instanceof LanguageFileType) {
-        final Language language = ((LanguageFileType)fileType).getLanguage();
-        if (language == StdLanguages.JAVA || vFile == null || !isTooLarge(vFile)) {
-          final PsiFile psiFile = createFile(language);
-          if (psiFile != null) return psiFile;
-        }
-      }
-
-      if (fileType instanceof JavaClassFileType) {
-        if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(vFile)) {
-          // skip inners & anonymous
-          int dotIndex = name.lastIndexOf('.');
-          if (dotIndex < 0) dotIndex = name.length();
-          int index = name.lastIndexOf('$', dotIndex);
-          if (index >= 0) return null;
-
-          return new ClsFileImpl((PsiManagerImpl)PsiManager.getInstance(project), this);
-        }
-        return null;
-      }
-
-      if (fileType.isBinary()) {
-        return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
-      }
-      return new PsiPlainTextFileImpl(this);
+      return creatFile(project, vFile, vFile.getFileType());
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -256,12 +225,20 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     }
   }
 
-  private FileType getRealFileType() {
-    FileType fileType = getVirtualFile().getFileType();
-    if (!isPhysical()) return fileType;
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getManager().getProject()).getFileIndex();
-    if (fileType == StdFileTypes.JAVA && !projectFileIndex.isInSource(getVirtualFile())) fileType = FileTypes.PLAIN_TEXT;
-    return fileType;
+  @Nullable
+  protected PsiFile creatFile(final Project project, final VirtualFile vFile, final FileType fileType) {
+    if (fileType instanceof LanguageFileType) {
+      final Language language = ((LanguageFileType)fileType).getLanguage();
+      if (!isTooLarge(vFile)) {
+        final PsiFile psiFile = createFile(language);
+        if (psiFile != null) return psiFile;
+      }
+    }
+
+    if (fileType.isBinary()) {
+      return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
+    }
+    return new PsiPlainTextFileImpl(this);
   }
 
   public static boolean isTooLarge(final VirtualFile vFile) {
@@ -360,10 +337,11 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   public FileViewProvider clone() {
-    LightVirtualFile copy = new LightVirtualFile(getVirtualFile().getName(), getRealFileType(), getContents(), getModificationStamp());
+    final VirtualFile origFile = getVirtualFile();
+    LightVirtualFile copy = new LightVirtualFile(origFile.getName(), origFile.getFileType(), getContents(), getModificationStamp());
     copy.putUserData(UndoManager.DONT_RECORD_UNDO, Boolean.TRUE);
 
-    copy.setCharset(getVirtualFile().getCharset());
+    copy.setCharset(origFile.getCharset());
     return new SingleRootFileViewProvider(getManager(), copy, false);
   }
 

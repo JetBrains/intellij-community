@@ -59,6 +59,10 @@ class EmptyFileManager implements FileManager {
     return null;
   }
 
+  public FileViewProvider createFileViewProvider(final VirtualFile file, final boolean physical) {
+    return null;
+  }
+
   public void setViewProvider(final VirtualFile virtualFile, final FileViewProvider singleRootFileViewProvider) {
 
   }

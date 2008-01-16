@@ -32,9 +32,7 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -72,10 +70,6 @@ public class JavaClassFileType implements FileType {
   }
 
   public String getCharset(@NotNull VirtualFile file) {
-    return null;
-  }
-
-  public StructureViewBuilder getStructureViewBuilder(@NotNull final VirtualFile file, @NotNull final Project project) {
     return null;
   }
 }

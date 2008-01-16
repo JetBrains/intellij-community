@@ -19,7 +19,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public volatile CompositeElement parent = null;
 
   public static final Key<PsiManagerEx> MANAGER_KEY = Key.create("Element.MANAGER_KEY");
-  public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("Element.PsiElement");
 
   public Object clone() {
     TreeElement clone = (TreeElement)super.clone();
