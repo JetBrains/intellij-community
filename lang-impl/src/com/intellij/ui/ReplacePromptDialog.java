@@ -1,4 +1,3 @@
-
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
