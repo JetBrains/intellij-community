@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.packageDependencies.DependencyUISettings;
+import com.intellij.packageDependencies.ui.ProjectPatternProvider;
 
 public final class GroupByScopeTypeAction extends ToggleAction {
   private final Runnable myUpdate;
@@ -26,5 +27,10 @@ public final class GroupByScopeTypeAction extends ToggleAction {
   public void setSelected(AnActionEvent event, boolean flag) {
     DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
     myUpdate.run();
+  }
+
+  public void update(final AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setEnabled(DependencyUISettings.getInstance().SCOPE_TYPE != ProjectPatternProvider.FILE);
   }
 }
