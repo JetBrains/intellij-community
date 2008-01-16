@@ -37,7 +37,7 @@ public class ControlFlowFactory {
     });
   }
 
-  public void clearCache() {
+  private void clearCache() {
     cachedFlows.clear();
   }
 

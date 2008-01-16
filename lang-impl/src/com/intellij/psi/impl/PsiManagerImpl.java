@@ -27,7 +27,6 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
@@ -183,7 +182,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
   public void dropResolveCaches() {
     myResolveCache.clearCache();
-    ControlFlowFactory.getInstance(myProject).clearCache();
+    physicalChange();
+    nonPhysicalChange();
   }
 
   public boolean isInProject(@NotNull PsiElement element) {
