@@ -4,8 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 
 public class PackageTreeExpansionMonitor {

@@ -9,7 +9,10 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,7 +21,7 @@ import javax.swing.*;
  * User: anna
  * Date: 30-Jan-2006
  */
-public class BasePsiNode<T extends PsiMember> extends PackageDependenciesNode {
+public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
   private SmartPsiElementPointer myPsiElementPointer = null;
   private PsiFile myFile = null;
 

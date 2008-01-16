@@ -7,28 +7,24 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.TreeClassChooser;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
@@ -41,8 +37,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ScopeChooserCombo extends ComboboxWithBrowseButton {
   private Project myProject;
@@ -122,22 +120,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     getComboBox().setModel(createModel());
   }
 
-  protected static class ScopeDescriptor {
-    private SearchScope myScope;
-
-    public ScopeDescriptor(SearchScope scope) {
-      myScope = scope;
-    }
-
-    public String getDisplay() {
-      return myScope.getDisplayName();
-    }
-
-    public SearchScope getScope() {
-      return myScope;
-    }
-  }
-
   private DefaultComboBoxModel createModel() {
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     createPredefinedScopeDescriptors(model);
@@ -162,11 +144,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
     model.addElement(new ScopeDescriptor(GlobalSearchScope.projectTestScope(myProject)));
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
-    final PsiElement dataContextElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (dataContextElement != null) {
       Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
       if (module == null) {
-        module = DataKeys.MODULE.getData(dataContext);
+        module = LangDataKeys.MODULE.getData(dataContext);
       }
       if (module != null) {
         model.addElement(new ScopeDescriptor(module.getModuleScope()));
@@ -260,7 +242,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
       }
     }
 
-    model.addElement(new ClassHierarchyScopeDescriptor());
+    for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
+      for (ScopeDescriptor scopeDescriptor : provider.getScopeDescriptors(myProject)) {
+        model.addElement(scopeDescriptor);
+      }
+    }
   }
 
   class ModifiedFilesScopeDescriptor extends ScopeDescriptor {
@@ -295,40 +281,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton {
           return false;
         }
       };
-    }
-  }
-
-  class ClassHierarchyScopeDescriptor extends ScopeDescriptor {
-    private SearchScope myCachedScope;
-
-    public ClassHierarchyScopeDescriptor() {
-      super(null);
-    }
-
-    public String getDisplay() {
-      return IdeBundle.message("scope.class.hierarchy");
-    }
-
-    @Nullable
-    public SearchScope getScope() {
-      if (myCachedScope == null) {
-        TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(IdeBundle.message("prompt.choose.base.class.of.the.hierarchy"));
-
-        chooser.showDialog();
-
-        PsiClass aClass = chooser.getSelectedClass();
-        if (aClass == null) return null;
-
-        List<PsiElement> classesToSearch = new LinkedList<PsiElement>();
-        classesToSearch.add(aClass);
-
-        classesToSearch.addAll(ClassInheritorsSearch.search(aClass, aClass.getUseScope(), true).findAll());
-
-        myCachedScope = new LocalSearchScope(classesToSearch.toArray(new PsiElement[classesToSearch.size()]),
-                                             IdeBundle.message("scope.hierarchy", ClassPresentationUtil.getNameForClass(aClass, true)));
-      }
-
-      return myCachedScope;
     }
   }
 

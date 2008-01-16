@@ -5,8 +5,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -273,7 +271,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new ShowModulesAction());
     group.add(new ShowModuleGroupsAction());
     group.add(new GroupByScopeTypeAction());
-    group.add(new GroupByFilesAction());
+    //group.add(new GroupByFilesAction());
     group.add(new FilterLegalsAction());
     group.add(new MarkAsIllegalAction());
     group.add(new EditDependencyRulesAction());
@@ -506,22 +504,22 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-  private final class GroupByFilesAction extends ToggleAction {
+ /* private final class GroupByFilesAction extends ToggleAction {
     private GroupByFilesAction() {
       super(IdeBundle.message("action.show.file.structure"),
             IdeBundle.message("action.description.show.file.structure"), IconLoader.getIcon("/objectBrowser/showGlobalInspections.png"));
     }
 
     public boolean isSelected(final AnActionEvent e) {
-      return mySettings.UI_GROUP_BY_FILES;
+      return mySettings.SCOPE_TYPE;
     }
 
     public void setSelected(final AnActionEvent e, final boolean state) {
-      mySettings.UI_GROUP_BY_FILES = state;
+      mySettings.SCOPE_TYPE = state;
       mySettings.copyToApplicationDependencySettings();
       rebuild();
     }
-  }
+  }*/
 
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
@@ -577,7 +575,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     public void update(final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(!mySettings.UI_GROUP_BY_FILES);
     }
   }
 
@@ -932,14 +929,15 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
             }
           }
         }
-        PackageSet leftPackageSet = ScopeEditorPanel.getNodePackageSet(leftNode, true);
+        final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+        PackageSet leftPackageSet = provider.createPackageSet(leftNode, true);
         if (leftPackageSet == null) {
-          leftPackageSet = ScopeEditorPanel.getNodePackageSet(leftNode, false);
+          leftPackageSet = provider.createPackageSet(leftNode, false);
         }
         LOG.assertTrue(leftPackageSet != null);
-        PackageSet rightPackageSet = ScopeEditorPanel.getNodePackageSet(rightNode, true);
+        PackageSet rightPackageSet = provider.createPackageSet(rightNode, true);
         if (rightPackageSet == null) {
-          rightPackageSet = ScopeEditorPanel.getNodePackageSet(rightNode, false);
+          rightPackageSet = provider.createPackageSet(rightNode, false);
         }
         LOG.assertTrue(rightPackageSet != null);
         if (hasDirectDependencies) {
@@ -960,8 +958,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final PackageDependenciesNode leftNode = myLeftTree.getSelectedNode();
       final PackageDependenciesNode rightNode = myRightTree.getSelectedNode();
       if (leftNode != null && rightNode != null) {
-        presentation.setEnabled((ScopeEditorPanel.getNodePackageSet(leftNode, true) != null || ScopeEditorPanel.getNodePackageSet(leftNode, false) != null) &&
-                                (ScopeEditorPanel.getNodePackageSet(rightNode, true) != null || ScopeEditorPanel.getNodePackageSet(rightNode, false) != null));
+        final PatternDialectProvider provider = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE);
+        presentation.setEnabled((provider.createPackageSet(leftNode, true) != null || provider.createPackageSet(leftNode, false) != null) &&
+                                (provider.createPackageSet(rightNode, true) != null || provider.createPackageSet(rightNode, false) != null));
       }
     }
   }
@@ -973,7 +972,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     public boolean UI_SHOW_MODULE_GROUPS = true;
     public boolean UI_FILTER_LEGALS = false;
     public boolean UI_GROUP_BY_SCOPE_TYPE = true;
-    public boolean UI_GROUP_BY_FILES = false;
+    public String SCOPE_TYPE;
     public boolean UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
 
     public DependencyPanelSettings() {
@@ -984,7 +983,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       UI_SHOW_MODULE_GROUPS = settings.UI_SHOW_MODULE_GROUPS;
       UI_FILTER_LEGALS = settings.UI_FILTER_LEGALS;
       UI_GROUP_BY_SCOPE_TYPE = settings.UI_GROUP_BY_SCOPE_TYPE;
-      UI_GROUP_BY_FILES = settings.UI_GROUP_BY_FILES;
+      SCOPE_TYPE = settings.SCOPE_TYPE;
       UI_COMPACT_EMPTY_MIDDLE_PACKAGES = settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
 
@@ -996,7 +995,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       settings.UI_SHOW_MODULE_GROUPS = UI_SHOW_MODULE_GROUPS;
       settings.UI_FILTER_LEGALS = UI_FILTER_LEGALS;
       settings.UI_GROUP_BY_SCOPE_TYPE = UI_GROUP_BY_SCOPE_TYPE;
-      settings.UI_GROUP_BY_FILES = UI_GROUP_BY_FILES;
+      settings.SCOPE_TYPE = SCOPE_TYPE;
       settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
     }
   }

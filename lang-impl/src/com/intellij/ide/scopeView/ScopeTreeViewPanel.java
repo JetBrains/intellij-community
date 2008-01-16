@@ -204,7 +204,6 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     settings.UI_FILTER_LEGALS = true;
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
     settings.UI_SHOW_FILES = true;
-    settings.UI_GROUP_BY_FILES = true;
     final ProjectView projectView = ProjectView.getInstance(myProject);
     settings.UI_FLATTEN_PACKAGES = projectView.isFlattenPackages(ScopeViewPane.ID);
     settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);

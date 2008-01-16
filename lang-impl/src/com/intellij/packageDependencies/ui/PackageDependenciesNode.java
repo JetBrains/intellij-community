@@ -10,8 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

@@ -6,7 +6,9 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,11 +23,10 @@ import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.Icons;
 import com.intellij.util.ui.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ import java.awt.event.FocusListener;
 import java.util.ArrayList;
 
 public class ScopeEditorPanel {
-  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
+
   private JPanel myButtonsPanel;
   private JTextField myPatternField;
   private JPanel myTreeToolbar;
@@ -235,7 +236,7 @@ public class ScopeEditorPanel {
     final ArrayList<PackageSet> result = new ArrayList<PackageSet>();
     for (int row : rows) {
       final PackageDependenciesNode node = (PackageDependenciesNode)myPackageTree.getPathForRow(row).getLastPathComponent();
-      final PackageSet set = getNodePackageSet(node, recursively);
+      final PackageSet set = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createPackageSet(node, recursively);
       if (set != null) {
         result.add(set);
       }
@@ -243,116 +244,25 @@ public class ScopeEditorPanel {
     return result;
   }
 
-  @Nullable
-  public static PackageSet getNodePackageSet(final PackageDependenciesNode node, final boolean recursively) {
-    return getNodePackageSet(node, recursively, getSelectedScopeType(node));
-  }
-
-  @Nullable
-  private static PackageSet getNodePackageSet(final PackageDependenciesNode node, final boolean recursively, final String scope) {
-    if (node instanceof ModuleGroupNode){
-      if (!recursively) return null;
-      @NonNls final String modulePattern = "group:" + ((ModuleGroupNode)node).getModuleGroup().toString();
-      return scope == FilePatternPackageSet.SCOPE_FILE ? new FilePatternPackageSet(modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern);
-    } else if (node instanceof ModuleNode) {
-      if (!recursively) return null;
-      final String modulePattern = ((ModuleNode)node).getModuleName();
-      return scope == FilePatternPackageSet.SCOPE_FILE ? new FilePatternPackageSet(modulePattern, "*//*") : new PatternPackageSet("*..*", scope, modulePattern);
-    }
-    else if (node instanceof PackageNode) {
-      String pattern = ((PackageNode)node).getPackageQName();
-      if (pattern != null) {
-        pattern += recursively ? "..*" : ".*";
-      }
-      else {
-        pattern = recursively ? "*..*" : ".*";
-      }
-
-      return getPatternSet(node, pattern, scope);
-    }
-    else if (node instanceof DirectoryNode){
-      String pattern = ((DirectoryNode)node).getFQName();
-      if (pattern != null) {
-        if (pattern.length() > 0) {
-          pattern += recursively ? "/*" : "*";
-        } else {
-          pattern += recursively ? "*/" : "*";
-        }
-      }
-      return getPatternSet(node, pattern, scope);
-    }
-    else if (node instanceof FileNode) {
-      if (recursively) return null;
-      FileNode fNode = (FileNode)node;
-      String fqName = fNode.getFQName(scope == FilePatternPackageSet.SCOPE_FILE);
-      if (fqName != null) return getPatternSet(node, fqName, scope);
-    }
-    else if (node instanceof GeneralGroupNode) {
-      return new PatternPackageSet("*..*", scope, null);
-    }
-
-    return null;
-  }
-
-  private static PackageSet getPatternSet(PackageDependenciesNode node, String pattern, final String scope) {
-    String modulePattern = getSelectedModulePattern(node);
-
-    return scope != FilePatternPackageSet.SCOPE_FILE ? new PatternPackageSet( pattern, scope, modulePattern) : new FilePatternPackageSet(modulePattern, pattern);
-  }
-
-  @Nullable
-  private static String getSelectedModulePattern(PackageDependenciesNode node) {
-    ModuleNode moduleParent = getModuleParent(node);
-    String modulePattern = null;
-    if (moduleParent != null) {
-      modulePattern = moduleParent.getModuleName();
-    }
-    return modulePattern;
-  }
-
-  private static String getSelectedScopeType(PackageDependenciesNode node) {
-    if (DependencyUISettings.getInstance().UI_GROUP_BY_FILES) return FilePatternPackageSet.SCOPE_FILE;
-    GeneralGroupNode groupParent = getGroupParent(node);
-    String scope = PatternPackageSet.SCOPE_ANY;
-    if (groupParent != null) {
-      String name = groupParent.toString();
-      if (TreeModelBuilder.PRODUCTION_NAME.equals(name)) {
-        scope = PatternPackageSet.SCOPE_SOURCE;
-      }
-      else if (TreeModelBuilder.TEST_NAME.equals(name)) {
-        scope = PatternPackageSet.SCOPE_TEST;
-      }
-      else if (TreeModelBuilder.LIBRARY_NAME.equals(name)) {
-        scope = PatternPackageSet.SCOPE_LIBRARY;
-      }
-    }
-    return scope;
-  }
-
-  @Nullable
-  private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
-    if (node instanceof GeneralGroupNode) return (GeneralGroupNode)node;
-    if (node == null || node instanceof RootNode) return null;
-    return getGroupParent((PackageDependenciesNode)node.getParent());
-  }
-
-  @Nullable
-  private static ModuleNode getModuleParent(PackageDependenciesNode node) {
-    if (node instanceof ModuleNode) return (ModuleNode)node;
-    if (node == null || node instanceof RootNode) return null;
-    return getModuleParent((PackageDependenciesNode)node.getParent());
-  }
 
   private JComponent createTreeToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new FlattenPackagesAction());
-    group.add(new CompactEmptyMiddlePackagesAction());
-    group.add(new ShowFilesAction());
-    group.add(new ShowModulesAction());
-    group.add(new ShowModuleGroupsAction());
-    group.add(new GroupByScopeTypeAction());
-    group.add(new GroupByFilesAction());
-    group.add(new FilterLegalsAction());
+    final DefaultActionGroup group = new DefaultActionGroup();
+    final Runnable update = new Runnable() {
+      public void run() {
+        rebuild(true);
+      }
+    };
+    group.add(new FlattenPackagesAction(update));
+    for (PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+      for (AnAction action : provider.createActions(update)) {
+        group.add(action);
+      }
+    }
+    group.add(new ShowFilesAction(update));
+    group.add(new ShowModulesAction(update));
+    group.add(new ShowModuleGroupsAction(update));
+    group.add(new FilterLegalsAction(update));
+    group.add(new ChooseScopeTypeAction(update));
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
@@ -440,10 +350,7 @@ public class ScopeEditorPanel {
           public void run() {
             try {
               myTreeExpansionMonitor.freeze();
-              final TreeModel model = DependencyUISettings.getInstance().UI_GROUP_BY_FILES
-                                      ? FileTreeModelBuilder.createTreeModel(myProject, false, myTreeMarker)
-                                      : TreeModelBuilder.createTreeModel(myProject, false, false, myTreeMarker);
-
+              final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
               if (myErrorMessage == null) {
                 myMatchingCountLabel
                   .setText(IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount()));
@@ -518,7 +425,7 @@ public class ScopeEditorPanel {
   }
 
   public void clearCaches() {
-    TreeModelBuilder.clearCaches(myProject);
+    FileTreeModelBuilder.clearCaches(myProject);
   }
 
   public NamedScopesHolder getHolder() {
@@ -564,150 +471,35 @@ public class ScopeEditorPanel {
     }
   }
 
-  private final class FlattenPackagesAction extends ToggleAction {
-    FlattenPackagesAction() {
-      super(IdeBundle.message("action.flatten.packages"),
-            IdeBundle.message("action.flatten.packages"), Icons.FLATTEN_PACKAGES_ICON);
+  private final class ChooseScopeTypeAction extends ComboBoxAction{
+    private final Runnable myUpdate;
+
+    public ChooseScopeTypeAction(final Runnable update) {
+      myUpdate = update;
     }
 
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_FLATTEN_PACKAGES = flag;
-      rebuild(true);
-    }
-  }
-
-
-  private final class CompactEmptyMiddlePackagesAction extends ToggleAction {
-    CompactEmptyMiddlePackagesAction() {
-      super(IdeBundle.message("action.compact.empty.middle.packages"),
-            IdeBundle.message("action.compact.empty.middle.packages"), COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_COMPACT_EMPTY_MIDDLE_PACKAGES = flag;
-      rebuild(true);
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
-    }
-  }
-
-  private final class ShowFilesAction extends ToggleAction {
-    ShowFilesAction() {
-      super(IdeBundle.message("action.show.files"),
-            IdeBundle.message("action.description.show.files"), IconLoader.getIcon("/fileTypes/java.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_SHOW_FILES;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_SHOW_FILES = flag;
-      rebuild(true);
-    }
-  }
-
-  private final class GroupByScopeTypeAction extends ToggleAction {
-    GroupByScopeTypeAction() {
-      super(IdeBundle.message("action.group.by.scope.type"),
-            IdeBundle.message("action.description.group.by.scope"), IconLoader.getIcon("/nodes/testSourceFolder.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_GROUP_BY_SCOPE_TYPE = flag;
-      rebuild(true);
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
-    }
-  }
-
-  private final class GroupByFilesAction extends ToggleAction{
-    GroupByFilesAction() {
-      super(IdeBundle.message("action.show.file.structure"),
-            IdeBundle.message("action.description.show.file.structure"), IconLoader.getIcon("/objectBrowser/showGlobalInspections.png"));
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return DependencyUISettings.getInstance().UI_GROUP_BY_FILES;
-    }
-
-    public void setSelected(AnActionEvent e, boolean flag) {
-      final DependencyUISettings settings = DependencyUISettings.getInstance();
-      settings.UI_GROUP_BY_FILES = flag;
-      if (flag){
-        settings.UI_GROUP_BY_SCOPE_TYPE = false;
-        settings.UI_SHOW_MODULES = true;
+    @NotNull
+    protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
+      final DefaultActionGroup group = new DefaultActionGroup();
+      for (final PatternDialectProvider provider : Extensions.getExtensions(PatternDialectProvider.EP_NAME)) {
+        group.add(new AnAction(provider.getDisplayName()) {
+          public void actionPerformed(final AnActionEvent e) {
+            DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
+            myUpdate.run();
+          }
+        });
       }
-      clearCaches(); //need to reconsider libraries files 
-      rebuild(true);
-    }
-  }
-
-  private final class ShowModulesAction extends ToggleAction {
-    ShowModulesAction() {
-      super(IdeBundle.message("action.show.modules"),
-            IdeBundle.message("action.description.show.modules"), IconLoader.getIcon("/objectBrowser/showModules.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_SHOW_MODULES;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_SHOW_MODULES = flag;
-      rebuild(true);
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(!DependencyUISettings.getInstance().UI_GROUP_BY_FILES);
-    }
-  }
-
-  private final class ShowModuleGroupsAction extends ToggleAction {
-    ShowModuleGroupsAction() {
-      super("Show module groups",
-            "Show/hide module groups", IconLoader.getIcon("/nodes/moduleGroupClosed.png"));
-    }
-
-    public boolean isSelected(AnActionEvent event) {
-      return DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS;
-    }
-
-    public void setSelected(AnActionEvent event, boolean flag) {
-      DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = flag;
-      rebuild(true);
-    }
-
-    public void update(final AnActionEvent e) {
-      super.update(e);
-      final DependencyUISettings settings = DependencyUISettings.getInstance();
-      e.getPresentation().setEnabled(!settings.UI_GROUP_BY_FILES && settings.UI_SHOW_MODULES);
+      return group;
     }
   }
 
   private final class FilterLegalsAction extends ToggleAction {
-    FilterLegalsAction() {
+    private final Runnable myUpdate;
+
+    public FilterLegalsAction(final Runnable update) {
       super(IdeBundle.message("action.show.included.only"),
             IdeBundle.message("action.description.show.included.only"), IconLoader.getIcon("/ant/filter.png"));
+      myUpdate = update;
     }
 
     public boolean isSelected(AnActionEvent event) {
@@ -717,7 +509,7 @@ public class ScopeEditorPanel {
     public void setSelected(AnActionEvent event, boolean flag) {
       DependencyUISettings.getInstance().UI_FILTER_LEGALS = flag;
       UIUtil.setEnabled(myLegendPanel, !flag, true);
-      rebuild(true);
+      myUpdate.run();
     }
   }
 }

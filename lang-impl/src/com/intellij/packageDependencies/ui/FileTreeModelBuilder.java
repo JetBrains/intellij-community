@@ -2,7 +2,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scopeView.nodes.ClassNode;
+import com.intellij.ide.scopeView.nodes.BasePsiNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -307,8 +307,8 @@ public class FileTreeModelBuilder {
         }
         if (element instanceof PsiFile) {
           PsiFile psiFile = null;
-          if (node instanceof ClassNode) {
-            psiFile = ((ClassNode)node).getContainingFile();
+          if (node instanceof BasePsiNode) {
+            psiFile = ((BasePsiNode)node).getContainingFile();
           }
           else if (node instanceof FileNode) { //non java files
             psiFile = ((PsiFile)node.getPsiElement());

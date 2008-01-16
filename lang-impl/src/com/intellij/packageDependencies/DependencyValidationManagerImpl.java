@@ -6,17 +6,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -24,7 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
   private final List<DependencyRule> myRules = new ArrayList<DependencyRule>();
@@ -220,7 +226,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     if (toolWindowManager == null) return;
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
+        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
                                                                      myContentManager.getComponent(),
                                                                      ToolWindowAnchor.BOTTOM);
