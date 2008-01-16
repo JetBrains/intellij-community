@@ -12,16 +12,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -48,7 +43,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 public class HighlightUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil");
@@ -1967,36 +1965,6 @@ public class HighlightUtil {
     else {
       component.setHighlightingSettingForRoot(root, level);
     }
-  }
-
-  public static HighlightInfo convertToHighlightInfo(@NotNull Annotation annotation) {
-    TextAttributes attributes = annotation.getEnforcedTextAttributes();
-    if (attributes == null) {
-      attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(annotation.getTextAttributes());
-    }
-    HighlightInfo info = new HighlightInfo(attributes, convertType(annotation), annotation.getStartOffset(),
-                                           annotation.getEndOffset(), annotation.getMessage(), annotation.getTooltip(),
-                                           annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
-    info.setGutterIconRenderer(annotation.getGutterIconRenderer());
-    info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
-    List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
-    if (fixes != null) {
-      for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
-        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
-      }
-    }
-    return info;
-  }
-
-  private static HighlightInfoType convertType(Annotation annotation) {
-    ProblemHighlightType type = annotation.getHighlightType();
-    if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
-    if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
-    if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
-    return annotation.getSeverity() == HighlightSeverity.ERROR
-           ? HighlightInfoType.ERROR
-           : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
-             : annotation.getSeverity() == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
   }
 
   public static boolean isSerializable(PsiClass aClass) {

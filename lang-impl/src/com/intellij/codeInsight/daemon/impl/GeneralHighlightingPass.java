@@ -194,7 +194,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         highlightInjectedIn(injectedPsi, annotationHolder);
         DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
         for (Annotation annotation : annotationHolder) {
-          HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
+          HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation);
           TextRange textRange = documentWindow.getHostRange(highlightInfo.startOffset);
           synchronized (myInjectedPsiHighlights) {
             Collection<HighlightInfo> infos = myInjectedPsiHighlights.get(textRange);

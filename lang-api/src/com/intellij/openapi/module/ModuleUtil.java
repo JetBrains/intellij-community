@@ -205,4 +205,16 @@ public class ModuleUtil {
     }
     return true;
   }
+
+  public static boolean moduleContainsFile(final Module module, VirtualFile file, boolean isLibraryElement) {
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    if (isLibraryElement) {
+      OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);
+      return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
+             orderEntry instanceof LibraryOrderEntry;
+    }
+    else {
+      return moduleRootManager.getFileIndex().isInContent(file);
+    }
+  }
 }

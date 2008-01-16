@@ -38,6 +38,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -82,7 +83,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
       return PackageUtil.projectContainsFile(getProject(), file, isLibraryElement());
     }
     else {
-      return PackageUtil.moduleContainsFile(module, file, isLibraryElement());
+      return ModuleUtil.moduleContainsFile(module, file, isLibraryElement());
     }
   }
 

@@ -36,6 +36,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
   public boolean contains(@NotNull VirtualFile file) {
     Module module = getValue();
     return module != null && !module.isDisposed() &&
-           (PackageUtil.moduleContainsFile(module, file, false) || PackageUtil.moduleContainsFile(module, file, true));
+           (ModuleUtil.moduleContainsFile(module, file, false) || ModuleUtil.moduleContainsFile(module, file, true));
   }
 
   public String getToolTip() {

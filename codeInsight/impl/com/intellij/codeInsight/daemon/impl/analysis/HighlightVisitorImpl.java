@@ -198,7 +198,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       if (myAnnotationHolder.hasAnnotations()) {
         for (Annotation annotation : myAnnotationHolder) {
-          myHolder.add(HighlightUtil.convertToHighlightInfo(annotation));
+          myHolder.add(HighlightInfo.fromAnnotation(annotation));
         }
         myAnnotationHolder.clear();
       }

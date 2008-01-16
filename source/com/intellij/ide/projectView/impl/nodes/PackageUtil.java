@@ -42,6 +42,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
@@ -190,22 +191,10 @@ public class PackageUtil {
   }
 
 
-  public static boolean moduleContainsFile(final Module module, VirtualFile file, boolean isLibraryElement) {
-    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-    if (isLibraryElement) {
-      OrderEntry orderEntry = moduleRootManager.getFileIndex().getOrderEntryForFile(file);
-      return orderEntry instanceof ModuleJdkOrderEntry || orderEntry instanceof JdkOrderEntry ||
-             orderEntry instanceof LibraryOrderEntry;
-    }
-    else {
-      return moduleRootManager.getFileIndex().isInContent(file);
-    }
-  }
-
   public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     for (Module module : modules) {
-      if (moduleContainsFile(module, file, isLibraryElement)) return true;
+      if (ModuleUtil.moduleContainsFile(module, file, isLibraryElement)) return true;
     }
     return false;
   }

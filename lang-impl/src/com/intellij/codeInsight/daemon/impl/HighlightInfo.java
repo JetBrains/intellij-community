@@ -1,16 +1,19 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
@@ -271,6 +274,36 @@ public class HighlightInfo {
     // do not use HighlightInfoFilter
     return new HighlightInfo(attributes, type, textRange.getStartOffset(), textRange.getEndOffset(), message, htmlEscapeToolTip(message),
                              type.getSeverity(element), false, Boolean.FALSE);
+  }
+
+  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
+    TextAttributes attributes = annotation.getEnforcedTextAttributes();
+    if (attributes == null) {
+      attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(annotation.getTextAttributes());
+    }
+    HighlightInfo info = new HighlightInfo(attributes, convertType(annotation), annotation.getStartOffset(),
+                                           annotation.getEndOffset(), annotation.getMessage(), annotation.getTooltip(),
+                                           annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping());
+    info.setGutterIconRenderer(annotation.getGutterIconRenderer());
+    info.isFileLevelAnnotation = annotation.isFileLevelAnnotation();
+    List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
+    if (fixes != null) {
+      for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
+        QuickFixAction.registerQuickFixAction(info, quickFixInfo.textRange, quickFixInfo.quickFix, quickFixInfo.key);
+      }
+    }
+    return info;
+  }
+
+  public static HighlightInfoType convertType(Annotation annotation) {
+    ProblemHighlightType type = annotation.getHighlightType();
+    if (type == ProblemHighlightType.LIKE_UNUSED_SYMBOL) return HighlightInfoType.UNUSED_SYMBOL;
+    if (type == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL) return HighlightInfoType.WRONG_REF;
+    if (type == ProblemHighlightType.LIKE_DEPRECATED) return HighlightInfoType.DEPRECATED;
+    return annotation.getSeverity() == HighlightSeverity.ERROR
+           ? HighlightInfoType.ERROR
+           : annotation.getSeverity() == HighlightSeverity.WARNING ? HighlightInfoType.WARNING
+             : annotation.getSeverity() == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
   }
 
   public static class IntentionActionDescriptor {

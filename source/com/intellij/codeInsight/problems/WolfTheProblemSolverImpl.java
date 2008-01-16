@@ -2,8 +2,6 @@ package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -14,6 +12,7 @@ import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -290,7 +289,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
           return new AnnotationHolderImpl(){
             public boolean add(Annotation annotation) {
               if (annotation != null && annotation.getSeverity() == HighlightSeverity.ERROR) {
-                HighlightInfo highlightInfo = HighlightUtil.convertToHighlightInfo(annotation);
+                HighlightInfo highlightInfo = HighlightInfo.fromAnnotation(annotation);
                 throw new HaveGotErrorException(highlightInfo, myHasErrorElement);
               }
               return super.add(annotation);
@@ -371,7 +370,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   public boolean hasProblemFilesBeneath(final Module scope) {
     return hasProblemFilesBeneath(new Condition<VirtualFile>() {
       public boolean value(final VirtualFile virtualFile) {
-        return PackageUtil.moduleContainsFile(scope, virtualFile, false);
+        return ModuleUtil.moduleContainsFile(scope, virtualFile, false);
       }
     });
   }
