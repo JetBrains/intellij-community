@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class OpenFileHyperlinkInfo implements HyperlinkInfo {
+public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
   private final OpenFileDescriptor myDescriptor;
 
   public OpenFileHyperlinkInfo(@NotNull OpenFileDescriptor descriptor) {

@@ -392,7 +392,7 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
       }
       final LogicalPosition pos = myEditor.getCaretModel().getLogicalPosition();
       final HyperlinkInfo info = getHyperlinkInfoByLineAndCol(pos.line, pos.column);
-      final OpenFileDescriptor openFileDescriptor = info instanceof OpenFileHyperlinkInfo ? ((OpenFileHyperlinkInfo)info).getDescriptor() : null;
+      final OpenFileDescriptor openFileDescriptor = info instanceof FileHyperlinkInfo ? ((FileHyperlinkInfo)info).getDescriptor() : null;
       if (openFileDescriptor == null || !openFileDescriptor.getFile().isValid()) {
         return null;
       }
