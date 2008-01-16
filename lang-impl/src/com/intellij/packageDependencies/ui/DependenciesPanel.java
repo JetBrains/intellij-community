@@ -7,8 +7,6 @@ import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -276,10 +274,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     group.add(new MarkAsIllegalAction());
     group.add(new EditDependencyRulesAction());
     group.add(new HelpAction());
-
-    if (((ApplicationEx)ApplicationManager.getApplication()).isInternal()) {
-      group.add(new ExportZkmAction());
-    }
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
     return toolbar.getComponent();
