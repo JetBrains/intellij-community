@@ -413,7 +413,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   public void dispose() {
-    TreeModelBuilder.clearCaches(myProject);
+    FileTreeModelBuilder.clearCaches(myProject);
   }
 
   @Nullable
@@ -651,55 +651,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
     public void actionPerformed(AnActionEvent event) {
       HelpManager.getInstance().invokeHelp("dependency.viewer.tool.window");
-    }
-  }
-
-  private class ExportZkmAction extends AnAction {
-    private ExportZkmAction() {
-      super(AnalysisScopeBundle.message("action.export.zkm"), null, Icons.CUSTOM_FILE_ICON);
-    }
-
-    public void actionPerformed(AnActionEvent event) {
-      System.out.println("// -----------------------------------------------------------------------------");
-
-      Set<PsiFile> files = getSelectedScope(myRightTree);
-      Set<String> excludeStrings = new TreeSet<String>();
-
-      for (PsiFile psiFile : files) {
-        if (psiFile instanceof PsiJavaFile) {
-          PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-          for (final PsiClass aClass : classes) {
-            excludeClass(aClass, false, excludeStrings);
-          }
-        }
-      }
-
-      for (String s : excludeStrings) {
-        System.out.println(s);
-      }
-
-      System.out.println("// -----------------------------------------------------------------------------");
-    }
-
-    @SuppressWarnings({"HardCodedStringLiteral"})
-    private void excludeClass(final PsiClass aClass, boolean base, Set<String> excludeStrings) {
-      String qName = aClass.getQualifiedName();
-      if (!qName.startsWith("com.intellij")) return;
-
-      String instr = qName.substring(0, qName.lastIndexOf(".") + 1) + "^" + aClass.getName() + "^";
-
-      excludeStrings.add(instr + " !private *(*) and" + (base ? " //base" : ""));
-      excludeStrings.add(instr + " !private * and" + (base ? " //base" : ""));
-
-      final PsiClass[] supers = aClass.getSupers();
-      for (PsiClass aSuper : supers) {
-        excludeClass(aSuper, true, excludeStrings);
-      }
-
-      final PsiClass[] interfaces = aClass.getInterfaces();
-      for (PsiClass anInterface : interfaces) {
-        excludeClass(anInterface, true, excludeStrings);
-      }
     }
   }
 

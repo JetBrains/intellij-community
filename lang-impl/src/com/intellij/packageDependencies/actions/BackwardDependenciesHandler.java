@@ -10,9 +10,9 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 
 import javax.swing.*;
 import java.util.*;
@@ -55,7 +55,7 @@ public class BackwardDependenciesHandler {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             DependenciesPanel panel = new DependenciesPanel(myProject, builders, myExcluded);
-            Content content = PeerFactory.getInstance().getContentFactory().createContent(panel, AnalysisScopeBundle.message(
+            Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(
               "backward.dependencies.toolwindow.title", builders.get(0).getScope().getDisplayName()), false);
             content.setDisposer(panel);
             panel.setContent(content);
