@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<components xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.w3.org/2001/XInclude
+   http://www.w3.org/2001/XInclude.xsd">
+
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.project.impl.ProjectStoreClassProvider</interface-class>
+      <implementation-class>com.intellij.openapi.components.impl.stores.PlatformProjectStoreClassProvider</implementation-class>
+    </component>
+    <component>
+      <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
+      <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
+    </component>
+  </application-components>
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.openapi.components.impl.ServiceManagerImpl</implementation-class>
+    </component>
+  </project-components>
+
+  <xi:include href="Platform.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="UICore.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="WindowManagement.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="Lang.xml" xpointer="xpointer(/components/*)"/>
+
+  <application-components>
+    <component>
+      <interface-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.text.TextEditorProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.platform.PlatformProjectStarter</implementation-class>
+    </component>
+  </application-components>
+
+  <project-components>
+    <component>
+      <interface-class>com.intellij.openapi.fileEditor.FileEditorManager</interface-class>
+      <implementation-class>com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.testFramework.TestEditorManagerImpl</headless-implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.history.LocalHistory</interface-class>
+      <implementation-class>com.intellij.history.DeafLocalHistory</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+  </project-components>
+
+</components>

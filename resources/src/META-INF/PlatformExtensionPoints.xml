@@ -57,4 +57,7 @@
                   beanClass="com.intellij.util.KeyedLazyInstanceEP"/>
   <extensionPoint name="projectOpenProcessor"
                   interface="com.intellij.projectImport.ProjectOpenProcessor"/>
+
+  <extensionPoint name="codeInsight.linkHandler"
+                  interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
 </extensionPoints>

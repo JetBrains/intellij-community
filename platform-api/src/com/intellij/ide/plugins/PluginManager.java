@@ -432,8 +432,9 @@ public class PluginManager {
           //if (!canonicalPath.startsWith(homePath) || canonicalPath.endsWith(".jar")) continue;
           //if (!canonicalPath.startsWith(homePath)) continue;
           IdeaPluginDescriptorImpl pluginDescriptor = null;
-          if (System.getProperty("idea.platform") != null) {
-            pluginDescriptor = loadDescriptor(file, "PlatformPlugin.xml");
+          final String platformPrefix = System.getProperty("idea.platform.prefix");
+          if (platformPrefix != null) {
+            pluginDescriptor = loadDescriptor(file, platformPrefix + "Plugin.xml");
           }
           if (pluginDescriptor == null) {
             pluginDescriptor = loadDescriptor(file, PLUGIN_XML);

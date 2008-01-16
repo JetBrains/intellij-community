@@ -1,0 +1,53 @@
+<extensions>
+  <appStarter implementation="com.intellij.codeInspection.InspectionMain"/>
+
+  <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
+
+  <applicationService serviceInterface="com.intellij.codeInsight.completion.impl.CompletionService"
+                      serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionService"/>
+  <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
+                      serviceImplementation="com.intellij.openapi.module.impl.ModuleTypeManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.psi.impl.cache.impl.GlobalCacheManager"
+                      serviceImplementation="com.intellij.psi.impl.cache.impl.GlobalCacheManager"/>
+  <applicationService serviceInterface="com.intellij.lang.cacheBuilder.CacheBuilderRegistry"
+                      serviceImplementation="com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl"/>
+
+  <applicationService serviceInterface="com.intellij.codeInsight.intention.IntentionManager"
+                      serviceImplementation="com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl"/>
+  <applicationService serviceInterface="com.intellij.codeInsight.lookup.LookupElementFactory"
+                      serviceImplementation="com.intellij.codeInsight.lookup.LookupElementFactoryImpl"/>
+  <applicationService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
+
+  <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
+                      serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
+
+
+  <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
+                  serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
+  <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
+                  serviceImplementation="com.intellij.find.replaceInProject.ReplaceInProjectManager"/>
+  <projectService serviceInterface="com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar"
+                  serviceImplementation="com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl"/>
+  <projectService serviceInterface="com.intellij.psi.PsiFileFactory"
+                  serviceImplementation="com.intellij.psi.impl.PsiFileFactoryImpl"/>
+  <projectService serviceInterface="com.intellij.psi.text.BlockSupport"
+                  serviceImplementation="com.intellij.psi.impl.source.text.BlockSupportImpl"/>
+  <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
+                  serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
+  <projectService serviceInterface="com.intellij.psi.codeStyle.CodeStyleManager"
+                  serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl"/>
+  <projectService serviceInterface="com.intellij.pom.PomModel" serviceImplementation="com.intellij.pom.core.impl.PomModelImpl"/>
+
+  <projectService serviceInterface="com.intellij.lang.PsiBuilderFactory"
+                  serviceImplementation="com.intellij.lang.PsiBuilderFactoryImpl"/>
+
+
+  <projectService serviceInterface="com.intellij.codeInsight.AutoPopupController"
+                  serviceImplementation="com.intellij.codeInsight.AutoPopupController"/>
+
+  <projectService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
+                  serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
+
+  <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
+</extensions>

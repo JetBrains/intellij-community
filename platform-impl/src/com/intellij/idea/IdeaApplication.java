@@ -54,8 +54,9 @@ public class IdeaApplication {
     else {
       System.setProperty("sun.awt.noerasebackground","true");
 
-      @NonNls final String componentsDescriptor = System.getProperty("idea.platform") != null
-                                                  ? "componentSets/PlatformComponents"
+      final String platformPrefix = System.getProperty("idea.platform.prefix");
+      @NonNls final String componentsDescriptor = platformPrefix != null
+                                                  ? "componentSets/" + platformPrefix + "Components"
                                                   : "componentSets/IdeaComponents";
       ApplicationManagerEx.createApplication(componentsDescriptor, isInternal, false, false, false, "idea");
     }

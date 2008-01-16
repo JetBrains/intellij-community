@@ -18,9 +18,6 @@
       <implementation-class>com.intellij.openapi.vfs.ex.http.HttpFileSystem</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.psi.statistics.StatisticsManager</interface-class>
       <implementation-class>com.intellij.psi.statistics.impl.StatisticsManagerImpl</implementation-class>
     </component>
@@ -39,10 +36,6 @@
     <component>
       <interface-class>com.intellij.javaee.ExternalResourceManager</interface-class>
       <implementation-class>com.intellij.j2ee.openapi.impl.ExternalResourceManagerImpl</implementation-class>
-    </component>
-    <component>
-      <interface-class>com.intellij.psi.codeStyle.CodeStyleSchemes</interface-class>
-      <implementation-class>com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.psi.impl.PsiManagerConfiguration</interface-class>
@@ -131,9 +124,6 @@
     <component>
       <interface-class>com.intellij.psi.PsiDocumentManager</interface-class>
       <implementation-class>com.intellij.psi.impl.PsiDocumentManagerImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>

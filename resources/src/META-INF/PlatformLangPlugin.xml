@@ -1,0 +1,23 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
+
+  <extensionPoints>
+    <xi:include href="PlatformExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+    <xi:include href="VcsExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+    <xi:include href="LangExtensionPoints.xml" xpointer="xpointer(/extensionPoints/*)"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <xi:include href="PlatformExtensions.xml" xpointer="xpointer(/extensions/*)"/>
+    <xi:include href="VcsExtensions.xml" xpointer="xpointer(/extensions/*)"/>
+    <xi:include href="LangExtensions.xml" xpointer="xpointer(/extensions/*)"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.BasicDefaultVcsRootPolicy"/>
+
+    <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
+  </extensions>
+</idea-plugin>

@@ -1,0 +1,104 @@
+<extensionPoints>
+  <extensionPoint name="moduleService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
+
+  <extensionPoint name="indexPatternProvider"
+                  interface="com.intellij.psi.search.IndexPatternProvider"/>
+
+  <extensionPoint name="refGraphAnnotator"
+                  interface="com.intellij.codeInspection.reference.RefGraphAnnotator"/>
+
+  <extensionPoint name="entryPoint"
+                  interface="com.intellij.codeInspection.reference.EntryPoint"/>
+
+  <!-- Code Insight -->
+  <extensionPoint name="highlightVisitor"
+                  interface="com.intellij.codeInsight.daemon.impl.HighlightVisitor"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="intentionAction"
+                  beanClass="com.intellij.codeInsight.intention.IntentionActionBean"/>
+
+  <extensionPoint name="quoteHandler"
+                  beanClass="com.intellij.codeInsight.editorActions.QuoteHandlerEP"/>
+  <extensionPoint name="extendWordSelectionHandler"
+                  interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler"/>
+  <extensionPoint name="typedHandler"
+                  interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate"/>
+  <extensionPoint name="joinLinesHandler"
+                  interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate"/>
+  <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate"/>
+  <extensionPoint name="backspaceHandlerDelegate" interface="com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate"/>
+
+  <extensionPoint name="codeStyleSettingsProvider"
+                  interface="com.intellij.psi.codeStyle.CodeStyleSettingsProvider"/>
+
+  <extensionPoint name="daemon.highlightInfoFilter"
+                  interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
+
+  <extensionPoint name="implicitUsageProvider"
+                  interface="com.intellij.codeInsight.daemon.ImplicitUsageProvider"/>
+
+  <extensionPoint name="languageInjector"
+                  interface="com.intellij.psi.LanguageInjector"/>
+  <extensionPoint name="concatenationAwareInjector"
+                  interface="com.intellij.lang.injection.ConcatenationAwareInjector"
+                  area="IDEA_PROJECT"/>
+  <extensionPoint name="multiHostInjector"
+                  interface="com.intellij.lang.injection.MultiHostInjector"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="annotator"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="externalAnnotator"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.refactoringSupport"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.documentationProvider"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.namesValidator"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.findUsagesProvider"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.commenter"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.braceMatcher"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.foldingBuilder"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.psiStructureViewFactory"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.ast.factory"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
+  <extensionPoint name="cacheBuilder"
+                  beanClass="com.intellij.lang.cacheBuilder.CacheBuilderEP"/>
+
+  <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
+  <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
+
+  <extensionPoint name="gotoClassContributor"
+                  interface="com.intellij.navigation.ChooseByNameContributor"/>
+  <extensionPoint name="gotoSymbolContributor"
+                  interface="com.intellij.navigation.ChooseByNameContributor"/>
+  <extensionPoint name="gotoFileContributor"
+                  interface="com.intellij.navigation.ChooseByNameContributor"/>
+
+  <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
+  <extensionPoint name="moduleExtension" interface="com.intellij.openapi.roots.ModuleExtension" area="IDEA_MODULE"/>
+  <extensionPoint name="orderRootType" interface="com.intellij.openapi.roots.OrderRootType"/>
+  <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
+                  area="IDEA_PROJECT"/>
+
+  <extensionPoint name="smartPointerElementInfoFactory" interface="com.intellij.psi.impl.smartPointers.SmartPointerElementInfoFactory"/>
+  <extensionPoint name="elementSignatureProvider" interface="com.intellij.codeInsight.folding.impl.ElementSignatureProvider"/>
+  <extensionPoint name="preFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PreFormatProcessor"/>
+  <extensionPoint name="postFormatProcessor" interface="com.intellij.psi.impl.source.codeStyle.PostFormatProcessor"/>
+
+  <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP"/>
+  <extensionPoint name="highlightUsagesHandler" interface="com.intellij.codeInsight.highlighting.HighlightUsagesHandlerDelegate"/>
+</extensionPoints>

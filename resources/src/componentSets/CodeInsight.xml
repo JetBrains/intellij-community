@@ -25,9 +25,6 @@
       <interface-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</interface-class>
       <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerActions</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings</implementation-class>
-    </component>
   </application-components>
 
   <project-components>
