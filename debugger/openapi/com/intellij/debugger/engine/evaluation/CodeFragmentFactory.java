@@ -16,6 +16,7 @@
 package com.intellij.debugger.engine.evaluation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -25,10 +26,9 @@ public interface CodeFragmentFactory {
 
   PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project);
 
+  PsiCodeFragment createPresentationCodeFragment(TextWithImports item, PsiElement context, Project project);
+
   boolean isContextAccepted(PsiElement contextElement);
 
-  /**
-   * @return the name dsiplayed in UI (normally the language name this factory deals with)
-   */
-  String getDisplayName();
+  LanguageFileType getFileType();
 }

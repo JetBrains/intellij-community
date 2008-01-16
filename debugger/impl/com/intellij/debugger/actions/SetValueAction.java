@@ -318,8 +318,7 @@ public class SetValueAction extends DebuggerAction {
     final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(
       debuggerContext.getProject(),
       PositionUtil.getContextElement(debuggerContext),
-      "setValue"
-    );
+      "setValue", DefaultCodeFragmentFactory.getInstance());
     comboBox.setText(initialString);
     comboBox.selectAll();
     editorPanel.add(comboBox);

@@ -1,12 +1,9 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
@@ -84,14 +81,14 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   protected void updateEditor(TextWithImports item) {
     if(!myComboBox.isEditable()) return;
 
-    boolean focusOwner = myEditor != null ? myEditor.getEditorComponent().isFocusOwner() : false;
+    boolean focusOwner = myEditor != null && myEditor.getEditorComponent().isFocusOwner();
     int offset = 0;
     TextWithImports oldItem = null;
     if(focusOwner) {
       offset = myEditor.getEditor().getCaretModel().getOffset();
       oldItem = (TextWithImports)myEditor.getItem();
     }
-    myEditor = new MyEditorComboBoxEditor(getProject(), StdFileTypes.JAVA);
+    myEditor = new MyEditorComboBoxEditor(getProject(), myFactory.getFileType());
     myComboBox.setEditor(myEditor);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
 
@@ -107,7 +104,7 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   private void setRecents() {
-    boolean focusOwner = myEditor != null ? myEditor.getEditorComponent().isFocusOwner() : false;
+    boolean focusOwner = myEditor != null && myEditor.getEditorComponent().isFocusOwner();
     myComboBox.removeAllItems();
     if(getRecentsId() != null) {
       LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
@@ -158,11 +155,11 @@ public class DebuggerExpressionComboBox extends DebuggerEditorImpl {
   }
 
   public DebuggerExpressionComboBox(Project project, @NonNls String recentsId) {
-    this(project, null, recentsId);
+    this(project, null, recentsId, DefaultCodeFragmentFactory.getInstance());
   }
 
-  public DebuggerExpressionComboBox(Project project, PsiElement context, @NonNls String recentsId) {
-    super(project, context, recentsId);
+  public DebuggerExpressionComboBox(Project project, PsiElement context, @NonNls String recentsId, final CodeFragmentFactory factory) {
+    super(project, context, recentsId, factory);
     myComboBox = new ComboBox(-1);
     // Have to turn this off because when used in InplaceEditor, the combobox popup is hidden on every change of selection
     // See comment to SynthComboBoxUI.FocusHandler.focusLost()

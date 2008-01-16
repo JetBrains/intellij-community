@@ -7,6 +7,8 @@ package com.intellij.debugger.engine.evaluation;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -25,9 +27,8 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
     return SingletonHolder.ourInstance;
   }
 
-  public String getDisplayName() {
-    //noinspection HardCodedStringLiteral
-    return "Java";
+  public PsiCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
+    return createCodeFragment(item, context, project);
   }
 
   public PsiCodeFragment createCodeFragment(TextWithImports item, PsiElement context, Project project) {
@@ -39,26 +40,25 @@ public class DefaultCodeFragmentFactory implements CodeFragmentFactory {
       final String expressionText = StringUtil.endsWithChar(text, ';')? text.substring(0, text.length() - 1) : text;
       fragment = elementFactory.createExpressionCodeFragment(expressionText, context, null, true);
     }
-    else if (CodeFragmentKind.CODE_BLOCK == item.getKind()) {
+    else /*if (CodeFragmentKind.CODE_BLOCK == item.getKind())*/ {
       fragment = elementFactory.createCodeBlockCodeFragment(text, context, true);
     }
-    else {
-      fragment = null;
-    }
 
-    if (fragment != null) {
-      if(item.getImports().length() > 0) {
-        fragment.addImportsFromString(item.getImports());
-      }
-      fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-      //noinspection HardCodedStringLiteral
-      fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
+    if(item.getImports().length() > 0) {
+      fragment.addImportsFromString(item.getImports());
     }
+    fragment.setVisibilityChecker(PsiCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    //noinspection HardCodedStringLiteral
+    fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
 
     return fragment;
   }
 
   public boolean isContextAccepted(PsiElement contextElement) {
     return true; // default factory works everywhere debugger can stop
+  }
+
+  public LanguageFileType getFileType() {
+    return StdFileTypes.JAVA;
   }
 }

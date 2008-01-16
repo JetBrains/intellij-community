@@ -1,6 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
@@ -8,7 +9,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextField;
@@ -18,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 
 /**
@@ -34,10 +35,10 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
 
   private int    myRecentIdx;
 
-  public DebuggerStatementEditor(Project project, PsiElement context, @NonNls String recentsId) {
-    super(project, context, recentsId);
+  public DebuggerStatementEditor(Project project, PsiElement context, @NonNls String recentsId, final CodeFragmentFactory factory) {
+    super(project, context, recentsId, factory);
     myRecentIdx = getRecentItemsCount();
-    myEditor = new EditorTextField("", project, StdFileTypes.JAVA) {
+    myEditor = new EditorTextField("", project, factory.getFileType()) {
       protected EditorEx createEditor() {
         EditorEx editor = super.createEditor();
         editor.setOneLineMode(false);
@@ -79,16 +80,16 @@ public class DebuggerStatementEditor extends DebuggerEditorImpl {
     add(ActionManager.getInstance().createActionToolbar(ActionPlaces.COMBO_PAGER, actionGroup, false).getComponent(),
         BorderLayout.EAST);
 
-    setText(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
+    setText(new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, ""));
   }
 
   private void updateTextFromRecents() {
-    java.util.List<TextWithImports> recents = getRecents();
+    List<TextWithImports> recents = getRecents();
     LOG.assertTrue(myRecentIdx <= recents.size());
     setText(myRecentIdx < recents.size() ? recents.get(myRecentIdx) : new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, ""));
   }
 
-  private java.util.List<TextWithImports> getRecents() {
+  private List<TextWithImports> getRecents() {
     final LinkedList<TextWithImports> recents = DebuggerRecents.getInstance(getProject()).getRecents(getRecentsId());
     final ArrayList<TextWithImports> reversed = new ArrayList<TextWithImports>(recents.size());
     for (final ListIterator<TextWithImports> it = recents.listIterator(recents.size()); it.hasPrevious();) {

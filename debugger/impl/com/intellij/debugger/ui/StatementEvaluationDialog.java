@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.actions.EvaluateAction;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
@@ -14,10 +15,10 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -137,7 +138,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
       }
     });
 
-    this.init();
+    init();
   }
 
   protected void setDebuggerContext(DebuggerContextImpl context) {
@@ -173,8 +174,8 @@ public class StatementEvaluationDialog extends EvaluationDialog{
     HelpManager.getInstance().invokeHelp(HelpID.EVALUATE);
   }
 
-  protected DebuggerEditorImpl createEditor() {
-    return new DebuggerStatementEditor(getProject(), PositionUtil.getContextElement(getDebuggerContext()), "evaluation");
+  protected DebuggerEditorImpl createEditor(final CodeFragmentFactory factory) {
+    return new DebuggerStatementEditor(getProject(), PositionUtil.getContextElement(getDebuggerContext()), "evaluation", factory);
   }
 
   public void dispose() {

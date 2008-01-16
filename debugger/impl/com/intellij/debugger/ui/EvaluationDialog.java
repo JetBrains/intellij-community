@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.WatchPanel;
@@ -26,8 +27,9 @@ import javax.swing.event.ListDataListener;
 import javax.swing.tree.TreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.ItemEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public abstract class EvaluationDialog extends DialogWrapper {
@@ -47,16 +49,26 @@ public abstract class EvaluationDialog extends DialogWrapper {
     setCancelButtonText(DebuggerBundle.message("button.close.no.mnemonic"));
     setOKButtonText(DebuggerBundle.message("button.evaluate"));
 
-    myEditor   = createEditor();
     myEvaluationPanel = new MyEvaluationPanel(myProject);
     myCbFactories = new ComboBox(new MyComboBoxModel(), 150);
     myCbFactories.setRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        component.setText(((CodeFragmentFactory)value).getDisplayName());
+        component.setText(((CodeFragmentFactory)value).getFileType().getLanguage().getID());
         return component;
       }
     });
+
+    myCbFactories.addItemListener(new ItemListener() {
+      public void itemStateChanged(final ItemEvent e) {
+        myEditor.setFactory((CodeFragmentFactory)myCbFactories.getSelectedItem());
+        myEditor.revalidate();
+      }
+    });
+
+    CodeFragmentFactory factory = (CodeFragmentFactory)myCbFactories.getSelectedItem();
+    if (factory == null) factory = DefaultCodeFragmentFactory.getInstance();
+    myEditor = createEditor(factory);
 
     setDebuggerContext(getDebuggerContext());
     initDialogData(text);
@@ -64,9 +76,8 @@ public abstract class EvaluationDialog extends DialogWrapper {
     myContextListener = new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {
         boolean close = true;
-        for (Iterator iterator = DebuggerManagerEx.getInstanceEx(myProject).getSessions().iterator(); iterator.hasNext();) {
-          DebuggerSession session = (DebuggerSession) iterator.next();
-          if(!session.isStopped()) {
+        for (DebuggerSession session : DebuggerManagerEx.getInstanceEx(myProject).getSessions()) {
+          if (!session.isStopped()) {
             close = false;
             break;
           }
@@ -226,7 +237,7 @@ public abstract class EvaluationDialog extends DialogWrapper {
     return myCbFactories;
   }
 
-  protected abstract DebuggerEditorImpl createEditor();
+  protected abstract DebuggerEditorImpl createEditor(final CodeFragmentFactory factory);
 
   protected MyEvaluationPanel getEvaluationPanel() {
     return myEvaluationPanel;

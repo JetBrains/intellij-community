@@ -4,10 +4,7 @@ import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.StackFrameContext;
-import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilder;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.ui.CompletionEditor;
@@ -111,7 +108,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   public CompletionEditor createEditor(Project project, PsiElement context, String recentsId) {
-    return new DebuggerExpressionComboBox(project, context, recentsId);
+    return new DebuggerExpressionComboBox(project, context, recentsId, DefaultCodeFragmentFactory.getInstance());
   }
 
   public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {

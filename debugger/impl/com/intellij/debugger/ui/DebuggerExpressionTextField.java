@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,7 @@ public class DebuggerExpressionTextField extends DebuggerEditorImpl {
   private static final @NonNls String STUB = "stub";
 
   public DebuggerExpressionTextField(Project project, PsiElement context, final @NonNls String recentsId) {
-    super(project, context, recentsId);
+    super(project, context, recentsId, DefaultCodeFragmentFactory.getInstance());
     myStubField.setEnabled(false);
     myEditor = new EditorTextField("", project, StdFileTypes.JAVA);
     setLayout(new BorderLayout());

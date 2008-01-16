@@ -1,18 +1,19 @@
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.actions.EvaluateAction;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,11 +56,11 @@ public class ExpressionEvaluationDialog extends EvaluationDialog {
       }
     });
 
-    this.init();
+    init();
   }
 
-  protected DebuggerExpressionComboBox createEditor() {
-    return new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(getDebuggerContext()), "evaluation");
+  protected DebuggerExpressionComboBox createEditor(final CodeFragmentFactory factory) {
+    return new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(getDebuggerContext()), "evaluation", factory);
   }
 
   protected JComponent createCenterPanel() {

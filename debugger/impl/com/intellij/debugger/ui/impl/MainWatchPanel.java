@@ -9,6 +9,7 @@ import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.impl.PositionUtil;
@@ -140,7 +141,8 @@ public class MainWatchPanel extends WatchPanel implements DataProvider {
 
   public void editNode(final DebuggerTreeNodeImpl node) {
     final DebuggerContextImpl context = getContext();
-    final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(context), "evaluation");
+    final DebuggerExpressionComboBox comboBox = new DebuggerExpressionComboBox(getProject(), PositionUtil.getContextElement(context), "evaluation",
+                                                                               DefaultCodeFragmentFactory.getInstance());
     comboBox.setText(((WatchItemDescriptor)node.getDescriptor()).getEvaluationText());
     comboBox.selectAll();
 

@@ -1,7 +1,7 @@
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
+import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
@@ -57,12 +57,14 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
       }
     }
   };
+  protected CodeFragmentFactory myFactory;
 
-  public DebuggerEditorImpl(Project project, PsiElement context, String recentsId) {
+  public DebuggerEditorImpl(Project project, PsiElement context, String recentsId, final CodeFragmentFactory factory) {
     myProject = project;
     myContext = context;
     myRecentsId = recentsId;
     PsiManager.getInstance(project).addPsiTreeChangeListener(myPsiListener);
+    myFactory = factory;
   }
 
   protected TextWithImports createItem(Document document, Project project) {
@@ -108,7 +110,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     if(item == null) {
       item = createText("");
     }
-    PsiCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(item, myContext, getProject());
+    PsiCodeFragment codeFragment = myFactory.createPresentationCodeFragment(item, myContext, getProject());
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
     if (myContext != null) {
       final PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(myContext, PsiClass.class);
@@ -161,5 +163,13 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
 
   public void dispose() {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiListener);
+  }
+
+  public void setFactory(final CodeFragmentFactory factory) {
+    myFactory = factory;
+  }
+
+  public void revalidate() {
+    setText(getText());
   }
 }

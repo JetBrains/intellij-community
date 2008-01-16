@@ -9,6 +9,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
@@ -671,7 +672,8 @@ public abstract class BreakpointPropertiesPanel {
         @Nullable
         protected JComponent createCenterPanel() {
           final JPanel panel = new JPanel(new BorderLayout());
-          myEditor = new DebuggerStatementEditor(myProject, myTargetEditor.getContext(), myTargetEditor.getRecentsId());
+          myEditor = new DebuggerStatementEditor(myProject, myTargetEditor.getContext(), myTargetEditor.getRecentsId(),
+                                                 DefaultCodeFragmentFactory.getInstance());
           myEditor.setPreferredSize(new Dimension(400, 150));
           myEditor.setText(myTargetEditor.getText());
           panel.add(myEditor, BorderLayout.CENTER);

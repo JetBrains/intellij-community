@@ -3,6 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
@@ -45,7 +46,7 @@ public class CompletedInputDialog extends DialogWrapper {
     myPanel.add(myLabel, new GridBagConstraints(0, 0, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
             new Insets(0, 1, 0, 1), 0, 0));
 
-    myCombo = new DebuggerExpressionComboBox(myProject, myContext, "evaluation");
+    myCombo = new DebuggerExpressionComboBox(myProject, myContext, "evaluation", DefaultCodeFragmentFactory.getInstance());
     myCombo.selectAll();
 
     myPanel.add(myCombo, new GridBagConstraints(0, 1, GridBagConstraints.REMAINDER, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
