@@ -58,9 +58,17 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
             return addBounds(t, typeParameter);
           }
         }
+
         PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
         PsiSubstitutor substitutor = PsiUtil.isRawSubstitutor(aClass, PsiSubstitutorImpl.this) ?
                                      factory.createRawSubstitutor(aClass) : resolveResult.getSubstitutor();
+        PsiType[] parameters = classType.getParameters();
+        PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+        for (int i = 0; i < parameters.length; i++) {
+          PsiType parameter = parameters[i];
+          PsiTypeParameter typeParameter = typeParameters[i];
+          substitutor = substitutor.put(typeParameter, substitute(parameter));
+        }
         return factory.createType(aClass, substitutor, classType.getLanguageLevel());
       }
     });
