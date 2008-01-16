@@ -16,11 +16,13 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.containers.FactoryMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * @author peter
@@ -41,6 +43,7 @@ public final class JavaMethod implements AnnotatedElement{
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
+  private Map<Class, Annotation> myAnnotationsMap;
 
   private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
@@ -93,7 +96,17 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return mySignature.findAnnotation(annotationClass, myDeclaringClass);
+    if (myAnnotationsMap == null) {
+      myAnnotationsMap = new THashMap<Class, Annotation>();
+    } else if (myAnnotationsMap.containsKey(annotationClass)) {
+      return (T)myAnnotationsMap.get(annotationClass);
+    }
+
+    synchronized (myAnnotationsMap) {
+      final T value = mySignature.findAnnotation(annotationClass, myDeclaringClass);
+      myAnnotationsMap.put(annotationClass, value);
+      return value;
+    }
   }
 
   public final Class getReturnType() {

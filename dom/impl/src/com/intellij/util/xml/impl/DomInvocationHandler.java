@@ -73,18 +73,13 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private Map<FixedChildDescriptionImpl, Class> myFixedChildrenClasses;
   private Throwable myInvalidated;
   private final InvocationCache myInvocationCache;
-  private static final Function<DomInvocationHandler, Converter> myGenericConverterFactory = new Function<DomInvocationHandler, Converter>() {
-    public Converter fun(final DomInvocationHandler handler) {
-      return handler.myGenericConverter;
-    }
-  };
   private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
     protected Converter create(final JavaMethod method) {
       final Type returnType = method.getGenericReturnType();
       final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
       final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
       LOG.assertTrue(parameter != null, type + " " + myType);
-      final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverterFactory : Function.NULL);
+      final Converter converter = getConverter(method, parameter, type instanceof TypeVariable ? myGenericConverter : null);
       LOG.assertTrue(converter != null, "No converter specified: String<->" + parameter.getName());
       return converter;
     }
@@ -111,7 +106,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myGenericInfo = ((DomInvocationHandler)this) instanceof AttributeChildInvocationHandler ? staticInfo : new DynamicGenericInfo(this, staticInfo, myManager.getProject());
     myType = concreteInterface;
 
-    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), Function.NULL);
+    final Converter converter = getConverter(this, DomUtil.getGenericValueParameter(concreteInterface), null);
     myGenericConverter = converter;
     myInvocationCache =
       manager.getInvocationCache(new Pair<Type, Type>(concreteInterface, converter == null ? null : converter.getClass()));
@@ -453,7 +448,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @Nullable
   private Converter getConverter(final AnnotatedElement annotationProvider,
                                  Class parameter,
-                                 final Function<DomInvocationHandler,Converter> continuation) {
+                                 @Nullable Converter defaultConverter) {
     final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       final Class<? extends DomElement> aClass = resolveAnnotation.value();
@@ -474,9 +469,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       return converterManager.getConverterInstance(convertAnnotation.value());
     }
 
-    final Converter converter = continuation.fun(this);
-    if (converter != null) {
-      return converter;
+    if (defaultConverter != null) {
+      return defaultConverter;
     }
 
     return parameter == null ? null : converterManager.getConverterByClass(parameter);
