@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.util.text.StringTokenizer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -125,7 +126,9 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
 
   private static Map<PsiElement, TextRange> buildRanges(final Editor editor, final PsiFile psiFile) {
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
-    final FoldingDescriptor[] descriptors = foldingBuilder.buildFoldRegions(psiFile.getNode(), editor.getDocument());
+    final ASTNode node = psiFile.getNode();
+    ChameleonTransforming.transformChildren(node, true);
+    final FoldingDescriptor[] descriptors = foldingBuilder.buildFoldRegions(node, editor.getDocument());
     Map<PsiElement, TextRange> ranges = new HashMap<PsiElement, TextRange>();
     for (FoldingDescriptor descriptor : descriptors) {
       final ASTNode ast = descriptor.getElement();

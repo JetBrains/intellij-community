@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
@@ -10,6 +11,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -31,7 +33,9 @@ class FoldingPolicy {
     final Language lang = file.getLanguage();
     final FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(lang);
     if (foldingBuilder != null) {
-      final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(file.getNode(), document);
+      final ASTNode node = file.getNode();
+      ChameleonTransforming.transformChildren(node, true);
+      final FoldingDescriptor[] foldingDescriptors = foldingBuilder.buildFoldRegions(node, document);
       for (FoldingDescriptor descriptor : foldingDescriptors) {
         map.put(SourceTreeToPsiMap.treeElementToPsi(descriptor.getElement()), descriptor.getRange());
       }

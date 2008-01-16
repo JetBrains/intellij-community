@@ -2,6 +2,21 @@
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
 
+    <group id="LangCodeInsightActions">
+      <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
+      <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
+
+      <add-to-group group-id="EditorActions" anchor="last"/>
+    </group>
+
+    <!-- Edit -->
+    <group id="EditSelectWordGroup">
+      <reference ref="EditorSelectWord"/>
+      <reference ref="EditorUnSelectWord"/>
+
+      <add-to-group group-id="EditSelectGroup" anchor="last"/>
+    </group>
+
     <!-- Search -->
     <group id="SearchMenu" popup="true">
       <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
@@ -22,6 +37,22 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="EditMenu"/>
     </group>
 
+    <!-- View -->
+    <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
+      <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
+      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
+      <separator/>
+      <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
+      <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
+      <separator/>
+      <group id="LanguageSpecificFoldingGroup"/>
+      <separator/>
+      <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
+      <group id="LanguageSpecificCollapseGroup"/>
+
+      <add-to-group group-id="ViewMenu" anchor="last"/>
+    </group>
+
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
@@ -37,12 +68,5 @@
     <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
       <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
     </action>
-
-    <group id="LangCodeInsightActions">
-      <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
-      <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
-
-      <add-to-group group-id="EditorActions" anchor="last"/>
-    </group>
   </actions>
 </component>

@@ -141,13 +141,6 @@
       <add-to-group group-id="CutCopyPasteGroup" anchor="after" relative-to-action="CopyPaths"/>
     </action>
 
-    <group id="EditSelectWordGroup">
-      <reference ref="EditorSelectWord"/>
-      <reference ref="EditorUnSelectWord"/>
-
-      <add-to-group group-id="EditSelectGroup" anchor="last"/>
-    </group>
-
     <group id="EditBookmarksGroup">
       <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
       <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.ShowBookmarksAction"/>
@@ -210,20 +203,17 @@
       <add-to-group group-id="ViewMenu" anchor="last"/>
     </group>
 
-    <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
-      <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
-      <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
-      <separator/>
-      <action id="ExpandAllRegions" class="com.intellij.codeInsight.folding.impl.actions.ExpandAllRegionsAction"/>
-      <action id="CollapseAllRegions" class="com.intellij.codeInsight.folding.impl.actions.CollapseAllRegionsAction"/>
-      <separator/>
+    <group id="JavadocFoldingGroup">
       <action id="ExpandJavadocs" class="com.intellij.codeInsight.folding.impl.actions.ExpandJavadocsAction"/>
       <action id="CollapseJavadocs" class="com.intellij.codeInsight.folding.impl.actions.CollapseJavadocsAction"/>
-      <separator/>
-      <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
+
+      <add-to-group group-id="LanguageSpecificFoldingGroup" anchor="last"/>
+    </group>
+
+    <group id="JavaCollapseGroup">
       <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
 
-      <add-to-group group-id="ViewMenu" anchor="last"/>
+      <add-to-group group-id="LanguageSpecificCollapseGroup" anchor="last"/>
     </group>
 
     <!-- Go To -->
