@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -226,4 +227,8 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   Document getDocument(PsiFile file);
 
   void setFileContext(@Nullable PsiElement context);
+
+  @NotNull
+  Collection<GutterIconRenderer> findAllGutters(String filePath) throws Throwable;
+
 }

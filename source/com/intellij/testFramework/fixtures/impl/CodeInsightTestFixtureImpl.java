@@ -80,9 +80,11 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +134,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public String copyFileToProject(@NonNls final String sourceFilePath, @NonNls final String targetPath) throws IOException {
-    FileUtil.copy(new File(sourceFilePath), new File(getTempDirPath() + "/" + targetPath));
+    final File destFile = new File(getTempDirPath() + "/" + targetPath);
+    FileUtil.copy(new File(sourceFilePath), destFile);
+    Assert.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(destFile));
     return targetPath;
   }
 
@@ -368,6 +372,36 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return result.get();
   }
 
+  @NotNull
+  public Collection<GutterIconRenderer> findAllGutters(final String filePath) throws Throwable {
+    final Project project = myProjectFixture.getProject();
+    final SortedMap<HighlightInfo, List<GutterIconRenderer>> result = new TreeMap<HighlightInfo, List<GutterIconRenderer>>(new Comparator<HighlightInfo>() {
+      public int compare(final HighlightInfo o1, final HighlightInfo o2) {
+        return o1.startOffset - o2.startOffset;
+      }
+    });
+    new WriteCommandAction.Simple(project) {
+
+      protected void run() throws Throwable {
+        configureByFilesInner(filePath);
+
+        final Collection<HighlightInfo> infos = doHighlighting();
+        for (HighlightInfo info :infos) {
+          final GutterIconRenderer renderer = info.getGutterIconRenderer();
+          if (renderer != null) {
+            List<GutterIconRenderer> renderers = result.get(info);
+            if (renderers == null) {
+              result.put(info, renderers = new SmartList<GutterIconRenderer>());
+            }
+            renderers.add(renderer);
+          }
+        }
+
+      }
+    }.execute().throwException();
+    return ContainerUtil.concat(result.values());
+  }
+
   public PsiClass addClass(@NotNull @NonNls final String classText) throws IOException {
     final PsiClass aClass = ((PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("a.java", classText)).getClasses()[0];
     final String qName = aClass.getQualifiedName();
@@ -421,14 +455,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                 return copy;
               }
 
-              protected Lookup showLookup(final Project project,
-                                          final Editor editor,
-                                          final LookupItem[] items,
-                                          final String prefix,
-                                          final LookupData data,
-                                          final PsiFile file) {
+              protected Lookup showLookup(final Project project, final Editor editor, final LookupItem[] items, final String prefix, final LookupData data,
+                                          final PsiFile file,
+                                          final String bottomText) {
                 result.setResult(items);
-                return super.showLookup(project, editor, items, prefix, data, file);
+                return super.showLookup(project, editor, items, prefix, data, file, bottomText);
               }
             };
           }
@@ -715,20 +746,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
 
     ArrayList<HighlightInfo> list = new ArrayList<HighlightInfo>();
-    for (HighlightInfo info : highlights1) {
-      list.add(info);
-    }
-
-    for (HighlightInfo info : highlights2) {
-      list.add(info);
-    }
-
+    list.addAll(highlights1);
+    list.addAll(highlights2);
     if (highlights3 != null) {
-      for (HighlightInfo info : highlights3) {
-        list.add(info);
-      }
+      list.addAll(highlights3);
     }
-
     return list;
   }
 
