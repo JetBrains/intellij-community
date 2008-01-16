@@ -4,9 +4,6 @@
       <implementation-class>com.intellij.codeInsight.template.impl.TemplateSettings</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.CodeInsightSettings</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings</implementation-class>
     </component>
     <component>
@@ -28,11 +25,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <interface-class>com.intellij.codeInsight.highlighting.BraceHighlighter</interface-class>
-      <implementation-class>com.intellij.codeInsight.highlighting.BraceHighlighter</implementation-class>
-      <skipForDummyProject/>
-    </component>
     <component>
       <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>

@@ -37,5 +37,12 @@
     <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
       <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
     </action>
+
+    <group id="LangCodeInsightActions">
+      <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
+      <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
+
+      <add-to-group group-id="EditorActions" anchor="last"/>
+    </group>
   </actions>
 </component>

@@ -22,6 +22,10 @@
       <interface-class>com.intellij.find.FindSettings</interface-class>
       <implementation-class>com.intellij.find.impl.FindSettingsImpl</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.CodeInsightSettings</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -75,6 +79,12 @@
     <component>
       <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
       <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.highlighting.BraceHighlighter</interface-class>
+      <implementation-class>com.intellij.codeInsight.highlighting.BraceHighlighter</implementation-class>
       <skipForDummyProject/>
     </component>
   </project-components>
