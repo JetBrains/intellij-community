@@ -14,8 +14,6 @@
                       serviceImplementation="com.intellij.help.impl.HelpManagerImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.fileChooser.FileChooserFactory"
                       serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
-  <applicationService serviceInterface="com.intellij.openapi.vfs.CharsetSettings"
-                      serviceImplementation="com.intellij.openapi.vfs.impl.CharsetSettingsImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                       serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
 
@@ -64,7 +62,7 @@
   <applicationService serviceInterface="com.intellij.ide.dnd.DnDManager"
                       serviceImplementation="com.intellij.ide.dnd.DnDManagerImpl"/>
   <applicationService serviceInterface="com.intellij.openapi.vfs.encoding.EncodingManager"
-                      serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManager"/>
+                      serviceImplementation="com.intellij.openapi.vfs.encoding.EncodingManagerImpl"/>
 
   <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                   serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>

@@ -1,15 +1,14 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.CharsetSettings;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import java.nio.charset.Charset;
 
 /**
  * @author max
@@ -17,7 +16,6 @@ import javax.swing.*;
 public class PropertiesFileType extends LanguageFileType {
   public static final Icon FILE_ICON = IconLoader.getIcon("/fileTypes/properties.png");
   public static final LanguageFileType FILE_TYPE = new PropertiesFileType();
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".properties";
 
   private PropertiesFileType() {
     super(new PropertiesLanguage());
@@ -43,11 +41,9 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   public String getCharset(@NotNull VirtualFile file) {
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    if (editorSettings == null) return null;
-    String defaultCharsetName = editorSettings.getDefaultPropertiesCharsetName();
-    if (CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME.equals(defaultCharsetName)) defaultCharsetName = null;
-    if (editorSettings.isNative2AsciiForPropertiesFiles()) {
+    Charset charset = EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(file);
+    String defaultCharsetName = charset == null ? null : charset.name();
+    if (EncodingManager.getInstance().isNative2AsciiForPropertiesFiles(file)) {
       return Native2AsciiCharset.makeNative2AsciiEncodingName(defaultCharsetName);
     }
     else {

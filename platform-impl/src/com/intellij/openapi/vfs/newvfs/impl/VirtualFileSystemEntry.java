@@ -5,8 +5,8 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -155,10 +155,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
-    VirtualFile newFile = ourPersistence.copyFile(requestor, this, newParent, copyName);
-    EncodingManager.getInstance().restoreEncoding(newFile, charsetBefore);
-    return newFile;
+    return VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      public VirtualFile compute() throws IOException {
+        return ourPersistence.copyFile(requestor, VirtualFileSystemEntry.this, newParent, copyName);
+      }
+    });
   }
 
   public void move(final Object requestor, final VirtualFile newParent) throws IOException {
@@ -166,9 +167,12 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
-    ourPersistence.moveFile(requestor, this, newParent);
-    EncodingManager.getInstance().restoreEncoding(this, charsetBefore);
+    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      public VirtualFile compute() throws IOException {
+        ourPersistence.moveFile(requestor, VirtualFileSystemEntry.this, newParent);
+        return VirtualFileSystemEntry.this;
+      }
+    });
   }
 
   public int getId() {

@@ -18,7 +18,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.Semaphore;
 
@@ -218,10 +218,10 @@ public class OSProcessHandler extends ProcessHandler {
 
 
   public Charset getCharset() {
-    return CharsetToolkit.getIDEOptionsCharset();
+    return EncodingManager.getInstance().getDefaultCharset();
   }
 
-  private static abstract class ReadProcessThread implements Runnable {
+  private abstract static class ReadProcessThread implements Runnable {
     private static final int NOTIFY_TEXT_DELAY = 300;
 
     private final Reader myReader;

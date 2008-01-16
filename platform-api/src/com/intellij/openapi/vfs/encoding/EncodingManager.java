@@ -1,85 +1,49 @@
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 17, 2007
- * Time: 3:20:51 PM
- */
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectLocator;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.beans.PropertyChangeListener;
 
-public class EncodingManager implements ApplicationComponent {
+/**
+ * @author cdr
+ */
+public abstract class EncodingManager implements ApplicationComponent {
+  @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
+  @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
+
   public static EncodingManager getInstance() {
     return ServiceManager.getService(EncodingManager.class);
   }
 
-  @NonNls
   @NotNull
-  public String getComponentName() {
-    return "EncodingManager";
-  }
+  public abstract Collection<Charset> getFavorites();
 
-  public void initComponent() {
+  public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
 
-  }
+  public abstract void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset);
 
-  public void disposeComponent() {
+  public abstract boolean isUseUTFGuessing(VirtualFile virtualFile);
 
-  }
+  public abstract void setUseUTFGuessing(VirtualFile virtualFile, boolean useUTFGuessing);
 
-  @Nullable
-  public Charset getEncoding(@NotNull VirtualFile virtualFile, boolean useParentDefaults) {
-    Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+  public abstract boolean isNative2AsciiForPropertiesFiles(VirtualFile virtualFile);
 
-    if (project == null) {
-      ProjectManager projectManager = ProjectManager.getInstance();
-      if (projectManager == null) return null; //tests
-      project = projectManager.getDefaultProject();
-    }
-    return EncodingProjectManager.getInstance(project).getEncoding(virtualFile, useParentDefaults);
-  }
+  public abstract void setNative2AsciiForPropertiesFiles(VirtualFile virtualFile, boolean native2Ascii);
 
-  public void setEncoding(@Nullable VirtualFile virtualFileOrDir, @Nullable Charset charset) {
-    Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFileOrDir);
-    EncodingProjectManager.getInstance(project).setEncoding(virtualFileOrDir, charset);
-  }
+  // returns name of default charset configured in File|Template project settings|File encoding|Project
+  public abstract Charset getDefaultCharset();
 
-  @NotNull
-  public Collection<Charset> getFavorites() {
-    Set<Charset> result = new THashSet<Charset>();
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      result.addAll(EncodingProjectManager.getInstance(project).getFavorites());
-    }
-    return result;
-  }
+  public abstract Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile);
+  public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, Charset charset);
 
-  public void setMapping(final Map<VirtualFile, Charset> map) {
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    for (Project project : projects) {
-      EncodingProjectManager.getInstance(project).setMapping(map);
-    }
-  }
+  public abstract void addPropertyChangeListener(PropertyChangeListener listener);
 
-  public void restoreEncoding(final VirtualFile virtualFile, final Charset charsetBefore) {
-    Charset actual = getEncoding(virtualFile, true);
-    if (!Comparing.equal(actual, charsetBefore)) {
-      setEncoding(virtualFile, charsetBefore);
-    }
-  }
+  public abstract void removePropertyChangeListener(PropertyChangeListener listener);
 }

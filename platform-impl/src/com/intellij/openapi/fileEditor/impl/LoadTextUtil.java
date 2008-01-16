@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -83,13 +82,13 @@ public final class LoadTextUtil {
 
   public static void detectCharset(final VirtualFile virtualFile, final byte[] content) {
     Charset charset = dodetectCharset(virtualFile, content);
-    virtualFile.setCharset(charset == null ? CharsetToolkit.getIDEOptionsCharset() : charset);
+    virtualFile.setCharset(charset == null ? EncodingManager.getInstance().getDefaultCharset() : charset);
   }
 
   private static Charset dodetectCharset(final VirtualFile virtualFile, final byte[] content) {
-    CharsetSettings settings = CharsetSettings.getInstance();
-    boolean shouldGuess = settings != null && settings.isUseUTFGuessing();
-    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, CharsetToolkit.getIDEOptionsCharset()) : null;
+    EncodingManager settings = EncodingManager.getInstance();
+    boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
+    CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingManager.getInstance().getDefaultCharset()) : null;
     setUtfCharsetWasDetectedFromBytes(virtualFile, false);
     if (shouldGuess) {
       toolkit.setEnforce8Bit(true);

@@ -16,8 +16,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.Patches;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -183,7 +182,7 @@ public class CharsetToolkit {
    *
    * @return the Charset recognized.
    */
-  public Charset guessEncoding( int guess_length, Charset defaultCharset) {
+  public Charset guessEncoding(int guess_length, Charset defaultCharset) {
     // if the file has a Byte Order Marker, we can assume the file is in UTF-xx
     // otherwise, the file would not be human readable
     Charset charset = guessFromBOM();
@@ -209,7 +208,7 @@ public class CharsetToolkit {
   }
 
   public static String bytesToString(final byte[] bytes) {
-    Charset charset = new CharsetToolkit(bytes, getIDEOptionsCharset()).guessEncoding(bytes.length);
+    Charset charset = new CharsetToolkit(bytes, EncodingManager.getInstance().getDefaultCharset()).guessEncoding(bytes.length);
     int bomLength = getBOMLength(bytes, charset);
     final CharBuffer charBuffer = charset.decode(ByteBuffer.wrap(bytes, bomLength, bytes.length - bomLength));
     return charBuffer.toString();
@@ -310,26 +309,12 @@ public class CharsetToolkit {
     return null;
   }
 
-  public Charset guessEncoding( int guess_length ) {
+  public Charset guessEncoding(int guess_length) {
     return guessEncoding(guess_length, defaultCharset);
   }
 
   public static Charset guessEncoding(File f, int bufferLength) throws IOException {
-    return guessEncoding(f, bufferLength, getIDEOptionsCharset());
-  }
-
-  public static Charset getIDEOptionsCharset() {
-    // see SCR #5288
-    Application application = ApplicationManager.getApplication();
-    if (application == null) return null;
-    CharsetSettings settings = CharsetSettings.getInstance();
-    if (settings == null) return null;
-
-    String charsetName = settings.getCharsetName();
-    if (CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME.equals(charsetName)) return getDefaultSystemCharset();
-    if (!Charset.isSupported(charsetName)) return getDefaultSystemCharset();
-    Charset charset = forName(charsetName);
-    return charset == null ? getDefaultSystemCharset() : charset;
+    return guessEncoding(f, bufferLength, EncodingManager.getInstance().getDefaultCharset());
   }
 
   public static Charset guessEncoding(File f, int bufferLength, Charset defaultCharset) throws IOException {

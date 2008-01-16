@@ -3,11 +3,15 @@ package com.intellij.compiler.impl.javaCompiler.javac;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 import java.util.StringTokenizer;
@@ -44,7 +48,7 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
   public Element getState() {
     try {
       final Element e = new Element("state");
-      writeExternal(e);
+      DefaultJDOMExternalizer.writeExternal(this, e);
       return e;
     }
     catch (WriteExternalException e1) {
@@ -55,7 +59,7 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
 
   public void loadState(Element state) {
     try {
-      readExternal(state);
+      DefaultJDOMExternalizer.readExternal(this, state);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -70,9 +74,8 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
     myTestsUseExternalCompiler = testsUseExternalCompiler;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String getOptionsString() {
-    StringBuffer options = new StringBuffer();
+    @NonNls StringBuilder options = new StringBuilder();
     if(DEBUGGING_INFO) {
       options.append("-g ");
     }
@@ -85,7 +88,7 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
     boolean isEncodingSet = false;
     final StringTokenizer tokenizer = new StringTokenizer(ADDITIONAL_OPTIONS_STRING, " \t\r\n");
     while(tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
+      @NonNls String token = tokenizer.nextToken();
       if("-g".equals(token)) {
         continue;
       }
@@ -102,8 +105,8 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
       }
     }
     if (!isEncodingSet) {
-      final Charset ideCharset = CharsetToolkit.getIDEOptionsCharset();
-      if ((CharsetToolkit.getDefaultSystemCharset() != ideCharset)) {
+      final Charset ideCharset = EncodingManager.getInstance().getDefaultCharset();
+      if (!Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset)) {
         options.append("-encoding ");
         options.append(ideCharset.name());
       }
@@ -115,15 +118,8 @@ public class JavacSettings implements PersistentStateComponent<Element>, Project
     return project.getComponent(JavacSettings.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "JavacSettings";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

@@ -51,13 +51,13 @@ public class DefaultJDOMExternalizer {
     for (Field field : fields) {
       if (field.getName().indexOf('$') >= 0) continue;
       int modifiers = field.getModifiers();
-      String value = null;
       if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
       field.setAccessible(true); // class might be non-public
       Class type = field.getType();
       if (filter != null && !filter.isAccept(field)) {
         continue;
       }
+      String value = null;
       try {
         if (type.isPrimitive()) {
           if (type.equals(byte.class)) {

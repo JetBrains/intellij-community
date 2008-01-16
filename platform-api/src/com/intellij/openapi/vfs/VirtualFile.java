@@ -20,12 +20,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -386,17 +383,20 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @param newParent the directory to move this file to
    * @throws IOException if file failed to be moved
    */
-  public void move(Object requestor, VirtualFile newParent) throws IOException {
+  public void move(final Object requestor, final VirtualFile newParent) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.move.error", newParent.getPresentableUrl()));
     }
 
-    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
-    getFileSystem().moveFile(requestor, this, newParent);
-    EncodingManager.getInstance().restoreEncoding(this, charsetBefore);
+    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      public VirtualFile compute() throws IOException {
+        getFileSystem().moveFile(requestor, VirtualFile.this, newParent);
+        return VirtualFile.this;
+      }
+    });
   }
 
-  public VirtualFile copy(Object requestor, VirtualFile newParent, final String copyName) throws IOException {
+  public VirtualFile copy(final Object requestor, final VirtualFile newParent, final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
       throw new IOException(VfsBundle.message("file.copy.error", newParent.getPresentableUrl()));
     }
@@ -405,10 +405,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       throw new IOException(VfsBundle.message("file.copy.target.must.be.directory"));
     }
 
-    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
-    VirtualFile newFile = getFileSystem().copyFile(requestor, this, newParent, copyName);
-    EncodingManager.getInstance().restoreEncoding(newFile, charsetBefore);
-    return newFile;
+    return VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      public VirtualFile compute() throws IOException {
+        return getFileSystem().copyFile(requestor, VirtualFile.this, newParent, copyName);
+      }
+    });
   }
 
 
@@ -422,7 +423,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public Charset getCharset() {
     Charset charset = getUserData(CHARSET_KEY);
     if (charset == null) {
-      charset = CharsetToolkit.getIDEOptionsCharset();
+      charset = EncodingManager.getInstance().getDefaultCharset();
       setCharset(charset);
     }
     return charset;

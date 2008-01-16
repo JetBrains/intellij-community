@@ -18,10 +18,10 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 
 public class GeneralCommandLine {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
   private Map<String, String> myEnvParams;
   private boolean myPassParentEnvs;
   private String myExePath = null;
@@ -57,13 +56,8 @@ public class GeneralCommandLine {
     myEnvParams = envParams;
   }
 
-  public void setCharset(final Charset charset) {
-    if (charset == null) {
-      LOG.error("null charset");
-      return;
-    }
+  public void setCharset(@NotNull Charset charset) {
     myCharset = charset;
-    //noinspection HardCodedStringLiteral
     addParameter("-Dfile.encoding=" + charset.name());
   }
 
@@ -79,8 +73,7 @@ public class GeneralCommandLine {
     }
   }
 
-  public void addParameter(@NonNls final String parameter) {
-    LOG.assertTrue(parameter != null);
+  public void addParameter(@NotNull @NonNls final String parameter) {
     myProgramParams.add(parameter);
   }
 

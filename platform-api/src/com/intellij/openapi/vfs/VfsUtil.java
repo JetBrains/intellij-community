@@ -19,11 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
@@ -35,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -631,5 +631,21 @@ public class VfsUtil {
       return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
     }
     return file;
+  }
+  public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(VirtualFile fileBefore, ThrowableComputable<VirtualFile, E> action) throws E {
+    Charset charsetBefore = EncodingManager.getInstance().getEncoding(fileBefore, true);
+    VirtualFile fileAfter = null;
+    try {
+      fileAfter = action.compute();
+      return fileAfter;
+    }
+    finally {
+      if (fileAfter != null) {
+        Charset actual = EncodingManager.getInstance().getEncoding(fileAfter, true);
+        if (!Comparing.equal(actual, charsetBefore)) {
+          EncodingManager.getInstance().setEncoding(fileAfter, charsetBefore);
+        }
+      }
+    }
   }
 }

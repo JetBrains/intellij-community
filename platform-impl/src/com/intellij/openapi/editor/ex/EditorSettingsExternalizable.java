@@ -5,8 +5,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.options.OptionsBundle;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.CharsetSettings;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NamedJDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.nio.charset.Charset;
+import java.lang.reflect.Field;
 
 public class EditorSettingsExternalizable implements NamedJDOMExternalizable, ExportableApplicationComponent, Cloneable {
   //Q: make it interface?
@@ -39,8 +45,10 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_DND_ENABLED = true;
     public boolean IS_WHEEL_FONTCHANGE_ENABLED = true;
     public boolean IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = true;
+    @Deprecated
     public boolean IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
-    public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
+    @Deprecated
+    public String DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
 
     public boolean RENAME_VARIABLES_INPLACE = true;
     public boolean REFRAIN_FROM_SCROLLING = false;
@@ -55,7 +63,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   }
 
   private OptionSet myOptions = new OptionSet();
-  private PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
 
   private int myBlockIndent;
   //private int myTabSize = 4;
@@ -70,7 +78,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   @NonNls public static final String STRIP_TRAILING_SPACES_WHOLE = "Whole";
 
 
-  @NonNls public static String DEFAULT_FONT_NAME = "Courier";
+  @NonNls public static final String DEFAULT_FONT_NAME = "Courier";
 
   public static EditorSettingsExternalizable getInstance() {
     final Application app = ApplicationManager.getApplication();
@@ -91,15 +99,16 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  @NonNls public static final String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
-  @NonNls public static final String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
-
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(myOptions, element);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(myOptions, element);
+    DefaultJDOMExternalizer.writeExternal(myOptions, element, new DefaultJDOMExternalizer.JDOMFilter() {
+      public boolean isAccept(final Field field) {
+        return !field.getName().equals("IS_NATIVE2ASCII_FOR_PROPERTIES_FILES") && !field.getName().equals("DEFAULT_PROPERTIES_FILES_CHARSET_NAME");
+      }
+    });
   }
 
   public String getExternalFileName() {
@@ -309,26 +318,6 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void setMouseClickSelectionHonorsCamelWords(boolean val) {
     myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
   }
-  public boolean isNative2AsciiForPropertiesFiles() {
-    return myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES;
-  }
-  public void setNative2AsciiForPropertiesFiles(boolean value) {
-    if (myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES != value) {
-      myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES = value;
-      myPropertyChangeSupport.firePropertyChange(PROP_NATIVE2ASCII_SWITCH, !value, value);
-    }
-  }
-  public String getDefaultPropertiesCharsetName() {
-    return myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
-  }
-
-  public void setDefaultPropertiesCharsetName(@NonNls final String defaultPropertiesCharsetName) {
-    String old = myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME;
-    myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME = defaultPropertiesCharsetName;
-    if (!Comparing.strEqual(old, defaultPropertiesCharsetName)) {
-      myPropertyChangeSupport.firePropertyChange(PROP_PROPERTIES_FILES_ENCODING, old, defaultPropertiesCharsetName);
-    }
-  }
 
   public boolean isVariableInplaceRenameEnabled() {
     return myOptions.RENAME_VARIABLES_INPLACE;
@@ -338,4 +327,13 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.RENAME_VARIABLES_INPLACE = val;
   }
 
+  public void migrateCharsetSettingsTo(EncodingManager encodingManager) {
+    if (myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME != null) {
+      Charset charset = CharsetToolkit.forName(myOptions.DEFAULT_PROPERTIES_FILES_CHARSET_NAME);
+      if (charset != null) {
+        encodingManager.setDefaultCharsetForPropertiesFiles(null, charset);
+        encodingManager.setNative2AsciiForPropertiesFiles(null, myOptions.IS_NATIVE2ASCII_FOR_PROPERTIES_FILES);
+      }
+    }
+  }
 }

@@ -12,8 +12,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChooseFileEncodingAction;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.ChangeEncodingUpdateGroup;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.util.Pair;
 
 import javax.swing.*;
@@ -30,7 +30,7 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
     StatusBarTooltipper.install(this, statusBar);
     addMouseListener(new MouseAdapter() {
       public void mouseClicked(final MouseEvent e) {
-        EncodingPanel.this.mouseClicked(e, statusBar);
+        EncodingPanel.this.mouseClicked(statusBar);
       }
     });
   }
@@ -86,7 +86,7 @@ public class EncodingPanel extends TextPanel implements StatusBarPatch {
     return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this));
   }
 
-  private void mouseClicked(final MouseEvent e, final StatusBarImpl statusBar) {
+  private void mouseClicked(final StatusBarImpl statusBar) {
     VirtualFile virtualFile = getSelectedFile(getEditor());
     if (virtualFile == null) return;
     if (!isEnabled()) return;

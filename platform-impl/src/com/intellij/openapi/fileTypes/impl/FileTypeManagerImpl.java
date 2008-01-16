@@ -2,6 +2,7 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -166,10 +167,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     registerFileType(fileType, new String[0]);
   }
 
-  public void registerFileType(@NotNull FileType type, @NotNull List<FileNameMatcher> defaultAssociations) {
-    fireBeforeFileTypesChanged();
-    registerFileTypeWithoutNotification(type, defaultAssociations);
-    fireFileTypesChanged();
+  public void registerFileType(@NotNull final FileType type, @NotNull final List<FileNameMatcher> defaultAssociations) {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        fireBeforeFileTypesChanged();
+        registerFileTypeWithoutNotification(type, defaultAssociations);
+        fireFileTypesChanged();
+
+      }
+    });
   }
 
   public void unregisterFileType(FileType fileType) {

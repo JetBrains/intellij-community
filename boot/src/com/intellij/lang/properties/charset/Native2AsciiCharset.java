@@ -9,7 +9,7 @@ import java.nio.charset.*;
 public class Native2AsciiCharset extends Charset {
   private final Charset myBaseCharset;
   @SuppressWarnings({"HardCodedStringLiteral"}) private static final String NAME_PREFIX = "NATIVE_TO_ASCII_";
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static final String DEAFULT_ENCODING_NAME = "ISO-8859-1";
+  @SuppressWarnings({"HardCodedStringLiteral"}) private static final String DEFAULT_ENCODING_NAME = "ISO-8859-1";
 
   private Native2AsciiCharset(String canonicalName) {
     super(canonicalName, null);
@@ -24,7 +24,7 @@ public class Native2AsciiCharset extends Charset {
     catch(UnsupportedCharsetException e){
       //ignore
     }
-    myBaseCharset = baseCharset == null ? Charset.forName(DEAFULT_ENCODING_NAME) : baseCharset;
+    myBaseCharset = baseCharset == null ? Charset.forName(DEFAULT_ENCODING_NAME) : baseCharset;
   }
 
   public String displayName() {
@@ -47,7 +47,7 @@ public class Native2AsciiCharset extends Charset {
     return myBaseCharset;
   }
   public static String makeNative2AsciiEncodingName(String baseCharsetName) {
-    if (baseCharsetName == null) baseCharsetName = DEAFULT_ENCODING_NAME;
+    if (baseCharsetName == null) baseCharsetName = DEFAULT_ENCODING_NAME;
     return NAME_PREFIX + baseCharsetName;
   }
   public static Charset forName(String charsetName) {

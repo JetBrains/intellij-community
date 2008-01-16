@@ -209,25 +209,6 @@ public class FileTreeTable extends TreeTable {
     }
   }
 
-  public boolean editCellAt(final int row, final int column, final EventObject me) {
-    boolean b = super.editCellAt(row, column, me);
-    //if (column == 1) {
-    //  Rectangle bounds = getTree().getRowBounds(row);
-    //  Rectangle rect = getBounds();
-    //  Rectangle r = new Rectangle(rect.x + bounds.x, rect.y + bounds.y, 10, 10);
-    //  MouseEvent newME2 = new MouseEvent(
-    //    this,
-    //    MouseEvent.MOUSE_PRESSED,
-    //    0, 0,
-    //    (int)r.getX()/* - getCellRect(0, column, true).x*/,
-    //    (int)r.getY()/*- getCellRect(0, column, true).y*/, 1,
-    //    false
-    //  );
-    //  getTree().dispatchEvent(newME2);
-    //}
-    return b;
-  }
-
   public Map<VirtualFile, Charset> getValues() {
     return myModel.getValues();
   }

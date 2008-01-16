@@ -19,9 +19,10 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.nio.charset.Charset;
 
 public abstract class NewVirtualFile extends VirtualFile {
   private volatile long myModificationStamp = LocalTimeCounter.currentTime();
@@ -110,9 +110,12 @@ public abstract class NewVirtualFile extends VirtualFile {
       throw new IOException("Destination already exists: " + newParent.getPath() + "/" + getName());
     }
 
-    Charset charsetBefore = EncodingManager.getInstance().getEncoding(this, true);
-    getFileSystem().moveFile(requestor, this, newParent);
-    EncodingManager.getInstance().restoreEncoding(this, charsetBefore);
+    VfsUtil.doActionAndRestoreEncoding(this, new ThrowableComputable<VirtualFile, IOException>() {
+      public VirtualFile compute() throws IOException {
+        getFileSystem().moveFile(requestor, NewVirtualFile.this, newParent);
+        return NewVirtualFile.this;
+      }
+    });
   }
 
   public abstract Collection<VirtualFile> getCachedChildren();

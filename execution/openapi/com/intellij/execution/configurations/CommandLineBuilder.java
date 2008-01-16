@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class CommandLineBuilder {
             commandLine.addParameters(parametersList.getList());
             if (!parametersList.hasProperty("file.encoding")) {
               Charset charset = javaParameters.getCharset();
-              if (charset == null) charset = CharsetToolkit.getIDEOptionsCharset();
+              if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
               if (charset == null) charset = CharsetToolkit.getDefaultSystemCharset();
               commandLine.setCharset(charset);
             }

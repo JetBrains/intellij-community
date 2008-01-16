@@ -30,10 +30,10 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualTreeElement;
@@ -63,6 +63,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -461,7 +462,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
       Document doc = myFilePath.getDocument();
 
-      String charset = myFilePath.getCharset().name();
+      Charset charset = myFilePath.getCharset();
       FileType fileType = myFilePath.getFileType();
       diffData.setContentTitles(left.getRevisionNumber().asString(), right.getRevisionNumber().asString());
       diffData.setContents(createContent(project, content1, left, doc, charset, fileType),
@@ -488,7 +489,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                                            byte[] content1,
                                            VcsFileRevision revision,
                                            Document doc,
-                                           String charset,
+                                           Charset charset,
                                            FileType fileType) {
     if (isCurrent(revision) && (doc != null)) return new DocumentContent(project, doc);
     return new BinaryContent(content1, charset, fileType);

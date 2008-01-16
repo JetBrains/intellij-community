@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public class JavaParameters {
   private final ParametersList myVmParameters = new ParametersList();
   private final ParametersList myProgramParameters = new ParametersList();
   private String myWorkingDirectory;
-  private Charset myCharset = CharsetToolkit.getIDEOptionsCharset();
+  private Charset myCharset = EncodingManager.getInstance().getDefaultCharset();
   private Map<String, String> myEnv;
   private boolean myPassParentEnvs = true;
 

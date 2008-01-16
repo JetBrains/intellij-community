@@ -2,12 +2,12 @@ package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.containers.ConcurrentHashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -60,10 +60,10 @@ public class PropertiesFilesManager implements ApplicationComponent {
         fileChanged(file, null);
       }
     };
-    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
+    EncodingManager.getInstance().addPropertyChangeListener(new PropertyChangeListener() {
       public void propertyChange(final PropertyChangeEvent evt) {
-        if (EditorSettingsExternalizable.PROP_NATIVE2ASCII_SWITCH.equals(evt.getPropertyName()) ||
-            EditorSettingsExternalizable.PROP_PROPERTIES_FILES_ENCODING.equals(evt.getPropertyName())
+        if (EncodingManager.PROP_NATIVE2ASCII_SWITCH.equals(evt.getPropertyName()) ||
+            EncodingManager.PROP_PROPERTIES_FILES_ENCODING.equals(evt.getPropertyName())
           ) {
           encodingChanged();
         }
@@ -128,7 +128,7 @@ public class PropertiesFilesManager implements ApplicationComponent {
     return "Properties files manager";
   }
 
-  public void encodingChanged() {
+  private void encodingChanged() {
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
       public void run() {
         Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());

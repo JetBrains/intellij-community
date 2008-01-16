@@ -15,9 +15,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.nio.charset.Charset;
+import java.io.IOException;
 import java.util.HashSet;
 
 public class CopyHandler {
@@ -333,7 +333,8 @@ public class CopyHandler {
    * @return first copied PsiFile (recursivly); null if no PsiFiles copied
    */
   @Nullable
-  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy, @Nullable String newName, @NotNull PsiDirectory targetDirectory) throws IncorrectOperationException{
+  public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy, @Nullable String newName, @NotNull PsiDirectory targetDirectory)
+    throws IncorrectOperationException, IOException {
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
@@ -345,9 +346,12 @@ public class CopyHandler {
         return null;
       }
       if (newName == null) newName = directory.getName();
-      PsiDirectory subdirectory = targetDirectory.createSubdirectory(newName);
-      Charset oldEncoding = EncodingProjectManager.getInstance(subdirectory.getProject()).getEncoding(directory.getVirtualFile(), true);
-      EncodingManager.getInstance().restoreEncoding(subdirectory.getVirtualFile(), oldEncoding);
+      final PsiDirectory subdirectory = targetDirectory.createSubdirectory(newName);
+      VfsUtil.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
+        public VirtualFile compute() {
+          return subdirectory.getVirtualFile();
+        }
+      });
 
       PsiFile firstFile = null;
       PsiElement[] children = directory.getChildren();
@@ -410,10 +414,17 @@ public class CopyHandler {
             }
             catch (final IncorrectOperationException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
-                          public void run() {
-                            Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-                          }
-                        });
+                public void run() {
+                  Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+                }
+              });
+            }
+            catch (final IOException ex) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                public void run() {
+                  Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
+                }
+              });
             }
           }
         };

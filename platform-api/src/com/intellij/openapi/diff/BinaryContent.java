@@ -15,27 +15,26 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 
 /**
  * Represents bytes as content. May has text representaion.
  */
 public class BinaryContent extends DiffContent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.BinaryContent");
   private final FileType myFileType;
   private final byte[] myBytes;
-  private final String myCharset;
+  private final Charset myCharset;
   private Document myDocument = null;
 
   /**
@@ -45,38 +44,44 @@ public class BinaryContent extends DiffContent {
    * Has no sense if fileType.isBinary()
    * @param fileType type of content
    */
-  public BinaryContent(byte[] bytes, String charset, FileType fileType) {
+  public BinaryContent(byte[] bytes, Charset charset, @NotNull FileType fileType) {
     myFileType = fileType;
     myBytes = bytes;
-    if (fileType != null && fileType.isBinary()) myCharset = null;
-    else myCharset = charset;
+    if (fileType.isBinary()) {
+      myCharset = null;
+    }
+    else {
+      myCharset = charset;
+    }
   }
 
   @SuppressWarnings({"EmptyCatchBlock"})
   @Nullable
   public Document getDocument() {
-    if( myDocument == null )
-    {
-      if( isBinary() ) return null;
+    if (myDocument == null) {
+      if (isBinary()) return null;
 
       String text = null;
       try {
-        if( CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME.equals( myCharset ))
+        if (myCharset == null) {
           text = new String(myBytes);
-        else
-          text = new String( myBytes, myCharset );
+        }
+        else {
+          text = new String(myBytes, myCharset.name());
+        }
       }
-      catch( UnsupportedEncodingException e ) {}
-      catch( IllegalCharsetNameException e )  {}
+      catch (IllegalCharsetNameException e) {
+      }
+      catch (UnsupportedEncodingException e) {
+      }
 
       //  Still NULL? only if not supported or an exception was thrown.
       //  Decode a string using the truly default encoding.
-      if( text == null )
-          text = new String( myBytes );
-      text = LineTokenizer.correctLineSeparators( text );
+      if (text == null) text = new String(myBytes);
+      text = LineTokenizer.correctLineSeparators(text);
 
-      myDocument = EditorFactory.getInstance().createDocument( text );
-      myDocument.setReadOnly( true );
+      myDocument = EditorFactory.getInstance().createDocument(text);
+      myDocument.setReadOnly(true);
     }
     return myDocument;
   }

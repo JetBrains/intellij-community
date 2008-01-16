@@ -20,7 +20,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.CharsetSettings;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.List;
 
 public class GeneralSettings implements NamedJDOMExternalizable, ExportableApplicationComponent {
@@ -44,9 +46,7 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
   private int myInactiveTimeout; // Number of seconds of inactivity after which IDEA automatically saves all files
-  private String myCharsetName;
-  private boolean myUseUTFGuessing = true;
-  private PropertyChangeSupport myPropertyChangeSupport;
+  private final PropertyChangeSupport myPropertyChangeSupport;
   private boolean myUseDefaultBrowser = true;
   private String myLastProjectLocation;
   private boolean myUseCyclicBuffer = true;
@@ -64,24 +64,30 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
   @NonNls private static final String OPTION_AUTO_SYNC_FILES = "autoSyncFiles";
   @NonNls private static final String OPTION_AUTO_SAVE_FILES = "autoSaveFiles";
   @NonNls private static final String OPTION_AUTO_SAVE_IF_INACTIVE = "autoSaveIfInactive";
+  @Deprecated
   @NonNls private static final String OPTION_CHARSET = "charset";
+  @Deprecated
   @NonNls private static final String OPTION_UTFGUESSING = "UTFGuessing";
-  @NonNls private static final String CHARSET_DEFAULT = "Default";
+
   @NonNls private static final String OPTION_USE_DEFAULT_BROWSER = "useDefaultBrowser";
   @NonNls private static final String OPTION_USE_CYCLIC_BUFFER = "useCyclicBuffer";
   @NonNls private static final String OPTION_SEARCH_IN_BACKGROUND = "searchInBackground";
   @NonNls private static final String OPTION_CONFIRM_EXIT = "confirmExit";
   @NonNls private static final String OPTION_CYCLIC_BUFFER_SIZE = "cyclicBufferSize";
   @NonNls private static final String OPTION_LAST_PROJECT_LOCATION = "lastProjectLocation";
+  @Deprecated
+  private Charset myCharset;
+  @Deprecated
+  private boolean myUseUTFGuessing;
+  @Deprecated
+  private boolean readCharsetSettings;
 
   public static GeneralSettings getInstance(){
     return ApplicationManager.getApplication().getComponent(GeneralSettings.class);
   }
 
-  /** Invoked by reflection */
   public GeneralSettings() {
     myInactiveTimeout=DEFAULT_INACTIVE_TIMEOUT;
-    myCharsetName= CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
 
     if (SystemInfo.isWindows) {
       myBrowserPath = "C:\\Program Files\\Internet Explorer\\IExplore.exe";
@@ -199,22 +205,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     );
   }
 
-  public boolean isUseUTFGuessing() {
-    return myUseUTFGuessing;
-  }
-
-  public void setUseUTFGuessing(boolean useUTFGuessing) {
-    myUseUTFGuessing = useUTFGuessing;
-  }
-
-  public String getCharsetName() {
-    return myCharsetName;
-  }
-
-  public void setCharsetName(@NonNls String charsetName) {
-    myCharsetName = charsetName;
-  }
-
   //todo use DefaultExternalizer
   public void readExternal(Element parentNode) {
     List children = parentNode.getChildren(ELEMENT_OPTION);
@@ -289,25 +279,13 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
         }
       }
       if (OPTION_CHARSET.equals(name)) {
-        try {
-          if (!CHARSET_DEFAULT.equals(value)) {
-            myCharsetName = value;
-          }
-          else {
-            myCharsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
-          }
-        }
-        catch (Exception ex) {
-          myCharsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
-        }
+        //for migration
+        myCharset = CharsetToolkit.forName(value);
+        readCharsetSettings = true;
       }
       if (OPTION_UTFGUESSING.equals(name)) {
-        try {
-          myUseUTFGuessing = Boolean.valueOf(value).booleanValue();
-        }
-        catch (Exception ex) {
-          myUseUTFGuessing = true;
-        }
+        myUseUTFGuessing = Boolean.valueOf(value).booleanValue();
+        readCharsetSettings = true;
       }
 
       if (OPTION_USE_DEFAULT_BROWSER.equals(name)) {
@@ -419,16 +397,6 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
     //
 
     optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_CHARSET);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, myCharsetName);
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
-    optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_UTFGUESSING);
-    optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myUseUTFGuessing));
-    parentNode.addContent(optionElement);
-
-    optionElement = new Element(ELEMENT_OPTION);
     optionElement.setAttribute(ATTRIBUTE_NAME, OPTION_USE_DEFAULT_BROWSER);
     optionElement.setAttribute(ATTRIBUTE_VALUE, Boolean.toString(myUseDefaultBrowser));
     parentNode.addContent(optionElement);
@@ -518,5 +486,12 @@ public class GeneralSettings implements NamedJDOMExternalizable, ExportableAppli
 
   public void setSearchInBackground(final boolean searchInBackground) {
     mySearchInBackground = searchInBackground;
+  }
+
+  public void migrateCharsetSettingsTo(EncodingManager encodingProjectManager) {
+    if (readCharsetSettings) {
+      encodingProjectManager.setEncoding(null, myCharset);
+      encodingProjectManager.setUseUTFGuessing(null, myUseUTFGuessing);
+    }
   }
 }

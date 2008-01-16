@@ -310,7 +310,7 @@ public class HintManager implements ApplicationComponent {
     }
   }
 
-  private void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p) {
+  private static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, final Point p) {
     JLayeredPane layeredPane = editor.getComponent().getRootPane().getLayeredPane();
     Dimension size = hint.getComponent().getPreferredSize();
     if(layeredPane.getWidth() < p.x + size.width) {

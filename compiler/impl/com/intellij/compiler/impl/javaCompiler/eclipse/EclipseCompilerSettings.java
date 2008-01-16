@@ -7,7 +7,9 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 import java.util.StringTokenizer;
@@ -43,7 +45,7 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
   public Element getState() {
     try {
       final Element e = new Element("state");
-      writeExternal(e);
+      DefaultJDOMExternalizer.writeExternal(this, e);
       return e;
     }
     catch (WriteExternalException e1) {
@@ -54,7 +56,7 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
 
   public void loadState(Element state) {
     try {
-      readExternal(state);
+      DefaultJDOMExternalizer.readExternal(this, state);
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -63,7 +65,7 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String getOptionsString() {
-    StringBuffer options = new StringBuffer();
+    StringBuilder options = new StringBuilder();
     if(DEBUGGING_INFO) {
       options.append("-g ");
     }
@@ -93,7 +95,7 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
       }
     }
     if (!isEncodingSet) {
-      final Charset ideCharset = CharsetToolkit.getIDEOptionsCharset();
+      final Charset ideCharset = EncodingManager.getInstance().getDefaultCharset();
       if (CharsetToolkit.getDefaultSystemCharset() != ideCharset) {
         options.append("-encoding ");
         options.append(ideCharset.name());
@@ -106,15 +108,8 @@ public class EclipseCompilerSettings implements PersistentStateComponent<Element
     return project.getComponent(EclipseCompilerSettings.class);
   }
 
+  @NotNull
   public String getComponentName() {
     return "EclipseCompilerSettings";
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
   }
 }

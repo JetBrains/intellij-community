@@ -42,12 +42,12 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
   }
 
   protected CoderResult decodeLoop(ByteBuffer in, CharBuffer out) {
-    byte[] buf = new byte[4];
     try {
       CoderResult coderResult = doFlush(out);
       if (coderResult == CoderResult.OVERFLOW) return CoderResult.OVERFLOW;
 
       int start = in.position();
+      byte[] buf = new byte[4];
       while (in.position() < in.limit()) {
         in.mark();
         final byte b = in.get();

@@ -12,7 +12,6 @@ import com.intellij.openapi.options.SortableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.vfs.CharsetSettings;
 import com.intellij.util.net.HTTPProxySettingsPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +22,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.nio.charset.Charset;
-import java.util.SortedMap;
-import java.util.Vector;
 
 public class GeneralSettingsConfigurable extends BaseConfigurable implements SearchableConfigurable, SortableConfigurable {
   private DiffOptionsForm myDiffOptions;
@@ -38,7 +34,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     settings.setReopenLastProject(myComponent.myChkReopenLastProject.isSelected());
     settings.setSyncOnFrameActivation(myComponent.myChkSyncOnFrameActivation.isSelected());
     settings.setSaveOnFrameDeactivation(myComponent.myChkSaveOnFrameDeactivation.isSelected());
-    settings.setUseUTFGuessing(myComponent.myChkUTFGuessing.isSelected());
     settings.setUseDefaultBrowser(myComponent.myUseSystemDefaultBrowser.isSelected());
     settings.setUseCyclicBuffer(myComponent.myUseCyclicBuffer.isSelected());
     settings.setConfirmExit(myComponent.myConfirmExit.isSelected());
@@ -65,7 +60,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
 
     //
 
-    settings.setCharsetName((String)myComponent.myCharsetNameCombo.getSelectedItem());
     if (!FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText())) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
@@ -76,12 +70,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     getDiffOptions().apply();
 
     myComponent.myHTTPProxySettingsEditor.apply();
-
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    editorSettings.setNative2AsciiForPropertiesFiles(myComponent.myCbNative2Ascii.isSelected());
-    String charsetName = (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem();
-    if (charsetName == null) charsetName = CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME;
-    editorSettings.setDefaultPropertiesCharsetName(charsetName);
   }
 
   public boolean isModified() {
@@ -92,7 +80,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     isModified |= settings.isSyncOnFrameActivation() != myComponent.myChkSyncOnFrameActivation.isSelected();
     isModified |= settings.isSaveOnFrameDeactivation() != myComponent.myChkSaveOnFrameDeactivation.isSelected();
     isModified |= settings.isAutoSaveIfInactive() != myComponent.myChkAutoSaveIfInactive.isSelected();
-    isModified |= settings.isUseUTFGuessing() != myComponent.myChkUTFGuessing.isSelected();
     isModified |= settings.isUseDefaultBrowser() != myComponent.myUseSystemDefaultBrowser.isSelected();
     isModified |= settings.isUseCyclicBuffer() != myComponent.myUseCyclicBuffer.isSelected();
     isModified |= settings.isConfirmExit() != myComponent.myConfirmExit.isSelected();
@@ -106,15 +93,10 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     }
     isModified |= inactiveTimeout > 0 && settings.getInactiveTimeout() != inactiveTimeout;
 
-    isModified |= !Comparing.strEqual(settings.getCharsetName(), (String)myComponent.myCharsetNameCombo.getSelectedItem());
     isModified |= !FileTypeManagerEx.getInstanceEx().isIgnoredFilesListEqualToCurrent(myComponent.myIgnoreFilesField.getText());
 
     isModified |= myComponent.myHTTPProxySettingsEditor.isModified();
 
-    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    isModified |= isModified(myComponent.myCbNative2Ascii, editorSettings.isNative2AsciiForPropertiesFiles());
-    isModified |= !Comparing
-      .strEqual(editorSettings.getDefaultPropertiesCharsetName(), (String)myComponent.myDefaultPropertiesFilesCharset.getSelectedItem());
     isModified |= settings.isSearchInBackground() != myComponent.mySearchInBackground.isSelected();
 
     return isModified || getDiffOptions().isModified();
@@ -148,24 +130,8 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myBrowserPathField.addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, descriptor);
 
     myComponent.myIgnoreFilesField.setText("##### ##############");
-    setupCharsetComboModel(myComponent.myCharsetNameCombo);
 
     return myComponent.myPanel;
-  }
-
-  public static void setupCharsetComboModel(JComboBox charsetNameCombo) {
-    Vector<String> charsets = new Vector<String>();
-    charsets.add(CharsetSettings.SYSTEM_DEFAULT_CHARSET_NAME);
-    SortedMap avaliableCharsets = Charset.availableCharsets();
-    for (Object cs : avaliableCharsets.keySet()) {
-      String name = (String)cs;
-      //noinspection HardCodedStringLiteral
-      if (!name.startsWith("UTF-16")) {
-        charsets.add(name);
-      }
-    }
-
-    charsetNameCombo.setModel(new DefaultComboBoxModel(charsets));
   }
 
   public String getDisplayName() {
@@ -193,8 +159,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     myComponent.myCyclicBufferSize.setText(settings.getCyclicBufferSize() / 1024 + "");
 
     myComponent.myIgnoreFilesField.setText(FileTypeManagerEx.getInstanceEx().getIgnoredFilesList());
-    myComponent.myCharsetNameCombo.setSelectedItem(settings.getCharsetName());
-    myComponent.myChkUTFGuessing.setSelected(settings.isUseUTFGuessing());
     getDiffOptions().reset();
 
     if (settings.isUseDefaultBrowser()) {
@@ -205,12 +169,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     }
     myComponent.updateBrowserField();
     myComponent.myHTTPProxySettingsEditor.reset();
-    myComponent.myCbNative2Ascii.setSelected(editorSettings.isNative2AsciiForPropertiesFiles());
-    setupCharsetComboModel(myComponent.myDefaultPropertiesFilesCharset);
-    myComponent.myDefaultPropertiesFilesCharset.setSelectedItem(editorSettings.getDefaultPropertiesCharsetName());
-    if (myComponent.myDefaultPropertiesFilesCharset.getSelectedIndex() == -1) {
-      myComponent.myDefaultPropertiesFilesCharset.setSelectedIndex(0);
-    }
 
     myComponent.mySearchInBackground.setSelected(settings.isSearchInBackground());
   }
@@ -238,8 +196,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JCheckBox myChkSaveOnFrameDeactivation;
     private JCheckBox myChkAutoSaveIfInactive;
     private JTextField myTfInactiveTimeout;
-    private JComboBox myCharsetNameCombo;
-    private JCheckBox myChkUTFGuessing;
     private JPanel myDiffOptionsPanel;
     private JRadioButton myUseSystemDefaultBrowser;
     private JRadioButton myUseUserDefinedBrowser;
@@ -247,8 +203,6 @@ public class GeneralSettingsConfigurable extends BaseConfigurable implements Sea
     private JTextField myCyclicBufferSize;
     public JCheckBox myConfirmExit;
     private JPanel myHTTPProxyPanel;
-    private JCheckBox myCbNative2Ascii;
-    private JComboBox myDefaultPropertiesFilesCharset;
 
     private final HTTPProxySettingsPanel myHTTPProxySettingsEditor;
     private JCheckBox mySearchInBackground;
