@@ -3,7 +3,6 @@ package com.intellij.codeInsight.problems;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -34,7 +33,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -337,18 +335,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     return false;
   }
 
-  public boolean hasProblemFilesBeneath(final ProjectViewNode node) {
-    return hasProblemFilesBeneath(new Condition<VirtualFile>() {
-      public boolean value(final VirtualFile virtualFile) {
-        return node.contains(virtualFile)
-               // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
-               && (node.getValue() instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)node.getValue()) == virtualFile ||
-                   node.someChildContainsFile(virtualFile));
-      }
-    });
-  }
-
-  private boolean hasProblemFilesBeneath(Condition<VirtualFile> condition) {
+  public boolean hasProblemFilesBeneath(Condition<VirtualFile> condition) {
     if (!myProject.isOpen()) return false;
     synchronized (myProblems) {
       if (!myProblems.isEmpty()) {

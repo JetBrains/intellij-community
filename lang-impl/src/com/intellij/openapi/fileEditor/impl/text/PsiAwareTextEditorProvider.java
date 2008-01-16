@@ -102,13 +102,13 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   }
 
   protected EditorWrapper createWrapperForEditor(final Editor editor) {
-    return new PsiAwareEdtiorWrapper(editor);
+    return new PsiAwareEditorWrapper(editor);
   }
 
-  private final class PsiAwareEdtiorWrapper extends EditorWrapper {
+  private final class PsiAwareEditorWrapper extends EditorWrapper {
     private TextEditorBackgroundHighlighter myBackgroundHighlighter;
 
-    private PsiAwareEdtiorWrapper(final Editor editor) {
+    private PsiAwareEditorWrapper(final Editor editor) {
       super(editor);
       final Project project = editor.getProject();
       myBackgroundHighlighter = project == null

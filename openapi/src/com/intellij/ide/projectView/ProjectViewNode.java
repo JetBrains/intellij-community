@@ -22,6 +22,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,7 +139,14 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   }
 
   protected boolean hasProblemFileBeneath() {
-    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(this);
+    return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      public boolean value(final VirtualFile virtualFile) {
+        return contains(virtualFile)
+               // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.
+               && (getValue() instanceof PsiElement && PsiUtil.getVirtualFile((PsiElement)getValue()) == virtualFile ||
+                   someChildContainsFile(virtualFile));
+      }
+    });
   }
 
   /**

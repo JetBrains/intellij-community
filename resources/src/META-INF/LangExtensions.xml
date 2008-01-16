@@ -55,4 +55,13 @@
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
+
+  <getDataRule key="psi.File" implementationClass="com.intellij.ide.impl.dataRules.PsiFileRule"/>
+  <getDataRule key="virtualFile" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileRule"/>
+  <getDataRule key="Navigatable" implementationClass="com.intellij.ide.impl.dataRules.NavigatableRule"/>
+  <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule"/>
+
+  <dataValidator key="psi.File" implementationClass="com.intellij.ide.impl.PsiElementDataValidator"/>
+  <dataValidator key="psi.Element" implementationClass="com.intellij.ide.impl.PsiElementDataValidator"/>
+  <dataValidator key="psi.Element.array" implementationClass="com.intellij.ide.impl.PsiElementArrayDataValidator"/>
 </extensions>

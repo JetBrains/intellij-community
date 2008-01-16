@@ -7,8 +7,6 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
@@ -37,7 +35,6 @@ public class UsageTargetsRule implements GetDataRule {
     }
 
     PsiElement psiElement = (PsiElement)dataProvider.getData(DataConstants.PSI_ELEMENT);
-    if (psiElement instanceof PsiDirectory) psiElement = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
     if (psiElement instanceof NavigationItem) {
       if (FindManager.getInstance(psiElement.getProject()).canFindUsages(psiElement)) {
         result.add(new PsiElement2UsageTargetAdapter(psiElement));

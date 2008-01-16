@@ -1,11 +1,10 @@
 package com.intellij.codeInsight.problems;
 
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.compiler.CompilerMessage;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -33,7 +32,7 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
     if (myDelegate != null) myDelegate.weHaveGotProblems(virtualFile, problems);
   }
 
-  public boolean hasProblemFilesBeneath(ProjectViewNode scope) {
+  public boolean hasProblemFilesBeneath(final Condition<VirtualFile> condition) {
     return false;
   }
 

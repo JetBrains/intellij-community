@@ -101,4 +101,7 @@
 
   <extensionPoint name="declarationRangeHandler" beanClass="com.intellij.util.MixinEP"/>
   <extensionPoint name="highlightUsagesHandler" interface="com.intellij.codeInsight.highlighting.HighlightUsagesHandlerDelegate"/>
+
+  <extensionPoint name="usageTargetProvider"
+                  interface="com.intellij.usages.UsageTargetProvider"/>
 </extensionPoints>

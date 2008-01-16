@@ -16,14 +16,13 @@
 
 package com.intellij.problems;
 
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ public abstract class WolfTheProblemSolver implements ProjectComponent {
   public abstract void weHaveGotProblems(@NotNull VirtualFile virtualFile, @NotNull List<Problem> problems);
   public abstract void clearProblems(@NotNull VirtualFile virtualFile);
 
-  public abstract boolean hasProblemFilesBeneath(ProjectViewNode scope);
+  public abstract boolean hasProblemFilesBeneath(Condition<VirtualFile> condition);
 
   public abstract boolean hasProblemFilesBeneath(PsiElement scope);
 
