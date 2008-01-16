@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project;
 /**
  * @author yole
  */
-public class CloseAllUnpinnedEditorsAction extends CloseAllUnmodifiedEditorsAction {
+public class CloseAllUnpinnedEditorsAction extends CloseEditorsActionBase {
 
   @Override
   protected boolean isFileToClose(final EditorComposite editor, final EditorWindow window) {

@@ -165,5 +165,10 @@
     <group id="UpdateActionGroup">
       <reference ref="$Delete"/>
     </group>
+
+    <!-- Window -->
+    <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
+      <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
+    </action>
   </actions>
 </component>

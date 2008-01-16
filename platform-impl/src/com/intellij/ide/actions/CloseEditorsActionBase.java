@@ -1,22 +1,22 @@
-
 package com.intellij.ide.actions;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.ide.IdeBundle;
 
 import java.util.ArrayList;
 
-public class CloseAllUnmodifiedEditorsAction extends AnAction {
-
+/**
+ * @author yole
+ */
+public abstract class CloseEditorsActionBase extends AnAction {
   private ArrayList<Pair<EditorComposite, EditorWindow>> getFilesToClose (final AnActionEvent event) {
     final ArrayList<Pair<EditorComposite, EditorWindow>> res = new ArrayList<Pair<EditorComposite, EditorWindow>>();
     final DataContext dataContext = event.getDataContext();
@@ -26,7 +26,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     final EditorWindow[] windows;
     if (editorWindow != null){
       windows = new EditorWindow[]{ editorWindow };
-    } 
+    }
     else {
       windows = editorManager.getWindows ();
     }
@@ -45,10 +45,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     return res;
   }
 
-  protected boolean isFileToClose(final EditorComposite editor, final EditorWindow window) {
-    return !window.getManager().isChanged (editor);
-  }
-
+  protected abstract boolean isFileToClose(EditorComposite editor, EditorWindow window);
 
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -65,7 +62,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
       }, IdeBundle.message("command.close.all.unmodified.editors"), null
     );
   }
-  
+
   public void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
@@ -80,16 +77,7 @@ public class CloseAllUnmodifiedEditorsAction extends AnAction {
     presentation.setEnabled(getFilesToClose (event).size () > 0 && isValidForProject(project));
   }
 
-  protected boolean isValidForProject(final Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getAllActiveVcss().length > 0;
-  }
+  protected abstract boolean isValidForProject(Project project);
 
-  protected String getPresentationText(final boolean inSplitter) {
-    if (inSplitter) {
-      return IdeBundle.message("action.close.all.unmodified.editors.in.tab.group");
-    }
-    else {
-      return IdeBundle.message("action.close.all.unmodified.editors");
-    }
-  }
+  protected abstract String getPresentationText(boolean inSplitter);
 }

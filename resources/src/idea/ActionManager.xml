@@ -447,14 +447,6 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
-    <!-- Window -->
-    <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
-      <add-to-group group-id="CloseEditorsGroup" anchor="last"/>
-    </action>
-    <action id="CloseAllUnpinnedEditors" class="com.intellij.ide.actions.CloseAllUnpinnedEditorsAction">
-      <add-to-group group-id="CloseEditorsGroup" anchor="last"/>
-    </action>
-
     <!-- Help -->
     <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction">
       <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="OnlineDocAction"/>
