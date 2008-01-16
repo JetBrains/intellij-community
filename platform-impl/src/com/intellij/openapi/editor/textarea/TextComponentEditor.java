@@ -39,7 +39,7 @@ public class TextComponentEditor extends UserDataHolderBase implements Editor {
       myDocument = new TextComponentDocument(textComponent);
     }
     myCaretModel = new TextComponentCaretModel(textComponent, this);
-    mySelectionModel = new TextComponentSelectionModel(textComponent);
+    mySelectionModel = new TextComponentSelectionModel(textComponent, this);
     myScrollingModel = new TextComponentScrollingModel(textComponent);
   }
 

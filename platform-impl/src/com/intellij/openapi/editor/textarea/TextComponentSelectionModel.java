@@ -1,8 +1,12 @@
 package com.intellij.openapi.editor.textarea;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.SelectionListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,9 +18,11 @@ import javax.swing.text.JTextComponent;
  */
 public class TextComponentSelectionModel implements SelectionModel {
   private JTextComponent myTextComponent;
+  private TextComponentEditor myEditor;
 
-  public TextComponentSelectionModel(final JTextComponent textComponent) {
+  public TextComponentSelectionModel(final JTextComponent textComponent, final TextComponentEditor textComponentEditor) {
     myTextComponent = textComponent;
+    myEditor = textComponentEditor;
   }
 
   public int getSelectionStart() {
@@ -72,7 +78,11 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
-    throw new UnsupportedOperationException("Not implemented");
+    removeSelection();
+
+    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
+      IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+    handler.execute(myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
   }
 
   public void copySelectionToClipboard() {
