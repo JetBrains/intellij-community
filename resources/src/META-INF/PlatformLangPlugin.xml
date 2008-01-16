@@ -19,5 +19,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.impl.BasicDefaultVcsRootPolicy"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
+
+    <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
+                    serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
   </extensions>
 </idea-plugin>

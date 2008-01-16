@@ -17,9 +17,27 @@
       <interface-class>com.intellij.ide.todo.TodoConfiguration</interface-class>
       <implementation-class>com.intellij.ide.todo.TodoConfiguration</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.find.FindSettings</interface-class>
+      <implementation-class>com.intellij.find.impl.FindSettingsImpl</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
+    <component>
+      <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
+      <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.lookup.LookupManager</interface-class>
+      <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerImpl</implementation-class>
+      <headless-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</headless-implementation-class>
+      <skipForDummyProject/>
+    </component>
+
     <component>
       <implementation-class>com.intellij.psi.codeStyle.CodeStyleSettingsManager</implementation-class>
     </component>
@@ -45,6 +63,19 @@
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
       <implementation-class>com.intellij.openapi.module.impl.ModuleManagerImpl</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.find.FindManager</interface-class>
+      <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
+      <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
+      <skipForDummyProject/>
     </component>
   </project-components>
 

@@ -1,10 +1,6 @@
 <components>
   <application-components>
     <component>
-      <interface-class>com.intellij.find.FindSettings</interface-class>
-      <implementation-class>com.intellij.find.impl.FindSettingsImpl</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.tools.ToolManager</interface-class>
       <implementation-class>com.intellij.tools.ToolManager</implementation-class>
     </component>
@@ -30,12 +26,6 @@
     <component>
       <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
       <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.find.FindManager</interface-class>
-      <implementation-class>com.intellij.find.impl.FindManagerImpl</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>

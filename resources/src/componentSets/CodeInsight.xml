@@ -43,19 +43,8 @@
       <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.javadoc.JavaDocManager</interface-class>
       <implementation-class>com.intellij.codeInsight.javadoc.JavaDocManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.codeInsight.lookup.LookupManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.lookup.impl.LookupManagerImpl</implementation-class>
-      <headless-implementation-class>com.intellij.codeInsight.lookup.impl.TestLookupManager</headless-implementation-class>
       <skipForDummyProject/>
     </component>
     <component>

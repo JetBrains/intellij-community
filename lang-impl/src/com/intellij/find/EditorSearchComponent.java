@@ -593,7 +593,10 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
 
   private class VariantsCompletionAction extends AnAction {
     private VariantsCompletionAction() {
-      registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION).getShortcutSet(), mySearchField);
+      final AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION);
+      if (action != null) {
+        registerCustomShortcutSet(action.getShortcutSet(), mySearchField);
+      }
     }
 
     public void actionPerformed(final AnActionEvent e) {

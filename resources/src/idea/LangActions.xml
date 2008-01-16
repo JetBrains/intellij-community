@@ -1,0 +1,34 @@
+<component>
+  <actions>
+    <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
+
+    <!-- Search -->
+    <group id="SearchMenu" popup="true">
+      <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
+      <action id="Replace" class="com.intellij.openapi.editor.actions.ReplaceAction" icon="/actions/menu-replace.png"/>
+      <action id="FindNext" class="com.intellij.ide.actions.SearchAgainAction"/>
+      <action id="FindPrevious" class="com.intellij.ide.actions.SearchBackAction"/>
+      <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
+      <separator/>
+      <action id="FindUsages" class="com.intellij.find.actions.FindUsagesAction"/>
+      <action id="ShowUsages" class="com.intellij.find.actions.ShowUsagesAction"/>
+      <action id="FindUsagesInFile" class="com.intellij.find.actions.FindUsagesInFileAction"/>
+      <action id="HighlightUsagesInFile" class="com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction"/>
+      <group id="ShowRecentFindUsagesGroup" class="com.intellij.find.impl.ShowRecentFindUsagesGroup" popup="true"/>
+      <separator/>
+      <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
+      <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="EditMenu"/>
+    </group>
+
+    <group id="UsageView.Popup">
+      <reference ref="EditSource"/>
+      <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>
+      <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>
+      <separator/>
+      <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
+    </group>
+
+  </actions>
+</component>

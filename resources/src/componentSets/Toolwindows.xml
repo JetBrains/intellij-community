@@ -46,12 +46,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.usageView.UsageViewManager</interface-class>
-      <implementation-class>com.intellij.usageView.impl.UsageViewManagerImpl</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.palette.impl.PaletteManager</interface-class>
       <implementation-class>com.intellij.ide.palette.impl.PaletteManager</implementation-class>
       <skipForDummyProject/>

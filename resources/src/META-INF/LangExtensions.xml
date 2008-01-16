@@ -49,6 +49,9 @@
   <projectService serviceInterface="com.intellij.codeStyle.CodeStyleFacade"
                   serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleFacadeImpl"/>
 
+  <projectService serviceInterface="com.intellij.usages.UsageViewManager"
+                  serviceImplementation="com.intellij.usages.impl.UsageViewManagerImpl"/>
+
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
