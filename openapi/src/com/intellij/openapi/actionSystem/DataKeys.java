@@ -23,7 +23,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ExporterToTextFile;
-import com.intellij.ide.IdeView;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 
@@ -33,7 +32,6 @@ public final class DataKeys extends LangDataKeys {
   }
 
   public static final DataKey<ExporterToTextFile> EXPORTER_TO_TEXT_FILE = DataKey.create(DataConstants.EXPORTER_TO_TEXT_FILE);
-  public static final DataKey<IdeView> IDE_VIEW = DataKey.create(DataConstants.IDE_VIEW);
 
   @Deprecated
   public static final DataKey<ChangeList[]> CHANGE_LISTS = DataKey.create(DataConstants.CHANGE_LISTS);

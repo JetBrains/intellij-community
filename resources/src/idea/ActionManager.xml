@@ -66,18 +66,24 @@
       <action id="GenerateSuperMethodCall" class="com.intellij.codeInsight.generation.actions.GenerateSuperMethodCallAction"/>
     </group>
 
-    <group id="NewGroup" popup="true">
+    <group id="NewGroup1" popup="true">
       <action id="NewClass" class="com.intellij.ide.actions.CreateClassAction"/>
       <action id="NewInterface" class="com.intellij.ide.actions.CreateInterfaceAction"/>
       <action id="NewEnum" class="com.intellij.ide.actions.CreateEnumAction"/>
       <action id="NewAnnotationType" class="com.intellij.ide.actions.CreateAnnotationTypeAction"/>
       <action id="NewHtmlType" class="com.intellij.ide.actions.CreateHtmlAction"/>
       <action id="NewXhtmlType" class="com.intellij.ide.actions.CreateXhtmlAction"/>
-      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
+
+      <add-to-group group-id="NewGroup" anchor="first"/>
+    </group>
+
+    <group id="NewGroup2">
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <separator/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
       <separator/>
+
+      <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
@@ -143,10 +149,6 @@
 
       <add-to-group group-id="EditSelectGroup" anchor="last"/>
     </group>
-
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
-      <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
-    </action>
 
     <group id="EditBookmarksGroup">
       <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>

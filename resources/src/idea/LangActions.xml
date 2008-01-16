@@ -30,5 +30,12 @@
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
     </group>
 
+    <group id="NewGroup" popup="true">
+      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
+    </group>
+
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="EditCreateDeleteGroup" anchor="first"/>
+    </action>
   </actions>
 </component>

@@ -72,7 +72,7 @@ public abstract class CreateElementActionBase extends AnAction {
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
-    final IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
+    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (view == null) {
       return;
     }
@@ -99,7 +99,7 @@ public abstract class CreateElementActionBase extends AnAction {
       return;
     }
 
-    final IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
+    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (view == null || view.getDirectories().length == 0) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

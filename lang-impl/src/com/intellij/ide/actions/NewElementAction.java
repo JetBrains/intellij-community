@@ -28,7 +28,7 @@ public class NewElementAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-    IdeView ideView = DataKeys.IDE_VIEW.getData(dataContext);
+    IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (ideView == null) {
       presentation.setEnabled(false);
       return;
