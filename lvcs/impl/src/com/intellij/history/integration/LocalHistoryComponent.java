@@ -5,6 +5,7 @@ import com.intellij.history.core.ILocalVcs;
 import com.intellij.history.core.LocalVcs;
 import com.intellij.history.core.ThreadSafeLocalVcs;
 import com.intellij.history.core.storage.Storage;
+import com.intellij.history.core.storage.StorageChecker;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -84,14 +85,17 @@ public class LocalHistoryComponent extends LocalHistory implements ProjectCompon
 
   protected void initVcs() {
     myStorage = new Storage(getStorageDir());
+
+    checkStorageIntegrity();
+
     myVcsImpl = new LocalVcs(myStorage);
     myVcs = new ThreadSafeLocalVcs(myVcsImpl);
   }
 
-  //private void checkStorageIntegrity() {
-  //  if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
-  //  myStorage.checkIntegrity();
-  //}
+  protected void checkStorageIntegrity() {
+    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return;
+    StorageChecker.checkIntegrity(myStorage);
+  }
 
   protected void initService() {
     myGateway = new IdeaGateway(myProject);
