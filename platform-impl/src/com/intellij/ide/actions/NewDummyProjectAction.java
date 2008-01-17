@@ -18,6 +18,6 @@ public class NewDummyProjectAction extends AnAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setVisible(System.getProperty("idea.platform.prefix").equals("Platform"));
+    e.getPresentation().setVisible("Platform".equals(System.getProperty("idea.platform.prefix")));
   }
 }
