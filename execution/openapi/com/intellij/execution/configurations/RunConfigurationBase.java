@@ -45,7 +45,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
   private Map<Class<? extends RunConfigurationExtension>, Object> myExtensionSettings =
     new HashMap<Class<? extends RunConfigurationExtension>, Object>();
 
-  protected RunConfigurationBase(final Project project, final ConfigurationFactory factory, final String name) {
+  protected RunConfigurationBase(Project project, ConfigurationFactory factory, String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
