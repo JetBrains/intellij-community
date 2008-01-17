@@ -149,14 +149,6 @@ public class CodeInsightSettings implements NamedJDOMExternalizable, Cloneable, 
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_BACKSPACE)));
       actionManager.setActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START, new BackspaceHandler(actionManager.getActionHandler(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START)));
 
-      final BraceMatcher defaultBraceMatcher = new DefaultBraceMatcher();
-      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.JAVA,defaultBraceMatcher);
-      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XML,defaultBraceMatcher);
-
-      HtmlBraceMatcher braceMatcher = new HtmlBraceMatcher();
-      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.HTML,braceMatcher);
-      BraceMatchingUtil.registerBraceMatcher(StdFileTypes.XHTML,braceMatcher);
-
       TypedAction typedAction = actionManager.getTypedAction();
       typedAction.setupHandler(new TypedHandler(typedAction.getHandler()));
     }
