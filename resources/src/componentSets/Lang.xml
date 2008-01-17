@@ -163,6 +163,27 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleGeneralHighlightingPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.WholeFileLocalInspectionsPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory</implementation-class>
+    </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
+    </component>
   </project-components>
 
   <module-components>

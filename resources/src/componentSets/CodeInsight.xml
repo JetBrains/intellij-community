@@ -40,13 +40,7 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleGeneralHighlightingPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.VisibleLineMarkersPassFactory</implementation-class>
@@ -55,28 +49,13 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.PostHighlightingPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.WholeFileLocalInspectionsPassFactory</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.OverriddenMarkersPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
     </component>
 
     <component>
