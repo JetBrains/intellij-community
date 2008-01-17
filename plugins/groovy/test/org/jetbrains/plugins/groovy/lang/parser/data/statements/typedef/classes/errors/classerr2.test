@@ -43,44 +43,47 @@ Groovy script
       PsiWhiteSpace(' ')
       PsiElement(for)('for')
       PsiElement(new line)('\n\n  ')
-      Open block
-        PsiElement({)('{')
-        IF statement
-          PsiElement(if)('if')
-          PsiWhiteSpace(' ')
-          PsiElement(()('(')
-          Literal
-            PsiElement(true)('true')
-          PsiElement())(')')
-          PsiWhiteSpace(' ')
-          Block statement
-            Open block
-              PsiElement({)('{')
-              PsiWhiteSpace('\n\n  ')
-              Method
-                Modifiers
-                  Annotation
-                    PsiElement(@)('@')
-                    Reference element
-                      PsiElement(identifier)('Property')
-                    PsiWhiteSpace(' ')
-                    Annotation arguments
-                      <empty list>
-                  PsiElement(def)('def')
-                PsiWhiteSpace(' ')
-                PsiElement(identifier)('a')
-                PsiWhiteSpace(' ')
-                PsiElement(()('(')
-                Parameter list
-                  <empty list>
-                PsiElement())(')')
-                PsiWhiteSpace(' ')
-                Throw clause
-                  <empty list>
-                Open block
-                  PsiElement({)('{')
-                  PsiElement(})('}')
-              PsiElement(new line)('\n  ')
-              PsiElement(})('}')
-        PsiElement(new line)('\n')
-        PsiElement(})('}')
+      Class initializer
+        Modifiers
+          <empty list>
+        Open block
+          PsiElement({)('{')
+          IF statement
+            PsiElement(if)('if')
+            PsiWhiteSpace(' ')
+            PsiElement(()('(')
+            Literal
+              PsiElement(true)('true')
+            PsiElement())(')')
+            PsiWhiteSpace(' ')
+            Block statement
+              Open block
+                PsiElement({)('{')
+                PsiWhiteSpace('\n\n  ')
+                Method
+                  Modifiers
+                    Annotation
+                      PsiElement(@)('@')
+                      Reference element
+                        PsiElement(identifier)('Property')
+                      PsiWhiteSpace(' ')
+                      Annotation arguments
+                        <empty list>
+                    PsiElement(def)('def')
+                  PsiWhiteSpace(' ')
+                  PsiElement(identifier)('a')
+                  PsiWhiteSpace(' ')
+                  PsiElement(()('(')
+                  Parameter list
+                    <empty list>
+                  PsiElement())(')')
+                  PsiWhiteSpace(' ')
+                  Throw clause
+                    <empty list>
+                  Open block
+                    PsiElement({)('{')
+                    PsiElement(})('}')
+                PsiElement(new line)('\n  ')
+                PsiElement(})('}')
+          PsiElement(new line)('\n')
+          PsiElement(})('}')

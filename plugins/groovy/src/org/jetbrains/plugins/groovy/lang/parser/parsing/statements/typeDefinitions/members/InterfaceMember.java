@@ -66,17 +66,18 @@ public class InterfaceMember implements GroovyElementTypes {
     }
     typeDeclStartMarker.rollbackTo();
 
-    //static compound statement
+    // static class initializer
     if (ParserUtils.getToken(builder, kSTATIC)) {
       if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
         builder.error(GroovyBundle.message("interface.must.has.no.static.compound.statemenet"));
-        return STATIC_COMPOUND_STATEMENT;
+        return CLASS_INITIALIZER;
       } else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
         return WRONGWAY;
       }
     }
 
+    // class initializer
     if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
       builder.error(GroovyBundle.message("interface.must.has.no.compound.statemenet"));
       return COMPOUND_STATEMENT;

@@ -17,9 +17,11 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.PsiElement;
 
 /**
@@ -38,5 +40,8 @@ public interface GrTypeDefinitionBody extends GroovyPsiElement {
 
   @Nullable
   PsiElement getRBrace();
+
+  @NotNull
+  GrClassInitializer[] getInitializers();
 
 }

@@ -131,6 +131,7 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (elem.equals(VARIABLE)) return new GrVariableImpl(node);
 
     if (elem.equals(FIELD)) return new GrFieldImpl(node);
+    if (elem.equals(CLASS_INITIALIZER)) return new GrClassInitializerImpl(node);
 
     //type definitions
     if (elem.equals(CLASS_DEFINITION)) return new GrClassDefinitionImpl(node);

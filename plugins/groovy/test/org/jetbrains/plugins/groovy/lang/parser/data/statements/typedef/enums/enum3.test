@@ -79,17 +79,20 @@ Groovy script
                 PsiElement({)('{')
                 PsiElement(})('}')
             PsiElement(new line)('\n    ')
-            Open block
-              PsiElement({)('{')
-              Assignment expression
-                Reference expression
-                  PsiElement(identifier)('a')
-                PsiWhiteSpace(' ')
-                PsiElement(=)('=')
-                PsiWhiteSpace(' ')
-                Literal
-                  PsiElement(Integer)('2')
-              PsiElement(})('}')
+            Class initializer
+              Modifiers
+                <empty list>
+              Open block
+                PsiElement({)('{')
+                Assignment expression
+                  Reference expression
+                    PsiElement(identifier)('a')
+                  PsiWhiteSpace(' ')
+                  PsiElement(=)('=')
+                  PsiWhiteSpace(' ')
+                  Literal
+                    PsiElement(Integer)('2')
+                PsiElement(})('}')
             PsiElement(new line)('\n    ')
             Variable definitions
               Modifiers

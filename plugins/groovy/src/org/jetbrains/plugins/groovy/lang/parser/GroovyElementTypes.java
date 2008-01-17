@@ -194,7 +194,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes {
   GroovyElementType CATCH_CLAUSE = new GroovyElementType("catch clause");
   GroovyElementType FINALLY_CLAUSE = new GroovyElementType("finally clause");
   GroovyElementType SYNCHRONIZED_STATEMENT = new GroovyElementType("synchronized block statement");
-  GroovyElementType STATIC_COMPOUND_STATEMENT = new GroovyElementType("static compound statement");
+  GroovyElementType CLASS_INITIALIZER = new GroovyElementType("static compound statement");
   GroovyElementType COMPOUND_STATEMENT = new GroovyElementType("compound statement");
 
   GroovyElementType VARIABLE_DEFINITION_ERROR = new GroovyElementType("variable definitions with errors");

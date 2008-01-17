@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -358,7 +359,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
     if (!isInterface()) {
       return new PsiClassType[]{
-        getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
+          getManager().getElementFactory().createTypeByFQClassName("groovy.lang.GroovyObjectSupport", getResolveScope())
       };
     }
 
@@ -434,6 +435,16 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     }
 
     return GrField.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  public GrClassInitializer[] getInitializersGroovy() {
+    GrTypeDefinitionBody body = getBody();
+    if (body != null) {
+      return body.getInitializers();
+    }
+
+    return GrClassInitializer.EMPTY_ARRAY;
   }
 
   @NotNull

@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -77,6 +78,11 @@ public class GrTypeDefinitionBodyImpl extends GroovyPsiElementImpl implements Gr
   @Nullable
   public PsiElement getRBrace() {
     return findChildByType(GroovyTokenTypes.mRCURLY);
+  }
+
+  @NotNull
+  public GrClassInitializer[] getInitializers() {
+    return findChildrenByClass(GrClassInitializer.class);
   }
 
 

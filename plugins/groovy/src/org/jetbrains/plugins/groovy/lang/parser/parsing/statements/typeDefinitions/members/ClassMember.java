@@ -44,10 +44,6 @@ public class ClassMember implements GroovyElementTypes {
       declMarker.drop();
       return declType;
     }
-//    if (DeclarationStart.parse(builder)) {
-//      declMarker.rollbackTo();
-//      return Declaration.parse(builder);
-//    }
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
@@ -64,18 +60,29 @@ public class ClassMember implements GroovyElementTypes {
     typeDeclStartMarker.rollbackTo();
 
     //static compound statement
-    if (ParserUtils.getToken(builder, kSTATIC)) {
+    PsiBuilder.Marker initMarker = builder.mark();
+    if (kSTATIC == builder.getTokenType()) {
+      PsiBuilder.Marker modMarker = builder.mark();
+      ParserUtils.getToken(builder, kSTATIC);
+      modMarker.done(MODIFIERS);
       if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
-        return STATIC_COMPOUND_STATEMENT;
+        initMarker.done(CLASS_INITIALIZER);
+        return CLASS_INITIALIZER;
       } else {
+        initMarker.rollbackTo();
+        ParserUtils.getToken(builder, kSTATIC);
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
         return WRONGWAY;
       }
     }
 
+    builder.mark().done(MODIFIERS);
     if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
+      initMarker.done(CLASS_INITIALIZER);
       return COMPOUND_STATEMENT;
     }
+
+    initMarker.rollbackTo();
 
     return WRONGWAY;
   }

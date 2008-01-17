@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
@@ -42,6 +43,9 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   @NotNull
   GrField[] getFields();
+
+  @NotNull
+  GrClassInitializer[] getInitializersGroovy();
 
   @NotNull
   public GrMembersDeclaration[] getMemberDeclarations();

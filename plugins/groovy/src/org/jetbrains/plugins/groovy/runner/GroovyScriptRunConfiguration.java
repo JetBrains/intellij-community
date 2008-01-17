@@ -31,15 +31,14 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.plugins.groovy.config.GroovyFacet;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   private GroovyScriptConfigurationFactory factory;
@@ -47,6 +46,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public String scriptParams;
   public String scriptPath;
   public String workDir = ".";
+  public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
+  public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
+  public final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project, true), factory);
@@ -100,10 +102,10 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   }
 
   public RunProfileState getState(
-          DataContext context,
-          RunnerInfo runnerInfo,
-          RunnerSettings runnerSettings,
-          ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+      DataContext context,
+      RunnerInfo runnerInfo,
+      RunnerSettings runnerSettings,
+      ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     GroovyGrailsConfiguration groovyConfig = GroovyGrailsConfiguration.getInstance();
     if (!groovyConfig.isGroovyConfigured(null)) {
       throw new ExecutionException("Groovy is not configured");
@@ -124,13 +126,9 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
       protected JavaParameters createJavaParameters() throws ExecutionException {
         JavaParameters params = new JavaParameters();
 
-        params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
-
-        params.setWorkingDirectory(getAbsoluteWorkDir());
-        params.getVMParametersList().addParametersString(vmParams);
-        params.getProgramParametersList().add(scriptPath);
-        params.getProgramParametersList().addParametersString(scriptParams);
-        params.setMainClass("groovy.lang.GroovyShell");
+        configureJavaParams(params, module);
+        configureStarter(params);
+        configureScript(params);
 
         return params;
       }
@@ -139,6 +137,61 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     state.setModulesToCompile(getModules());
     return state;
+  }
+
+  private void configureScript(JavaParameters params) {
+    // add script
+    params.getProgramParametersList().add(scriptPath);
+
+    // add script parameters
+    params.getProgramParametersList().addParametersString(scriptParams);
+  }
+
+  private void configureStarter(JavaParameters params) {
+    GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
+
+    // add GroovyStarter parameters
+    params.getProgramParametersList().add("--main");
+    params.getProgramParametersList().add(GROOVY_MAIN);
+    params.getProgramParametersList().add("--conf");
+    params.getProgramParametersList().add(config.getGroovyInstallPath() + GROOVY_STARTER_CONF);
+    params.getProgramParametersList().add("--classpath");
+
+    // Clear module libraries from JDK's occurrences
+    List<String> list = params.getClassPath().getPathList();
+    ProjectJdk jdk = params.getJdk();
+    StringBuffer buffer = new StringBuffer();
+    if (jdk != null) {
+      String jdkUrl = jdk.getHomeDirectory().getPresentableUrl();
+      for (String s : list) {
+        if (!s.contains(jdkUrl)) {
+          buffer.append(s).append(File.pathSeparator);
+        }
+      }
+    }
+
+    params.getProgramParametersList().add(workDir + File.pathSeparator + buffer.toString());
+    params.getProgramParametersList().add("--debug");
+  }
+
+  private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
+
+    params.configureByModule(module, JavaParameters.JDK_AND_CLASSES);
+    params.setWorkingDirectory(getAbsoluteWorkDir());
+
+    GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
+
+    //add starter configuration parameters
+    String groovyHome = config.getGroovyInstallPath();
+    if (groovyHome != null) {
+      params.getVMParametersList().addParametersString("-Dgroovy.home=" + groovyHome);
+    }
+
+    // add user parameters
+    params.getVMParametersList().addParametersString(vmParams);
+
+    // set starter class
+    params.setMainClass(GROOVY_STARTER);
   }
 
   public Module getModule() {
