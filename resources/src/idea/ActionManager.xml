@@ -222,23 +222,25 @@
       <add-to-group group-id="GoToTarget" anchor="first"/>
     </group>
 
-    <group id="GoToMenuEx">
+    <group id="GoToCodeGroup">
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
       <separator/>
-      <action id="GotoNextError" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction"/>
-      <action id="GotoPreviousError" class="com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction"/>
-      <separator/>
+
+      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>
+    </group>
+
+    <group id="GoToMenuEx">
       <action id="MethodDown" class="com.intellij.codeInsight.navigation.actions.MethodDownAction"/>
       <action id="MethodUp" class="com.intellij.codeInsight.navigation.actions.MethodUpAction"/>
       <separator/>
       <action id="GotoNextBookmark" class="com.intellij.ide.bookmarks.actions.NextBookmarkAction"/>
       <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
 
-      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
+      <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
     </group>
 
     <group id="CodeMenu" class="com.intellij.codeInsight.actions.CodeGroup" popup="true">

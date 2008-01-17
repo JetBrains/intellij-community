@@ -53,6 +53,16 @@
       <add-to-group group-id="ViewMenu" anchor="last"/>
     </group>
 
+    <!-- Go To -->
+    <group id="GoToErrorGroup">
+      <separator/>
+      <action id="GotoNextError" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextErrorAction"/>
+      <action id="GotoPreviousError" class="com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction"/>
+      <separator/>
+
+      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
+    </group>
+
     <!-- Analyze -->
     <group id="AnalyzeMenu" popup="true">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
