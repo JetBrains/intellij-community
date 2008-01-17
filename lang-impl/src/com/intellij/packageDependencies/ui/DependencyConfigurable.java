@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -250,7 +251,7 @@ public class DependencyConfigurable extends BaseConfigurable {
 
     public void addRow() {
       ArrayList<DependencyRule> newList = new ArrayList<DependencyRule>(getItems());
-      final NamedScope scope = DependencyValidationManager.getInstance(myProject).getProjectProductionScope();
+      final NamedScope scope = DefaultScopesProvider.getInstance(myProject).getAllScope();
       newList.add(new DependencyRule(scope, scope, myDenyRule));
       setItems(newList);
     }
