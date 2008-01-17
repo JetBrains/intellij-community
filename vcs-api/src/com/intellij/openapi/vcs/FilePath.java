@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.Charset;
 
+/**
+ * Represents a path to a (possibly non-existing) file on disk or in a VCS repository.
+ */
 public interface FilePath {
   VirtualFile getVirtualFile();
   VirtualFile getVirtualFileParent();

@@ -30,17 +30,62 @@ public interface VcsContextFactory {
 
   VcsContext createContextOn(final AnActionEvent event);
 
+  /**
+   * Creates a FilePath corresponding to the specified virtual file.
+   *
+   * @param virtualFile the file for which the FilePath should be created.
+   * @return the FilePath instance.
+   */
   FilePath createFilePathOn(VirtualFile virtualFile);
 
+  /**
+   * Creates a FilePath corresponding to the specified java.io.File.
+   *
+   * @param file the file for which the FilePath should be created.
+   * @return the FilePath instance.
+   */
   FilePath createFilePathOn(File file);
 
+  /**
+   * Creates a FilePath corresponding to the specified java.io.File. Assumes that the file does not exist in the filesystem
+   * and does not try to find the corresponding VirtualFile, which provides a performance benefit.
+   *
+   * @param file the file for which the FilePath should be created.
+   * @param isDirectory whether {@code file} specifies a file or a directory.
+   * @return the FilePath instance.
+   */
   FilePath createFilePathOnDeleted(File file, boolean isDirectory);
 
+  /**
+   * Creates a FilePath corresponding to the specified java.io.File. If the file does not exist, uses the value
+   * of the {@code isDirectory} parameter to determine if the file is a directory.
+   *
+   * @param file the file for which the FilePath should be created.
+   * @param isDirectory whether {@code file} specifies a file or a directory.
+   * @return the FilePath instance.
+   */
   FilePath createFilePathOn(File file, boolean isDirectory);
 
+  /**
+   * Creates a FilePath corresponding to the specified path in a VCS repository. Does not try to locate
+   * the file in the local filesystem.
+   *
+   * @param path the repository path for which the FilePath should be created.
+   * @param isDirectory whether {@code file} specifies a file or a directory.
+   * @return the FilePath instance.
+   */
   @NotNull
   FilePath createFilePathOnNonLocal(String path, boolean isDirectory);
 
+  /**
+   * Creates a FilePath corresponding to a file with the specified name in the specified directory.
+   * Assumes that the file does not exist in the filesystem and does not try to find the corresponding VirtualFile,
+   * which provides a performance benefit.
+   *
+   * @param parent the containing directory for the file.
+   * @param name   the name of the file.
+   * @return the FilePath instance.
+   */
   FilePath createFilePathOn(VirtualFile parent, String name);
 
   LocalChangeList createLocalChangeList(Project project, @NotNull final String name);
