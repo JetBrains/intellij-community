@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.concurrency.JobUtil;
 import com.intellij.injected.editor.DocumentWindow;
@@ -255,7 +255,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       }
 
       @Override public void visitErrorElement(PsiErrorElement element) {
-        HighlightInfo info = HighlightVisitorImpl.createErrorElementInfo(element);
+        HighlightInfo info = DefaultHighlightVisitor.createErrorElementInfo(element);
         TextRange editable = documentRange.intersectWithEditable(new TextRange(info.startOffset, info.endOffset));
         if (editable==null) return; //do not highlight generated header/footer
         Annotation annotation = fixingOffsetsHolder.createErrorAnnotation(editable, info.description);

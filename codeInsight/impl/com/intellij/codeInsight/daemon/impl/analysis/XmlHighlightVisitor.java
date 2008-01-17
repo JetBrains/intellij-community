@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -18,12 +17,10 @@ import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -69,7 +66,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
 
   private static boolean ourDoJaxpTesting;
 
-  @NonNls private static final String AMP_ENTITY = "&amp;";
   @NonNls private static final String TAGLIB_DIRECTIVE = "taglib";
   @NonNls private static final String URI_ATT = "uri";
   @NonNls private static final String TAGDIR_ATT = "tagdir";
@@ -266,37 +262,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
         QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, key);
       }
       addToResults(highlightInfo);
-    }
-  }
-
-  public static void registerXmlErrorQuickFix(final PsiErrorElement element, final HighlightInfo highlightInfo) {
-    final String text = element.getErrorDescription();
-    if (text != null && text.startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
-        @NotNull
-        public String getText() {
-          return XmlErrorMessages.message("escape.ampersand.quickfix");
-        }
-
-        @NotNull
-        public String getFamilyName() {
-          return getText();
-        }
-
-        public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-          return true;
-        }
-
-        public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-          if (!CodeInsightUtil.prepareFileForWrite(file)) return;
-          final int textOffset = element.getTextOffset();
-          editor.getDocument().replaceString(textOffset,textOffset + 1,AMP_ENTITY);
-        }
-
-        public boolean startInWriteAction() {
-          return true;
-        }
-      });
     }
   }
 

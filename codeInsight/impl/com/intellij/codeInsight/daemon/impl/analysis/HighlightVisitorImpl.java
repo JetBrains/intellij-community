@@ -7,38 +7,24 @@ import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LanguageAnnotators;
-import com.intellij.lang.StdLanguages;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspExpression;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +51,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   private final Map<String, Pair<PsiImportStatementBase, PsiClass>> mySingleImportedClasses = new THashMap<String, Pair<PsiImportStatementBase, PsiClass>>();
   private final Map<String, Pair<PsiImportStaticReferenceElement, PsiField>> mySingleImportedFields = new THashMap<String, Pair<PsiImportStaticReferenceElement, PsiField>>();
-  private final AnnotationHolderImpl myAnnotationHolder = new AnnotationHolderImpl();
   private volatile boolean released = true;
 
   @SuppressWarnings({"UnusedDeclaration"}) //in plugin.xml
@@ -90,7 +75,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       throw new UnsupportedOperationException();
     }
     myHolder = holder;
-    assert !myAnnotationHolder.hasAnnotations() : myAnnotationHolder;
 
     if (LOG.isDebugEnabled()) {
       LOG.assertTrue(element.isValid());
@@ -166,7 +150,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     mySingleImportedClasses.clear();
     mySingleImportedFields.clear();
     myParameterIsReassigned.clear();
-    myAnnotationHolder.clear();
     myXmlVisitor.clearResult();
 
     myRefCountHolder = null;
@@ -183,25 +166,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       List<HighlightInfo> result = myXmlVisitor.getResult();
       myHolder.addAll(result);
       myXmlVisitor.clearResult();
-    }
-
-    runAnnotators(element);
-  }
-
-  private void runAnnotators(final PsiElement element) {
-    List<Annotator> annotators = LanguageAnnotators.INSTANCE.allForLanguage(element.getLanguage());
-    if (!annotators.isEmpty()) {
-      //noinspection ForLoopReplaceableByForEach
-      for (int i = 0; i < annotators.size(); i++) {
-        Annotator annotator = annotators.get(i);
-        annotator.annotate(element, myAnnotationHolder);
-      }
-      if (myAnnotationHolder.hasAnnotations()) {
-        for (Annotation annotation : myAnnotationHolder) {
-          myHolder.add(HighlightInfo.fromAnnotation(annotation));
-        }
-        myAnnotationHolder.clear();
-      }
     }
   }
 
@@ -349,128 +313,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
       }
     }
-  }
-
-  @Override public void visitErrorElement(PsiErrorElement element) {
-    if(filterJspErrors(element)) return;
-
-    if (PsiTreeUtil.getParentOfType(element, PsiDocComment.class) != null) return;
-
-    HighlightInfo info = createErrorElementInfo(element);
-    myHolder.add(info);
-  }
-
-  public static HighlightInfo createErrorElementInfo(final PsiErrorElement element) {
-    TextRange range = element.getTextRange();
-    if (range.getLength() > 0) {
-      final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range, element.getErrorDescription());
-      if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
-        XmlHighlightVisitor.registerXmlErrorQuickFix(element,highlightInfo);
-      }
-      return highlightInfo;
-    }
-    int offset = range.getStartOffset();
-    PsiFile containingFile = element.getContainingFile();
-    int fileLength = containingFile.getTextLength();
-    FileViewProvider viewProvider = containingFile.getViewProvider();
-    PsiElement elementAtOffset = viewProvider.findElementAt(offset, viewProvider.getBaseLanguage());
-    String text = elementAtOffset == null ? null : elementAtOffset.getText();
-    HighlightInfo info;
-    if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      int start = offset;
-      PsiElement prevElement = containingFile.findElementAt(offset - 1);
-      if (offset > 0 && prevElement != null && prevElement.getText().equals("(") && StringUtil.startsWithChar(text, ')')) {
-        start = offset - 1;
-      }
-      int end = offset + 1;
-      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
-      info.navigationShift = offset - start;
-    }
-    else {
-      int start;
-      int end;
-      if (offset > 0) {
-        start = offset - 1;
-        end = offset;
-      }
-      else {
-        start = offset;
-        end = offset < fileLength ? offset + 1 : offset;
-      }
-      info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, start, end, element.getErrorDescription());
-      info.isAfterEndOfLine = true;
-    }
-    return info;
-  }
-
-  private static boolean filterJspErrors(final PsiErrorElement element) {
-    if (element.getParent().getLanguage() == StdLanguages.JAVA) return false;
-    PsiElement nextSibling = element.getNextSibling();
-
-    if (nextSibling != null) {
-      ASTNode node = nextSibling.getNode();
-      if (nextSibling instanceof PsiErrorElement ||
-          node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
-        nextSibling = nextSibling.getNextSibling();
-      }
-    }
-
-    final PsiFile containingFile = element.getContainingFile();
-    if (!(containingFile instanceof PsiFileImpl) || !((PsiFileImpl)containingFile).isTemplateDataFile()) return false;
-
-    if (nextSibling == null) {
-      if (PsiUtil.isInJspFile(containingFile)) {
-        final JspxFileViewProvider viewProvider = (JspxFileViewProvider)containingFile.getViewProvider();
-        nextSibling = viewProvider.findElementAt(element.getTextOffset() + 1, viewProvider.getTemplateDataLanguage());
-
-        if (containingFile.getFileType() == StdFileTypes.JSPX) {
-          final ELExpressionHolder expressionHolder = PsiTreeUtil.getParentOfType(nextSibling, ELExpressionHolder.class);
-
-          if (expressionHolder != null) {
-            return true;
-          }
-        }
-      }
-    }
-
-    while (nextSibling instanceof PsiWhiteSpace) {
-      nextSibling = nextSibling.getNextSibling();
-    }
-
-    final PsiElement psiElement = nextSibling == null ? null : PsiTreeUtil.findCommonParent(nextSibling, element);
-    final boolean nextIsOuterLanguageElement =
-      nextSibling instanceof OuterLanguageElement || nextSibling instanceof JspExpression || nextSibling instanceof ELExpressionHolder;
-    if (nextIsOuterLanguageElement && psiElement != null && !(psiElement instanceof PsiFile) // error is not inside jsp text
-       ) {
-      return !(nextSibling.getPrevSibling() instanceof XmlTag);
-    }
-
-    final XmlAttributeValue parentOfType = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if(parentOfType != null && parentOfType.getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null) {
-      return true;
-    }
-
-    PsiElement prevLeaf = PsiTreeUtil.prevLeaf(element, true);
-    while (prevLeaf instanceof PsiWhiteSpace) {
-      prevLeaf = prevLeaf.getPrevSibling();
-    }
-
-    if (prevLeaf instanceof OuterLanguageElement &&
-        prevLeaf.getTextRange().getEndOffset() != element.getContainingFile().getTextLength()
-       ) {
-      return true;
-    }
-
-    PsiElement grandPrevLeaf = prevLeaf != null ? PsiTreeUtil.prevLeaf(prevLeaf):null;
-    if (grandPrevLeaf != null && containingFile.getFileType() == StdFileTypes.JSPX) {
-      final ELExpressionHolder languageElement = PsiTreeUtil.getParentOfType(grandPrevLeaf, ELExpressionHolder.class);
-      if (languageElement != null && PsiTreeUtil.findCommonParent(grandPrevLeaf, element, languageElement.getFirstChild()) != languageElement) {
-        return true;
-      }
-    }
-
-    return element.getParent().getUserData(XmlHighlightVisitor.DO_NOT_VALIDATE_KEY) != null ||
-           nextIsOuterLanguageElement && prevLeaf == null;
   }
 
   @Override public void visitEnumConstant(PsiEnumConstant enumConstant) {
