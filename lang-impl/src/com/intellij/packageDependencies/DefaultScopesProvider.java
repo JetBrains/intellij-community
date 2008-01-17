@@ -7,16 +7,13 @@ package com.intellij.packageDependencies;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DefaultScopesProvider implements CustomScopesProvider{
+public class DefaultScopesProvider implements CustomScopesProvider {
   private NamedScope myAllScope;
 
 
