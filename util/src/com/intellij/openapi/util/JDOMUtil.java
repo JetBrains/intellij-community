@@ -193,6 +193,28 @@ public class JDOMUtil {
     }
   }
 
+  public static String legalizeText(final String str) {
+    StringReader reader = new StringReader(str);
+    StringBuffer result = new StringBuffer();
+    while(true) {
+      try {
+        int each = reader.read();
+        if (each == -1) break;
+
+        if (Verifier.isXMLCharacter(each)) {
+          result.append((char)each);
+        } else {
+          result.append("0x").append(Long.toHexString(each).toUpperCase());
+        }
+      }
+      catch (IOException e) {
+        return result.toString();
+      }
+    }
+
+    return result.toString();
+  }
+
 
   private static class EmptyTextFilter implements Filter {
     public boolean matches(Object obj) {

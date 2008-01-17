@@ -105,7 +105,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
         //noinspection HardCodedStringLiteral
         Element p = new Element("pre");
         html.addContent(p);
-        p.setText(tipBuilder.toString());
+        p.setText(JDOMUtil.legalizeText(tipBuilder.toString()));
       }
       finally {
         StringBuilderSpinAllocator.dispose(tipBuilder);
