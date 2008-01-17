@@ -81,7 +81,7 @@ public class Storage implements Disposable, Forceable {
     return new Storage(storageFilePath, recordsTable, dataTable);
   }
 
-  public Storage(String path, RecordsTable recordsTable, DataTable dataTable) {
+  private Storage(String path, RecordsTable recordsTable, DataTable dataTable) {
     myRecordsTable = recordsTable;
     myDataTable = dataTable;
 
@@ -177,6 +177,28 @@ public class Storage implements Disposable, Forceable {
     return writeStream(createNewRecord());
   }
 
+  public void appendBytes(int record, byte[] bytes) {
+    int delta = bytes.length;
+    if (delta == 0) return;
+
+    synchronized (lock) {
+      int capacity = myRecordsTable.getCapacity(record);
+      int oldSize = myRecordsTable.getSize(record);
+      int newSize = oldSize + delta;
+      if (newSize > capacity) {
+        byte[] newbytes = new byte[newSize];
+        System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
+        System.arraycopy(bytes, 0, newbytes, oldSize, delta);
+        writeBytes(record, newbytes);
+      }
+      else {
+        long address = myRecordsTable.getAddress(record) + oldSize;
+        myDataTable.writeBytes(address, bytes);
+        myRecordsTable.setSize(record, newSize);
+      }
+    }
+  }
+
   public void writeBytes(int record, byte[] bytes) {
     synchronized (lock) {
       final int requiredLength = bytes.length;
@@ -220,6 +242,10 @@ public class Storage implements Disposable, Forceable {
   
   public StorageDataOutput writeStream(final int record) {
     return new StorageDataOutput(this, record);
+  }
+
+  public AppenderStream appendStream(int record) {
+    return new AppenderStream(this, record);
   }
 
   public DataInputStream readStream(int record) {
@@ -266,6 +292,26 @@ public class Storage implements Disposable, Forceable {
     public void close() throws IOException {
       super.close();
       myStorage.writeBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+    }
+
+    public int getRecordId() {
+      return myRecordId;
+    }
+  }
+
+  public static class AppenderStream extends DataOutputStream implements RecordDataOutput {
+    private final Storage myStorage;
+    private final int myRecordId;
+
+    public AppenderStream(Storage storage, int recordId) {
+      super(new ByteArrayOutputStream());
+      myStorage = storage;
+      myRecordId = recordId;
+    }
+
+    public void close() throws IOException {
+      super.close();
+      myStorage.appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
     }
 
     public int getRecordId() {
