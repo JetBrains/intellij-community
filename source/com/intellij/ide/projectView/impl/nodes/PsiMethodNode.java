@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -39,5 +40,20 @@ public class PsiMethodNode extends BasePsiNode<PsiMethod>{
 
   public int getWeight() {
     return isConstructor() ? 40 : 50;
+  }
+
+  @Override
+  public String getTitle() {
+    final PsiMethod method = getValue();
+    if (method != null) {
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        return aClass.getQualifiedName();
+      }
+      else {
+        return method.toString();
+      }
+    }
+    return super.getTitle();
   }
 }

@@ -1,9 +1,8 @@
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.util.ui.Tree;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;

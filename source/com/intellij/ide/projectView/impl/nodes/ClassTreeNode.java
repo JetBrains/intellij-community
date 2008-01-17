@@ -79,4 +79,13 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
   public int getWeight() {
     return 20;
   }
+
+  @Override
+  public String getTitle() {
+    final PsiClass psiClass = getValue();
+    if (psiClass != null) {
+      return psiClass.getQualifiedName();
+    }
+    return super.getTitle();
+  }
 }

@@ -18,11 +18,11 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,5 +158,10 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
    */
   public boolean canHaveChildrenMatching(Condition<PsiFile> condition) {
     return true;
+  }
+
+  @Nullable
+  public String getTitle() {
+    return null;
   }
 }

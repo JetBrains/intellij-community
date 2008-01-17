@@ -48,9 +48,9 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
 
 
 public abstract class AbstractProjectViewPane implements JDOMExternalizable, DataProvider, ProjectComponent, Disposable {

@@ -45,4 +45,13 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   public int getWeight() {
     return 20;
   }
+
+  @Override
+  public String getTitle() {
+    final PsiFile file = getValue();
+    if (file != null) {
+      return file.getVirtualFile().getPresentableUrl();
+    }
+    return super.getTitle();    //To change body of overridden methods use File | Settings | File Templates.
+  }
 }

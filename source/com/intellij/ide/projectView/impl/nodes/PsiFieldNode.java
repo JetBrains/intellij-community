@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -32,5 +33,20 @@ public class PsiFieldNode extends BasePsiNode<PsiField>{
 
   public int getWeight() {
     return 70;
+  }
+
+  @Override
+  public String getTitle() {
+    final PsiField field = getValue();
+    if (field != null) {
+      PsiClass aClass = field.getContainingClass();
+      if (aClass != null) {
+        return aClass.getQualifiedName();
+      }
+      else {
+        return field.toString();
+      }
+    }
+    return super.getTitle();
   }
 }

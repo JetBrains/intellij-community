@@ -200,4 +200,15 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
   public int getWeight() {
     return 0;
   }
+
+  @Override
+  public String getTitle() {
+    final PackageElement packageElement = getValue();
+    if (packageElement != null) {
+      return packageElement.getPackage().getQualifiedName();
+    }
+    else {
+      return super.getTitle();
+    }
+  }
 }

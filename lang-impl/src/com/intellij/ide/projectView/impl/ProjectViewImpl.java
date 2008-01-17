@@ -12,6 +12,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PackageUtil;
@@ -45,7 +46,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.AutoScrollFromSourceHandler;
@@ -155,7 +155,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   private final FileEditorManager myFileEditorManager;
   private final SelectInManager mySelectInManager;
   private MyPanel myDataProvider;
-  private final SplitterProportionsData splitterProportions = PeerFactory.getInstance().getUIHelper().createSplitterProportionsData();
+  private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
 
@@ -637,53 +637,20 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     ToolWindow toolWindow = toolWindowManager == null ? null : toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (toolWindow == null) return;
-
-    final PsiElement element = (PsiElement)myDataProvider.getData(DataConstants.PSI_ELEMENT);
-    String title;
-    if (element != null) {
-      // todo!!!
-      if (element instanceof PsiDirectory) {
-        PsiDirectory directory = (PsiDirectory)element;
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-        if (aPackage != null) {
-          title = aPackage.getQualifiedName();
-        }
-        else {
-          title = directory.getVirtualFile().getPresentableUrl();
+    String title = null;
+    final AbstractProjectViewPane pane = getCurrentProjectViewPane();
+    if (pane != null) {
+      final DefaultMutableTreeNode selectedNode = pane.getSelectedNode();
+      if (selectedNode != null) {
+        final Object o = selectedNode.getUserObject();
+        if (o instanceof ProjectViewNode) {
+          title = ((ProjectViewNode)o).getTitle();
         }
       }
-      else if (element instanceof PsiFile) {
-        PsiFile file = (PsiFile)element;
-        title = file.getVirtualFile().getPresentableUrl();
-      }
-      else if (element instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)element;
-        title = psiClass.getQualifiedName();
-      }
-      else if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        PsiClass aClass = method.getContainingClass();
-        if (aClass != null) {
-          title = aClass.getQualifiedName();
-        }
-        else {
-          title = method.toString();
-        }
-      }
-      else if (element instanceof PsiField) {
-        PsiField field = (PsiField)element;
-        PsiClass aClass = field.getContainingClass();
-        if (aClass != null) {
-          title = aClass.getQualifiedName();
-        }
-        else {
-          title = field.toString();
-        }
-      }
-      else if (element instanceof PsiPackage) {
-        title = ((PsiPackage)element).getQualifiedName();
-      }
-      else {
+    }
+    if (title == null) {
+      final PsiElement element = (PsiElement)myDataProvider.getData(DataConstants.PSI_ELEMENT);
+      if (element != null) {
         PsiFile file = element.getContainingFile();
         if (file != null) {
           title = file.getVirtualFile().getPresentableUrl();
@@ -692,11 +659,11 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           title = element.toString();
         }
       }
-    }
-    else {
-      title = "";
-      if (myProject != null) {
-        title = myProject.getPresentableUrl();
+      else {
+        title = "";
+        if (myProject != null) {
+          title = myProject.getPresentableUrl();
+        }
       }
     }
 

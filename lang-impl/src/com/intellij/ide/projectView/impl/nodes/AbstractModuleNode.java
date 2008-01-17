@@ -38,9 +38,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
