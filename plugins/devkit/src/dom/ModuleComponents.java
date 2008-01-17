@@ -18,12 +18,12 @@ public interface ModuleComponents extends DomElement {
 	 * @return the list of component children.
 	 */
 	@NotNull
-	List<Component> getComponents();
+	List<Component.Module> getComponents();
 	/**
 	 * Adds new child to the list of component children.
 	 * @return created child
 	 */
-	Component addComponent();
+	Component.Module addComponent();
 
 
 }

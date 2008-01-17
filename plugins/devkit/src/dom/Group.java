@@ -4,10 +4,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -51,6 +48,8 @@ public interface Group extends DomElement {
 	 */
 	@NotNull
 	@com.intellij.util.xml.Attribute ("class")
+        @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
+            instantiatable = true, allowAbstract = false, allowInterface = false)
 	GenericAttributeValue<PsiClass> getClazz();
 
 

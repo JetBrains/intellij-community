@@ -4,10 +4,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericDomValue;
-import com.intellij.util.xml.Required;
-import com.intellij.util.xml.SubTag;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,6 +20,7 @@ public interface Component extends DomElement {
 
 
   @NotNull
+  @ExtendClass(instantiatable = false)
   GenericDomValue<PsiClass> getInterfaceClass();
 
 
@@ -31,8 +29,25 @@ public interface Component extends DomElement {
 
   Option addOption();
 
+  interface Application extends Component {
+    @NotNull
+    @Required
+    GenericDomValue<PsiClass> getImplementationClass();
+  }
 
-  @NotNull
-  @SubTag(value = "skipForDummyProject", indicator = true)
-  GenericDomValue<Boolean> getSkipForDummyProject();
+  interface Module extends Component {
+    @NotNull
+    @Required
+    GenericDomValue<PsiClass> getImplementationClass();
+  }
+
+  interface Project extends Component {
+    @NotNull
+    @Required
+    GenericDomValue<PsiClass> getImplementationClass();
+
+    @NotNull
+    @SubTag(value = "skipForDummyProject", indicator = true)
+    GenericDomValue<Boolean> getSkipForDummyProject();
+  }
 }

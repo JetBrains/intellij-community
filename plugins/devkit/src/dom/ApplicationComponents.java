@@ -18,12 +18,12 @@ public interface ApplicationComponents extends DomElement {
 	 * @return the list of component children.
 	 */
 	@NotNull
-	List<Component> getComponents();
+	List<Component.Application> getComponents();
 	/**
 	 * Adds new child to the list of component children.
 	 * @return created child
 	 */
-	Component addComponent();
+	Component.Application addComponent();
 
 
 }

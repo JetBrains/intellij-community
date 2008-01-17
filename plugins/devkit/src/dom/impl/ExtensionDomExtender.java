@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.ConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
@@ -107,7 +106,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   private static void registerField(final DomExtensionsRegistrar registrar, @NotNull final PsiField field) {
-      final PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
+    final PsiAnnotation[] annotations = field.getModifierList().getAnnotations();
+    final PsiConstantEvaluationHelper evalHelper = JavaPsiFacade.getInstance(field.getProject()).getConstantEvaluationHelper();
     for (PsiAnnotation annotation : annotations) {
       final String qName = annotation.getQualifiedName();
       if (qName != null) {
@@ -116,7 +116,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           if (attributeName != null && attributeName instanceof PsiExpression) {
             final Class<String> type = String.class;
             PsiExpression expression = (PsiExpression)attributeName;
-            final Object evaluatedExpression = ConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+            final Object evaluatedExpression = evalHelper.computeConstantExpression(expression, false);
             if (evaluatedExpression != null) {
               registrar.registerGenericAttributeValueChildExtension(new XmlName(evaluatedExpression.toString()), type);
             }
@@ -125,7 +125,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
           final PsiAnnotationMemberValue attributeName = annotation.findAttributeValue("value");
           if (attributeName != null && attributeName instanceof PsiExpression) {
             PsiExpression expression = (PsiExpression)attributeName;
-            final Object evaluatedExpression = ConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
+            final Object evaluatedExpression = evalHelper.computeConstantExpression(expression, false);
             if (evaluatedExpression != null) {
               // I guess this actually needs something like registrar.registerGenericTagValueChildExtension...
               registrar.registerFixedNumberChildExtension(new XmlName(evaluatedExpression.toString()), SimpleTagValue.class);

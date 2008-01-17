@@ -14,7 +14,7 @@ import java.util.List;
 public interface ProjectComponents extends DomElement {
 
   @NotNull
-  List<Component> getComponents();
+  List<Component.Project> getComponents();
 
-  Component addComponent();
+  Component.Project addComponent();
 }
