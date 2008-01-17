@@ -30,11 +30,11 @@ class MavenRunSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
       }
     }, new MavenCoreConfigurable() {
       protected MavenCoreSettings getState() {
-        return configuration.getCoreState();
+        return configuration.getCoreSettings();
       }
     }, new MavenRunnerConfigurable(p, true) {
       protected MavenRunnerSettings getState() {
-        return configuration.getRunnerState();
+        return configuration.getRunnerSettings();
       }
     });
   }

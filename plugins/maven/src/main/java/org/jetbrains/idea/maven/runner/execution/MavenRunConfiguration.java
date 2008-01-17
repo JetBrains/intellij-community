@@ -16,7 +16,6 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
 import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.runner.MavenRunner;
@@ -25,9 +24,6 @@ import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalParameters;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 
-/**
- * @author Vladislav.Kaznacheev
- */
 public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration{
   private MavenSettings mySettings;
 
@@ -79,16 +75,16 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return Module.EMPTY_ARRAY;
   }
 
-  public MavenRunnerParameters getRunnerParameters() {
-    return mySettings.myRunnerParameters;
-  }
-
-  public MavenCoreSettings getCoreState() {
+  public MavenCoreSettings getCoreSettings() {
     return mySettings.myCoreSettings;
   }
 
-  public MavenRunnerSettings getRunnerState() {
+  public MavenRunnerSettings getRunnerSettings() {
     return mySettings.myRunnerSettings;
+  }
+
+  public MavenRunnerParameters getRunnerParameters() {
+    return mySettings.myRunnerParameters;
   }
 
   public void setRunnerParameters(MavenRunnerParameters p){
@@ -122,31 +118,31 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public static class MavenSettings implements Cloneable {
-    @NonNls private static final String TAG = "MavenSettings";
+    public static final String TAG = "MavenSettings";
 
-    public MavenRunnerParameters myRunnerParameters;
     public MavenCoreSettings myCoreSettings;
     public MavenRunnerSettings myRunnerSettings;
+    public MavenRunnerParameters myRunnerParameters;
 
     public MavenSettings() {
       this(ProjectManager.getInstance().getDefaultProject());
     }
 
     public MavenSettings(Project project) {
-      this(new MavenRunnerParameters(),
-           project.getComponent(MavenCore.class).getState(),
-           project.getComponent(MavenRunner.class).getState());
+      this(project.getComponent(MavenCore.class).getState(),
+           project.getComponent(MavenRunner.class).getState(),
+           new MavenRunnerParameters());
     }
 
     public MavenSettings(MavenSettings that) {
-      this(that.myRunnerParameters, that.myCoreSettings, that.myRunnerSettings);
+      this(that.myCoreSettings, that.myRunnerSettings, that.myRunnerParameters);
     }
 
-    private MavenSettings(MavenRunnerParameters rp, MavenCoreSettings cs, MavenRunnerSettings rs) {
-      myRunnerParameters = rp.clone();
+    private MavenSettings(MavenCoreSettings cs, MavenRunnerSettings rs, MavenRunnerParameters rp) {
       myCoreSettings = cs.clone();
       myRunnerSettings = rs.clone();
       myRunnerSettings.useExternalMaven();
+      myRunnerParameters = rp.clone();
     }
 
     protected MavenSettings clone() {

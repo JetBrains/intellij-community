@@ -66,13 +66,13 @@ public abstract class MavenRunConfigurable implements Configurable {
   private void setData(final MavenRunnerParameters data) {
     data.setPomPath(pomComponent.getComponent().getText());
     data.setGoals(Strings.tokenize(goalsComponent.getComponent().getText(), " "));
-    data.setProfiles(Strings.tokenize(profilesComponent.getComponent().getText(), " ,"));
+    data.setProfiles(Strings.tokenize(profilesComponent.getComponent().getText(), " "));
   }
 
   private void getData(final MavenRunnerParameters data) {
     pomComponent.getComponent().setText(data.getPomPath());
     goalsComponent.getComponent().setText(Strings.detokenize(data.getGoals(), ' '));
-    profilesComponent.getComponent().setText(Strings.detokenize(data.getProfiles(), ','));
+    profilesComponent.getComponent().setText(Strings.detokenize(data.getProfiles(), ' '));
   }
 
   protected abstract MavenRunnerParameters getParameters();

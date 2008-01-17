@@ -30,7 +30,7 @@
         <properties>
           <componentClass value="javax.swing.JTextField"/>
           <labelLocation value="North"/>
-          <text value="&amp;Goals"/>
+          <text value="&amp;Goals (separated with space)"/>
         </properties>
       </component>
       <component id="6dbd7" class="com.intellij.openapi.ui.LabeledComponent" binding="profilesComponent">
@@ -40,7 +40,7 @@
         <properties>
           <componentClass value="javax.swing.JTextField"/>
           <labelLocation value="North"/>
-          <text value="&amp;Profiles"/>
+          <text value="&amp;Profiles (separated with space)"/>
         </properties>
       </component>
     </children>
