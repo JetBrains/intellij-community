@@ -2,10 +2,8 @@
  * User: anna
  * Date: 14-Jan-2008
  */
-package com.intellij.packageDependencies;
+package com.intellij.analysis;
 
-import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;

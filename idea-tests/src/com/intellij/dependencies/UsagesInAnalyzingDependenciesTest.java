@@ -1,10 +1,14 @@
 package com.intellij.dependencies;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.packageDependencies.*;
+import com.intellij.packageDependencies.BackwardDependenciesBuilder;
+import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.FindDependencyUtil;
+import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;

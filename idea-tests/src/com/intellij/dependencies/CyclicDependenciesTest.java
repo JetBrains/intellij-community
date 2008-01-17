@@ -1,11 +1,11 @@
 package com.intellij.dependencies;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.cyclicDependencies.CyclicDependenciesBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.packageDependencies.JavaAnalysisScope;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.PsiTestCase;

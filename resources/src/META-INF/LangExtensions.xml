@@ -69,4 +69,5 @@
   <dataValidator key="psi.Element.array" implementationClass="com.intellij.ide.impl.PsiElementArrayDataValidator"/>
 
   <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider"/>
+  <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider"/>
 </extensions>

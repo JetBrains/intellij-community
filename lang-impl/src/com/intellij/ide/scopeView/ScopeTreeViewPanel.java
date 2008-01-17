@@ -1,6 +1,7 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.ProjectTopics;
+import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -35,6 +36,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -147,7 +149,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
   public void selectScope(final NamedScope scope) {
     refreshScope(scope, true);
-    if (scope != myDependencyValidationManager.getProjectProductionScope()) {
+    if (scope != DefaultScopesProvider.getInstance(myProject).getAllScope()) {
       CURRENT_SCOPE_NAME = scope.getName();
     }
   }
@@ -195,7 +197,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     FileTreeModelBuilder.clearCaches(myProject);
     myTreeExpansionMonitor.freeze();
     if (scope == null || scope.getValue() == null) { //was deleted
-      scope = myDependencyValidationManager.getProjectProductionScope();
+      scope = DefaultScopesProvider.getInstance(myProject).getAllScope();
     }
     LOG.assertTrue(scope != null);
     final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
@@ -229,7 +231,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
   private NamedScope getCurrentScope() {
     NamedScope scope = NamedScopesHolder.getScope(myProject, CURRENT_SCOPE_NAME);
     if (scope == null) {
-      scope = myDependencyValidationManager.getProjectProductionScope();
+      scope = DefaultScopesProvider.getInstance(myProject).getAllScope();
     }
     LOG.assertTrue(scope != null);
     return scope;
@@ -704,7 +706,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     private void queueUpdate(final VirtualFile fileToRefresh, final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter) {
       AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
       if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
-          !DependencyValidationManager.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
+          !PackagesScopesProvider.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
         return;
       }
       myUpdateQueue.queue(new Update(fileToRefresh) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -108,7 +109,7 @@ public class ProjectSettingsPanel extends PanelWithButtons {
             public void actionPerformed(final ActionEvent e) {
                 TableUtil.stopEditing(myScopeMappingTable);
                 List<ScopeSetting> newList = new ArrayList<ScopeSetting>(myScopeMappingModel.getItems());
-                newList.add(new ScopeSetting(DependencyValidationManager.getInstance(myProject).getProjectProductionScope(),
+                newList.add(new ScopeSetting(DefaultScopesProvider.getInstance(myProject).getAllScope(),
                         myManager.getCopyrights().iterator().next()));
                 myScopeMappingModel.setItems(newList);
                 TableUtil.editCellAt(myScopeMappingTable, myScopeMappingModel.getRowCount() - 1, 0);

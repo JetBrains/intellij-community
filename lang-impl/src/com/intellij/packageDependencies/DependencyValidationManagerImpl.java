@@ -3,21 +3,20 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -46,9 +45,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String UNNAMED_SCOPE = "unnamed_scope";
   @NonNls private static final String VALUE = "value";
 
-  private NamedScope myProjectTestScope;
-  private NamedScope myProjectProductionScope;
-  private NamedScope myProblemsScope;
+
   private static final Icon SHARED_SCOPES = IconLoader.getIcon("/ide/sharedScope.png");
 
   private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
@@ -57,90 +54,11 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     myProject = project;
   }
 
-  public NamedScope getProjectTestScope() {
-    if (myProjectTestScope == null) {
-      final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      myProjectTestScope = new NamedScope(IdeBundle.message("predefined.scope.tests.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          return file.getProject() == myProject && virtualFile != null && index.isInTestSourceContent(virtualFile);
-        }
 
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_TEST+":*..*";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
-    }
-    return myProjectTestScope;
-  }
-
-  public NamedScope getProjectProductionScope() {
-    if (myProjectProductionScope == null) {
-      final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-      myProjectProductionScope = new NamedScope(IdeBundle.message("predefined.scope.production.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          final VirtualFile virtualFile = file.getVirtualFile();
-          return file.getProject() == myProject
-                 && virtualFile != null
-                 && !index.isInTestSourceContent(virtualFile)
-                 && !index.isInLibraryClasses(virtualFile)
-                 && !index.isInLibrarySource(virtualFile)
-            ;
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_SOURCE+":*..*";
-        }
-
-        public int getNodePriority() {
-          return 0;
-        }
-      });
-    }
-    return myProjectProductionScope;
-  }
-
-  public NamedScope getProblemsScope() {
-    if (myProblemsScope == null) {
-      myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
-        }
-
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_PROBLEM + ":*..*";
-        }
-
-        public int getNodePriority() {
-          return 1;
-        }
-      });
-    }
-    return myProblemsScope;
-  }
 
   @NotNull
   public List<NamedScope> getPredefinedScopes() {
     final List<NamedScope> predifinedScopes = new ArrayList<NamedScope>();
-    predifinedScopes.add(getProjectProductionScope());
-    predifinedScopes.add(getProjectTestScope());
-    predifinedScopes.add(getProblemsScope());
     final CustomScopesProvider[] scopesProviders = myProject.getExtensions(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER);
     if (scopesProviders != null) {
       for (CustomScopesProvider scopesProvider : scopesProviders) {
