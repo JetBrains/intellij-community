@@ -91,10 +91,11 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
 
     javaText.append(createProperty(StringUtil.escapeStringCharacters(text), imports, names));
     javaText.append("groovy.lang.ExpandoMetaClass emc = new groovy.lang.ExpandoMetaClass(clazz);\n");
-    javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
     if (!isStatic) {
+      javaText.append("emc.setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
       javaText.append("((groovy.lang.GroovyObject)this).setMetaClass(emc);\n");
     } else {
+      javaText.append("emc.getProperty(\"static\").setProperty(\"").append(EVAL_NAME).append("\", closure);\n");
       javaText.append("groovy.lang.GroovySystem.getMetaClassRegistry().setMetaClass(clazz, emc);\n");
     }
     javaText.append("emc.initialize();\n");
