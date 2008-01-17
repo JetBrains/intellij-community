@@ -1,6 +1,7 @@
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -39,8 +41,13 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return nodes;
   }
 
-  protected Class<? extends AbstractTreeNode> getModuleNodeClass() {
-    return ProjectViewModuleNode.class;
+  protected AbstractTreeNode createModuleGroup(final Module module)
+    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    return createTreeNode(ProjectViewModuleNode.class, getProject(), module, getSettings());
   }
 
+  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
+    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    return createTreeNode(ProjectViewModuleGroupNode.class, getProject(), moduleGroup, getSettings());
+  }
 }

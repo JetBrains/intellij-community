@@ -47,6 +47,7 @@ import com.intellij.util.Icons;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
@@ -71,23 +72,26 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
       }
     }
     List<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
-    boolean isPackageView = false;
-    if (getModuleNodeClass() == PackageViewModuleNode.class){
-      isPackageView = true;
-    }
-    for (String groupPath : groups.keySet()) {
-      if (isPackageView) {
-        result.add(new PackageViewModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings()));
+    try {
+      for (String groupPath : groups.keySet()) {
+        result.add(createModuleGroupNode(new ModuleGroup(new String[]{groupPath})));
       }
-      else {
-        result.add(new ProjectViewModuleGroupNode(getProject(), new ModuleGroup(new String[]{groupPath}), getSettings()));
+      for (Module module : nonGroupedModules) {
+        result.add(createModuleGroup(module));
       }
     }
-    result.addAll(ProjectViewNode.wrap(nonGroupedModules, getProject(), getModuleNodeClass(), getSettings()));
+    catch (Exception e) {
+      LOG.error(e);
+      return new ArrayList<AbstractTreeNode>();
+    }
     return result;
   }
 
-  protected abstract Class<? extends AbstractTreeNode> getModuleNodeClass();
+  protected abstract AbstractTreeNode createModuleGroup(final Module module)
+    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
+
+  protected abstract AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
+    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   public void update(PresentationData presentation) {
     presentation.setIcons(Icons.PROJECT_ICON);
