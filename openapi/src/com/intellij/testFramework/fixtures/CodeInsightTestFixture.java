@@ -231,4 +231,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   @NotNull
   Collection<GutterIconRenderer> findAllGutters(String filePath) throws Throwable;
 
+  void testRename(String fileAfter, String newName) throws Throwable;
+
 }
