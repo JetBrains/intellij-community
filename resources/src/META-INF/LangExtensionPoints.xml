@@ -106,6 +106,10 @@
   <extensionPoint name="usageTargetProvider"
                   interface="com.intellij.usages.UsageTargetProvider"/>
 
+  <extensionPoint name="customScopesProvider"
+                  interface="com.intellij.psi.search.scope.packageSet.CustomScopesProvider"
+                  area="IDEA_PROJECT"/>
+
   <extensionPoint name="scopeDescriptorProvider" interface="com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider"/>
   <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 

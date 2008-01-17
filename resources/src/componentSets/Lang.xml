@@ -141,6 +141,11 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
+    <component>
+      <interface-class>com.intellij.packageDependencies.DependencyValidationManager</interface-class>
+      <implementation-class>com.intellij.packageDependencies.DependencyValidationManagerImpl</implementation-class>
+      <skipForDummyProject/>
+    </component>
 
     <component>
       <interface-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzer</interface-class>
