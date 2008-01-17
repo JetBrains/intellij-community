@@ -2,7 +2,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.PasteProvider;
-import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -12,6 +11,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -19,7 +19,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -40,7 +39,8 @@ public class PasteHandler extends EditorActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.PasteHandler");
 
   private EditorActionHandler myOriginalHandler;
-  private final PasteProvider myPasteReferenceProvider = new CopyReferenceAction.MyPasteProvider();
+
+  private static final ExtensionPointName<PasteProvider> EP_NAME = ExtensionPointName.create("com.intellij.customPasteProvider");
 
   public PasteHandler(EditorActionHandler originalAction) {
     myOriginalHandler = originalAction;
@@ -84,12 +84,13 @@ public class PasteHandler extends EditorActionHandler {
 
     document.startGuardedBlockChecking();
     try {
-      if (myPasteReferenceProvider.isPasteEnabled(dataContext)) {
-        myPasteReferenceProvider.performPaste(dataContext);
+      for(PasteProvider provider: Extensions.getExtensions(EP_NAME)) {
+        if (provider.isPasteEnabled(dataContext)) {
+          provider.performPaste(dataContext);
+          return;
+        }
       }
-      else {
-        doPaste(editor, project, file, fileType, document);
-      }
+      doPaste(editor, project, file, fileType, document);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler().handle(e);
