@@ -11,6 +11,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.ResourceBundle;
@@ -293,7 +294,7 @@ public class AddToFavoritesAction extends AnAction {
       final PsiDirectory[] directories = psiPackage.getDirectories();
       if (directories.length > 0) {
         final VirtualFile firstDir = directories[0].getVirtualFile();
-        final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, project);
+        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, project);
         return new PackageElement(module, psiPackage, isLibraryRoot);
       }
     }

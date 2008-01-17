@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 
 import java.util.Collection;
 
-public class PsiFieldNode extends BasePsiNode<PsiField>{
+public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
   public PsiFieldNode(Project project, PsiField value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }

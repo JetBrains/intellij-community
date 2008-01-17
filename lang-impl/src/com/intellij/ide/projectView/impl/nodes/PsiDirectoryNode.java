@@ -2,6 +2,7 @@ package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -86,7 +87,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
 
   public boolean canNavigate() {
     VirtualFile virtualFile = getVirtualFile();
-    return virtualFile != null && (PackageUtil.isSourceOrTestRoot(virtualFile, getProject()) || PackageUtil.isLibraryRoot(virtualFile, getProject()));
+    return virtualFile != null && (ProjectRootsUtil.isSourceOrTestRoot(virtualFile, getProject()) || ProjectRootsUtil.isLibraryRoot(virtualFile, getProject()));
   }
 
   public boolean canNavigateToSource() {

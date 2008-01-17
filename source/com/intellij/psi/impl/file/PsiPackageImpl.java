@@ -2,8 +2,8 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
-import com.intellij.ide.projectView.impl.nodes.PackageUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -488,7 +488,7 @@ public class PsiPackageImpl extends PsiElementBase implements PsiPackage {
     projectView.changeView(PackageViewPane.ID);
     final PsiDirectory[] directories = getDirectories();
     final VirtualFile firstDir = directories[0].getVirtualFile();
-    final boolean isLibraryRoot = PackageUtil.isLibraryRoot(firstDir, getProject());
+    final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, getProject());
 
     final Module module = ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(firstDir);
     final PackageElement packageElement = new PackageElement(module, this, isLibraryRoot);

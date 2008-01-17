@@ -11,7 +11,7 @@ import com.intellij.psi.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class ClassTreeNode extends BasePsiNode<PsiClass>{
+public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   public ClassTreeNode(Project project, PsiClass value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -87,5 +87,10 @@ public class ClassTreeNode extends BasePsiNode<PsiClass>{
       return psiClass.getQualifiedName();
     }
     return super.getTitle();
+  }
+
+  @Override
+  protected boolean isMarkReadOnly() {
+    return true;
   }
 }

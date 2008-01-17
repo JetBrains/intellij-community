@@ -1,10 +1,12 @@
 /**
  * @author cdr
  */
-package com.intellij.ide.projectView.impl;
+package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.ModifiableModuleModel;

@@ -36,6 +36,7 @@ import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -199,12 +200,6 @@ public class PackageUtil {
     return false;
   }
 
-  private static boolean isSourceRoot(final PsiDirectory psiDirectory) {
-    return psiDirectory.getVirtualFile().equals(
-      ProjectRootManager.getInstance(psiDirectory.getProject()).getFileIndex()
-        .getSourceRootForFile(psiDirectory.getVirtualFile()));
-  }
-
   private static boolean isPackage(final PsiDirectory psiDirectory) {
     return JavaDirectoryService.getInstance().getPackage(psiDirectory) != null;
   }
@@ -214,7 +209,7 @@ public class PackageUtil {
     return value != null
            && !(parentValue instanceof Project)
            && settings.isFlattenPackages()
-           && !isSourceRoot(value)
+           && !ProjectRootsUtil.isSourceRoot(value)
            && (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null
            && aPackage.getQualifiedName().length() > 0;
 
@@ -228,20 +223,15 @@ public class PackageUtil {
                                             final AbstractTreeNode node) {
     final VirtualFile directoryFile = psiDirectory.getVirtualFile();
     updateDefault(data, psiDirectory, settings, parentValue, node);
-    if (isModuleContentRoot(directoryFile, project) || isLibraryRoot(directoryFile, project)) {
+    if (isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
       data.setLocationString(directoryFile.getPresentableUrl());
     }
     else {
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
-      if (coverageDataManager.getCurrentSuite() != null && !isInTestSource(directoryFile, project)) {
+      if (coverageDataManager.getCurrentSuite() != null && !ProjectRootsUtil.isInTestSource(directoryFile, project)) {
         data.setLocationString(coverageDataManager.getDirCoverageInformationString(psiDirectory));
       }
     }
-  }
-
-  private static boolean isInTestSource(final VirtualFile directoryFile, final Project project) {
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return projectFileIndex.isInTestSourceContent(directoryFile);
   }
 
   private static void updateDefault(PresentationData data,
@@ -253,7 +243,7 @@ public class PackageUtil {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
 
     if (aPackage != null
-        && !isSourceRoot(psiDirectory)
+        && !ProjectRootsUtil.isSourceRoot(psiDirectory)
         && !settings.isFlattenPackages()
         && settings.isHideEmptyMiddlePackages()
         && !(node.getParent() instanceof LibraryGroupNode)
@@ -265,7 +255,7 @@ public class PackageUtil {
     final boolean isWritable = virtualFile.isWritable();
 
     PsiPackage parentPackage;
-    if (!isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
+    if (!ProjectRootsUtil.isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
                               parentValue instanceof PsiDirectory) {
 
       parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));
@@ -278,7 +268,7 @@ public class PackageUtil {
       psiDirectory.getVirtualFile().getPresentableUrl() :
       getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
 
-    final String packagePrefix = isSourceRoot(psiDirectory) && aPackage != null ? aPackage.getQualifiedName() : "";
+    final String packagePrefix = ProjectRootsUtil.isSourceRoot(psiDirectory) && aPackage != null ? aPackage.getQualifiedName() : "";
 
     data.setPresentableText(name);
     data.setLocationString(packagePrefix);
@@ -296,8 +286,8 @@ public class PackageUtil {
       }
     }
 
-    boolean inTestSource = isInTestSource(virtualFile, psiDirectory.getProject());
-    boolean isSourceOrTestRoot = isSourceOrTestRoot(virtualFile, psiDirectory.getProject());
+    boolean inTestSource = ProjectRootsUtil.isInTestSource(virtualFile, psiDirectory.getProject());
+    boolean isSourceOrTestRoot = ProjectRootsUtil.isSourceOrTestRoot(virtualFile, psiDirectory.getProject());
     boolean isPackage = isPackage(psiDirectory);
     data.setOpenIcon(addReadMark(isSourceOrTestRoot
                                  ? IconSet.getSourceRootIcon(inTestSource, true)
@@ -339,29 +329,6 @@ public class PackageUtil {
       name = defaultShortName;
     }
     return name;
-  }
-
-  public static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    Module module = projectFileIndex.getModuleForFile(virtualFile);
-    if (module == null) return false;
-    ContentEntry[] contentEntries = ModuleRootManager.getInstance(module).getContentEntries();
-    for (ContentEntry contentEntry : contentEntries) {
-      SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
-      for (SourceFolder sourceFolder : sourceFolders) {
-        if (virtualFile == sourceFolder.getFile()) return true;
-      }
-    }
-    return false;
-  }
-
-  public static boolean isLibraryRoot(VirtualFile directoryFile, Project project) {
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (projectFileIndex.isInLibraryClasses(directoryFile)) {
-      final VirtualFile parent = directoryFile.getParent();
-      return parent == null || !projectFileIndex.isInLibraryClasses(parent);
-    }
-    return false;
   }
 
   private static Icon addReadMark(Icon originalIcon, boolean isWritable) {

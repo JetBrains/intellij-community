@@ -1,7 +1,7 @@
 /**
  * @author cdr
  */
-package com.intellij.ide.projectView.impl;
+package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;

@@ -4,6 +4,8 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.actions.MoveModulesToGroupAction;
+import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;

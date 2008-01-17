@@ -3,6 +3,8 @@
  */
 package com.intellij.ide.projectView.impl;
 
+import com.intellij.ide.projectView.actions.MoveModulesOutsideGroupAction;
+import com.intellij.ide.projectView.actions.MoveModulesToSubGroupAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.ModifiableModuleModel;

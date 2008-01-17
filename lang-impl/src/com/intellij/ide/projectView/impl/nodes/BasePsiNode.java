@@ -13,8 +13,9 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +48,9 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
 
-  private boolean isMarkReadOnly() {
+  protected boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();
-    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module
-           || getValue() instanceof PsiClass; // class in default package has project as its parent
+    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module;
   }
 
   public FileStatus getFileStatus() {
@@ -103,11 +103,8 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
     updateImpl(data);
   }
 
-  private boolean isDeprecated() {
-    final T element = getValue();
-    return element != null && element.isValid() &&
-           element instanceof PsiDocCommentOwner &&
-           ((PsiDocCommentOwner)element).isDeprecated();
+  protected boolean isDeprecated() {
+    return false;
   }
 
   public boolean contains(@NotNull VirtualFile file) {
@@ -135,11 +132,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   }
 
   @Nullable
-  private String calcTooltip() {
-    T t = getValue();
-    if (t instanceof PsiModifierListOwner && t.isValid()) {
-      return ElementPresentationUtil.getDescription((PsiModifierListOwner)t);
-    }
+  protected String calcTooltip() {
     return null;
   }
 }

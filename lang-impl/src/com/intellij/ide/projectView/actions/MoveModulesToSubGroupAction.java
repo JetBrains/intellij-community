@@ -1,9 +1,10 @@
 /**
  * @author cdr
  */
-package com.intellij.ide.projectView.impl;
+package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
