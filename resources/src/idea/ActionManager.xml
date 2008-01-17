@@ -271,18 +271,18 @@
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
       <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="AnalyzeMenu"/>
     </group>
 
-    <group id="AnalyzeMenu" popup="true">
-      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
-      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
-      <separator/>
+    <group id="CoverageMenu">
       <action id="SwitchCoverage" class="com.intellij.coverage.actions.SwitchCoverageSuiteAction"/>
       <action id="GenerateCoverageReport" class="com.intellij.coverage.actions.GenerateCoverageReportAction"/>
       <separator/>
-      <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
-      <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
+
+      <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="ShowPackageDeps"/>
+    </group>
+
+    <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <action id="ShowModulesDependencies" class="com.intellij.moduleDependencies.ShowModuleDependenciesAction"/>
       <separator/>
@@ -290,7 +290,7 @@
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
+      <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>
 
     <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringGroup" popup="true">

@@ -22,6 +22,8 @@
   <applicationService serviceInterface="com.intellij.openapi.project.ProjectLocator"
                       serviceImplementation="com.intellij.openapi.project.ProjectLocatorImpl"/>
 
+  <applicationService serviceInterface="com.intellij.packageDependencies.DependencyUISettings"
+                      serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
@@ -51,6 +53,9 @@
 
   <projectService serviceInterface="com.intellij.usages.UsageViewManager"
                   serviceImplementation="com.intellij.usages.impl.UsageViewManagerImpl"/>
+
+  <projectService serviceInterface="com.intellij.analysis.AnalysisUIOptions"
+                  serviceImplementation="com.intellij.analysis.AnalysisUIOptions"/>
 
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 

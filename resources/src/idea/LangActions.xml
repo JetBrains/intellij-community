@@ -53,6 +53,16 @@
       <add-to-group group-id="ViewMenu" anchor="last"/>
     </group>
 
+    <!-- Analyze -->
+    <group id="AnalyzeMenu" popup="true">
+      <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+      <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+      <separator/>
+      <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
+      <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
+    </group>
+
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>

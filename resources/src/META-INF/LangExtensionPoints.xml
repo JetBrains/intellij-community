@@ -115,6 +115,10 @@
 
   <extensionPoint name="inspectionToolProvider"
                   interface="com.intellij.codeInspection.InspectionToolProvider"/>
+  <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory"/>
 
   <extensionPoint name="customPasteProvider" interface="com.intellij.ide.PasteProvider"/>
+
+  <extensionPoint name="copyPastePreProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePreProcessor"/>
+  <extensionPoint name="copyPastePostProcessor" interface="com.intellij.codeInsight.editorActions.CopyPastePostProcessor"/>
 </extensionPoints>
