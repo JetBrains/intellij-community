@@ -126,7 +126,7 @@ public class DomElementXmlDescriptor implements XmlElementDescriptor {
 
       @Nullable
       public XmlFile getDescriptorFile() {
-        throw new UnsupportedOperationException("Method getDescriptorFile not implemented in " + getClass());
+        return null;
       }
 
       public boolean isHierarhyEnabled() {
