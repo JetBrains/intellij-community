@@ -50,6 +50,12 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
     @NonNls
     static final String VALUES_ITERATOR_TEXT = "values().iterator()";
 
+    private static final int KEEP_NOTHING = 0;
+
+    private static final int KEEP_INITIALIZATION = 1;
+
+    private static final int KEEP_DECLARATION = 2;
+
     @NotNull
     public String getDisplayName() {
         return InspectionGadgetsBundle.message(
@@ -86,7 +92,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             final PsiElement parent =
                     methodCallExpression.getParent();
             final PsiVariable variable;
-            boolean deleteInitializationStatement = false;
             if (parent instanceof PsiVariable) {
                 variable = (PsiVariable) parent;
             } else if (parent instanceof PsiAssignmentExpression) {
@@ -103,7 +108,6 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                     return;
                 }
                 variable = (PsiVariable) target;
-                deleteInitializationStatement = true;
             } else {
                 return;
             }
@@ -113,7 +117,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (statement == null) {
                 return;
             }
-            deleteInitializationStatement |= replaceMethodCalls(variable,
+            final int result = replaceMethodCalls(variable,
                     statement.getTextOffset(), variableName);
             final PsiType variableType = variable.getType();
             if (!(variableType instanceof PsiClassType)) {
@@ -133,24 +137,40 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             if (newStatement == null) {
                 return;
             }
-            if (deleteInitializationStatement) {
-                statement.replace(newStatement);
-            } else {
-                final PsiElement statementParent = statement.getParent();
-                if (statementParent instanceof PsiForStatement) {
-                    final PsiElement statementGrandParent =
-                            statementParent.getParent();
-                    statementGrandParent.addBefore(newStatement,
-                            statementParent);
+            if (parent == variable) {
+                if (result == KEEP_NOTHING) {
+                    System.out.println("KEEP_NOTHING");
+                    statement.replace(newStatement);
                 } else {
-                    statementParent.addAfter(newStatement, statement);
-                }
-                if (parent == variable) {
-                    final PsiExpression initializer = variable.getInitializer();
-                    if (initializer != null) {
-                        initializer.delete();
+                    insertNewStament(statement, newStatement);
+                    if (result != KEEP_INITIALIZATION) {
+                        final PsiExpression initializer =
+                                variable.getInitializer();
+                        if (initializer != null) {
+                            initializer.delete();
+                        }
                     }
                 }
+            } else {
+                if (result == KEEP_NOTHING || result == KEEP_DECLARATION) {
+                    statement.replace(newStatement);
+                } else {
+                    insertNewStament(statement, newStatement);
+                }
+            }
+        }
+
+        private static void insertNewStament(PsiStatement anchor,
+                                             PsiStatement newStatement)
+                throws IncorrectOperationException {
+            final PsiElement statementParent = anchor.getParent();
+            if (statementParent instanceof PsiForStatement) {
+                final PsiElement statementGrandParent =
+                        statementParent.getParent();
+                statementGrandParent.addBefore(newStatement,
+                        statementParent);
+            } else {
+                statementParent.addAfter(newStatement, anchor);
             }
         }
 
@@ -223,13 +243,15 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
 
         /** @return true if the initialization of the Enumeration variable can
          *  be deleted. */
-        private static boolean replaceMethodCalls(
+        private static int replaceMethodCalls(
                 PsiVariable enumerationVariable,
                 int startOffset,
                 String newVariableName)
                 throws IncorrectOperationException {
             final PsiManager manager = enumerationVariable.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+            final Project project = manager.getProject();
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = facade.getElementFactory();
             final Query<PsiReference> query = ReferencesSearch.search(
                     enumerationVariable);
             final List<PsiElement> referenceElements = new ArrayList();
@@ -239,13 +261,14 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
             }
             Collections.sort(referenceElements,
                     PsiElementOrderComparator.getInstance());
-            boolean deleteInitialization = true;
+            int result = 0;
             for (PsiElement referenceElement : referenceElements) {
                 if (!(referenceElement instanceof PsiReferenceExpression)) {
-                    deleteInitialization = false;
+                    result = KEEP_DECLARATION;
                     continue;
                 }
                 if (referenceElement.getTextOffset() <= startOffset) {
+                    result = KEEP_DECLARATION;
                     continue;
                 }
                 final PsiReferenceExpression referenceExpression =
@@ -254,15 +277,16 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                         referenceExpression.getParent();
                 if (!(referenceParent instanceof PsiReferenceExpression)) {
                     if (referenceParent instanceof PsiAssignmentExpression) {
-                        deleteInitialization = false;
+                        result = KEEP_DECLARATION;
                         break;
                     }
+                    result = KEEP_INITIALIZATION;
                     continue;
                 }
                 final PsiElement referenceGrandParent =
                         referenceParent.getParent();
                 if (!(referenceGrandParent instanceof PsiMethodCallExpression)) {
-                    deleteInitialization = false;
+                    result = KEEP_INITIALIZATION;
                     continue;
                 }
                 final PsiMethodCallExpression callExpression =
@@ -277,7 +301,7 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                 } else if ("nextElement".equals(foundName)) {
                     newExpressionText = newVariableName + ".next()";
                 } else {
-                    deleteInitialization = false;
+                    result = KEEP_INITIALIZATION;
                     continue;
                 }
                 final PsiExpression newExpression =
@@ -285,15 +309,16 @@ public class EnumerationCanBeIterationInspection extends BaseInspection {
                                 callExpression);
                 callExpression.replace(newExpression);
             }
-            return deleteInitialization;
+            return result;
         }
 
         private static String createVariableName(PsiElement context) {
-            final PsiManager manager = context.getManager();
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
             final Project project = context.getProject();
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = facade.getElementFactory();
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-          final PsiClass iteratorClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.util.Iterator", scope);
+            final PsiClass iteratorClass =
+                    facade.findClass("java.util.Iterator", scope);
             if (iteratorClass == null) {
                 return "iterator";
             }
