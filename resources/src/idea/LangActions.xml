@@ -63,6 +63,16 @@
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
     </group>
 
+    <!-- Code -->
+    <group id="CodeMenu" popup="true">
+      <group id="CommentGroup">
+        <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
+        <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
+      </group>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
+    </group>
+
     <!-- Analyze -->
     <group id="AnalyzeMenu" popup="true">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
@@ -70,7 +80,7 @@
       <separator/>
       <action id="ShowPackageDeps" class="com.intellij.packageDependencies.actions.AnalyzeDependenciesAction"/>
       <action id="ShowBackwardPackageDeps" class="com.intellij.packageDependencies.actions.BackwardDependenciesAction"/>
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
     <group id="UsageView.Popup">

@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CommentUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
@@ -275,7 +275,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
   }
 
   private Indent computeMinIndent(int line1, int line2, CharSequence chars, CodeStyleManager codeStyleManager, FileType fileType) {
-    Indent minIndent = CodeInsightUtil.getMinLineIndent(myProject, myDocument, line1, line2, fileType);
+    Indent minIndent = CommentUtil.getMinLineIndent(myProject, myDocument, line1, line2, fileType);
     if (line1 > 0) {
       int commentOffset = getCommentStart(line1 - 1);
       if (commentOffset >= 0) {

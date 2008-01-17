@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -21,8 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
 import com.intellij.psi.jsp.JspFile;
@@ -39,7 +36,6 @@ import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.ReflectionCache;
-import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,33 +269,6 @@ public class CodeInsightUtil {
     if (classes.length <= 1) return;
 
     Arrays.sort(classes, new PsiProximityComparator(context, context.getProject()));
-  }
-
-  public static Indent getMinLineIndent(Project project, Document document, int line1, int line2, FileType fileType) {
-    CharSequence chars = document.getCharsSequence();
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    Indent minIndent = null;
-    for (int line = line1; line <= line2; line++) {
-      int lineStart = document.getLineStartOffset(line);
-      int textStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
-      if (textStart >= document.getTextLength()) {
-        textStart = document.getTextLength();
-      }
-      else {
-        char c = chars.charAt(textStart);
-        if (c == '\n' || c == '\r') continue; // empty line
-      }
-      String space = chars.subSequence(lineStart, textStart).toString();
-      Indent indent = codeStyleManager.getIndent(space, fileType);
-      minIndent = minIndent != null ? indent.min(minIndent) : indent;
-    }
-    if (minIndent == null && line1 == line2 && line1 < document.getLineCount() - 1) {
-      return getMinLineIndent(project, document, line1 + 1, line1 + 1, fileType);
-    }
-    //if (minIndent == Integer.MAX_VALUE){
-    //  minIndent = 0;
-    //}
-    return minIndent;
   }
 
   public static PsiExpression[] findExpressionOccurrences(PsiElement scope, PsiExpression expr) {

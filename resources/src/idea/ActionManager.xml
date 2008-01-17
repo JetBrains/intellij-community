@@ -243,7 +243,7 @@
       <add-to-group group-id="GoToMenu" anchor="after" relative-to-action="GoToErrorGroup"/>
     </group>
 
-    <group id="CodeMenu" class="com.intellij.codeInsight.actions.CodeGroup" popup="true">
+    <group id="CodeMenu1">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
       <reference ref="DelegateMethods"/>
@@ -263,8 +263,11 @@
       <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
       <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
       <separator/>
-      <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
-      <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>
+
+      <add-to-group group-id="CodeMenu" anchor="first"/>
+    </group>
+
+    <group id="CodeMenu2">
       <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
       <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
       <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
@@ -273,7 +276,7 @@
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
       <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="AnalyzeMenu"/>
+      <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
 
     <group id="CoverageMenu">
