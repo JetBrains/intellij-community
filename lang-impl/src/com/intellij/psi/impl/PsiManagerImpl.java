@@ -116,7 +116,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
 
     boolean isProjectDefault = project.isDefault();
 
-    myFileManager = isProjectDefault ? new EmptyFileManager() : new FileManagerImpl(this, fileTypeManager,
+    myFileManager = isProjectDefault ? new EmptyFileManager(this) : new FileManagerImpl(this, fileTypeManager,
                                                                                                     virtualFileManager, fileDocumentManager,
                                                                                                     projectRootManagerEx);
     mySearchHelper = new PsiSearchHelperImpl(this);
@@ -700,7 +700,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
         new WeakReference[myWeakRunnablesOnChange.size()]);
       myWeakRunnablesOnChange.clear();
       for (WeakReference ref : refs) {
-        Runnable runnable = (Runnable)ref.get();
+        Runnable runnable = ref != null ? (Runnable)ref.get() : null;
         if (runnable != null) {
           runnable.run();
         }

@@ -4,10 +4,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +13,12 @@ import java.util.Collections;
 import java.util.List;
 
 class EmptyFileManager implements FileManager {
+  private PsiManagerImpl myManager;
+
+  EmptyFileManager(final PsiManagerImpl manager) {
+    myManager = manager;
+  }
+
   public void dispose() {
   }
 
@@ -60,7 +63,7 @@ class EmptyFileManager implements FileManager {
   }
 
   public FileViewProvider createFileViewProvider(final VirtualFile file, final boolean physical) {
-    return null;
+    return new SingleRootFileViewProvider(myManager, file, physical);
   }
 
   public void setViewProvider(final VirtualFile virtualFile, final FileViewProvider singleRootFileViewProvider) {
