@@ -399,7 +399,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                        getProjectPath() + "/testCustom");
   }
 
-  public void testExcludingCustomOutputUnderTargetUsingStandartVariable() throws IOException {
+  public void testExcludingCustomOutputUnderTargetUsingStandardVariable() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +

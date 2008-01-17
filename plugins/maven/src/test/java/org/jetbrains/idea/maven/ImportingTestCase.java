@@ -19,6 +19,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
+import org.jetbrains.idea.maven.core.MavenCoreState;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
@@ -27,14 +28,11 @@ import org.jetbrains.idea.maven.repo.MavenRepository;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public abstract class ImportingTestCase extends IdeaTestCase {
-  private File dir;
-  private File repoDir;
+  protected File dir;
 
   private VirtualFile projectRoot;
   private VirtualFile projectPom;
@@ -63,20 +61,15 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     configMaven();
   }
 
-  private void initDirs() throws IOException {
+  protected void initDirs() throws IOException {
     dir = createTempDirectory();
-
-    repoDir = new File(dir, "local");
-    repoDir.mkdirs();
 
     File projectDir = new File(dir, "project");
     projectDir.mkdirs();
     projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
   }
 
-  private void configMaven() {
-    myProject.getComponent(MavenCore.class).getState().setLocalRepository(repoDir.getPath());
-
+  protected void configMaven() {
     MavenWorkspacePreferencesComponent c = myProject.getComponent(MavenWorkspacePreferencesComponent.class);
     prefs = c.getState().myImporterPreferences;
   }
@@ -100,7 +93,12 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   }
 
   protected String getRepositoryPath() {
-    return FileUtil.toSystemIndependentName(repoDir.getPath());
+    String path = getMavenCoreState().getEffectiveLocalRepository().getPath();
+    return FileUtil.toSystemIndependentName(path);
+  }
+
+  protected MavenCoreState getMavenCoreState() {
+    return myProject.getComponent(MavenCore.class).getState();
   }
 
   protected PomTreeStructure.RootNode createMavenTree() {
@@ -409,51 +407,6 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       projectModel = p.getMavenProjectModel();
     }
     catch (CanceledException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected void putArtifactInLocalRepository(String groupId, String artefactId, String version, String timestamp, String build) {
-    String rawXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata>" +
-                 "  <groupId>%s</groupId>" +
-                 "  <artifactId>%s</artifactId>" +
-                 "  <version>%s</version>" +
-                 "  <versioning>" +
-                 "    <snapshot>" +
-                 "      <timestamp>%s</timestamp>" +
-                 "      <buildNumber>%s</buildNumber>" +
-                 "    </snapshot>" +
-                 "    <lastUpdated>0000000000000</lastUpdated>" +
-                 "  </versioning>" +
-                 "</metadata>";
-
-    String xml = String.format(rawXml, groupId, artefactId, version, timestamp, build);
-
-    String currentDate = new SimpleDateFormat("yyyy-MM-dd HH\\:mm\\:ss +0300").format(new Date());
-    String prop = "internal.maven-metadata-internal.xml.lastUpdated=" + currentDate;
-
-    String dir = groupId + "/" + artefactId + "/" + version + "/";
-
-    String xmlName = dir + "/maven-metadata-internal.xml";
-    String propName = dir + "/resolver-status.properties";
-
-    writeFile(new File(repoDir, xmlName), xml);
-    writeFile(new File(repoDir, propName), prop);
-  }
-
-  private void writeFile(File f, String string) {
-    try {
-      f.getParentFile().mkdirs();
-      f.createNewFile();
-      FileWriter w = new FileWriter(f);
-      try {
-        w.write(string);
-      }
-      finally {
-        w.close();
-      }
-    }
-    catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
