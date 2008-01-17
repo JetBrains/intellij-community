@@ -66,8 +66,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
     if(fileType instanceof LanguageFileType){
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      final FileViewProvider viewProvider = ((PsiManagerEx)myManager).getFileManager().createFileViewProvider(virtualFile, physical);
-
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(language);
         if (psiFile != null) {
@@ -101,7 +102,9 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
 
     if(fileType instanceof LanguageFileType){
       final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
-      final FileViewProvider viewProvider = ((PsiManagerEx)myManager).getFileManager().createFileViewProvider(virtualFile, physical);
+      final FileViewProviderFactory factory = LanguageFileViewProviders.INSTANCE.forLanguage(language);
+      FileViewProvider viewProvider = factory != null ? factory.createFileViewProvider(virtualFile, language, myManager, physical) : null;
+      if (viewProvider == null) viewProvider = new SingleRootFileViewProvider(myManager, virtualFile, physical);
       if (parserDefinition != null){
         final PsiFile psiFile = viewProvider.getPsi(targetLanguage);
         if (psiFile != null) {
