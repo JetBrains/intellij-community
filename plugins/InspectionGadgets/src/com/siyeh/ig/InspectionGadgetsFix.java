@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.siyeh.ig;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.StdLanguages;
+import com.intellij.lang.Language;
 import com.intellij.lang.jsp.JspxFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -99,7 +100,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
       final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
         final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
         final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
-      PsiElement element = replacementExpression.bindToElement(target);
+      final PsiElement element = replacementExpression.bindToElement(target);
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(psiManager.getProject());
         styleManager.shortenClassReferences(element);
     }
@@ -138,9 +139,12 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
         final PsiManager psiManager = statement.getManager();
         PsiStatement newStatement;
         final CodeStyleManager styleManager = psiManager.getCodeStyleManager();
+        final Project project = psiManager.getProject();
+        final JavaCodeStyleManager javaStyleManager =
+                JavaCodeStyleManager.getInstance(project);
         if (PsiUtil.isInJspFile(statement)) {
             final PsiDocumentManager documentManager =
-                    PsiDocumentManager.getInstance(psiManager.getProject());
+                    PsiDocumentManager.getInstance(project);
             final JspFile file = PsiUtil.getJspFile(statement);
             final Document document = documentManager.getDocument(file);
             if (document == null) {
@@ -168,18 +172,22 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix{
                 }
             }
             newStatement = (PsiStatement) elementAt;
-            JavaCodeStyleManager.getInstance(psiManager.getProject()).shortenClassReferences(newStatement);
+            javaStyleManager.shortenClassReferences(newStatement);
             final TextRange newTextRange = newStatement.getTextRange();
-            final PsiFile element = viewProvider.getPsi(
-                    viewProvider.getBaseLanguage());
-            styleManager.reformatRange(element, newTextRange.getStartOffset(),
-                newTextRange.getEndOffset());
+            final Language baseLanguage = viewProvider.getBaseLanguage();
+            final PsiFile element = viewProvider.getPsi(baseLanguage);
+            if (element != null) {
+                styleManager.reformatRange(element,
+                        newTextRange.getStartOffset(),
+                        newTextRange.getEndOffset());
+            }
         } else {
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
-            newStatement = factory.createStatementFromText(newStatementText,
-                    statement);
+            final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+            final PsiElementFactory factory = facade.getElementFactory();
+            newStatement =
+                    factory.createStatementFromText(newStatementText, statement);
             newStatement = (PsiStatement) statement.replace(newStatement);
-            JavaCodeStyleManager.getInstance(psiManager.getProject()).shortenClassReferences(newStatement);
+            javaStyleManager.shortenClassReferences(newStatement);
             styleManager.reformat(newStatement);
         }
     }

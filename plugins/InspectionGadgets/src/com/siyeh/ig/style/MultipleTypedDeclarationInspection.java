@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,9 +92,9 @@ public class MultipleTypedDeclarationInspection extends BaseInspection {
                 final PsiType baseType = firstField.getType();
                 boolean hasMultipleTypes = false;
                 for (int i = 1; i < fields.size(); i++) {
-                    final PsiField var = fields.get(i);
-                    final PsiType varType = var.getType();
-                    if (!varType.equals(baseType)) {
+                    final PsiField variable = fields.get(i);
+                    final PsiType variableType = variable.getType();
+                    if (!variableType.equals(baseType)) {
                         hasMultipleTypes = true;
                     }
                 }
@@ -110,17 +110,23 @@ public class MultipleTypedDeclarationInspection extends BaseInspection {
         public static List<PsiField> getSiblingFields(PsiField field) {
             final List<PsiField> out = new ArrayList<PsiField>(5);
             out.add(field);
-            PsiField nextfield =
+            PsiField nextField =
                     PsiTreeUtil.getNextSiblingOfType(field,
                             PsiField.class);
-            while (nextfield != null &&
-                    nextfield.getTypeElement().equals(field.getTypeElement())) {
-                out.add(nextfield);
-                nextfield =
-                        PsiTreeUtil.getNextSiblingOfType(nextfield,
-                                PsiField.class);
+            if (nextField != null) {
+                PsiTypeElement nextTypeElement = nextField.getTypeElement();
+                while (nextTypeElement != null &&
+                       nextTypeElement.equals(field.getTypeElement())) {
+                    out.add(nextField);
+                    nextField =
+                            PsiTreeUtil.getNextSiblingOfType(nextField,
+                                    PsiField.class);
+                    if (nextField == null) {
+                        break;
+                    }
+                    nextTypeElement = nextField.getTypeElement();
+                }
             }
-
             return out;
         }
 

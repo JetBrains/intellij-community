@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,6 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
         final PsiClass aClass = (PsiClass)location.getParent();
         final PsiJavaFile file = (PsiJavaFile)aClass.getParent();
         final String fileName = file.getName();
-        if (fileName == null) {
-            return null;
-        }
         final int prefixIndex = fileName.indexOf((int)'.');
         final String filenameWithoutPrefix = fileName.substring(0, prefixIndex);
         final PsiClass[] classes = file.getClasses();
@@ -83,9 +80,6 @@ public class ClassNameDiffersFromFileNameInspection extends BaseInspection {
                 return;
             }
             final String fileName = file.getName();
-            if (fileName == null) {
-                return;
-            }
             final int prefixIndex = fileName.indexOf((int)'.');
             if (prefixIndex < 0) {
                 return;

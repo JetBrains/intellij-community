@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,11 @@ class ShiftUtils {
     public static int getLogBaseTwo(PsiExpression rhs) {
         final PsiLiteralExpression literal = (PsiLiteralExpression) rhs;
         final Object value = literal.getValue();
-        int intValue = ((Number) value).intValue();
         int log = 0;
+        if (value == null) {
+            return log;
+        }
+        int intValue = ((Number) value).intValue();
         while (intValue % 2 == 0) {
             intValue >>= 1;
             log++;
