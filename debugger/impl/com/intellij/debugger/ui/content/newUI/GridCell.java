@@ -243,7 +243,7 @@ public class GridCell implements Disposable {
   }
 
   public void saveUiState() {
-    myContainer.saveSplitterProportions(myPlaceInGrid);
+    saveProportions();
 
     for (Content each : myContents.getKeys()) {
       saveState(each, false);
@@ -252,6 +252,10 @@ public class GridCell implements Disposable {
     for (Content each : myMinimizedContents) {
       saveState(each, true);
     }
+  }
+
+  public void saveProportions() {
+    myContainer.saveSplitterProportions(myPlaceInGrid);
   }
 
   private void saveState(Content content, boolean minimized) {
@@ -263,7 +267,7 @@ public class GridCell implements Disposable {
     state.getTab().setDetached(myPlaceInGrid, isDetached());
   }
 
-  private void restoreProportions() {
+  public void restoreProportions() {
     myContainer.restoreLastSplitterProportions(myPlaceInGrid);
   }
 
