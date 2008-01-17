@@ -180,11 +180,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.*)(?:\\:|@|,|#)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.*?)(?:\\:|@|,|#)(\\d+)?(?:(?:\\D)(\\d+)?)?");
 
   public String getNamePattern(String pattern) {
     if (pattern.indexOf(':') != -1 ||
         pattern.indexOf(',') != -1 ||
+        pattern.indexOf(';') != -1 ||
         pattern.indexOf('#') != -1 ||
         pattern.indexOf('@') != -1) { // quick test if reg exp should be used
       final Matcher matcher = patternToDetectLinesAndColumns.matcher(pattern);
@@ -205,8 +206,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (matcher.matches()) {
       final int groupNumber = line ? 2:3;
       try {
-        if(groupNumber < matcher.groupCount()) return Integer.parseInt(matcher.group(groupNumber)) - 1;
-        else if (!line && groupNumber - 1 < matcher.groupCount()) return 0;
+        if(groupNumber <= matcher.groupCount()) {
+          final String group = matcher.group(groupNumber);
+          if (group != null) return Integer.parseInt(group) - 1;
+        }
+        if (!line && getLineOrColumn(true) != -1) return 0;
       } catch (NumberFormatException ex) {}
     }
 
