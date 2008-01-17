@@ -13,7 +13,7 @@ import java.io.File;
  * @author Vladislav.Kaznacheev
  */
 @SuppressWarnings({"UnusedDeclaration"})
-public class MavenCoreState implements Cloneable {
+public class MavenCoreSettings implements Cloneable {
 
   private boolean workOffline = false;
   @NotNull private String mavenHome = "";
@@ -138,7 +138,7 @@ public class MavenCoreState implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenCoreState that = (MavenCoreState)o;
+    final MavenCoreSettings that = (MavenCoreSettings)o;
 
     if (nonRecursive != that.nonRecursive) return false;
     if (outputLevel != that.outputLevel) return false;
@@ -172,9 +172,9 @@ public class MavenCoreState implements Cloneable {
   }
 
   @Override
-  public MavenCoreState clone() {
+  public MavenCoreSettings clone() {
     try {
-      return (MavenCoreState)super.clone();
+      return (MavenCoreSettings)super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);

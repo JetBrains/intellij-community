@@ -21,14 +21,14 @@ import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExecutor;
 import org.jetbrains.idea.maven.runner.executor.MavenExternalExecutor;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.DummyProjectComponent;
 import org.jetbrains.idea.maven.core.util.ErrorHandler;
 
 import java.util.List;
 
 @State(name = "MavenRunner", storages = {@Storage(id = "default", file = "$WORKSPACE_FILE$")})
-public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunner, PersistentStateComponent<MavenRunnerState> {
+public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunner, PersistentStateComponent<MavenRunnerSettings> {
 
   @NonNls private static final String OUTPUT_TOOL_WINDOW_ID = "Maven Runner Output";
 
@@ -37,7 +37,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
 
   private MavenRunnerParameters myRunnerParameters;
 
-  private MavenRunnerState myState = new MavenRunnerState();
+  private MavenRunnerSettings mySettings = new MavenRunnerSettings();
 
   private MavenRunnerOutputPanel myMavenOutputWindowPanel;
   private MavenExecutor executor;
@@ -51,20 +51,20 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
     mavenCore.addConfigurableFactory(new MavenCore.ConfigurableFactory() {
       public Configurable createConfigurable() {
         return new MavenRunnerConfigurable(project, false) {
-          protected MavenRunnerState getState() {
-            return myState;
+          protected MavenRunnerSettings getState() {
+            return mySettings;
           }
         };
       }
     });
   }
 
-  public MavenRunnerState getState() {
-    return myState;
+  public MavenRunnerSettings getState() {
+    return mySettings;
   }
 
-  public void loadState(MavenRunnerState state) {
-    myState = state;
+  public void loadState(MavenRunnerSettings settings) {
+    mySettings = settings;
   }
 
   public MavenExecutor getExecutor() {
@@ -105,7 +105,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
 
-      executor = createTask(myRunnerParameters, mavenCore.getState(), myState);
+      executor = createTask(myRunnerParameters, mavenCore.getState(), mySettings);
       openToolWindow(executor.createConsole(project));
       ProgressManager.getInstance().run(new Task.Backgroundable(project, executor.getCaption(), true) {
         public void run(ProgressIndicator indicator) {
@@ -126,15 +126,15 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
         }
 
         public boolean shouldStartInBackground() {
-          return myState.isRunMavenInBackground();
+          return mySettings.isRunMavenInBackground();
         }
 
         public void processSentToBackground() {
-          myState.setRunMavenInBackground(true);
+          mySettings.setRunMavenInBackground(true);
         }
 
         public void processRestoredToForeground() {
-          myState.setRunMavenInBackground(false);
+          mySettings.setRunMavenInBackground(false);
         }
       });
     }
@@ -145,7 +145,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
 
   private void onRunComplete() {
     executor = null;
-    if (myState.isSyncAfterBuild()) {
+    if (mySettings.isSyncAfterBuild()) {
       VirtualFileManager.getInstance().refresh(false);
     }
   }
@@ -161,11 +161,11 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
   }
 
   public boolean runBatch(List<MavenRunnerParameters> commands,
-                          @Nullable MavenCoreState coreState,
-                          @Nullable MavenRunnerState runnerState,
+                          @Nullable MavenCoreSettings coreSettings,
+                          @Nullable MavenRunnerSettings runnerSettings,
                           @Nullable final String action) {
-    final MavenCoreState effectiveCoreState = coreState != null ? coreState : mavenCore.getState();
-    final MavenRunnerState effectiveRunnerState = runnerState != null ? runnerState : getState();
+    final MavenCoreSettings effectiveCoreSettings = coreSettings != null ? coreSettings : mavenCore.getState();
+    final MavenRunnerSettings effectiveRunnerSettings = runnerSettings != null ? runnerSettings : getState();
 
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
@@ -175,7 +175,7 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
         indicator.setFraction(((double)count++) / commands.size());
       }
 
-      final MavenExecutor task = createTask(command, effectiveCoreState, effectiveRunnerState);
+      final MavenExecutor task = createTask(command, effectiveCoreSettings, effectiveRunnerSettings);
       task.setAction(action);
       if (!task.execute()) {
         return false;
@@ -185,13 +185,13 @@ public class MavenRunnerImpl extends DummyProjectComponent implements MavenRunne
   }
 
   static MavenExecutor createTask(final MavenRunnerParameters taskParameters,
-                                  final MavenCoreState state,
-                                  final MavenRunnerState runnerState) {
-    if (runnerState.isUseMavenEmbedder()) {
-      return new MavenEmbeddedExecutor(taskParameters, state, runnerState);
+                                  final MavenCoreSettings coreSettings,
+                                  final MavenRunnerSettings runnerSettings) {
+    if (runnerSettings.isUseMavenEmbedder()) {
+      return new MavenEmbeddedExecutor(taskParameters, coreSettings, runnerSettings);
     }
     else {
-      return new MavenExternalExecutor(taskParameters, state, runnerState);
+      return new MavenExternalExecutor(taskParameters, coreSettings, runnerSettings);
     }
   }
 }

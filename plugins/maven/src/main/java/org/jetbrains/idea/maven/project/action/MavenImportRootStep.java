@@ -11,11 +11,11 @@ import com.intellij.projectImport.ProjectImportWizardStep;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.MavenPathsForm;
-import org.jetbrains.idea.maven.project.ImporterPreferencesForm;
+import org.jetbrains.idea.maven.project.ImporterSettingsForm;
 import org.jetbrains.idea.maven.project.MavenImportProcessorContext;
-import org.jetbrains.idea.maven.project.MavenImporterPreferences;
+import org.jetbrains.idea.maven.project.MavenImporterSettings;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
 import javax.swing.*;
@@ -28,18 +28,18 @@ import java.awt.event.MouseEvent;
  */
 class MavenImportRootStep extends ProjectImportWizardStep {
 
-  private MavenCoreState myCoreState;
+  private MavenCoreSettings myCoreSettings;
   private MavenImportProcessorContext myImportContext;
-  private MavenImporterPreferences myImporterPreferences;
+  private MavenImporterSettings myImporterSettings;
 
   private final JPanel myPanel;
   private NamePathComponent myRootPathComponent;
-  private final ImporterPreferencesForm myImporterPreferencesForm;
+  private final ImporterSettingsForm myImporterSettingsForm;
 
   public MavenImportRootStep(WizardContext wizardContext) {
     super(wizardContext);
 
-    myImporterPreferencesForm = new ImporterPreferencesForm(true) {
+    myImporterSettingsForm = new ImporterSettingsForm(true) {
       public String getDefaultModuleDir() {
         return myRootPathComponent.getPath();
       }
@@ -55,7 +55,7 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     myPanel.add(myRootPathComponent, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
                                                             GridBagConstraints.HORIZONTAL, new Insets(5, 6, 0, 6), 0, 0));
 
-    myPanel.add(myImporterPreferencesForm.createComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
+    myPanel.add(myImporterSettingsForm.createComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                                                     GridBagConstraints.HORIZONTAL, new Insets(15, 6, 0, 6),
                                                                                     0, 0));
     JButton advancedButton = new JButton(ProjectBundle.message("maven.advanced.button.name"));
@@ -74,9 +74,9 @@ class MavenImportRootStep extends ProjectImportWizardStep {
   }
 
   public void updateDataModel() {
-    final MavenImporterPreferences preferences = getImporterPreferences();
-    myImporterPreferencesForm.getData(preferences);
-    suggestProjectNameAndPath(preferences.getDedicatedModuleDir(), myRootPathComponent.getPath());
+    final MavenImporterSettings settings = getImporterSettings();
+    myImporterSettingsForm.getData(settings);
+    suggestProjectNameAndPath(settings.getDedicatedModuleDir(), myRootPathComponent.getPath());
   }
 
   public boolean validate() throws ConfigurationException {
@@ -98,18 +98,18 @@ class MavenImportRootStep extends ProjectImportWizardStep {
         myRootPathComponent.getPathComponent().selectAll();
       }
     }
-    myImporterPreferencesForm.setData(getImporterPreferences());
+    myImporterSettingsForm.setData(getImporterSettings());
   }
 
   public JComponent getPreferredFocusedComponent() {
     return myRootPathComponent.getPathComponent();
   }
 
-  private MavenCoreState getCoreState() {
-    if(myCoreState == null){
-      myCoreState = ((MavenImportBuilder)getBuilder()).getCoreState();
+  private MavenCoreSettings getCoreSettings() {
+    if(myCoreSettings == null){
+      myCoreSettings = ((MavenImportBuilder)getBuilder()).getCoreState();
     }
-    return myCoreState;
+    return myCoreSettings;
   }
 
   public MavenImportProcessorContext getImportContext() {
@@ -119,11 +119,11 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     return myImportContext;
   }
 
-  public MavenImporterPreferences getImporterPreferences() {
-    if (myImporterPreferences == null) {
-      myImporterPreferences = ((MavenImportBuilder)getBuilder()).getImporterPreferences();
+  public MavenImporterSettings getImporterSettings() {
+    if (myImporterSettings == null) {
+      myImporterSettings = ((MavenImportBuilder)getBuilder()).getImporterPreferences();
     }
-    return myImporterPreferences;
+    return myImporterSettings;
   }
 
   @NonNls
@@ -155,15 +155,15 @@ class MavenImportRootStep extends ProjectImportWizardStep {
     }
 
     public boolean isModified() {
-      return myForm.isModified(getCoreState());
+      return myForm.isModified(getCoreSettings());
     }
 
     public void apply() throws ConfigurationException {
-      myForm.setData(getCoreState());
+      myForm.setData(getCoreSettings());
     }
 
     public void reset() {
-      myForm.getData(getCoreState());
+      myForm.getData(getCoreSettings());
     }
 
     public void disposeUIResources() {

@@ -30,7 +30,7 @@ public class MavenToIdeaModuleConfigurator {
   private ModifiableModuleModel myModuleModel;
   private MavenToIdeaMapping myMapping;
   private Collection<String> myProfiles;
-  private MavenImporterPreferences myPrefs;
+  private MavenImporterSettings myPrefs;
   private Pattern myIgnorePatternCache;
   private Module myModule;
   private MavenProject myMavenProject;
@@ -39,7 +39,7 @@ public class MavenToIdeaModuleConfigurator {
   public MavenToIdeaModuleConfigurator(ModifiableModuleModel moduleModel,
                                        MavenToIdeaMapping mapping,
                                        Collection<String> profiles,
-                                       MavenImporterPreferences prefs,
+                                       MavenImporterSettings prefs,
                                        Module module,
                                        MavenProject mavenProject) {
     myModuleModel = moduleModel;

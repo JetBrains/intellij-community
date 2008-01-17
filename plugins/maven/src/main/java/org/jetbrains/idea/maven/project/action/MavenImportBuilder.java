@@ -11,7 +11,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import org.apache.maven.embedder.MavenEmbedder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.FileFinder;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
@@ -30,9 +30,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
 
   private Project projectToUpdate;
 
-  private MavenCoreState coreState;
-  private MavenImporterPreferences importerPreferences;
-  private MavenArtifactPreferences artifactPreferences;
+  private MavenCoreSettings myCoreSettings;
+  private MavenImporterSettings myImporterSettings;
+  private MavenArtifactSettings myArtifactSettings;
 
   private VirtualFile importRoot;
   private Collection<VirtualFile> myFiles;
@@ -89,9 +89,9 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
         }
       });
     }
-    project.getComponent(MavenWorkspacePreferencesComponent.class).getState().myImporterPreferences = getImporterPreferences();
-    project.getComponent(MavenWorkspacePreferencesComponent.class).getState().myArtifactPreferences = getArtifactPreferences();
-    project.getComponent(MavenCore.class).loadState(coreState);
+    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myImporterSettings = getImporterPreferences();
+    project.getComponent(MavenWorkspaceSettingsComponent.class).getState().myArtifactSettings = getArtifactPreferences();
+    project.getComponent(MavenCore.class).loadState(myCoreSettings);
   }
 
   public Project getUpdatedProject() {
@@ -205,27 +205,27 @@ public class MavenImportBuilder extends ProjectImportBuilder<MavenProjectModel.N
     openModulesConfigurator = on;
   }
 
-  public MavenCoreState getCoreState() {
-    if (coreState == null) {
-      coreState = getProject().getComponent(MavenCore.class).getState().clone();
+  public MavenCoreSettings getCoreState() {
+    if (myCoreSettings == null) {
+      myCoreSettings = getProject().getComponent(MavenCore.class).getState().clone();
     }
-    return coreState;
+    return myCoreSettings;
   }
 
-  public MavenImporterPreferences getImporterPreferences() {
-    if (importerPreferences == null) {
-      importerPreferences = getProject().getComponent(MavenWorkspacePreferencesComponent.class).getState()
-        .myImporterPreferences.clone();
+  public MavenImporterSettings getImporterPreferences() {
+    if (myImporterSettings == null) {
+      myImporterSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
+        .myImporterSettings.clone();
     }
-    return importerPreferences;
+    return myImporterSettings;
   }
 
-  private MavenArtifactPreferences getArtifactPreferences() {
-    if (artifactPreferences == null) {
-      artifactPreferences = getProject().getComponent(MavenWorkspacePreferencesComponent.class).getState()
-        .myArtifactPreferences.clone();
+  private MavenArtifactSettings getArtifactPreferences() {
+    if (myArtifactSettings == null) {
+      myArtifactSettings = getProject().getComponent(MavenWorkspaceSettingsComponent.class).getState()
+        .myArtifactSettings.clone();
     }
-    return artifactPreferences;
+    return myArtifactSettings;
   }
 
   private Project getProject() {

@@ -31,7 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MavenRunnerState implements Cloneable {
+public class MavenRunnerSettings implements Cloneable {
 
   @NonNls public static final String USE_INTERNAL_JAVA = "#JAVA_INTERNAL";
   @NonNls public static final String USE_JAVA_HOME = "#JAVA_HOME";
@@ -132,7 +132,7 @@ public class MavenRunnerState implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenRunnerState that = (MavenRunnerState)o;
+    final MavenRunnerSettings that = (MavenRunnerSettings)o;
 
     if (runMavenInBackground != that.runMavenInBackground) return false;
     if (skipTests != that.skipTests) return false;
@@ -158,9 +158,9 @@ public class MavenRunnerState implements Cloneable {
   }
 
   @Override
-  public MavenRunnerState clone() {
+  public MavenRunnerSettings clone() {
     try {
-      final MavenRunnerState clone = (MavenRunnerState)super.clone();
+      final MavenRunnerSettings clone = (MavenRunnerSettings)super.clone();
       clone.mavenProperties = cloneMap(mavenProperties);
       return clone;
     }

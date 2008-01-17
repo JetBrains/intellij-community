@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class MavenImporterPreferences implements Cloneable {
+public class MavenImporterSettings implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
   private boolean createModuleGroups = false;
@@ -52,7 +52,7 @@ public class MavenImporterPreferences implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final MavenImporterPreferences that = (MavenImporterPreferences)o;
+    final MavenImporterSettings that = (MavenImporterSettings)o;
 
     if (createModuleGroups != that.createModuleGroups) return false;
     if (lookForNested != that.lookForNested) return false;
@@ -76,9 +76,9 @@ public class MavenImporterPreferences implements Cloneable {
   }
 
   @Override
-  public MavenImporterPreferences clone() {
+  public MavenImporterSettings clone() {
     try {
-      return (MavenImporterPreferences)super.clone();
+      return (MavenImporterSettings)super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new Error(e);

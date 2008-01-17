@@ -72,19 +72,19 @@ public class MavenPathsForm {
       });
   }
 
-  public boolean isModified(MavenCoreState data) {
-    MavenCoreState formData = new MavenCoreState();
+  public boolean isModified(MavenCoreSettings data) {
+    MavenCoreSettings formData = new MavenCoreSettings();
     setData(formData);
     return !formData.equals(data);
   }
 
-  public void setData(MavenCoreState data) {
+  public void setData(MavenCoreSettings data) {
     data.setMavenHome(mavenHomeOverrider.getText());
     data.setMavenSettingsFile(mavenSettingsFileOverrider.getText());
     data.setLocalRepository(localRepositoryOverrider.getText());
   }
 
-  public void getData(MavenCoreState data) {
+  public void getData(MavenCoreSettings data) {
     mavenHomeOverrider.setText(data.getMavenHome());
     mavenSettingsFileOverrider.setText(data.getMavenSettingsFile());
     localRepositoryOverrider.setText(data.getLocalRepository());

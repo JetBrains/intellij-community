@@ -18,29 +18,28 @@ import java.util.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class ImporterPreferencesConfigurable implements Configurable {
-  private MavenImporterPreferences myImporterPreferences;
+public class ImporterSettingsConfigurable implements Configurable {
+  private MavenImporterSettings myImporterSettings;
+
   private MavenImporterState myImporterState;
-  private final MavenProjectsState myProjectsState;
+  private MavenProjectsState myProjectsState;
 
   private JPanel panel;
-  private ImporterPreferencesForm preferencesForm;
-  private ElementsChooser<String> projectChooser;
+  private ImporterSettingsForm mySettingsForm;
   private ElementsChooser<String> profileChooser;
 
   private List<String> myOriginalProfiles;
 
-  public ImporterPreferencesConfigurable(final MavenImporterPreferences importerPreferences,
+  public ImporterSettingsConfigurable(final MavenImporterSettings importerSettings,
                                          final MavenImporterState importerState,
                                          final MavenProjectsState projectsState) {
-    myImporterPreferences = importerPreferences;
+    myImporterSettings = importerSettings;
     myImporterState = importerState;
     myProjectsState = projectsState;
     myOriginalProfiles = myImporterState.getMemorizedProfiles();
   }
 
   private void createUIComponents() {
-    projectChooser = new ElementsChooser<String>(true);
     profileChooser = new ElementsChooser<String>(true);
   }
 
@@ -65,17 +64,17 @@ public class ImporterPreferencesConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    return preferencesForm.isModified(myImporterPreferences) ||
+    return mySettingsForm.isModified(myImporterSettings) ||
            !IdeaAPIHelper.equalAsSets(myOriginalProfiles, profileChooser.getMarkedElements());
   }
 
   public void apply() throws ConfigurationException {
-    preferencesForm.getData(myImporterPreferences);
+    mySettingsForm.getData(myImporterSettings);
     myImporterState.memorizeProfiles(profileChooser.getMarkedElements());
   }
 
   public void reset() {
-    preferencesForm.setData(myImporterPreferences);
+    mySettingsForm.setData(myImporterSettings);
 
     final Collection<VirtualFile> files =
       collectVisibleProjects(myProjectsState, new TreeSet<VirtualFile>(ProjectUtil.ourProjectDirComparator));

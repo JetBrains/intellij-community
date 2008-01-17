@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class ImporterPreferencesForm {
+public class ImporterSettingsForm {
 
   private JPanel panel;
   private JCheckBox myModuleDirCheckBox;
@@ -24,11 +24,11 @@ public class ImporterPreferencesForm {
   private JTextArea myIgnoreDependenciesTextArea;
   private JPanel myIgnorePanel;
 
-  public ImporterPreferencesForm() {
+  public ImporterSettingsForm() {
     this(false);
   }
 
-  public ImporterPreferencesForm(boolean minimal) {
+  public ImporterSettingsForm(boolean minimal) {
 
     ActionListener listener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
@@ -64,7 +64,7 @@ public class ImporterPreferencesForm {
     return panel;
   }
 
-  public void getData(final MavenImporterPreferences data) {
+  public void getData(final MavenImporterSettings data) {
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
     data.setLookForNested(myLookForNestedCheckBox.isSelected());
@@ -72,7 +72,7 @@ public class ImporterPreferencesForm {
     data.setIgnoredDependencies(Strings.tokenize(myIgnoreDependenciesTextArea.getText(), Strings.WHITESPACE + ",;"));
   }
 
-  public void setData(final MavenImporterPreferences data) {
+  public void setData(final MavenImporterSettings data) {
     myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     myModuleDirControl.setText(data.getDedicatedModuleDir());
 
@@ -84,9 +84,9 @@ public class ImporterPreferencesForm {
     enableControls();
   }
 
-  public boolean isModified(MavenImporterPreferences preferences) {
-    MavenImporterPreferences formData = new MavenImporterPreferences();
+  public boolean isModified(MavenImporterSettings settings) {
+    MavenImporterSettings formData = new MavenImporterSettings();
     getData(formData);
-    return !formData.equals(preferences);
+    return !formData.equals(settings);
   }
 }

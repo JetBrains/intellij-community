@@ -26,8 +26,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.idea.maven.core.MavenCoreState;
-import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
 
@@ -38,8 +38,8 @@ public class MavenExternalExecutor extends MavenExecutor {
   @NonNls private static final String PHASE_INFO_REGEXP = "\\[INFO\\] \\[.*:.*\\]";
   @NonNls private static final int INFO_PREFIX_SIZE = "[INFO] ".length();
 
-  public MavenExternalExecutor(MavenRunnerParameters parameters, MavenCoreState mavenCoreState, MavenRunnerState runnerState) {
-    super(parameters, mavenCoreState, runnerState, RunnerBundle.message("external.executor.caption"));
+  public MavenExternalExecutor(MavenRunnerParameters parameters, MavenCoreSettings coreSettings, MavenRunnerSettings runnerSettings) {
+    super(parameters, coreSettings, runnerSettings, RunnerBundle.message("external.executor.caption"));
   }
 
   public boolean execute() {
@@ -47,7 +47,7 @@ public class MavenExternalExecutor extends MavenExecutor {
 
     try {
 
-      myProcessHandler = new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreState, myRunnerState)) {
+      myProcessHandler = new DefaultJavaProcessHandler(MavenExternalParameters.createJavaParameters(myParameters, myCoreSettings, myRunnerSettings)) {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
         public void notifyTextAvailable(String text, Key outputType) {

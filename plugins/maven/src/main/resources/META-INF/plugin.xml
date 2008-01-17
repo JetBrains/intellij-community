@@ -62,7 +62,7 @@
       <implementation-class>org.jetbrains.idea.maven.project.MavenImporterComponent</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspacePreferencesComponent</implementation-class>
+      <implementation-class>org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent</implementation-class>
       <option name="workspace" value="true"/>
     </component>
     <component>

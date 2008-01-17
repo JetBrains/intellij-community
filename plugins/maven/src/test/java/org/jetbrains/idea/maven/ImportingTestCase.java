@@ -19,7 +19,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.events.MavenEventsHandler;
 import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import org.jetbrains.idea.maven.navigator.PomTreeViewSettings;
@@ -38,7 +38,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   private VirtualFile projectPom;
 
   private List<VirtualFile> poms = new ArrayList<VirtualFile>();
-  protected MavenImporterPreferences prefs;
+  protected MavenImporterSettings myPrefs;
   protected MavenProjectModel projectModel;
 
   @Override
@@ -70,8 +70,8 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   }
 
   protected void configMaven() {
-    MavenWorkspacePreferencesComponent c = myProject.getComponent(MavenWorkspacePreferencesComponent.class);
-    prefs = c.getState().myImporterPreferences;
+    MavenWorkspaceSettingsComponent c = myProject.getComponent(MavenWorkspaceSettingsComponent.class);
+    myPrefs = c.getState().myImporterSettings;
   }
 
   @Override
@@ -97,7 +97,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     return FileUtil.toSystemIndependentName(path);
   }
 
-  protected MavenCoreState getMavenCoreState() {
+  protected MavenCoreSettings getMavenCoreState() {
     return myProject.getComponent(MavenCore.class).getState();
   }
 

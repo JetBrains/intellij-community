@@ -22,17 +22,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
-import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.logger.MavenLogUtil;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 
 import java.text.MessageFormat;
 
 public abstract class MavenExecutor extends ConsoleAdapter {
 
   final MavenRunnerParameters myParameters;
-  final MavenCoreState myCoreState;
-  final MavenRunnerState myRunnerState;
+  final MavenCoreSettings myCoreSettings;
+  final MavenRunnerSettings myRunnerSettings;
   private final String myCaption;
   private String myAction;
 
@@ -40,11 +40,11 @@ public abstract class MavenExecutor extends ConsoleAdapter {
   private boolean cancelled = false;
   private int exitCode = 0;
 
-  public MavenExecutor(MavenRunnerParameters parameters, MavenCoreState coreState, MavenRunnerState runnerState, String caption) {
-    super(coreState.getOutputLevel());
+  public MavenExecutor(MavenRunnerParameters parameters, MavenCoreSettings coreSettings, MavenRunnerSettings runnerSettings, String caption) {
+    super(coreSettings.getOutputLevel());
     myParameters = parameters;
-    myCoreState = coreState;
-    myRunnerState = runnerState;
+    myCoreSettings = coreSettings;
+    myRunnerSettings = runnerSettings;
     myCaption = caption;
   }
 
@@ -85,7 +85,7 @@ public abstract class MavenExecutor extends ConsoleAdapter {
   void displayProgress() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : RunnerBundle.message("maven.building"),
+      indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : RunnerBundle.message("maven.running"),
                                              FileUtil.toSystemDependentName(myParameters.getPomPath())));
       indicator.setText2(myParameters.getGoals().toString());
     }

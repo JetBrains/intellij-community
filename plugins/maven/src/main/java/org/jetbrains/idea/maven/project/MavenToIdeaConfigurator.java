@@ -3,7 +3,13 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.util.Function;
 import org.apache.maven.project.MavenProject;
+import org.jetbrains.idea.maven.core.util.IdeaAPIHelper;
 
 import java.util.Collection;
 import java.util.Stack;
@@ -12,45 +18,69 @@ import java.util.Stack;
 public class MavenToIdeaConfigurator {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenToIdeaConfigurator");
 
+  private Project myProject;
   private ModifiableModuleModel myModuleModel;
   private MavenProjectModel myProjectModel;
   private MavenToIdeaMapping myMapping;
   private Collection<String> myProfiles;
-  private MavenImporterPreferences myPrefs;
+  private MavenImporterSettings myPrefs;
 
-  public static void config(ModifiableModuleModel moduleModel,
+  public static void config(Project p,
                             MavenProjectModel projectModel,
                             Collection<String> profiles,
                             MavenToIdeaMapping mapping,
-                            MavenImporterPreferences prefs) {
-    MavenToIdeaConfigurator c = new MavenToIdeaConfigurator(moduleModel, projectModel, mapping, profiles, prefs);
+                            MavenImporterSettings prefs) {
+    MavenToIdeaConfigurator c = new MavenToIdeaConfigurator(p, projectModel, mapping, profiles, prefs);
     c.config();
   }
 
-  private MavenToIdeaConfigurator(ModifiableModuleModel model,
+  private MavenToIdeaConfigurator(Project p,
                                   MavenProjectModel projectModel,
                                   MavenToIdeaMapping mapping,
                                   Collection<String> profiles,
-                                  MavenImporterPreferences preferences) {
-    myModuleModel = model;
+                                  MavenImporterSettings settings) {
+    myProject = p;
     myProjectModel = projectModel;
     myMapping = mapping;
     myProfiles = profiles;
-    myPrefs = preferences;
+    myPrefs = settings;
   }
 
   private void config() {
+    deleteObsoleteModules();
+
+    myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
+
     configModules();
     configModuleGroups();
     resolveDependenciesAndCommit();
+  }
+
+  private void deleteObsoleteModules() {
+    Collection<Module> modules = myMapping.getObsoleteModules();
+    if (modules.isEmpty()) return;
+
+    String formatted = StringUtil.join(modules, new Function<Module, String>() {
+      public String fun(Module m) {
+        return "'" + m.getName() + "'";
+      }
+    }, "\n");
+
+    int result = Messages.showYesNoDialog(myProject,
+                                          ProjectBundle.message("maven.import.message.delete.obsolete", formatted),
+                                          ProjectBundle.message("maven.import"),
+                                          Messages.getQuestionIcon());
+    if (result == 1) return;// NO
+
+    IdeaAPIHelper.deleteModules(myMapping.getObsoleteModules());
   }
 
   private void configModules() {
     myProjectModel.visit(new MavenProjectModel.MavenProjectVisitorRoot() {
       public void visit(MavenProjectModel.Node node) {
         convertNode(node);
-        for (MavenProjectModel.Node subnode : node.mavenModulesTopoSorted) {
-          convertNode(subnode);
+        for (MavenProjectModel.Node child : node.mavenModulesTopoSorted) {
+          convertNode(child);
         }
       }
     });

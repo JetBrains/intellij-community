@@ -45,7 +45,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
   private final DefaultComboBoxModel comboboxModelMultiprojectBuildFailPolicy = new DefaultComboBoxModel();
   private final DefaultComboBoxModel comboboxModelPluginUpdatePolicy = new DefaultComboBoxModel();
 
-  protected abstract MavenCoreState getState();
+  protected abstract MavenCoreSettings getState();
 
   private void fillComboboxFailureBehavior() {
     ComboBoxUtil.setModel(comboboxMultiprojectBuildFailPolicy, comboboxModelMultiprojectBuildFailPolicy, new Object[][]{
@@ -80,7 +80,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    MavenCoreState formData = new MavenCoreState();
+    MavenCoreSettings formData = new MavenCoreSettings();
     setData(formData);
     return !formData.equals(getState());
   }
@@ -93,7 +93,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
     getData(getState());
   }
 
-  private void setData(MavenCoreState data) {
+  private void setData(MavenCoreSettings data) {
     data.setWorkOffline(checkboxWorkOffline.isSelected());
     mavenPathsForm.setData(data);
 
@@ -113,7 +113,7 @@ public abstract class MavenCoreConfigurable implements Configurable {
     }
   }
 
-  private void getData(MavenCoreState data) {
+  private void getData(MavenCoreSettings data) {
     checkboxWorkOffline.setSelected(data.isWorkOffline());
 
     mavenPathsForm.getData(data);

@@ -369,7 +369,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
   }
 
   public void testExcludingOutputDirectoriesIfProjectOutputIsUsed() throws IOException {
-    prefs.setUseMavenOutput(false);
+    myPrefs.setUseMavenOutput(false);
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

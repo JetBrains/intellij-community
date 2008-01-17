@@ -27,9 +27,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
-import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.RunnerBundle;
 
 import java.io.File;
@@ -46,17 +46,17 @@ public class MavenExternalParameters {
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   public static JavaParameters createJavaParameters(final MavenRunnerParameters parameters,
-                                                    final MavenCoreState coreState,
-                                                    final MavenRunnerState runnerState) throws ExecutionException {
+                                                    final MavenCoreSettings coreSettings,
+                                                    final MavenRunnerSettings runnerSettings) throws ExecutionException {
     final JavaParameters params = new JavaParameters();
 
     params.setWorkingDirectory(parameters.getWorkingDir());
 
-    params.setJdk(getJdk(runnerState.getJreName()));
+    params.setJdk(getJdk(runnerSettings.getJreName()));
 
-    final String mavenHome = resolveMavenHome(coreState);
+    final String mavenHome = resolveMavenHome(coreSettings);
 
-    for (String parameter : createVMParameters(new ArrayList<String>(), mavenHome, runnerState)) {
+    for (String parameter : createVMParameters(new ArrayList<String>(), mavenHome, runnerSettings)) {
       params.getVMParametersList().add(parameter);
     }
 
@@ -66,7 +66,7 @@ public class MavenExternalParameters {
 
     params.setMainClass(MAVEN_LAUNCHER_CLASS);
 
-    for (String parameter : createMavenParameters(new ArrayList<String>(), coreState, runnerState, parameters)) {
+    for (String parameter : createMavenParameters(new ArrayList<String>(), coreSettings, runnerSettings, parameters)) {
       params.getProgramParametersList().add(parameter);
     }
 
@@ -75,11 +75,11 @@ public class MavenExternalParameters {
 
   @NotNull
   private static Sdk getJdk(final String name) throws ExecutionException {
-    if (name.equals(MavenRunnerState.USE_INTERNAL_JAVA)) {
+    if (name.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return ProjectJdkTable.getInstance().getInternalJdk();
     }
 
-    if (name.equals(MavenRunnerState.USE_JAVA_HOME)) {
+    if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
       final String javaHome = System.getenv(JAVA_HOME);
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
@@ -100,8 +100,8 @@ public class MavenExternalParameters {
     throw new ExecutionException(RunnerBundle.message("maven.java.not.found", name));
   }
 
-  public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenRunnerState runnerState) {
-    addParameters(list, runnerState.getVmOptions());
+  public static List<String> createVMParameters(final List<String> list, final String mavenHome, final MavenRunnerSettings runnerSettings) {
+    addParameters(list, runnerSettings.getVmOptions());
 
     addParameters(list, StringUtil.notNullize(System.getenv(MAVEN_OPTS)));
 
@@ -113,16 +113,16 @@ public class MavenExternalParameters {
   }
 
   private static List<String> createMavenParameters(final List<String> list,
-                                                    final MavenCoreState coreState,
-                                                    final MavenRunnerState runnerState,
+                                                    final MavenCoreSettings coreSettings,
+                                                    final MavenRunnerSettings runnerSettings,
                                                     final MavenRunnerParameters parameters) {
-    encodeCoreSettings(coreState, list);
+    encodeCoreSettings(coreSettings, list);
 
-    if (runnerState.isSkipTests()) {
+    if (runnerSettings.isSkipTests()) {
       addProperty(list, "test", "skip");
     }
 
-    for (Map.Entry<String, String> entry : runnerState.getMavenProperties().entrySet()) {
+    for (Map.Entry<String, String> entry : runnerSettings.getMavenProperties().entrySet()) {
       addProperty(list, entry.getKey(), entry.getValue());
     }
 
@@ -158,8 +158,8 @@ public class MavenExternalParameters {
     cmdList.add(MessageFormat.format("-D{0}={1}", key, value));
   }
 
-  private static String resolveMavenHome(@NotNull MavenCoreState coreState) throws ExecutionException {
-    final File file = MavenEnv.resolveMavenHomeDirectory(coreState.getMavenHome());
+  private static String resolveMavenHome(@NotNull MavenCoreSettings coreSettings) throws ExecutionException {
+    final File file = MavenEnv.resolveMavenHomeDirectory(coreSettings.getMavenHome());
 
     if (file == null) {
       throw new ExecutionException(RunnerBundle.message("external.maven.home.no.default"));
@@ -202,36 +202,36 @@ public class MavenExternalParameters {
     return classpathEntries;
   }
 
-  private static void encodeCoreSettings(MavenCoreState mavenCoreState, @NonNls List<String> cmdList) {
-    if (mavenCoreState.isWorkOffline()) {
+  private static void encodeCoreSettings(MavenCoreSettings coreSettings, @NonNls List<String> cmdList) {
+    if (coreSettings.isWorkOffline()) {
       cmdList.add("--offline");
     }
-    if (!mavenCoreState.isUsePluginRegistry()) {
+    if (!coreSettings.isUsePluginRegistry()) {
       cmdList.add("--no-plugin-registry");
     }
-    if (mavenCoreState.getOutputLevel() == MavenExecutionRequest.LOGGING_LEVEL_DEBUG) {
+    if (coreSettings.getOutputLevel() == MavenExecutionRequest.LOGGING_LEVEL_DEBUG) {
       cmdList.add("--debug");
     }
 
-    if (mavenCoreState.isNonRecursive()) {
+    if (coreSettings.isNonRecursive()) {
       cmdList.add("--non-recursive");
     }
 
-    if (mavenCoreState.isProduceExceptionErrorMessages()) {
+    if (coreSettings.isProduceExceptionErrorMessages()) {
       cmdList.add("--errors");
     }
 
-    cmdList.add("--" + mavenCoreState.getFailureBehavior());
+    cmdList.add("--" + coreSettings.getFailureBehavior());
 
-    if (mavenCoreState.getPluginUpdatePolicy()) {
+    if (coreSettings.getPluginUpdatePolicy()) {
       cmdList.add("--check-plugin-updates");
     }
     else {
       cmdList.add("--no-plugin-updates");
     }
 
-    if (mavenCoreState.getChecksumPolicy().length() != 0) {
-      if (mavenCoreState.getChecksumPolicy().equals(MavenExecutionRequest.CHECKSUM_POLICY_FAIL)) {
+    if (coreSettings.getChecksumPolicy().length() != 0) {
+      if (coreSettings.getChecksumPolicy().equals(MavenExecutionRequest.CHECKSUM_POLICY_FAIL)) {
         cmdList.add("--strict-checksums");
       }
       else {
@@ -239,7 +239,7 @@ public class MavenExternalParameters {
       }
     }
 
-    addOption(cmdList, "s", mavenCoreState.getMavenSettingsFile());
+    addOption(cmdList, "s", coreSettings.getMavenSettingsFile());
   }
 
   private static String encodeProfiles(final Collection<String> profiles) {

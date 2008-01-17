@@ -18,12 +18,12 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.maven.core.MavenCore;
-import org.jetbrains.idea.maven.core.MavenCoreState;
+import org.jetbrains.idea.maven.core.MavenCoreSettings;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
 import org.jetbrains.idea.maven.runner.MavenRunner;
-import org.jetbrains.idea.maven.runner.MavenRunnerState;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
 import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
@@ -33,12 +33,12 @@ import java.util.*;
 public class MavenArtifactDownloader {
   static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.maven.project.MavenArtifactDownloader");
 
-  private final MavenArtifactPreferences myPreferences;
+  private final MavenArtifactSettings mySettings;
   private final MavenEmbedder myEmbedder;
   private final Progress myProgress;
 
-  public MavenArtifactDownloader(MavenArtifactPreferences preferences, MavenEmbedder embedder, Progress p) {
-    myPreferences = preferences;
+  public MavenArtifactDownloader(MavenArtifactSettings settings, MavenEmbedder embedder, Progress p) {
+    mySettings = settings;
     myEmbedder = embedder;
     myProgress = p;
   }
@@ -104,19 +104,19 @@ public class MavenArtifactDownloader {
 
     myProgress.checkCanceled();
 
-    if (isEnabled(myPreferences.getDownloadSources(), demand)) {
+    if (isEnabled(mySettings.getDownloadSources(), demand)) {
       download(libraryArtifacts, Constants.SOURCES_CLASSIFIER);
     }
 
     myProgress.checkCanceled();
 
-    if (isEnabled(myPreferences.getDownloadJavadoc(), demand)) {
+    if (isEnabled(mySettings.getDownloadJavadoc(), demand)) {
       download(libraryArtifacts, Constants.JAVADOC_CLASSIFIER);
     }
 
     myProgress.checkCanceled();
 
-    if (isEnabled(myPreferences.getDownloadPlugins(), demand)) {
+    if (isEnabled(mySettings.getDownloadPlugins(), demand)) {
       final Map<Plugin, MavenProject> plugins = ProjectUtil.collectPlugins(mavenProjects);
       collectAttachedPlugins(projectsState, plugins);
       downloadPlugins(plugins);
@@ -125,7 +125,7 @@ public class MavenArtifactDownloader {
 
     myProgress.checkCanceled();
 
-    if (isEnabled(myPreferences.getGenerateSources(), demand)) {
+    if (isEnabled(mySettings.getGenerateSources(), demand)) {
       generateSources(project, createGenerateCommand(mavenProjects));
     }
   }
@@ -142,8 +142,8 @@ public class MavenArtifactDownloader {
     }
   }
 
-  private boolean isEnabled(final MavenArtifactPreferences.UPDATE_MODE level, final boolean demand) {
-    return level == MavenArtifactPreferences.UPDATE_MODE.ALWAYS || (level == MavenArtifactPreferences.UPDATE_MODE.ON_DEMAND && demand);
+  private boolean isEnabled(final MavenArtifactSettings.UPDATE_MODE level, final boolean demand) {
+    return level == MavenArtifactSettings.UPDATE_MODE.ALWAYS || (level == MavenArtifactSettings.UPDATE_MODE.ON_DEMAND && demand);
   }
 
   private static Map<MavenId, Set<ArtifactRepository>> collectLibraryArtifacts(MavenProjectsState projectsState,
@@ -229,14 +229,14 @@ public class MavenArtifactDownloader {
     final MavenCore core = project.getComponent(MavenCore.class);
     final MavenRunner runner = project.getComponent(MavenRunner.class);
 
-    final MavenCoreState coreState = core.getState().clone();
-    coreState.setFailureBehavior(MavenExecutionRequest.REACTOR_FAIL_NEVER);
-    coreState.setNonRecursive(false);
+    final MavenCoreSettings coreSettings = core.getState().clone();
+    coreSettings.setFailureBehavior(MavenExecutionRequest.REACTOR_FAIL_NEVER);
+    coreSettings.setNonRecursive(false);
 
-    final MavenRunnerState runnerState = runner.getState().clone();
-    runnerState.setRunMavenInBackground(false);
+    MavenRunnerSettings runnerSettings = runner.getState().clone();
+    runnerSettings.setRunMavenInBackground(false);
 
-    runner.runBatch(commands, coreState, runnerState, ProjectBundle.message("maven.import.generating.sources"));
+    runner.runBatch(commands, coreSettings, runnerSettings, ProjectBundle.message("maven.import.generating.sources"));
   }
 
   @NonNls private final static String[] generateGoals =

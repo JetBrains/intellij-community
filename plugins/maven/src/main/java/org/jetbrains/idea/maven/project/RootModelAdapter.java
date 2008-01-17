@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-class RootModelAdapter {
+public class RootModelAdapter {
   private final ModifiableRootModel myRootModel;
   private LibraryTable.ModifiableModel myLibraryTable;
 
@@ -198,7 +198,7 @@ class RootModelAdapter {
     }
   }
 
-  void resolveModuleDependencies(Map<String, String> libraryNameToModule) {
+  public void resolveModuleDependencies(Map<String, String> libraryNameToModule) {
     OrderEntry[] entries = myRootModel.getOrderEntries();
     boolean dirty = false;
     for (int i = 0; i != entries.length; i++) {
