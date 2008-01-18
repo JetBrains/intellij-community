@@ -6,25 +6,20 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 29.05.2007
  */
-public interface GrConstructorInvocation extends GrStatement, PsiReference {
-  GrArgumentList getArgumentList();
-
+public interface GrConstructorInvocation extends GrStatement, GrConstructorCall, PsiReference {
   boolean isSuperCall();
 
   boolean isThisCall();
 
   PsiElement getThisOrSuperKeyword();
 
-  PsiMethod resolveConstructor();
-
-  GroovyResolveResult resolveConstructorGenerics();
-
   PsiClass getDelegatedClass();
-
-  GroovyResolveResult[] multiResolveConstructor();
 }

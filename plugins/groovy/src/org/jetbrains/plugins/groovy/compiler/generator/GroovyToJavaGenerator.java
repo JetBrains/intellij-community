@@ -12,30 +12,28 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrInterfaceDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrConstructor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.util.containers.CharTrie;
 
 import java.io.*;
@@ -285,6 +283,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     boolean isClassDef = typeDefinition instanceof GrClassDefinition;
     boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
+    boolean isEnum = typeDefinition instanceof GrEnumTypeDefinition;
 
 
     if (typeDefinition != null) {
@@ -303,6 +302,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 //    text.append(" ");
 
     if (isInterface) text.append("interface");
+    else if (isEnum) text.append("enum");
     else text.append("class");
 
     text.append(" ");
@@ -327,7 +327,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (isScript) {
       text.append("extends ");
       text.append("groovy.lang.Script ");
-    } else {
+    } else if (!isEnum) {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
@@ -358,6 +358,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     text.append("{");
 
+    if (isEnum) {
+      writeEnumConstants(text, (GrEnumTypeDefinition) typeDefinition);
+    }
+
     boolean wasRunMethodPresent = false;
 
     Set<MethodSignature> methodSignatures = new HashSet<MethodSignature>();
@@ -365,7 +369,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     PsiMethod[] methods = typeDefinition == null ? PsiMethod.EMPTY_ARRAY : typeDefinition.getMethods();
     for (PsiMethod method : methods) {
       if (method instanceof GrConstructor) {
-        writeConstructor(text, (GrConstructor) method);
+        writeConstructor(text, (GrConstructor) method, isEnum);
         continue;
       }
 
@@ -428,19 +432,39 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("}");
   }
 
-  private void getDefinedGetters(List<String> gettersNames, GrMethod method) {
-    final String nameByGetter = PsiUtil.getPropertyNameByGetter(method);
+  private void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
+    text.append("\n  ");
+    GrEnumConstant[] enumConstants = enumDefinition.getEnumConstants();
+    for (int i = 0; i < enumConstants.length; i++) {
+      if (i > 0) text.append(", ");
+      GrEnumConstant enumConstant = enumConstants[i];
+      text.append(enumConstant.getName());
+      PsiMethod constructor = enumConstant.resolveConstructor();
+      if (constructor != null) {
+        text.append("(");
+        writeStubConstructorInvocation(text, constructor);
+        text.append(")");
+      }
 
-    if (!nameByGetter.equals(method.getName())) {
-      gettersNames.add(nameByGetter);
+      GrTypeDefinitionBody block = enumConstant.getAnonymousBlock();
+      if (block != null) {
+        text.append("{\n");
+        GrMethod[] methods = block.getMethods();
+        for (GrMethod method : methods) {
+          writeMethod(text, method, method.getParameterList().getParameters());
+        }
+        text.append("}");
+      }
     }
+    text.append(";");
   }
 
-  private void getDefinedSetters(List<String> settersNames, GrMethod method) {
-    final String nameBySetter = PsiUtil.getPropertyNameBySetter(method);
-
-    if (!nameBySetter.equals(method.getName())) {
-      settersNames.add(nameBySetter);
+  private void writeStubConstructorInvocation(StringBuffer text, PsiMethod constructor) {
+    final PsiParameter[] superParams = constructor.getParameterList().getParameters();
+    for (int j = 0; j < superParams.length; j++) {
+      if (j > 0) text.append(", ");
+      String typeText = getTypeText(superParams[j].getType());
+      text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
     }
   }
 
@@ -470,10 +494,12 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
         "  }\n");
   }
 
-  private void writeConstructor(final StringBuffer text, GrConstructor constructor) {
+  private void writeConstructor(final StringBuffer text, GrConstructor constructor, boolean isEnum) {
     text.append("\n");
     text.append("  ");
-    writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
+    if (!isEnum) {
+      writeMethodModifiers(text, constructor.getModifierList(), JAVA_MODIFIERS);
+    }
 
     /************* name **********/
     //append constructor name
@@ -507,16 +533,16 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (constructorInvocation != null) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
-          PsiMethod superConstructor = constructorInvocation.resolveConstructor();
-          if (superConstructor == null) {
+          PsiMethod chainedConstructor = constructorInvocation.resolveConstructor();
+          if (chainedConstructor == null) {
             final GroovyResolveResult[] results = constructorInvocation.multiResolveConstructor();
             if (results.length > 0) {
-              superConstructor = (PsiMethod) results[0].getElement();
+              chainedConstructor = (PsiMethod) results[0].getElement();
             }
           }
 
-          if (superConstructor != null) {
-            final PsiClassType[] throwsTypes = superConstructor.getThrowsList().getReferencedTypes();
+          if (chainedConstructor != null) {
+            final PsiClassType[] throwsTypes = chainedConstructor.getThrowsList().getReferencedTypes();
             if (throwsTypes.length > 0) {
               text.append(" throws ");
               for (int i = 0; i < throwsTypes.length; i++) {
@@ -536,13 +562,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
           }
           text.append("(");
 
-          if (superConstructor != null) {
-            final PsiParameter[] superParams = superConstructor.getParameterList().getParameters();
-            for (int i = 0; i < superParams.length; i++) {
-              if (i > 0) text.append(", ");
-              String typeText = getTypeText(superParams[i].getType());
-              text.append("(").append(typeText).append(")").append(getDefaultValueText(typeText));
-            }
+          if (chainedConstructor != null) {
+            writeStubConstructorInvocation(text, chainedConstructor);
           }
 
           text.append(")");
@@ -612,8 +633,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (method instanceof GrMethod) {
       retType = ((GrMethod) method).getDeclaredReturnType();
       if (retType == null) retType = TypesUtil.createJavaLangObject(method);
-    }
-    else retType = method.getReturnType();
+    } else retType = method.getReturnType();
 
     text.append(getTypeText(retType));
     text.append(" ");
@@ -629,7 +649,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     int i = 0;
     while (i < parameters.length) {
       PsiParameter parameter = parameters[i];
-      if(parameter == null) continue;
+      if (parameter == null) continue;
 
       if (i > 0) text.append(", ");  //append ','
 

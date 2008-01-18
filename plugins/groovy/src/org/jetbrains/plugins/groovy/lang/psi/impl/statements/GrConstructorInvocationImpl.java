@@ -51,7 +51,7 @@ public class GrConstructorInvocationImpl extends GroovyPsiElementImpl implements
     return "Constructor invocation";
   }
 
-  @Nullable
+  @NotNull
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }

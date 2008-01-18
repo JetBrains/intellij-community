@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -214,8 +215,9 @@ public class PsiUtil {
       }
 
       return result;
-    } else if (parent instanceof GrConstructorInvocation) {
-      final GrArgumentList argList = ((GrConstructorInvocation) parent).getArgumentList();
+    } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
+      final GrArgumentList argList = (GrArgumentList) ((GrCall) parent).getArgumentList();
+      assert argList != null;
       List<PsiType> result = new ArrayList<PsiType>();
       if (argList.getNamedArguments().length > 0) {
         result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));

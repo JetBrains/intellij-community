@@ -22,13 +22,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -87,5 +93,30 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   public boolean isProperty() {
     return false;
+  }
+
+  public GroovyResolveResult resolveConstructorGenerics() {
+    return PsiImplUtil.extractUniqueResult(multiResolveConstructor());
+  }
+
+  public GroovyResolveResult[] multiResolveConstructor() {
+    PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
+    PsiClass clazz = getContainingClass();
+    MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, false, true, argTypes, PsiType.EMPTY_ARRAY);
+    clazz.processDeclarations(processor, PsiSubstitutor.EMPTY, null, this);
+    return processor.getCandidates();
+  }
+
+  public PsiMethod resolveConstructor() {
+    return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
+  }
+
+  @NotNull
+  public GrArgumentList getArgumentList() {
+    return findChildByClass(GrArgumentList.class);
+  }
+
+  public GrTypeDefinitionBody getAnonymousBlock() {
+    return findChildByClass(GrTypeDefinitionBody.class);
   }
 }

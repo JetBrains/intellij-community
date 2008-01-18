@@ -12,25 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members;
-
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiClass;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 06.04.2007
+ * @author ven
  */
-public interface GrEnumConstant extends GrField, GrConstructorCall {
-  GrEnumConstant[] EMPTY_ARRAY = new GrEnumConstant[0];
+public interface GrConstructorCall extends GrCall {
+  @NotNull
+  GrArgumentList getArgumentList();
 
-  GrTypeDefinitionBody getAnonymousBlock();
+  PsiMethod resolveConstructor();
+
+  GroovyResolveResult resolveConstructorGenerics();
+
+  GroovyResolveResult[] multiResolveConstructor();
 }
