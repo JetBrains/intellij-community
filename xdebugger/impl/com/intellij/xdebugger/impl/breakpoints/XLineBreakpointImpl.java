@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -54,7 +53,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
     removeHighlighter();
     MarkupModelEx markupModel = (MarkupModelEx)document.getMarkupModel(getProject());
-    RangeHighlighter highlighter = markupModel.addPersistentLineHighlighter(getLine(), HighlighterLayer.CARET_ROW + 1, attributes);
+    RangeHighlighter highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
+                                                                            attributes);
     updateIcon();
     setupGutterRenderer(highlighter);
     myHighlighter = highlighter;

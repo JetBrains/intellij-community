@@ -536,7 +536,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
     RangeHighlighter highlighter = ((MarkupModelEx)document.getMarkupModel(project)).addPersistentLineHighlighter(
-      lineIndex, HighlighterLayer.CARET_ROW + 1, attributes); // glow through the caret line
+      lineIndex, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
     if (!highlighter.isValid()) {
       return null;
     }

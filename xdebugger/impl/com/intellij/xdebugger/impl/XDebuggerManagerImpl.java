@@ -7,11 +7,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.xdebugger.XDebugProcess;
-import com.intellij.xdebugger.XDebugProcessStarter;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +34,14 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final List<XDebugSessionImpl> mySessions;
+  private ExecutionPointHighlighter myExecutionPointHighlighter;
+  private XDebugSessionImpl myLastActiveSession;
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager) {
     myProject = project;
-    myBreakpointManager = new XBreakpointManagerImpl(myProject, startupManager);
+    myBreakpointManager = new XBreakpointManagerImpl(project, startupManager);
     mySessions = new ArrayList<XDebugSessionImpl>();
+    myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
   }
 
   @NotNull
@@ -52,6 +53,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
   }
 
   public void projectClosed() {
+  }
+
+  public Project getProject() {
+    return myProject;
   }
 
   @NonNls
@@ -77,8 +82,21 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
     return session;
   }
 
-  public void disposeSession(@NotNull XDebugSession session) {
-    mySessions.remove((XDebugSessionImpl)session);
+  public void removeSession(@NotNull XDebugSessionImpl session) {
+    mySessions.remove(session);
+    if (myLastActiveSession == session) {
+      myLastActiveSession = null;
+    }
+  }
+
+  public void updateExecutionPosition(@NotNull XDebugSessionImpl session, @Nullable XSourcePosition position) {
+    myLastActiveSession = session;
+    if (position != null) {
+      myExecutionPointHighlighter.show(position);
+    }
+    else {
+      myExecutionPointHighlighter.hide();
+    }
   }
 
   @NotNull
@@ -88,6 +106,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   @Nullable
   public XDebugSession getCurrentSession() {
+    if (myLastActiveSession != null) {
+      return myLastActiveSession;
+    }
     return !mySessions.isEmpty() ? mySessions.get(0) : null;
   }
 
@@ -97,6 +118,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements ProjectCom
 
   public void loadState(final XDebuggerState state) {
     myBreakpointManager.loadState(state.myBreakpointManagerState);
+  }
+
+  public void showExecutionPosition() {
+    myExecutionPointHighlighter.navigateTo();
   }
 
   public static class XDebuggerState {

@@ -1,9 +1,11 @@
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,6 +23,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public XDebugSessionImpl(XDebuggerManagerImpl debuggerManager) {
     myDebuggerManager = debuggerManager;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myDebuggerManager.getProject();
   }
 
   @NotNull
@@ -50,17 +57,19 @@ public class XDebugSessionImpl implements XDebugSession {
     }
   }
 
-  public void dispose() {
-    myDebuggerManager.getBreakpointManager().removeBreakpointListener(myBreakpointListener);
-  }
-
   public void stepOver() {
+    doResume();
+    myDebugProcess.startStepOver();
   }
 
   public void stepInto() {
+    doResume();
+    myDebugProcess.startStepInto();
   }
 
   public void stepOut() {
+    doResume();
+    myDebugProcess.startStepOut();
   }
 
   public void forceStepInto() {
@@ -70,9 +79,37 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void resume() {
+    doResume();
+    myDebugProcess.resume();
+  }
+
+  private void doResume() {
+    myDebuggerManager.updateExecutionPosition(this, null);
+    myPaused = false;
   }
 
   public void showExecutionPoint() {
+    myDebuggerManager.showExecutionPosition();
+  }
+
+  public void breakpointReached(@NotNull final XBreakpoint<?> breakpoint) {
+    myPaused = true;
+    XSourcePosition position = breakpoint.getSourcePosition();
+    if (position != null) {
+      positionReached(position);
+    }
+  }
+
+  public void positionReached(@NotNull final XSourcePosition position) {
+    myPaused = true;
+    myDebuggerManager.updateExecutionPosition(this, position);
+  }
+
+  public void stop() {
+    myDebugProcess.stop();
+    myDebuggerManager.updateExecutionPosition(this, null);
+    myDebuggerManager.getBreakpointManager().removeBreakpointListener(myBreakpointListener);
+    myDebuggerManager.removeSession(this);
   }
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {

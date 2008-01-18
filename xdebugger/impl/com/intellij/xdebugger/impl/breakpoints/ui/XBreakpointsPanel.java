@@ -60,6 +60,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
 
     myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
     initButtons();
+    onSelectionChanged();
   }
 
   private void onSelectionChanged() {

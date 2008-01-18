@@ -3,7 +3,6 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
 import com.intellij.debugger.engine.DebugProcessEvents;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -11,7 +10,6 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.debugger.ui.breakpoints.*;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -23,7 +21,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -31,6 +28,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.ui.DebuggerColors;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.event.MethodEntryEvent;
@@ -103,7 +102,7 @@ public class PositionHighlighter {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       myHighlighter = myEditor.getMarkupModel().addLineHighlighter(
         myLineIndex,
-        HighlighterLayer.SELECTION - 1,
+        DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
         scheme.getAttributes(DebuggerColors.EXECUTIONPOINT_ATTRIBUTES)
       );
       myHighlighter.setErrorStripeTooltip(DebuggerBundle.message("position.highlighter.stripe.tooltip"));

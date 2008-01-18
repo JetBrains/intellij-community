@@ -16,12 +16,17 @@
 
 package com.intellij.xdebugger;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
 public interface XDebugSession {
+
+  @NotNull
+  Project getProject();
 
   @NotNull XDebugProcess getDebugProcess();
 
@@ -42,4 +47,12 @@ public interface XDebugSession {
   void resume();
 
   void showExecutionPoint();
+
+
+  void breakpointReached(@NotNull XBreakpoint<?> breakpoint);
+
+  void positionReached(@NotNull XSourcePosition position);
+
+
+  void stop();
 }

@@ -43,5 +43,4 @@ public abstract class XDebuggerManager {
   @NotNull 
   public abstract XDebugSession startSession(@NotNull XDebugProcessStarter processStarter);
 
-  public abstract void disposeSession(@NotNull XDebugSession session);
 }

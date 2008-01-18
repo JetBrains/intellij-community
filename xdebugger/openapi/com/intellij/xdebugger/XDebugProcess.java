@@ -37,9 +37,13 @@ public abstract class XDebugProcess {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
 
-  public abstract void stepOver();
+  public abstract void startStepOver();
 
-  public abstract void stepInto();
+  public abstract void startStepInto();
 
-  public abstract void stepOut();
+  public abstract void startStepOut();
+
+  public abstract void stop();
+
+  public abstract void resume();
 }
