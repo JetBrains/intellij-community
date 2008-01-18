@@ -3,7 +3,7 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.impl.ConcatenationToMessageFormatAction;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
@@ -188,7 +188,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
     String text = editor.getDocument().getText().substring(selectedRange.getStartOffset(), selectedRange.getEndOffset());
     return new I18nizeQuickFixDialog(project, jspFile, null, text, false, true){
       protected String getTemplateName() {
-        return FileTemplateManager.TEMPLATE_I18NIZED_JSP_EXPRESSION;
+        return JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION;
       }
     };
   }

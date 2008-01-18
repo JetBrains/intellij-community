@@ -10,12 +10,11 @@ package com.intellij.lang.properties.psi;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.SetupJDKFix;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +29,11 @@ public class DefaultResourceBundleManager extends ResourceBundleManager {
   }
 
   public String getTemplateName() {
-    return FileTemplateManager.TEMPLATE_I18NIZED_EXPRESSION;
+    return JavaTemplateUtil.TEMPLATE_I18NIZED_EXPRESSION;
   }
 
   public String getConcatenationTemplateName() {
-    return FileTemplateManager.TEMPLATE_I18NIZED_CONCATENATION;
+    return JavaTemplateUtil.TEMPLATE_I18NIZED_CONCATENATION;
   }
 
   public boolean isActive(PsiFile context) throws ResourceBundleNotFoundException{
