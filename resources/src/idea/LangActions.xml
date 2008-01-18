@@ -17,6 +17,14 @@
       <add-to-group group-id="EditSelectGroup" anchor="last"/>
     </group>
 
+    <group id="EditBookmarksGroup">
+      <action id="ToggleBookmark" class="com.intellij.ide.bookmarks.actions.ToggleBookmarkAction"/>
+      <action id="ShowBookmarks" class="com.intellij.ide.bookmarks.actions.ShowBookmarksAction"/>
+      <separator/>
+
+      <add-to-group group-id="EditMenu" anchor="after" relative-to-action="EditCreateDeleteGroup"/>
+    </group>
+
     <!-- Search -->
     <group id="SearchMenu" popup="true">
       <action id="Find" class="com.intellij.openapi.editor.actions.IncrementalFindAction" icon="/actions/menu-find.png"/>
