@@ -501,7 +501,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private void updateSingleIndex(final String indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
-
+    if (!(file instanceof NewVirtualFile)) return;
+    
     final int inputId = Math.abs(((NewVirtualFile)file).getId());
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     index.update(inputId, currentFC, oldFC);
