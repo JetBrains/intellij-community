@@ -29,9 +29,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.cache.RepositoryManager;
-import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.impl.CompositeCacheManager;
+import com.intellij.psi.impl.cache.index.IndexCacheManagerImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
@@ -122,7 +122,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     mySearchHelper = new PsiSearchHelperImpl(this);
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
     if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
-      cacheManager.addCacheManager(new CacheManagerImpl(this));
+      //cacheManager.addCacheManager(new CacheManagerImpl(this));
+      cacheManager.addCacheManager(new IndexCacheManagerImpl(this));
     }
     else {
       cacheManager.addCacheManager(new EmptyCacheManager());

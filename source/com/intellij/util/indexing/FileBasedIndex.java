@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
+import gnu.trove.TIntHashSet;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,8 +77,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   public static final class FileContent {
-    final VirtualFile file;
-    final CharSequence content;
+    public final VirtualFile file;
+    public final CharSequence content;
 
     public FileContent(final VirtualFile file, final CharSequence content) {
       this.file = file;
@@ -214,68 +216,85 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   @NotNull
-  public <K, V> List<V> getData(final String indexId, K dataKey, Project project) throws StorageException {
-    indexUnsavedDocuments();
-    final AbstractIndex<K, V> index = getIndex(indexId);
-    if (index == null) {
-      return Collections.emptyList();
-    }
+  public <K, V> List<V> getData(final String indexId, K dataKey, Project project) {
+    try {
+      indexUnsavedDocuments();
+      final AbstractIndex<K, V> index = getIndex(indexId);
+      if (index == null) {
+        return Collections.emptyList();
+      }
 
-    final ValueContainer<V> container = index.getData(dataKey);
-    final List<V> valueList = container.toValueList();
+      final ValueContainer<V> container = index.getData(dataKey);
+      final List<V> valueList = container.toValueList();
 
-    if (project != null) {
-      final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-      final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-
-      for (Iterator<V> it = valueList.iterator(); it.hasNext();) {
-        final V value = it.next();
-        if (!belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
-          it.remove();
+      if (project != null) {
+        final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+        final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
+  
+        for (Iterator<V> it = valueList.iterator(); it.hasNext();) {
+          final V value = it.next();
+          if (!belongsToProject(container.getInputIdsIterator(value), dirIndex, fs)) {
+            it.remove();
+          }
         }
       }
-    }
 
-    return valueList;
+      return valueList;
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
-  public <K> Collection<VirtualFile> getContainingFiles(final String indexId, K dataKey, @NotNull Project project) throws StorageException {
-    indexUnsavedDocuments();
-    final AbstractIndex<K, ?> index = getIndex(indexId);
-    if (index == null) {
-      return Collections.emptyList();
-    }
+  public <K> Collection<VirtualFile> getContainingFiles(final String indexId, K dataKey, @NotNull Project project) {
+    try {
+      indexUnsavedDocuments();
+      final AbstractIndex<K, ?> index = getIndex(indexId);
+      if (index == null) {
+        return Collections.emptyList();
+      }
 
-    final Set<VirtualFile> files = new HashSet<VirtualFile>();
+      final List<VirtualFile> files = new ArrayList<VirtualFile>();
+      final TIntHashSet processedIds = new TIntHashSet();
+      
+      final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+      final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
 
-    final DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
-    final PersistentFS fs = (PersistentFS)PersistentFS.getInstance();
-
-    final ValueContainer container = index.getData(dataKey);
-    for (Iterator it = container.getValueIterator(); it.hasNext();) {
-      final Object value = it.next();
-      //noinspection unchecked
-      final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
-      while (inputIdsIterator.hasNext()) {
-        final int id = inputIdsIterator.next();
-        final boolean isDirectory = fs.isDirectory(id);
-        final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
-        if (directoryInfo != null && directoryInfo.contentRoot != null) {
-          if (isDirectory) {
-            files.add(directoryInfo.directory);
+      final ValueContainer container = index.getData(dataKey);
+      for (Iterator it = container.getValueIterator(); it.hasNext();) {
+        final Object value = it.next();
+        //noinspection unchecked
+        final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
+        while (inputIdsIterator.hasNext()) {
+          final int id = inputIdsIterator.next();
+          if (processedIds.contains(id)) {
+            continue;
           }
-          else {
-            final VirtualFile child = directoryInfo.directory.findChild(fs.getName(id));
-            if (child != null) {
-              files.add(child);
+          processedIds.add(id);
+          final boolean isDirectory = fs.isDirectory(id);
+          final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
+          if (directoryInfo != null && directoryInfo.contentRoot != null) {
+            if (isDirectory) {
+              files.add(directoryInfo.directory);
+            }
+            else {
+              final VirtualFile child = directoryInfo.directory.findChild(fs.getName(id));
+              if (child != null) {
+                files.add(child);
+              }
             }
           }
         }
       }
-    }
 
-    return files;
+      return files;
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+    }
+    return Collections.emptyList();
   }
 
   private void indexUnsavedDocuments() throws StorageException {
@@ -320,24 +339,26 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     try {
       indicator.setText("Building indices...");
       final int[] fileCount = new int[] {0};
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+      fileIndex.iterateContent(new ContentIterator() {
         public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory()) {
+          if (!file.isDirectory() && !fileIndex.isIgnored(file)) {
             fileCount[0]++;
           }
           return true;
         }
       });
       
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+      fileIndex.iterateContent(new ContentIterator() {
         private int myProcessed = 0;
         private final double myTotalCount = (double)fileCount[0]; 
         public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory()) {
+          if (!file.isDirectory() && !fileIndex.isIgnored(file)) {
             for (String indexId : indicesToUpdate) {
               if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
                 try {
-                  //indicator.setText2(file.getPresentableUrl());
+                  indicator.setText2(file.getPresentableUrl());
                   updateSingleIndex(indexId, file, new FileContent(file, loadContent(file)), null);
                 }
                 catch (StorageException e) {

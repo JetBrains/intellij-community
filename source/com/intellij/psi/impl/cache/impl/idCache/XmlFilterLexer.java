@@ -4,11 +4,10 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
-import gnu.trove.TIntIntHashMap;
 
 public class XmlFilterLexer extends BaseFilterLexer {
 
-  public XmlFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts) {
+  public XmlFilterLexer(Lexer originalLexer, OccurrenceConsumer table, int[] todoCounts) {
     super(originalLexer, table, todoCounts);
   }
 

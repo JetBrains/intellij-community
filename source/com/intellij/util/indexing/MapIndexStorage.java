@@ -12,6 +12,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -22,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
   private final PersistentHashMap<Key, ValueContainerImpl<Value>> myMap;
+  private final DataExternalizer<Value> myValueExternalizer;
   private final ObjectCache<Key, ValueContainerImpl<Value>> myCache;
   private Key myKeyBeingRemoved = null;
   private Lock myFlushingLock = new ReentrantLock();
@@ -37,6 +39,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     File storageFile, 
     final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, 
     final DataExternalizer<Value> valueExternalizer) throws IOException {
+    myValueExternalizer = valueExternalizer;
 
     myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(storageFile, keyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
     myCache = new ObjectCache<Key, ValueContainerImpl<Value>>(1024);
@@ -58,7 +61,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   }
   
   public void flush() {
-    //System.out.println("Cache hit rate = " + myCache.hitRate());
+    System.out.println("Cache hit rate = " + myCache.hitRate());
     myFlushingLock.lock();
     myCache.removeAll();
     try {
@@ -100,8 +103,22 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     myFlushingLock.lock();
+    final ValueContainerImpl<Value> container = myCache.get(key);
     try {
-      ((ValueContainerImpl<Value>)read(key)).addValue(inputId, value);
+      if (container != null) {
+        container.addValue(inputId, value);
+      }
+      else {
+        myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
+          public void append(final DataOutput out) throws IOException {
+            myValueExternalizer.save(out, value);
+            out.writeInt(-inputId);
+          }
+        });
+      }
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
     }
     finally {
       myFlushingLock.unlock();
@@ -175,11 +192,49 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
 
     public void save(final DataOutput out, final ValueContainerImpl<T> container) throws IOException {
-      container.write(out, myExternalizer);
+      for (final Iterator<T> valueIterator = container.getValueIterator(); valueIterator.hasNext();) {
+        final T value = valueIterator.next(); 
+        myExternalizer.save(out, value);
+
+        final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
+        if (ids != null) {
+          if (ids.size() == 1) {
+            out.writeInt(-ids.next());
+          }
+          else {
+            out.writeInt(ids.size());
+            while (ids.hasNext()) {
+              out.writeInt(ids.next());
+            }
+          }
+        }
+        else {
+          out.writeInt(0);
+        }
+      }
     }
 
     public ValueContainerImpl<T> read(final DataInput in) throws IOException {
-      return new ValueContainerImpl<T>(in, myExternalizer);
+      final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
+      while (true) {
+        try {
+          final T value = myExternalizer.read(in);
+          final int idCount = in.readInt();
+          if (idCount < 0) {
+            valueContainer.addValue(-idCount, value);
+          }
+          else if (idCount > 0){
+            for (int i = 0; i < idCount; i++) {
+              valueContainer.addValue(in.readInt(), value);
+            }
+          }
+        }
+        catch (IOException e) {
+          break;
+        }
+      }
+      
+      return valueContainer;
     }
   }
 }

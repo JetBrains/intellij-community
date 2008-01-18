@@ -242,9 +242,9 @@ public class Storage implements Disposable, Forceable {
       int newSize = oldSize + delta;
       if (newSize > capacity) {
         byte[] newbytes = new byte[newSize];
-        System.arraycopy(readBytes(record), 0, newbytes, 0, oldSize);
+        System.arraycopy(doReadBytes(record), 0, newbytes, 0, oldSize);
         System.arraycopy(bytes, 0, newbytes, oldSize, delta);
-        writeBytes(record, newbytes);
+        doWriteBytes(record, newbytes);
       }
       else {
         long address = myRecordsTable.getAddress(record) + oldSize;
@@ -256,6 +256,10 @@ public class Storage implements Disposable, Forceable {
 
   public void writeBytes(int record, byte[] bytes) {
     dropRecordCache(record);
+    doWriteBytes(record, bytes);
+  }
+
+  private void doWriteBytes(final int record, final byte[] bytes) {
     synchronized (lock) {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -347,6 +351,10 @@ public class Storage implements Disposable, Forceable {
 
   public byte[] readBytes(int record) {
     dropRecordCache(record);
+    return doReadBytes(record);
+  }
+
+  private byte[] doReadBytes(final int record) {
     synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;

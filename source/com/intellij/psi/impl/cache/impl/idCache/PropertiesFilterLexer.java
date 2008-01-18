@@ -4,13 +4,12 @@ import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TIntIntHashMap;
 
 /**
  * @author ven
  */
 public class PropertiesFilterLexer extends BaseFilterLexer {
-  public PropertiesFilterLexer(final Lexer originalLexer, final TIntIntHashMap table, final int[] todoCounts) {
+  public PropertiesFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table, final int[] todoCounts) {
     super(originalLexer, table, todoCounts);
   }
 

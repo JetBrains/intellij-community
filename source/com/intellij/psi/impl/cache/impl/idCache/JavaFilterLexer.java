@@ -4,13 +4,12 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.TIntIntHashMap;
 
 /**
  * @author ven
  */
 public class JavaFilterLexer extends BaseFilterLexer {
-  public JavaFilterLexer(final Lexer originalLexer, final TIntIntHashMap table, final int[] todoCounts) {
+  public JavaFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table, final int[] todoCounts) {
     super(originalLexer, table, todoCounts);
   }
 

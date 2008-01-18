@@ -25,6 +25,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
+import com.intellij.psi.impl.cache.index.FileTypeIdIndexer;
+import com.intellij.psi.impl.cache.index.IdIndexEntry;
+import com.intellij.psi.impl.cache.index.indexers.PlainTextIndexer;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -32,6 +35,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.IndexDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -47,35 +52,6 @@ public class IdTableBuilding {
   private static final int FILE_SIZE_LIMIT = 10000000; // ignore files of size > 10Mb
 
   private IdTableBuilding() {
-  }
-
-  public static void processPossibleComplexFileName(CharSequence chars, char[] charArray, int startOffset, int endOffset, TIntIntHashMap table) {
-    int offset = findCharsWithinRange(chars, charArray,startOffset, endOffset, "/\\");
-    offset = Math.min(offset, endOffset);
-    int start = startOffset;
-
-    while(start < endOffset) {
-      if (start != offset) {
-        if (charArray != null) {
-          IdCacheUtil.addOccurrence(table, charArray, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
-        } else {
-          IdCacheUtil.addOccurrence(table, chars, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
-        }
-      }
-      start = offset + 1;
-      offset = Math.min(endOffset, findCharsWithinRange(chars, charArray, start, endOffset, "/\\"));
-    }
-  }
-
-  private static int findCharsWithinRange(final CharSequence chars, final char[] charArray, int startOffset, int endOffset, String charsToFind) {
-    while(startOffset < endOffset) {
-      if (charsToFind.indexOf(charArray != null ? charArray[startOffset]:chars.charAt(startOffset)) != -1) {
-        return startOffset;
-      }
-      ++startOffset;
-    }
-
-    return startOffset;
   }
 
   public static class Result {
@@ -141,13 +117,23 @@ public class IdTableBuilding {
   }
 
   private static final HashMap<FileType,IdCacheBuilder> cacheBuilders = new HashMap<FileType, IdCacheBuilder>();
+  private static final HashMap<FileType,FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
 
   public static void registerCacheBuilder(FileType fileType,IdCacheBuilder idCacheBuilder) {
     cacheBuilders.put(fileType, idCacheBuilder);
   }
 
+  public static void registerIdIndexer(FileType fileType,FileTypeIdIndexer indexer) {
+    ourIdIndexers.put(fileType, indexer);
+  }
+
+  public static boolean isIdIndexerRegistered(FileType fileType) {
+    return ourIdIndexers.containsKey(fileType);
+  }
+  
   static {
     registerCacheBuilder(FileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
+    registerIdIndexer(FileTypes.PLAIN_TEXT,new PlainTextIndexer());
 
     registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());
     registerCacheBuilder(StdFileTypes.IDEA_WORKSPACE, new EmptyBuilder());
@@ -156,6 +142,8 @@ public class IdTableBuilding {
 
   @Nullable
   public static IdCacheBuilder getCacheBuilder(FileType fileType, final Project project, final VirtualFile virtualFile) {
+    return null;
+    /*
     final IdCacheBuilder idCacheBuilder = cacheBuilders.get(fileType);
 
     if (idCacheBuilder != null) return idCacheBuilder;
@@ -187,6 +175,7 @@ public class IdTableBuilding {
     }
 
     return null;
+    */
   }
 
   private static class WordsScannerIdCacheBuilderAdapter implements IdCacheBuilder {
@@ -249,6 +238,85 @@ public class IdTableBuilding {
           iterator.advance();
         }
       }
+    }
+  }
+
+  @Nullable
+  public static FileTypeIdIndexer getFileTypeIndexer(FileType fileType, final VirtualFile virtualFile) {
+    final FileTypeIdIndexer idIndexer = ourIdIndexers.get(fileType);
+
+    if (idIndexer != null) {
+      return idIndexer;
+    }
+
+    final WordsScanner customWordsScanner = CacheBuilderRegistry.getInstance().getCacheBuilder(fileType);
+    if (customWordsScanner != null) {
+      return new WordsScannerFileTypeIdIndexerAdapter(customWordsScanner, null, null, virtualFile);
+    }
+
+    final SyntaxHighlighter highlighter = SyntaxHighlighter.PROVIDER.create(fileType, null, virtualFile);
+    if (fileType instanceof LanguageFileType) {
+      final Language lang = ((LanguageFileType)fileType).getLanguage();
+      final FindUsagesProvider findUsagesProvider = LanguageFindUsages.INSTANCE.forLanguage(lang);
+      WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
+      if (scanner == null) {
+        scanner = new SimpleWordsScanner();
+      }
+      final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+      return new WordsScannerFileTypeIdIndexerAdapter(scanner, highlighter, commentTokens, virtualFile);
+    }
+
+    if (fileType instanceof CustomFileType) {
+      final TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
+                                                     CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+
+      return new WordsScannerFileTypeIdIndexerAdapter(((CustomFileType)fileType).getWordsScanner(), highlighter, commentTokens, virtualFile);
+    }
+
+    return null;
+  }
+
+  private static class WordsScannerFileTypeIdIndexerAdapter extends FileTypeIdIndexer {
+    private WordsScanner myScanner;
+    @Nullable private final SyntaxHighlighter myHighlighter;
+    @Nullable private final TokenSet myCommentTokens;
+    private final VirtualFile myFile;
+
+    public WordsScannerFileTypeIdIndexerAdapter(@NotNull final WordsScanner scanner,
+                                             @Nullable final SyntaxHighlighter highlighter,
+                                             @Nullable final TokenSet commentTokens,
+                                             @NotNull final VirtualFile file) {
+      myScanner = scanner;
+      myHighlighter = highlighter;
+      myCommentTokens = commentTokens;
+      myFile = file;
+    }
+
+    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
+      final CharSequence chars = inputData.content;
+      final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
+
+      myScanner.processWords(chars, new Processor<WordOccurrence>() {
+        public boolean process(final WordOccurrence t) {
+          if(charsArray != null && t.getBaseText() == chars) {
+            addOccurrence(consumer, charsArray, t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+          } 
+          else {
+            addOccurrence(consumer, t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+          }
+          return true;
+        }
+
+        private int convertToMask(final WordOccurrence.Kind kind) {
+          if (kind == null) return UsageSearchContext.ANY;
+          if (kind == WordOccurrence.Kind.CODE) return UsageSearchContext.IN_CODE;
+          if (kind == WordOccurrence.Kind.COMMENTS) return UsageSearchContext.IN_COMMENTS;
+          if (kind == WordOccurrence.Kind.LITERALS) return UsageSearchContext.IN_STRINGS;
+          if (kind == WordOccurrence.Kind.FOREIGN_LANGUAGE) return UsageSearchContext.IN_FOREIGN_LANGUAGES;
+          return 0;
+        }
+      });
     }
   }
 

@@ -3,27 +3,33 @@ package com.intellij.psi.impl.cache.impl.idCache;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.search.IndexPattern;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
-import gnu.trove.TIntIntHashMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class BaseFilterLexer extends LexerBase implements IdTableBuilding.ScanWordProcessor {
   protected final Lexer myOriginalLexer;
-  protected final TIntIntHashMap myTable;
-  protected final int[] myTodoCounts;
+
+  private final OccurrenceConsumer myOccurrenceConsumer;
+  private final int[] myTodoCounts; 
 
   private int myTodoScannedBound = 0;
-  protected int myOccurenceMask;
-  protected CharSequence myBuffer;
-  protected char[] myBufferArray;
+  private int myOccurenceMask;
+  private CharSequence myBuffer;
+  private char[] myBufferArray;
 
-  protected BaseFilterLexer(Lexer originalLexer, TIntIntHashMap table, int[] todoCounts) {
+  public static interface OccurrenceConsumer {
+    void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
+    void addOccurrence(char[] chars, int start, int end, int occurrenceMask);
+  }
+  
+  protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer, int[] todoCounts) {
     myOriginalLexer = originalLexer;
-    myTable = table;
+    myOccurrenceConsumer = occurrenceConsumer;
     myTodoCounts = todoCounts;
   }
 
@@ -96,17 +102,17 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
 
   public final void run(CharSequence chars, int start, int end, char[] charArray) {
     if (charArray != null) {
-      IdCacheUtil.addOccurrence(myTable, charArray, start, end, myOccurenceMask);
+      myOccurrenceConsumer.addOccurrence(charArray, start, end, myOccurenceMask);
     } else {
-      IdCacheUtil.addOccurrence(myTable, chars, start, end, myOccurenceMask);
+      myOccurrenceConsumer.addOccurrence(chars, start, end, myOccurenceMask);
     }
   }
 
   protected final void addOccurrenceInToken(final int occurrenceMask) {
     if (myBufferArray != null) {
-      IdCacheUtil.addOccurrence(myTable, myBufferArray, getTokenStart(), getTokenEnd(), occurrenceMask);
+      myOccurrenceConsumer.addOccurrence(myBufferArray, getTokenStart(), getTokenEnd(), occurrenceMask);
     } else {
-      IdCacheUtil.addOccurrence(myTable, myBuffer, getTokenStart(), getTokenEnd(), occurrenceMask);
+      myOccurrenceConsumer.addOccurrence(myBuffer, getTokenStart(), getTokenEnd(), occurrenceMask);
     }
   }
 
@@ -117,7 +123,37 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     IdTableBuilding.scanWords(this, myBuffer, myBufferArray, start, end, mayHaveEscapes);
 
     if (mayHaveFileRefs) {
-      IdTableBuilding.processPossibleComplexFileName(myBuffer, myBufferArray, start, end, myTable);
+      processPossibleComplexFileName(myBuffer, myBufferArray, start, end);
     }
   }
+  
+  private void processPossibleComplexFileName(CharSequence chars, char[] charArray, int startOffset, int endOffset) {
+    int offset = findCharsWithinRange(chars, charArray,startOffset, endOffset, "/\\");
+    offset = Math.min(offset, endOffset);
+    int start = startOffset;
+
+    while(start < endOffset) {
+      if (start != offset) {
+        if (charArray != null) {
+          myOccurrenceConsumer.addOccurrence(charArray, start, offset, UsageSearchContext.IN_FOREIGN_LANGUAGES);
+        } else {
+          myOccurrenceConsumer.addOccurrence(chars, start, offset,UsageSearchContext.IN_FOREIGN_LANGUAGES);
+        }
+      }
+      start = offset + 1;
+      offset = Math.min(endOffset, findCharsWithinRange(chars, charArray, start, endOffset, "/\\"));
+    }
+  }
+
+  private static int findCharsWithinRange(final CharSequence chars, final char[] charArray, int startOffset, int endOffset, String charsToFind) {
+    while(startOffset < endOffset) {
+      if (charsToFind.indexOf(charArray != null ? charArray[startOffset]:chars.charAt(startOffset)) != -1) {
+        return startOffset;
+      }
+      ++startOffset;
+    }
+
+    return startOffset;
+  }
+  
 }

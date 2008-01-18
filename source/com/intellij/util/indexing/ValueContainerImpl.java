@@ -1,12 +1,8 @@
 package com.intellij.util.indexing;
 
-import com.intellij.util.io.DataExternalizer;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -18,45 +14,6 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
 
   public ValueContainerImpl() {
     myInputIdMapping = new HashMap<Value, Object>(16, 0.98f);
-  }
-  
-  public ValueContainerImpl(DataInput in, DataExternalizer<Value> externalizer) throws IOException {
-    final int valuesCount = in.readInt();
-    final float loadFactor = 0.98f;
-    myInputIdMapping = new HashMap<Value, Object>((int)(valuesCount / loadFactor) + 1, loadFactor);
-    for (int idx = 0; idx < valuesCount; idx++) {
-      final Value value = externalizer.read(in);
-      final int idCount = in.readInt();
-      if (idCount == 1) {
-        myInputIdMapping.put(value, in.readInt());
-      }
-      else if (idCount > 0){
-        TIntHashSet idSet = new TIntHashSet((int)(idCount / loadFactor) + 1, loadFactor);
-        for (int i = 0; i < idCount; i++) {
-          idSet.add(in.readInt());
-        }
-        myInputIdMapping.put(value, idSet);
-      }
-    }
-  }
-
-  public void write(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
-    out.writeInt(size());
-
-    for (Value value : myInputIdMapping.keySet()) {
-      externalizer.save(out, value);
-
-      final IntIterator ids = getInputIdsIterator(value);
-      if (ids != null) {
-        out.writeInt(ids.size());
-        while (ids.hasNext()) {
-          out.writeInt(ids.next());
-        }
-      }
-      else {
-        out.writeInt(0);
-      }
-    }
   }
   
   public void addValue(int inputId, Value value) {

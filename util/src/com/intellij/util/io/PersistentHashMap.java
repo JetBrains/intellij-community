@@ -43,6 +43,26 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
     }
   }
 
+  public static interface ValueDataAppender {
+    void append(DataOutput out) throws IOException;
+  }
+  
+  public synchronized void appendData(Key key, ValueDataAppender appender) throws IOException {
+    final int id = enumerate(key);
+    int valueId = readValueId(id);
+    if (valueId == NULL_ID) {
+      valueId = myValueStorage.createNewRecord();
+      updateValueId(id, valueId);
+    }
+    final Storage.AppenderStream record = myValueStorage.appendStream(valueId);
+    try {
+      appender.append(record);
+    }
+    finally {
+      record.close();
+    }
+  }
+
   
   public synchronized Value get(Key key) throws IOException {
     final int id = tryEnumerate(key);
