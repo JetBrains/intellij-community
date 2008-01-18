@@ -4,6 +4,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.xml.DomElement;
@@ -22,7 +23,7 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
   private static final NotNullFunction<DomInvocationHandler,List<XmlTag>> CUSTOM_TAGS_GETTER = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
     @NotNull
     public List<XmlTag> fun(final DomInvocationHandler handler) {
-      return DomImplUtil.getCustomSubTags(handler.getXmlTag(), handler);
+      return DomImplUtil.getCustomSubTags(handler, handler.getXmlTag().getSubTags(), handler.getFile());
     }
   };
 
@@ -51,8 +52,8 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
     return equals(o) ? 0 : -1;
   }
 
-  public List<XmlTag> getSubTags(final DomInvocationHandler handler) {
-    return DomImplUtil.getCustomSubTags(handler.getXmlTag(), handler);
+  public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+    return DomImplUtil.getCustomSubTags(handler, subTags, file);
   }
 
   public EvaluatedXmlName createEvaluatedXmlName(final DomInvocationHandler parent, final XmlTag childTag) {

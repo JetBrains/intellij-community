@@ -111,35 +111,36 @@ public class DomImplUtil {
     return null;
   }
 
-  public static List<XmlTag> findSubTags(@NotNull XmlTag tag, final EvaluatedXmlName name, final DomInvocationHandler handler) {
-    return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
+  public static List<XmlTag> findSubTags(@NotNull XmlTag tag, final EvaluatedXmlName name, final XmlFile file) {
+    return findSubTags(tag.getSubTags(), name, file);
+  }
+
+  public static List<XmlTag> findSubTags(final XmlTag[] tags, final EvaluatedXmlName name, final XmlFile file) {
+    return ContainerUtil.findAll(tags, new Condition<XmlTag>() {
       public boolean value(XmlTag childTag) {
-        return isNameSuitable(name, childTag, handler);
+        return isNameSuitable(name, childTag, file);
       }
     });
   }
 
-  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler) {
-    return isNameSuitable(handler.createEvaluatedXmlName(name), tag, handler);
+  public static boolean isNameSuitable(final XmlName name, final XmlTag tag, @NotNull final DomInvocationHandler handler, final XmlFile file) {
+    return isNameSuitable(handler.createEvaluatedXmlName(name), tag, file);
   }
 
-  private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, @NotNull final DomInvocationHandler handler) {
-    return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), handler);
+  private static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final XmlTag tag, final XmlFile file) {
+    return isNameSuitable(evaluatedXmlName, tag.getLocalName(), tag.getName(), tag.getNamespace(), file);
   }
 
-  public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName,
-                                        final String localName,
-                                        final String qName,
-                                        final String namespace,
-                                        final DomInvocationHandler handler) {
+  public static boolean isNameSuitable(final EvaluatedXmlName evaluatedXmlName, final String localName, final String qName, final String namespace,
+                                       final XmlFile file) {
     final String localName1 = evaluatedXmlName.getXmlName().getLocalName();
-    return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(handler, namespace);
+    return (localName1.equals(localName) || localName1.equals(qName)) && evaluatedXmlName.isNamespaceAllowed(namespace, file);
   }
 
   public static boolean containsTagName(final Set<CollectionChildDescriptionImpl> descriptions, final XmlTag subTag, final DomInvocationHandler handler) {
     return ContainerUtil.find(descriptions, new Condition<CollectionChildDescriptionImpl>() {
       public boolean value(CollectionChildDescriptionImpl description) {
-        return isNameSuitable(description.getXmlName(), subTag, handler);
+        return isNameSuitable(description.getXmlName(), subTag, handler, handler.getFile());
       }
     }) != null;
   }
@@ -218,7 +219,7 @@ public class DomImplUtil {
     return createXmlName(name, method.getGenericReturnType(), method);
   }
 
-  public static List<XmlTag> getCustomSubTags(final XmlTag tag, final DomInvocationHandler handler) {
+  public static List<XmlTag> getCustomSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
     final DomGenericInfoEx info = handler.getGenericInfo();
     final Set<XmlName> usedNames = new THashSet<XmlName>();
     for (final DomCollectionChildDescription description : info.getCollectionChildrenDescriptions()) {
@@ -227,10 +228,10 @@ public class DomImplUtil {
     for (final DomFixedChildDescription description : info.getFixedChildrenDescriptions()) {
       usedNames.add(description.getXmlName());
     }
-    return ContainerUtil.findAll(tag.getSubTags(), new Condition<XmlTag>() {
+    return ContainerUtil.findAll(subTags, new Condition<XmlTag>() {
       public boolean value(final XmlTag tag) {
         for (final XmlName name : usedNames) {
-          if (isNameSuitable(name, tag, handler)) {
+          if (isNameSuitable(name, tag, handler, file)) {
             return false;
           }
         }

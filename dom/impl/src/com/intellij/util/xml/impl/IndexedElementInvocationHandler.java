@@ -71,7 +71,7 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
 
     final int totalCount = description.getCount();
 
-    final List<XmlTag> subTags = DomImplUtil.findSubTags(parentTag, xmlElementName, this);
+    final List<XmlTag> subTags = DomImplUtil.findSubTags(parentTag, xmlElementName, getFile());
     if (subTags.size() <= myIndex) {
       return;
     }

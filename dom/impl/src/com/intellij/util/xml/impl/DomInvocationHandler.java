@@ -621,19 +621,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   final void _checkInitialized(final AbstractDomChildDescriptionImpl description) {
     if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
-
-    final List<XmlTag> subTags;
-
-    final XmlTag tag = getXmlTag();
-    if (tag != null && description instanceof FixedChildDescriptionImpl) {
-      subTags = DomImplUtil.findSubTags(tag, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), this);
-    } else if (tag != null && description instanceof AbstractCollectionChildDescription) {
-      subTags = ((AbstractCollectionChildDescription) description).getSubTags(this);
-    } else {
-      subTags = Collections.emptyList();
-    }
-
     r.unlock();
+
+    final List<XmlTag> subTags = getSubTags(description);
+
     w.lock();
     try {
       if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
@@ -666,6 +657,27 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       r.lock();
       w.unlock();
     }
+  }
+
+  private List<XmlTag> getSubTags(final AbstractDomChildDescriptionImpl description) {
+    final XmlTag tag = getXmlTag();
+    final XmlFile file = getFile();
+    if (tag != null) {
+      final XmlTag[] xmlTags = tag.getSubTags();
+      r.lock();
+      try {
+        if (description instanceof FixedChildDescriptionImpl) {
+          return DomImplUtil.findSubTags(xmlTags, createEvaluatedXmlName(((DomChildDescriptionImpl)description).getXmlName()), file);
+        }
+        if (description instanceof AbstractCollectionChildDescription) {
+          return ((AbstractCollectionChildDescription) description).getSubTags(this, xmlTags, file);
+        }
+      }
+      finally {
+        r.unlock();
+      }
+    }
+    return Collections.emptyList();
   }
 
   private void getOrCreateIndexedChild(final XmlTag subTag, EvaluatedXmlName name, final Pair<FixedChildDescriptionImpl, Integer> pair) {
@@ -808,7 +820,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   protected final void createFixedChildrenTags(EvaluatedXmlName tagName, FixedChildDescriptionImpl description, int count) {
     checkInitialized(description);
     final XmlTag tag = ensureTagExists();
-    final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, this);
+    final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, getFile());
     if (subTags.size() < count) {
       getFixedChild(Pair.create(description, count - 1)).ensureTagExists();
     }
@@ -816,7 +828,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   private XmlTag addEmptyTag(final EvaluatedXmlName tagName, int index) throws IncorrectOperationException {
     final XmlTag tag = ensureTagExists();
-    final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, this);
+    final List<XmlTag> subTags = DomImplUtil.findSubTags(tag, tagName, getFile());
     if (subTags.size() < index) {
       index = subTags.size();
     }

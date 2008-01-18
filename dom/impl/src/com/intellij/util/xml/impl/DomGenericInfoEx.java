@@ -35,7 +35,7 @@ public abstract class DomGenericInfoEx implements DomGenericInfo {
         if (attribute && StringUtil.isEmpty(namespace) && xmlName.getLocalName().equals(localName)) return description;
 
         final EvaluatedXmlName evaluatedXmlName = handler.createEvaluatedXmlName(xmlName);
-        if (DomImplUtil.isNameSuitable(evaluatedXmlName, localName, qName, namespace, handler)) {
+        if (DomImplUtil.isNameSuitable(evaluatedXmlName, localName, qName, namespace, handler.getFile())) {
           return description;
         }
       }

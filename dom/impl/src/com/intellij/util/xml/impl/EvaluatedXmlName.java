@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.xml.XmlName;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author peter
@@ -17,7 +18,7 @@ public interface EvaluatedXmlName {
 
   EvaluatedXmlName evaluateChildName(@NotNull XmlName name);
 
-  boolean isNamespaceAllowed(DomInvocationHandler handler, String namespace);
+  boolean isNamespaceAllowed(String namespace, final XmlFile file);
 
   @NotNull @NonNls
   String getNamespace(@NotNull XmlElement parentElement);

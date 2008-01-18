@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import com.intellij.util.xml.XmlName;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 
 /**
  * @author peter
@@ -32,7 +33,7 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName{
     return EvaluatedXmlNameImpl.createEvaluatedXmlName(name, namespaceKey);
   }
 
-  public boolean isNamespaceAllowed(final DomInvocationHandler handler, final String namespace) {
+  public boolean isNamespaceAllowed(final String namespace, final XmlFile file) {
     return namespace.equals(myNamespace);
   }
 

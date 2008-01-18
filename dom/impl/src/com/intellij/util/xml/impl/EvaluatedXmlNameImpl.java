@@ -113,8 +113,8 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
 
   }
 
-  public final boolean isNamespaceAllowed(DomInvocationHandler handler, String namespace) {
-    return myNamespaceKey == null || isNamespaceAllowed(namespace, getNamespaceList(handler));
+  public final boolean isNamespaceAllowed(String namespace, final XmlFile file) {
+    return myNamespaceKey == null || isNamespaceAllowed(namespace, getNamespaceList(file));
   }
 
   @NotNull @NonNls
@@ -149,8 +149,8 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     throw new AssertionError("Can't get namespace of " + parentElement);
   }
 
-  private List<String> getNamespaceList(final DomInvocationHandler handler) {
-    return getAllowedNamespaces(handler.getFile());
+  private List<String> getNamespaceList(final XmlFile file) {
+    return getAllowedNamespaces(file);
   }
 
   protected static EvaluatedXmlNameImpl createEvaluatedXmlName(@NotNull final XmlName xmlName, @Nullable final String namespaceKey) {

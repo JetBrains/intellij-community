@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
   private final NotNullFunction<DomInvocationHandler, List<XmlTag>> myTagsGetter = new NotNullFunction<DomInvocationHandler, List<XmlTag>>() {
     @NotNull
     public List<XmlTag> fun(final DomInvocationHandler handler) {
-      return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler);
+      return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler.getFile());
     }
   };
   @NonNls private static final String ES = "es";
@@ -222,8 +223,8 @@ public class CollectionChildDescriptionImpl extends DomChildDescriptionImpl impl
     return myInvertedIndexedClassAdderMethods;
   }
 
-  public List<XmlTag> getSubTags(final DomInvocationHandler handler) {
-    return DomImplUtil.findSubTags(handler.getXmlTag(), handler.createEvaluatedXmlName(getXmlName()), handler);
+  public List<XmlTag> getSubTags(final DomInvocationHandler handler, final XmlTag[] subTags, final XmlFile file) {
+    return DomImplUtil.findSubTags(subTags, handler.createEvaluatedXmlName(getXmlName()), file);
   }
 
   public EvaluatedXmlName createEvaluatedXmlName(final DomInvocationHandler parent, final XmlTag childTag) {
