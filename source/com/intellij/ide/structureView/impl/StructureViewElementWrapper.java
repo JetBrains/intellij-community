@@ -2,12 +2,12 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,6 +55,8 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
   @Nullable
   private Navigatable getNavigatableInTemplateLanguageFile() {
     PsiElement element = (PsiElement)myTreeElement.getValue();
+    if (element == null) return null;
+
     int offset = element.getTextRange().getStartOffset();
     final Language dataLanguage = ((TemplateLanguageFileViewProvider)myMainFile.getViewProvider()).getTemplateDataLanguage();
     final PsiFile dataFile = myMainFile.getViewProvider().getPsi(dataLanguage);
