@@ -112,7 +112,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
   private static boolean canCreateFromTemplate(AnActionEvent e, FileTemplate template){
     if (e == null) return false;
     DataContext dataContext = e.getDataContext();
-    IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
+    IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (view == null) return false;
 
     PsiDirectory[] dirs = view.getDirectories();
@@ -130,7 +130,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
     public final void actionPerformed(AnActionEvent e){
       DataContext dataContext = e.getDataContext();
 
-      IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
+      IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
       if (view == null) {
         return;
       }

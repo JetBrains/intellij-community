@@ -78,10 +78,8 @@
     <group id="NewGroup2">
       <action id="NewDir" class="com.intellij.ide.actions.CreateDirectoryOrPackageAction"/>
       <separator/>
-      <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
-      <separator/>
 
-      <add-to-group group-id="NewGroup" anchor="last"/>
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFile"/>
     </group>
 
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">

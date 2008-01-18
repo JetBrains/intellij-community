@@ -25,6 +25,10 @@
   <applicationService serviceInterface="com.intellij.packageDependencies.DependencyUISettings"
                       serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
+  <applicationService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
+                      serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
+  <exportable serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
@@ -61,6 +65,9 @@
 
   <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
   <!-- Live Templates -->
+
+  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
+  <!-- File Templates-->
 
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
   <!-- Errors -->
