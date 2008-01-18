@@ -1,0 +1,22 @@
+<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
+<idea-plugin version="2" url="http://pythonid.dev.java.net">
+  <name>Pythonid</name>
+  <id>Pythonid</id>
+  <description>Smart editing for Python scripts</description>
+  <version>2.0</version>
+  <vendor url="http://pythonid.dev.java.net" logo="/ru/yole/pythonid/python.png">Dmitry
+    Jemerov, Keith Lea</vendor>
+  <change-notes>Updated for IntelliJ IDEA 7.0</change-notes>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileTypeFactory implementation="ru.yole.pythonid.PythonFileTypeFactory"/>
+    <syntaxHighlighter key="Python" implementationClass="ru.yole.pythonid.PyHighlighter"/>
+    <lang.braceMatcher language="Python" implementationClass="ru.yole.pythonid.PyBraceMatcher"/>
+    <lang.parserDefinition language="Python" implementationClass="ru.yole.pythonid.PythonParserDefinition"/>
+    <lang.commenter language="Python" implementationClass="ru.yole.pythonid.PythonCommenter"/>
+    <lang.foldingBuilder language="Python" implementationClass="ru.yole.pythonid.PythonFoldingBuilder"/>
+    <lang.findUsagesProvider language="Python" implementationClass="ru.yole.pythonid.PythonFindUsagesProvider"/>
+    <lang.formatter language="Python" implementationClass="ru.yole.pythonid.PythonFormattingModelBuilder"/>
+    <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
+  </extensions>
+</idea-plugin>
