@@ -175,7 +175,13 @@ public class PsiSuperMethodImplUtil {
         return;
       }
     }
-    if (existing.getMethod() != superSignature.getMethod()) {
+    if (existing.getMethod() == superSignature.getMethod()) {
+      List<HierarchicalMethodSignature> existingSupers = existing.getSuperSignatures();
+      for (HierarchicalMethodSignature supers : superSignature.getSuperSignatures()) {
+        if (!existingSupers.contains(supers)) existing.addSuperSignature(copy(supers));
+      }
+    }
+    else {
       HierarchicalMethodSignatureImpl copy = copy(superSignature);
       existing.addSuperSignature(copy);
     }
@@ -185,17 +191,14 @@ public class PsiSuperMethodImplUtil {
                                        HierarchicalMethodSignature superSignatureHierarchical) {
     PsiMethod superMethod = superSignatureHierarchical.getMethod();
     PsiClass superClass = superMethod.getContainingClass();
-    if (!superMethod.isConstructor() &&
-        !aClass.equals(superClass) &&
-        //only public methods from java.lang.Object are considered to be overridden in interface
-        !(aClass.isInterface() &&
-          "java.lang.Object".equals(superClass.getQualifiedName()) &&
-          !superMethod.hasModifierProperty(PsiModifier.PUBLIC)) &&
-          PsiUtil.isAccessible(superMethod, aClass, aClass) &&
-          MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature)) {
-      return true;
-    }
-    return false;
+    return !superMethod.isConstructor() &&
+           !aClass.equals(superClass) &&
+           //only public methods from java.lang.Object are considered to be overridden in interface
+           !(aClass.isInterface() &&
+             "java.lang.Object".equals(superClass.getQualifiedName()) &&
+             !superMethod.hasModifierProperty(PsiModifier.PUBLIC))
+           && PsiUtil.isAccessible(superMethod, aClass, aClass)
+           && MethodSignatureUtil.isSubsignature(superSignatureHierarchical, hierarchicalMethodSignature);
   }
 
   private static HierarchicalMethodSignatureImpl copy(HierarchicalMethodSignature hi) {
