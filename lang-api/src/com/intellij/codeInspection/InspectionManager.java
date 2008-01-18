@@ -57,4 +57,10 @@ public abstract class InspectionManager {
                                                             @NotNull final String descriptionTemplate,
                                                             final ProblemHighlightType highlightType,
                                                             final LocalQuickFix... fixes);
+
+  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                            @NotNull final String descriptionTemplate,
+                                                            final ProblemHighlightType highlightType,
+                                                            final QuestionActionDescriptorGetter questionActionDescriptorGetter,
+                                                            final LocalQuickFix... fixes);
 }

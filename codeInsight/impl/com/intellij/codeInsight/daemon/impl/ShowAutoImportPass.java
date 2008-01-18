@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packageDependencies.DependencyRule;
@@ -80,9 +81,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-
     if (!myEditor.getContentComponent().hasFocus()) return;
+    doMyJob();
+  }
 
+  protected boolean doMyJob() {
     HighlightInfo[] visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
 
     PsiElement[] elements = new PsiElement[visibleHighlights.length];
@@ -97,13 +100,14 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     int caretOffset = myEditor.getCaretModel().getOffset();
     for (int i = visibleHighlights.length - 1; i >= 0; i--) {
       HighlightInfo info = visibleHighlights[i];
-      if (elements[i] != null && info.startOffset <= caretOffset && showAddImportHint(info, elements[i])) return;
+      if (elements[i] != null && info.startOffset <= caretOffset && showAddImportHint(info, elements[i])) return true;
     }
 
     for (int i = 0; i < visibleHighlights.length; i++) {
       HighlightInfo info = visibleHighlights[i];
-      if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return;
+      if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return true;
     }
+    return false;
   }
 
   @NotNull
@@ -129,9 +133,14 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     element = element.getParent();
     if (!(element instanceof PsiJavaCodeReferenceElement)) return false;
-
-    final HighlightInfoType infoType = info.type;
-    return isWrongRef(infoType) && handleWrongRefInfo(myEditor, (PsiJavaCodeReferenceElement)element, true);
+    final Pair<String, ? extends QuestionAction> descriptor = info.getQuestionAction(element, myEditor, myFile);
+    if (descriptor == null) {
+      return false;
+    }
+    final int offset1 = element.getTextOffset();
+    final int offset2 = element.getTextRange().getEndOffset();
+    HintManager.getInstance().showQuestionHint(myEditor, descriptor.getFirst(), offset1, offset2, descriptor.getSecond());
+    return true;
   }
 
   protected boolean isWrongRef(final HighlightInfoType infoType) {
@@ -150,36 +159,37 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
         if (ref.resolve() == null) {
-          handleWrongRefInfo(editor, ref, false);
+          getDescriptor(editor, ref);
         }
       }
     }
   }
+  
+  public static Pair<String,QuestionAction> getDescriptor(Editor editor, PsiJavaCodeReferenceElement ref) {
 
-  private static boolean handleWrongRefInfo(Editor editor, PsiJavaCodeReferenceElement ref, final boolean showAddImportHint) {
-    if (!ApplicationManager.getApplication().isUnitTestMode() && HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return false;
-
-    PsiManager manager = ref.getManager();
-    if (manager == null) return false;
+    if (!ApplicationManager.getApplication().isUnitTestMode() && HintManager.getInstance().hasShownHintsThatWillHideByOtherHint()) return null;
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
-    PsiShortNamesCache cache = facade.getShortNamesCache();
+    PsiManager manager = ref.getManager();
+    if (manager == null) return null;
     PsiElement refname = ref.getReferenceNameElement();
-    if (!(refname instanceof PsiIdentifier)) return false;
+    if (!(refname instanceof PsiIdentifier)) return null;
     PsiElement refElement = ref.resolve();
-    if (refElement != null) return false;
+    if (refElement != null) return null;
     String name = ref.getQualifiedName();
-    if (facade.getResolveHelper().resolveReferencedClass(name, ref) != null) return false;
 
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    if (facade.getResolveHelper().resolveReferencedClass(name, ref) != null) return null;
+
+    PsiShortNamesCache cache = facade.getShortNamesCache();
     GlobalSearchScope scope = ref.getResolveScope();
     PsiClass[] classes = cache.getClassesByName(name, scope);
-    if (classes.length == 0) return false;
+    if (classes.length == 0) return null;
 
     try {
       Pattern pattern = Pattern.compile(DaemonCodeAnalyzerSettings.getInstance().NO_AUTO_IMPORT_PATTERN);
       Matcher matcher = pattern.matcher(name);
-      if (matcher.matches()) return false;
+      if (matcher.matches()) return null;
     }
     catch (PatternSyntaxException e) {
       //ignore
@@ -194,7 +204,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (CompletionUtil.isInExcludedPackage(aClass)) continue;
       availableClasses.add(aClass);
     }
-    if (availableClasses.isEmpty()) return false;
+    if (availableClasses.isEmpty()) return null;
 
     PsiReferenceParameterList parameterList = ref.getParameterList();
     int refTypeArgsLength = parameterList == null ? 0 : parameterList.getTypeArguments().length;
@@ -234,19 +244,13 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
           action.execute();
         }
       });
-      return false;
+      return null;
     }
-
-    if (showAddImportHint) {
-      String hintText = getMessage(classes.length > 1, classes[0].getQualifiedName());
-      final int offset1 = ref.getTextOffset();
-      final int offset2 = ref.getTextRange().getEndOffset();
-      HintManager.getInstance().showQuestionHint(editor, hintText, offset1, offset2, action);
-    }
-    return true;
+    String hintText = getMessage(classes.length > 1, classes[0].getQualifiedName());
+    return Pair.create(hintText, action);
   }
 
-  protected static String getMessage(final boolean multiple, final String name) {
+  public static String getMessage(final boolean multiple, final String name) {
     final @NonNls String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = QuickFixBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));

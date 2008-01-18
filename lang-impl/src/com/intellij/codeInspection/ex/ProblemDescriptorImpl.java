@@ -1,9 +1,6 @@
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.CommonProblemDescriptorImpl;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -11,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.codeInspection.QuestionActionDescriptorGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +26,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private Navigatable myNavigatable;
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
+  private QuestionActionDescriptorGetter myQuestionActionDescriptorGetter;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
@@ -120,5 +119,13 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   public void setNavigatable(final Navigatable navigatable) {
     myNavigatable = navigatable;
+  }
+
+  public QuestionActionDescriptorGetter getQuestionActionDescriptorGetter() {
+    return myQuestionActionDescriptorGetter;
+  }
+
+  public void setQuestionActionDescriptorGetter(final QuestionActionDescriptorGetter questionActionDescriptorGetter) {
+    myQuestionActionDescriptorGetter = questionActionDescriptorGetter;
   }
 }
