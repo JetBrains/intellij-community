@@ -29,6 +29,7 @@ import java.awt.event.InputEvent;
 public abstract class AbstractAction extends AnAction {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.actions.AbstractAction");
   private final boolean myStartLvcsAction;
+  private boolean myAutoSave = true;
   private LocalHistoryAction myLocalHistoryAction = LocalHistoryAction.NULL;
 
   public AbstractAction(boolean startLvcsAction) {
@@ -38,6 +39,11 @@ public abstract class AbstractAction extends AnAction {
   public AbstractAction(boolean startLvcsAction, String name, Icon icon) {
     super(name, null, icon);
     myStartLvcsAction = startLvcsAction;
+  }
+
+  public AbstractAction setAutoSave(final boolean autoSave) {
+    myAutoSave = autoSave;
+    return this;
   }
 
   protected void beforeActionPerformed(VcsContext context) {
@@ -122,11 +128,10 @@ public abstract class AbstractAction extends AnAction {
     myLocalHistoryAction = LocalHistoryAction.NULL;
   }
 
-  protected static void start(VcsContext context) {
+  protected void start(VcsContext context) {
     final Project project = context.getProject();
     if (project != null) {
-
-      if (ApplicationManager.getApplication().isDispatchThread()) {
+      if (ApplicationManager.getApplication().isDispatchThread() && myAutoSave) {
         ApplicationManager.getApplication().saveAll();
       }
     }

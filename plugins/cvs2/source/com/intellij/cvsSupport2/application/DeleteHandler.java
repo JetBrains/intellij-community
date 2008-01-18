@@ -71,6 +71,7 @@ class DeleteHandler {
 
     RemoveLocallyFileOrDirectoryAction
       .createAutomaticallyAction()
+      .setAutoSave(false)
       .actionPerformed(context);
   }
 
