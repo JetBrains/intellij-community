@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Iterator;
 
-import com.intellij.ide.IdeBundle;
-
 /**
  * @author Vladimir Kondratyev
  */

@@ -38,6 +38,14 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   }
 
+  public int getFileCount(final SmartTodoItemPointer val) {
+    return 1;
+  }
+
+  public int getTodoItemCount(final SmartTodoItemPointer val) {
+    return 1;
+  }
+
   public ArrayList<HighlightedRegion> getHighlightedRegions(){
     return myHighlightedRegions;
   }
@@ -143,5 +151,10 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
 
   public String getTestPresentation() {
     return "Item: "+getValue().getTodoItem().getTextRange();
+  }
+
+  @Override
+  public int getWeight() {
+    return 5;
   }
 }

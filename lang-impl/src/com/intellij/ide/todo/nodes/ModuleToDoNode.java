@@ -1,12 +1,11 @@
 package com.intellij.ide.todo.nodes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.todo.HighlightedRegionProvider;
-import com.intellij.ide.todo.TodoFileDirAndModuleComparator;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -18,13 +17,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
-
-import org.jetbrains.annotations.NotNull;
 
 public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedRegionProvider {
   private ArrayList<HighlightedRegion> myHighlightedRegions;
@@ -38,7 +35,7 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
     if (myToDoSettings.getIsPackagesShown()) {
-      TodoPackageUtil.addPackagesToChildren(children, getValue(), myBuilder, getProject());
+      TodoTreeHelper.getInstance(getProject()).addPackagesToChildren(children, getValue(), myBuilder);
     }
     else {
       for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
@@ -55,7 +52,6 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
         }
       }
     }
-    Collections.sort(children, TodoFileDirAndModuleComparator.ourInstance);
     return children;
 
   }
@@ -67,8 +63,8 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
   public void update(PresentationData presentation) {
     String newName = getValue().getName();
     int nameEndOffset = newName.length();
-    int todoItemCount = getStructure().getTodoItemCount(getValue());
-    int fileCount = getStructure().getFileCount(getValue());
+    int todoItemCount = getTodoItemCount(getValue());
+    int fileCount = getFileCount(getValue());
     newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
     myHighlightedRegions.clear();
 
@@ -93,5 +89,32 @@ public class ModuleToDoNode extends BaseToDoNode<Module> implements HighlightedR
 
   public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
+  }
+
+  public int getFileCount(Module module) {
+    Iterator<PsiFile> iterator = myBuilder.getFiles(module);
+    int count = 0;
+    while (iterator.hasNext()) {
+      PsiFile psiFile = iterator.next();
+      if (getStructure().accept(psiFile)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public int getTodoItemCount(final Module val) {
+    Iterator<PsiFile> iterator = myBuilder.getFiles(val);
+    int count = 0;
+    while(iterator.hasNext()){
+        PsiFile psiFile = iterator.next();
+        count+=getTreeStructure().getTodoItemCount(psiFile);
+      }
+    return count;
+  }
+
+  @Override
+  public int getWeight() {
+    return 1;
   }
 }

@@ -132,4 +132,9 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     );
 
   }
+
+  @Override
+  public int getWeight() {
+    return 4;
+  }
 }

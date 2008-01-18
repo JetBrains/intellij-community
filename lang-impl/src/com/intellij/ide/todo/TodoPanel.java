@@ -4,14 +4,13 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.todo.configurable.TodoConfigurable;
-import com.intellij.ide.todo.nodes.TodoDirNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
-import com.intellij.ide.todo.nodes.TodoPackageNode;
+import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -257,21 +256,9 @@ abstract class TodoPanel extends JPanel implements OccurenceNavigator, DataProvi
     }
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     Object userObject = node.getUserObject();
-    if (userObject instanceof TodoDirNode) {
-      TodoDirNode descriptor = (TodoDirNode)userObject;
-      return descriptor.getValue();
-    }
-    else if (userObject instanceof TodoPackageNode) {
-      TodoPackageNode descriptor = (TodoPackageNode)userObject;
-      return descriptor.getValue().getPackage();
-    }
-    else if (userObject instanceof TodoFileNode) {
-      TodoFileNode descriptor = (TodoFileNode)userObject;
-      return descriptor.getValue();
-    }
-    else {
-      return getSelectedFile();
-    }
+    final PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(userObject);
+    if (selectedElement != null) return selectedElement;
+    return getSelectedFile();
   }
 
   public Object getData(String dataId) {

@@ -2,8 +2,10 @@ package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
-import com.intellij.ide.todo.nodes.*;
+import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
+import com.intellij.ide.todo.nodes.TodoFileNode;
+import com.intellij.ide.todo.nodes.TodoItemNode;
+import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -23,7 +25,6 @@ import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageTreeColorsScheme;
@@ -44,13 +45,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   protected final Project myProject;
 
   /**
-   * All files that have TODO items are presented as tree. This tree help a lot
+   * All files that have T.O.D.O items are presented as tree. This tree help a lot
    * to separate these files by directories.
    */
   protected final FileTree myFileTree;
   /**
    * This set contains "dirty" files. File is "dirty" if it's currently not nkown
-   * whether the file contains TODO item or not. To determine this it's necessary
+   * whether the file contains T.O.D.O item or not. To determine this it's necessary
    * to perform some (perhaps, CPU expensive) operation. These "dirty" files are
    * validated in <code>validateCache()</code> method.
    */
@@ -170,14 +171,14 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         virtual file, or virtual file is invalid).
    *         The reason why we return such "dirty" iterator is the peformance.
    */
-  public Iterator getAllFiles() {
+  public Iterator<PsiFile> getAllFiles() {
     final Iterator<VirtualFile> iterator = myFileTree.getFileIterator();
-    return new Iterator() {
+    return new Iterator<PsiFile>() {
       public boolean hasNext() {
         return iterator.hasNext();
       }
 
-      @Nullable public Object next() {
+      @Nullable public PsiFile next() {
         VirtualFile vFile = iterator.next();
         if (vFile == null || !vFile.isValid()) {
           return null;
@@ -196,11 +197,20 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return read-only iterator of all valid PSI files that can have TODO items
+   * @return read-only iterator of all valid PSI files that can have T.O.D.O items
    *         and which are located under specified <code>psiDirctory</code>.
-   * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
+   * @see com.intellij.ide.todo.FileTree#getFiles(com.intellij.openapi.vfs.VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory) {
+    return getFiles(psiDirectory, true);
+  }
+
+  /**
+   * @return read-only iterator of all valid PSI files that can have T.O.D.O items
+   *         and which are located under specified <code>psiDirctory</code>.
+   * @see FileTree#getFiles(VirtualFile)
+   */
+  public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory, final boolean skip) {
     ArrayList<VirtualFile> files = myFileTree.getFiles(psiDirectory.getVirtualFile());
     ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>(files.size());
     PsiManager psiManager = PsiManager.getInstance(myProject);
@@ -214,8 +224,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       if (file.isValid()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) {
-          if (psiFile.getContainingDirectory() == null ||
-              JavaDirectoryService.getInstance().getPackage(psiFile.getContainingDirectory()) == null){
+          final PsiDirectory directory = psiFile.getContainingDirectory();
+          if (directory == null || !skip || !TodoTreeHelper.getInstance(myProject).skipDirectory(directory)){
             psiFileList.add(psiFile);
           }
         }
@@ -225,9 +235,9 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   /**
-   * @return read-only iterator of all valid PSI files that can have TODO items
+   * @return read-only iterator of all valid PSI files that can have T.O.D.O items
    *         and which are located under specified <code>psiDirctory</code>.
-   * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
+   * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFilesUnderDirectory(PsiDirectory psiDirectory) {
     ArrayList<VirtualFile> files = myFileTree.getFilesUnderDirectory(psiDirectory.getVirtualFile());
@@ -250,36 +260,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     return psiFileList.iterator();
   }
 
-  /**
-   * @return read-only iterator of all valid PSI files that can have TODO items
-   *         and which are located under specified <code>psiDirctory</code>.
-   * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
-   */
-  public Iterator<PsiFile> getFiles(PackageElement packageElement) {
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
-    ArrayList<PsiFile> psiFileList = new ArrayList<PsiFile>();
-    GlobalSearchScope scope = packageElement.getModule() != null ? GlobalSearchScope.moduleScope(packageElement.getModule()) :
-                              GlobalSearchScope.projectScope(myProject);
-    final PsiDirectory[] directories = packageElement.getPackage().getDirectories(scope);
-    for (PsiDirectory directory : directories) {
-      final VirtualFile directoryFile = directory.getVirtualFile();
-      ArrayList<VirtualFile> files = myFileTree.getFiles(directoryFile);
-      for (VirtualFile file : files) {
-        if (file.isValid()){
-          PsiFile psiFile = psiManager.findFile(file);
-          if (psiFile != null){
-            psiFileList.add(psiFile);
-          }
-        }
-      }
-    }
-    return psiFileList.iterator();
-  }
+
 
   /**
-    * @return read-only iterator of all valid PSI files that can have TODO items
+    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
     *         and which in specified <code>module</code>.
-    * @see com.intellij.ide.todo.FileTree#getFiles(VirtualFile)
+    * @see FileTree#getFiles(VirtualFile)
     */
    public Iterator<PsiFile> getFiles(Module module) {
     if (module.isDisposed()) return Collections.<PsiFile>emptyList().iterator();
@@ -350,7 +336,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
           }
         }
       }
-      else { // file is valid and contains TODO items
+      else { // file is valid and contains T.O.D.O items
         myFileTree.removeFile(file);
         myFileTree.add(file); // file can be moved. remove/add calls move it to another place
         if (myFile2Highlighter.containsKey(file)) { // update highlighter's text
@@ -370,7 +356,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return getTodoTreeStructure().needLoadingNode(nodeDescriptor);
+    final Object element= nodeDescriptor.getElement();
+    if (element instanceof TodoItemNode){
+      return false;
+    } else if(element instanceof PsiFileNode) {
+      return getTodoTreeStructure().mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue()) > 0;
+    }
+    return true;
   }
 
   /**
@@ -487,7 +479,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   /**
    * Sets new <code>TodoFilter</code>, rebuild whole the caches and immediately update the tree.
    *
-   * @see com.intellij.ide.todo.TodoTreeStructure#setTodoFilter
+   * @see TodoTreeStructure#setTodoFilter
    */
   void setTodoFilter(TodoFilter filter) {
     getTodoTreeStructure().setTodoFilter(filter);
@@ -497,7 +489,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return next <code>TodoItem</code> for the passed <code>pointer</code>. Returns <code>null</code>
-   *         if the <code>pointer</code> is the last todo item in the tree.
+   *         if the <code>pointer</code> is the last t.o.d.o item in the tree.
    */
   public TodoItemNode getNextPointer(TodoItemNode pointer) {
     Object sibling = getNextSibling(pointer);
@@ -542,7 +534,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /**
    * @return next <code>SmartTodoItemPointer</code> for the passed <code>pointer</code>. Returns <code>null</code>
-   *         if the <code>pointer</code> is the last todo item in the tree.
+   *         if the <code>pointer</code> is the last t.o.d.o item in the tree.
    */
   public TodoItemNode getPreviousPointer(TodoItemNode pointer) {
     Object sibling = getPreviousSibling(pointer);
@@ -630,37 +622,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     private MyComparator() {}
 
     public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
-      int weight1 = getWeight(descriptor1);
-      int weight2 = getWeight(descriptor2);
+      int weight1 = descriptor1.getWeight();
+      int weight2 = descriptor2.getWeight();
       if (weight1 != weight2) {
         return weight1 - weight2;
       }
       else {
         return descriptor1.getIndex() - descriptor2.getIndex();
-      }
-    }
-
-    private int getWeight(NodeDescriptor descriptor) {
-      if (descriptor instanceof SummaryNode) {
-        return 0;
-      }
-      else if (descriptor instanceof ModuleToDoNode) {
-        return 1;
-      }
-      else if (descriptor instanceof TodoDirNode) {
-        return 2;
-      }
-      else if (descriptor instanceof TodoPackageNode) {
-        return 2;
-      }
-      else if (descriptor instanceof TodoFileNode) {
-        return 3;
-      }
-      else if (descriptor instanceof TodoItemNode) {
-        return 4;
-      }
-      else {
-        throw new IllegalArgumentException(descriptor.getClass().getName());
       }
     }
   }

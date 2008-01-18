@@ -11,7 +11,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
-import java.util.ArrayList;
 
 /**
  * @author Vladimir Kondratyev

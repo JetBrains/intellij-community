@@ -1,3 +1,7 @@
+/*
+ * User: anna
+ * Date: 18-Jan-2008
+ */
 package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -15,38 +19,34 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: May 27, 2005
- */
-public class TodoPackageUtil {
-  public static boolean isPackageEmpty(PackageElement packageElement, TodoTreeBuilder builder, Project project) {
-    if (packageElement == null) return true;
-    final PsiPackage psiPackage = packageElement.getPackage();
-    final Module module = packageElement.getModule();
-    GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
-    final PsiDirectory[] directories = psiPackage.getDirectories(scope);
-    boolean isEmpty = true;
-    for (PsiDirectory psiDirectory : directories) {
-      isEmpty &= builder.isDirectoryEmpty(psiDirectory);
-    }
-    return isEmpty;
+public class TodoJavaTreeHelper extends TodoTreeHelper {
+  public TodoJavaTreeHelper(final Project project) {
+    super(project);
   }
 
-  public static void addPackagesToChildren(ArrayList<AbstractTreeNode> children,
-                                           Module module,
-                                           TodoTreeBuilder builder,
-                                           Project project) {
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
+  @Override
+  public boolean skipDirectory(final PsiDirectory directory) {
+    return JavaDirectoryService.getInstance().getPackage(directory) != null;
+  }
+
+  @Override
+  public PsiElement getSelectedElement(final Object userObject) {
+    if (userObject instanceof TodoPackageNode) {
+      TodoPackageNode descriptor = (TodoPackageNode)userObject;
+      return descriptor.getValue().getPackage();
+    }
+    return super.getSelectedElement(userObject);
+  }
+
+  @Override
+  public void addPackagesToChildren(final ArrayList<AbstractTreeNode> children, final Module module, final TodoTreeBuilder builder) {
+    final PsiManager psiManager = PsiManager.getInstance(getProject());
     final List<VirtualFile> sourceRoots = new ArrayList<VirtualFile>();
     if (module == null){
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-      roots.addAll(Arrays.asList(projectRootManager.getContentRoots()));
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(getProject());
       sourceRoots.addAll(Arrays.asList(projectRootManager.getContentSourceRoots()));
     } else {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      roots.addAll(Arrays.asList(moduleRootManager.getContentRoots()));
       sourceRoots.addAll(Arrays.asList(moduleRootManager.getSourceRoots()));
     }
     final Set<PsiPackage> topLevelPackages = new HashSet<PsiPackage>();
@@ -66,7 +66,7 @@ public class TodoPackageUtil {
           } else {
             final Iterator<PsiFile> files = builder.getFiles(subdirectory);
             if (!files.hasNext()) continue;
-            TodoDirNode dirNode = new TodoDirNode(project, subdirectory, builder);
+            TodoDirNode dirNode = new TodoDirNode(getProject(), subdirectory, builder);
             if (!children.contains(dirNode)){
               children.add(dirNode);
             }
@@ -76,7 +76,7 @@ public class TodoPackageUtil {
         final Iterator<PsiFile> filesUnderDirectory = builder.getFilesUnderDirectory(directory);
         for (;filesUnderDirectory.hasNext();) {
           final PsiFile file = filesUnderDirectory.next();
-          TodoFileNode todoFileNode = new TodoFileNode(project, file, builder, false);
+          TodoFileNode todoFileNode = new TodoFileNode(getProject(), file, builder, false);
           if (!children.contains(todoFileNode)){
             children.add(todoFileNode);
           }
@@ -88,10 +88,10 @@ public class TodoPackageUtil {
       }
     }
 
-    GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
+    GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(getProject());
     ArrayList<PsiPackage> packages = new ArrayList<PsiPackage>();
     for (PsiPackage psiPackage : topLevelPackages) {
-      final PsiPackage aPackage = findNonEmptyPackage(psiPackage, module, project, builder, scope);
+      final PsiPackage aPackage = findNonEmptyPackage(psiPackage, module, getProject(), builder, scope);
       if (aPackage != null){
         packages.add(aPackage);
       }
@@ -99,37 +99,25 @@ public class TodoPackageUtil {
     for (PsiPackage psiPackage : packages) {
       if (!builder.getTodoTreeStructure().getIsFlattenPackages()) {
         PackageElement element = new PackageElement(module, psiPackage, false);
-        TodoPackageNode packageNode = new TodoPackageNode(project, element, builder, psiPackage.getQualifiedName());
+        TodoPackageNode packageNode = new TodoPackageNode(getProject(), element, builder, psiPackage.getQualifiedName());
         if (!children.contains(packageNode)) {
           children.add(packageNode);
         }
       } else {
         Set<PsiPackage> allPackages = new HashSet<PsiPackage>();
-        traverseSubPackages(psiPackage, module, builder, project, allPackages);
+        traverseSubPackages(psiPackage, module, builder, getProject(), allPackages);
         for (PsiPackage aPackage : allPackages) {
-          TodoPackageNode packageNode = new TodoPackageNode(project, new PackageElement(module, aPackage, false), builder);
+          TodoPackageNode packageNode = new TodoPackageNode(getProject(), new PackageElement(module, aPackage, false), builder);
           if (!children.contains(packageNode)) {
             children.add(packageNode);
           }
         }
       }
     }
-    roots.removeAll(sourceRoots);
-    for (VirtualFile dir : roots) {
-      final PsiDirectory directory = psiManager.findDirectory(dir);
-      if (directory == null) {
-        continue;
-      }
-      final Iterator<PsiFile> files = builder.getFiles(directory);
-      if (!files.hasNext()) continue;
-      TodoDirNode dirNode = new TodoDirNode(project, directory, builder);
-      if (!children.contains(dirNode)){
-        children.add(dirNode);
-      }
-    }
+    super.addPackagesToChildren(children, module, builder);
   }
 
-  @Nullable
+   @Nullable
   public static PsiPackage findNonEmptyPackage(PsiPackage rootPackage, Module module, Project project, TodoTreeBuilder builder, GlobalSearchScope scope){
     if (!isPackageEmpty(new PackageElement(module, rootPackage, false), builder, project)){
       return rootPackage;
@@ -165,9 +153,21 @@ public class TodoPackageUtil {
     }
     GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
     final PsiPackage[] subPackages = psiPackage.getSubPackages(scope);
-    for (PsiPackage subPackage : subPackages) {      
+    for (PsiPackage subPackage : subPackages) {
       traverseSubPackages(subPackage, module, builder, project, packages);
     }
   }
 
+  private static boolean isPackageEmpty(PackageElement packageElement, TodoTreeBuilder builder, Project project) {
+    if (packageElement == null) return true;
+    final PsiPackage psiPackage = packageElement.getPackage();
+    final Module module = packageElement.getModule();
+    GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleScope(module) : GlobalSearchScope.projectScope(project);
+    final PsiDirectory[] directories = psiPackage.getDirectories(scope);
+    boolean isEmpty = true;
+    for (PsiDirectory psiDirectory : directories) {
+      isEmpty &= builder.isDirectoryEmpty(psiDirectory);
+    }
+    return isEmpty;
+  }
 }

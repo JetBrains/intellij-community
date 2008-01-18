@@ -24,4 +24,8 @@ public abstract class BaseToDoNode<Value> extends AbstractTreeNode<Value> {
   protected TodoTreeStructure getTreeStructure() {
     return myBuilder.getTodoTreeStructure();
   }
+
+  public abstract int getFileCount(Value val);
+
+  public abstract int getTodoItemCount(Value val);
 }

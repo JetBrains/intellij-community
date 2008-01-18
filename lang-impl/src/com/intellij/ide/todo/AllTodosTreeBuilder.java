@@ -4,18 +4,18 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-public class ChangeListTodosTreeBuilder extends TodoTreeBuilder{
-  public ChangeListTodosTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
+public class AllTodosTreeBuilder extends TodoTreeBuilder{
+  public AllTodosTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
     super(tree,treeModel,project);
   }
 
   protected TodoTreeStructure createTreeStructure(){
-    return new ChangeListTodosTreeStructure(myProject);
+    return new AllTodosTreeStructure(myProject);
   }
 
   void rebuildCache(){

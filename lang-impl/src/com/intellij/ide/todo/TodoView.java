@@ -14,16 +14,16 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -161,7 +161,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
         public void run(){
           // Create panels
 
-          Content allTodosContent=PeerFactory.getInstance().getContentFactory().createContent(null, IdeBundle.message("title.project"),false);
+          Content allTodosContent= ContentFactory.SERVICE.getInstance().createContent(null, IdeBundle.message("title.project"),false);
           myAllTodos=new TodoPanel(myProject,myAllPanelSettings,false,allTodosContent){
             protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
               AllTodosTreeBuilder builder=new AllTodosTreeBuilder(tree,treeModel,project);
@@ -171,7 +171,8 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           };
           allTodosContent.setComponent(myAllTodos);
 
-          Content currentFileTodosContent=PeerFactory.getInstance().getContentFactory().createContent(null,IdeBundle.message("title.todo.current.file"),false);
+          Content currentFileTodosContent=
+            ContentFactory.SERVICE.getInstance().createContent(null,IdeBundle.message("title.todo.current.file"),false);
           myCurrentFileTodos=new CurrentFileTodosPanel(myProject,myCurrentPanelSettings,currentFileTodosContent){
             protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
               CurrentFileTodosTreeBuilder builder=new CurrentFileTodosTreeBuilder(tree,treeModel,project);
@@ -181,7 +182,7 @@ public class TodoView implements ProjectComponent,JDOMExternalizable{
           };
           currentFileTodosContent.setComponent(myCurrentFileTodos);
 
-          myChangeListTodosContent = PeerFactory.getInstance().getContentFactory()
+          myChangeListTodosContent = ContentFactory.SERVICE.getInstance()
             .createContent(null, IdeBundle.message("changelist.todo.title",
                                                    ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
                                  false);

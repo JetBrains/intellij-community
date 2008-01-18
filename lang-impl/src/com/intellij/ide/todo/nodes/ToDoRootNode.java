@@ -6,12 +6,11 @@ import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-
-import org.jetbrains.annotations.NotNull;
 
 public final class ToDoRootNode extends BaseToDoNode{
   private SummaryNode mySummaryNode;
@@ -39,5 +38,13 @@ public final class ToDoRootNode extends BaseToDoNode{
 
   public String getTestPresentation() {
     return "Root";
+  }
+
+  public int getFileCount(final Object val) {
+    return mySummaryNode.getFileCount(null);
+  }
+
+  public int getTodoItemCount(final Object val) {
+    return mySummaryNode.getTodoItemCount(null);
   }
 }

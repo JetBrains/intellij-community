@@ -5,12 +5,11 @@ import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-
-import org.jetbrains.annotations.NotNull;
 
 public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   private final TodoFileNode myFileNode = new TodoFileNode(getProject(), getValue(), myBuilder, true);
@@ -29,5 +28,13 @@ public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
 
   public Object getFileNode() {
     return myFileNode;
+  }
+
+  public int getFileCount(final PsiFile val) {
+    return 1;
+  }
+
+  public int getTodoItemCount(final PsiFile val) {
+    return getTreeStructure().getTodoItemCount(val);
   }
 }

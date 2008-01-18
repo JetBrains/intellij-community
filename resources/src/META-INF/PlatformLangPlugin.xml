@@ -22,6 +22,7 @@
 
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
                     serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
   </extensions>
   <project-components>
     <component>
