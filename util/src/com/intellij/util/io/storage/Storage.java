@@ -24,6 +24,7 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +36,7 @@ public class Storage implements Disposable, Forceable {
   private final Object lock = new Object();
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
+  private final IntObjectCache<AppenderStream> myAppendersCache = new IntObjectCache<AppenderStream>();
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + ".rindex");
@@ -84,6 +86,18 @@ public class Storage implements Disposable, Forceable {
   private Storage(String path, RecordsTable recordsTable, DataTable dataTable) {
     myRecordsTable = recordsTable;
     myDataTable = dataTable;
+
+    myAppendersCache.addDeletedPairsListener(new IntObjectCache.DeletedPairsListener() {
+      public void objectRemoved(final int record, final Object value) {
+        try {
+          AppenderStream stream = (AppenderStream)value;
+          stream.close();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
 
     if (myDataTable.isCompactNecessary()) {
       compact(path);
@@ -156,6 +170,9 @@ public class Storage implements Disposable, Forceable {
 
   public void force() {
     synchronized (lock) {
+      synchronized (myAppendersCache) {
+        myAppendersCache.removeAll();
+      }
       myDataTable.force();
       myRecordsTable.force();
     }
@@ -200,6 +217,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void writeBytes(int record, byte[] bytes) {
+    dropRecordCache(record);
     synchronized (lock) {
       final int requiredLength = bytes.length;
       final int currentCapacity = myRecordsTable.getCapacity(record);
@@ -226,6 +244,12 @@ public class Storage implements Disposable, Forceable {
     }
   }
 
+  private void dropRecordCache(final int record) {
+    synchronized (myAppendersCache) {
+      myAppendersCache.remove(record);
+    }
+  }
+
   private static int calcCapacity(int requiredLength) {
     if (requiredLength < 2048) {
       int capacity = 1;
@@ -245,7 +269,13 @@ public class Storage implements Disposable, Forceable {
   }
 
   public AppenderStream appendStream(int record) {
-    return new AppenderStream(this, record);
+    synchronized (myAppendersCache) {
+      AppenderStream appenderStream = myAppendersCache.tryKey(record);
+      if (appenderStream != null) return appenderStream;
+      appenderStream = new AppenderStream(this, record);
+      myAppendersCache.cacheObject(record, appenderStream);
+      return appenderStream;
+    }
   }
 
   public DataInputStream readStream(int record) {
@@ -254,6 +284,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public byte[] readBytes(int record) {
+    dropRecordCache(record);
     synchronized (lock) {
       final int length = myRecordsTable.getSize(record);
       if (length == 0) return ArrayUtil.EMPTY_BYTE_ARRAY;
@@ -267,6 +298,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void deleteRecord(int record) {
+    dropRecordCache(record);
     synchronized (lock) {
       myRecordsTable.deleteRecord(record);
     }
