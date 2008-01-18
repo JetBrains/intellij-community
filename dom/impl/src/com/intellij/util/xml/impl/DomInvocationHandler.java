@@ -623,7 +623,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (myInitializedChildren != null && myInitializedChildren.contains(description)) return;
     r.unlock();
 
-    final List<XmlTag> subTags = getSubTags(description);
+    final List<XmlTag> subTags;
+    try {
+      subTags = getSubTags(description);
+    }
+    finally {
+      r.lock();
+    }
+    r.unlock();
 
     w.lock();
     try {
