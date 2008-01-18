@@ -204,7 +204,7 @@ public class TargetElementUtil {
     if (item == null) return null;
     Object o = item.getObject();
 
-    if (o instanceof PsiClass || o instanceof PsiPackage || o instanceof PsiMethod || o instanceof PsiVariable || o instanceof PsiFile) {
+    if (o instanceof PsiElement) {
       PsiElement element = (PsiElement)o;
       if (!(element instanceof PsiPackage)) {
         if (!isValidElement(element)) return null;
