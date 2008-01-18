@@ -362,10 +362,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   public static boolean isInternalTemplate(String templateName, String templateTabTitle) {
     if (templateName == null) return false;
     if (Comparing.strEqual(templateTabTitle, TEMPLATES_TITLE)) {
-      return Comparing.strEqual(templateName, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME) ||
-             Comparing.strEqual(templateName, FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME) ||
-             Comparing.strEqual(templateName, FileTemplateManager.INTERNAL_ENUM_TEMPLATE_NAME) ||
-             Comparing.strEqual(templateName, FileTemplateManager.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+      return Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME) ||
+             Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME) ||
+             Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME) ||
+             Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
     if (Comparing.strEqual(templateTabTitle, CODE_TITLE)) {
       return true;
@@ -443,9 +443,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     boolean errorInName = true;
     for (FileTemplate template : templates) {
       boolean isClassTemplate = Comparing.strEqual(template.getName(),
-                                                   FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
+                                                   JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
       boolean isInterfaceTemplate = Comparing.strEqual(template.getName(),
-                                                       FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME);
+                                                       JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
       if (isClassTemplate || isInterfaceTemplate) continue;
       String currName = template.getName();
       String currExt = template.getExtension();
