@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
@@ -87,7 +87,7 @@ public class HectorComponent extends JPanel {
         }
       });
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      slider.setValue(getValue(HighlightUtil.shouldHighlight(psiRoot), HighlightUtil.shouldInspect(psiRoot)));
+      slider.setValue(getValue(HighlightLevelUtil.shouldHighlight(psiRoot), HighlightLevelUtil.shouldInspect(psiRoot)));
       mySliders.put(language, slider);
     }
 
@@ -223,13 +223,13 @@ public class HectorComponent extends JPanel {
       PsiElement root = viewProvider.getPsi(language);
       int value = slider.getValue();
       if (value == 1) {
-        HighlightUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_HIGHLIGHTING);
+        HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_HIGHLIGHTING);
       }
       else if (value == 2) {
-        HighlightUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_INSPECTION);
+        HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_INSPECTION);
       }
       else {
-        HighlightUtil.forceRootHighlighting(root, FileHighlighingSetting.FORCE_HIGHLIGHTING);
+        HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.FORCE_HIGHLIGHTING);
       }
     }
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
@@ -245,7 +245,7 @@ public class HectorComponent extends JPanel {
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);
       final PsiFile root = viewProvider.getPsi(language);
-      if (getValue(HighlightUtil.shouldHighlight(root), HighlightUtil.shouldInspect(root)) != slider.getValue()) {
+      if (getValue(HighlightLevelUtil.shouldHighlight(root), HighlightLevelUtil.shouldInspect(root)) != slider.getValue()) {
         return true;
       }
     }

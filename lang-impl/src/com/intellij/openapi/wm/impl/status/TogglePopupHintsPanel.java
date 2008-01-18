@@ -2,7 +2,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.HectorComponent;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -108,7 +108,7 @@ public class TogglePopupHintsPanel extends JPanel implements StatusBarPatch{
 
   void updateStatus(PsiFile file) {
     if (isStateChangeable(file)) {
-      if (HighlightUtil.shouldInspect(file)) {
+      if (HighlightLevelUtil.shouldInspect(file)) {
         myHectorLabel.setIcon(INSPECTIONS_ICON);
         String text = InspectionProjectProfileManager.getInstance(file.getProject()).getProfileName(file);
         if (text != null){

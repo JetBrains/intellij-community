@@ -17,20 +17,13 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.QuestionActionDescriptorGetter;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
@@ -1935,47 +1928,6 @@ public class HighlightUtil {
     return highlightInfo;
   }
 
-
-  public static boolean shouldHighlight(final PsiElement psiRoot) {
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
-    if (component == null) return true;
-
-    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
-    return settingForRoot != FileHighlighingSetting.SKIP_HIGHLIGHTING;
-  }
-
-  public static boolean shouldInspect(final PsiElement psiRoot) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
-
-    if (!shouldHighlight(psiRoot)) return false;                                                                
-    final Project project = psiRoot.getProject();
-    final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) return false;
-
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if ((fileIndex.isInLibrarySource(virtualFile) || fileIndex.isInLibraryClasses(virtualFile)) && !fileIndex.isInContent(virtualFile)) {
-      return false;
-    }
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);
-    if (component == null) return true;
-
-    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
-    return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
-  }
-                      
-  public static void forceRootHighlighting(final PsiElement root, FileHighlighingSetting level) {
-    final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
-    if (component == null) return;
-    final PsiFile file = root.getContainingFile();
-    if (file instanceof JspFile && root.getLanguage() instanceof JavaLanguage) {
-      //highlight both java roots
-      final JspClass jspClass = (JspClass)((JspFile)file).getJavaClass();
-      component.setHighlightingSettingForRoot(jspClass.getContainingFile(), level);
-    }
-    else {
-      component.setHighlightingSettingForRoot(root, level);
-    }
-  }
 
   public static boolean isSerializable(PsiClass aClass) {
     PsiManager manager = aClass.getManager();

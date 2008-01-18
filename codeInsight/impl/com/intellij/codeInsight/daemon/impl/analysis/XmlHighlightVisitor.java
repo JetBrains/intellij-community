@@ -151,7 +151,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
 
       if (namespaceByPrefix.length() == 0) {
         final PsiFile containingFile = context.getContainingFile();
-        if (!HighlightUtil.shouldInspect(containingFile)) return;
+        if (!HighlightLevelUtil.shouldInspect(containingFile)) return;
 
         if (!"xml".equals(namespacePrefix) ) {
           boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;

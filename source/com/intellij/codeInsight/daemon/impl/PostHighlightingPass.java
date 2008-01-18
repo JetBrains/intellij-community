@@ -7,10 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
@@ -111,7 +108,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         Set<PsiElement> elementSet = new THashSet<PsiElement>();
         for (Language language : relevantLanguages) {
           PsiElement psiRoot = viewProvider.getPsi(language);
-          if (!HighlightUtil.shouldHighlight(psiRoot)) continue;
+          if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
           List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
           elementSet.addAll(elements);
         }

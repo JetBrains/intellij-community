@@ -4,7 +4,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
@@ -90,7 +90,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void inspectRoot(final ProgressIndicator progress) {
-    if (!HighlightUtil.shouldInspect(myFile)) return;
+    if (!HighlightLevelUtil.shouldInspect(myFile)) return;
     final InspectionManagerEx iManager = (InspectionManagerEx)InspectionManager.getInstance(myProject);
     final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper(myFile);
     final LocalInspectionTool[] tools = getInspectionTools(profile);
@@ -415,7 +415,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final Set<PsiElement> result = new LinkedHashSet<PsiElement>();
     for (Language language : viewProvider.getPrimaryLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      if (HighlightUtil.shouldInspect(psiRoot)) {
+      if (HighlightLevelUtil.shouldInspect(psiRoot)) {
         ApplicationManager.getApplication().runReadAction(new Runnable(){
           public void run() {
             result.addAll(CodeInsightUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));

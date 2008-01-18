@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
@@ -78,10 +78,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer {
     ArrayList<String> noHighlightingRoots = new ArrayList<String>();
     final PsiFile[] roots = myFile.getPsiRoots();
     for (PsiFile file : roots) {
-      if (!HighlightUtil.shouldHighlight(file)) {
+      if (!HighlightLevelUtil.shouldHighlight(file)) {
         noHighlightingRoots.add(file.getLanguage().getID());
       }
-      else if (!HighlightUtil.shouldInspect(file)) {
+      else if (!HighlightLevelUtil.shouldInspect(file)) {
         noInspectionRoots.add(file.getLanguage().getID());
       }
     }
