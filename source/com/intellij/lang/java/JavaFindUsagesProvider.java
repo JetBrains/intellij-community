@@ -12,14 +12,19 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.xml.TypeNameManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public class JavaFindUsagesProvider implements FindUsagesProvider {
+  public static final String DEFAULT_PACKAGE_NAME = UsageViewBundle.message("default.package.presentable.name");
+
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
@@ -113,10 +118,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return ThrowSearchUtil.getSearchableTypeName(element);
     }
     if (element instanceof PsiDirectory) {
-      return UsageViewUtil.getPackageName((PsiDirectory)element, false);
+      return getPackageName((PsiDirectory)element, false);
     }
     else if (element instanceof PsiPackage) {
-      return UsageViewUtil.getPackageName((PsiPackage)element);
+      return getPackageName((PsiPackage)element);
     }
     else if (element instanceof PsiFile) {
       return ((PsiFile)element).getVirtualFile().getPresentableUrl();
@@ -187,10 +192,10 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   @NotNull
   public String getNodeText(@NotNull PsiElement element, boolean useFullName) {
     if (element instanceof PsiDirectory) {
-      return UsageViewUtil.getPackageName((PsiDirectory)element, false);
+      return getPackageName((PsiDirectory)element, false);
     }
     if (element instanceof PsiPackage) {
-      return UsageViewUtil.getPackageName((PsiPackage)element);
+      return getPackageName((PsiPackage)element);
     }
     if (element instanceof PsiFile) {
       return useFullName ? ((PsiFile)element).getVirtualFile().getPresentableUrl() : ((PsiFile)element).getName();
@@ -286,6 +291,53 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
 
     return "";
+  }
+
+  public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
+    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    if (aPackage == null) {
+      return directory.getVirtualFile().getPresentableUrl();
+    }
+    else {
+      String packageName = getPackageName(aPackage);
+      if (includeRootDir) {
+        String rootDir = getRootDirectoryForPackage(directory);
+        if (rootDir != null) {
+          return UsageViewBundle.message("usage.target.package.in.directory", packageName, rootDir);
+        }
+      }
+      return packageName;
+    }
+  }
+
+  public static String getRootDirectoryForPackage(PsiDirectory directory) {
+    PsiManager manager = directory.getManager();
+    final VirtualFile virtualFile = directory.getVirtualFile();
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(manager.getProject()).getFileIndex();
+    VirtualFile root = fileIndex.getSourceRootForFile(virtualFile);
+
+    if (root == null) {
+      root = fileIndex.getClassRootForFile(virtualFile);
+    }
+    if (root != null) {
+      return root.getPresentableUrl();
+    }
+    else {
+      return null;
+    }
+  }
+
+  public static String getPackageName(PsiPackage psiPackage) {
+    if (psiPackage == null) {
+      return null;
+    }
+    String name = psiPackage.getQualifiedName();
+    if (name.length() > 0) {
+      return name;
+    }
+    else {
+      return DEFAULT_PACKAGE_NAME;
+    }
   }
 
   private static class Inner {

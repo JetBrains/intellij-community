@@ -6,10 +6,7 @@ import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -29,7 +26,6 @@ import java.util.Set;
  */
 public class UsageViewUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usageView.UsageViewUtil");
-  public static final String DEFAULT_PACKAGE_NAME = UsageViewBundle.message("default.package.presentable.name");
 
   private UsageViewUtil() { }
 
@@ -62,53 +58,6 @@ public class UsageViewUtil {
   private static String getMetaDataName(final PsiMetaData metaData) {
     final String name = metaData.getName();
     return StringUtil.isEmpty(name) ? "''" : name;
-  }
-
-  public static String getPackageName(PsiDirectory directory, boolean includeRootDir) {
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (aPackage == null) {
-      return directory.getVirtualFile().getPresentableUrl();
-    }
-    else {
-      String packageName = getPackageName(aPackage);
-      if (includeRootDir) {
-        String rootDir = getRootDirectoryForPackage(directory);
-        if (rootDir != null) {
-          return UsageViewBundle.message("usage.target.package.in.directory", packageName, rootDir);
-        }
-      }
-      return packageName;
-    }
-  }
-
-  public static String getRootDirectoryForPackage(PsiDirectory directory) {
-    PsiManager manager = directory.getManager();
-    final VirtualFile virtualFile = directory.getVirtualFile();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(manager.getProject()).getFileIndex();
-    VirtualFile root = fileIndex.getSourceRootForFile(virtualFile);
-
-    if (root == null) {
-      root = fileIndex.getClassRootForFile(virtualFile);
-    }
-    if (root != null) {
-      return root.getPresentableUrl();
-    }
-    else {
-      return null;
-    }
-  }
-
-  public static String getPackageName(PsiPackage psiPackage) {
-    if (psiPackage == null) {
-      return null;
-    }
-    String name = psiPackage.getQualifiedName();
-    if (name.length() > 0) {
-      return name;
-    }
-    else {
-      return DEFAULT_PACKAGE_NAME;
-    }
   }
 
   public static String getShortName(final PsiElement psiElement) {

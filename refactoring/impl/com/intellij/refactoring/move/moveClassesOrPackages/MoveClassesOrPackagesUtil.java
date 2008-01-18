@@ -21,9 +21,9 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
+import com.intellij.lang.java.JavaFindUsagesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -291,7 +291,7 @@ public class MoveClassesOrPackagesUtil {
       return name;
     }
     else {
-      return UsageViewUtil.DEFAULT_PACKAGE_NAME;
+      return JavaFindUsagesProvider.DEFAULT_PACKAGE_NAME;
     }
   }
 
