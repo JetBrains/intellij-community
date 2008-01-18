@@ -24,11 +24,13 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Storage implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
@@ -36,7 +38,30 @@ public class Storage implements Disposable, Forceable {
   private final Object lock = new Object();
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
-  private final IntObjectCache<AppenderStream> myAppendersCache = new IntObjectCache<AppenderStream>();
+
+  private final static LinkedHashMap<AppenderCacheKey, AppenderStream> ourAppendersCache = new LinkedHashMap<AppenderCacheKey, AppenderStream>(16, 0.75f, true) {
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<AppenderCacheKey, AppenderStream> eldest) {
+      try {
+        eldest.getValue().realClose();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return true;
+    }
+  };
+
+
+  private static class AppenderCacheKey {
+    public final Storage storage;
+    public final int record;
+
+    public AppenderCacheKey(final int record, final Storage storage) {
+      this.record = record;
+      this.storage = storage;
+    }
+  }
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + ".rindex");
@@ -86,18 +111,6 @@ public class Storage implements Disposable, Forceable {
   private Storage(String path, RecordsTable recordsTable, DataTable dataTable) {
     myRecordsTable = recordsTable;
     myDataTable = dataTable;
-
-    myAppendersCache.addDeletedPairsListener(new IntObjectCache.DeletedPairsListener() {
-      public void objectRemoved(final int record, final Object value) {
-        try {
-          AppenderStream stream = (AppenderStream)value;
-          stream.realClose();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
 
     if (myDataTable.isCompactNecessary()) {
       compact(path);
@@ -170,8 +183,19 @@ public class Storage implements Disposable, Forceable {
 
   public void force() {
     synchronized (lock) {
-      synchronized (myAppendersCache) {
-        myAppendersCache.removeAll();
+      synchronized (ourAppendersCache) {
+        for (AppenderCacheKey key : new ArrayList<AppenderCacheKey>(ourAppendersCache.keySet())) {
+          AppenderStream stream = ourAppendersCache.get(key);
+          if (stream.myStorage == this) {
+            try {
+              stream.realClose();
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          }
+          ourAppendersCache.remove(key);
+        }
       }
       myDataTable.force();
       myRecordsTable.force();
@@ -245,8 +269,18 @@ public class Storage implements Disposable, Forceable {
   }
 
   private void dropRecordCache(final int record) {
-    synchronized (myAppendersCache) {
-      myAppendersCache.remove(record);
+    synchronized (ourAppendersCache) {
+      final AppenderCacheKey key = new AppenderCacheKey(record, this);
+      final AppenderStream stream = ourAppendersCache.get(key);
+      if (stream != null) {
+        try {
+          stream.realClose();
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      ourAppendersCache.remove(key);
     }
   }
 
@@ -269,11 +303,13 @@ public class Storage implements Disposable, Forceable {
   }
 
   public AppenderStream appendStream(int record) {
-    synchronized (myAppendersCache) {
-      AppenderStream appenderStream = myAppendersCache.tryKey(record);
+    synchronized (ourAppendersCache) {
+      final AppenderCacheKey key = new AppenderCacheKey(record, this);
+      AppenderStream appenderStream = ourAppendersCache.get(key);
       if (appenderStream != null) return appenderStream;
+
       appenderStream = new AppenderStream(this, record);
-      myAppendersCache.cacheObject(record, appenderStream);
+      ourAppendersCache.put(key, appenderStream);
       return appenderStream;
     }
   }
