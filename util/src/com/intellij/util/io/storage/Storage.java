@@ -91,7 +91,7 @@ public class Storage implements Disposable, Forceable {
       public void objectRemoved(final int record, final Object value) {
         try {
           AppenderStream stream = (AppenderStream)value;
-          stream.close();
+          stream.realClose();
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -342,12 +342,15 @@ public class Storage implements Disposable, Forceable {
     }
 
     public void close() throws IOException {
-      super.close();
-      myStorage.appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
     }
 
     public int getRecordId() {
       return myRecordId;
+    }
+
+    public void realClose() throws IOException {
+      super.close();
+      myStorage.appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
     }
   }
 }
