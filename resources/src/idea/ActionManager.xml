@@ -159,7 +159,6 @@
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
         <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
         <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction"/>
-        <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction"/>
         <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
         <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
         <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
@@ -252,9 +251,6 @@
         <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
         <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
       </group>
-      <separator/>
-      <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
-      <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
       <separator/>
 
       <add-to-group group-id="CodeMenu" anchor="first"/>

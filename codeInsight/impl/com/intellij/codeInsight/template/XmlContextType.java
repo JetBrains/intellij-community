@@ -4,6 +4,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 
 /**
  * @author yole
@@ -23,5 +24,9 @@ public class XmlContextType implements TemplateContextType {
 
   public void setEnabled(final TemplateContext context, final boolean value) {
     context.XML = value;
+  }
+
+  public SyntaxHighlighter createHighlighter() {
+    return  SyntaxHighlighter.PROVIDER.create(StdFileTypes.XML, null, null);
   }
 }

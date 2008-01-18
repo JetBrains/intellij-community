@@ -1,4 +1,16 @@
 <component xmlns:xi="http://www.w3.org/2001/XInclude">
+  <actions>
+    <group id="LookupActions">
+      <!-- these must be declared before standard EnterAction and TabAction -->
+      <action id="EditorChooseLookupItem" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction"/>
+      <action id="EditorChooseLookupItemReplace" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemReplaceAction"/>
+      <action id="EditorChooseLookupItemCompleteStatement" class="com.intellij.codeInsight.lookup.impl.actions.ChooseItemCompleteStatementAction"/>
+
+      <action id="NextTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.NextVariableAction"/>
+      <action id="PreviousTemplateVariable" class="com.intellij.codeInsight.template.impl.actions.PreviousVariableAction"/>
+    </group>
+  </actions>
+
   <xi:include href="PlatformActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="VcsActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="LangActions.xml" xpointer="xpointer(/component/*)"/>

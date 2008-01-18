@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.lexer.CompositeLexer;
-import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -37,35 +39,18 @@ public class TemplateEditorUtil {
   }
 
   public static void setHighlighter(Editor editor, TemplateContext templateContext) {
-    int count1 =
-      (templateContext.JAVA_CODE || templateContext.COMPLETION ? 1 : 0) +
-      (templateContext.JAVA_COMMENT ? 1 : 0) +
-      (templateContext.JAVA_STRING ? 1 : 0) +
-      (templateContext.OTHER ? 1 : 0);
-    int count2 =
-      (templateContext.HTML ? 1 : 0) +
-      (templateContext.XML ? 1 : 0) +
-      (templateContext.JSP ? 1 : 0);
-    int count = count1 + count2;
-
-    FileType fileType;
-    if ((templateContext.JAVA_CODE || templateContext.COMPLETION) && count == 1) {
-      fileType = StdFileTypes.JAVA;
+    SyntaxHighlighter baseHighlighter = null;
+    for(TemplateContextType type: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
+      if (type.isEnabled(templateContext)) {
+        baseHighlighter = type.createHighlighter();
+        if (baseHighlighter != null) break;
+      }
     }
-    else if (templateContext.HTML && count1 == 0) {
-      fileType = StdFileTypes.HTML;
-    }
-    else if (templateContext.XML && count1 == 0) {
-      fileType = StdFileTypes.XML;
-    }
-    else if (templateContext.JSP && count1 == 0) {
-      fileType = StdFileTypes.JSP;
-    }
-    else {
-      fileType = FileTypes.PLAIN_TEXT;
+    if (baseHighlighter == null) {
+      baseHighlighter = new PlainSyntaxHighlighter();
     }
 
-    SyntaxHighlighter highlighter = createTemplateTextHighlighter(SyntaxHighlighter.PROVIDER.create(fileType, null, null));
+    SyntaxHighlighter highlighter = createTemplateTextHighlighter(baseHighlighter);
     ((EditorEx)editor).setHighlighter(new LexerEditorHighlighter(highlighter, EditorColorsManager.getInstance().getGlobalScheme()));
   }
 

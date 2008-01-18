@@ -61,6 +61,11 @@
       <add-to-group group-id="ViewMenu" anchor="last"/>
     </group>
 
+    <!-- TODO: correct action location -->
+    <action id="QuickImplementations" class="com.intellij.codeInsight.hint.actions.ShowImplementationsAction">
+      <add-to-group group-id="ViewMenu" relative-to-action="ToggleFullScreenMode" anchor="after"/>
+    </action>
+
     <!-- Go To -->
     <group id="GoToErrorGroup">
       <separator/>
@@ -73,6 +78,10 @@
 
     <!-- Code -->
     <group id="CodeMenu" popup="true">
+      <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
+      <action id="SurroundWithLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.SurroundWithTemplateAction"/>
+      <separator/>
+
       <group id="CommentGroup">
         <action id="CommentByLineComment" class="com.intellij.codeInsight.generation.actions.CommentByLineCommentAction"/>
         <action id="CommentByBlockComment" class="com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction"/>

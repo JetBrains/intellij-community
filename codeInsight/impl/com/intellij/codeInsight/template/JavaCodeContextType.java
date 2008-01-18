@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -35,5 +36,9 @@ public class JavaCodeContextType implements TemplateContextType {
 
   public void setEnabled(final TemplateContext context, final boolean value) {
     context.JAVA_CODE = value;
+  }
+
+  public SyntaxHighlighter createHighlighter() {
+     return SyntaxHighlighter.PROVIDER.create(StdFileTypes.JAVA, null, null);
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.psi.PsiFile;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 
 /**
  * @author yole
@@ -22,5 +23,9 @@ public class OtherContextType implements TemplateContextType {
 
   public void setEnabled(final TemplateContext context, final boolean value) {
     context.OTHER = value;
+  }
+
+  public SyntaxHighlighter createHighlighter() {
+    return null;
   }
 }

@@ -44,6 +44,10 @@
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.codeInsight.template.impl.TemplateSettings</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -186,6 +190,11 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.template.TemplateManager</interface-class>
+      <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerImpl</implementation-class>
     </component>
   </project-components>
 

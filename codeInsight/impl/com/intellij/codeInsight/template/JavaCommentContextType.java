@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,5 +33,9 @@ public class JavaCommentContextType implements TemplateContextType {
 
   public void setEnabled(final TemplateContext context, final boolean value) {
     context.JAVA_COMMENT = value;
+  }
+
+  public SyntaxHighlighter createHighlighter() {
+     return null;
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 
 /**
  * @author yole
@@ -27,10 +28,14 @@ public class JavaStringContextType implements TemplateContextType {
   }// these methods mostly exist for serialization compatibility with pre-8.0 live templates
 
   public boolean isEnabled(final TemplateContext context) {
-    return context.JAVA_COMMENT;
+    return context.JAVA_STRING;
   }
 
   public void setEnabled(final TemplateContext context, final boolean value) {
-    context.JAVA_COMMENT = value;
+    context.JAVA_STRING = value;
+  }
+
+  public SyntaxHighlighter createHighlighter() {
+    return null;
   }
 }

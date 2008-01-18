@@ -1,9 +1,10 @@
 package com.intellij.codeInsight.template;
 
-import com.intellij.psi.PsiFile;
-import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.psi.PsiFile;
 
 /**
  * @author yole
@@ -23,5 +24,9 @@ public class HtmlContextType implements TemplateContextType {
 
   public void setEnabled(final TemplateContext context, final boolean value) {
     context.HTML = value;
+  }
+
+  public SyntaxHighlighter createHighlighter() {
+    return  SyntaxHighlighter.PROVIDER.create(StdFileTypes.HTML, null, null);
   }
 }

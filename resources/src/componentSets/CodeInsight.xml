@@ -1,9 +1,6 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.codeInsight.template.impl.TemplateSettings</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.folding.CodeFoldingSettings</interface-class>
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
     </component>
@@ -29,10 +26,6 @@
       <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
       <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.codeInsight.template.TemplateManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerImpl</implementation-class>
     </component>
     <component>
       <interface-class>com.intellij.codeInsight.javadoc.JavaDocManager</interface-class>

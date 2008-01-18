@@ -59,10 +59,14 @@
 
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 
+  <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
+  <!-- Live Templates -->
+
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
   <!-- Errors -->
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
+  <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>
 
   <getDataRule key="psi.File" implementationClass="com.intellij.ide.impl.dataRules.PsiFileRule"/>
   <getDataRule key="virtualFile" implementationClass="com.intellij.ide.impl.dataRules.VirtualFileRule"/>
@@ -78,4 +82,14 @@
 
   <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor"/>
   <keymapExtension implementation="com.intellij.ide.bookmarks.BookmarkKeymapExtension"/>
+
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DecapitalizeMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
+  <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
+
+  <liveTemplateContext implementation="com.intellij.codeInsight.template.OtherContextType"/>
 </extensions>
