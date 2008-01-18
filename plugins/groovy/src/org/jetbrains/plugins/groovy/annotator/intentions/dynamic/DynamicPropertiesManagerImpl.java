@@ -8,8 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,6 +138,14 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
       }
     }
 
+    writeXMLTree(moduleName, rootElement);
+
+    fireChange();
+
+    return dynamicPropertyVirtual;
+  }
+
+  private void writeXMLTree(String moduleName, Element rootElement) {
     FileWriter writer = null;
     final File filePath = myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName));
     try {
@@ -151,10 +163,6 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
         LOG.error("FileWriter for file " + filePath + " cannot be close.");
       }
     }
-
-    fireChange();
-
-    return dynamicPropertyVirtual;
   }
 
   private Document loadModuleDynXML(String moduleName) {
@@ -174,8 +182,33 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   }
 
   @Nullable
-  public DynamicPropertyReal removeDynamicProperty(DynamicPropertyReal dynamicPropertyReal) {
-    return null;
+  public DynamicPropertyVirtual removeDynamicProperty(DynamicPropertyVirtual dynamicProperty) {
+    final Document document = loadModuleDynXML(dynamicProperty.getModuleName());
+    final String containingClassName = dynamicProperty.getContainingClassQualifiedName();
+    final String propertyName = dynamicProperty.getPropertyName();
+    final String moduleName = dynamicProperty.getModuleName();
+
+    final Element rootElement = document.getRootElement();
+    final Element foundDynamicProperty = findConcreateDynamicProperty(rootElement, containingClassName, propertyName);
+    if (foundDynamicProperty == null) return null;
+
+    foundDynamicProperty.getParent().removeContent(foundDynamicProperty);
+
+    writeXMLTree(moduleName, rootElement);
+
+    fireChange();
+    return dynamicProperty;
+  }
+
+  @Nullable
+  public void removeDynamicPropertiesOfClass(String moduleName, String containingClassName) {
+    final Document document = loadModuleDynXML(moduleName);
+
+    final Element rootElement = document.getRootElement();
+    final Element classElement = findDynamicPropertyClassElement(rootElement, containingClassName);
+    classElement.getParent().removeContent();
+
+    fireChange();
   }
 
   @Nullable
@@ -216,7 +249,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     if (types == null || (types.size() != 1)) return null;
 
     final Object type = types.get(0);
-    if(!(type instanceof Element)) return null;
+    if (!(type instanceof Element)) return null;
 
     return ((Element) type).getText();
   }
@@ -317,10 +350,16 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     myListeners.remove(listener);
   }
 
-  public void fireChange(){
+  public void fireChange() {
     for (DynamicPropertyChangeListener listener : myListeners) {
       listener.dynamicPropertyChange();
     }
+
+    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
+    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+
+    //TODO
+    analyzer.restart();
   }
 
   @Nullable

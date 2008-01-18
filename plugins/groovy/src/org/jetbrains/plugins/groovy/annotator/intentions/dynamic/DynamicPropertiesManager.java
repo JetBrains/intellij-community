@@ -37,7 +37,14 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   */
 
   @Nullable
-  public abstract DynamicPropertyReal removeDynamicProperty(DynamicPropertyReal dynamicPropertyReal);
+  public abstract DynamicPropertyVirtual removeDynamicProperty(DynamicPropertyVirtual dynamicProperty);
+
+  /*
+  * Return dynamic property with be removed or null if not
+  */
+
+  @Nullable
+  public abstract void removeDynamicPropertiesOfClass(String moduleName, String className);
 
   /*
   * Find dynamic property in class with name

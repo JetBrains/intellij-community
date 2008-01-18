@@ -673,10 +673,12 @@ public class GroovyAnnotator implements Annotator {
       }
     }
 
-    if (refExpr.getType() == null) {
-      PsiElement refNameElement = refExpr.getReferenceNameElement();
-      PsiElement elt = refNameElement == null ? refExpr : refNameElement;
-      Annotation annotation = holder.createInfoAnnotation(elt, null);
+    final PsiType refExprType = refExpr.getType();
+    PsiElement refNameElement = refExpr.getReferenceNameElement();
+    PsiElement elt = refNameElement == null ? refExpr : refNameElement;
+    Annotation annotation = holder.createInfoAnnotation(elt, null);
+
+    if (refExprType == null) {
       if (resolved == null && refExpr.getQualifierExpression() == null) {
         if (!(refExpr.getParent() instanceof GrCallExpression)) {
           registerCreateClassByTypeFix(refExpr, annotation, false);
@@ -687,9 +689,10 @@ public class GroovyAnnotator implements Annotator {
       if (isNeedsAddDynPropertiesAnnotation(refExpr) && refExpr.resolve() == null) {
         addDynPropertyAnnotation(annotation, refExpr);
       }
-      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
 
-      //annotation.setEnforcedTextAttributes(new TextAttributes(Color.black, null, Color.black, EffectType.LINE_UNDERSCORE, 0));
+      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
+    } else if (refExprType instanceof PsiClassType && ((PsiClassType) refExprType).resolve() == null) {
+      annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     }
   }
 
