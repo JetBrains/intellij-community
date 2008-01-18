@@ -127,7 +127,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
         JavaParameters params = new JavaParameters();
 
         configureJavaParams(params, module);
-        configureStarter(params);
+        configureGroovyStarter(params);
         configureScript(params);
 
         return params;
@@ -137,41 +137,6 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject()));
     state.setModulesToCompile(getModules());
     return state;
-  }
-
-  private void configureScript(JavaParameters params) {
-    // add script
-    params.getProgramParametersList().add(scriptPath);
-
-    // add script parameters
-    params.getProgramParametersList().addParametersString(scriptParams);
-  }
-
-  private void configureStarter(JavaParameters params) {
-    GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
-
-    // add GroovyStarter parameters
-    params.getProgramParametersList().add("--main");
-    params.getProgramParametersList().add(GROOVY_MAIN);
-    params.getProgramParametersList().add("--conf");
-    params.getProgramParametersList().add(config.getGroovyInstallPath() + GROOVY_STARTER_CONF);
-    params.getProgramParametersList().add("--classpath");
-
-    // Clear module libraries from JDK's occurrences
-    List<String> list = params.getClassPath().getPathList();
-    ProjectJdk jdk = params.getJdk();
-    StringBuffer buffer = new StringBuffer();
-    if (jdk != null) {
-      String jdkUrl = jdk.getHomeDirectory().getPresentableUrl();
-      for (String s : list) {
-        if (!s.contains(jdkUrl)) {
-          buffer.append(s).append(File.pathSeparator);
-        }
-      }
-    }
-
-    params.getProgramParametersList().add(workDir + File.pathSeparator + buffer.toString());
-    params.getProgramParametersList().add("--debug");
   }
 
   private void configureJavaParams(JavaParameters params, Module module) throws CantRunException {
@@ -192,6 +157,43 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
 
     // set starter class
     params.setMainClass(GROOVY_STARTER);
+  }
+
+  private void configureGroovyStarter(JavaParameters params) {
+    GroovyGrailsConfiguration config = GroovyGrailsConfiguration.getInstance();
+
+    // add GroovyStarter parameters
+    params.getProgramParametersList().add("--main");
+    params.getProgramParametersList().add(GROOVY_MAIN);
+
+//    params.getProgramParametersList().add("--conf");
+//    params.getProgramParametersList().add(config.getGroovyInstallPath() + GROOVY_STARTER_CONF);
+    params.getProgramParametersList().add("--classpath");
+
+    // Clear module libraries from JDK's occurrences
+    List<String> list = params.getClassPath().getPathList();
+    ProjectJdk jdk = params.getJdk();
+    StringBuffer buffer = new StringBuffer();
+    if (jdk != null) {
+      String jdkUrl = jdk.getHomeDirectory().getPresentableUrl();
+      String jreLib = jdkUrl + File.separator + "jre" + File.separator + "lib";
+      for (String libPath : list) {
+        if (!libPath.contains(jreLib)) {
+          buffer.append(libPath).append(File.pathSeparator);
+        }
+      }
+    }
+
+    params.getProgramParametersList().add(workDir + File.pathSeparator + buffer.toString());
+    params.getProgramParametersList().add("--debug");
+  }
+
+  private void configureScript(JavaParameters params) {
+    // add script
+    params.getProgramParametersList().add(scriptPath);
+
+    // add script parameters
+    params.getProgramParametersList().addParametersString(scriptParams);
   }
 
   public Module getModule() {
