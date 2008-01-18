@@ -386,7 +386,9 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <IN_TRIPLE_GSTRING> {
   {mGSTRING_TRIPLE_CONTENT}(\" (\")?)?"$" {  yybegin(IN_TRIPLE_GSTRING_DOLLAR);
                                              return mGSTRING_SINGLE_CONTENT; }
-  {mGSTRING_TRIPLE_CONTENT}\"\"\"         {  gStringStack.pop();
+  {mGSTRING_TRIPLE_CONTENT}\"\"\"         {  if (!gStringStack.isEmpty()){
+                                               gStringStack.pop();
+                                             }
                                              if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {
@@ -525,7 +527,9 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 <IN_REGEX> {
   {mREGEX_CONTENT}"$"                     {  yybegin(KING_STATE_CONTENT);
                                              return mREGEX_CONTENT; }
-  {mREGEX_CONTENT} ("$" "/" | "/")        {  gStringStack.pop();
+  {mREGEX_CONTENT} ("$" "/" | "/")        {  if (!gStringStack.isEmpty()) {
+                                               gStringStack.pop();
+                                             }
                                              if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
                                              } else {

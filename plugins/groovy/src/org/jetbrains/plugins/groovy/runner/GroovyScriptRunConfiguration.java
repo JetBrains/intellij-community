@@ -48,7 +48,7 @@ class GroovyScriptRunConfiguration extends ModuleBasedConfiguration {
   public String workDir = ".";
   public final String GROOVY_STARTER = "org.codehaus.groovy.tools.GroovyStarter";
   public final String GROOVY_MAIN = "groovy.ui.GroovyMain";
-  public final String GROOVY_STARTER_CONF = "/conf/groovy-starter.conf";
+  public final String GROOVY_STARTER_CONF = File.separator + "conf" + File.separator + "groovy-starter.conf";
 
   public GroovyScriptRunConfiguration(GroovyScriptConfigurationFactory factory, Project project, String name) {
     super(name, new RunConfigurationModule(project, true), factory);
