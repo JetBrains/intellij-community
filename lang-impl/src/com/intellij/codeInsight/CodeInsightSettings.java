@@ -1,17 +1,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.*;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
-import com.intellij.codeInsight.highlighting.DefaultBraceMatcher;
-import com.intellij.codeInsight.highlighting.BraceMatcher;
-import com.intellij.codeInsight.highlighting.HtmlBraceMatcher;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
