@@ -110,7 +110,9 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         if (((TreeNode) lastPathComponent).isLeaf()) {
           DataContext context = DataManager.getInstance().getDataContext(myTree);
           final Change[] changes = VcsDataKeys.CHANGES.getData(context);
-          ShowDiffAction.showDiffForChange(changes, 0, myProject);
+          if (changes != null && changes.length > 0) {
+            ShowDiffAction.showDiffForChange(changes, 0, myProject);
+          }
           e.consume();
         }
       }
