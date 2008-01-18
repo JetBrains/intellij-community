@@ -15,9 +15,8 @@ import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -108,13 +107,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public String getTitle() {
     final PsiDirectory directory = getValue();
     if (directory != null) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      if (aPackage != null) {
-        return aPackage.getQualifiedName();
-      }
-      else {
-        return directory.getVirtualFile().getPresentableUrl();
-      }
+      return PsiDirectoryFactory.getInstance(getProject()).getQualifiedName(directory);
     }
     return super.getTitle();
   }

@@ -17,9 +17,13 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -40,7 +44,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     return project.getComponent(BookmarkManager.class);
   }
 
-  BookmarkManager(Project project) {
+  public BookmarkManager(Project project) {
     myProject = project;
   }
 
@@ -65,6 +69,8 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     return myProject;
   }
 
+
+
   public void addEditorBookmark(Editor editor, int lineIndex, int number) {
     Document document = editor.getDocument();
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
@@ -76,8 +82,12 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
     RangeHighlighter lineMarker = ((MarkupModelEx)document.getMarkupModel(myProject)).addPersistentLineHighlighter(
       lineIndex, HighlighterLayer.ERROR + 1, null);
     if (lineMarker == null) return;
-    EditorBookmark bookmark = new EditorBookmark(document, myProject, lineMarker, getAutoDescription(editor, lineIndex), number);
-    myEditorBookmarks.addBookmark(bookmark);
+    myEditorBookmarks.addBookmark(createEditorBookmark(editor, lineIndex, number, document, lineMarker));
+  }
+
+  protected EditorBookmark createEditorBookmark(final Editor editor, final int lineIndex, final int number, final Document document,
+                                              final RangeHighlighter lineMarker) {
+    return new EditorBookmark(document, myProject, lineMarker, getAutoDescription(editor, lineIndex), number);
   }
 
   public static String getAutoDescription(final Editor editor, final int lineIndex) {
@@ -94,19 +104,44 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
   }
 
   public void addCommanderBookmark(PsiElement element) {
+    addCommanderBookmark(element, "", false);
+  }
+
+  public void addCommanderBookmark(PsiElement element, final String description, boolean last) {
     if (element == null) return;
     if (myCommanderBookmarks.findByPsiElement(element) != null) return;
 
-    if (element instanceof PsiClass || element instanceof PsiDirectory) {
-      myCommanderBookmarks.addBookmark(new CommanderBookmark(myProject, element, ""));
+    final CommanderBookmark bookmark = createCommanderBookmark(element, description);
+    if (bookmark != null) {
+      if (last) {
+        myCommanderBookmarks.addLast(bookmark);
+      }
+      else {
+        myCommanderBookmarks.addBookmark(bookmark);
+      }
     }
+  }
+
+  @Nullable
+  protected CommanderBookmark createCommanderBookmark(final PsiElement element, final String description) {
+    if (element instanceof PsiDirectory) {
+      return new CommanderBookmark(myProject, element, description);
+    }
+    return null;
+  }
+
+  @Nullable
+  protected CommanderBookmark createCommanderBookmark(String type, String url, String description) {
+    final CommanderBookmark commanderBookmark = new CommanderBookmark(myProject, type, url, description);
+    if (commanderBookmark.getPsiElement() != null) return commanderBookmark;
+    return null;
   }
 
   public List<EditorBookmark> getValidEditorBookmarks() {
     return myEditorBookmarks.getValidBookmarks();
   }
 
-  public List<CommanderBookmark> getValidCommanderBookmarks() {
+  public List<? extends Bookmark> getValidCommanderBookmarks() {
     return myCommanderBookmarks.getValidBookmarks();
   }
 
@@ -138,7 +173,7 @@ public class BookmarkManager implements JDOMExternalizable, ProjectComponent {
         myEditorBookmarks.readBookmark(bookmarkElement, myProject);
       }
       else if (BookmarksCollection.ForPsiElements.ELEMENT_NAME.equals(bookmarkElement.getName())) {
-        myCommanderBookmarks.readBookmark(bookmarkElement, myProject);
+        myCommanderBookmarks.readBookmark(bookmarkElement, this);
       }
     }
   }

@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-abstract class BookmarksDialog extends DialogWrapper{
+public abstract class BookmarksDialog extends DialogWrapper{
   private MyModel myModel;
   protected Table myTable;
   private JButton myGotoButton = new JButton(IdeBundle.message("button.go.to"));
@@ -72,7 +72,7 @@ abstract class BookmarksDialog extends DialogWrapper{
     }
   }
 
-  BookmarksDialog(BookmarkManager bookmarkManager) {
+  protected BookmarksDialog(BookmarkManager bookmarkManager) {
     super(bookmarkManager.getProject(), true);
     myBookmarkManager = bookmarkManager;
     myModel = new MyModel();
@@ -202,7 +202,7 @@ abstract class BookmarksDialog extends DialogWrapper{
     }
   }
 
-  protected <T extends Bookmark> void fillList(List<T> bookmarks, Bookmark selectedBookmark) {
+  public <T extends Bookmark> void fillList(List<T> bookmarks, Bookmark selectedBookmark) {
     final List<Bookmark> list = new ArrayList<Bookmark>();
     list.add(selectedBookmark);
     fillList(bookmarks, list);

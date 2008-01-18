@@ -24,7 +24,7 @@ public class ToggleBookmarkAction extends AnAction {
     BookmarkManager bookmarkManager = BookmarkManager.getInstance(project);
 
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = DataKeys.EDITOR.getData(dataContext);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       // toggle editor bookmark if editor is active
       if (editor != null) {
         EditorBookmark bookmark = bookmarkManager.findEditorBookmark(editor.getDocument(), editor.getCaretModel().getLogicalPosition().line);

@@ -1,7 +1,7 @@
 package com.intellij.ide.bookmarks;
 
-import com.intellij.ide.commander.Commander;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.commander.Commander;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;

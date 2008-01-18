@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
@@ -45,7 +46,7 @@ public class SaveAsTemplateAction extends AnAction {
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
 
-    Project project = file.getProject();
+    final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(),
@@ -69,7 +70,7 @@ public class SaveAsTemplateAction extends AnAction {
         PsiClass psiClass = (PsiClass)ref;
         if (!(psiClass.getParent() instanceof PsiJavaFile)) return false;
         PsiDirectory directory = PsiTreeUtil.getParentOfType(psiClass, PsiDirectory.class);
-        if (JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName().equals(JAVA_LANG_PACKAGE_PREFIX)) return false;
+        if (directory == null || PsiDirectoryFactory.getInstance(project).getQualifiedName(directory).equals(JAVA_LANG_PACKAGE_PREFIX)) return false;
         return true;
       }
     });

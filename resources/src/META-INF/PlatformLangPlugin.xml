@@ -23,4 +23,12 @@
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"
                     serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
   </extensions>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
+      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+  </project-components>
 </idea-plugin>

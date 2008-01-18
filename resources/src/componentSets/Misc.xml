@@ -25,7 +25,7 @@
   <project-components>
     <component>
       <interface-class>com.intellij.ide.bookmarks.BookmarkManager</interface-class>
-      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
+      <implementation-class>com.intellij.ide.bookmarks.JavaBookmarkManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>

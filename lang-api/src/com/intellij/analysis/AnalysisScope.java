@@ -394,6 +394,9 @@ public class AnalysisScope {
 
       case DIRECTORY:
         return AnalysisScopeBundle.message("scope.directory", ((PsiFileSystemItem)myElement).getVirtualFile().getPresentableUrl());
+
+      case VIRTUAL_FILES:
+        return AnalysisScopeBundle.message("scope.virtual.files");
     }
 
     return "";

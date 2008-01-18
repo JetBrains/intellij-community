@@ -9,6 +9,7 @@ import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -71,13 +72,9 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
       if (descriptor1 instanceof PsiDirectoryNode) {
         final PsiDirectory aDirectory1 = ((PsiDirectoryNode)descriptor1).getValue();
         final PsiDirectory aDirectory2 = ((PsiDirectoryNode)descriptor2).getValue();
-        if (aDirectory1 != null &&
-            aDirectory2 != null) {
-          final PsiPackage aPackage1 = JavaDirectoryService.getInstance().getPackage(aDirectory1);
-          final PsiPackage aPackage2 = JavaDirectoryService.getInstance().getPackage(aDirectory2);
-          if (aPackage1 != null && aPackage2 != null){
-            return aPackage1.getQualifiedName().compareToIgnoreCase(aPackage2.getQualifiedName());
-          }
+        if (aDirectory1 != null && aDirectory2 != null) {
+          final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(aDirectory1.getProject());
+          return factory.getQualifiedName(aDirectory1).compareToIgnoreCase(factory.getQualifiedName(aDirectory2));
         }
       } else if (descriptor1 instanceof PackageElementNode) {
         final PackageElement packageElement1 = ((PackageElementNode)descriptor1).getValue();
