@@ -39,15 +39,13 @@ public class Storage implements Disposable, Forceable {
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
 
+  private static final int CACHE_SIZE = 8192;
   private final static LinkedHashMap<AppenderCacheKey, AppenderStream> ourAppendersCache = new LinkedHashMap<AppenderCacheKey, AppenderStream>(16, 0.75f, true) {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<AppenderCacheKey, AppenderStream> eldest) {
-      try {
-        eldest.getValue().realClose();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      if (size() < CACHE_SIZE) return false;
+
+      closeStream(eldest.getValue());
       return true;
     }
   };
@@ -273,12 +271,7 @@ public class Storage implements Disposable, Forceable {
       final AppenderCacheKey key = new AppenderCacheKey(record, this);
       final AppenderStream stream = ourAppendersCache.get(key);
       if (stream != null) {
-        try {
-          stream.realClose();
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        closeStream(stream);
       }
       ourAppendersCache.remove(key);
     }
@@ -306,11 +299,28 @@ public class Storage implements Disposable, Forceable {
     synchronized (ourAppendersCache) {
       final AppenderCacheKey key = new AppenderCacheKey(record, this);
       AppenderStream appenderStream = ourAppendersCache.get(key);
-      if (appenderStream != null) return appenderStream;
+      if (appenderStream != null) {
+        if (appenderStream.size() > 4048) {
+          closeStream(appenderStream);
+        }
+        else {
+          return appenderStream;
+        }
+      }
 
       appenderStream = new AppenderStream(this, record);
+      
       ourAppendersCache.put(key, appenderStream);
       return appenderStream;
+    }
+  }
+
+  private static void closeStream(final AppenderStream appenderStream) {
+    try {
+      appenderStream.realClose();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
