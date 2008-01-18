@@ -40,9 +40,9 @@ public class EditTemplateDialog extends DialogWrapper {
   private JComboBox myExpandByCombo;
   private String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
-  private JCheckBox myCbShortenFQNames;
 
   private Map<TemplateContextType, JCheckBox> myCbContextMap = new HashMap<TemplateContextType, JCheckBox>();
+  private Map<TemplateOptionalProcessor, JCheckBox> myCbOptionalProcessorMap = new HashMap<TemplateOptionalProcessor, JCheckBox>();
 
   private JButton myEditVariablesButton;
 
@@ -223,9 +223,12 @@ public class EditTemplateDialog extends DialogWrapper {
     myCbReformat = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.reformat.according.to.style"));
     panel.add(myCbReformat, gbConstraints);
 
-    gbConstraints.gridy++;
-    myCbShortenFQNames = new JCheckBox(CodeInsightBundle.message("dialog.edit.template.checkbox.shorten.fq.names"));
-    panel.add(myCbShortenFQNames, gbConstraints);
+    for(TemplateOptionalProcessor processor: Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+      gbConstraints.gridy++;
+      JCheckBox cb = new JCheckBox(processor.getOptionName());
+      panel.add(cb, gbConstraints);
+      myCbOptionalProcessorMap.put(processor, cb);
+    }
 
     gbConstraints.weighty = 1;
     gbConstraints.gridy++;
@@ -391,7 +394,12 @@ public class EditTemplateDialog extends DialogWrapper {
     }
 
     myCbReformat.setSelected(myTemplate.isToReformat());
-    myCbShortenFQNames.setSelected(myTemplate.isToShortenLongNames());
+
+    for(TemplateOptionalProcessor processor: myCbOptionalProcessorMap.keySet()) {
+      JCheckBox cb = myCbOptionalProcessorMap.get(processor);
+      cb.setSelected(processor.isEnabled(myTemplate));
+
+    }
     myExpandByCombo.setEnabled(!isEnabledInStaticContextOnly());
 
     updateHighlighter();
@@ -432,7 +440,10 @@ public class EditTemplateDialog extends DialogWrapper {
     updateTemplateContext(myTemplate.getTemplateContext());
 
     myTemplate.setToReformat(myCbReformat.isSelected());
-    myTemplate.setToShortenLongNames(myCbShortenFQNames.isSelected());
+    for(TemplateOptionalProcessor processor: myCbOptionalProcessorMap.keySet()) {
+      JCheckBox cb = myCbOptionalProcessorMap.get(processor);
+      processor.setEnabled(myTemplate, cb.isSelected());
+    }
 
     myTemplate.setString(myTemplateEditor.getDocument().getText());
     myTemplate.parseSegments();

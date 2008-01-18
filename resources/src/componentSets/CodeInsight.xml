@@ -5,10 +5,6 @@
       <implementation-class>com.intellij.codeInsight.folding.impl.CodeFoldingSettingsImpl</implementation-class>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</interface-class>
-      <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</interface-class>
       <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerActions</implementation-class>
     </component>

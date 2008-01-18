@@ -379,14 +379,12 @@
     </group>
 
     <!-- Tools -->
-    <group id="ToolsBasicGroup">
-      <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
-      <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction"/>
-      <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction"/>
-      <separator/>
-
-      <add-to-group group-id="ToolsMenu" anchor="first"/>
-    </group>
+    <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction">
+      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveAsTemplate"/>
+    </action>
+    <action id="GenerateJavadoc" class="com.intellij.javadoc.actions.GenerateJavadocAction">
+      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
+    </action>
 
     <group id="ToolsXmlGroup">
       <action id="ValidateXml" class="com.intellij.xml.actions.ValidateXmlAction"/>

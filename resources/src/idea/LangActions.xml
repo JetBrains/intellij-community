@@ -100,6 +100,15 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
+    <!-- Tools -->
+    <group id="ToolsBasicGroup">
+      <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
+      <separator/>
+
+      <add-to-group group-id="ToolsMenu" anchor="first"/>
+    </group>
+
+
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
       <action id="UsageView.Include" class="com.intellij.usages.actions.IncludeUsageAction"/>

@@ -32,5 +32,6 @@ public interface Template {
 
   String getTemplateText();
 
+  boolean isToShortenLongNames();
   void setToShortenLongNames(boolean toShortenLongNames);
 }

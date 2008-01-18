@@ -22,12 +22,12 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
@@ -325,23 +325,13 @@ public class TemplateState implements Disposable {
       public void run() {
         final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
         if (file != null) {
-          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-          if (myTemplate.isToShortenLongNames()) {
-            try {
-              IntArrayList indices = initEmptyVariables();
-              mySegments.setSegmentsGreedy(false);
-
-              PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-              codeStyleManager.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-              unblockDocument();
-
-              mySegments.setSegmentsGreedy(true);
-              restoreEmptyVariables(indices);
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
+          IntArrayList indices = initEmptyVariables();
+          mySegments.setSegmentsGreedy(false);
+          for(TemplateOptionalProcessor processor: Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+            processor.processText(myProject, myTemplate, myDocument, myTemplateRange);
           }
+          mySegments.setSegmentsGreedy(true);
+          restoreEmptyVariables(indices);
         }
       }
     });
@@ -913,17 +903,9 @@ public class TemplateState implements Disposable {
   private void reformat() {
     final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (file != null) {
-      JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(myProject);
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
-      if (myTemplate.isToShortenLongNames()) {
-        try {
-          PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-          javaStyle.shortenClassReferences(file, myTemplateRange.getStartOffset(), myTemplateRange.getEndOffset());
-          unblockDocument();
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+      for(TemplateOptionalProcessor optionalProcessor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+        optionalProcessor.processText(myProject, myTemplate, myDocument, myTemplateRange);
       }
       if (myTemplate.isToReformat()) {
         try {
