@@ -59,6 +59,22 @@ public class Storage implements Disposable, Forceable {
       this.record = record;
       this.storage = storage;
     }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof AppenderCacheKey)) return false;
+
+      final AppenderCacheKey that = (AppenderCacheKey)o;
+
+      if (record != that.record) return false;
+      if (!storage.equals(that.storage)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return record;
+    }
   }
 
   public static boolean deleteFiles(String storageFilePath) {
