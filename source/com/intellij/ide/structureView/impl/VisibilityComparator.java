@@ -4,6 +4,7 @@ import com.intellij.ide.structureView.impl.java.AccessLevelProvider;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.SourceComparator;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
@@ -21,7 +22,7 @@ public class VisibilityComparator implements Comparator {
     myNextComparator = comparator;
   }
 
-  public int compare(Object descriptor1, Object descriptor2) {
+  public int compare(@NotNull Object descriptor1, @NotNull Object descriptor2) {
     int accessLevel1 = getAccessLevel(descriptor1);
     int accessLevel2 = getAccessLevel(descriptor2);
     if (accessLevel1 == accessLevel2 && myNextComparator != null) {
@@ -30,7 +31,7 @@ public class VisibilityComparator implements Comparator {
     return accessLevel2 - accessLevel1;
   }
 
-  private static int getAccessLevel(Object element) {
+  private static int getAccessLevel(@NotNull Object element) {
     if (element instanceof AccessLevelProvider) {
       return ((AccessLevelProvider)element).getAccessLevel() * (GROUP_ACCESS_SUBLEVEL + 1) + ((AccessLevelProvider)element).getSubLevel();
     }
