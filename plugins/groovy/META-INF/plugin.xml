@@ -37,6 +37,10 @@
     <frameworkSupport implementation="org.jetbrains.plugins.groovy.config.GroovyFacetSupportProvider"/>
   </extensions>
 
+  <extensions xmlns="com.intellij.debugger">
+    <codeFragmentFactory implementation="org.jetbrains.plugins.groovy.debugger.GroovyCodeFragmentFactory" />
+  </extensions>
+
   <project-components>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsProvider</implementation-class>
