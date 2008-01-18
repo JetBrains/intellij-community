@@ -11,7 +11,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +25,7 @@ import java.awt.*;
 public class ColorChooserIntentionAction extends PsiElementBaseIntentionAction {
 
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @Nullable final PsiElement element) {
-    if (StandardPatterns.psiElement().inside(StandardPatterns.psiElement().type(PsiNewExpression.class)).accepts(element)) {
+    if (PlatformPatterns.psiElement().inside(PlatformPatterns.psiElement(PsiNewExpression.class)).accepts(element)) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
       assert expression != null;
       final PsiJavaCodeReferenceElement referenceElement = PsiTreeUtil.getChildOfType(expression, PsiJavaCodeReferenceElement.class);

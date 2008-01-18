@@ -1,0 +1,18 @@
+/*
+ * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
+ */
+package com.intellij.patterns;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author peter
+ */
+public interface ElementPattern {
+
+  boolean accepts(@Nullable Object o);
+
+  boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext);
+
+}

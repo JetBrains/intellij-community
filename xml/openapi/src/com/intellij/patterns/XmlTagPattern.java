@@ -1,0 +1,74 @@
+package com.intellij.patterns;
+
+import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
+
+/**
+ * @author spleaner
+*/
+public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedElementPattern<XmlTag, Self> {
+  protected XmlTagPattern() {
+    super(new NullablePatternCondition() {
+      public boolean accepts(@Nullable final Object o,
+                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        return o instanceof XmlTag;
+      }
+    });
+  }
+
+  protected XmlTagPattern(@NotNull final NullablePatternCondition condition) {
+    super(condition);
+  }
+
+  protected String getLocalName(XmlTag tag) {
+    return tag.getLocalName();
+  }
+
+  protected String getNamespace(XmlTag tag) {
+    return tag.getNamespace();
+  }
+
+  public Self withAttributeValue(@NotNull @NonNls final String attributeName, @NotNull final String attributeValue) {
+    return with(new PatternCondition<XmlTag>() {
+      public boolean accepts(@NotNull final XmlTag xmlTag,
+                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        return Comparing.equal(xmlTag.getAttributeValue(attributeName), attributeValue);
+      }
+    });
+  }
+
+  public Self isFirstSubtag(@NotNull final ElementPattern pattern) {
+    return with(new PatternCondition<XmlTag>() {
+      public boolean accepts(@NotNull final XmlTag xmlTag,
+                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        final XmlTag parent = xmlTag.getParentTag();
+        return parent != null && pattern.accepts(parent, matchingContext, traverseContext) && parent.getSubTags()[0] == xmlTag;
+      }
+    });
+  }
+
+  public Self withFirstSubTag(@NotNull final ElementPattern pattern) {
+    return withSubTags(StandardPatterns.<XmlTag>collection().first(pattern));
+  }
+
+  public Self withSubTags(@NotNull final ElementPattern pattern) {
+    return with(new PatternCondition<XmlTag>() {
+      public boolean accepts(@NotNull final XmlTag xmlTag,
+                                final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        return pattern.accepts(Arrays.asList(xmlTag.getSubTags()), matchingContext, traverseContext);
+      }
+    });
+  }
+
+  public Self withoutAttributeValue(@NotNull @NonNls final String attributeName, @NotNull final String attributeValue) {
+    return and(StandardPatterns.not(withAttributeValue(attributeName, attributeValue)));
+  }
+
+  public static class Capture extends XmlTagPattern<Capture> {
+  }
+}

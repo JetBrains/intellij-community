@@ -17,10 +17,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.patterns.impl.Pattern;
-import com.intellij.patterns.impl.VirtualFilePattern;
-import com.intellij.patterns.impl.StandardPatterns;
-import static com.intellij.patterns.impl.StandardPatterns.*;
+import com.intellij.patterns.VirtualFilePattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
                                                             @NotNull @NonNls String rootTag,
                                                             @NotNull final FacetDetector<VirtualFile, C> detector,
                                                             @Nullable UnderlyingFacetSelector<VirtualFile, U> underlyingFacetSelector) {
-    VirtualFilePattern fileNamePattern = StandardPatterns.virtualFile().withName(StandardPatterns.string().equalTo(fileName));
+    VirtualFilePattern fileNamePattern = PlatformPatterns.virtualFile().withName(StandardPatterns.string().equalTo(fileName));
     VirtualFilePattern wizardPattern = fileNamePattern.xmlWithRootTag(StandardPatterns.string().equalTo(rootTag));
 
     if (underlyingFacetSelector != null) {
@@ -59,7 +58,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
       registerDetectorForWizard(StdFileTypes.XML, wizardPattern, detector);
     }
 
-    registerOnTheFlyDetector(StdFileTypes.XML, fileNamePattern, xmlFile().withRootTag(xmlTag().withName(rootTag)),
+    registerOnTheFlyDetector(StdFileTypes.XML, fileNamePattern, XmlPatterns.xmlFile().withRootTag(XmlPatterns.xmlTag().withName(rootTag)),
                              convertDetector(detector));
   }
 
@@ -82,7 +81,7 @@ public class FacetDetectorRegistryEx<C extends FacetConfiguration> implements Fa
   }
 
   public void registerOnTheFlyDetector(@NotNull final FileType fileType, @NotNull final VirtualFilePattern virtualFilePattern,
-                       @NotNull final Pattern<? extends PsiFile, ?> psiFilePattern,
+                       @NotNull final ElementPattern psiFilePattern,
                        @NotNull final FacetDetector<PsiFile, C> facetDetector) {
     registerOnTheFlyDetector(fileType, new MyPatternFilter(virtualFilePattern), new Condition<PsiFile>() {
       public boolean value(final PsiFile psiFile) {

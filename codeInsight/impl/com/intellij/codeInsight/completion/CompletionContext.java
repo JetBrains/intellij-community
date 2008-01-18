@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.html.HtmlTag;
@@ -100,7 +100,7 @@ public class CompletionContext implements Cloneable {
         && ((PsiJavaToken)element).getTokenType() == JavaTokenType.LPARENTH){
 
       if(element.getParent() instanceof PsiExpressionList || ".".equals(file.findElementAt(selectionEndOffset - 1).getText())
-        || StandardPatterns.psiElement().afterLeaf(StandardPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
+        || PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement(JavaTokenType.NEW_KEYWORD)).accepts(element)) {
         lparenthOffset = element.getTextRange().getStartOffset();
         PsiElement list = element.getParent();
         PsiElement last = list.getLastChild();

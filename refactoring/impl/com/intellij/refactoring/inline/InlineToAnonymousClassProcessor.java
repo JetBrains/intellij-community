@@ -4,8 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.patterns.impl.Pattern;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -37,8 +37,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
 
-  private Pattern ourCatchClausePattern = psiElement().type(PsiTypeElement.class).withParent(psiElement().type(PsiParameter.class).withParent(psiElement().type(PsiCatchSection.class)));
-  private Pattern ourThrowsClausePattern = psiElement().withParent(psiElement().type(PsiReferenceList.class).withFirstChild(psiElement().withText(PsiKeyword.THROWS)));
+  private ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
+    PlatformPatterns.psiElement(PsiCatchSection.class)));
+  private ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
+    PlatformPatterns.psiElement().withText(PsiKeyword.THROWS)));
 
   protected InlineToAnonymousClassProcessor(Project project,
                                             PsiClass psiClass,

@@ -5,12 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.impl.MatchingContext;
-import com.intellij.patterns.impl.Pattern;
-import com.intellij.patterns.impl.StandardPatterns;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
-import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
-import com.intellij.patterns.impl.TraverseContext;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.ProjectScope;
@@ -33,10 +28,12 @@ class InlineToAnonymousConstructorProcessor {
 
   private static final Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
   private static final Key<PsiCallExpression> ourCallKey = Key.create("call");
-  public static final Pattern ourNullPattern = StandardPatterns.psiExpression().type(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
-  private static final Pattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
-  private static final Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
-  private static final Pattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.THIS)));
+  public static final ElementPattern ourNullPattern = PlatformPatterns.psiElement(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
+  private static final ElementPattern ourAssignmentPattern = PsiJavaPatterns.psiExpressionStatement().withChild(PlatformPatterns.psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
+  private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(
+    PlatformPatterns.psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
+  private static final ElementPattern ourThisCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
+    PlatformPatterns.psiElement().withText(PsiKeyword.THIS)));
 
   private final PsiClass myClass;
   private final PsiNewExpression myNewExpression;

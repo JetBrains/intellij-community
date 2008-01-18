@@ -12,7 +12,7 @@ import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -30,7 +30,7 @@ public class XmlTagRenameHandler implements RenameHandler {
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     //noinspection ConstantConditions
-    return StandardPatterns.psiElement().withParent(XmlTag.class).accepts(element) &&
+    return PlatformPatterns.psiElement().withParent(XmlTag.class).accepts(element) &&
            isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
   }
 

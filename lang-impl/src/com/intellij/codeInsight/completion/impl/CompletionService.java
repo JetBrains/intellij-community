@@ -8,10 +8,9 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.patterns.impl.MatchingContext;
-import com.intellij.patterns.impl.Pattern;
-import com.intellij.patterns.impl.TraverseContext;
-import com.intellij.psi.PsiElement;
+import com.intellij.patterns.MatchingContext;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.TraverseContext;
 import com.intellij.util.PrioritizedQueryExecutor;
 import com.intellij.util.PrioritizedQueryFactory;
 import com.intellij.util.QueryResultSet;
@@ -27,15 +26,15 @@ public class CompletionService {
   public CompletionService() {
     for (final CompletionContributor contributor : Extensions.getExtensions(CompletionContributor.EP_NAME)) {
       contributor.registerCompletionProviders(new CompletionRegistrar() {
-        public CompletionPlace<LookupElement, CompletionParameters> extendBasicCompletion(final Pattern<? extends PsiElement, ?> place) {
+        public CompletionPlace<LookupElement, CompletionParameters> extendBasicCompletion(final ElementPattern place) {
           return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, myBasicCompletionQueryFactory);
         }
 
-        public CompletionPlace<LookupElement, CompletionParameters> extendSmartCompletion(final Pattern<? extends PsiElement, ?> place) {
+        public CompletionPlace<LookupElement, CompletionParameters> extendSmartCompletion(final ElementPattern place) {
           return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, mySmartCompletionQueryFactory);
         }
 
-        public CompletionPlace<LookupElement, CompletionParameters> extendClassNameCompletion(final Pattern<? extends PsiElement, ?> place) {
+        public CompletionPlace<LookupElement, CompletionParameters> extendClassNameCompletion(final ElementPattern place) {
           return new CompletionPlaceImpl<LookupElement, CompletionParameters>(place, myClassNameCompletionQueryFactory);
         }
       });
@@ -59,11 +58,11 @@ public class CompletionService {
   }
 
   public static class CompletionPlaceImpl<Result, Params extends CompletionParameters> implements CompletionPlace<Result,Params> {
-    private final Pattern<? extends PsiElement,?> myPlace;
+    private final ElementPattern myPlace;
     private final PrioritizedQueryFactory<Result, Params> myQueryFactory;
     private double myPriority;
 
-    protected CompletionPlaceImpl(final Pattern<? extends PsiElement, ?> place, final PrioritizedQueryFactory<Result, Params> queryFactory) {
+    protected CompletionPlaceImpl(final ElementPattern place, final PrioritizedQueryFactory<Result, Params> queryFactory) {
       myPlace = place;
       myQueryFactory = queryFactory;
     }

@@ -10,10 +10,10 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.patterns.impl.MatchingContext;
-import com.intellij.patterns.impl.PsiElementPattern;
-import static com.intellij.patterns.impl.StandardPatterns.or;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.MatchingContext;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,18 +22,16 @@ import com.intellij.util.QueryResultSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor{
   private static final JavaSmartCompletionData myData = new JavaSmartCompletionData();
-  private static final PsiElementPattern._PsiElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeafSkipping(
-    psiElement().whitespaceOrComment(),
-    psiElement().withText("?").afterLeafSkipping(psiElement().whitespaceOrComment(), psiElement().withText("<")));
+  private static final ElementPattern INSIDE_TYPE_PARAMS_PATTERN = psiElement().afterLeaf(psiElement().withText("?").afterLeaf(psiElement().withText("<")));
 
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {

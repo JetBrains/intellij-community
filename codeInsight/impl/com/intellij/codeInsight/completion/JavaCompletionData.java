@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.LookupItem;
-import static com.intellij.patterns.impl.StandardPatterns.not;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.not;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.classes.AssignableFromContextFilter;
@@ -31,7 +31,7 @@ public class JavaCompletionData extends CompletionData{
     declareCompletionSpaces();
 
     final CompletionVariant variant = new CompletionVariant(PsiMethod.class,
-                                                            new PatternFilter(not(psiElement().afterLeaf(psiElement().withText("@")))));
+                                                            new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
     variant.includeScopeClass(PsiVariable.class);
     variant.includeScopeClass(PsiClass.class);
     variant.includeScopeClass(PsiFile.class);
@@ -104,7 +104,7 @@ public class JavaCompletionData extends CompletionData{
           END_OF_BLOCK,
           new LeftNeighbour(new SuperParentFilter(new ClassFilter(PsiModifierList.class))), new StartElementFilter()
         ),
-        new PatternFilter(not(psiElement().afterLeaf(psiElement().withText("@")))));
+        new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
       variant.includeScopeClass(PsiClass.class);
@@ -247,7 +247,7 @@ public class JavaCompletionData extends CompletionData{
             new AndFilter (new TokenTypeFilter(JavaTokenType.GT),
                            new SuperParentFilter(new ClassFilter(PsiTypeParameterList.class)))))
         ),
-        new PatternFilter(not(psiElement().afterLeaf(psiElement().withText("@"))))));
+        new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@"))))));
 
 // completion
       addPrimitiveTypes(variant);

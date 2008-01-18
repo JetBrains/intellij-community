@@ -5,7 +5,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.util.QueryResultSet;
-import com.intellij.patterns.impl.MatchingContext;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**

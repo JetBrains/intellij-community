@@ -4,8 +4,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.*;
 import com.intellij.codeInsight.TailType;
-import static com.intellij.patterns.impl.StandardPatterns.not;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.not;
+import com.intellij.patterns.PlatformPatterns;
 
 /**
  * @author ven
@@ -41,7 +41,7 @@ public class Java15CompletionData extends JavaCompletionData {
         new OrFilter(END_OF_BLOCK,
                      new LeftNeighbour(new SuperParentFilter(new ClassFilter(PsiModifierList.class))),
                      new StartElementFilter()),
-        new PatternFilter(not(psiElement().afterLeaf(psiElement().withText("@")))));
+        new PatternFilter(not(PlatformPatterns.psiElement().afterLeaf(PlatformPatterns.psiElement().withText("@")))));
 
       final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, position);
       variant.includeScopeClass(PsiClass.class);

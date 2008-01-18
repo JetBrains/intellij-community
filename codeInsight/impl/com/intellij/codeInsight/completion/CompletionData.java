@@ -3,9 +3,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.patterns.impl.Pattern;
-import static com.intellij.patterns.impl.StandardPatterns.character;
-import static com.intellij.patterns.impl.StandardPatterns.not;
+import com.intellij.patterns.ElementPattern;
+import static com.intellij.patterns.StandardPatterns.character;
+import static com.intellij.patterns.StandardPatterns.not;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.util.ReflectionCache;
@@ -178,7 +178,7 @@ public class CompletionData {
     return findPrefixDefault(insertedElement, offsetInFile, not(character().javaIdentifierPart()));
   }
 
-  protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final Pattern<Character, ?> trimStart) {
+  protected static String findPrefixDefault(final PsiElement insertedElement, final int offset, @NotNull final ElementPattern trimStart) {
     String substr = insertedElement.getText().substring(0, offset - insertedElement.getTextRange().getStartOffset());
     if (substr.length() == 0 || Character.isWhitespace(substr.charAt(substr.length() - 1))) return "";
 

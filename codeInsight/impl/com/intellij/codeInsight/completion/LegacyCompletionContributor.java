@@ -7,9 +7,9 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.patterns.impl.PsiElementPattern;
-import com.intellij.patterns.impl.StandardPatterns;
-import com.intellij.patterns.impl.MatchingContext;
+import com.intellij.patterns.MatchingContext;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -27,7 +27,7 @@ public class LegacyCompletionContributor extends CompletionContributor{
   private static final CompletionData CLASS_NAME_DATA = new ClassNameCompletionData();
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
-    final PsiElementPattern._PsiElementPattern<PsiElement> everywhere = StandardPatterns.psiElement();
+    final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
     registrar.extendBasicCompletion(everywhere).onPriority(Double.POSITIVE_INFINITY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);

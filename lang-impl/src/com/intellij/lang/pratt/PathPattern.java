@@ -4,8 +4,8 @@
  */
 package com.intellij.lang.pratt;
 
-import com.intellij.patterns.impl.Pattern;
-import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
@@ -19,7 +19,7 @@ import java.util.ListIterator;
  * @author peter
  */
 public class PathPattern {
-  private final List<Pattern<? extends IElementType,?>> myPath = new SmartList<Pattern<? extends IElementType,?>>();
+  private final List<ElementPattern> myPath = new SmartList<ElementPattern>();
 
   private PathPattern() {
   }
@@ -34,14 +34,14 @@ public class PathPattern {
   }
 
   public PathPattern left() {
-    return left(StandardPatterns.elementType());
+    return left(PlatformPatterns.elementType());
   }
 
   public PathPattern left(@NotNull IElementType pattern) {
-    return left(StandardPatterns.elementType().equalTo(pattern));
+    return left(PlatformPatterns.elementType().equalTo(pattern));
   }
 
-  public PathPattern left(@NotNull Pattern<? extends IElementType,?> pattern) {
+  public PathPattern left(@NotNull ElementPattern pattern) {
     myPath.add(pattern);
     return this;
   }
@@ -53,7 +53,7 @@ public class PathPattern {
 
   public boolean accepts(PrattBuilder builder) {
     ListIterator<IElementType> iterator = null;
-    for (final Pattern<? extends IElementType,?> pattern : myPath) {
+    for (final ElementPattern pattern : myPath) {
       if (builder == null) return false;
 
       if (iterator == null) {

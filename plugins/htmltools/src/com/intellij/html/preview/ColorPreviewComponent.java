@@ -1,6 +1,6 @@
 package com.intellij.html.preview;
 
-import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.css.impl.util.CssUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -118,7 +118,7 @@ public class ColorPreviewComponent extends JComponent {
       }
     }
 
-    if (StandardPatterns.psiElement(PsiIdentifier.class).withParent(StandardPatterns.psiElement(PsiReferenceExpression.class))
+    if (PlatformPatterns.psiElement(PsiIdentifier.class).withParent(PlatformPatterns.psiElement(PsiReferenceExpression.class))
       .accepts(element)) {
       final PsiReference reference = element.getParent().getReference();
       if (reference != null) {

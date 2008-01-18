@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.patterns.impl.StandardPatterns;
+import com.intellij.patterns.PlatformPatterns;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +103,7 @@ public class ImagePreviewComponent extends JPanel {
   @SuppressWarnings({"HardCodedStringLiteral"})
   @Nullable
   public static JComponent getPreviewComponent(@NotNull final PsiElement element) {
-    if (StandardPatterns.psiElement().withParent(StandardPatterns.psiElement(PsiLiteralExpression.class)).accepts(element)) {
+    if (PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiLiteralExpression.class)).accepts(element)) {
       final PsiLiteralExpression psiLiteralExpression = (PsiLiteralExpression) element.getParent();
       if (psiLiteralExpression != null) {
         return _getPreviewComponent(psiLiteralExpression);

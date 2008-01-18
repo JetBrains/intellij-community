@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.patterns.impl.Pattern;
-import static com.intellij.patterns.impl.StandardPatterns.psiElement;
-import static com.intellij.patterns.impl.StandardPatterns.psiExpressionStatement;
+import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -53,7 +53,8 @@ public final class FormSourceCodeGenerator {
   @NonNls private static TIntObjectHashMap<String> ourTitleJustificationMap = new TIntObjectHashMap<String>();
   @NonNls private static TIntObjectHashMap<String> ourTitlePositionMap = new TIntObjectHashMap<String>();
 
-  private static final Pattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
+  private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
+    PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
 
   static {
     ourComponentLayoutCodeGenerators.put(LwSplitPane.class, new SplitPaneLayoutSourceGenerator());
