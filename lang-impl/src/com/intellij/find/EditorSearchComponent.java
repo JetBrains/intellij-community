@@ -7,6 +7,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightManagerImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -609,7 +610,12 @@ public class EditorSearchComponent extends JPanel implements DataProvider {
       }
 
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.completion");
-      final JList list = new JList(array);
+      final JList list = new JList(array) {
+        protected void paintComponent(final Graphics g) {
+          UISettings.setupAntialiasing(g);
+          super.paintComponent(g);
+        }
+      };
       list.setBackground(COMPLETION_BACKGROUND_COLOR);
       list.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
