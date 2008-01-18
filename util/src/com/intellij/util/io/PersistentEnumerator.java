@@ -21,6 +21,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author max
@@ -45,6 +47,40 @@ public class PersistentEnumerator<Data> implements Forceable {
   private boolean myDirty = false;
   private final DataDescriptor<Data> myDataDescriptor;
   private final byte[] myBuffer = new byte[8];
+
+  private static final int CACHE_SIZE = 8192;
+  private static class CacheKey {
+    public PersistentEnumerator owner;
+    public Object key;
+
+    private CacheKey(final Object key, final PersistentEnumerator owner) {
+      this.key = key;
+      this.owner = owner;
+    }
+
+    public boolean equals(final Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CacheKey)) return false;
+
+      final CacheKey cacheKey = (CacheKey)o;
+
+      if (!key.equals(cacheKey.key)) return false;
+      if (!owner.equals(cacheKey.owner)) return false;
+
+      return true;
+    }
+
+    public int hashCode() {
+      return key.hashCode();
+    }
+  }
+
+  private static Map<Object, Integer> ourEnumerationCache = new LinkedHashMap<Object, Integer>(16, 0.75f, true) {
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<Object, Integer> eldest) {
+      return size() > CACHE_SIZE;
+    }
+  };
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -81,12 +117,19 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
   
-  protected int tryEnumerate(Data value) throws IOException {
+  protected synchronized int tryEnumerate(Data value) throws IOException {
+    final Integer cachedId = ourEnumerationCache.get(new CacheKey(value, this));
+    if (cachedId != null) return cachedId.intValue();
     return enumerateImpl(value, false);
   }
   
   public synchronized int enumerate(Data value) throws IOException {
-    return enumerateImpl(value, true);
+    final CacheKey key = new CacheKey(value, this);
+    final Integer cachedId = ourEnumerationCache.get(key);
+    if (cachedId != null) return cachedId.intValue();
+    final int id = enumerateImpl(value, true);
+    ourEnumerationCache.put(key, id);
+    return id;
   }
 
   private int enumerateImpl(final Data value, final boolean saveNewValue) throws IOException {
@@ -213,7 +256,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     }
   }
 
-  public int hashCodeOf(int idx) throws IOException {
+  private int hashCodeOf(int idx) throws IOException {
     return myStorage.getInt(idx + 4);
   }
 
@@ -281,11 +324,11 @@ public class PersistentEnumerator<Data> implements Forceable {
       myFile = file;
     }
 
-    public void readFully(final byte b[]) throws IOException {
+    public void readFully(final byte[] b) throws IOException {
       myFile.get(b, 0, b.length);
     }
 
-    public void readFully(final byte b[], final int off, final int len) throws IOException {
+    public void readFully(final byte[] b, final int off, final int len) throws IOException {
       myFile.get(b, off, len);
     }
 
@@ -350,10 +393,6 @@ public class PersistentEnumerator<Data> implements Forceable {
     public MappedFileDataOutput(MappedFile file) {
       myFile = file;
     }
-    
-    public short getShort(final int index) throws IOException {
-      return myFile.getShort(index);
-    }
 
     public void writeShort(final int value) throws IOException {
       myFile.writeShort(value);
@@ -363,11 +402,11 @@ public class PersistentEnumerator<Data> implements Forceable {
       myFile.writeByte((byte)(b & 0xFF));
     }
 
-    public void write(final byte b[]) throws IOException {
+    public void write(final byte[] b) throws IOException {
       myFile.put(b, 0, b.length);
     }
 
-    public void write(final byte b[], final int off, final int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len) throws IOException {
       myFile.put(b, off, len);
     }
 
