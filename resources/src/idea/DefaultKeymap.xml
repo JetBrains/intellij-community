@@ -710,6 +710,9 @@
     <action id="SurroundWith">
       <keyboard-shortcut first-keystroke="control alt T"/>
     </action>
+    <action id="Unwrap">
+      <keyboard-shortcut first-keystroke="control alt shift T"/>
+    </action>
     <action id="ActivateProjectToolWindow">
       <keyboard-shortcut first-keystroke="alt 1"/>
     </action>

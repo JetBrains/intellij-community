@@ -242,6 +242,7 @@
       <separator/>
       <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
       <action id="Generate" class="com.intellij.codeInsight.generation.actions.GenerateAction"/>
+      <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
       <separator/>
       <group id="CodeCompletionGroup" class="com.intellij.codeInsight.completion.actions.CodeCompletionGroup" popup="true">
         <action id="CodeCompletion" class="com.intellij.codeInsight.completion.actions.CodeCompletionAction"/>
