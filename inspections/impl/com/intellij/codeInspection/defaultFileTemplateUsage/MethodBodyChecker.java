@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -107,19 +108,19 @@ public class MethodBodyChecker {
     FileTemplateManager templateManager = FileTemplateManager.getInstance();
     FileTemplate template;
     if (superSignatures.isEmpty()) {
-      String name = FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY;
+      String name = JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY;
       template = useDefaultTemplate ? templateManager.getDefaultTemplate(name) : templateManager.getCodeTemplate(name);
     }
     else {
       PsiMethod superMethod = superSignatures.get(0).getMethod();
       String name = superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                    FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
+                    JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
       template = useDefaultTemplate ? templateManager.getDefaultTemplate(name) : templateManager.getCodeTemplate(name);
     }
     return template;
   }
 
-  private static final String NEW_METHOD_BODY_TEMPLATE_NAME = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY).getName();
+  private static final String NEW_METHOD_BODY_TEMPLATE_NAME = FileTemplateManager.getInstance().getDefaultTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY).getName();
   @Nullable
   private static FileTemplate setupMethodBody(final List<HierarchicalMethodSignature> superSignatures,
                                               final PsiMethod templateMethod,

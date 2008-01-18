@@ -14,7 +14,7 @@ import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -484,7 +484,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
     }
 
     public PsiDirectory getOrChooseDirectory() {
-      return PackageUtil.getOrChooseDirectory(this);
+      return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
   }
 }

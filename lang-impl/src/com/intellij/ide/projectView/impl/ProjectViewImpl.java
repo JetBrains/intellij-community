@@ -15,7 +15,7 @@ import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -1175,7 +1175,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
 
     public PsiDirectory getOrChooseDirectory() {
-      return PackageUtil.getOrChooseDirectory(this);
+      return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
   }
 

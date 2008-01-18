@@ -3,13 +3,13 @@ package com.intellij.ide.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -216,13 +216,13 @@ public class DirectoryChooser extends DialogWrapper {
       if (myDirectory != null) {
         VirtualFile virtualFile = myDirectory.getVirtualFile();
         if (fileIndex.isInTestSourceContent(virtualFile)){
-          return CellAppearanceUtils.TEST_SOURCE_FOLDER;
+          return Icons.TEST_SOURCE_FOLDER;
         }
         else if (fileIndex.isInSourceContent(virtualFile)){
-          return CellAppearanceUtils.SOURCE_FOLDERS_ICON;
+          return Icons.SOURCE_FOLDERS_ICON;
         }
       }
-      return CellAppearanceUtils.FOLDER_ICON;
+      return Icons.FOLDER_ICON;
     }
 
     public String getPresentableUrl() {

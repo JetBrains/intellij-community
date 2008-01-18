@@ -11,6 +11,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -94,7 +95,7 @@ public class CreateFromUsageUtils {
   }
 
   public static void setupMethodBody(final PsiMethod method, final PsiClass aClass) throws IncorrectOperationException {
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_FROM_USAGE_METHOD_BODY);
+    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
     setupMethodBody(method, aClass, template);
   }
 
@@ -115,7 +116,7 @@ public class CreateFromUsageUtils {
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE,
                            PsiTypesUtil.getDefaultValueOfType(returnType));
 
-    FileTemplateUtil.setClassAndMethodNameProperties(properties, aClass, method);
+    JavaTemplateUtil.setClassAndMethodNameProperties(properties, aClass, method);
 
     @NonNls String methodText;
     CodeStyleManager csManager = CodeStyleManager.getInstance(method.getProject());

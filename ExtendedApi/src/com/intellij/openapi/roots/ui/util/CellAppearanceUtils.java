@@ -27,14 +27,11 @@ import java.io.File;
 // Author: dyoma
 
 public class CellAppearanceUtils {
-  public static final Icon FOLDER_ICON = IconLoader.getIcon("/nodes/folder.png");
   public static final Icon INVALID_ICON = IconLoader.getIcon("/nodes/ppInvalid.png");
-  public static final Icon SOURCE_FOLDERS_ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
   public static final Icon JAVA_DOC_FOLDER = IconLoader.getIcon("/nodes/javaDocFolder.png");
-  public static final Icon TEST_SOURCE_FOLDER = IconLoader.getIcon("/nodes/testSourceFolder.png");
   public static final Icon CLASSES_FOLDER = IconLoader.getIcon("/nodes/compiledClassesFolder.png");
-  public static final Icon EXCLUDE_FOLDERS_ICON = excludeIcon(SOURCE_FOLDERS_ICON);
-  public static final Icon EXCLUDE_FOLDER_ICON = excludeIcon(FOLDER_ICON);
+  public static final Icon EXCLUDE_FOLDERS_ICON = excludeIcon(Icons.SOURCE_FOLDERS_ICON);
+  public static final Icon EXCLUDE_FOLDER_ICON = excludeIcon(Icons.FOLDER_ICON);
   public static final CellAppearance EMPTY = new EmptyAppearance();
   public static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   public static final String NO_JDK = ProjectBundle.message("jdk.missing.item");
@@ -72,7 +69,7 @@ public class CellAppearanceUtils {
       return new HttpUrlCellAppearance(virtualFile);
     }
     if (virtualFile.isDirectory()) {
-      return SimpleTextCellAppearance.normal(virtualFile.getPresentableUrl(), FOLDER_ICON);
+      return SimpleTextCellAppearance.normal(virtualFile.getPresentableUrl(), Icons.FOLDER_ICON);
     }
     return new ValidFileCellAppearance(virtualFile);
   }
@@ -81,7 +78,7 @@ public class CellAppearanceUtils {
     if (file.getFileSystem().getProtocol().equals(JarFileSystem.PROTOCOL) && file.getParent() == null) {
       return file.getIcon();
     }
-    if (file.isDirectory()) return FOLDER_ICON;
+    if (file.isDirectory()) return Icons.FOLDER_ICON;
     return file.getIcon();
   }
 
@@ -139,11 +136,11 @@ public class CellAppearanceUtils {
   }
 
   public static SimpleTextCellAppearance forSourceFolder(SourceFolder folder) {
-    return formatRelativePath(folder, FOLDER_ICON);
+    return formatRelativePath(folder, Icons.FOLDER_ICON);
   }
 
   public static Icon sourceFolderIcon(boolean testSource) {
-    return testSource ? TEST_SOURCE_FOLDER : SOURCE_FOLDERS_ICON;
+    return testSource ? Icons.TEST_SOURCE_FOLDER : Icons.SOURCE_FOLDERS_ICON;
   }
 
   public static CellAppearance forExcludeFolder(ExcludeFolder folder) {
@@ -223,7 +220,7 @@ public class CellAppearanceUtils {
     if (!file.exists()) return CompositeAppearance.invalid(absolutePath);
     if (file.isDirectory()) {
       CompositeAppearance appearance = CompositeAppearance.single(absolutePath);
-      appearance.setIcon(FOLDER_ICON);
+      appearance.setIcon(Icons.FOLDER_ICON);
       return appearance;
     }
     String name = file.getName();

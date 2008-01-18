@@ -5,7 +5,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -275,7 +275,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   private void setupCatchBlock(String exceptionName, PsiElement context, PsiCatchSection psiCatchSection)
     throws IncorrectOperationException {
-    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_CATCH_BODY);
+    FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     LOG.assertTrue(catchBodyTemplate != null);
 
     Properties props = new Properties();
@@ -283,7 +283,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     if (context != null && context.isPhysical()) {
       PsiDirectory directory = context.getContainingFile().getContainingDirectory();
       if (directory != null) {
-        FileTemplateUtil.setPackageNameAttribute(props, directory);
+        JavaTemplateUtil.setPackageNameAttribute(props, directory);
       }
     }
     PsiCodeBlock codeBlockFromText;

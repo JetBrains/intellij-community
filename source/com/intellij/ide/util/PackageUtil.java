@@ -1,20 +1,19 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.projectRoots.impl.ProjectRootUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
@@ -77,14 +76,14 @@ public class PackageUtil {
         if (packageName.length() > 0) {
           postfixToShow = File.separatorChar + postfixToShow;
         }
-        psiDirectory = selectDirectory(project, rootPackage.getDirectories(), baseDir, postfixToShow);
+        psiDirectory = DirectoryChooserUtil.selectDirectory(project, rootPackage.getDirectories(), baseDir, postfixToShow);
         if (psiDirectory == null) return null;
       }
     }
 
     if (psiDirectory == null) {
       PsiDirectory[] sourceDirectories = ProjectRootUtil.getRootDirectories(project, OrderRootType.SOURCES);
-      psiDirectory = selectDirectory(project, sourceDirectories, baseDir,
+      psiDirectory = DirectoryChooserUtil.selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;
     }
@@ -157,7 +156,7 @@ public class PackageUtil {
           postfixToShow = File.separatorChar + postfixToShow;
         }
         PsiDirectory[] moduleDirectories = getPackageDirectoriesInModule(rootPackage, module);
-        psiDirectory = selectDirectory(project, moduleDirectories, baseDir, postfixToShow);
+        psiDirectory = DirectoryChooserUtil.selectDirectory(project, moduleDirectories, baseDir, postfixToShow);
         if (psiDirectory == null) return null;
       }
     }
@@ -173,7 +172,7 @@ public class PackageUtil {
         }
       }
       PsiDirectory[] sourceDirectories = directoryList.toArray(new PsiDirectory[directoryList.size()]);
-      psiDirectory = selectDirectory(project, sourceDirectories, baseDir,
+      psiDirectory = DirectoryChooserUtil.selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;
     }
@@ -302,45 +301,6 @@ public class PackageUtil {
   private static String cutLeftPart(String packageName) {
     int index = packageName.indexOf('.');
     return index > -1 ? packageName.substring(index + 1) : "";
-  }
-
-  public static PsiDirectory selectDirectory(Project project,
-                                             PsiDirectory[] packageDirectories,
-                                             PsiDirectory defaultDirectory,
-                                             String postfixToShow) {
-    ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-
-    ArrayList<PsiDirectory> possibleDirs = new ArrayList<PsiDirectory>();
-    for (PsiDirectory dir : packageDirectories) {
-      if (!dir.isValid()) continue;
-      if (!dir.isWritable()) continue;
-      if (possibleDirs.contains(dir)) continue;
-      if (!projectFileIndex.isInContent(dir.getVirtualFile())) continue;
-      possibleDirs.add(dir);
-    }
-
-    if (possibleDirs.size() == 0) return null;
-    if (possibleDirs.size() == 1) return possibleDirs.get(0);
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) return possibleDirs.get(0);
-
-    DirectoryChooser chooser = new DirectoryChooser(project);
-    chooser.setTitle(IdeBundle.message("title.choose.destination.directory"));
-    chooser.fillList(possibleDirs.toArray(new PsiDirectory[possibleDirs.size()]), defaultDirectory, project, postfixToShow);
-    chooser.show();
-    return chooser.isOK() ? chooser.getSelectedDirectory() : null;
-  }
-
-  public static PsiDirectory getOrChooseDirectory(IdeView view) {
-    PsiDirectory[] dirs = view.getDirectories();
-    if (dirs.length == 0) return null;
-    if (dirs.length == 1) {
-      return dirs[0];
-    }
-    else {
-      Project project = dirs[0].getProject();
-      return selectDirectory(project, dirs, null, "");
-    }
   }
 
   public static boolean checkSourceRootsConfigured(final Module module) {

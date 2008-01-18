@@ -6,6 +6,7 @@ package com.intellij.psi.impl.file;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -55,7 +56,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
   @NotNull
   public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
-    return createClassFromTemplate(dir, name, FileTemplateManager.INTERNAL_CLASS_TEMPLATE_NAME);
+    return createClassFromTemplate(dir, name, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
   @NotNull
@@ -65,7 +66,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
   @NotNull
   public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
-    String templateName = FileTemplateManager.INTERNAL_INTERFACE_TEMPLATE_NAME;
+    String templateName = JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isInterface()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
@@ -75,7 +76,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
   @NotNull
   public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
-    String templateName = FileTemplateManager.INTERNAL_ENUM_TEMPLATE_NAME;
+    String templateName = JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isEnum()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));
@@ -85,7 +86,7 @@ public class JavaDirectoryServiceImpl extends JavaDirectoryService {
 
   @NotNull
   public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
-    String templateName = FileTemplateManager.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
+    String templateName = JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isAnnotationType()) {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName));

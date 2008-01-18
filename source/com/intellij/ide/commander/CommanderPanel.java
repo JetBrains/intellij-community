@@ -9,10 +9,7 @@ import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
-import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.*;
@@ -587,7 +584,7 @@ public class CommanderPanel extends JPanel {
     }
 
     public PsiDirectory getOrChooseDirectory() {
-      return PackageUtil.getOrChooseDirectory(this);
+      return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
   }
   

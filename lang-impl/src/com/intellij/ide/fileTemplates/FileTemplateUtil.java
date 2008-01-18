@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -15,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.apache.commons.collections.ExtendedProperties;
@@ -215,7 +215,7 @@ public class FileTemplateUtil{
       props = FileTemplateManager.getInstance().getDefaultProperties();
     }
     FileTemplateManager.getInstance().addRecentName(template.getName());
-    setPackageNameAttribute(props, directory);
+    fillDefaultProperties(props, directory);
 
     if (fileName != null && props.getProperty(FileTemplate.ATTRIBUTE_NAME) == null) {
       props.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
@@ -250,13 +250,14 @@ public class FileTemplateUtil{
         final Runnable run = new Runnable(){
           public void run(){
             try{
-              FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-              if (fileType.equals(StdFileTypes.JAVA)) {
-                String extension = template.getExtension();
-                result[0] = createClassOrInterface(project, directory, templateText, template.isAdjust(), extension);
-                hackAwayEmptyPackage((PsiJavaFile)result[0].getContainingFile(), template, finalProps);
+              boolean handled = false;
+              for(CreateFromTemplateHandler handler: Extensions.getExtensions(CreateFromTemplateHandler.EP_NAME)) {
+                if (handler.handlesTemplate(template)) {
+                  result [0] = handler.createFromTemplate(project, directory, template, templateText, finalProps);
+                  handled = true;
+                }
               }
-              else{
+              if (!handled) {
                 result[0] = createPsiFile(project, directory, templateText, fileName, template.getExtension());
               }
             }
@@ -276,49 +277,11 @@ public class FileTemplateUtil{
     return result[0];
   }
 
-  private static void hackAwayEmptyPackage(PsiJavaFile file, FileTemplate template, Properties props) throws IncorrectOperationException {
-    if (!template.isJavaClassTemplate()) return;
-
-    String packageName = props.getProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME);
-    if(packageName == null || packageName.length() == 0 || packageName.equals(FileTemplate.ATTRIBUTE_PACKAGE_NAME)){
-      PsiPackageStatement packageStatement = file.getPackageStatement();
-      if (packageStatement != null) {
-        packageStatement.delete();
-      }
+  public static void fillDefaultProperties(final Properties props, final PsiDirectory directory) {
+    final DefaultTemplatePropertiesProvider[] providers = Extensions.getExtensions(DefaultTemplatePropertiesProvider.EP_NAME);
+    for(DefaultTemplatePropertiesProvider provider: providers) {
+      provider.fillProperties(directory, props);
     }
-  }
-
-  public static PsiClass createClassOrInterface(Project project,
-                                                PsiDirectory directory,
-                                                String content,
-                                                boolean reformat,
-                                                String extension) throws IncorrectOperationException{
-    if (extension == null) extension = StdFileTypes.JAVA.getDefaultExtension();
-    final PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText("myclass" + "." + extension, content);
-    if (!(psiFile instanceof PsiJavaFile)){
-      throw new IncorrectOperationException("This template did not produce Java class nor interface!\n"+psiFile.getText());
-    }
-    PsiJavaFile psiJavaFile = (PsiJavaFile)psiFile;
-    final PsiClass[] classes = psiJavaFile.getClasses();
-    if (classes.length == 0) {
-      throw new IncorrectOperationException("This template did not produce Java class nor interface!\n"+psiFile.getText());
-    }
-    PsiClass createdClass = classes[0];
-    if(reformat){
-      CodeStyleManager.getInstance(project).reformat(psiJavaFile);
-    }
-    String className = createdClass.getName();
-    String fileName = className + "." + extension;
-    if(createdClass.isInterface()){
-      JavaDirectoryService.getInstance().checkCreateInterface(directory, className);
-    }
-    else{
-      JavaDirectoryService.getInstance().checkCreateClass(directory, className);
-    }
-    psiJavaFile = (PsiJavaFile)psiJavaFile.setName(fileName);
-    psiJavaFile = (PsiJavaFile)directory.add(psiJavaFile);
-
-    return psiJavaFile.getClasses()[0];
   }
 
   private static PsiFile createPsiFile(Project project, @NotNull PsiDirectory directory, String content, String fileName, String extension) throws IncorrectOperationException{
@@ -373,28 +336,7 @@ public class FileTemplateUtil{
       }
     }
   }
-
-  public static void setClassAndMethodNameProperties (Properties properties, PsiClass aClass, PsiMethod method) {
-    String className = aClass.getQualifiedName();
-    if (className == null) className = "";
-    properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, className);
-
-    String methodName = method.getName();
-    properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, methodName);
-  }
-
-  public static void setPackageNameAttribute (@NotNull Properties properties, @NotNull PsiDirectory directory) {
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (aPackage != null) {
-      String packageName = aPackage.getQualifiedName();
-      if (packageName.length() > 0) {
-        properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, packageName);
-        return;
-      }
-    }
-    properties.setProperty(FileTemplate.ATTRIBUTE_PACKAGE_NAME, "");
-  }
-
+                         
   public static boolean canCreateFromTemplate (PsiDirectory[] dirs, FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     if (fileType.equals(FileTypes.UNKNOWN)) return false;
@@ -409,5 +351,4 @@ public class FileTemplateUtil{
     }
     return true;
   }
-
 }

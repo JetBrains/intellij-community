@@ -4,6 +4,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -55,7 +56,7 @@ class CatchBodyVisitor extends JavaRecursiveElementVisitor {
       templateCatchBlock = sectionTemplate.getCatchBlock();
 
       // replace with default template text
-      FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getDefaultTemplate(FileTemplateManager.TEMPLATE_CATCH_BODY);
+      FileTemplate catchBodyTemplate = FileTemplateManager.getInstance().getDefaultTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
 
       Properties props = new Properties();
       props.setProperty(FileTemplate.ATTRIBUTE_EXCEPTION, parameter.getName());
@@ -93,7 +94,7 @@ class CatchBodyVisitor extends JavaRecursiveElementVisitor {
   }
 
   private static LocalQuickFix[] createQuickFix(final PsiCatchSection section) {
-    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(FileTemplateManager.TEMPLATE_CATCH_BODY);
+    FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiParameter parameter = section.getParameter();

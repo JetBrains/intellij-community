@@ -9,7 +9,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.fileTemplates.ui.SelectTemplateDialog;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,7 +136,7 @@ public class CreateFromTemplateGroup extends ActionGroup{
       }
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-      PsiDirectory dir = PackageUtil.getOrChooseDirectory(view);
+      PsiDirectory dir = DirectoryChooserUtil.getOrChooseDirectory(view);
       if (dir == null) return;
 
       FileTemplate selectedTemplate = getTemplate(project, dir);

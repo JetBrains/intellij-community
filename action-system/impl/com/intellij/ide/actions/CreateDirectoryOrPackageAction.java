@@ -5,7 +5,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,7 +32,7 @@ public class CreateDirectoryOrPackageAction extends AnAction {
     IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
 
-    PsiDirectory directory = PackageUtil.getOrChooseDirectory(view);
+    PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
     boolean isDirectory = JavaDirectoryService.getInstance().getPackage(directory) == null;

@@ -24,7 +24,7 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.TimerListener;
@@ -994,7 +994,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
     }
 
     public PsiDirectory getOrChooseDirectory() {
-      return PackageUtil.getOrChooseDirectory(this);
+      return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
 
   }

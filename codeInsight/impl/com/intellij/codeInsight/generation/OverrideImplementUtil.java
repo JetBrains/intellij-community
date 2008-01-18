@@ -8,6 +8,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -336,7 +337,7 @@ public class OverrideImplementUtil {
 
   public static void setupMethodBody(PsiMethod result, PsiMethod originalMethod, PsiClass targetClass) throws IncorrectOperationException {
     String templName = originalMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                       FileTemplateManager.TEMPLATE_IMPLEMENTED_METHOD_BODY : FileTemplateManager.TEMPLATE_OVERRIDDEN_METHOD_BODY;
+                       JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY : JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY;
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templName);
     setupMethodBody(result, originalMethod, targetClass, template);
   }
@@ -357,7 +358,7 @@ public class OverrideImplementUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType.getPresentableText());
     properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE, PsiTypesUtil.getDefaultValueOfType(returnType));
     properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, callSuper(originalMethod, result));
-    FileTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
+    JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     PsiElementFactory factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
     @NonNls String methodText;

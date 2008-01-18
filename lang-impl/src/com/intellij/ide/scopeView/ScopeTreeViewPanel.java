@@ -17,7 +17,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.scopeView.nodes.ClassNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
@@ -652,7 +652,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
 
     @Nullable
     public PsiDirectory getOrChooseDirectory() {
-      return PackageUtil.getOrChooseDirectory(this);
+      return DirectoryChooserUtil.getOrChooseDirectory(this);
     }
   }
 

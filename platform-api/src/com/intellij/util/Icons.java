@@ -109,4 +109,7 @@ public abstract class Icons {
 
   public static final Icon OPENED_MODULE_GROUP_ICON = IconLoader.getIcon("/nodes/moduleGroupOpen.png");
   public static final Icon CLOSED_MODULE_GROUP_ICON = IconLoader.getIcon("/nodes/moduleGroupClosed.png");
+  public static final Icon FOLDER_ICON = IconLoader.getIcon("/nodes/folder.png");
+  public static final Icon SOURCE_FOLDERS_ICON = IconLoader.getIcon("/nodes/sourceFolder.png");
+  public static final Icon TEST_SOURCE_FOLDER = IconLoader.getIcon("/nodes/testSourceFolder.png");
 }
