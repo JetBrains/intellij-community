@@ -64,7 +64,7 @@ public class RootModelImpl implements ModifiableRootModel {
   private boolean myDisposed = false;
   private final OrderEntryProperties myOrderEntryProperties;
 
-  private final Set<ModuleExtension> myExtensions = new HashSet<ModuleExtension>();
+  private final Set<ModuleExtension> myExtensions = new TreeSet<ModuleExtension>();
 
   private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<OrderRootType, VirtualFilePointerContainer>();
 
