@@ -26,6 +26,10 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
     myMainFile = mainFile;
   }
 
+  public StructureViewTreeElement getWrappedElement() {
+    return myTreeElement;
+  }
+
   public V getValue() {
     return (V)myTreeElement.getValue();
   }

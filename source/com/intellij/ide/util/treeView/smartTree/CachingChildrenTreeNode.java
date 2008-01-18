@@ -1,5 +1,6 @@
 package com.intellij.ide.util.treeView.smartTree;
 
+import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -14,7 +15,8 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   protected final TreeModel myTreeModel;
 
   public CachingChildrenTreeNode(Project project, Value value, TreeModel treeModel) {
-    super(project, value);
+    super(project,
+          value instanceof StructureViewElementWrapper ? (Value) ((StructureViewElementWrapper) value).getWrappedElement() : value);
     myTreeModel = treeModel;
   }
 
