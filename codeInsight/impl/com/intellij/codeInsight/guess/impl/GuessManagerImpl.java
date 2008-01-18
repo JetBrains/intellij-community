@@ -122,7 +122,7 @@ public class GuessManagerImpl extends GuessManager {
     PsiElement scope = expr.getParent();
     PsiElement lastScope = scope;
     while(true){
-      if (scope instanceof PsiFile) break;
+      if (scope == null || scope instanceof PsiFile) break;
       scope = scope.getParent();
       if (scope instanceof PsiCodeBlock ||
           scope instanceof PsiFile && PsiUtil.isInJspFile(scope)) {
