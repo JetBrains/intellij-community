@@ -50,6 +50,8 @@ public class PersistentEnumerator<Data> implements Forceable {
 
   private static final int CACHE_SIZE = 8192;
   private static class CacheKey {
+    public static final CacheKey FLYWEIGHT = new CacheKey(null, null);
+
     public PersistentEnumerator owner;
     public Object key;
 
@@ -57,6 +59,7 @@ public class PersistentEnumerator<Data> implements Forceable {
       this.key = key;
       this.owner = owner;
     }
+
 
     public boolean equals(final Object o) {
       if (this == o) return true;
@@ -73,6 +76,12 @@ public class PersistentEnumerator<Data> implements Forceable {
     public int hashCode() {
       return key.hashCode();
     }
+  }
+
+  public static CacheKey sharedKey(Object key, PersistentEnumerator owner) {
+    CacheKey.FLYWEIGHT.key = key;
+    CacheKey.FLYWEIGHT.owner = owner;
+    return CacheKey.FLYWEIGHT;
   }
 
   private static Map<Object, Integer> ourEnumerationCache = new LinkedHashMap<Object, Integer>(16, 0.75f, true) {
@@ -118,17 +127,16 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
   
   protected synchronized int tryEnumerate(Data value) throws IOException {
-    final Integer cachedId = ourEnumerationCache.get(new CacheKey(value, this));
+    final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
     if (cachedId != null) return cachedId.intValue();
     return enumerateImpl(value, false);
   }
   
   public synchronized int enumerate(Data value) throws IOException {
-    final CacheKey key = new CacheKey(value, this);
-    final Integer cachedId = ourEnumerationCache.get(key);
+    final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
     if (cachedId != null) return cachedId.intValue();
     final int id = enumerateImpl(value, true);
-    ourEnumerationCache.put(key, id);
+    ourEnumerationCache.put(new CacheKey(value, this), id);
     return id;
   }
 

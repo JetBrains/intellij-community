@@ -49,11 +49,11 @@ public class Storage implements Disposable, Forceable {
       return true;
     }
   };
+  private static final AppenderCacheKey KEY_FLYWEIGHT = new AppenderCacheKey(0, null);
 
-
-  private static class AppenderCacheKey {
-    public final Storage storage;
-    public final int record;
+ private static class AppenderCacheKey {
+    public Storage storage;
+    public int record;
 
     public AppenderCacheKey(final int record, final Storage storage) {
       this.record = record;
@@ -288,13 +288,19 @@ public class Storage implements Disposable, Forceable {
 
   private void dropRecordCache(final int record) {
     synchronized (ourAppendersCache) {
-      final AppenderCacheKey key = new AppenderCacheKey(record, this);
+      final AppenderCacheKey key = setupKey(record, this);
       final AppenderStream stream = ourAppendersCache.get(key);
       if (stream != null) {
         closeStream(stream);
+        ourAppendersCache.remove(key);
       }
-      ourAppendersCache.remove(key);
     }
+  }
+
+  private static AppenderCacheKey setupKey(int record, Storage storage) {
+    KEY_FLYWEIGHT.storage = storage;
+    KEY_FLYWEIGHT.record = record;
+    return KEY_FLYWEIGHT;
   }
 
   private static int calcCapacity(int requiredLength) {
@@ -317,8 +323,7 @@ public class Storage implements Disposable, Forceable {
 
   public AppenderStream appendStream(int record) {
     synchronized (ourAppendersCache) {
-      final AppenderCacheKey key = new AppenderCacheKey(record, this);
-      AppenderStream appenderStream = ourAppendersCache.get(key);
+      AppenderStream appenderStream = ourAppendersCache.get(setupKey(record, this));
       if (appenderStream != null) {
         if (appenderStream.size() > 4048) {
           closeStream(appenderStream);
@@ -330,7 +335,7 @@ public class Storage implements Disposable, Forceable {
 
       appenderStream = new AppenderStream(this, record);
       
-      ourAppendersCache.put(key, appenderStream);
+      ourAppendersCache.put(new AppenderCacheKey(record, this), appenderStream);
       return appenderStream;
     }
   }
