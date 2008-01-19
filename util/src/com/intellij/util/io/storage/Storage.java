@@ -207,8 +207,8 @@ public class Storage implements Disposable, Forceable {
             catch (IOException e) {
               LOG.error(e);
             }
+            ourAppendersCache.remove(key);
           }
-          ourAppendersCache.remove(key);
         }
       }
       myDataTable.force();
