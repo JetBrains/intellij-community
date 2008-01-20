@@ -44,10 +44,14 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
 
   @Nullable
   private static VirtualFile findById(final int id, final VirtualFileImpl r) {
+    if (r == null) return null;
     if (r.getId() == id) return r;
-    for (VirtualFile f : r.getChildren()) {
-      final VirtualFile child = findById(id, (VirtualFileImpl)f);
-      if (child != null) return child;
+    final VirtualFile[] children = r.getChildren();
+    if (children != null) {
+      for (VirtualFile f : children) {
+        final VirtualFile child = findById(id, (VirtualFileImpl)f);
+        if (child != null) return child;
+      }
     }
     return null;
   }
