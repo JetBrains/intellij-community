@@ -593,11 +593,13 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     //append method name
     PsiModifierList modifierList = variableDeclaration.getModifierList();
-    GrVariable[] grVariables = variableDeclaration.getVariables();
+    GrVariable[] variables = variableDeclaration.getVariables();
     GrVariable variable;
     int i = 0;
-    while (i < grVariables.length) {
-      variable = grVariables[i];
+    while (i < variables.length) {
+      variable = variables[i];
+      String name = variable.getName();
+      if (!variable.getManager().getNameHelper().isIdentifier(name)) continue; //does not have a java image
 
       text.append("\n");
       text.append("  ");
@@ -608,7 +610,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
       text.append(" ");
 
       //var name
-      text.append(variable.getName());
+      text.append(name);
       text.append(" = ");
 
       text.append(initValueText);
@@ -620,6 +622,9 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
   private void writeMethod(StringBuffer text, PsiMethod method, final PsiParameter[] parameters) {
     if (method == null) return;
+    String name = method.getName();
+    if (!method.getManager().getNameHelper().isIdentifier(name)) return; //does not have a java image
+
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     PsiModifierList modifierList = method.getModifierList();
@@ -639,7 +644,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append(" ");
 
     //append method name
-    text.append(method.getName());
+    text.append(name);
 
     /************* parameters **********/
 

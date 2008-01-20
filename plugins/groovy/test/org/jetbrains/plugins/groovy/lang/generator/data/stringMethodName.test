@@ -8,6 +8,10 @@ class StringMethodName {
     public def 'getFoo5'() {'foo5'}
     private boolean 'fooFalse'() {false}
     public def 'fooDef'() {}
+
+    public def 'foo Def'() {} //does not have a java image
+
+    def "a b" = 0 //does not have a java image
 }
 -----
 public class StringMethodName extends groovy.lang.GroovyObjectSupport {
