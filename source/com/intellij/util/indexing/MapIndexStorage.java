@@ -61,7 +61,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   }
   
   public void flush() {
-    System.out.println("Cache hit rate = " + myCache.hitRate());
+    //System.out.println("Cache hit rate = " + myCache.hitRate());
     myFlushingLock.lock();
     myCache.removeAll();
     try {
