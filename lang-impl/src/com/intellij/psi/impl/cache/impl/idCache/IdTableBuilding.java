@@ -27,7 +27,6 @@ import com.intellij.psi.impl.cache.impl.CacheManagerImpl;
 import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.psi.impl.cache.index.FileTypeIdIndexer;
 import com.intellij.psi.impl.cache.index.IdIndexEntry;
-import com.intellij.psi.impl.cache.index.indexers.PlainTextIndexer;
 import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.UsageSearchContext;
@@ -104,7 +103,39 @@ public class IdTableBuilding {
     }
   }
 
+  public static class PlainTextIndexer extends FileTypeIdIndexer {
+  
+    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
+      final CharSequence chars = inputData.content;
+      scanWords(new ScanWordProcessor(){
+        public void run(final CharSequence chars11, final int start, final int end, char[] charsArray) {
+          if (charsArray != null) {
+            addOccurrence(consumer, charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+          } else {
+            addOccurrence(consumer, chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+          }
+        }
+      }, chars, 0, chars.length());
 
+      /*
+      if (todoCounts != null) {
+        for (int index = 0; index < todoPatterns.length; index++) {
+          Pattern pattern = todoPatterns[index].getPattern();
+          if (pattern != null) {
+            Matcher matcher = pattern.matcher(chars);
+            while (matcher.find()) {
+              if (matcher.start() != matcher.end()) {
+                todoCounts[index]++;
+              }
+            }
+          }
+        }
+      }
+      */
+    }
+
+  }
+  
   static class EmptyBuilder implements IdCacheBuilder {
     public void build(CharSequence chars,
                       int length,
@@ -132,12 +163,12 @@ public class IdTableBuilding {
   }
   
   static {
-    registerCacheBuilder(FileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
+    //registerCacheBuilder(FileTypes.PLAIN_TEXT,new TextIdCacheBuilder());
     registerIdIndexer(FileTypes.PLAIN_TEXT,new PlainTextIndexer());
 
-    registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());
-    registerCacheBuilder(StdFileTypes.IDEA_WORKSPACE, new EmptyBuilder());
-    registerCacheBuilder(StdFileTypes.IDEA_PROJECT, new EmptyBuilder());
+    //registerCacheBuilder(StdFileTypes.IDEA_MODULE, new EmptyBuilder());
+    //registerCacheBuilder(StdFileTypes.IDEA_WORKSPACE, new EmptyBuilder());
+    //registerCacheBuilder(StdFileTypes.IDEA_PROJECT, new EmptyBuilder());
   }
 
   @Nullable

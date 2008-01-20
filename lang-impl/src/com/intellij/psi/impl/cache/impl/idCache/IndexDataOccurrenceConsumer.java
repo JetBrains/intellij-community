@@ -10,7 +10,6 @@ import com.intellij.util.indexing.IndexDataConsumer;
  */
 public class IndexDataOccurrenceConsumer implements BaseFilterLexer.OccurrenceConsumer{
   private final IndexDataConsumer<IdIndexEntry, Void> myIndexDataConsumer; 
-  //private final int[] myTodoCounts;
   
   public IndexDataOccurrenceConsumer(final IndexDataConsumer<IdIndexEntry, Void> indexDataConsumer) {
     myIndexDataConsumer = indexDataConsumer;
