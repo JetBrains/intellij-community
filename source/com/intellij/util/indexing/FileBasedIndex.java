@@ -560,6 +560,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public boolean acceptInput(final VirtualFile file) {
+      if (file.isDirectory()) return false;
       for (InputFilter filter : myFilters) {
         if (filter.acceptInput(file)) {
           return true;
