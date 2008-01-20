@@ -59,8 +59,6 @@ public class MethodResolverProcessor extends ResolverProcessor {
       PsiMethod method = (PsiMethod) element;
       if (method.isConstructor() != myIsConstructor) return true;
 
-      if (!isAccessible((PsiNamedElement) element)) return true;
-
       substitutor = obtainSubstitutor(substitutor, method);
       boolean isAccessible = isAccessible(method);
       boolean isStaticsOK = isStaticsOK(method);
