@@ -27,7 +27,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -71,6 +71,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private CompositeCommand myFlushStorages = new CompositeCommand();
   private CompositeCommand myStartDataBuffering = new CompositeCommand();
   private CompositeCommand myStopDataBuffering = new CompositeCommand();
+  private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -269,21 +270,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
         while (inputIdsIterator.hasNext()) {
           final int id = inputIdsIterator.next();
-          if (processedIds.contains(id)) {
-            continue;
-          }
-          processedIds.add(id);
-          final boolean isDirectory = fs.isDirectory(id);
-          final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
-          if (directoryInfo != null && directoryInfo.contentRoot != null) {
-            if (isDirectory) {
-              files.add(directoryInfo.directory);
-            }
-            else {
-              final VirtualFile child = directoryInfo.directory.findChild(fs.getName(id));
-              if (child != null) {
-                files.add(child);
-              }
+          if (!processedIds.contains(id)) {
+            processedIds.add(id);
+            VirtualFile file = findFileById(dirIndex, fs, id);
+            if (file != null) {
+              files.add(file);
             }
           }
         }
@@ -297,6 +288,30 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     return Collections.emptyList();
   }
 
+  @Nullable
+  private static VirtualFile findFileById(final DirectoryIndex dirIndex, final PersistentFS fs, final int id) {
+    final boolean isDirectory = fs.isDirectory(id);
+    final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
+    if (directoryInfo != null && directoryInfo.contentRoot != null) {
+      if (isDirectory) {
+        return directoryInfo.directory;
+      }
+      else {
+        final VirtualFile child = directoryInfo.directory.findChild(fs.getName(id));
+        if (child != null) {
+          return child;
+        }
+      }
+    }
+
+    return findTestFile(id);
+  }
+
+  @Nullable
+  private static VirtualFile findTestFile(final int id) {
+    return ourUnitTestMode ? DummyFileSystem.getInstance().findById(id) : null;
+  }
+
   private void indexUnsavedDocuments() throws StorageException {
     final FileDocumentManager fdManager = FileDocumentManager.getInstance();
     final Document[] documents = fdManager.getUnsavedDocuments();
@@ -305,9 +320,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       myStartDataBuffering.execute();
       for (Document document : documents) {
         final VirtualFile vFile = fdManager.getFile(document);
-        if (!(vFile instanceof NewVirtualFile)) {
-          continue;
-        }
         final Pair<CharSequence, Long> indexingInfo = myIndexingHistory.get(document);
         final long documentStamp = document.getModificationStamp();
         if (indexingInfo == null || documentStamp != indexingInfo.getSecond().longValue()) {
@@ -318,7 +330,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           final FileContent newFc = new FileContent(vFile, document.getText());
           for (String indexId : myIndices.keySet()) {
             if (getInputFilter(indexId).acceptInput(vFile)) {
-              final int inputId = Math.abs(((NewVirtualFile)vFile).getId());
+              final int inputId = Math.abs(getFileId(vFile));
               getIndex(indexId).update(inputId, newFc, oldFc);
             }
           }
@@ -501,14 +513,20 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private void updateSingleIndex(final String indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
-    if (!(file instanceof NewVirtualFile)) return;
-    
-    final int inputId = Math.abs(((NewVirtualFile)file).getId());
+    final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
       IndexingStamp.update(file, indexId, getIndexCreationStamp(indexId));
     }
+  }
+
+  private static int getFileId(final VirtualFile file) {
+    if (file instanceof VirtualFileWithId) {
+      return ((VirtualFileWithId)file).getId();
+    }
+
+    return 0;
   }
 
   private static CharSequence loadContent(VirtualFile file) {

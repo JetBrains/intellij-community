@@ -4,21 +4,28 @@ package com.intellij.openapi.vfs.ex.dummy;
 import com.intellij.openapi.vfs.DeprecatedVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.testFramework.DummyFileIdGenerator;
 import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
-abstract class VirtualFileImpl extends DeprecatedVirtualFile {
-  protected final DummyFileSystem myFileSystem;
-  protected VirtualFileDirectoryImpl myParent;
+abstract class VirtualFileImpl extends DeprecatedVirtualFile implements VirtualFileWithId {
+  private final DummyFileSystem myFileSystem;
+  private final VirtualFileDirectoryImpl myParent;
   private String myName;
   protected boolean myIsValid = true;
+  private int myId = DummyFileIdGenerator.next();
 
   protected VirtualFileImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     myFileSystem = fileSystem;
     myParent = parent;
     myName = name;
+  }
+
+  public int getId() {
+    return myId;
   }
 
   @NotNull

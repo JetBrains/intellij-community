@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -15,6 +16,7 @@ import java.io.IOException;
  */
 public class DummyFileSystem extends DeprecatedVirtualFileSystem implements ApplicationComponent {
   @NonNls public static final String PROTOCOL = "dummy";
+  private VirtualFileDirectoryImpl myRoot;
 
   public static DummyFileSystem getInstance() {
     return ApplicationManager.getApplication().getComponent(DummyFileSystem.class);
@@ -30,9 +32,24 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
   }
 
   public VirtualFile createRoot(String name) {
-    final VirtualFileDirectoryImpl root = new VirtualFileDirectoryImpl(this, null, name);
-    fireFileCreated(null, root);
-    return root;
+    myRoot = new VirtualFileDirectoryImpl(this, null, name);
+    fireFileCreated(null, myRoot);
+    return myRoot;
+  }
+
+  @Nullable
+  public VirtualFile findById(int id) {
+    return findById(id, myRoot);
+  }
+
+  @Nullable
+  private static VirtualFile findById(final int id, final VirtualFileImpl r) {
+    if (r.getId() == id) return r;
+    for (VirtualFile f : r.getChildren()) {
+      final VirtualFile child = findById(id, (VirtualFileImpl)f);
+      if (child != null) return child;
+    }
+    return null;
   }
 
   public String getProtocol() {
@@ -92,6 +109,16 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements Appl
     dir.addChild(child);
     fireFileCreated(requestor, child);
     return child;
+  }
+
+  @Override
+  public void fireBeforeContentsChange(final Object requestor, final VirtualFile file) {
+    super.fireBeforeContentsChange(requestor, file);
+  }
+
+  @Override
+  public void fireContentsChanged(final Object requestor, final VirtualFile file, final long oldModificationStamp) {
+    super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
   public VirtualFile createChildDirectory(Object requestor, VirtualFile vDir, String dirName) throws IOException {

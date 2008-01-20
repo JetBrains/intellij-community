@@ -33,7 +33,7 @@ class VirtualFileDataImpl extends VirtualFileImpl {
     return new ByteArrayInputStream(myContents);
   }
 
-  public OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
+  public OutputStream getOutputStream(final Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     return new OutputStream() {
       public void write(int b) throws IOException {
@@ -54,8 +54,12 @@ class VirtualFileDataImpl extends VirtualFileImpl {
 
       public void close() throws IOException {
         out.close();
+        final DummyFileSystem fs = (DummyFileSystem)getFileSystem();
+        fs.fireBeforeContentsChange(requestor, VirtualFileDataImpl.this);
+        final long oldModStamp = myModificationStamp;
         myContents = out.toByteArray();
         myModificationStamp = newModificationStamp >= 0 ? newModificationStamp : LocalTimeCounter.currentTime();
+        fs.fireContentsChanged(requestor, VirtualFileDataImpl.this, oldModStamp);
       }
     };
   }

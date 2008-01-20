@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
@@ -44,7 +45,7 @@ public class IndexingStamp {
 
   public static void update(VirtualFile file, String indexName, final long indexCreationStamp) {
     try {
-      if (file.isValid()) {
+      if (file instanceof NewVirtualFile && file.isValid()) {
         final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
         try {
           stream.writeLong(indexCreationStamp);

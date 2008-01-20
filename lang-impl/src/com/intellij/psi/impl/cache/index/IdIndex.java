@@ -59,7 +59,7 @@ public class IdIndex extends ScalarIndexExtension<IdIndexEntry>{
   };
   
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   public String getName() {

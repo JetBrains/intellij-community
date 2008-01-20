@@ -1,17 +1,19 @@
 
 package com.intellij.openapi.vfs.ex.dummy;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
 /**
  *
  */
 class VirtualFileDirectoryImpl extends VirtualFileImpl {
-  private ArrayList<VirtualFileImpl> myChildren = new ArrayList<VirtualFileImpl>();
+  private final ArrayList<VirtualFileImpl> myChildren = new ArrayList<VirtualFileImpl>();
 
   public VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     super(fileSystem, parent, name);

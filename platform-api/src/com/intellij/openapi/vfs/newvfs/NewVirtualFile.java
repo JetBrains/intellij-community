@@ -23,6 +23,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 
-public abstract class NewVirtualFile extends VirtualFile {
+public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
   private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   public boolean isValid() {

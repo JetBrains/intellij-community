@@ -20,7 +20,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.impl.PsiManagerConfiguration;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
@@ -221,7 +220,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       VirtualFile dir = forDir;
       do {
         myDirToInfoMap.remove(dir);
-        removeInfoById(((NewVirtualFile)dir).getId());
+        removeInfoById(((VirtualFileWithId)dir).getId());
         dir = dir.getParent();
       }
       while (dir != null);
@@ -818,9 +817,9 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
     if (info == null) {
       info = new DirectoryInfo(dir);
       myDirToInfoMap.put(dir, info);
-      if (dir instanceof NewVirtualFile) {
+      if (dir instanceof VirtualFileWithId) {
         // need this check to filter out deprecated virtual file implementations
-        putInfoById(((NewVirtualFile)dir).getId(), info);
+        putInfoById(((VirtualFileWithId)dir).getId(), info);
       }
     }
     return info;
@@ -1005,7 +1004,7 @@ public class DirectoryIndexImpl extends DirectoryIndex implements ProjectCompone
       if (list == null) return;
 
       for (VirtualFile dir : list) {
-        removeInfoById(((NewVirtualFile)dir).getId());
+        removeInfoById(((VirtualFileWithId)dir).getId());
         DirectoryInfo info = myDirToInfoMap.remove(dir);
         if (info != null) {
           setPackageName(dir, info, null);
