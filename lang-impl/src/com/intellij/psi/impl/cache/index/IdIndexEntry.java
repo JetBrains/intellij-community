@@ -45,4 +45,9 @@ public final class IdIndexEntry {
     result = 31 * result + myOccurrenceMask;
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "IdIndexEntry[hash: " + myWordHashCode + ", mask: " + myOccurrenceMask + "]";
+  }
 }

@@ -36,11 +36,11 @@ public class IndexCacheManagerImpl implements CacheManager{
   }
 
   public void initialize() {
-    // empty
+    FileBasedIndex.getInstance().projectJoins(myProject);
   }
 
   public void dispose() {
-    // empty
+    FileBasedIndex.getInstance().projectLeaves(myProject);
   }
 
   @NotNull

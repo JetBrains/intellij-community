@@ -1,5 +1,6 @@
 package com.intellij.util.indexing;
 
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -12,15 +13,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.startup.StartupManager;
@@ -72,6 +72,21 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private CompositeCommand myStartDataBuffering = new CompositeCommand();
   private CompositeCommand myStopDataBuffering = new CompositeCommand();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+
+  public void projectJoins(final Project project) {
+    // TODO: Change that to CacheUpdaters/FileSystemSynchronizer
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      public void beforeRootsChange(final ModuleRootEvent event) {
+      }
+
+      public void rootsChanged(final ModuleRootEvent event) {
+        scanContent(project, new EmptyProgressIndicator());
+      }
+    });
+  }
+
+  public void projectLeaves(Project project) {
+  }
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -530,12 +545,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   private static CharSequence loadContent(VirtualFile file) {
-    try {
-      return LoadTextUtil.getTextByBinaryPresentation(file.contentsToByteArray(), file, false);
-    }
-    catch (IOException e) {
-      return "";
-    }
+    return LoadTextUtil.loadText(file);
   }
 
   private static final class CompositeInputFiler implements InputFilter {
