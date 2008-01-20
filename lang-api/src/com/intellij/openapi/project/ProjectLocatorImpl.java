@@ -13,14 +13,15 @@ public class ProjectLocatorImpl extends ProjectLocator {
     ProjectManager projectManager = ProjectManager.getInstance();
     if (projectManager == null) return null;
     final Project[] projects = projectManager.getOpenProjects();
-    if (projects.length == 1) return projects[0];
+    if (projects.length == 0) return null;
+    if (projects.length == 1 && !projects[0].isDisposed()) return projects[0];
 
     for (Project project : projects) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+      if (!project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
         return project;
       }
     }
 
-    return projects.length == 0 ? null : projects[0];
+    return !projects[0].isDisposed() ? projects[0] : null;
   }
 }

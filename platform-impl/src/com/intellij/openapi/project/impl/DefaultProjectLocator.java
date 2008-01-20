@@ -16,6 +16,11 @@ public class DefaultProjectLocator extends ProjectLocator {
     if (projectManager == null) return null;
 
     final Project[] projects = projectManager.getOpenProjects();
-    return projects.length == 1 ? projects[0] : null;
+    if (projects.length == 1) {
+      return !projects[0].isDisposed() ? projects[0] : null;
+    }
+    else {
+      return null;
+    }
   }
 }
