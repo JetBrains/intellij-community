@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -18,6 +19,9 @@ public interface GrConstructorInvocation extends GrStatement, GrConstructorCall,
   boolean isSuperCall();
 
   boolean isThisCall();
+
+  @NotNull
+  GrArgumentList getArgumentList();
 
   PsiElement getThisOrSuperKeyword();
 

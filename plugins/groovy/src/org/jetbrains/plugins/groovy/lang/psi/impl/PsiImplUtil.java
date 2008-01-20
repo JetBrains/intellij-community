@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -332,4 +333,20 @@ public class PsiImplUtil {
     return result;
   }
 
+  public static String getName(GrNamedElement namedElement) {
+    PsiElement nameElement = namedElement.getNameIdentifierGroovy();
+    ASTNode node = nameElement.getNode();
+    LOG.assertTrue(node != null);
+    if (node.getElementType() == GroovyTokenTypes.mIDENT) return nameElement.getText();
+    else {
+      if (node.getElementType() == GroovyTokenTypes.mSTRING_LITERAL) {
+        String text = nameElement.getText();
+        return text.endsWith("'") ? text.substring(1, text.length() - 1) : text.substring(1);
+      } else {
+        LOG.assertTrue(node.getElementType() == GroovyTokenTypes.mGSTRING_LITERAL);
+        String text = nameElement.getText();
+        return text.endsWith("\"") ? text.substring(1, text.length() - 1) : text.substring(1);
+      }
+    }
+  }
 }

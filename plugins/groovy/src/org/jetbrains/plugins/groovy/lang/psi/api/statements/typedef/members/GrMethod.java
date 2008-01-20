@@ -44,8 +44,6 @@ public interface GrMethod extends GrMember, GrMembersDeclaration, GrNamedElement
   @Nullable
   PsiType getDeclaredReturnType();
 
-  PsiElement getNameIdentifierGroovy();
-
   @NotNull
   @NonNls
   String getName();

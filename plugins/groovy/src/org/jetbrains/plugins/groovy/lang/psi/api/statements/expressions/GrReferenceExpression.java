@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 /**
  * @author ilyas
  */
-public interface GrReferenceExpression extends GrExpression, GrReferenceElement, GrNamedElement {
+public interface GrReferenceExpression extends GrExpression, GrReferenceElement, PsiNamedElement {
   GrExpression getQualifierExpression();
 
   boolean isQualified();

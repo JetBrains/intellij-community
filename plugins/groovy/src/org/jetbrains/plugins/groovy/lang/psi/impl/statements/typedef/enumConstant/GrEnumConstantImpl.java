@@ -111,7 +111,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return PsiImplUtil.extractUniqueElement(multiResolveConstructor());
   }
 
-  @NotNull
+  @Nullable
   public GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }

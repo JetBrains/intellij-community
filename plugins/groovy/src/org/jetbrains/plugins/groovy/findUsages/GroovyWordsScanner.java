@@ -26,7 +26,7 @@ class GroovyWordsScanner implements WordsScanner
 
     while (myLexer.getTokenType() != null) {
       final IElementType type = myLexer.getTokenType();
-      if (type == GroovyTokenTypes.mIDENT || TokenSets.KEYWORD_PROPERTY_NAMES.contains(type)) {
+      if (type == GroovyTokenTypes.mIDENT || TokenSets.KEYWORD_REFERENCE_NAMES.contains(type)) {
         if (occurrence == null) occurrence = new WordOccurrence(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         else occurrence.init(fileText,myLexer.getTokenStart(),myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
         if (!processor.process(occurrence)) return;

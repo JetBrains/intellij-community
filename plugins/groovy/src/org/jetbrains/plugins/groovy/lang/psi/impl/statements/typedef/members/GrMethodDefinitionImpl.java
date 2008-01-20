@@ -27,9 +27,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.*;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -67,8 +65,9 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
     return getNameIdentifierGroovy().getTextRange().getStartOffset();
   }
 
+  @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    return findChildByType(GroovyElementTypes.mIDENT);
+    return findChildByType(TokenSets.PROPERTY_NAMES);
   }
 
   public String toString() {
@@ -336,16 +335,7 @@ public class GrMethodDefinitionImpl extends GroovyPsiElementImpl implements GrMe
 
   @NotNull
   public String getName() {
-    PsiElement nameElement = getNameIdentifierGroovy();
-    if (nameElement == null) {
-      nameElement = findChildByType(GroovyTokenTypes.mSTRING_LITERAL);
-    }
-    if (nameElement == null) {
-      nameElement = findChildByType(GroovyTokenTypes.mGSTRING_LITERAL);
-    }
-
-    assert nameElement != null;
-    return nameElement.getText();
+    return PsiImplUtil.getName(this);
   }
 
   @NotNull

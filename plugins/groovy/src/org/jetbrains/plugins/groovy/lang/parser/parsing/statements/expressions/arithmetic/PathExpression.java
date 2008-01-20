@@ -167,7 +167,7 @@ public class PathExpression implements GroovyElementTypes {
       PrimaryExpression.parenthesizedExprParse(builder);
       return PATH_PROPERTY_REFERENCE;
     }
-    if (TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType())) {
+    if (TokenSets.KEYWORD_REFERENCE_NAMES.contains(builder.getTokenType())) {
       builder.advanceLexer();
       return REFERENCE_EXPRESSION;
     }

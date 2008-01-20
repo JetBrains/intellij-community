@@ -65,7 +65,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
   public PsiElement getReferenceNameElement() {
     final ASTNode lastChild = getNode().getLastChildNode();
     if (lastChild == null) return null;
-    for (IElementType elementType : TokenSets.PROPERTY_NAMES.getTypes()) {
+    for (IElementType elementType : TokenSets.REFERENCE_NAMES.getTypes()) {
       if (lastChild.getElementType() == elementType) return lastChild.getPsi();
     }
 

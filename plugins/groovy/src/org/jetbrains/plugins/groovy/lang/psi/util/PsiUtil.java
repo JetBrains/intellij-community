@@ -217,7 +217,8 @@ public class PsiUtil {
       return result;
     } else if (parent instanceof GrConstructorInvocation || parent instanceof GrEnumConstant) {
       final GrArgumentList argList = (GrArgumentList) ((GrCall) parent).getArgumentList();
-      assert argList != null;
+      if (argList == null) return PsiType.EMPTY_ARRAY;
+      
       List<PsiType> result = new ArrayList<PsiType>();
       if (argList.getNamedArguments().length > 0) {
         result.add(factory.createTypeByFQClassName("java.util.HashMap", place.getResolveScope()));
@@ -270,7 +271,7 @@ public class PsiUtil {
   public static boolean isValidReferenceName(String text) {
     final GroovyLexer lexer = new GroovyLexer();
     lexer.start(text.toCharArray());
-    return TokenSets.PROPERTY_NAMES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
+    return TokenSets.REFERENCE_NAMES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == text.length();
   }
 
   public static boolean isSimplePropertyAccessor(PsiMethod method) {

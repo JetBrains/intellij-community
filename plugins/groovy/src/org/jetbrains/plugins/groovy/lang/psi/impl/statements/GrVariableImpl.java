@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -178,12 +179,12 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
   }
 
   public String getName() {
-    return getNameIdentifierGroovy().getText();
+    return PsiImplUtil.getName(this);
   }
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    PsiElement ident = findChildByType(GroovyTokenTypes.mIDENT);
+    PsiElement ident = findChildByType(TokenSets.PROPERTY_NAMES);
     assert ident != null;
     return ident;
   }

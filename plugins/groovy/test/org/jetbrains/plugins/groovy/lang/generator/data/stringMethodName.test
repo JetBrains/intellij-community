@@ -1,0 +1,46 @@
+class StringMethodName {
+    def foo0() {'foo0'} // control
+    def 'foo1'() {'foo1'}
+
+    public Integer 'foo2'() {2}
+    public int 'foo3'() {3}
+    Integer 'foo4'(x) { x * 4}
+    public def 'getFoo5'() {'foo5'}
+    private boolean 'fooFalse'() {false}
+    public def 'fooDef'() {}
+}
+-----
+public class StringMethodName extends groovy.lang.GroovyObjectSupport {
+  public java.lang.Object foo0() {
+    return null;
+  }
+
+  public java.lang.Object foo1() {
+    return null;
+  }
+
+  public java.lang.Integer foo2() {
+    return null;
+  }
+
+  public int foo3() {
+    return 0;
+  }
+
+  public java.lang.Integer foo4(java.lang.Object x) {
+    return null;
+  }
+
+  public java.lang.Object getFoo5() {
+    return null;
+  }
+
+  private boolean fooFalse() {
+    return false;
+  }
+
+  public java.lang.Object fooDef() {
+    return null;
+  }
+}
+---

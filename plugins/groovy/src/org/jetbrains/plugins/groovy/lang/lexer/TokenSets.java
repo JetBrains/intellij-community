@@ -89,7 +89,7 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kDOUBLE
   );
 
-  public static TokenSet KEYWORD_PROPERTY_NAMES = TokenSet.orSet(TokenSet.create(
+  public static TokenSet KEYWORD_REFERENCE_NAMES = TokenSet.orSet(TokenSet.create(
       kCLASS,
       kIN,
       kAS,
@@ -106,7 +106,9 @@ public abstract class TokenSets implements GroovyTokenTypes {
       kDEFAULT
   ), BUILT_IN_TYPE);
 
-  public static TokenSet PROPERTY_NAMES = TokenSet.orSet(KEYWORD_PROPERTY_NAMES, TokenSet.create(mIDENT, mSTRING_LITERAL));
+  public static final TokenSet PROPERTY_NAMES = TokenSet.create(mIDENT, mSTRING_LITERAL, mGSTRING_LITERAL);
+
+  public static TokenSet REFERENCE_NAMES = TokenSet.orSet(KEYWORD_REFERENCE_NAMES, PROPERTY_NAMES);
 
 
   public static TokenSet VISIBILITY_MODIFIERS = TokenSet.create(

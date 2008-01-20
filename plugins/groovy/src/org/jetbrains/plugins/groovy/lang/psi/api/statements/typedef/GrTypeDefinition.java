@@ -55,9 +55,6 @@ public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiCla
 
   GrWildcardTypeArgument[] getTypeParametersGroovy();
 
-  @NotNull
-  PsiElement getNameIdentifierGroovy();
-
   @Nullable
   GrExtendsClause getExtendsClause();
 

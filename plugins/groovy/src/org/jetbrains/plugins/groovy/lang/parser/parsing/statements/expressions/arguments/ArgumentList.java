@@ -111,7 +111,7 @@ public class ArgumentList implements GroovyElementTypes {
       marker.done(ARGUMENT_LABEL);
       return true;
     } else if (ParserUtils.lookAhead(builder, mIDENT, mCOLON) ||
-            TokenSets.KEYWORD_PROPERTY_NAMES.contains(builder.getTokenType()) ||
+            TokenSets.KEYWORD_REFERENCE_NAMES.contains(builder.getTokenType()) ||
             TokenSets.NUMBERS.contains(builder.getTokenType()) ||
             mSTRING_LITERAL.equals(builder.getTokenType()) ||
             mGSTRING_LITERAL.equals(builder.getTokenType())

@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import javax.swing.*;
 import java.util.*;
@@ -180,7 +181,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiElement getNameIdentifierGroovy() {
-    PsiElement result = findChildByType(GroovyElementTypes.mIDENT);
+    PsiElement result = findChildByType(TokenSets.PROPERTY_NAMES);
     assert result != null;
     return result;
   }
@@ -313,7 +314,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public String getName() {
-    return getNameIdentifierGroovy().getText();
+    return PsiImplUtil.getName(this);
   }
 
   //Fake java class implementation
