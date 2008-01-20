@@ -25,6 +25,7 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   public static interface OccurrenceConsumer {
     void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
     void addOccurrence(char[] chars, int start, int end, int occurrenceMask);
+    void incTodoOccurrence(IndexPattern pattern);
   }
   
   protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer, int[] todoCounts) {
