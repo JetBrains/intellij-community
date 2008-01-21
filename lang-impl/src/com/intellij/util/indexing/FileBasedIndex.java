@@ -594,7 +594,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     private void markDirty(final VirtualFileEvent event) {
-      myFileToUpdate.add(event.getFile());
+      final VirtualFile file = event.getFile();
+      if (!file.isDirectory()) {
+        myFileToUpdate.add(file);
+      }
     }
 
     private void invalidateIndex(final VirtualFile file) {
