@@ -98,6 +98,5 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
 
-  <liveTemplateContext implementation="com.intellij.codeInsight.template.OtherContextType"/>
   <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 </extensions>

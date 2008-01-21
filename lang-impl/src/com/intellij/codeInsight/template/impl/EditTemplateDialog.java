@@ -253,7 +253,7 @@ public class EditTemplateDialog extends DialogWrapper {
     gbConstraints.weightx = 1;
     gbConstraints.weighty = 1;
 
-    final TemplateContextType[] contextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
+    final Collection<TemplateContextType> contextTypes = TemplateManagerImpl.getAllContextTypes();
     int row = 0;
     int col = 0;
     for (TemplateContextType contextType : contextTypes) {
@@ -264,7 +264,7 @@ public class EditTemplateDialog extends DialogWrapper {
       panel.add(cb, gbConstraints);
       myCbContextMap.put(contextType, cb);
 
-      if (row == (contextTypes.length + 1) / 2 - 1) {
+      if (row == (contextTypes.size() + 1) / 2 - 1) {
         row = 0;
         col = 1;
       }

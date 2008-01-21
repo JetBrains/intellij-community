@@ -17,8 +17,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
@@ -237,8 +240,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   public TemplateContextType getContextType(PsiFile file, int offset) {
-    final TemplateContextType[] contextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
-    for(TemplateContextType contextType: contextTypes) {
+    for(TemplateContextType contextType: getAllContextTypes()) {
       if (contextType.isInContext(file, offset)) {
         return contextType;
       }
@@ -247,6 +249,15 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return null;
   }
 
+  public static Collection<TemplateContextType> getAllContextTypes() {
+    // OtherContextType must be last in the list, so don't register it as extension
+    List<TemplateContextType> result = new ArrayList<TemplateContextType>();
+    Collections.addAll(result, Extensions.getExtensions(TemplateContextType.EP_NAME));
+    result.add(new OtherContextType());
+    return result;
+  }
+
+  @NotNull
   public String getComponentName() {
     return "TemplateManager";
   }

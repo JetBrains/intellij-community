@@ -14,8 +14,9 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public class TemplateEditorUtil {
 
   public static void setHighlighter(Editor editor, TemplateContext templateContext) {
     SyntaxHighlighter baseHighlighter = null;
-    for(TemplateContextType type: Extensions.getExtensions(TemplateContextType.EP_NAME)) {
+    for(TemplateContextType type: TemplateManagerImpl.getAllContextTypes()) {
       if (type.isEnabled(templateContext)) {
         baseHighlighter = type.createHighlighter();
         if (baseHighlighter != null) break;
