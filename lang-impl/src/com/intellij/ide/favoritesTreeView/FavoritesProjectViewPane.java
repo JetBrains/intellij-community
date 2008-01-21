@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +124,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
     }
 
     final PsiElement originalElement = element.getOriginalElement();*/
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)object);
+    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile((PsiElement)object);
     final String list = FavoritesViewSelectInTarget.findSuitableFavoritesList(virtualFile, myProject, getSubId());
     if (list == null) return;
     if (!list.equals(getSubId())) {

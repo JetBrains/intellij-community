@@ -16,7 +16,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -291,7 +291,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
       Object element = path[path.length - 1];
       if (element instanceof SmartPsiElementPointer) {
-        final VirtualFile virtualFile = PsiUtil.getVirtualFile(((SmartPsiElementPointer)element).getElement());
+        final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(((SmartPsiElementPointer)element).getElement());
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())) {
           return true;
@@ -303,7 +303,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       }
 
       if (element instanceof PsiElement) {
-        final VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)element);
+        final VirtualFile virtualFile = PsiUtilBase.getVirtualFile((PsiElement)element);
         if (virtualFile == null) continue;
         if (vFile.getPath().equals(virtualFile.getPath())){
           return true;
