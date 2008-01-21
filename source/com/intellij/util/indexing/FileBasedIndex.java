@@ -1,6 +1,7 @@
 package com.intellij.util.indexing;
 
-import com.intellij.ProjectTopics;
+import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -13,20 +14,21 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.DataExternalizer;
@@ -72,21 +74,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private CompositeCommand myStartDataBuffering = new CompositeCommand();
   private CompositeCommand myStopDataBuffering = new CompositeCommand();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-
-  public void projectJoins(final Project project) {
-    // TODO: Change that to CacheUpdaters/FileSystemSynchronizer
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      public void beforeRootsChange(final ModuleRootEvent event) {
-      }
-
-      public void rootsChanged(final ModuleRootEvent event) {
-        scanContent(project, new EmptyProgressIndicator());
-      }
-    });
-  }
-
-  public void projectLeaves(Project project) {
-  }
+  private ChangedFilesUpdater myChangedFilesUpdater;
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -102,7 +90,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  public FileBasedIndex(final VirtualFileManager vfManager, final ProjectManager projectManager) throws IOException {
+  public FileBasedIndex(final VirtualFileManagerEx vfManager, final ProjectManager projectManager) throws IOException {
     final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
     for (FileBasedIndexExtension extension : extensions) {
       registerIndexer(
@@ -117,27 +105,17 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     dropUnregisteredIndices();
 
-    final VirtualFileListener vfsListener = new MyVFSListener();
-    vfManager.addVirtualFileListener(vfsListener);
+    myChangedFilesUpdater = new ChangedFilesUpdater();
+    vfManager.addVirtualFileListener(myChangedFilesUpdater);
+    vfManager.registerRefreshUpdater(myChangedFilesUpdater);
     myDisposables.add(new Disposable() {
       public void dispose() {
-        vfManager.removeVirtualFileListener(vfsListener);
+        vfManager.removeVirtualFileListener(myChangedFilesUpdater);
+        vfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
       }
     });
 
-    final ProjectManagerListener pmListener = new ProjectManagerAdapter() {
-      public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-          public void run() {
-            new Task.Modal(project, "Indexing", false) {
-              public void run(@NotNull final ProgressIndicator indicator) {
-                scanContent(project, indicator);
-              }
-            }.queue();
-          }
-        });
-      }
-    };
+    final ProjectManagerListener pmListener = new ProjectEventsTracker();
     projectManager.addProjectManagerListener(pmListener);
     myDisposables.add(new Disposable() {
       public void dispose() {
@@ -328,6 +306,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
 
   private void indexUnsavedDocuments() throws StorageException {
+    myChangedFilesUpdater.forceUpdate();
+    
     final FileDocumentManager fdManager = FileDocumentManager.getInstance();
     final Document[] documents = fdManager.getUnsavedDocuments();
     if (documents.length > 0) {
@@ -360,53 +340,36 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   
   // called for initial content scan on opening a project
   private void scanContent(final Project project, final ProgressIndicator indicator) {
-    final Set<String> indicesToUpdate = new HashSet<String>(myIndices.keySet());
-    if (indicesToUpdate.size() == 0) {
+    if (myIndices.size() == 0) {
       return;
     }
 
     indicator.pushState();
     try {
       indicator.setText("Building indices...");
-      final int[] fileCount = new int[] {0};
 
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      final ContentIterator filesCounter = new ContentIterator() {
-        public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory()) {
-            fileCount[0]++;
-          }
-          return true;
-        }
-      };
-      fileIndex.iterateContent(filesCounter);
-      fileIndex.iterateContent(new ContentIterator() {
-        private int myProcessed = 0;
-        private final double myTotalCount = (double)fileCount[0]; 
-        public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory()) {
-            for (String indexId : indicesToUpdate) {
-              if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
-                try {
-                  indicator.setText2(file.getPresentableUrl());
-                  updateSingleIndex(indexId, file, new FileContent(file, loadContent(file)), null);
-                }
-                catch (StorageException e) {
-                  LOG.error(e);
-                }
-              }
-            }
-            indicator.setFraction(((double)++myProcessed)/ myTotalCount);
-          }
-          return true;
-        }
-      });
+      final UnindexedFilesFinder filesCounter = new UnindexedFilesFinder(myIndices.keySet());
+      iterateIndexableFiles(project, filesCounter);
+      final List<VirtualFile> unindexedFiles = filesCounter.getFiles();
+      
+      int myProcessed = 0;
+      final double myTotalCount = (double)unindexedFiles.size(); 
+      for (VirtualFile file: unindexedFiles) {
+        indicator.setText2(file.getPresentableUrl());
+        indexFile(file, loadContent(file));
+        indicator.setFraction(((double)++myProcessed)/ myTotalCount);
+      }
     }
     finally {
       indicator.setText("Saving caches...");
       myFlushStorages.execute();
       indicator.popState();
     }
+  }
+
+  private static void iterateIndexableFiles(final Project project, final ContentIterator processor) {
+    // todo: iterate all files that can be indexed, not just content
+    ProjectRootManager.getInstance(project).getFileIndex().iterateContent(processor);
   }
 
   private void dropUnregisteredIndices() {
@@ -507,6 +470,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
+  /*
   private void updateIndicesForFile(final VirtualFile file, final @Nullable CharSequence oldContent) {
     final FileContent oldFC = oldContent != null ? new FileContent(file, oldContent) : null;
     final boolean isValidFile = file.isValid();
@@ -528,14 +492,53 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
     }
   }
+  */
+
+  private void invalidateIndex(final VirtualFile file, @NotNull final CharSequence content) {
+    final FileContent fc = new FileContent(file, content);
+    for (String indexId : myIndices.keySet()) {
+      if (getInputFilter(indexId).acceptInput(file)) {
+        try {
+          updateSingleIndex(indexId, file, null, fc);
+        }
+        catch (StorageException e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
+
+  private void indexFile(final VirtualFile file, @NotNull final CharSequence content) {
+    final FileContent fc = new FileContent(file, content);
+    for (String indexId : myIndices.keySet()) {
+      if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
+        try {
+          updateSingleIndex(indexId, file, fc, null);
+        }
+        catch (StorageException e) {
+          LOG.error(e);
+        }
+      }
+    }
+  }
 
   private void updateSingleIndex(final String indexId, final VirtualFile file, final FileContent currentFC, final FileContent oldFC)
     throws StorageException {
+
+    myStopDataBuffering.execute();
+    myIndexingHistory.clear();
+
     final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     index.update(inputId, currentFC, oldFC);
     if (file.isValid()) {
-      IndexingStamp.update(file, indexId, getIndexCreationStamp(indexId));
+      if (currentFC != null) {
+        IndexingStamp.update(file, indexId, getIndexCreationStamp(indexId));
+      }
+      else {
+        // mark the file as unindexed
+        IndexingStamp.update(file, indexId, -1L);
+      }
     }
   }
 
@@ -573,8 +576,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private static final com.intellij.openapi.util.Key<CharSequence> CONTENT_KEY = com.intellij.openapi.util.Key.create("FileContent");
-  private final class MyVFSListener extends VirtualFileAdapter {
+  private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
+    // todo: implement more sophisticated storage scheme in order to survive in massive changes
+    private Set<VirtualFile> myFileToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
+    
     public void contentsChanged(final VirtualFileEvent event) {
       doAfterAction(event);
     }
@@ -584,7 +589,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void fileDeleted(final VirtualFileEvent event) {
-      doAfterAction(event);
+      myFileToUpdate.remove(event.getFile()); // no need to update it anymore
     }
 
     public void fileMoved(final VirtualFileMoveEvent event) {
@@ -609,25 +614,41 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     
     private void doBeforeAction(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (myCompositeFilter.acceptInput(file)) {
-        final CharSequence oldContent = loadContent(file);
-        file.putUserData(CONTENT_KEY, oldContent);
-      }
-      else {
-        file.putUserData(CONTENT_KEY, null);
-      }
+      final CharSequence oldContent = loadContent(file);
+      invalidateIndex(file, oldContent);
     }
     
     private void doAfterAction(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (myCompositeFilter.acceptInput(file)) {
-        final @Nullable CharSequence oldContent = file.getUserData(CONTENT_KEY);
-        file.putUserData(CONTENT_KEY, null);
+      myFileToUpdate.add(file);
+    }
 
-        myStopDataBuffering.execute();
-        myIndexingHistory.clear();
+    public VirtualFile[] queryNeededFiles() {
+      return myFileToUpdate.toArray(new VirtualFile[myFileToUpdate.size()]);
+    }
 
-        updateIndicesForFile(file, oldContent);
+    public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
+      final VirtualFile file = fileContent.getVirtualFile();
+      try {
+        indexFile(file, LoadTextUtil.getTextByBinaryPresentation(fileContent.getBytes(), file, false));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      finally {
+        myFileToUpdate.remove(file);
+      }
+    }
+
+    public void updatingDone() {
+    }
+
+    public void canceled() {
+    }
+    
+    public void forceUpdate() {
+      for (VirtualFile file: queryNeededFiles()) {
+        processFile(new com.intellij.ide.startup.FileContent(file));
       }
     }
   }
@@ -647,6 +668,88 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     void clear() {
       myTasks.clear();
+    }
+  }
+
+  private class UnindexedFilesFinder implements ContentIterator {
+    private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
+    private final Collection<String> myIndexIds;
+
+    public UnindexedFilesFinder(final Collection<String> indexIds) {
+      myIndexIds = indexIds;
+    }
+
+    public List<VirtualFile> getFiles() {
+      return myFiles;
+    }
+
+    public boolean processFile(final VirtualFile file) {
+      if (!file.isDirectory()) {
+        for (String indexId : myIndexIds) {
+          if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
+            myFiles.add(file);
+            break;
+          }
+        }
+      }
+      return true;
+    }
+  }
+
+  private class UnindexedFilesUpdater implements CacheUpdater {
+    private final Project myProject;
+
+    private UnindexedFilesUpdater(Project project) {
+      myProject = project;
+    }
+
+    public VirtualFile[] queryNeededFiles() {
+      final UnindexedFilesFinder finder = new UnindexedFilesFinder(myIndices.keySet());
+      iterateIndexableFiles(myProject, finder);
+      final List<VirtualFile> files = finder.getFiles();
+      return files.toArray(new VirtualFile[files.size()]);
+    }
+
+    public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
+      final VirtualFile file = fileContent.getVirtualFile();
+      try {
+        indexFile(file, LoadTextUtil.getTextByBinaryPresentation(fileContent.getBytes(), file, false));
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
+    public void updatingDone() {
+    }
+
+    public void canceled() {
+    }
+  }
+
+  private class ProjectEventsTracker extends ProjectManagerAdapter {
+    private Map<Project, CacheUpdater> myUpdaters = new HashMap<Project, CacheUpdater>();
+    public void projectOpened(final Project project) {
+      final UnindexedFilesUpdater updater = new UnindexedFilesUpdater(project);
+      try {
+        final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
+        startupManager.registerPreStartupActivity(new Runnable() {
+          public void run() {
+            startupManager.getFileSystemSynchronizer().registerCacheUpdater(updater);
+            ProjectRootManagerEx.getInstanceEx(project).registerChangeUpdater(updater);
+          }
+        });
+      }
+      finally {
+        myUpdaters.put(project, updater);
+      }
+    }
+
+    public void projectClosed(final Project project) {
+      final CacheUpdater updater = myUpdaters.remove(project);
+      if (updater != null) {
+        ProjectRootManagerEx.getInstanceEx(project).unregisterChangeUpdater(updater);
+      }
     }
   }
 }
