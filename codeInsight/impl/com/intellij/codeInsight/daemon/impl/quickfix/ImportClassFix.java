@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -72,7 +73,9 @@ public class ImportClassFix implements HintAction {
     PsiShortNamesCache cache = JavaPsiFacade.getInstance(manager.getProject()).getShortNamesCache();
     String name = myRef.getReferenceName();
     GlobalSearchScope scope = myRef.getResolveScope();
-    assert name != null;
+    if (name == null) {
+      return Collections.emptyList();
+    }
     PsiClass[] classes = cache.getClassesByName(name, scope);
     ArrayList<PsiClass> classList = new ArrayList<PsiClass>();
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
