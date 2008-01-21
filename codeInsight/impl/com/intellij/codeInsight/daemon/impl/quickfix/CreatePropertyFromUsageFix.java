@@ -204,7 +204,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
         typeReference = accessor.getReturnTypeElement();
       }
       else {
-        accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field));
+        accessor = (PsiMethod)targetClass.add(PropertyUtil.generateSetterPrototype(field, targetClass));
         body = accessor.getBody();
         LOG.assertTrue(body != null, accessor.getText());
         PsiAssignmentExpression expr = (PsiAssignmentExpression)((PsiExpressionStatement)body.getStatements()[0]).getExpression();

@@ -330,6 +330,10 @@ public class PropertyUtil {
   }
 
   public static PsiMethod generateSetterPrototype(PsiField field) {
+    return generateSetterPrototype(field, field.getContainingClass());
+  }
+
+  public static PsiMethod generateSetterPrototype(PsiField field, final PsiClass containingClass) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
@@ -357,7 +361,7 @@ public class PropertyUtil {
           buffer.append("this.");
         }
         else {
-          String className = field.getContainingClass().getName();
+          String className = containingClass.getName();
           if (className != null) {
             buffer.append(className);
             buffer.append(".");
