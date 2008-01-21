@@ -38,6 +38,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -82,6 +84,7 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.ide.DataManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
@@ -326,6 +329,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         checkResultByFile(fileAfter, myFile, false);
       }
     }.execute().throwException();
+  }
+
+  public void type(final char c) {
+    EditorActionManager actionManager = EditorActionManager.getInstance();
+    TypedAction action = actionManager.getTypedAction();
+    action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
   }
 
   public PsiReference[] testFindUsages(@NonNls final String... fileNames) throws Throwable {

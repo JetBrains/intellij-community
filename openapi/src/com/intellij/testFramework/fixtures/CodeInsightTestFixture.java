@@ -233,4 +233,5 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void testRename(String fileAfter, String newName) throws Throwable;
 
+  void type(final char c);
 }

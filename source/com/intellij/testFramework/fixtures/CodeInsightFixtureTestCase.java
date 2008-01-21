@@ -9,6 +9,7 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -22,16 +23,20 @@ import java.util.Arrays;
  */
 public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
   protected CodeInsightTestFixture myFixture;
+  protected Module myModule;
 
   protected void setUp() throws Exception {
     super.setUp();
 
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder();
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
-    projectBuilder.addModule(JavaModuleFixtureBuilder.class).addSourceContentRoot(myFixture.getTempDirPath());
+    final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
     tuneFixture();    
 
     myFixture.setUp();
+
+    myModule = moduleFixtureBuilder.getFixture().getModule();
   }
 
   protected void tuneFixture() {}
@@ -54,7 +59,8 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
     return myFixture.getProject();
   }
 
-  protected abstract void tuneCompletionFile(PsiFile file);
+  protected void tuneCompletionFile(PsiFile file) {
+  }
 
   protected void checkCompletionVariants(final FileType fileType, final String text, final String... strings) throws Throwable {
     myFixture.configureByText(fileType, text.replaceAll("\\|", "<caret>"));

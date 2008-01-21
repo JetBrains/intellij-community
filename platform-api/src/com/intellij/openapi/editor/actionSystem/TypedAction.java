@@ -33,9 +33,11 @@ public class TypedAction {
   private static final Object TYPING_COMMAND_GROUP = Key.create("Typing");
 
   private TypedActionHandler myHandler;
+  private final TypedActionHandler myBaseHandler;
 
   public TypedAction() {
-    myHandler = new Handler();
+    myBaseHandler = new Handler();
+    myHandler = myBaseHandler;
   }
 
   private static class Handler implements TypedActionHandler {
@@ -71,6 +73,10 @@ public class TypedAction {
    */
   public TypedActionHandler getHandler() {
     return myHandler;
+  }
+
+  public TypedActionHandler getBaseHandler() {
+    return myBaseHandler;
   }
 
   /**

@@ -33,7 +33,7 @@ public abstract class PsiDocumentManager {
    * @param project the project for which the document manager is requested.
    * @return the document manager instance.
    */
-  public static PsiDocumentManager getInstance(Project project) {
+  public static PsiDocumentManager getInstance(@NotNull Project project) {
     return project.getComponent(PsiDocumentManager.class);
   }
 
