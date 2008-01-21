@@ -494,24 +494,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
   */
 
-  private void invalidateIndex(final VirtualFile file) {
-    FileContent fc = null;
-    for (String indexId : myIndices.keySet()) {
-      if (getInputFilter(indexId).acceptInput(file)) {
-        try {
-          if (IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
-            if (fc == null) {
-              fc = new FileContent(file, loadContent(file));
-            }
-            updateSingleIndex(indexId, file, null, fc);
-          }
-        }
-        catch (StorageException e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
 
   private void indexFile(final VirtualFile file, @NotNull final CharSequence content) {
     final FileContent fc = new FileContent(file, content);
@@ -584,47 +566,55 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
     // todo: implement more sophisticated storage scheme in order to survive in massive changes
     private Set<VirtualFile> myFileToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
-    
-    public void contentsChanged(final VirtualFileEvent event) {
-      doAfterAction(event);
-    }
+
+    // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     public void fileCreated(final VirtualFileEvent event) {
-      doAfterAction(event);
+      markDirty(event);
     }
 
     public void fileDeleted(final VirtualFileEvent event) {
       myFileToUpdate.remove(event.getFile()); // no need to update it anymore
     }
 
-    public void fileMoved(final VirtualFileMoveEvent event) {
-      doAfterAction(event);
-    }
-
     public void fileCopied(final VirtualFileCopyEvent event) {
-      doAfterAction(event);
+      markDirty(event);
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
-      doBeforeAction(event);
+      updateIndexSynchronouslyBeforeChange(event);
     }
 
     public void beforeContentsChange(final VirtualFileEvent event) {
-      doBeforeAction(event);
+      updateIndexSynchronouslyBeforeChange(event);
     }
 
-    public void beforeFileMovement(final VirtualFileMoveEvent event) {
-      doBeforeAction(event);
-    }
-    
-    private void doBeforeAction(final VirtualFileEvent event) {
-      final VirtualFile file = event.getFile();
-      invalidateIndex(file);
+    private void updateIndexSynchronouslyBeforeChange(final VirtualFileEvent event) {
+      invalidateIndex(event.getFile());
     }
 
-    private void doAfterAction(final VirtualFileEvent event) {
-      final VirtualFile file = event.getFile();
-      myFileToUpdate.add(file);
+    private void markDirty(final VirtualFileEvent event) {
+      myFileToUpdate.add(event.getFile());
+    }
+
+    private void invalidateIndex(final VirtualFile file) {
+      FileContent fc = null;
+      for (String indexId : myIndices.keySet()) {
+        if (getInputFilter(indexId).acceptInput(file)) {
+          try {
+            if (IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
+              if (fc == null) {
+                fc = new FileContent(file, loadContent(file));
+              }
+              updateSingleIndex(indexId, file, null, fc);
+              myFileToUpdate.add(file);
+            }
+          }
+          catch (StorageException e) {
+            LOG.error(e);
+          }
+        }
+      }
     }
 
     public VirtualFile[] queryNeededFiles() {
