@@ -35,7 +35,7 @@ public class GroovyCodeFragment extends GroovyFileImpl implements PsiCodeFragmen
   public GroovyCodeFragment(Project project, CharSequence text) {
     super(new SingleRootFileViewProvider(PsiManager.getInstance(project),
         new LightVirtualFile(
-            "_Dummy_.groovy",
+            "Dummy.groovy",
             GroovyFileType.GROOVY_FILE_TYPE,
             text), true));
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);
