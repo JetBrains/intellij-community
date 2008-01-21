@@ -63,6 +63,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   private volatile XmlTag[] myTags = null;
   private volatile XmlTagValue myValue = null;
   private volatile Map<String, CachedValue<XmlNSDescriptor>> myNSDescriptorsMap = null;
+  private volatile String myCachedNamespace;
+  private volatile long myModCount;
 
   private volatile boolean myHaveNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
@@ -79,6 +81,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
   public void clearCaches() {
     myName = null;
     myNamespaceMap = null;
+    myCachedNamespace = null;
     myAttributes = null;
     myAttributeValueMap = null;
     myHaveNamespaceDeclarations = false;
@@ -603,7 +606,15 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, XmlElementType
 
   @NotNull
   public String getNamespace() {
-    return getNamespaceByPrefix(getNamespacePrefix());
+    String cachedNamespace = myCachedNamespace;
+    final long curModCount = getManager().getModificationTracker().getModificationCount();
+    if (cachedNamespace != null && myModCount == curModCount) {
+      return cachedNamespace;
+    }
+    cachedNamespace = getNamespaceByPrefix(getNamespacePrefix());
+    myCachedNamespace = cachedNamespace;
+    myModCount = curModCount;
+    return cachedNamespace;
   }
 
   @NotNull
