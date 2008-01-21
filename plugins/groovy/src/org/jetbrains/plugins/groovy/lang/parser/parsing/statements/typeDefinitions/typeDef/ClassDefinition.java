@@ -55,10 +55,12 @@ public class ClassDefinition implements GroovyElementTypes {
 
     if (kEXTENDS.equals(builder.getTokenType())) {
       ExtendsClause.parse(builder);
+      ParserUtils.getToken(builder, mNLS);
     }
 
     if (kIMPLEMENTS.equals(builder.getTokenType())) {
       ImplementsClause.parse(builder);
+      ParserUtils.getToken(builder, mNLS);
     }
 
     if (mLCURLY.equals(builder.getTokenType())) {

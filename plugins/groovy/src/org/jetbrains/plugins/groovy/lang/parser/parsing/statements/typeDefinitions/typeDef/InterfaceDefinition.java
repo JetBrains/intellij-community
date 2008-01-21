@@ -49,8 +49,10 @@ public class InterfaceDefinition implements GroovyElementTypes {
     TypeParameters.parse(builder);
 
     ExtendsClause.parse(builder);
+    ParserUtils.getToken(builder, mNLS);
 
     ImplementsClause.parse(builder);
+    ParserUtils.getToken(builder, mNLS);
 
     if (WRONGWAY.equals(InterfaceBlock.parse(builder, name))) {
       builder.error(GroovyBundle.message("interface.body.expected"));
