@@ -53,10 +53,10 @@ public class MessageBusImpl implements MessageBus {
 
   //is used for debugging purposes
   @SuppressWarnings({"UnusedDeclaration", "FieldCanBeLocal"})
-  private Object myOwner;
+  private final Object myOwner;
 
-  public MessageBusImpl(MessageBus parentBus) {
-    this(null, parentBus);
+  public MessageBusImpl() {
+    this(null, null);
   }
 
   public MessageBusImpl(final Object owner, MessageBus parentBus) {
