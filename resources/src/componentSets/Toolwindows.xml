@@ -19,12 +19,6 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.projectView.ProjectView</interface-class>
-      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
 
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.ClassesTreeStructureProvider</implementation-class>
@@ -35,12 +29,6 @@
     <component>
       <interface-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</interface-class>
       <implementation-class>com.intellij.ide.hierarchy.HierarchyBrowserManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <interface-class>com.intellij.ide.todo.TodoView</interface-class>
-      <implementation-class>com.intellij.ide.todo.TodoView</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>

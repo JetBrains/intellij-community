@@ -76,8 +76,10 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
     myPropertiesFileListener = new PropertiesFileListener();
-
-    PropertiesFilesManager.getInstance().addPropertiesFileListener(myPropertiesFileListener);
+    final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
+    if (propertiesFilesManager != null) {
+      propertiesFilesManager.addPropertiesFileListener(myPropertiesFileListener);
+    }
     myProblemListener = new MyProblemListener();
     WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
     initRootNode();
@@ -88,7 +90,10 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
-    PropertiesFilesManager.getInstance().removePropertiesFileListener(myPropertiesFileListener);
+    final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
+    if (propertiesFilesManager != null) {
+      propertiesFilesManager.removePropertiesFileListener(myPropertiesFileListener);
+    }
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 

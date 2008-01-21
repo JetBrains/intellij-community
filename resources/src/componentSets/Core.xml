@@ -125,38 +125,12 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <implementation-class>com.intellij.psi.search.scope.packageSet.NamedScopeManager</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.jar.BuildJarProjectSettings</implementation-class>
       <skipForDummyProject/>
     </component>
 
     <component>
-      <implementation-class>com.intellij.ide.scopeView.ScopeViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.ide.projectView.impl.PackageViewPane</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
-
-    <component>
-      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
