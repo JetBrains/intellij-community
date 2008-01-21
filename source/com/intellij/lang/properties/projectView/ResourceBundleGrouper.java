@@ -91,6 +91,10 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
     return null;
   }
 
+  public PsiElement getTopLevelElement(final PsiElement element) {
+    return null;
+  }
+
   @NotNull
   public String getComponentName() {
     return "ResourceBundleGrouper";

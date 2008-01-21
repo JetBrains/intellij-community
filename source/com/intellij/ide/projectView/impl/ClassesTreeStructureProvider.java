@@ -9,9 +9,9 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,6 +51,47 @@ public class ClassesTreeStructureProvider implements TreeStructureProvider, Proj
     return null;
   }
 
+  public PsiElement getTopLevelElement(final PsiElement element) {
+    PsiFile baseRootFile = getBaseRootFile(element);
+    if (baseRootFile == null) return null;
+    PsiElement current = element;
+    while (current != null) {
+      if (current instanceof PsiFileSystemItem) {
+        break;
+      }
+      if (isTopLevelClass(current, baseRootFile)) {
+        break;
+      }
+      current = current.getParent();
+    }
+
+    if (current instanceof PsiClassOwner) {
+      PsiClass[] classes = ((PsiClassOwner)current).getClasses();
+      if (classes.length > 0 && isTopLevelClass(classes[0], baseRootFile)) {
+        current = classes[0];
+      }
+    }
+    return current instanceof PsiClass ? current : baseRootFile;
+  }
+
+  @Nullable
+  private static PsiFile getBaseRootFile(PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+
+    final FileViewProvider viewProvider = containingFile.getViewProvider();
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
+
+  private static boolean isTopLevelClass(final PsiElement element, PsiFile baseRootFile) {
+
+    if (!(element instanceof PsiClass)) {
+      return false;
+    }
+    final PsiElement parent = element.getParent();
+                                        // do not select JspClass
+    return parent instanceof PsiFile && parent.getLanguage() == baseRootFile.getLanguage();
+  }
 
   public void projectOpened() {
   }
