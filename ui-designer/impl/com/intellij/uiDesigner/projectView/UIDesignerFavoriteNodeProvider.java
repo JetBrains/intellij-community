@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class UIDesignerFavoriteNodeProvider implements FavoriteNodeProvider {
+public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Nullable
   public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings) {
     Project project = PlatformDataKeys.PROJECT.getData(context);

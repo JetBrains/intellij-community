@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,11 +36,11 @@ import java.util.Collection;
  *
  * @author yole
  */
-public interface FavoriteNodeProvider {
-  ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<FavoriteNodeProvider>("com.intellij.favoriteNodeProvider");
+public abstract class FavoriteNodeProvider {
+  public static final ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<FavoriteNodeProvider>("com.intellij.favoriteNodeProvider");
 
   @Nullable
-  Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
+  public abstract Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
 
   /**
    * Checks if the specified project view node element (the value of {@link AbstractTreeNode}) contains
@@ -49,7 +50,7 @@ public interface FavoriteNodeProvider {
    * @param vFile   the file to check.
    * @return true if the file is contained, false if not or if <code>element</code> is not an element supported by this provider.
    */
-  boolean elementContainsFile(final Object element, final VirtualFile vFile);
+  public abstract boolean elementContainsFile(final Object element, final VirtualFile vFile);
 
   /**
    * Returns the weight of the specified project view node element to use when sorting the favorites list.
@@ -58,7 +59,7 @@ public interface FavoriteNodeProvider {
    * @param isSortByType
    * @return the weight, or -1 if <code>element</code> is not an element supported by this provider.
    */
-  int getElementWeight(final Object element, final boolean isSortByType);
+  public abstract int getElementWeight(final Object element, final boolean isSortByType);
 
   /**
    * Returns the location text (grey text in parentheses) to display in the Favorites view for the specified element.
@@ -67,7 +68,7 @@ public interface FavoriteNodeProvider {
    * @return the location text, or -1 if <code>element</code> is not an element supported by this provider.
    */
   @Nullable
-  String getElementLocation(final Object element);
+  public abstract String getElementLocation(final Object element);
 
   /**
    * Checks if the specified element is invalid and needs to be removed from the tree.
@@ -75,7 +76,7 @@ public interface FavoriteNodeProvider {
    * @param element the element to check.
    * @return true if the element is invalid, false if the element is valid or not supported by this provider.
    */
-  boolean isInvalidElement(final Object element);
+  public abstract boolean isInvalidElement(final Object element);
 
   /**
    * Returns the identifier used to persist favorites for this provider.
@@ -83,7 +84,7 @@ public interface FavoriteNodeProvider {
    * @return the string identifier.
    */
   @NotNull @NonNls
-  String getFavoriteTypeId();
+  public abstract String getFavoriteTypeId();
 
   /**
    * Returns the persistable URL for the specified element.
@@ -92,7 +93,7 @@ public interface FavoriteNodeProvider {
    * @return the URL, or null if the element is not supported by this provider.
    */
   @Nullable @NonNls
-  String getElementUrl(final Object element);
+  public abstract String getElementUrl(final Object element);
 
   /**
    * Returns the name of the module containing the specified element.
@@ -101,7 +102,7 @@ public interface FavoriteNodeProvider {
    * @return the name of the module, or null if the element is not supported by this provider or the module name is unknown.
    */
   @Nullable
-  String getElementModuleName(final Object element);
+  public abstract String getElementModuleName(final Object element);
 
   /**
    * Returns the path of node objects to be added to the favorites tree for the specified persisted URL and module name.
@@ -113,5 +114,13 @@ public interface FavoriteNodeProvider {
    * specified URL.
    */
   @Nullable
-  Object[] createPathFromUrl(final Project project, final String url, final String moduleName);
+  public abstract Object[] createPathFromUrl(final Project project, final String url, final String moduleName);
+
+  @Nullable
+  public PsiElement getPsiElement(final Object element) {
+    if (element instanceof PsiElement) {
+      return (PsiElement)element;
+    }
+    return null;
+  }
 }

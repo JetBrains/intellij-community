@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ResourcesFavoriteNodeProvider implements FavoriteNodeProvider {
+public class ResourcesFavoriteNodeProvider extends FavoriteNodeProvider {
   private final Project myProject;
 
   public ResourcesFavoriteNodeProvider(Project project) {

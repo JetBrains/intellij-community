@@ -10,7 +10,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
@@ -22,6 +21,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
@@ -183,6 +183,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
         if (psiElement != null) {
           result.add(psiElement);
         }
+      } else {
+        for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
+          final PsiElement psiElement = provider.getPsiElement(element);
+          if (psiElement != null) {
+            result.add(psiElement);
+            break;
+          }
+        }
       }
     }
     return result.toArray(new PsiElement[result.size()]);
@@ -218,30 +226,14 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider {
       return myHelpId;
     }
     if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      Object[] elements = getSelectedNodeElements();
-      if (elements == null || elements.length != 1) {
+      PsiElement[] elements = getSelectedPsiElements();
+      if (elements.length != 1) {
         return null;
       }
-      final PsiElement psiElement;
-      if (elements[0] instanceof SmartPsiElementPointer) {
-        psiElement = ((SmartPsiElementPointer)elements[0]).getElement();
-      }
-      else if (elements[0] instanceof PsiElement) {
-        psiElement = (PsiElement)elements[0];
-      }
-      else if (elements[0] instanceof PackageElement) {
-        psiElement = ((PackageElement)elements[0]).getPackage();
-      }
-      else {
-        return null;
-      }
-      return psiElement != null && psiElement.isValid() ? psiElement : null;
+      return elements[0] != null && elements[0].isValid() ? elements[0] : null;
     }
     if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
       final PsiElement[] elements = getSelectedPsiElements();
-      if (elements == null) {
-        return null;
-      }
       ArrayList<PsiElement> result = new ArrayList<PsiElement>();
       for (PsiElement element : elements) {
         if (element.isValid()) {

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiClassFavoriteNodeProvider implements FavoriteNodeProvider {
+public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) return null;

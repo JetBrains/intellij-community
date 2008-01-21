@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PsiPackageFavoriteNodeProvider implements FavoriteNodeProvider {
+public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
   public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) return null;
@@ -167,5 +167,11 @@ public class PsiPackageFavoriteNodeProvider implements FavoriteNodeProvider {
     return new Object[]{packageElement};
   }
 
-
+  @Override
+  public PsiElement getPsiElement(final Object element) {
+    if (element instanceof PackageElement) {
+      return ((PackageElement)element).getPackage();
+    }
+    return super.getPsiElement(element);
+  }
 }
