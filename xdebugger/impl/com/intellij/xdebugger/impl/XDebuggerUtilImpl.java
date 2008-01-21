@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,5 +83,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     XBreakpointType<?, ?> type = myTypeByClass.get(typeClass);
     //noinspection unchecked
     return (XBreakpointType<B, ?>)type;
+  }
+
+  @Nullable 
+  public XSourcePosition createPosition(@NotNull final VirtualFile file, final int line) {
+    return XSourcePositionImpl.create(file, line);
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -42,4 +43,7 @@ public abstract class XDebuggerUtil {
   public abstract void removeBreakpoint(Project project, XBreakpoint<?> breakpoint);
 
   public abstract <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass);
+
+  @Nullable
+  public abstract XSourcePosition createPosition(@NotNull VirtualFile file, int line);
 }

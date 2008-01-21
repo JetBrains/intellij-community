@@ -18,8 +18,8 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +33,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private @Nullable RangeHighlighter myHighlighter;
   private final XLineBreakpointType<P> myType;
   private Icon myIcon;
+  private XSourcePosition mySourcePosition;
 
   public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, final @Nullable P properties) {
     super(type, breakpointManager, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
@@ -98,9 +99,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     return myHighlighter;
   }
 
-  @NotNull
   public XSourcePosition getSourcePosition() {
-    return new XSourcePositionImpl(getFile(), getLine());
+    if (mySourcePosition == null) {
+      mySourcePosition = XSourcePositionImpl.create(getFile(), getLine());
+    }
+    return mySourcePosition;
   }
 
   public boolean isValid() {

@@ -4,6 +4,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -13,11 +14,10 @@ public class XSourcePositionImpl implements XSourcePosition {
   private int myLine;
   private int myOffset;
 
-  public XSourcePositionImpl(final VirtualFile file, final int line) {
+  private XSourcePositionImpl(final VirtualFile file, final int line, final int offset) {
     myFile = file;
     myLine = line;
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    myOffset = document.getLineStartOffset(line);
+    myOffset = offset;
   }
 
   public int getLine() {
@@ -30,5 +30,14 @@ public class XSourcePositionImpl implements XSourcePosition {
 
   public VirtualFile getFile() {
     return myFile;
+  }
+
+  @Nullable
+  public static XSourcePositionImpl create(final VirtualFile file, final int line) {
+    Document document = FileDocumentManager.getInstance().getDocument(file);
+    if (document == null || line >= document.getLineCount()) {
+      return null;
+    }
+    return new XSourcePositionImpl(file, line, document.getLineStartOffset(line));
   }
 }
