@@ -139,7 +139,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
         if (ref.resolve() == null) {
-          new ImportClassFix(ref).showHint(editor);
+          new ImportClassFix(ref).doFix(editor, false);
         }
       }
     }

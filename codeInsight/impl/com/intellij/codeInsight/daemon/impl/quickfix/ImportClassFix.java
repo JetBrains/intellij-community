@@ -119,6 +119,10 @@ public class ImportClassFix implements HintAction {
 
   public boolean showHint(final Editor editor) {
 
+    return doFix(editor, true);
+  }
+
+  public boolean doFix(final Editor editor, boolean doShow) {
     List<PsiClass> classesToImport = getClassesToImport();
     if (classesToImport.isEmpty()) {
       return false;
@@ -157,8 +161,10 @@ public class ImportClassFix implements HintAction {
       });
       return false;
     }
-    String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
-    HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(), myRef.getTextRange().getEndOffset(), action);
+    if (doShow) {
+      String hintText = ShowAutoImportPass.getMessage(classes.length > 1, classes[0].getQualifiedName());
+      HintManager.getInstance().showQuestionHint(editor, hintText, myRef.getTextOffset(), myRef.getTextRange().getEndOffset(), action);
+    }
     return true;
   }
 
