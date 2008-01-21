@@ -634,7 +634,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
       final VirtualFile file = fileContent.getVirtualFile();
       try {
-        indexFile(file, LoadTextUtil.getTextByBinaryPresentation(fileContent.getBytes(), file, false));
+        if (file.isValid()) {
+          indexFile(file, LoadTextUtil.getTextByBinaryPresentation(fileContent.getBytes(), file, false));
+        }
       }
       catch (IOException e) {
         LOG.error(e);
