@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.codeInspection.QuestionActionDescriptorGetter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,11 +25,19 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private Navigatable myNavigatable;
   private final boolean myAfterEndOfLine;
   private final TextRange myTextRangeInElement;
-  private QuestionActionDescriptorGetter myQuestionActionDescriptorGetter;
+  private final HintAction myHintAction;
 
   public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
                                ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement) {
+    this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, null);
+  }
+
+  public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
+                               ProblemHighlightType highlightType, boolean isAfterEndOfLine, final TextRange rangeInElement,
+                               HintAction hintAction) {
+
     super(fixes, descriptionTemplate);
+    myHintAction = hintAction;
     LOG.assertTrue(startElement.isValid(), startElement);
     LOG.assertTrue(endElement.isValid(), endElement);
     assertPhysical(startElement, endElement);
@@ -121,11 +128,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     myNavigatable = navigatable;
   }
 
-  public QuestionActionDescriptorGetter getQuestionActionDescriptorGetter() {
-    return myQuestionActionDescriptorGetter;
-  }
-
-  public void setQuestionActionDescriptorGetter(final QuestionActionDescriptorGetter questionActionDescriptorGetter) {
-    myQuestionActionDescriptorGetter = questionActionDescriptorGetter;
+  public HintAction getHintAction() {
+    return myHintAction;
   }
 }

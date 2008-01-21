@@ -220,7 +220,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   }
 
   private void bindMessageToTag(final XmlTag tag, final HighlightInfoType warning, final int offset,
-                                final int messageLength, final String localizedMessage, final HighlightDisplayKey key, IntentionAction... quickFixActions) {
+                                final int messageLength, final String localizedMessage,
+                                final HighlightDisplayKey key, IntentionAction... quickFixActions) {
     XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
     bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);

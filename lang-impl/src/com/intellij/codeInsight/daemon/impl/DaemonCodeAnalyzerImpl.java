@@ -527,7 +527,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
       }
     };
   }
-  boolean canChangeFileSilently(PsiFileSystemItem file) {
+  public boolean canChangeFileSilently(PsiFileSystemItem file) {
     return myDaemonListeners.canChangeFileSilently(file);
   }
 

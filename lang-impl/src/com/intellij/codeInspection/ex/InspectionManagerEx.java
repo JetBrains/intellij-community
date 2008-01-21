@@ -130,13 +130,10 @@ public class InspectionManagerEx extends InspectionManager implements JDOMExtern
   }
 
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement, @NotNull final String descriptionTemplate, final ProblemHighlightType highlightType,
-                                                   final QuestionActionDescriptorGetter questionActionDescriptorGetter,
+                                                   final HintAction hintAction,
                                                    final LocalQuickFix... fixes) {
 
-    final ProblemDescriptorImpl descriptor =
-      new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null);
-    descriptor.setQuestionActionDescriptorGetter(questionActionDescriptorGetter);
-    return descriptor;
+    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction);
   }
 
 

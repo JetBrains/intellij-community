@@ -9,16 +9,12 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
-import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.QuestionActionDescriptorGetter;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -1820,12 +1816,6 @@ public class HighlightUtil {
         QuickFixAction.registerQuickFixAction(info, new ImportClassFix(ref));
         QuickFixAction.registerQuickFixAction(info, SetupJDKFix.getInstnace());
         OrderEntryFix.registerFixes(info, ref);
-        info.setQuestionActionGetter(new QuestionActionDescriptorGetter() {
-          public Pair<String, ? extends QuestionAction> getQuestionActionDescriptor(final @NotNull PsiElement element, final @NotNull Editor editor,
-                                                                                    final @NotNull PsiFile file) {
-            return element instanceof PsiJavaCodeReferenceElement ? ShowAutoImportPass.getDescriptor(editor, (PsiJavaCodeReferenceElement)element) : null;
-          }
-        });
         if (ref instanceof PsiReferenceExpression) {
           TextRange fixRange = HighlightMethodUtil.getFixRange(ref);
           PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;

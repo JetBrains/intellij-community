@@ -2,10 +2,12 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CustomSuppressableInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
@@ -14,7 +16,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,7 +29,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -195,9 +195,9 @@ public class HighlightInfo {
 
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
+  private boolean hasHint;
 
   private GutterIconRenderer gutterIconRenderer;
-  private QuestionActionDescriptorGetter questionActionGetter;
 
   public HighlightInfo(HighlightInfoType type, int startOffset, int endOffset, String description, String toolTip) {
     this(type, null, startOffset, endOffset, description, toolTip);
@@ -311,14 +311,12 @@ public class HighlightInfo {
              : severity == HighlightSeverity.INFO ? HighlightInfoType.INFO : HighlightInfoType.INFORMATION;
   }
 
-
-  public void setQuestionActionGetter(final QuestionActionDescriptorGetter questionActionGetter) {
-    this.questionActionGetter = questionActionGetter;
+  public boolean hasHint() {
+    return hasHint;
   }
 
-  @Nullable
-  public Pair<String, ? extends QuestionAction> getQuestionAction(PsiElement psiElement, Editor editor, final PsiFile file) {
-    return questionActionGetter == null ? null : questionActionGetter.getQuestionActionDescriptor(psiElement, editor, file);
+  public void setHint(final boolean hasHint) {
+    this.hasHint = hasHint;
   }
 
   public static class IntentionActionDescriptor {

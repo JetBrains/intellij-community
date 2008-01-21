@@ -2,7 +2,10 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.FQNameCellRenderer;
@@ -13,6 +16,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -38,9 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,7 +52,7 @@ import java.util.List;
 * Time: 11:13:33 PM
 * To change this template use File | Settings | File Templates.
 */
-public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQuickFix {
+public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFix {
   final boolean myTaglibDeclaration;
   private final XmlElement myElement;
   private final String myNamespacePrefix;
@@ -196,6 +199,53 @@ public class CreateNSDeclarationIntentionFix implements IntentionAction, LocalQu
 
   public boolean startInWriteAction() {
     return true;
+  }
+
+  public boolean showHint(final Editor editor) {
+    if (!(myElement instanceof XmlTag)) {
+      return false;
+    }
+    final String text = ((XmlTag)myElement).getName().trim();
+    final int pos = text.indexOf(':');
+    final Collection<String> list = new HashSet<String>();
+    String prefix = null;
+    final Project project = myElement.getProject();
+    if (pos == -1) {  // tag name
+ //     final MultiMap<String,String> map = JspManager.getInstance(project).getPossibleTagNames((JspFile)file);
+
+    } else if (pos == text.length() - 1) { // ns prefix
+      final Module module = ModuleUtil.findModuleForPsiElement(myElement);
+      if (module == null) {
+        return false;
+      }
+      prefix = text.substring(0, text.length() - 1);
+      final Collection<XmlFile> files = JspManager.getInstance(project).getPossibleTldFiles(module);
+      for (XmlFile psiFile : files) {
+        final XmlDocument document = psiFile.getDocument();
+        if (document != null) {
+          final TldDescriptor descriptor = (TldDescriptor)document.getMetaData();
+          if (descriptor != null) {
+            if (descriptor.getDefaultPrefix().equals(prefix)) {
+              final String uri = descriptor.getUri();
+              if (!StringUtil.isEmpty(uri)) {
+                list.add(uri);
+              }
+            }
+          }
+        }
+      }
+
+    } else {  // qualified tag name
+
+    }
+
+    if (!list.isEmpty()) {
+      final String message = ShowAutoImportPass.getMessage(list.size() > 1, list.iterator().next());
+      final ImportNSAction action = new ImportNSAction(list, prefix, myElement.getContainingFile(), editor, "taglib.to.import");
+      HintManager.getInstance().showQuestionHint(editor, message, myElement.getTextOffset(), myElement.getTextRange().getEndOffset(), action);
+      return true;
+    }
+    return false;
   }
 
   public interface StringToAttributeProcessor {

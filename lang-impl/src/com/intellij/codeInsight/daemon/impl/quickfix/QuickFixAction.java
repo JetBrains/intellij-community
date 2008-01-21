@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.HintAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -24,24 +25,15 @@ import java.util.List;
  * @author Alexey Kudravtsev
  */
 public final class QuickFixAction {
+  private QuickFixAction() {
+  }
+
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, HighlightDisplayKey key) {
     registerQuickFixAction(info, null, action, key);
   }
 
   public static void registerQuickFixAction(HighlightInfo info, IntentionAction action) {
     registerQuickFixAction(info, null, action, null);
-  }
-
-  @Deprecated
-  public static void registerQuickFixAction(HighlightInfo info, IntentionAction action, List<IntentionAction> options, String displayName) {
-    if (info == null || action == null) return;
-    final TextRange fixRange = new TextRange(info.startOffset, info.endOffset);
-    if (info.quickFixActionRanges == null) {
-      info.quickFixActionRanges = new ArrayList<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>>();
-    }
-    info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, options, displayName), fixRange));
-    info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
-    info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
   }
 
   public static void registerQuickFixAction(HighlightInfo info, TextRange fixRange, IntentionAction action, final HighlightDisplayKey key) {
@@ -53,6 +45,9 @@ public final class QuickFixAction {
     info.quickFixActionRanges.add(Pair.create(new HighlightInfo.IntentionActionDescriptor(action, key), fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
+    if (action instanceof HintAction) {
+      info.setHint(true);
+    }
   }
 
   public static void removeAction(Editor editor, Project project, IntentionAction action) {
