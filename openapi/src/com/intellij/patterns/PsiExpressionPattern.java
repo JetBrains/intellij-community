@@ -20,7 +20,7 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
   public Self ofType(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>() {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(t.getType(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(t.getType(), matchingContext, traverseContext);
       }
     });
   }
@@ -31,7 +31,7 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
         if (element instanceof PsiMethodCallExpression) {
           final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);
           for (JavaResolveResult result : results) {
-            if (methodPattern.accepts(result.getElement(), matchingContext, traverseContext)) {
+            if (methodPattern.getCondition().accepts(result.getElement(), matchingContext, traverseContext)) {
               return true;
             }
           }

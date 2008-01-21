@@ -20,7 +20,7 @@ public class PatternFilter implements ElementFilter {
   }
 
   public boolean isAcceptable(Object element, PsiElement context) {
-    return myPattern.accepts(element, new MatchingContext(), new TraverseContext());
+    return myPattern.accepts(element);
   }
 
   public boolean isClassAcceptable(Class hintClass) {

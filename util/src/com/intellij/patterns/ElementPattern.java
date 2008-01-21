@@ -3,16 +3,16 @@
  */
 package com.intellij.patterns;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public interface ElementPattern {
+public interface ElementPattern<T> {
 
   boolean accepts(@Nullable Object o);
 
-  boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext);
+  boolean accepts(@Nullable Object o, final MatchingContext matchingContext);
 
+  ElementPatternCondition<T> getCondition();
 }

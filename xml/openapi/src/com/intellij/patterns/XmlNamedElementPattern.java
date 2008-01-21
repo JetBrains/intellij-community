@@ -28,15 +28,15 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   public Self withLocalName(final ElementPattern localName) {
     return with(new PatternCondition<T>() {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return localName.accepts(getLocalName(t), matchingContext, traverseContext);
+        return localName.getCondition().accepts(getLocalName(t), matchingContext, traverseContext);
       }
     });
   }
 
-  public Self withNamespace(final ElementPattern namespace) {
-    return with(new PatternCondition<T>() {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return namespace.accepts(getNamespace(t), matchingContext, traverseContext);
+  public Self withNamespace(final ElementPattern<String> namespace) {
+    return with(new PropertyPatternCondition<T, String>(namespace) {
+      protected String getPropertyValue(@NotNull final T t) {
+        return getNamespace(t);
       }
     });
   }

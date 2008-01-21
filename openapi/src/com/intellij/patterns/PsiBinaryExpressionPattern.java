@@ -21,7 +21,7 @@ public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryEx
   public PsiBinaryExpressionPattern left(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<PsiBinaryExpression>() {
       public boolean accepts(@NotNull final PsiBinaryExpression psiBinaryExpression, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(psiBinaryExpression.getLOperand(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(psiBinaryExpression.getLOperand(), matchingContext, traverseContext);
       }
     });
   }
@@ -29,7 +29,7 @@ public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryEx
   public PsiBinaryExpressionPattern right(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<PsiBinaryExpression>() {
       public boolean accepts(@NotNull final PsiBinaryExpression psiBinaryExpression, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(psiBinaryExpression.getROperand(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(psiBinaryExpression.getROperand(), matchingContext, traverseContext);
       }
     });
   }
@@ -37,7 +37,7 @@ public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryEx
   public PsiBinaryExpressionPattern operation(final ElementPattern pattern) {
     return with(new PatternCondition<PsiBinaryExpression>() {
       public boolean accepts(@NotNull final PsiBinaryExpression psiBinaryExpression, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(psiBinaryExpression.getOperationSign(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(psiBinaryExpression.getOperationSign(), matchingContext, traverseContext);
       }
     });
   }

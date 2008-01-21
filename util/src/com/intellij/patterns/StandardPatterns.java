@@ -67,7 +67,7 @@ public class StandardPatterns {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final ElementPattern pattern : patterns) {
-          if (pattern.accepts(o, matchingContext, traverseContext)) return true;
+          if (pattern.getCondition().accepts(o, matchingContext, traverseContext)) return true;
         }
         return false;
       }
@@ -79,7 +79,7 @@ public class StandardPatterns {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final ElementPattern pattern : patterns) {
-          if (!pattern.accepts(o, matchingContext, traverseContext)) return false;
+          if (!pattern.getCondition().accepts(o, matchingContext, traverseContext)) return false;
         }
         return true;
       }
@@ -90,7 +90,7 @@ public class StandardPatterns {
     return new ObjectPattern.Capture<E>(new NullablePatternCondition() {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return !pattern.accepts(o, matchingContext, traverseContext);
+        return !pattern.getCondition().accepts(o, matchingContext, traverseContext);
       }
     });
   }
@@ -99,7 +99,7 @@ public class StandardPatterns {
     return new ObjectPattern.Capture<T>(new NullablePatternCondition() {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        pattern.accepts(o, matchingContext, traverseContext);
+        pattern.getCondition().accepts(o, matchingContext, traverseContext);
         return true;
       }
     });

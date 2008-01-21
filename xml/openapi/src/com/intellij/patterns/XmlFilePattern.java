@@ -23,7 +23,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
                                 final MatchingContext matchingContext,
                                 @NotNull final TraverseContext traverseContext) {
         XmlDocument document = xmlFile.getDocument();
-        return document != null && rootTag.accepts(document.getRootTag(), matchingContext, traverseContext);
+        return document != null && rootTag.getCondition().accepts(document.getRootTag(), matchingContext, traverseContext);
       }
     });
   }

@@ -13,7 +13,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -71,11 +70,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     });
   }
 
-  public Self withElementType(final ElementPattern pattern) {
-    return with(new PatternCondition<T>() {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+  public Self withElementType(final ElementPattern<IElementType> pattern) {
+    return with(new PropertyPatternCondition<T,IElementType>(pattern) {
+      protected IElementType getPropertyValue(@NotNull final T t) {
         final ASTNode node = t.getNode();
-        return node != null && pattern.accepts(node.getElementType(), matchingContext, traverseContext);
+        return node != null ? node.getElementType() : null;
       }
 
       public String toString() {
@@ -96,22 +95,16 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return withName(StandardPatterns.string().equalTo(name));
   }
 
-  public Self withName(@NotNull final ElementPattern name) {
-    return with(new PatternCondition<T>() {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return t instanceof PsiNamedElement && name.accepts(((PsiNamedElement)t).getName(), matchingContext, traverseContext);
+  public Self withName(@NotNull final ElementPattern<String> name) {
+    return with(new PropertyPatternCondition<T, String>(name) {
+      protected String getPropertyValue(@NotNull final T t) {
+        return t instanceof PsiNamedElement ? ((PsiNamedElement) t).getName() : null;
       }
 
       public String toString() {
         return "withName(" + name + ")";
       }
     });
-  }
-
-  @Nullable
-  private static PsiElement getPrevLeaf(PsiElement element) {
-    final int offset = element.getTextRange().getStartOffset();
-    return offset == 0 ? null : element.getContainingFile().findElementAt(offset - 1);
   }
 
   public Self afterLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
@@ -124,8 +117,8 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
           element = element.getContainingFile().findElementAt(offset - 1);
           if (element == null) return false;
-          if (!skip.accepts(element, matchingContext, traverseContext)) {
-            return pattern.accepts(element, matchingContext, traverseContext);
+          if (!skip.getCondition().accepts(element, matchingContext, traverseContext)) {
+            return pattern.getCondition().accepts(element, matchingContext, traverseContext);
           }
         }
       }
@@ -143,7 +136,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   private PatternCondition<T> _withText(final ElementPattern pattern) {
     return new PatternCondition<T>() {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(t.getText(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(t.getText(), matchingContext, traverseContext);
       }
 
       public String toString() {

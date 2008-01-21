@@ -21,7 +21,7 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
     return with(new PatternCondition<T>() {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         PsiDirectory directory = t.getContainingDirectory();
-        return directory != null && namePattern.accepts(directory.getName(), matchingContext, traverseContext);
+        return directory != null && namePattern.getCondition().accepts(directory.getName(), matchingContext, traverseContext);
       }
     });
   }

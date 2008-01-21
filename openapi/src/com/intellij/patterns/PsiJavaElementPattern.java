@@ -48,7 +48,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
         if (parent instanceof PsiMethod && t != ((PsiMethod) parent).getNameIdentifier()) return false;
         if (parent instanceof PsiVariable && t != ((PsiVariable) parent).getNameIdentifier()) return false;
 
-        return pattern.accepts(parent, matchingContext, traverseContext);
+        return pattern.getCondition().accepts(parent, matchingContext, traverseContext);
       }
     });
   }
@@ -67,7 +67,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
             final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);
             for (JavaResolveResult result : results) {
               final PsiElement psiElement = result.getElement();
-              if (methodPattern.accepts(psiElement, matchingContext, traverseContext)) {
+              if (methodPattern.getCondition().accepts(psiElement, matchingContext, traverseContext)) {
                 return true;
               }
             }

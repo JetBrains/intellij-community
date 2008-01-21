@@ -12,15 +12,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
 */
 public abstract class NullablePatternCondition {
-  public static final NullablePatternCondition TRUE = new NullablePatternCondition() {
-    public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-      return true;
-    }
-
-    public String toString() {
-      return "";
-    }
-  };
 
   public abstract boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext);
 
@@ -28,4 +19,5 @@ public abstract class NullablePatternCondition {
   public String toString() {
     return super.toString();
   }
+
 }

@@ -63,7 +63,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   public Self inClass(final ElementPattern pattern) {
     return with(new PatternCondition<T>() {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(t.getContainingClass(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(t.getContainingClass(), matchingContext, traverseContext);
       }
     });
   }

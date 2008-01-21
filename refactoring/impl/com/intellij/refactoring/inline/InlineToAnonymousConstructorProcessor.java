@@ -6,6 +6,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.*;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.psiExpressionStatement;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.ProjectScope;
@@ -28,12 +30,12 @@ class InlineToAnonymousConstructorProcessor {
 
   private static final Key<PsiAssignmentExpression> ourAssignmentKey = Key.create("assignment");
   private static final Key<PsiCallExpression> ourCallKey = Key.create("call");
-  public static final ElementPattern ourNullPattern = PlatformPatterns.psiElement(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
-  private static final ElementPattern ourAssignmentPattern = PsiJavaPatterns.psiExpressionStatement().withChild(PlatformPatterns.psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
-  private static final ElementPattern ourSuperCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(
-    PlatformPatterns.psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(PlatformPatterns.psiElement().withText(PsiKeyword.SUPER)));
-  private static final ElementPattern ourThisCallPattern = PsiJavaPatterns.psiExpressionStatement().withFirstChild(PlatformPatterns.psiElement(PsiMethodCallExpression.class).withFirstChild(
-    PlatformPatterns.psiElement().withText(PsiKeyword.THIS)));
+  public static final ElementPattern ourNullPattern = psiElement(PsiLiteralExpression.class).withText(PsiKeyword.NULL);
+  private static final ElementPattern ourAssignmentPattern = psiExpressionStatement().withChild(psiElement(PsiAssignmentExpression.class).save(ourAssignmentKey));
+  private static final ElementPattern ourSuperCallPattern = psiExpressionStatement().withFirstChild(
+    psiElement(PsiMethodCallExpression.class).save(ourCallKey).withFirstChild(psiElement().withText(PsiKeyword.SUPER)));
+  private static final ElementPattern ourThisCallPattern = psiExpressionStatement().withFirstChild(psiElement(PsiMethodCallExpression.class).withFirstChild(
+    psiElement().withText(PsiKeyword.THIS)));
 
   private final PsiClass myClass;
   private final PsiNewExpression myNewExpression;
@@ -149,7 +151,7 @@ class InlineToAnonymousConstructorProcessor {
       if (child instanceof PsiStatement) {
         PsiStatement stmt = (PsiStatement) child;
         MatchingContext context = new MatchingContext();
-        if (ourAssignmentPattern.accepts(stmt, context, new TraverseContext())) {
+        if (ourAssignmentPattern.accepts(stmt, context)) {
           PsiAssignmentExpression expression = context.get(ourAssignmentKey);
           if (!processAssignmentInConstructor(expression)) {
             initializerBlock.addBefore(replaceParameterReferences(stmt, null, false), initializerBlock.getRBrace());
@@ -288,7 +290,7 @@ class InlineToAnonymousConstructorProcessor {
       return;
     }
     MatchingContext context = new MatchingContext();
-    if (!ourSuperCallPattern.accepts(statements [0], context, new TraverseContext())) {
+    if (!ourSuperCallPattern.accepts(statements[0], context)) {
       return;
     }
     PsiExpressionList superArguments = context.get(ourCallKey).getArgumentList();

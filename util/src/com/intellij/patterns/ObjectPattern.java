@@ -12,19 +12,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author peter
  */
-public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> implements Cloneable, ElementPattern {
-  private NullablePatternCondition myCondition;
+public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> implements Cloneable, ElementPattern<T> {
+  private ElementPatternCondition<T> myCondition;
 
   protected ObjectPattern(@NotNull final NullablePatternCondition condition) {
-    myCondition = condition;
+    myCondition = new ElementPatternCondition<T>(condition);
   }
 
   protected ObjectPattern(final Class<T> aClass) {
-    myCondition = new NullablePatternCondition() {
+    myCondition = new ElementPatternCondition<T>(new NullablePatternCondition() {
       public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return aClass.isInstance(o);
       }
@@ -33,15 +34,19 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       public String toString() {
         return ObjectPattern.this.getClass().getSimpleName() + "(" + aClass.getName() + ")";
       }
-    };
+    });
   }
 
   public final boolean accepts(@Nullable Object t) {
-    return accepts(t, new MatchingContext(), new TraverseContext());
+    return myCondition.accepts(t, new MatchingContext(), new TraverseContext());
   }
 
-  public final boolean accepts(@Nullable Object t, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext) {
-    return myCondition.accepts(t, matchingContext, traverseContext);
+  public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext) {
+    return myCondition.accepts(o, matchingContext, new TraverseContext());
+  }
+
+  public final ElementPatternCondition getCondition() {
+    return myCondition;
   }
 
   public Self andNot(final ElementPattern pattern) {
@@ -53,20 +58,15 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self and(final ElementPattern pattern) {
-    return adapt(new NullablePatternCondition() {
-      public boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext) {
-        return myCondition.accepts(o, matchingContext, traverseContext) && pattern.accepts((T)o, matchingContext, traverseContext);
-      }
-
-      @NonNls
-      public String toString() {
-        return "and(" + pattern.toString() + ")";
+    return with(new PatternCondition<T>() {
+      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        return pattern.getCondition().accepts(t, matchingContext, traverseContext);
       }
     });
   }
 
   public Self equalTo(@NotNull final T o) {
-    return with(new PatternCondition<T>() {
+    return with(new ValuePatternCondition<T>(Collections.singleton(o)) {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return t.equals(o);
       }
@@ -84,11 +84,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self oneOf(final Collection<T> set) {
-    return with(new PatternCondition<T>() {
-      public boolean accepts(@NotNull final T str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return set.contains(str);
-      }
-
+    return with(new ValuePatternCondition<T>(set) {
       public String toString() {
         return "oneOf(" + set + ")";
       }
@@ -96,19 +92,20 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self isNull() {
-    return adapt(new NullablePatternCondition() {
-      public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+    return adapt(new ElementPatternCondition<T>(new NullablePatternCondition() {
+      public boolean accepts(@Nullable final Object o,
+                             final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o == null;
       }
-    });
+    }));
   }
 
   public Self notNull() {
-    return adapt(new NullablePatternCondition() {
+    return adapt(new ElementPatternCondition<T>(new NullablePatternCondition() {
       public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o != null;
       }
-    });
+    }));
   }
 
   public Self save(final Key<? super T> key) {
@@ -130,16 +127,19 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self with(final PatternCondition<? super T> pattern) {
-    return adapt(new NullablePatternCondition() {
-      public boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext) {
-        return myCondition.accepts(o, matchingContext, traverseContext) && o != null && pattern.accepts((T)o, matchingContext,
-                                                                                                        traverseContext);
-      }
+    final ElementPatternCondition<T> condition = myCondition.append(pattern);
+    return adapt(condition);
+  }
 
-      public String toString() {
-        return myCondition.toString() + "." + pattern.toString();
-      }
-    });
+  private Self adapt(final ElementPatternCondition<T> condition) {
+    try {
+      final ObjectPattern s = (ObjectPattern)clone();
+      s.myCondition = condition;
+      return (Self)s;
+    }
+    catch (CloneNotSupportedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public Self without(final PatternCondition<? super T> pattern) {
@@ -160,17 +160,6 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   public String toString() {
     return myCondition.toString();
-  }
-
-  protected Self adapt(final NullablePatternCondition condition) {
-    try {
-      final ObjectPattern s = (ObjectPattern)clone();
-      s.myCondition = condition;
-      return (Self)s;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static class Capture<T> extends ObjectPattern<T,Capture<T>> {

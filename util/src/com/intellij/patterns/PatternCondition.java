@@ -12,17 +12,6 @@ import org.jetbrains.annotations.NotNull;
 */
 public abstract class PatternCondition<T> {
 
-  public static final PatternCondition FALSE = new PatternCondition() {
-    public boolean accepts(@NotNull final Object o,
-                              final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-      return false;
-    }
-
-    public String toString() {
-      return "FALSE";
-    }
-  };
-
   public abstract boolean accepts(@NotNull T t, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext);
 
   @NonNls

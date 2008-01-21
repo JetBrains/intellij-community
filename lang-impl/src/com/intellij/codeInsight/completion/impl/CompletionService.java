@@ -76,7 +76,7 @@ public class CompletionService {
       myQueryFactory.registerExecutor(myPriority, new PrioritizedQueryExecutor<Result, Params>() {
         public void execute(final Params parameters, final QueryResultSet<Result> resultSet) {
           final MatchingContext matchingContext = new MatchingContext();
-          if (myPlace.accepts(parameters.getPosition(), matchingContext, new TraverseContext())) {
+          if (myPlace.accepts(parameters.getPosition(), matchingContext)) {
             provider.addCompletions(parameters, matchingContext, resultSet);
           }
         }

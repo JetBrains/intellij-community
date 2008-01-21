@@ -18,7 +18,7 @@ public class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation, PsiAn
   public PsiAnnotationPattern qName(final ElementPattern pattern) {
     return with(new PatternCondition<PsiAnnotation>() {
       public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return pattern.accepts(psiAnnotation.getQualifiedName(), matchingContext, traverseContext);
+        return pattern.getCondition().accepts(psiAnnotation.getQualifiedName(), matchingContext, traverseContext);
       }
     });
   }

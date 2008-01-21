@@ -25,7 +25,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
 
   private static boolean isInheritor(PsiClass psiClass, ElementPattern pattern, final MatchingContext matchingContext, final TraverseContext context) {
     if (psiClass == null) return false;
-    if (pattern.accepts(psiClass, matchingContext, context)) return true;
+    if (pattern.getCondition().accepts(psiClass, matchingContext, context)) return true;
     if (isInheritor(psiClass.getSuperClass(), pattern, matchingContext, context)) return true;
     for (final PsiClass aClass : psiClass.getInterfaces()) {
       if (isInheritor(aClass, pattern, matchingContext, context)) return true;

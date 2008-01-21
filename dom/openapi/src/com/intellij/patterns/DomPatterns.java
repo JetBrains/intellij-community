@@ -40,10 +40,10 @@ public class DomPatterns {
       public boolean accepts(@NotNull final XmlElement xmlElement, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final DomManager manager = DomManager.getDomManager(xmlElement.getProject());
         if (xmlElement instanceof XmlAttribute) {
-          return pattern.accepts(manager.getDomElement((XmlAttribute)xmlElement), matchingContext, traverseContext);
+          return pattern.getCondition().accepts(manager.getDomElement((XmlAttribute)xmlElement), matchingContext, traverseContext);
         }
         if (xmlElement instanceof XmlTag) {
-          return pattern.accepts(manager.getDomElement((XmlTag)xmlElement), matchingContext, traverseContext);
+          return pattern.getCondition().accepts(manager.getDomElement((XmlTag)xmlElement), matchingContext, traverseContext);
         }
         return false;
       }
