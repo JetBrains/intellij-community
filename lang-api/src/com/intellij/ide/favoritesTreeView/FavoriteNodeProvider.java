@@ -16,15 +16,15 @@
 
 package com.intellij.ide.favoritesTreeView;
 
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.NonNls;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -55,9 +55,10 @@ public interface FavoriteNodeProvider {
    * Returns the weight of the specified project view node element to use when sorting the favorites list.
    *
    * @param element the element for which the weight is requested.
+   * @param isSortByType
    * @return the weight, or -1 if <code>element</code> is not an element supported by this provider.
    */
-  int getElementWeight(final Object element);
+  int getElementWeight(final Object element, final boolean isSortByType);
 
   /**
    * Returns the location text (grey text in parentheses) to display in the Favorites view for the specified element.

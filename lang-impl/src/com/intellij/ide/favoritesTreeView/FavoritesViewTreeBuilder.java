@@ -20,7 +20,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -143,12 +146,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       Object currentValue = favorite.getValue();
       if (currentValue instanceof SmartPsiElementPointer){
         currentValue = ((SmartPsiElementPointer)favorite.getValue()).getElement();
-      } else if (currentValue instanceof PsiJavaFile) {
+      } /*else if (currentValue instanceof PsiJavaFile) {
         final PsiClass[] classes = ((PsiJavaFile)currentValue).getClasses();
         if (classes.length > 0) {
           currentValue = classes[0];
         }
-      }
+      }*/
       if (Comparing.equal(element, currentValue)){
         final DefaultMutableTreeNode nodeWithObject = findFirstLevelNodeWithObject((DefaultMutableTreeNode)getTree().getModel().getRoot(), favorite);
         if (nodeWithObject != null){

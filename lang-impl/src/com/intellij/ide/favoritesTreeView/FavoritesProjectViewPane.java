@@ -10,10 +10,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +73,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   public void installComparator() {
     final ProjectView projectView = ProjectView.getInstance(myProject);
-    myTreeBuilder.setNodeDescriptorComparator(new FavoritesComparator(projectView.isSortByType(ID)));
+    myTreeBuilder.setNodeDescriptorComparator(new FavoritesComparator(projectView.isSortByType(ID), myProject));
   }
 
   public JComponent createComponent() {
@@ -113,7 +110,7 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
 
   public void select(Object object, VirtualFile file, boolean requestFocus) {
     if (!(object instanceof PsiElement)) return;
-    PsiElement element = (PsiElement)object;
+    /*PsiElement element = (PsiElement)object;
     PsiFile psiFile = element.getContainingFile();
     if (psiFile != null) {
       element = psiFile;
@@ -126,14 +123,14 @@ public class FavoritesProjectViewPane extends AbstractProjectViewPane {
       }
     }
 
-    final PsiElement originalElement = element.getOriginalElement();
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile(originalElement);
+    final PsiElement originalElement = element.getOriginalElement();*/
+    final VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)object);
     final String list = FavoritesViewSelectInTarget.findSuitableFavoritesList(virtualFile, myProject, getSubId());
     if (list == null) return;
     if (!list.equals(getSubId())) {
       ProjectView.getInstance(myProject).changeView(ID, list);
     }
-    myViewPanel.selectElement(originalElement, virtualFile, requestFocus);
+    myViewPanel.selectElement(object, virtualFile, requestFocus);
   }
 
   public int getWeight() {

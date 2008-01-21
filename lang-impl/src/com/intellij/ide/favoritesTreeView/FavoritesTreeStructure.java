@@ -6,15 +6,11 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.ide.projectView.impl.ProjectTreeStructure;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayUtil;
@@ -85,17 +81,8 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
         if (val instanceof SmartPsiElementPointer && ((SmartPsiElementPointer)val).getElement() == null) {
           continue;
         }
-        if (val instanceof ResourceBundle) {
-          ResourceBundle resourceBundle = (ResourceBundle)val;
-          List<PropertiesFile> propertiesFiles = resourceBundle.getPropertiesFiles(myProject);
-          if (propertiesFiles.size() == 1) {
-            result.add(new PsiFileNode(myProject, propertiesFiles.iterator().next(), this));
-            continue;
-          }
-        }
-
         boolean isInvalid = false;
-        for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME)) {
+        for(FavoriteNodeProvider nodeProvider: Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject)) {
           if (nodeProvider.isInvalidElement(val)) {
             isInvalid = true;
             break;

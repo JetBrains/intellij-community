@@ -8,15 +8,17 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
-import com.intellij.ide.projectView.impl.GroupByTypeComparator;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.psi.*;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 
 import java.util.Comparator;
 
@@ -24,9 +26,9 @@ public class FavoritesComparator implements Comparator<NodeDescriptor> {
   private final FavoriteNodeProvider[] myNodeProviders;
   private final boolean mySortByType;
 
-  public FavoritesComparator(final boolean sortByType) {
+  public FavoritesComparator(final boolean sortByType, final Project project) {
     mySortByType = sortByType;
-    myNodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
+    myNodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project);
   }
 
   private int getWeight(NodeDescriptor descriptor) {
@@ -41,18 +43,10 @@ public class FavoritesComparator implements Comparator<NodeDescriptor> {
     if (value instanceof Module){
       return 1;
     }
-    if (value instanceof PsiDirectory || value instanceof PackageElement){
+    if (value instanceof PsiDirectory){
       return 2;
     }
-    if (value instanceof PsiClass){
-      return mySortByType ? GroupByTypeComparator.getClassPosition((PsiClass)value) : 3;
-    }
-    if (value instanceof PsiField){
-      return 4;
-    }
-    if (value instanceof PsiMethod){
-      return 5;
-    }
+   
     if (value instanceof PsiFile){
       return 6;
     }
@@ -66,7 +60,7 @@ public class FavoritesComparator implements Comparator<NodeDescriptor> {
       return 9;
     }
     for(FavoriteNodeProvider provider: myNodeProviders) {
-      int weight = provider.getElementWeight(value);
+      int weight = provider.getElementWeight(value, mySortByType);
       if (weight != -1) return weight;
     }
     return 9;

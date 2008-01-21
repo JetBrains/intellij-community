@@ -2,15 +2,16 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPsiElementPointer;
 
 /**
  * User: anna
@@ -35,10 +36,10 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
     return true;
   }
 
-  protected boolean isMarkReadOnly() {
+ /* protected boolean isMarkReadOnly() {
     final Object parentValue = myElement.getParent() == null ? null : myElement.getParent().getValue();
     return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement;
-  }
+  }*/
 
   public String getLocation(){
     Object nodeElement = myElement.getValue();
@@ -46,25 +47,16 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
       nodeElement = ((SmartPsiElementPointer)nodeElement).getElement();
     }
     if (nodeElement instanceof PsiElement){
-      if (nodeElement instanceof PsiClass){
-        return ClassPresentationUtil.getNameForClass((PsiClass)nodeElement, true);
-      }
       if (nodeElement instanceof PsiDirectory){
         return ((PsiDirectory)nodeElement).getVirtualFile().getPresentableUrl();
       }
-      final PsiElement parent = ((PsiElement)nodeElement).getParent();
-      if (parent instanceof PsiClass){
-        return ClassPresentationUtil.getNameForClass((PsiClass)parent, true);
+      if (nodeElement instanceof PsiFile) {
+        final PsiFile containingFile = (PsiFile)nodeElement;
+        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        return virtualFile != null ? virtualFile.getPresentableUrl() : "";
       }
-      if (parent == null) return "";
-      final PsiFile containingFile = nodeElement instanceof PsiFile ? (PsiFile)nodeElement : parent.getContainingFile();
-      return containingFile != null ? containingFile.getVirtualFile().getPresentableUrl() : "";
     }
-    if (nodeElement instanceof PackageElement){
-      final PackageElement packageElement = ((PackageElement)nodeElement);
-      final Module module = packageElement.getModule();
-      return (module != null ? (module.getName() + ":") : "") + packageElement.getPackage().getQualifiedName();
-    }
+
     if (nodeElement instanceof LibraryGroupElement){
       return ((LibraryGroupElement)nodeElement).getModule().getName();
     }
@@ -73,7 +65,7 @@ public class FavoritesTreeNodeDescriptor extends NodeDescriptor<AbstractTreeNode
       final LibraryGroupElement parent = namedLibraryElement.getParent();
       return parent.getModule().getName() + ":" + namedLibraryElement.getOrderEntry().getPresentableName();
     }
-    final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
+    final FavoriteNodeProvider[] nodeProviders = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, myProject);
     for(FavoriteNodeProvider provider: nodeProviders) {
       String location = provider.getElementLocation(nodeElement);
       if (location != null) return location;

@@ -2,20 +2,13 @@ package com.intellij.ide.favoritesTreeView.actions;
 
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
-import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
-import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.FieldSmartPointerNode;
-import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.MethodSmartPointerNode;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.projectView.impl.PackageViewPane;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.projectView.ResourceBundleNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +16,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,10 +57,10 @@ public class AddToFavoritesAction extends AnAction {
 
     if (project == null) return null;
 
-    Module moduleContext = DataKeys.MODULE_CONTEXT.getData(dataContext);
+    Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
     Collection<AbstractTreeNode> nodesToAdd = null;
-    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME);
+    FavoriteNodeProvider[] providers = Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project);
     for(FavoriteNodeProvider provider: providers) {
       nodesToAdd = provider.getFavoriteNodes(dataContext, ViewSettings.DEFAULT);
       if (nodesToAdd != null) {
@@ -104,17 +100,15 @@ public class AddToFavoritesAction extends AnAction {
   }
 
   private static Object collectSelectedElements(final DataContext dataContext) {
-    Object elements = retrieveData(null, dataContext.getData(DataConstantsEx.RESOURCE_BUNDLE_ARRAY));
-    elements = retrieveData(elements, DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
-    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.PSI_FILE.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.PSI_ELEMENT.getData(dataContext));
-    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE.getData(dataContext));
+    Object elements = retrieveData(null, LangDataKeys.PSI_ELEMENT.getData(dataContext));
+    elements = retrieveData(elements, LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext));
+    elements = retrieveData(elements, LangDataKeys.PSI_FILE.getData(dataContext));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.MODULE_GROUP_ARRAY));
-    elements = retrieveData(elements, DataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));
-    elements = retrieveData(elements, DataKeys.MODULE.getData(dataContext));
+    elements = retrieveData(elements, LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.LIBRARY_GROUP_ARRAY));
     elements = retrieveData(elements, dataContext.getData(DataConstantsEx.NAMED_LIBRARY_ARRAY));
+    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE.getData(dataContext));
+    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     return elements;
   }
 
@@ -128,13 +122,6 @@ public class AddToFavoritesAction extends AnAction {
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getProjectViewPaneById(currentViewId);
 
-    //on bundles nodes
-    if (object instanceof ResourceBundle[]) {
-      for (ResourceBundle bundle : (ResourceBundle[])object) {
-        result.add(new ResourceBundleNode(project, bundle, favoritesConfig));
-      }
-      return result;
-    }
 
     //on psi elements
     if (object instanceof PsiElement[]) {
@@ -144,11 +131,6 @@ public class AddToFavoritesAction extends AnAction {
       return result;
     }
 
-    if (object instanceof PackageElement) {
-      PackageElementNode node = new PackageElementNode(project, object, favoritesConfig);
-      result.add(node);
-      return result;
-    }
     //on psi element
     if (object instanceof PsiElement) {
       Module containingModule = null;
@@ -194,17 +176,8 @@ public class AddToFavoritesAction extends AnAction {
 
     //on module groups
     if (object instanceof ModuleGroup[]) {
-      boolean isPackageView = false;
-      if (currentViewId.equals(PackageViewPane.ID)) {
-        isPackageView = true;
-      }
       for (ModuleGroup moduleGroup : (ModuleGroup[])object) {
-        if (isPackageView) {
-          result.add(new PackageViewModuleGroupNode(project, moduleGroup, favoritesConfig));
-        }
-        else {
-          result.add(new ProjectViewModuleGroupNode(project, moduleGroup, favoritesConfig));
-        }
+        result.add(new ProjectViewModuleGroupNode(project, moduleGroup, favoritesConfig));
       }
       return result;
     }
@@ -213,12 +186,7 @@ public class AddToFavoritesAction extends AnAction {
     if (object instanceof Module) object = new Module[]{(Module)object};
     if (object instanceof Module[]) {
       for (Module module1 : (Module[])object) {
-        if (currentViewId.equals(PackageViewPane.ID)) {
-          result.add(new PackageViewModuleNode(project, module1, favoritesConfig));
-        }
-        else {
           result.add(new ProjectViewModuleNode(project, module1, favoritesConfig));
-        }
       }
       return result;
     }
@@ -253,7 +221,8 @@ public class AddToFavoritesAction extends AnAction {
         klass = PsiFileNode.class;
       }
     }
-    final Object value = getPsiElementNodeValue(psiElement, project, module);
+
+    final Object value = psiElement;
     try {
       if (klass != null && value != null) {
         result.add(ProjectViewNode.createTreeNode(klass, project, value, favoritesConfig));
@@ -267,38 +236,13 @@ public class AddToFavoritesAction extends AnAction {
 
   private static Class<? extends AbstractTreeNode> getPsiElementNodeClass(PsiElement psiElement) {
     Class<? extends AbstractTreeNode> klass = null;
-    if (psiElement instanceof PsiClass) {
-      klass = ClassSmartPointerNode.class;
-    }
-    else if (psiElement instanceof PsiMethod) {
-      klass = MethodSmartPointerNode.class;
-    }
-    else if (psiElement instanceof PsiField) {
-      klass = FieldSmartPointerNode.class;
-    }
-    else if (psiElement instanceof PsiFile) {
+    if (psiElement instanceof PsiFile) {
       klass = PsiFileNode.class;
     }
     else if (psiElement instanceof PsiDirectory) {
       klass = PsiDirectoryNode.class;
     }
-    else if (psiElement instanceof PsiPackage) {
-      klass = PackageElementNode.class;
-    }
     return klass;
-  }
-
-  private static Object getPsiElementNodeValue(PsiElement psiElement, Project project, Module module) {
-    if (psiElement instanceof PsiPackage) {
-      final PsiPackage psiPackage = (PsiPackage)psiElement;
-      final PsiDirectory[] directories = psiPackage.getDirectories();
-      if (directories.length > 0) {
-        final VirtualFile firstDir = directories[0].getVirtualFile();
-        final boolean isLibraryRoot = ProjectRootsUtil.isLibraryRoot(firstDir, project);
-        return new PackageElement(module, psiPackage, isLibraryRoot);
-      }
-    }
-    return psiElement;
   }
 
 }

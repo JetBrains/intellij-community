@@ -88,7 +88,7 @@ public class UIDesignerFavoriteNodeProvider implements FavoriteNodeProvider {
     return false;
   }
 
-  public int getElementWeight(final Object element) {
+  public int getElementWeight(final Object element, final boolean isSortByType) {
     if (element instanceof Form) return 9;
     return -1;
   }
