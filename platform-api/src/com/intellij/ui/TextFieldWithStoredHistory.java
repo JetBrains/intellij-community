@@ -28,6 +28,12 @@ import java.util.ArrayList;
 public class TextFieldWithStoredHistory extends TextFieldWithHistory {
   private final String myPropertyName;
 
+  // API compatibility with 7.0.1
+  @SuppressWarnings({"UnusedDeclaration"})
+  public TextFieldWithStoredHistory(@NonNls final String propertyName, boolean cropList) {
+    this(propertyName);
+  }
+
   public TextFieldWithStoredHistory(@NonNls final String propertyName) {
     myPropertyName = propertyName;
     reset();
