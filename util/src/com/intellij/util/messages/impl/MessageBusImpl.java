@@ -28,7 +28,10 @@ import com.intellij.util.messages.Topic;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -43,7 +46,7 @@ public class MessageBusImpl implements MessageBus {
   private final Map<Topic, Object> mySyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final Map<Topic, Object> myAsyncPublishers = new ConcurrentHashMap<Topic, Object>();
   private final Map<Topic, List<MessageBusConnectionImpl>> mySubscribers = new ConcurrentHashMap<Topic, List<MessageBusConnectionImpl>>();
-  private final List<MessageBusImpl> myChildBusses = Collections.synchronizedList(new ArrayList<MessageBusImpl>());
+  private final List<MessageBusImpl> myChildBusses = new CopyOnWriteArrayList<MessageBusImpl>();
 
   private final static Object NA = new Object();
   private final MessageBusImpl myParentBus;

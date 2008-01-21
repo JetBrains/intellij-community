@@ -23,6 +23,7 @@ public class IndexingStamp {
 
   public static boolean isFileIndexed(VirtualFile file, String indexName, final long indexCreationStamp) {
     try {
+      if (!(file instanceof NewVirtualFile)) return false;
       if (!file.isValid()) {
         return false;
       }
