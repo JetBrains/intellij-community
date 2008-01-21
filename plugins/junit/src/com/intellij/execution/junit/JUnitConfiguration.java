@@ -52,7 +52,6 @@ import java.util.Map;
 public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
-  private static final String DEFAULT_PACKAGE_CONFIGURATION_NAME = ExecutionBundle.message("default.package.configuration.name");
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
@@ -343,7 +342,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     public Module setTestMethod(final Location<PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
       METHOD_NAME = method.getName();
-      TEST_OBJECT = JUnitConfiguration.TEST_METHOD;
+      TEST_OBJECT = TEST_METHOD;
       return setMainClass(method.getContainingClass());
     }
 
@@ -393,7 +392,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
 
     public String getGeneratedName(final RunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT)) {
-        final String moduleName = TEST_SEARCH_SCOPE.getScope() != TestSearchScope.WHOLE_PROJECT ? configurationModule.getModuleName() : "";
+        final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = getPackageName();
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {

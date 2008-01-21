@@ -4,7 +4,6 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.ExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -16,6 +15,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiClassUtil;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
       psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     }
     if (psiClass == null) return null;
-    if (!ExecutionUtil.isRunnableClass(psiClass)) return null;
+    if (!PsiClassUtil.isRunnableClass(psiClass, true)) return null;
     if (!TestNGUtil.hasTest(psiClass)) return null;
     myPsiElement = psiClass;
     final Project project = location.getProject();
