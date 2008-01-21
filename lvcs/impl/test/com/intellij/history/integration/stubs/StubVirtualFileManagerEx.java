@@ -4,8 +4,6 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,14 +84,6 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  public void registerFileContentProvider(FileContentProvider provider) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void unregisterFileContentProvider(FileContentProvider provider) {
-    throw new UnsupportedOperationException();
-  }
-
   public void registerRefreshUpdater(CacheUpdater updater) {
     throw new UnsupportedOperationException();
   }
@@ -111,11 +101,6 @@ public class StubVirtualFileManagerEx extends VirtualFileManagerEx {
   }
 
   public void refreshWithoutFileWatcher(boolean asynchronous) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Nullable
-  public ProvidedContent getProvidedContent(VirtualFile file) {
     throw new UnsupportedOperationException();
   }
 

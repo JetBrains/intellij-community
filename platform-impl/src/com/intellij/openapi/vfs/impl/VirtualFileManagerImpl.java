@@ -8,8 +8,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -42,9 +40,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   private EventDispatcher<ModificationAttemptListener> myModificationAttemptListenerMulticaster =
     EventDispatcher.create(ModificationAttemptListener.class);
 
-  private ArrayList<FileContentProvider> myContentProviders = new ArrayList<FileContentProvider>();
-  private PendingEventDispatcher<VirtualFileListener> myContentProvidersDispatcher =
-    PendingEventDispatcher.create(VirtualFileListener.class);
   @NonNls private static final String USER_HOME = "user.home";
   private int myRefreshCount = 0;
 
@@ -58,7 +53,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
     if (LOG.isDebugEnabled()) {
       addVirtualFileListener(new LoggingListener());
     }
-    addVirtualFileListener(myContentProvidersDispatcher.getMulticaster());
 
     bus.connect().subscribe(VFS_CHANGES, new BulkFileListener() {
       public void before(final List<? extends VFileEvent> events) {
@@ -297,36 +291,12 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Appl
   public void addEventToFireByRefresh(final Runnable action, boolean asynchronous, ModalityState modalityState) {
   }
 
-  public void registerFileContentProvider(FileContentProvider provider) {
-    myContentProviders.add(provider);
-    myContentProvidersDispatcher.addListener(provider.getVirtualFileListener());
-  }
-
-  public void unregisterFileContentProvider(FileContentProvider provider) {
-    myContentProviders.remove(provider);
-    myContentProvidersDispatcher.removeListener(provider.getVirtualFileListener());
-  }
-
   public void registerRefreshUpdater(CacheUpdater updater) {
     RefreshQueue.getInstance().registerRefreshUpdater(updater);
   }
 
   public void unregisterRefreshUpdater(CacheUpdater updater) {
     RefreshQueue.getInstance().unregisterRefreshUpdater(updater);
-  }
-
-  public ProvidedContent getProvidedContent(VirtualFile file) {
-    for (FileContentProvider provider : myContentProviders) {
-      // not needed because of special order!
-      //dispatchPendingEvent(provider.getVirtualFileListener());
-      for (VirtualFile coveredDirectory : provider.getCoveredDirectories()) {
-        if (VfsUtil.isAncestor(coveredDirectory, file, true)) {
-          return provider.getProvidedContent(file);
-        }
-      }
-    }
-
-    return null;
   }
 
   public static ModalityState calcModalityStateForRefreshEventsPosting(final boolean asynchronous) {

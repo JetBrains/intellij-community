@@ -4,11 +4,8 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.FileContentProvider;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MockVirtualFileManager extends VirtualFileManagerEx {
   public MockVirtualFileManager() {
@@ -77,12 +74,6 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
   public void addEventToFireByRefresh(Runnable action, boolean asynchronous, ModalityState modalityState) {
   }
 
-  public void registerFileContentProvider(FileContentProvider provider) {
-  }
-
-  public void unregisterFileContentProvider(FileContentProvider provider) {
-  }
-
   public void registerRefreshUpdater(CacheUpdater updater) {
   }
 
@@ -103,8 +94,4 @@ public class MockVirtualFileManager extends VirtualFileManagerEx {
     
   }
 
-  @Nullable
-  public ProvidedContent getProvidedContent(VirtualFile file) {
-    return null;
-  }
 }

@@ -1,23 +1,15 @@
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.ex.ProvidedContent;
-import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
-import com.intellij.util.LocalTimeCounter;
-import com.intellij.vfs.local.win32.FileWatcher;
+import com.intellij.openapi.vfs.DeprecatedVirtualFile;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class VirtualFileImpl extends DeprecatedVirtualFile {
   @SuppressWarnings({"WeakerAccess"}) public long myTimeStamp = -1; // -1, if file content has not been requested yet
