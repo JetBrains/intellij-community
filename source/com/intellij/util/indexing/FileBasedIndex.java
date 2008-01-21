@@ -499,10 +499,12 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     for (String indexId : myIndices.keySet()) {
       if (getInputFilter(indexId).acceptInput(file)) {
         try {
-          if (fc == null) {
-            fc = new FileContent(file, loadContent(file));
+          if (IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
+            if (fc == null) {
+              fc = new FileContent(file, loadContent(file));
+            }
+            updateSingleIndex(indexId, file, null, fc);
           }
-          updateSingleIndex(indexId, file, null, fc);
         }
         catch (StorageException e) {
           LOG.error(e);
@@ -619,7 +621,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       final VirtualFile file = event.getFile();
       invalidateIndex(file);
     }
-    
+
     private void doAfterAction(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
       myFileToUpdate.add(file);
