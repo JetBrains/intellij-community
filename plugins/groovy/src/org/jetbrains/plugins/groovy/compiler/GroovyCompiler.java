@@ -170,6 +170,7 @@ public class GroovyCompiler implements TranslatingCompiler {
     required.add("asm");
     required.add("antlr");
     required.add("junit");
+    required.add("jline");
     required.add("ant");
     required.add("commons");
   }
