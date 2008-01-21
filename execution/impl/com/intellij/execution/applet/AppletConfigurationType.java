@@ -13,6 +13,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 
 import javax.swing.*;
@@ -85,7 +86,7 @@ public class AppletConfigurationType implements LocatableConfigurationType {
   }
 
   private static boolean isAppletClass(final PsiClass aClass, final PsiManager manager) {
-    if (!ExecutionUtil.isRunnableClass(aClass)) return false;
+    if (!PsiClassUtil.isRunnableClass(aClass, true)) return false;
 
     final Module module = ExecutionUtil.findModule(aClass);
     final GlobalSearchScope scope = module != null

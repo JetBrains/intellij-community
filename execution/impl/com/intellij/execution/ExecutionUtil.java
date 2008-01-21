@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
@@ -89,10 +88,6 @@ public class ExecutionUtil {
     return fqName.substring(dotIndex + 1, fqName.length());
   }
 
-  public static void showExecutionErrorMessage(final ExecutionException e, final String title, final Project project) {
-    ExecutionErrorDialog.show(e, title, project);
-  }
-
   public static Icon getConfigurationIcon(final Project project, final RunConfiguration configuration, final boolean invalid) {
     final RunManager runManager = RunManager.getInstance(project);
     final Icon icon = configuration.getFactory().getIcon();
@@ -113,9 +108,5 @@ public class ExecutionUtil {
     catch (RuntimeConfigurationException ex) {
       return getConfigurationIcon(project, configuration, true);
     }
-  }
-
-  public static boolean isRunnableClass(final PsiClass aClass) {
-    return PsiClassUtil.isRunnableClass(aClass, true);
   }
 }

@@ -47,9 +47,8 @@ public class TestUtil {
     final TestFramework[] testFrameworks = Extensions.getExtensions(TEST_FRAMEWORK);
     for (TestFramework framework : testFrameworks) {
       if (framework.isTestKlass(psiClass)) {
-        final PsiMethod setUpMethod;
         try {
-          setUpMethod = framework.findSetUpMethod(psiClass);
+          final PsiMethod setUpMethod = framework.findSetUpMethod(psiClass);
           if (setUpMethod != null) {
             return setUpMethod;
           }

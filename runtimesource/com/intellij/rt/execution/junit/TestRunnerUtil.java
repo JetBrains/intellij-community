@@ -17,7 +17,7 @@ import java.util.Vector;
 
 public class TestRunnerUtil {
   /** @noinspection HardCodedStringLiteral*/
-  private static ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
+  private static final ResourceBundle ourBundle = ResourceBundle.getBundle("RuntimeBundle");
 
   public static Test getTestSuite(IdeaTestRunner runner, String[] suiteClassNames){
     if (suiteClassNames.length == 0) {

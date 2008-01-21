@@ -1,18 +1,17 @@
 package com.intellij.execution.testframework;
 
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.execution.junit.JUnitUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dyoma
@@ -22,7 +21,7 @@ public abstract class SourceScope {
   public abstract Project getProject();
   public abstract GlobalSearchScope getLibrariesScope();
 
-  private static abstract class ModuleSourceScope extends SourceScope {
+  private abstract static class ModuleSourceScope extends SourceScope {
     private final Project myProject;
 
     protected ModuleSourceScope(final Project project) {
@@ -55,22 +54,6 @@ public abstract class SourceScope {
     };
   }
 
-  public static SourceScope moduleWithDependencies(final Module module) {
-    if (module == null) return null;
-    return new ModuleSourceScope(module.getProject()) {
-      public GlobalSearchScope getGlobalSearchScope() {
-        return GlobalSearchScope.moduleWithDependenciesScope(module);
-      }
-
-      public GlobalSearchScope getLibrariesScope() {
-        return new ModuleWithDependenciesAndLibsDependencies(module);
-      }
-
-      public Module[] getModulesToCompile() {
-        return new Module[]{module};
-      }
-    };
-  }
   public static SourceScope modulesWithDependencies(final Module[] modules) {
     if (modules == null || modules.length == 0) return null;
     return new ModuleSourceScope(modules[0].getProject()) {
@@ -92,23 +75,6 @@ public abstract class SourceScope {
 
       public Module[] getModulesToCompile() {
         return modules;
-      }
-    };
-  }
-
-  public static SourceScope singleModule(final Module module) {
-    if (module == null) return null;
-    return new ModuleSourceScope(module.getProject()) {
-      public GlobalSearchScope getGlobalSearchScope() {
-        return GlobalSearchScope.moduleScope(module);
-      }
-
-      public GlobalSearchScope getLibrariesScope() {
-        return GlobalSearchScope.moduleWithLibrariesScope(module);
-      }
-
-      public Module[] getModulesToCompile() {
-        return new Module[]{module};
       }
     };
   }
@@ -162,8 +128,7 @@ public abstract class SourceScope {
       final Map<Module, Collection<Module>> map = JUnitUtil.buildAllDependencies(module.getProject());
       if (map == null) return;
       final Collection<Module> modules = map.get(module);
-      for (Iterator<Module> iterator = modules.iterator(); iterator.hasNext();) {
-        final Module dependency = iterator.next();
+      for (final Module dependency : modules) {
         myScopes.add(GlobalSearchScope.moduleWithLibrariesScope(dependency));
       }
     }
@@ -188,8 +153,7 @@ public abstract class SourceScope {
 
     private GlobalSearchScope findScopeFor(final VirtualFile file) {
       if (myMainScope.contains(file)) return myMainScope;
-      for (Iterator<GlobalSearchScope> iterator = myScopes.iterator(); iterator.hasNext();) {
-        final GlobalSearchScope scope = iterator.next();
+      for (final GlobalSearchScope scope : myScopes) {
         if (scope.contains(file)) return scope;
       }
       return null;
