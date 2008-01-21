@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
@@ -158,7 +158,7 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
 
     classText += " {}";
 
-    final GrTypeDefinition definition = GroovyElementFactory.getInstance(project).createTypeDefinition(classText);
+    final GrTypeDefinition definition = GroovyPsiElementFactory.getInstance(project).createTypeDefinition(classText);
     GroovyPsiElement clause = isExtends ? definition.getExtendsClause() : definition.getImplementsClause();
 
     assert clause != null;

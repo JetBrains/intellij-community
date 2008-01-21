@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiElement;
@@ -19,7 +19,7 @@ public class IntentionUtils {
                                           @NotNull GrExpression expression)
       throws IncorrectOperationException {
     final PsiManager mgr = expression.getManager();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(expression.getProject());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
     final GrExpression newCall =
         factory.createExpressionFromText(newExpression);
     final PsiElement insertedElement = expression.replaceWithExpression(newCall, true);
@@ -32,7 +32,7 @@ public class IntentionUtils {
       @NonNls @NotNull GrStatement statement)
       throws IncorrectOperationException {
     final PsiManager mgr = statement.getManager();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(statement.getProject());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
     final GrStatement newCall =
         (GrStatement) factory.createTopElementFromText(newStatement);
     return statement.replaceWithStatement(newCall);

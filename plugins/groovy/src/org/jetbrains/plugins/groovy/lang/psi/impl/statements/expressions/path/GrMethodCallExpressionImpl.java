@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -103,7 +103,7 @@ public class GrMethodCallExpressionImpl extends GrCallExpressionImpl implements 
       int refIndex = allArgs.size() - 1;
 
       // New argument list
-      GrArgumentList newArgList = GroovyElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(GrExpression.EMPTY_ARRAY));
+      GrArgumentList newArgList = GroovyPsiElementFactory.getInstance(getProject()).createExpressionArgumentList(allArgs.toArray(GrExpression.EMPTY_ARRAY));
       while (closure.getNode().getTreePrev() != null &&
           !(closure.getNode().getTreePrev().getPsi() instanceof GrArgumentList)) {
         parentNode.removeChild(closure.getNode().getTreePrev());

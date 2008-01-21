@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -126,7 +126,7 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
       parent.removeChild(typeElementNode);
     } else {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      GrTypeElement newTypeElement = GroovyElementFactory.getInstance(getProject()).createTypeElement(type);
+      GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
       final ASTNode newTypeElementNode = newTypeElement.getNode();
       if (typeElement == null) {
         final PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);

@@ -110,7 +110,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final GrImportStatement[] oldImports = myFile.getImportStatements();
 
       // Getting aliased imports
-      GroovyElementFactory factory = GroovyElementFactory.getInstance(myFile.getProject());
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myFile.getProject());
       ArrayList<GrImportStatement> aliased  = new ArrayList<GrImportStatement>();
       for (GrImportStatement oldImport : oldImports) {
         if (oldImport.isAliasedImport() && usedImports.contains(oldImport)) {
@@ -144,7 +144,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Project project = myFile.getProject();
       final PsiManager manager = myFile.getManager();
       final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-      final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+      final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
       TObjectIntHashMap<String> packageCountMap = new TObjectIntHashMap<String>();
       TObjectIntHashMap<String> classCountMap = new TObjectIntHashMap<String>();

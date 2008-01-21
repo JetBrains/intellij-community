@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicProperti
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
@@ -82,7 +82,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   private Document createDocument(final String text) {
-    final PsiFile groovyFile = GroovyElementFactory.getInstance(myProject).createGroovyFile(text, true, null);
+    final PsiFile groovyFile = GroovyPsiElementFactory.getInstance(myProject).createGroovyFile(text, true, null);
     return PsiDocumentManager.getInstance(myReferenceExpression.getProject()).getDocument(groovyFile);
   }
 

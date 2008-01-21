@@ -20,13 +20,14 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parsing.GroovyDocElementTypes;
 
 /**
  * Utility interface that contains all Groovy non-token element types
  *
  * @author Dmitry.Krasilschikov, ilyas
  */
-public interface GroovyElementTypes extends GroovyTokenTypes {
+public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTypes {
 
   GroovyElementType NONE = new GroovyElementType("no token"); //not a node
 

@@ -9,7 +9,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
 /**
@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
-    final GrReferenceElement newPackageReference = GroovyElementFactory.getInstance(myPackageDefinition.getProject()).createPackegeReferenceElementFromText(myNewPackageName);
+    final GrReferenceElement newPackageReference = GroovyPsiElementFactory.getInstance(myPackageDefinition.getProject()).createPackegeReferenceElementFromText(myNewPackageName);
     myPackageDefinition.replacePackageReference(newPackageReference);
   }
 

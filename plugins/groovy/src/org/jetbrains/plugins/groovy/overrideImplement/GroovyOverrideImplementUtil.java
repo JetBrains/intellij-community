@@ -21,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -137,7 +137,7 @@ public class GroovyOverrideImplementUtil {
               anchor = nextElement.getNode();
             }
 
-            final ASTNode lineTerminator = GroovyElementFactory.getInstance(project).createLineTerminator(1).getNode();
+            final ASTNode lineTerminator = GroovyPsiElementFactory.getInstance(project).createLineTerminator(1).getNode();
 
             assert lineTerminator != null;
             final ASTNode resultNode = result.getNode();
@@ -228,7 +228,7 @@ public class GroovyOverrideImplementUtil {
     buffer.append("{");
     buffer.append("}");
 
-    return (GrMethod) GroovyElementFactory.getInstance(project).createTopElementFromText(buffer.toString());
+    return (GrMethod) GroovyPsiElementFactory.getInstance(project).createTopElementFromText(buffer.toString());
   }
 
   private static void setupOverridingMethodBody(Project project, PsiMethod method, GrMethod result, FileTemplate template, PsiSubstitutor substitutor) {
@@ -247,7 +247,7 @@ public class GroovyOverrideImplementUtil {
 
     try {
       String bodyText = template.getText(properties);
-      final GrCodeBlock newBody = GroovyElementFactory.getInstance(project).createMetodBodyFormText("\n" + bodyText + "\n");
+      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMetodBodyFormText("\n" + bodyText + "\n");
 
       final ASTNode resultNode = result.getNode();
       assert resultNode != null;

@@ -69,12 +69,12 @@ mNLS = {mONE_NL}({mONE_NL}|{mWS})*
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 C_STYLE_COMMENT=("/*" [^"*"] {COMMENT_TAIL} ) | "/*"
-DOC_COMMENT="/*" "*"+ ( "/" | ( [^"/""*"] {COMMENT_TAIL} ) )?
 COMMENT_TAIL=( [^"*"]* ("*"+ [^"*""/"] )? )* ("*"+"/")?
 
 mSH_COMMENT = "#!"[^\r\n]*
 mSL_COMMENT = "/""/"[^\r\n]*
-mML_COMMENT = {C_STYLE_COMMENT} | {DOC_COMMENT}
+mML_COMMENT = {C_STYLE_COMMENT}
+mDOC_COMMENT="/*" "*"+ ( "/" | ( [^"/""*"] {COMMENT_TAIL} ) )?
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////      integers and floats     /////////////////////////////////////////////////////////////////////
@@ -242,6 +242,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
   {mSL_COMMENT}                             {  return mSL_COMMENT; }
   {mML_COMMENT}                             {  return mML_COMMENT; }
+  {mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
 
   ({mNLS}|{mWS})+                           {  return mWS; }
 
@@ -472,6 +473,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 
 {mSL_COMMENT}                             {  return mSL_COMMENT; }
 {mML_COMMENT}                             {  return mML_COMMENT; }
+{mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
 
 {mREGEX_LITERAL}                          {  if (blockStack.isEmpty()){
                                                yybegin(YYINITIAL);
@@ -571,6 +573,7 @@ mWRONG_TRIPLE_GSTRING = \"\"\" ( {mSTRING_ESC}
 {mSH_COMMENT}                             {  return mSH_COMMENT; }
 {mSL_COMMENT}                             {  return mSL_COMMENT; }
 {mML_COMMENT}                             {  return mML_COMMENT; }
+{mDOC_COMMENT}                            {  return GROOVY_DOC_COMMENT; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////// Integers and floats //////////////////////////////////////////////////////////////////////////

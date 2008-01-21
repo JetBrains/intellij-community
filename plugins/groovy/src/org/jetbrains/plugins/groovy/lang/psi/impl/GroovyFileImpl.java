@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTopLevelDefintion;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -77,7 +77,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private GrParameter getSyntheticArgsParameter() {
     if (mySyntheticArgsParameter == null) {
       try {
-        mySyntheticArgsParameter = GroovyElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
+        mySyntheticArgsParameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(SYNTHETIC_PARAMETER_NAME, "java.lang.String[]", this);
       } catch (IncorrectOperationException e) {
         LOG.error(e);
       }
@@ -172,7 +172,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     try {
       // Calculating position
       Project project = aClass.getProject();
-      GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
       GrImportStatement importStatement = factory.createImportStatementFromText(aClass.getQualifiedName(), false, false, null);
       PsiElement anchor = getAnchorToInsertImportAfter();
       return (GrImportStatement) addAfter(importStatement, anchor);
@@ -221,7 +221,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     if (next != null){
       ASTNode node = next.getNode();
       if (node != null && GroovyTokenTypes.mNLS == node.getElementType()) {
-        GroovyElementFactory factory = GroovyElementFactory.getInstance(statement.getProject());
+        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
         next.replace(factory.createLineTerminator(2));
       }
     }
@@ -260,7 +260,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         return;
       }
     }
-    final GrTopStatement newPackage = GroovyElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
+    final GrTopStatement newPackage = GroovyPsiElementFactory.getInstance(getProject()).createTopElementFromText("package " + packageName);
     final ASTNode newNode = newPackage.getNode();
     if (currentPackage != null) {
       final ASTNode currNode = currentPackage.getNode();
@@ -281,7 +281,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     } else {
       PsiElement anchor = children[children.length - 1];
       if (!anchor.getText().matches("\n\n")) {
-        GroovyElementFactory factory = GroovyElementFactory.getInstance(getProject());
+        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
         PsiElement separator = factory.createLineTerminator(1);
         if (anchor.getText().matches("(\\s*\n\\s*)+")) {
           anchor = anchor.replace(separator);

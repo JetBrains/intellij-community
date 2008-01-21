@@ -55,10 +55,10 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 /**
  * @author ven
  */
-public class GroovyElementFactoryImpl extends GroovyElementFactory implements ProjectComponent {
+public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory implements ProjectComponent {
   Project myProject;
 
-  public GroovyElementFactoryImpl(Project project) {
+  public GroovyPsiElementFactoryImpl(Project project) {
     myProject = project;
   }
 

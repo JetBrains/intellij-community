@@ -71,6 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GroovyDocCommentImpl;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -243,6 +244,9 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (GSP_CLASS.equals(elem)) return new GrGspClassImpl(node);
     if (GSP_RUN_METHOD.equals(elem)) return new GrGspRunMethodImpl(node);
     if (GSP_RUN_BLOCK.equals(elem)) return new GrGspRunBlockImpl(node);
+
+    // GroovyDoc comments
+    if (GROOVY_DOC_COMMENT.equals(elem)) return new GroovyDocCommentImpl();
 
 
     return new ASTWrapperPsiElement(node);

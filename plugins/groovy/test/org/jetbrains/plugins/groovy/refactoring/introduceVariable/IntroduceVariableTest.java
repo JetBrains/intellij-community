@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -99,7 +99,7 @@ public class IntroduceVariableTest extends ActionTestCase {
       PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), tempContainer);
       String varName = "preved";
       final PsiType varType = null;
-      final GrVariableDeclaration varDecl = GroovyElementFactory.getInstance(myProject).createVariableDeclaration(new String[0], 
+      final GrVariableDeclaration varDecl = GroovyPsiElementFactory.getInstance(myProject).createVariableDeclaration(new String[0],
           varName, GroovyRefactoringUtil.getUnparenthesizedExpr(selectedExpr), varType, false);
 
       introduceVariableBase.runRefactoring(selectedExpr, myEditor, ((GroovyPsiElement) tempContainer),

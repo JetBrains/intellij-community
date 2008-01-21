@@ -38,7 +38,7 @@ import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHold
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -528,7 +528,7 @@ public abstract class GroovyRefactoringUtil {
       }
     }
     GrParameter[] parameters = method.getParameters();
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     for (GrParameter parameter : parameters) {
       GrExpression initializer = parameter.getDefaultInitializer();
       if (nameFilter.contains(parameter.getName()) && initializer != null) {
@@ -558,7 +558,7 @@ public abstract class GroovyRefactoringUtil {
     }
     GrParameter[] parameters = method.getParameters();
     if (parameters.length == 0) return;
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     int i = firstParamIsMap ? 1 : 0;
     for (GrExpression value : values) {
       while (i < parameters.length && nameFilter.contains(parameters[i].getName())) i++;

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
 /**
@@ -32,7 +32,7 @@ public class SecondUnsafeCallQuickFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof GrReferenceExpression)) return;
 
-    final PsiElement newDot = GroovyElementFactory.getInstance(project).createDotToken(GroovyElementTypes.mOPTIONAL_DOT.toString());
+    final PsiElement newDot = GroovyPsiElementFactory.getInstance(project).createDotToken(GroovyElementTypes.mOPTIONAL_DOT.toString());
     ((GrReferenceExpression) element).replaceDotToken(newDot);
   }
 }

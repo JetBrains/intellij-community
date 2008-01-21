@@ -26,7 +26,8 @@ public abstract class TokenSets implements GroovyTokenTypes {
 
   public static TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
       mSL_COMMENT,
-      mML_COMMENT
+      mML_COMMENT,
+      GROOVY_DOC_COMMENT
   );
 
   public static TokenSet SEPARATORS = TokenSet.create(

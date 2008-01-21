@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +43,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 /**
  * @author dimaskin
  */
-public abstract class GroovyElementFactory {
+public abstract class GroovyPsiElementFactory {
 
-  public static GroovyElementFactory getInstance(Project project) {
-    return project.getComponent(GroovyElementFactory.class);
+  public static GroovyPsiElementFactory getInstance(Project project) {
+    return project.getComponent(GroovyPsiElementFactory.class);
   }
 
   /**

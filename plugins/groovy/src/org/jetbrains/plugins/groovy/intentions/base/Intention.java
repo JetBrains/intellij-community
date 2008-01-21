@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
 
@@ -51,7 +51,7 @@ public abstract class Intention implements IntentionAction {
       @NotNull GrExpression expression)
       throws IncorrectOperationException {
     final PsiManager mgr = expression.getManager();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(expression.getProject());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
 
     GrExpression expressionToReplace = expression;
     final String expString;

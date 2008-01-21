@@ -34,7 +34,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -84,7 +84,7 @@ public class PsiImplUtil {
     }
 
     // check priorities
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(oldExpr.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(oldExpr.getProject());
     if (oldExpr.getParent() instanceof GrExpression) {
       GrExpression parentExpr = (GrExpression) oldExpr.getParent();
       int parentPriorityLevel = getExprPriorityLevel(parentExpr);
@@ -242,7 +242,7 @@ public class PsiImplUtil {
 
   public static void setName(String name, PsiElement nameElement) {
     ASTNode node = nameElement.getNode();
-    ASTNode newNameNode = GroovyElementFactory.getInstance(nameElement.getProject()).createReferenceNameFromText(name).getNode();
+    ASTNode newNameNode = GroovyPsiElementFactory.getInstance(nameElement.getProject()).createReferenceNameFromText(name).getNode();
     assert newNameNode != null && node != null;
     node.getTreeParent().replaceChild(node, newNameNode);
   }

@@ -29,7 +29,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -351,7 +351,7 @@ public abstract class GroovyInlineMethodUtil {
       }
     }
 
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(qualifier.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(qualifier.getProject());
     for (GrReferenceExpression expr : exprs) {
       GrExpression qual = factory.createExpressionFromText(qualifier.getText());
       if (qual instanceof GrReferenceExpression) {

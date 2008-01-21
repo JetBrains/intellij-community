@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
@@ -73,7 +73,7 @@ public class ExtractMethodUtil {
     GrStatement[] statements = helper.getStatements();
     GrMethodCallExpression callExpression = createMethodCallByHelper(methodName, helper);
     if ((name == null || type == PsiType.VOID) && !helper.isReturnStatement()) return callExpression;
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     if (helper.isReturnStatement()){
       return  factory.createStatementFromText("return " + callExpression.getText());
     } else if (name != null && mustAddVariableDeclaration(statements, name)) {
@@ -157,7 +157,7 @@ public class ExtractMethodUtil {
     if (block == null) return;
     GrStatement[] statements = block.getStatements();
 
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     for (ParameterInfo info : helper.getParameterInfos()) {
       final String oldName = info.getOldName();
       final String newName = info.getName();
@@ -200,7 +200,7 @@ public class ExtractMethodUtil {
     }
     buffer.append(") { \n");
 
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     String outputName = helper.getOutputName();
 
     ParameterInfo[] infos = helper.getParameterInfos();
@@ -357,7 +357,7 @@ public class ExtractMethodUtil {
 
     buffer.append(")");
     String callText = buffer.toString();
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(helper.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     GrExpression expr = factory.createExpressionFromText(callText);
     assert expr instanceof GrMethodCallExpression;
     return ((GrMethodCallExpression) expr);

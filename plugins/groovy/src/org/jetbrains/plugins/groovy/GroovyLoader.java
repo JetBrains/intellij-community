@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.Function;
@@ -57,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.grails.GrailsLoader;
+import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -105,6 +107,10 @@ public class GroovyLoader implements ApplicationComponent {
           }
         }
     );
+
+    //Register factory for special Groovy elements
+    Factory.addElementFactory(new GspElementFactory());
+
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new GroovyCompletionData());
 

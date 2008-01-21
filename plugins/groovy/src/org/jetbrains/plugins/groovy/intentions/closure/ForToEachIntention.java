@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 public class ForToEachIntention extends Intention {
 
@@ -43,7 +43,7 @@ public class ForToEachIntention extends Intention {
     collection = (GrExpression) collection.copy();
     @NonNls final String statement = "x.each{" + var.getText() + " -> " + bodyText + " }";
     final PsiManager mgr = parentStatement.getManager();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(parentStatement.getProject());
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(parentStatement.getProject());
     final GrMethodCallExpression eachExpression =
         (GrMethodCallExpression) factory.createTopElementFromText(statement);
     ((GrReferenceExpression) eachExpression.getInvokedExpression()).getQualifierExpression().replaceWithExpression(collection, true);

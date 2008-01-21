@@ -98,7 +98,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
     final PsiFile file = selectedExpr.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 
 
     PsiType type = selectedExpr.getType();
@@ -173,7 +173,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
                       final PsiType varType, final boolean replaceAllOccurrences,
                       final GrVariableDeclaration varDecl) {
     final Project project = selectedExpr.getProject();
-    final GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     // Marker for caret posiotion
     final Runnable runnable = new Runnable() {
       public void run() {
@@ -271,7 +271,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
             String fieldName = getFieldName(resolved);
             if (fieldName != null &&
                 varDef.getName().equals(fieldName)) {
-                GroovyElementFactory factory = GroovyElementFactory.getInstance(tempContainer.getProject());
+                GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(tempContainer.getProject());
                 try {
                   ((GrReferenceExpression) child).replaceWithExpression(factory.createExpressionFromText("this." + child.getText()), true);
                 } catch (IncorrectOperationException e) {
@@ -303,7 +303,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private GrVariable insertVariableDefinition(GroovyPsiElement tempContainer, GrExpression selectedExpr,
                                               PsiElement[] occurrences, boolean replaceAllOccurrences,
-                                              GrVariableDeclaration varDecl, GroovyElementFactory factory) throws IncorrectOperationException {
+                                              GrVariableDeclaration varDecl, GroovyPsiElementFactory factory) throws IncorrectOperationException {
     PsiElement anchorElement = GroovyRefactoringUtil.calculatePositionToInsertBefore(tempContainer, selectedExpr, occurrences, replaceAllOccurrences);
     assert anchorElement instanceof GrStatement;
     PsiElement realContainer;
@@ -356,7 +356,7 @@ public abstract class GroovyIntroduceVariableBase implements RefactoringActionHa
 
   private void replaceExpressionOccurrencesInStatement(GrStatement stmt, GrExpression expr, String refText, boolean replaceAllOccurrences)
       throws IncorrectOperationException {
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(stmt.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(stmt.getProject());
     GrReferenceExpression refExpr = factory.createReferenceExpressionFromText(refText);
     if (!replaceAllOccurrences) {
       expr.replaceWithExpression(refExpr, true);

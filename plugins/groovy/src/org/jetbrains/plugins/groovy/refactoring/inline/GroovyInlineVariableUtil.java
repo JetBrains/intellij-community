@@ -31,7 +31,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -80,7 +80,7 @@ public class GroovyInlineVariableUtil {
           tempExpr = ((GrParenthesizedExpression) tempExpr).getOperand();
         }
         Project project = variable.getProject();
-        GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
         GrExpression newExpr = factory.createExpressionFromText(tempExpr.getText());
 
         try {

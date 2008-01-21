@@ -24,7 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -58,7 +58,7 @@ public class GroovyCodeFragmentFactory implements CodeFragmentFactory {
     String text = textWithImports.getText();
     String imports = textWithImports.getImports();
     final GroovyPsiElement toEval;
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(project);
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
     toEval = factory.createGroovyFile(text, false, context);
 
     final Set<String> namesList = new HashSet<String>();

@@ -17,13 +17,14 @@ package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parsing.GroovyDocElementTypes;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer
  *
  * @author ilyas
  */
-public interface GroovyTokenTypes {
+public interface GroovyTokenTypes extends GroovyDocElementTypes{
 
   /**
    * Wrong token. Use for debug needs

@@ -62,8 +62,8 @@
       <implementation-class>org.jetbrains.plugins.grails.fileType.GroovyInjector</implementation-class>
     </component>
     <component>
-      <interface-class>org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory</interface-class>
-      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyElementFactoryImpl</implementation-class>
+      <interface-class>org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory</interface-class>
+      <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementFactoryImpl</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder</implementation-class>

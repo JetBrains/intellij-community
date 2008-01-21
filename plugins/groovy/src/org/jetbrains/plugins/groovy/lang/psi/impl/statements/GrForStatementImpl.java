@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -78,7 +78,7 @@ public class GrForStatementImpl extends GroovyPsiElementImpl implements GrForSta
     ASTNode oldBodyNode = getBody().getNode();
     if (oldBodyNode.getTreePrev() != null &&
         GroovyTokenTypes.mNLS.equals(oldBodyNode.getTreePrev().getElementType())) {
-      ASTNode whiteNode = GroovyElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
+      ASTNode whiteNode = GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace().getNode();
       getNode().replaceChild(oldBodyNode.getTreePrev(), whiteNode);
     }
     this.getNode().replaceChild(oldBodyNode, newBody.getNode());

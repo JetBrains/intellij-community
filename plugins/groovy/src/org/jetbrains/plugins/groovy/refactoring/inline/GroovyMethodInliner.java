@@ -33,7 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -123,7 +123,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
 
   static RangeMarker inlineReferenceImpl(GrCallExpression call, GrMethod method, boolean replaceCall, boolean isTailMethodCall) {
     try {
-      GroovyElementFactory factory = GroovyElementFactory.getInstance(call.getProject());
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
       final Project project = call.getProject();
 
       FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -304,7 +304,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
     if (parent instanceof GrVariableDeclarationOwner) {
       return expr;
     } else {
-      GroovyElementFactory factory = GroovyElementFactory.getInstance(expr.getProject());
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expr.getProject());
       PsiElement tempStmt = expr;
       while (parent != tempStmt.getParent()) {
         tempStmt = tempStmt.getParent();
@@ -337,7 +337,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   */
   private static GrMethod prepareNewMethod(GrCallExpression call, GrMethod method, GrReferenceExpression qualifier) throws IncorrectOperationException {
 
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(method.getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
     GrMethod newMethod = factory.createMethodFromText(method.getText());
     Collection<GroovyInlineMethodUtil.ReferenceExpressionInfo> infos = GroovyInlineMethodUtil.collectReferenceInfo(method);
     if (qualifier != null) {
@@ -397,7 +397,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       if (statements[0] instanceof GrReturnStatement) {
         GrExpression value = ((GrReturnStatement) statements[0]).getReturnValue();
         if (value == null && (method.getReturnType() != PsiType.VOID)) {
-          return GroovyElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
+          return GroovyPsiElementFactory.getInstance(method.getProject()).createExpressionFromText("null");
         }
         return value;
       }

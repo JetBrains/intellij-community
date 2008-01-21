@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
@@ -68,7 +68,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
       ASTNode node = nameElement.getNode();
-      ASTNode newNameNode = GroovyElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
+      ASTNode newNameNode = GroovyPsiElementFactory.getInstance(getProject()).createReferenceNameFromText(newElementName).getNode();
       assert newNameNode != null && node != null;
       node.getTreeParent().replaceChild(node, newNameNode);
     }
@@ -91,7 +91,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
         final GrImportStatement added = file.addImportForClass(clazz);
         if (!bindsCorrectly(element)) {
           file.removeImport(added);
-          final GrCodeReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+          final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
           getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
           return qualifiedRef;
         }
@@ -100,7 +100,7 @@ public abstract class GrReferenceElementImpl extends GroovyPsiElementImpl implem
       }
     } else if (element instanceof PsiPackage) {
       final String qName = ((PsiPackage) element).getQualifiedName();
-      final GrCodeReferenceElement qualifiedRef = GroovyElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
+      final GrCodeReferenceElement qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createTypeOrPackageReference(qName);
       getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
       return qualifiedRef;
     }

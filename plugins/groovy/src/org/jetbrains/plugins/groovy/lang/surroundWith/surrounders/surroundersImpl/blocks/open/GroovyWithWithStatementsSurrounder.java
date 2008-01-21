@@ -4,9 +4,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStatementsSurrounder;
 
@@ -16,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.GroovyManyStat
  */
 public class GroovyWithWithStatementsSurrounder extends GroovyManyStatementsSurrounder {
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(elements[0].getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrMethodCallExpression withCall = (GrMethodCallExpression) factory.createTopElementFromText("with(a){\n}");
     addStatements(withCall.getClosureArguments()[0], elements);
     return withCall;

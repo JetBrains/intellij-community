@@ -6,8 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -30,7 +28,7 @@ public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
       }
     }
 
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(elements[0].getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     final GrMethodCallExpression call = (GrMethodCallExpression) factory.createTopElementFromText("{ -> \n }.call()");
     final GrClosableBlock closure = (GrClosableBlock) ((GrReferenceExpression) call.getInvokedExpression()).getQualifierExpression();
     addStatements(closure, elements);
@@ -64,7 +62,7 @@ public class GroovySurrounderByClosure extends GroovyManyStatementsSurrounder {
         final PsiElement oldElement = oldResult.getElement();
         final PsiElement newElement = newResult.getElement();
         if (oldElement != newElement || oldResult.getCurrentFileResolveContext() != newResult.getCurrentFileResolveContext()) {
-          final GrReferenceExpression qualifier = GroovyElementFactory.getInstance(ref.getProject()).createReferenceExpressionFromText("owner");
+          final GrReferenceExpression qualifier = GroovyPsiElementFactory.getInstance(ref.getProject()).createReferenceExpressionFromText("owner");
           ref.setQualifierExpression(qualifier);
         }
       }

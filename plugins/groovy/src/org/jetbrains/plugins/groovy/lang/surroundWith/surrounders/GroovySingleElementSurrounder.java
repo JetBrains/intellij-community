@@ -10,7 +10,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -30,7 +30,7 @@ abstract public class GroovySingleElementSurrounder implements Surrounder {
 
     PsiElement element = elements[0];
 
-    GroovyPsiElement expression = GroovyElementFactory.getInstance(project).createTopElementFromText(getExpressionTemplateAsString(element.getNode()));
+    GroovyPsiElement expression = GroovyPsiElementFactory.getInstance(project).createTopElementFromText(getExpressionTemplateAsString(element.getNode()));
 
     PsiElement psiElement = element.getParent();
     assert psiElement != null;

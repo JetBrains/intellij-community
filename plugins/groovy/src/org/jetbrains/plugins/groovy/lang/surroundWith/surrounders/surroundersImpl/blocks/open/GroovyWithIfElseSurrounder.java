@@ -2,7 +2,7 @@ package org.jetbrains.plugins.groovy.lang.surroundWith.surrounders.surroundersIm
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 public class GroovyWithIfElseSurrounder extends GroovyWithIfSurrounder {
   @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements) throws IncorrectOperationException {
-    GroovyElementFactory factory = GroovyElementFactory.getInstance(elements[0].getProject());
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(elements[0].getProject());
     GrIfStatement ifStatement = (GrIfStatement) factory.createTopElementFromText("if (a) {\n} else {\n}");
     addStatements(((GrBlockStatement)ifStatement.getThenBranch()).getBlock(), elements);
     return ifStatement;
