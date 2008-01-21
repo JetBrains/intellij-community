@@ -16,6 +16,7 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="JUnit3" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="psi-extapi" />
     <orderEntryProperties />
   </component>
 </module>
