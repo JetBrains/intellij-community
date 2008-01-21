@@ -32,17 +32,11 @@ public interface XDebugSession {
 
   boolean isPaused();
 
-
   void stepOver();
-
   void stepInto();
-
   void stepOut();
-
   void forceStepInto();
-
   void forceStepOver();
-
 
   void resume();
 
@@ -50,9 +44,11 @@ public interface XDebugSession {
 
 
   void breakpointReached(@NotNull XBreakpoint<?> breakpoint);
-
   void positionReached(@NotNull XSourcePosition position);
 
 
   void stop();
+
+  void setBreakpointMuted(boolean muted);
+  boolean areBreakpointsMuted();
 }
