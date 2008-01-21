@@ -168,7 +168,9 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
   private Document loadModuleDynXML(String moduleName) {
     Document document;
     try {
-      document = JDOMUtil.loadDocument(myPathsToXmls.get(ModuleManager.getInstance(getProject()).findModuleByName(moduleName)));
+      final Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
+
+      document = module == null ? new Document() : JDOMUtil.loadDocument(myPathsToXmls.get(module));
     } catch (JDOMException e) {
       document = new Document();
     } catch (IOException e) {
