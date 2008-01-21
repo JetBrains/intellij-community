@@ -33,6 +33,12 @@ public class TextFieldWithHistory extends JComboBox {
     setEditable(true);
   }
 
+  // API compatibility with 7.0.1
+  @SuppressWarnings({"UnusedDeclaration"})
+  public TextFieldWithHistory(boolean cropList) {
+    this();
+  }
+
   public void addDocumentListener(DocumentListener listener) {
     getTextEditor().getDocument().addDocumentListener(listener);
   }
