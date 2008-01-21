@@ -36,10 +36,16 @@ public class CollectClassMembersUtil {
   private static final Key<CachedValue<Pair<Map<String, CandidateInfo>,
                                             Map<String, List<CandidateInfo>>>>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
 
-  public static Map<String, List<CandidateInfo>> getAllMethods(final PsiClass aClass) {
-    CachedValue<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>> cachedValue = aClass.getUserData(CACHED_MEMBERS);
+  private static final Key<CachedValue<Pair<Map<String, CandidateInfo>,
+                                            Map<String, List<CandidateInfo>>>>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
+
+
+  public static Map<String, List<CandidateInfo>> getAllMethods(final PsiClass aClass, boolean includeSynthetic) {
+    Key<CachedValue<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>>> key = includeSynthetic ?
+        CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
+    CachedValue<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>> cachedValue = aClass.getUserData(key);
     if (cachedValue == null) {
-      cachedValue = buildCache(aClass);
+      cachedValue = buildCache(aClass, includeSynthetic);
     }
 
     Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>> value = cachedValue.getValue();
@@ -50,7 +56,7 @@ public class CollectClassMembersUtil {
   public static Map<String, CandidateInfo> getAllFields(final PsiClass aClass) {
     CachedValue<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>> cachedValue = aClass.getUserData(CACHED_MEMBERS);
     if (cachedValue == null) {
-      cachedValue = buildCache(aClass);
+      cachedValue = buildCache(aClass, false);
     }
 
     Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>> value = cachedValue.getValue();
@@ -58,19 +64,19 @@ public class CollectClassMembersUtil {
     return value.getFirst();
   }
 
-  private static CachedValue<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>> buildCache(final PsiClass aClass) {
+  private static CachedValue<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>> buildCache(final PsiClass aClass, final boolean includeSynthetic) {
     return aClass.getManager().getCachedValuesManager().createCachedValue(new CachedValueProvider<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>>() {
       public Result<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>> compute() {
         Map<String, CandidateInfo> allFields = new HashMap<String, CandidateInfo>();
         Map<String, List<CandidateInfo>> allMethods = new HashMap<String, List<CandidateInfo>>();
 
-        processClass(aClass, allFields, allMethods, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY);
+        processClass(aClass, allFields, allMethods, new HashSet<PsiClass>(), PsiSubstitutor.EMPTY, includeSynthetic);
         return new Result<Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>>(new Pair<Map<String, CandidateInfo>, Map<String, List<CandidateInfo>>>(allFields, allMethods), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
   }
 
-  private static void processClass(PsiClass aClass, Map<String, CandidateInfo> allFields, Map<String, List<CandidateInfo>> allMethods, Set<PsiClass> visitedClasses, PsiSubstitutor substitutor) {
+  private static void processClass(PsiClass aClass, Map<String, CandidateInfo> allFields, Map<String, List<CandidateInfo>> allMethods, Set<PsiClass> visitedClasses, PsiSubstitutor substitutor, boolean includeSynthetic) {
     if (visitedClasses.contains(aClass)) return;
     visitedClasses.add(aClass);
 
@@ -79,12 +85,15 @@ public class CollectClassMembersUtil {
       if (!allFields.containsKey(name)) {
         allFields.put(name, new CandidateInfo(field, substitutor));
       }
-      if (field instanceof GrField && field.getName() != null) {
-        final GrField property = (GrField) field;
-        final PsiMethod getter = property.getGetter();
-        if (getter != null) addMethod(allMethods, getter, substitutor);
-        final PsiMethod setter = property.getSetter();
-        if (setter != null) addMethod(allMethods, setter, substitutor);
+
+      if (includeSynthetic) {
+        if (field instanceof GrField && field.getName() != null) {
+          final GrField property = (GrField) field;
+          final PsiMethod getter = property.getGetter();
+          if (getter != null) addMethod(allMethods, getter, substitutor);
+          final PsiMethod setter = property.getSetter();
+          if (setter != null) addMethod(allMethods, setter, substitutor);
+        }
       }
     }
 
@@ -104,7 +113,7 @@ public class CollectClassMembersUtil {
       PsiClass superClass = superType.resolve();
       if (superClass != null) {
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, substitutor);
-        processClass(superClass, allFields, allMethods, visitedClasses, superSubstitutor);
+        processClass(superClass, allFields, allMethods, visitedClasses, superSubstitutor, includeSynthetic);
       }
     }
   }

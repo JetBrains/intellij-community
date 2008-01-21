@@ -37,7 +37,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -236,7 +235,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     }
 
     if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.METHOD)) {
-      Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+      Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(this, true);
       boolean isPlaceGroovy = place.getLanguage() == GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
       if (name == null) {
         for (List<CandidateInfo> list : methodsMap.values()) {
@@ -570,7 +569,18 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public PsiMethod[] findMethodsBySignature(PsiMethod patternMethod, boolean checkBases) {
-    return PsiMethod.EMPTY_ARRAY;
+    List<PsiMethod> result = new ArrayList<PsiMethod>();
+    final MethodSignature patternSignature = patternMethod.getSignature(PsiSubstitutor.EMPTY);
+    final PsiMethod[] byName = findMethodsByName(patternMethod.getName(), checkBases, false);
+    for (PsiMethod method : byName) {
+      final PsiClass clazz = method.getContainingClass();
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(clazz, this, PsiSubstitutor.EMPTY);
+      assert superSubstitutor != null;
+      final MethodSignature signature = method.getSignature(superSubstitutor);
+      if (signature.equals(patternSignature)) result.add(method);
+    }
+
+    return result.toArray(new PsiMethod[result.size()]);
   }
 
   @NotNull
@@ -597,7 +607,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       return result.toArray(new PsiMethod[result.size()]);
     }
 
-    Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(this);
+    Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(this, includeSyntheticAccessors);
     return PsiImplUtil.mapToMethods(methodsMap.get(name));
   }
 
@@ -611,7 +621,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
         result.add(new Pair<PsiMethod, PsiSubstitutor>(method, PsiSubstitutor.EMPTY));
       }
     } else {
-      final Map<String, List<CandidateInfo>> map = CollectClassMembersUtil.getAllMethods(this);
+      final Map<String, List<CandidateInfo>> map = CollectClassMembersUtil.getAllMethods(this, true);
       final List<CandidateInfo> candidateInfos = map.get(name);
       if (candidateInfos != null) {
         for (CandidateInfo info : candidateInfos) {
@@ -626,7 +636,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
 
   @NotNull
   public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
-    final Map<String, List<CandidateInfo>> allMethodsMap = CollectClassMembersUtil.getAllMethods(this);
+    final Map<String, List<CandidateInfo>> allMethodsMap = CollectClassMembersUtil.getAllMethods(this, true);
     List<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
     for (List<CandidateInfo> infos : allMethodsMap.values()) {
       for (CandidateInfo info : infos) {

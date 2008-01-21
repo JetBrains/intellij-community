@@ -15,21 +15,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.PomField;
 import com.intellij.psi.*;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GrGspDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -83,6 +77,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
       return ((GroovyFileBase) file).getScriptClass();
     }
 
+    assert false;
     return null;
   }
 
@@ -96,7 +91,7 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     if (!isProperty()) return null;
     final AccessorMethod setter = new AccessorMethod(this, true);
     final PsiClass clazz = getContainingClass();
-    if (clazz == null || clazz.findMethodBySignature(setter, false) == null) {
+    if (!hasContradictingMethods(setter, clazz)) {
       mySetter = setter;
     } else {
       mySetter = null;
@@ -117,13 +112,22 @@ public class GrFieldImpl extends GrVariableImpl implements GrField {
     if (!isProperty()) return null;
     final AccessorMethod getter = new AccessorMethod(this, false);
     final PsiClass clazz = getContainingClass();
-    if (clazz == null || clazz.findMethodBySignature(getter, false) == null) {
+    if (!hasContradictingMethods(getter, clazz)) {
       myGetter = getter;
     } else {
       myGetter = null;
     }
 
     return myGetter;
+  }
+
+  private boolean hasContradictingMethods(AccessorMethod proto, PsiClass clazz) {
+    for (PsiMethod method : clazz.findMethodsBySignature(proto, true)) {
+      if (clazz.equals(method.getContainingClass())) return true;
+      
+      if (PsiUtil.isAccessible(clazz, method) && method.hasModifierProperty(PsiModifier.FINAL)) return true;
+    }
+    return false;
   }
 
   @NotNull

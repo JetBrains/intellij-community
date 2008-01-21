@@ -1,0 +1,22 @@
+class Base {
+  final int getP() {0}
+}
+
+class Derived extends Base {
+  int p = 0 //should not create a getter here
+}
+-----
+public class Base extends groovy.lang.GroovyObjectSupport {
+  public final int getP() {
+    return 0;
+  }
+}
+---
+public class Derived extends Base {
+  private int p = 0;
+
+  public void setP(int p) {
+    return ;
+  }
+}
+---
