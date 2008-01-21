@@ -494,11 +494,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
   */
 
-  private void invalidateIndex(final VirtualFile file, @NotNull final CharSequence content) {
-    final FileContent fc = new FileContent(file, content);
+  private void invalidateIndex(final VirtualFile file) {
+    FileContent fc = null;
     for (String indexId : myIndices.keySet()) {
       if (getInputFilter(indexId).acceptInput(file)) {
         try {
+          if (fc == null) {
+            fc = new FileContent(file, loadContent(file));
+          }
           updateSingleIndex(indexId, file, null, fc);
         }
         catch (StorageException e) {
@@ -614,8 +617,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     
     private void doBeforeAction(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      final CharSequence oldContent = loadContent(file);
-      invalidateIndex(file, oldContent);
+      invalidateIndex(file);
     }
     
     private void doAfterAction(final VirtualFileEvent event) {
