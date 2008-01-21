@@ -12,13 +12,19 @@ import gnu.trove.TObjectIntHashMap;
  */
 public class IndexDataOccurrenceConsumer implements BaseFilterLexer.OccurrenceConsumer{
   private final IndexDataConsumer<IdIndexEntry, Void> myIndexDataConsumer;
-  private final TObjectIntHashMap<IndexPattern> myTodoOccurrences = new TObjectIntHashMap<IndexPattern>();
+  private final TObjectIntHashMap<IndexPattern> myTodoOccurrences;
   
-  public IndexDataOccurrenceConsumer(final IndexDataConsumer<IdIndexEntry, Void> indexDataConsumer) {
+  public IndexDataOccurrenceConsumer(final IndexDataConsumer<IdIndexEntry, Void> indexDataConsumer, final boolean consumeTodos) {
     myIndexDataConsumer = indexDataConsumer;
-    IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
-    for (IndexPattern pattern : patterns) {
-      myTodoOccurrences.put(pattern, 0);
+    if (consumeTodos) {
+      myTodoOccurrences = new TObjectIntHashMap<IndexPattern>();
+      IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
+      for (IndexPattern pattern : patterns) {
+        myTodoOccurrences.put(pattern, 0);
+      }
+    }
+    else {
+      myTodoOccurrences = null;
     }
   }
   
@@ -32,5 +38,13 @@ public class IndexDataOccurrenceConsumer implements BaseFilterLexer.OccurrenceCo
 
   public void incTodoOccurrence(final IndexPattern pattern) {
     myTodoOccurrences.adjustValue(pattern, 1);
+  }
+
+  public boolean canConsumeTodoOccurrences() {
+    return myTodoOccurrences != null;
+  }
+  
+  public int getOccurrenceCount(IndexPattern pattern) {
+    return myTodoOccurrences.get(pattern); 
   }
 }

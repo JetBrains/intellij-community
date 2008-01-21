@@ -15,7 +15,6 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   protected final Lexer myOriginalLexer;
 
   private final OccurrenceConsumer myOccurrenceConsumer;
-  private final int[] myTodoCounts; 
 
   private int myTodoScannedBound = 0;
   private int myOccurenceMask;
@@ -25,13 +24,14 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   public static interface OccurrenceConsumer {
     void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask);
     void addOccurrence(char[] chars, int start, int end, int occurrenceMask);
+    
+    boolean canConsumeTodoOccurrences();
     void incTodoOccurrence(IndexPattern pattern);
   }
   
-  protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer, int[] todoCounts) {
+  protected BaseFilterLexer(Lexer originalLexer, OccurrenceConsumer occurrenceConsumer) {
     myOriginalLexer = originalLexer;
     myOccurrenceConsumer = occurrenceConsumer;
-    myTodoCounts = todoCounts;
   }
 
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
@@ -73,28 +73,28 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
   }
 
   protected final void advanceTodoItemCountsInToken() {
-    if (myTodoCounts != null){
+    if (myOccurrenceConsumer.canConsumeTodoOccurrences()){
       int start = getTokenStart();
       int end = getTokenEnd();
       start = Math.max(start, myTodoScannedBound);
       if (start >= end) return; // this prevents scanning of the same comment twice
 
       CharSequence input = new CharSequenceSubSequence(myBuffer, start, end);
-      advanceTodoItemsCount(input, myTodoCounts);
+      advanceTodoItemsCount(input, myOccurrenceConsumer);
 
       myTodoScannedBound = end;
     }
   }
 
-  public static void advanceTodoItemsCount(final CharSequence input, final int[] todoCounts) {
+  public static void advanceTodoItemsCount(final CharSequence input, final OccurrenceConsumer consumer) {
     IndexPattern[] patterns = IdCacheUtil.getIndexPatterns();
-    for(int index = 0; index < patterns.length; index++){
-      Pattern pattern = patterns[index].getPattern();
-      if (pattern != null){
+    for (final IndexPattern indexPattern : patterns) {
+      Pattern pattern = indexPattern.getPattern();
+      if (pattern != null) {
         Matcher matcher = pattern.matcher(input);
-        while(matcher.find()){
-          if (matcher.start() != matcher.end()){
-            todoCounts[index]++;
+        while (matcher.find()) {
+          if (matcher.start() != matcher.end()) {
+            consumer.incTodoOccurrence(indexPattern);
           }
         }
       }

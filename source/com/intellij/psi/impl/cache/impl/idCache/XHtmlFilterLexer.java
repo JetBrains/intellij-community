@@ -9,8 +9,8 @@ import com.intellij.psi.xml.XmlElementType;
 
 public class XHtmlFilterLexer extends BaseFilterLexer {
 
-  public XHtmlFilterLexer(Lexer originalLexer, OccurrenceConsumer table, int[] todoCounts) {
-    super(originalLexer, table, todoCounts);
+  public XHtmlFilterLexer(Lexer originalLexer, OccurrenceConsumer table) {
+    super(originalLexer, table);
   }
 
   public void advance() {

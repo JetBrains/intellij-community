@@ -9,8 +9,8 @@ import com.intellij.psi.tree.IElementType;
  * @author ven
  */
 public class PropertiesFilterLexer extends BaseFilterLexer {
-  public PropertiesFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table, final int[] todoCounts) {
-    super(originalLexer, table, todoCounts);
+  public PropertiesFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table) {
+    super(originalLexer, table);
   }
 
   public void advance() {

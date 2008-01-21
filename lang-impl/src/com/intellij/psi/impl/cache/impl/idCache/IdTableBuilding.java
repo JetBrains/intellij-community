@@ -259,14 +259,25 @@ public class IdTableBuilding {
         final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(manager.getProject(), myFile);
         highlighter.setText(chars);
 
+        final IndexDataOccurrenceConsumer todoConsumer = new IndexDataOccurrenceConsumer(new IndexDataConsumer<IdIndexEntry, Void>() {
+          public void consume(final IdIndexEntry key, final Void value) {
+            // empty consumer
+          }
+        }, true);
+
         final HighlighterIterator iterator = highlighter.createIterator(0);
         while (!iterator.atEnd()) {
           final IElementType token = iterator.getTokenType();
           if (IdCacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
-            BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(iterator.getStart(), iterator.getEnd()), todoCounts);
+            BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(iterator.getStart(), iterator.getEnd()), todoConsumer);
           }
 
           iterator.advance();
+        }
+
+        final IndexPattern[] indexPatterns = IdCacheUtil.getIndexPatterns();
+        for (int idx = 0; idx < indexPatterns.length; idx++) {
+          todoCounts[idx] = todoConsumer.getOccurrenceCount(indexPatterns[idx]);
         }
       }
     }
@@ -348,6 +359,27 @@ public class IdTableBuilding {
           return 0;
         }
       });
+
+      if (myHighlighter != null && myCommentTokens != null && IdCacheUtil.getIndexPatternCount() > 0) {
+        final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(null, myFile);
+        highlighter.setText(chars);
+        BaseFilterLexer.OccurrenceConsumer occurrenceConsumer = new IndexDataOccurrenceConsumer(new IndexDataConsumer<IdIndexEntry, Void>() {
+          public void consume(final IdIndexEntry key, final Void value) {
+            // empty consumer
+          }
+        }, true);
+        final HighlighterIterator iterator = highlighter.createIterator(0);
+        while (!iterator.atEnd()) {
+          final IElementType token = iterator.getTokenType();
+          if (IdCacheUtil.isInComments(token) || myCommentTokens.contains(token)) {
+            BaseFilterLexer.advanceTodoItemsCount(chars.subSequence(iterator.getStart(), iterator.getEnd()), occurrenceConsumer);
+          }
+
+          iterator.advance();
+        }
+        
+        // todo: use todo occurrences 
+      }
     }
   }
 

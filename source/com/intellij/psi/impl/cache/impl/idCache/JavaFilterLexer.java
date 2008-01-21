@@ -9,8 +9,8 @@ import com.intellij.psi.tree.IElementType;
  * @author ven
  */
 public class JavaFilterLexer extends BaseFilterLexer {
-  public JavaFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table, final int[] todoCounts) {
-    super(originalLexer, table, todoCounts);
+  public JavaFilterLexer(final Lexer originalLexer, final OccurrenceConsumer table) {
+    super(originalLexer, table);
   }
 
   public void advance() {

@@ -371,20 +371,20 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       final int[] fileCount = new int[] {0};
 
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-      fileIndex.iterateContent(new ContentIterator() {
+      final ContentIterator filesCounter = new ContentIterator() {
         public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory() && !fileIndex.isIgnored(file)) {
+          if (!file.isDirectory()) {
             fileCount[0]++;
           }
           return true;
         }
-      });
-      
+      };
+      fileIndex.iterateContent(filesCounter);
       fileIndex.iterateContent(new ContentIterator() {
         private int myProcessed = 0;
         private final double myTotalCount = (double)fileCount[0]; 
         public boolean processFile(final VirtualFile file) {
-          if (!file.isDirectory() && !fileIndex.isIgnored(file)) {
+          if (!file.isDirectory()) {
             for (String indexId : indicesToUpdate) {
               if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
                 try {

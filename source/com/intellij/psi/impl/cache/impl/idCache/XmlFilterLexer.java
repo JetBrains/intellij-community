@@ -7,8 +7,8 @@ import com.intellij.psi.xml.XmlElementType;
 
 public class XmlFilterLexer extends BaseFilterLexer {
 
-  public XmlFilterLexer(Lexer originalLexer, OccurrenceConsumer table, int[] todoCounts) {
-    super(originalLexer, table, todoCounts);
+  public XmlFilterLexer(Lexer originalLexer, OccurrenceConsumer table) {
+    super(originalLexer, table);
   }
 
   public void advance() {

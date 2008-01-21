@@ -11,11 +11,11 @@ import com.intellij.util.indexing.IndexDataConsumer;
 public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
   
   public final void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
-    final Lexer filterLexer = createLexer(consumer);
+    final Lexer lexer = createLexer(consumer);
     final CharSequence chars = inputData.content;
-    filterLexer.start(chars, 0, chars.length(),0);
-    while (filterLexer.getTokenType() != null) {
-      filterLexer.advance();
+    lexer.start(chars, 0, chars.length(),0);
+    while (lexer.getTokenType() != null) {
+      lexer.advance();
     }
   }
 
