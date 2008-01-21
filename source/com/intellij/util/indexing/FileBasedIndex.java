@@ -335,6 +335,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       myStartDataBuffering.execute();
       for (Document document : documents) {
         final VirtualFile vFile = fdManager.getFile(document);
+        if (!vFile.isValid()) {
+          continue; // since the corresponding file is invalid, the document should be ignored
+        }
         final Pair<CharSequence, Long> indexingInfo = myIndexingHistory.get(document);
         final long documentStamp = document.getModificationStamp();
         if (indexingInfo == null || documentStamp != indexingInfo.getSecond().longValue()) {
