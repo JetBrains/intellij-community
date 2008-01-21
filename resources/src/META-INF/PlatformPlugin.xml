@@ -22,6 +22,9 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.BasicDefaultVcsRootPolicy"/>
 
+    <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
+                        serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
+
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor"/>
   </extensions>
 </idea-plugin>

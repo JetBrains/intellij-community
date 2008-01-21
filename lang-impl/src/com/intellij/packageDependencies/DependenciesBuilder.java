@@ -2,9 +2,8 @@ package com.intellij.packageDependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -132,7 +131,7 @@ public abstract class DependenciesBuilder {
 
 
   public static void analyzeFileDependencies(PsiFile file, DependencyProcessor processor) {
-    file.accept(new DependenciesWalker(processor));
+    file.accept(DependenciesVisitorFactory.getInstance().createVisitor(processor));
   }
 
   public boolean isTransitive() {
@@ -145,60 +144,5 @@ public abstract class DependenciesBuilder {
 
   public interface DependencyProcessor {
     void process(PsiElement place, PsiElement dependency);
-  }
-
-
-  private static class DependenciesWalker extends JavaRecursiveElementVisitor {
-    private final DependencyProcessor myProcessor;
-
-    public DependenciesWalker(DependencyProcessor processor) {
-      myProcessor = processor;
-    }
-
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitReferenceElement(expression);
-    }
-
-    @Override public void visitElement(PsiElement element) {
-      super.visitElement(element);
-      PsiReference[] refs = element.getReferences();
-      for (PsiReference ref : refs) {
-        PsiElement resolved = ref.resolve();
-        if (resolved != null) {
-          myProcessor.process(ref.getElement(), resolved);
-        }
-      }
-    }
-
-    @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
-      // empty
-      // TODO: thus we'll skip property references and references to file resources. We can't validate them anyway now since
-      // TODO: rule syntax does not allow this.
-    }
-
-    @Override public void visitDocComment(PsiDocComment comment) {
-      //empty
-    }
-
-    @Override public void visitImportStatement(PsiImportStatement statement) {
-      if (!DependencyValidationManager.getInstance(statement.getProject()).skipImportStatements()) {
-        visitElement(statement);
-      }
-    }
-
-    @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      PsiMethod psiMethod = expression.resolveMethod();
-      if (psiMethod != null) {
-        PsiType returnType = psiMethod.getReturnType();
-        if (returnType != null) {
-          PsiClass psiClass = PsiUtil.resolveClassInType(returnType);
-          if (psiClass != null) {
-            myProcessor.process(expression, psiClass);
-          }
-        }
-      }
-    }
   }
 }
