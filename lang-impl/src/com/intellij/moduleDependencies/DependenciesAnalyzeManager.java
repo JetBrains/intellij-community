@@ -9,8 +9,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import org.jdom.Element;
 
@@ -33,7 +33,7 @@ public class DependenciesAnalyzeManager implements JDOMExternalizable, ProjectCo
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
-        myContentManager = PeerFactory.getInstance().getContentFactory().createContentManager(true, myProject);
+        myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES,
                                                                      myContentManager.getComponent(),

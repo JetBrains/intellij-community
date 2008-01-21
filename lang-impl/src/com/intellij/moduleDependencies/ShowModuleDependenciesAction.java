@@ -9,9 +9,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,7 +54,7 @@ public class ShowModuleDependenciesAction extends AnAction{
       }
     }
 
-    Content content = PeerFactory.getInstance().getContentFactory().createContent(panel,
+    Content content = ContentFactory.SERVICE.getInstance().createContent(panel,
                                                                                   AnalysisScopeBundle.message(
                                                                                     "module.dependencies.toolwindow.title",
                                                                                     StringUtil.decapitalize(scope.getDisplayName())),
