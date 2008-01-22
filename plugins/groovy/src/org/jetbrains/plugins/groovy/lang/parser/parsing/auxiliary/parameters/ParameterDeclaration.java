@@ -111,7 +111,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
           modSet.add(kDEF);
         }
         ParserUtils.getToken(builder, mNLS);
-      } else if (!WRONGWAY.equals(Annotation.parse(builder))) {
+      } else if (Annotation.parse(builder)) {
         ParserUtils.getToken(builder, mNLS);
       }
     }
