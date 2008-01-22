@@ -6,5 +6,5 @@ package com.intellij.ide.scopeView;
 
 import javax.swing.event.TreeWillExpandListener;
 
-public interface ScopeTreeSctructureExpander extends TreeWillExpandListener {
+public interface ScopeTreeStructureExpander extends TreeWillExpandListener {
 }

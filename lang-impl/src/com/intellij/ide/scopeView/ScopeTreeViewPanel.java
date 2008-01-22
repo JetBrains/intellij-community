@@ -169,7 +169,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
     };
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myTree, myProject);
-    for (ScopeTreeSctructureExpander expander : ServiceManager.getServices(myProject, ScopeTreeSctructureExpander.class)) {
+    for (ScopeTreeStructureExpander expander : ServiceManager.getServices(myProject, ScopeTreeStructureExpander.class)) {
       myTree.addTreeWillExpandListener(expander);
     }
   }

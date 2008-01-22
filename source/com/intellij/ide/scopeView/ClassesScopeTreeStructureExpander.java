@@ -28,7 +28,7 @@ import java.util.Set;
  * User: anna
  * Date: 30-Jan-2006
  */
-public class ClassesScopeTreeStructureExpander implements ScopeTreeSctructureExpander {
+public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpander {
 
   private Project myProject;
 
