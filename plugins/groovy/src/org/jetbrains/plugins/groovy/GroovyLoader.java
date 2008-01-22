@@ -42,8 +42,11 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.intellij.ide.IconProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
@@ -55,11 +58,14 @@ import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -68,7 +74,7 @@ import java.util.Set;
  *
  * @author ilyas
  */
-public class GroovyLoader implements ApplicationComponent {
+public class GroovyLoader implements ApplicationComponent, IconProvider {
 
   @NotNull
   public static final String GROOVY_EXTENSION = "groovy";
@@ -174,5 +180,22 @@ public class GroovyLoader implements ApplicationComponent {
   @NotNull
   public String getComponentName() {
     return "groovy.support.loader";
+  }
+
+  @Nullable
+  public Icon getIcon(@NotNull PsiElement element, int flags) {
+    if (element instanceof GroovyFile) {
+      GroovyFile file = (GroovyFile) element;
+      if (!file.isScript()) {
+        GrTypeDefinition[] typeDefinitions = file.getTypeDefinitions();
+        if (typeDefinitions.length > 0) {
+          return typeDefinitions[0].getIcon(flags);
+        }
+      }
+
+      return GroovyFileType.GROOVY_LOGO;
+    }
+
+    return null;
   }
 }
