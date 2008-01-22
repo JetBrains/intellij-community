@@ -16,6 +16,7 @@
 package org.intellij.images.editor.impl;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.CopyPasteSupport;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +60,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
     private final ImageEditor editor;
     private final DeleteProvider deleteProvider;
-    private final UIHelper.CopyPasteSupport copyPasteSupport;
+    private final CopyPasteSupport copyPasteSupport;
 
     private final ImageZoomModel zoomModel = new ImageZoomModelImpl();
     private final ImageWheelAdapter wheelAdapter = new ImageWheelAdapter();

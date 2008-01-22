@@ -17,6 +17,7 @@
 package org.intellij.images.thumbnail.impl;
 
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.CopyPasteSupport;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -63,7 +64,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private static final Navigatable[] EMPTY_NAVIGATABLE_ARRAY = new Navigatable[]{};
 
     private final ThumbnailView thumbnailView;
-    private final UIHelper.CopyPasteSupport copyPasteSupport;
+    private final CopyPasteSupport copyPasteSupport;
     private final DeleteProvider deleteProvider;
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
