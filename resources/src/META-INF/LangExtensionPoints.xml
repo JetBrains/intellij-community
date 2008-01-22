@@ -137,6 +137,9 @@
                   interface="com.intellij.ide.fileTemplates.CreateFromTemplateHandler"/>
   <extensionPoint name="defaultTemplatePropertiesProvider"
                   interface="com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider"/>
+  <extensionPoint name="internalFileTemplate"
+                  beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean"/>
+
   <extensionPoint name="favoriteNodeProvider"
                   interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider"
                   area="IDEA_PROJECT"/>

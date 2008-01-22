@@ -3,7 +3,7 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.*;
@@ -86,19 +87,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
          new FileTemplateManagerImpl(INCLUDES_DIR, TEMPLATES_DIR + File.separator + INCLUDES_DIR, virtualFileManager, typeManager, null, null, null, null),
          new FileTemplateManagerImpl(CODETEMPLATES_DIR, TEMPLATES_DIR + File.separator + CODETEMPLATES_DIR, virtualFileManager, typeManager, null, null, null, null),
          new FileTemplateManagerImpl(J2EE_TEMPLATES_DIR, TEMPLATES_DIR + File.separator + J2EE_TEMPLATES_DIR, virtualFileManager, typeManager, null, null, null, null));
-
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_CATCH_BODY, IdeBundle.message("template.catch.statement.body"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY, IdeBundle.message("template.implemented.method.body"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_OVERRIDDEN_METHOD_BODY, IdeBundle.message("template.overridden.method.body"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY, IdeBundle.message("template.new.method.body"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_I18NIZED_EXPRESSION, IdeBundle.message("template.i18nized.expression"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_I18NIZED_CONCATENATION, IdeBundle.message("template.i18nized.concatenation"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION, IdeBundle.message("template.i18nized.jsp.expression"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME, IdeBundle.message("template.class"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME, IdeBundle.message("template.interface"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME, IdeBundle.message("template.annotationtype"));
-    myLocalizedTemplateNames.put(JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME, IdeBundle.message("template.enum"));
-    myLocalizedTemplateNames.put(FILE_HEADER_TEMPLATE_NAME, IdeBundle.message("template.file.header"));
 
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       public void before(final List<? extends VFileEvent> events) {
@@ -498,14 +486,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
 
   @NotNull
   public FileTemplate[] getInternalTemplates() {
-    return new FileTemplate[] {
-    getInternalTemplate(JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME),
-    getInternalTemplate(JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME),
-    getInternalTemplate(JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME),
-    getInternalTemplate(JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME),
-    getInternalTemplate(INTERNAL_HTML_TEMPLATE_NAME),
-    getInternalTemplate(INTERNAL_XHTML_TEMPLATE_NAME),
-    };
+    InternalTemplateBean[] internalTemplateBeans = Extensions.getExtensions(InternalTemplateBean.EP_NAME);
+    FileTemplate[] result = new FileTemplate[internalTemplateBeans.length];
+    for(int i=0; i<internalTemplateBeans.length; i++) {
+      result [i] = getInternalTemplate(internalTemplateBeans [i].name);
+    }
+    return result;
   }
 
   public FileTemplate getInternalTemplate(@NotNull @NonNls String templateName) {
@@ -557,7 +543,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Expo
   @NotNull
   public String internalTemplateToSubject(@NotNull @NonNls String templateName) {
     //noinspection HardCodedStringLiteral
-    return JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME.equals(templateName) ? "@interface" : templateName.toLowerCase();
+    for(InternalTemplateBean bean: Extensions.getExtensions(InternalTemplateBean.EP_NAME)) {
+      if (bean.name.equals(templateName) && bean.subject != null) {
+        return bean.subject;
+      }
+    }
+    return templateName.toLowerCase();
   }
 
   @NotNull

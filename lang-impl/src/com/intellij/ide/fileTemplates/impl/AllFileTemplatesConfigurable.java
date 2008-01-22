@@ -362,10 +362,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
   public static boolean isInternalTemplate(String templateName, String templateTabTitle) {
     if (templateName == null) return false;
     if (Comparing.strEqual(templateTabTitle, TEMPLATES_TITLE)) {
-      return Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME) ||
-             Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME) ||
-             Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME) ||
-             Comparing.strEqual(templateName, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
+      return isInternalTemplateName(templateName);
     }
     if (Comparing.strEqual(templateTabTitle, CODE_TITLE)) {
       return true;
@@ -377,6 +374,13 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
       return Comparing.strEqual(templateName, FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
     }
 
+    return false;
+  }
+
+  private static boolean isInternalTemplateName(final String templateName) {
+    for(InternalTemplateBean bean: Extensions.getExtensions(InternalTemplateBean.EP_NAME)) {
+      if (Comparing.strEqual(templateName, bean.name)) return true;
+    }
     return false;
   }
 
@@ -442,11 +446,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable {
     String errorTitle = null;
     boolean errorInName = true;
     for (FileTemplate template : templates) {
-      boolean isClassTemplate = Comparing.strEqual(template.getName(),
-                                                   JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
-      boolean isInterfaceTemplate = Comparing.strEqual(template.getName(),
-                                                       JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME);
-      if (isClassTemplate || isInterfaceTemplate) continue;
+      if (isInternalTemplateName(template.getName())) continue;
       String currName = template.getName();
       String currExt = template.getExtension();
       if (currName.length() == 0) {
