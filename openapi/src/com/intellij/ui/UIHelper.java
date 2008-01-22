@@ -15,10 +15,8 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.CopyProvider;
-import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
-import com.intellij.ide.PasteProvider;
+import com.intellij.ide.CopyPasteSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PackageChooser;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -80,12 +78,6 @@ public interface UIHelper {
    * @param project
    */
   TextComponent createTypedTextField(final String text, PsiType type, PsiElement context, final Project project);
-
-  interface CopyPasteSupport {
-    CutProvider getCutProvider();
-    CopyProvider getCopyProvider();
-    PasteProvider getPasteProvider();
-  }
 
   interface PsiElementSelector {
     PsiElement[] getSelectedElements();

@@ -3,6 +3,7 @@ package com.intellij.peer.impl;
 import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.StructureViewModel;

@@ -11,12 +11,12 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.ui.UIHelper;
+import com.intellij.ide.CopyPasteSupport;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public abstract class CopyPasteDelegator implements UIHelper.CopyPasteSupport {
+public abstract class CopyPasteDelegator implements CopyPasteSupport {
   private final Project myProject;
   private final JComponent myKeyReceiver;
   private final MyEditable myEditable;
