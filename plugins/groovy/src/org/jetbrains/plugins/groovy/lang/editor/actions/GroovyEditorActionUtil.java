@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.editor;
+package org.jetbrains.plugins.groovy.lang.editor.actions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;

@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.editor;
+package org.jetbrains.plugins.groovy.lang.editor.actions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -41,6 +41,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
+import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 
 /**
  * @author ilyas
@@ -48,7 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 public class GroovyEnterHandler extends EditorWriteActionHandler {
   private EditorActionHandler myOriginalHandler;
 
-  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.GroovyEnterHandler");
+  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler");
 
   public GroovyEnterHandler(EditorActionHandler actionHandler) {
     myOriginalHandler = actionHandler;

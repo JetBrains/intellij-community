@@ -56,6 +56,7 @@ import org.jetbrains.plugins.groovy.debugger.GroovyPositionManager;
 import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
+import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -169,6 +170,8 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
           }
         });
 
+        //register editor actions
+        GroovyEditorActionsManager.registerGroovyEditorActions();
 
       }
     });
