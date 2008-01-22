@@ -58,9 +58,6 @@
       <interface-class>com.intellij.ide.RecentProjectsManager</interface-class>
       <implementation-class>com.intellij.ide.RecentProjectsManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.util.indexing.FileBasedIndex</implementation-class>
-    </component>
   </application-components>
 
 

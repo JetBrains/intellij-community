@@ -1,7 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.CacheUpdater;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -14,17 +13,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -112,14 +105,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       public void dispose() {
         vfManager.removeVirtualFileListener(myChangedFilesUpdater);
         vfManager.unregisterRefreshUpdater(myChangedFilesUpdater);
-      }
-    });
-
-    final ProjectManagerListener pmListener = new ProjectEventsTracker();
-    projectManager.addProjectManagerListener(pmListener);
-    myDisposables.add(new Disposable() {
-      public void dispose() {
-        projectManager.removeProjectManagerListener(pmListener);
       }
     });
   }
@@ -337,40 +322,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       }
     }
   }
-  
-  // called for initial content scan on opening a project
-  private void scanContent(final Project project, final ProgressIndicator indicator) {
-    if (myIndices.size() == 0) {
-      return;
-    }
-
-    indicator.pushState();
-    try {
-      indicator.setText("Building indices...");
-
-      final UnindexedFilesFinder filesCounter = new UnindexedFilesFinder(myIndices.keySet());
-      iterateIndexableFiles(project, filesCounter);
-      final List<VirtualFile> unindexedFiles = filesCounter.getFiles();
-      
-      int myProcessed = 0;
-      final double myTotalCount = (double)unindexedFiles.size(); 
-      for (VirtualFile file: unindexedFiles) {
-        indicator.setText2(file.getPresentableUrl());
-        indexFile(file, loadContent(file));
-        indicator.setFraction(((double)++myProcessed)/ myTotalCount);
-      }
-    }
-    finally {
-      indicator.setText("Saving caches...");
-      myFlushStorages.execute();
-      indicator.popState();
-    }
-  }
-
-  private static void iterateIndexableFiles(final Project project, final ContentIterator processor) {
-    // todo: iterate all files that can be indexed, not just content
-    ProjectRootManager.getInstance(project).getFileIndex().iterateContent(processor);
-  }
 
   private void dropUnregisteredIndices() {
     final Set<String> indicesToDrop = new HashSet<String>(myPreviouslyRegistered != null? myPreviouslyRegistered.registeredIndices : Collections.<String>emptyList());
@@ -494,6 +445,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   }
   */
 
+  public void indexFileContent(com.intellij.ide.startup.FileContent content) {
+    final VirtualFile file = content.getVirtualFile();
+    try {
+      indexFile(file, LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), file, false));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+  }
 
   private void indexFile(final VirtualFile file, @NotNull final CharSequence content) {
     final FileContent fc = new FileContent(file, content);
@@ -676,7 +636,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private class UnindexedFilesFinder implements ContentIterator {
+  private class UnindexedFilesFinder implements CollectingContentIterator {
     private final List<VirtualFile> myFiles = new ArrayList<VirtualFile>();
     private final Collection<String> myIndexIds;
 
@@ -701,60 +661,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  private class UnindexedFilesUpdater implements CacheUpdater {
-    private final Project myProject;
-
-    private UnindexedFilesUpdater(Project project) {
-      myProject = project;
-    }
-
-    public VirtualFile[] queryNeededFiles() {
-      final UnindexedFilesFinder finder = new UnindexedFilesFinder(myIndices.keySet());
-      iterateIndexableFiles(myProject, finder);
-      final List<VirtualFile> files = finder.getFiles();
-      return files.toArray(new VirtualFile[files.size()]);
-    }
-
-    public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
-      final VirtualFile file = fileContent.getVirtualFile();
-      try {
-        indexFile(file, LoadTextUtil.getTextByBinaryPresentation(fileContent.getBytes(), file, false));
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
-    public void updatingDone() {
-    }
-
-    public void canceled() {
-    }
-  }
-
-  private class ProjectEventsTracker extends ProjectManagerAdapter {
-    private Map<Project, CacheUpdater> myUpdaters = new HashMap<Project, CacheUpdater>();
-    public void projectOpened(final Project project) {
-      final UnindexedFilesUpdater updater = new UnindexedFilesUpdater(project);
-      try {
-        final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
-        startupManager.registerPreStartupActivity(new Runnable() {
-          public void run() {
-            startupManager.getFileSystemSynchronizer().registerCacheUpdater(updater);
-            ProjectRootManagerEx.getInstanceEx(project).registerChangeUpdater(updater);
-          }
-        });
-      }
-      finally {
-        myUpdaters.put(project, updater);
-      }
-    }
-
-    public void projectClosed(final Project project) {
-      final CacheUpdater updater = myUpdaters.remove(project);
-      if (updater != null) {
-        ProjectRootManagerEx.getInstanceEx(project).unregisterChangeUpdater(updater);
-      }
-    }
+  public CollectingContentIterator createContentIterator() {
+    return new UnindexedFilesFinder(myIndices.keySet());
   }
 }

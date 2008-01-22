@@ -52,6 +52,9 @@
       <interface-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</interface-class>
       <implementation-class>com.intellij.codeInsight.template.impl.TemplateManagerActions</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.util.indexing.FileBasedIndex</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
@@ -240,6 +243,9 @@
       <implementation-class>com.intellij.ide.todo.TodoView</implementation-class>
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>
   </project-components>
 
