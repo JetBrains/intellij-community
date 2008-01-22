@@ -67,7 +67,7 @@ public class RelationalExpression implements GroovyElementTypes {
     builder.advanceLexer();
     PsiBuilder.Marker rb = builder.mark();
     ParserUtils.getToken(builder, mNLS);
-    if (WRONGWAY.equals(TypeSpec.parse(builder))) {
+    if (!TypeSpec.parse(builder)) {
       rb.rollbackTo();
       builder.error(GroovyBundle.message("type.specification.expected"));
     } else {

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.types;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -25,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 28.03.2007
  */
 public class TypeArgument implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     if (builder.getTokenType() == mQUESTION) {
       //wildcard
       PsiBuilder.Marker taMarker = builder.mark();
@@ -34,16 +33,16 @@ public class TypeArgument implements GroovyElementTypes {
         ParserUtils.getToken(builder, mNLS);
 
         //todo: check for upper case type specification
-        if (WRONGWAY.equals(TypeSpec.parse(builder))) {
+        if (!TypeSpec.parse(builder)) {
           taMarker.rollbackTo();
-          return WRONGWAY;
+          return false;
         }
 
         ParserUtils.getToken(builder, mNLS);
       }
 
       taMarker.done(TYPE_ARGUMENT);
-      return TYPE_ARGUMENT;
+      return true;
     }
 
     return TypeSpec.parse(builder);

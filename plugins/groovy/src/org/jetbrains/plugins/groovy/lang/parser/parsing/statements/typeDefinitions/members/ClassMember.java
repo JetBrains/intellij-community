@@ -31,18 +31,17 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 public class ClassMember implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder, String className) {
+  public static boolean parse(PsiBuilder builder, String className) {
 
-    if (ConstructorDefinition.parse(builder, className)) return CONSTRUCTOR_DEFINITION;
+    if (ConstructorDefinition.parse(builder, className)) return true;
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    GroovyElementType declType = Declaration.parse(builder, true);
-    if (WRONGWAY.equals(declType)) {
-      declMarker.rollbackTo();
-    } else {
+    if (Declaration.parse(builder, true)) {
       declMarker.drop();
-      return declType;
+      return true;
+    } else {
+      declMarker.rollbackTo();
     }
 
     //type definition
@@ -53,9 +52,9 @@ public class ClassMember implements GroovyElementTypes {
       IElementType typeDef = TypeDefinition.parse(builder);
       if (WRONGWAY.equals(typeDef)) {
         builder.error(GroovyBundle.message("type.definition.expected"));
-        return WRONGWAY;
+        return false;
       }
-      return typeDef;
+      return true;
     }
     typeDeclStartMarker.rollbackTo();
 
@@ -67,23 +66,23 @@ public class ClassMember implements GroovyElementTypes {
       modMarker.done(MODIFIERS);
       if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
         initMarker.done(CLASS_INITIALIZER);
-        return CLASS_INITIALIZER;
+        return true;
       } else {
         initMarker.rollbackTo();
         ParserUtils.getToken(builder, kSTATIC);
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
-        return WRONGWAY;
+        return false;
       }
     }
 
     builder.mark().done(MODIFIERS);
     if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
       initMarker.done(CLASS_INITIALIZER);
-      return COMPOUND_STATEMENT;
+      return true;
     }
 
     initMarker.rollbackTo();
 
-    return WRONGWAY;
+    return false;
   }
 }

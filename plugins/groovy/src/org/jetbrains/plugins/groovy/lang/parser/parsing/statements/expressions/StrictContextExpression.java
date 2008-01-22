@@ -62,7 +62,7 @@ public class StrictContextExpression implements GroovyElementTypes {
       }
       marker.done(VARIABLE_DEFINITION);
     } else {
-      if (!WRONGWAY.equals(TypeSpec.parse(builder))) {
+      if (TypeSpec.parse(builder)) {
         ParserUtils.getToken(builder, mIDENT, GroovyBundle.message("identifier.expected"));
         if (mASSIGN.equals(builder.getTokenType())) {
           VariableInitializer.parse(builder);

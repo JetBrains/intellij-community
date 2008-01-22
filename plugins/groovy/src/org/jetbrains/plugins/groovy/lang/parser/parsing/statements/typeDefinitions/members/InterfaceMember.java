@@ -31,18 +31,17 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 20.03.2007
  */
 public class InterfaceMember implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder, String interfaceName) {
+  public static boolean parse(PsiBuilder builder, String interfaceName) {
     //constructor
-    if (ConstructorDefinition.parse(builder, interfaceName)) return CONSTRUCTOR_DEFINITION;
+    if (ConstructorDefinition.parse(builder, interfaceName)) return true;
 
     //declaration
     PsiBuilder.Marker declMarker = builder.mark();
-    GroovyElementType declType = Declaration.parse(builder, true);
-    if (WRONGWAY.equals(declType)) {
-      declMarker.rollbackTo();
-    } else {
+    if (Declaration.parse(builder, true)) {
       declMarker.drop();
-      return declType;
+      return true;
+    } else {
+      declMarker.rollbackTo();
     }
 
     //declaration
@@ -59,10 +58,7 @@ public class InterfaceMember implements GroovyElementTypes {
       typeDeclStartMarker.rollbackTo();
 
       IElementType typeDef = TypeDefinition.parse(builder);
-      if (WRONGWAY.equals(typeDef)) {
-        return WRONGWAY;
-      }
-      return typeDef;
+      return !WRONGWAY.equals(typeDef);
     }
     typeDeclStartMarker.rollbackTo();
 
@@ -70,19 +66,19 @@ public class InterfaceMember implements GroovyElementTypes {
     if (ParserUtils.getToken(builder, kSTATIC)) {
       if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
         builder.error(GroovyBundle.message("interface.must.has.no.static.compound.statemenet"));
-        return CLASS_INITIALIZER;
+        return true;
       } else {
         builder.error(GroovyBundle.message("compound.statemenet.expected"));
-        return WRONGWAY;
+        return false;
       }
     }
 
     // class initializer
     if (!WRONGWAY.equals(OpenOrClosableBlock.parseOpenBlock(builder))) {
       builder.error(GroovyBundle.message("interface.must.has.no.compound.statemenet"));
-      return COMPOUND_STATEMENT;
+      return true;
     }
 
-    return WRONGWAY;
+    return false;
   }
 }

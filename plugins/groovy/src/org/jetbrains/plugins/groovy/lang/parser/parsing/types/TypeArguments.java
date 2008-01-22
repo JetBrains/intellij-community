@@ -36,7 +36,7 @@ public class TypeArguments implements GroovyElementTypes {
 
     ParserUtils.getToken(builder, mNLS);
 
-    if (WRONGWAY.equals(TypeArgument.parse(builder))) {
+    if (!TypeArgument.parse(builder)) {
       taMarker.rollbackTo();
       return WRONGWAY;
     }
@@ -44,7 +44,7 @@ public class TypeArguments implements GroovyElementTypes {
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(TypeArgument.parse(builder))) {
+      if (!TypeArgument.parse(builder)) {
         taMarker.done(TYPE_ARGUMENTS);
         return TYPE_ARGUMENTS;
       }

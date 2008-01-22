@@ -26,7 +26,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
  * @date: 03.04.2007
  */
 public class AnnotationMember implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     //type definition
     PsiBuilder.Marker typeDeclStartMarker = builder.mark();
@@ -34,7 +34,7 @@ public class AnnotationMember implements GroovyElementTypes {
 
     if (!WRONGWAY.equals(typeDef)) {
       typeDeclStartMarker.drop();
-      return typeDef;
+      return true;
     } else {
       typeDeclStartMarker.rollbackTo();
     }
@@ -42,14 +42,12 @@ public class AnnotationMember implements GroovyElementTypes {
     PsiBuilder.Marker declMarker = builder.mark();
 
     //typized var definition
-    GroovyElementType declaration = Declaration.parse(builder, true, true);
-    if (!WRONGWAY.equals(declaration)) {
+    if (Declaration.parse(builder, true, true)) {
       declMarker.drop();
-      return declaration;
+      return true;
     } else {
       declMarker.rollbackTo();
+      return false;
     }
-
-    return WRONGWAY;
   }
 }

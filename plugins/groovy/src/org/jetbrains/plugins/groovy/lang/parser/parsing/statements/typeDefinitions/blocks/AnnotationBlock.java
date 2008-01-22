@@ -49,7 +49,7 @@ public class AnnotationBlock implements GroovyElementTypes {
     }
 
     while (!builder.eof() && !ParserUtils.getToken(builder, mRCURLY)) {
-      AnnotationMember.parse(builder/*, className*/);
+      AnnotationMember.parse(builder);
 
       builder.advanceLexer();
     }

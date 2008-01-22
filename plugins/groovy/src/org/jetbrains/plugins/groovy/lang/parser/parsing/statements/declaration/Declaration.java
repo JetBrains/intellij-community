@@ -36,11 +36,11 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Declaration implements GroovyElementTypes {
-  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass) {
+  public static boolean parse(PsiBuilder builder, boolean isInClass) {
     return parse(builder, isInClass, false);
   }
 
-  public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation) {
+  public static boolean parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation) {
     PsiBuilder.Marker declMarker = builder.mark();
     //allows error messages
     boolean modifiersParsed = Modifiers.parse(builder);
@@ -49,7 +49,7 @@ public class Declaration implements GroovyElementTypes {
       TypeParameters.parse(builder);
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (WRONGWAY.equals(TypeSpec.parse(builder, true))) { //if type wasn't recognized trying parse VaribleDeclaration
+      if (!TypeSpec.parse(builder, true)) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
       } else {
         checkMarker.drop();
@@ -61,13 +61,13 @@ public class Declaration implements GroovyElementTypes {
       } else {
         declMarker.done(METHOD_DEFINITION);
       }
-      return METHOD_DEFINITION;
+      return true;
 
     } else if (modifiersParsed) {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
-      if (WRONGWAY.equals(TypeSpec.parse(builder, false))) { //if type wasn't recognized trying parse VaribleDeclaration
+      if (!TypeSpec.parse(builder, false)) { //if type wasn't recognized trying parse VaribleDeclaration
         checkMarker.rollbackTo();
 
         if (isInAnnotation) {
@@ -79,10 +79,10 @@ public class Declaration implements GroovyElementTypes {
         if (WRONGWAY.equals(varDecl)) {
           builder.error(GroovyBundle.message("variable.definitions.expected"));
           declMarker.rollbackTo();
-          return WRONGWAY;
+          return false;
         } else {
           declMarker.done(varDecl);
-          return varDecl;
+          return true;
         }
 
       } else {  //type was recognized
@@ -100,15 +100,15 @@ public class Declaration implements GroovyElementTypes {
           if (WRONGWAY.equals(varDecl)) {
             builder.error(GroovyBundle.message("variable.definitions.expected"));
             declMarker.rollbackTo();
-            return WRONGWAY;
+            return false;
           } else {
             declMarker.done(varDecl);
-            return varDecl;
+            return true;
           }
         } else {
           checkMarker.drop();
           declMarker.done(varDeclarationTop);
-          return varDeclarationTop;
+          return true;
         }
       }
     } else {
@@ -123,31 +123,31 @@ public class Declaration implements GroovyElementTypes {
           (ParserUtils.lookAhead(builder, mIDENT, mIDENT) || ParserUtils.lookAhead(builder, mIDENT, mLPAREN))) {
         //call expression
         declMarker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
 
-      GroovyElementType typeParseResult = null;
+      boolean typeParsed = false;
       if (!ParserUtils.lookAhead(builder, mIDENT, mLPAREN)) {
+        typeParsed = TypeSpec.parse(builder, true);
         //type specification starts with upper case letter
-        typeParseResult = TypeSpec.parse(builder, true);
-        if (WRONGWAY.equals(typeParseResult)) {
+        if (!typeParsed) {
           builder.error(GroovyBundle.message("type.specification.expected"));
           declMarker.rollbackTo();
-          return WRONGWAY;
+          return false;
         }
       }
 
       GroovyElementType varDef = VariableDefinitions.parse(builder, isInClass);
       if (varDef != WRONGWAY) {
         declMarker.done(varDef);
-        return varDef;
-      } else if (isInClass && typeParseResult != null) {
+        return true;
+      } else if (isInClass && typeParsed) {
         declMarker.drop();
-        return typeParseResult;
+        return typeParsed;
       }
 
       declMarker.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
   }
 }
