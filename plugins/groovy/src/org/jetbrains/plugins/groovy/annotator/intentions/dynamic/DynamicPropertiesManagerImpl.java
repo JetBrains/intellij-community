@@ -2,22 +2,20 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import org.jdom.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.*;
 import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
@@ -215,7 +213,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
   @Nullable
   public Element findConcreateDynamicProperty(GrReferenceExpression referenceExpression, final String moduleName, final String containingClassName, final String propertyName) {
-    final PsiClassType type = TypesUtil.createPsiClassTypeFromText(referenceExpression, containingClassName);
+    final PsiClassType type = TypesUtil.createTypeFromCanonicalText(referenceExpression, containingClassName);
 
     final PsiClass psiClass = type.resolve();
     if (psiClass == null) return null;
@@ -327,13 +325,6 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     return result;
   }
 
-  public void fireChangeDynamicPropertyEnviroment() {
-    //TODO this
-    //change package
-    //rename property
-    // ... etc
-  }
-
   public Element getRootElement(String moduleName) {
     return loadModuleDynXML(moduleName).getRootElement();
   }
@@ -357,11 +348,14 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
       listener.dynamicPropertyChange();
     }
 
-    final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myProject);
-    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+    //    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
     //TODO
-    analyzer.restart();
+//    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
+//      public void run() {
+        DaemonCodeAnalyzer.getInstance(myProject).restart();
+//      }
+//    });
   }
 
   @Nullable

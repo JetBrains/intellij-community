@@ -27,6 +27,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.FilterComponent;
 
 import javax.swing.*;
+import javax.swing.table.TableCellEditor;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,6 +42,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elem
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -314,6 +316,10 @@ public class DynamicToolWindowWrapper {
       return true;
     }
 
+//    public TableCellEditor getEditor(DefaultMutableTreeNode o) {
+//      return super.getEditor(o);    //To change body of overridden methods use File | Settings | File Templates.
+//    }
+
     public DPPropertyTypeElement valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
 
@@ -358,7 +364,14 @@ public class DynamicToolWindowWrapper {
       String filterText;
 
       DefaultMutableTreeNode newContainingClassNode;
-      TreeNode containingClassNode = rootNode.getFirstChild();
+
+      TreeNode containingClassNode = null;
+      try {
+        containingClassNode = rootNode.getFirstChild();
+      } catch (Exception e) {
+        return;
+      }
+
       while (containingClassNode != null) {
         if (!(containingClassNode instanceof DefaultMutableTreeNode)) break;
 
@@ -433,12 +446,15 @@ public class DynamicToolWindowWrapper {
   }
 
   private void restoreState() {
-    final Module module = getModule();
+    if (myTreeTable != null && myTreeTable.getTree() != null) {
+      final Module module = getModule();
 
-    if (module != null) {
-      myState = module.getUserData(DYNAMIC_TOOLWINDOW_STATE_KEY);
+      if (module != null) {
+        myState = module.getUserData(DYNAMIC_TOOLWINDOW_STATE_KEY);
+      }
+
+      TreeUtil.restoreExpandedPaths(myTreeTable.getTree(), myState.getExpandedElements());
     }
-    TreeUtil.restoreExpandedPaths(myTreeTable.getTree(), myState.getExpandedElements());
   }
 
   public DynamicTreeViewState getState() {
@@ -464,21 +480,7 @@ public class DynamicToolWindowWrapper {
     return tree != null ? Arrays.asList(selectionPaths) : Collections.EMPTY_LIST;
   }
 
-//  private static Object[] convertPathsToValues(TreePath[] selectionPaths) {
-//    if (selectionPaths != null) {
-//      List<Object> result = new ArrayList<Object>();
-//
-//      for (TreePath selectionPath : selectionPaths) {
-//        final Object userObject = ((DefaultMutableTreeNode) selectionPath.getLastPathComponent()).getUserObject();
-//        if (userObject instanceof DPElement) {
-//          Object value = ((DPElement) userObject).getValue();
-//
-//          result.add(value);
-//        }
-//      }
-//      return result.toArray(new Object[result.size()]);
-//    } else {
-//      return null;
-//    }
-//  }
+  public TreeTable getTreeTable() {
+    return myTreeTable;
+  }
 }

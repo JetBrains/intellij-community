@@ -8,7 +8,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 
 /**
@@ -16,11 +16,11 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPrope
  * Date: 22.11.2007
  */
 public class DynamicPropertyIntention implements IntentionAction {
-  private final DynamicPropertyReal myDynPropertyReal;
+  private final DynamicProperty myDynProperty;
   private final GrReferenceExpression myReferenceExpression;
 
-  public DynamicPropertyIntention(DynamicPropertyReal dynamicPropertyReal, GrReferenceExpression referenceExpression) {
-    myDynPropertyReal = dynamicPropertyReal;
+  public DynamicPropertyIntention(DynamicProperty dynamicProperty, GrReferenceExpression referenceExpression) {
+    myDynProperty = dynamicProperty;
     myReferenceExpression = referenceExpression;
   }
 
@@ -41,7 +41,7 @@ public class DynamicPropertyIntention implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
 //    final DynamicPropertiesManager dynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
 
-    final DynamicPropertyDialog dialog = new DynamicPropertyDialog(project, myDynPropertyReal, myReferenceExpression);
+    final DynamicPropertyDialog dialog = new DynamicPropertyDialog(project, myDynProperty, myReferenceExpression);
     dialog.show();
   }
 

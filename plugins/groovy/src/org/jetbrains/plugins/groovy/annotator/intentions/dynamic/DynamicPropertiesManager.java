@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -86,11 +85,6 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
 
   @NotNull
   public abstract Set<String> getAllContainingClasses(String moduleName);
-
-  /*
-   * Makes needed changes in xml file 
-   */
-  public abstract void fireChangeDynamicPropertyEnviroment();
 
   /*
    * Returns root element

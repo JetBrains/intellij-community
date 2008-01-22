@@ -23,6 +23,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
  * @date: 11.04.2007
  */
 public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
+  public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrVariableImpl");
   public GrVariableImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -126,7 +128,14 @@ public class GrVariableImpl extends GroovyPsiElementImpl implements GrVariable {
       parent.removeChild(typeElementNode);
     } else {
       type = TypesUtil.unboxPrimitiveTypeWrapper(type);
-      GrTypeElement newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
+      GrTypeElement newTypeElement;
+      try {
+        newTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(type);
+      } catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return;
+      }
+      
       final ASTNode newTypeElementNode = newTypeElement.getNode();
       if (typeElement == null) {
         final PsiElement defKeyword = findChildByType(GroovyTokenTypes.kDEF);

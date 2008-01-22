@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,9 +61,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
 
   private static String DUMMY = "dummy.";
 
+  @Nullable
   public PsiElement createReferenceNameFromText(String refName) {
     PsiFile file = createGroovyFile("a." + refName);
-    return ((GrReferenceExpression) ((GroovyFileBase) file).getTopStatements()[0]).getReferenceNameElement();
+    GrTopStatement statement = ((GroovyFileBase) file).getTopStatements()[0];
+    if (!(statement instanceof GrReferenceExpression)) return null;
+
+    return ((GrReferenceExpression) statement).getReferenceNameElement();
   }
 
   public GrReferenceExpression createReferenceExpressionFromText(String idText) {
@@ -193,12 +194,23 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return classes[0];
   }
 
-  public GrTypeElement createTypeElement(PsiType type) {
-    final String typeText = getTypeText(type);
-    if (typeText == null) throw new RuntimeException("Cannot create type element: cannot obtain text for type");
+  public GrTypeElement createTypeElement(String typeText) throws IncorrectOperationException {
     final GroovyFileBase file = createDummyFile("def " + typeText + " someVar");
-    GrVariableDeclaration decl = (GrVariableDeclaration) file.getTopStatements()[0];
+
+    GrTopStatement[] topStatements = file.getTopStatements();
+
+    if (topStatements == null || topStatements.length == 0) throw new IncorrectOperationException("");
+    GrTopStatement statement = topStatements[0];
+    
+    if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("");
+    GrVariableDeclaration decl = (GrVariableDeclaration) statement;
     return decl.getTypeElementGroovy();
+  }
+
+  public GrTypeElement createTypeElement(PsiType type) throws IncorrectOperationException {
+    final String typeText = getTypeText(type);
+    if (typeText == null) throw new IncorrectOperationException("Cannot create type element: cannot obtain text for type");
+    return createTypeElement(typeText);
   }
 
   public GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr) {

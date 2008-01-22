@@ -18,16 +18,24 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightVariableBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.util.ui.treetable.TreeTable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 
 import javax.swing.*;
+import javax.swing.table.TableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
  * @author ilyas
@@ -85,4 +93,40 @@ public class GrImplicitVariable extends LightVariableBase implements ItemPresent
       super(manager, name);
     }
   }
+
+  public void navigate(boolean requestFocus) {
+    final Project myProject = myNameIdentifier.getProject();
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowUtil.DYNAMIC_TOOLWINDOW_ID);
+    final TreeTable treeTable = DynamicToolWindowUtil.setUpDynamicToolWindow(myProject, window);
+    final TableModel model = treeTable.getModel();
+
+    if (treeTable != null && model instanceof ListTreeTableModelOnColumns) {
+      final ListTreeTableModelOnColumns treeModel = ((ListTreeTableModelOnColumns) model);
+      window.show(new Runnable(){
+        public void run() {
+          Object root = treeModel.getRoot();
+
+          if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
+
+          DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
+
+          int rootNum = treeModel.getIndexOfChild(root, treeRoot);
+
+          treeTable.getTree().setSelectionRow(rootNum);
+        }
+      });
+    }
+  }
+
+  public boolean canNavigateToSource() {
+    //todo
+    return true;
+  }
+
+  public boolean canNavigate() {
+    //todo
+    return true;
+  }
+
+
 }

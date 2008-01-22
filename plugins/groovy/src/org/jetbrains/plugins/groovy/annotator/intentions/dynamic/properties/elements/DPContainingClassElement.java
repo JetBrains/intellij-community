@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements;
 
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 
 /**

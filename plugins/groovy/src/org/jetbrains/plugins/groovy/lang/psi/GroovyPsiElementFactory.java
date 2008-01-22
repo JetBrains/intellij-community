@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +85,8 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract PsiElement createReferenceNameFromText(String idText);
 
+//  public abstract PsiClassType createTypeReferenceNameFromText(String idText);
+
   public abstract GrTopStatement createTopElementFromText(String text);
 
   public abstract GrClosableBlock createClosureFromText(String s) throws IncorrectOperationException;
@@ -93,7 +97,9 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrTypeDefinition createTypeDefinition(String text) throws IncorrectOperationException;
 
-  public abstract GrTypeElement createTypeElement(PsiType type);
+  public abstract GrTypeElement createTypeElement(PsiType type) throws IncorrectOperationException;
+
+  public abstract GrTypeElement createTypeElement(String typeText) throws IncorrectOperationException;
 
   public abstract GrParenthesizedExpression createParenthesizedExpr(GrExpression newExpr);
 

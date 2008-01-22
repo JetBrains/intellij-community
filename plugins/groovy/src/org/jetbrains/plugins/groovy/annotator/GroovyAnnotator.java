@@ -46,8 +46,8 @@ import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicReferenceUtils;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyRealBase;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyBase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
 import org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter;
 import org.jetbrains.plugins.groovy.intentions.utils.DuplicatesUtil;
@@ -741,8 +741,8 @@ public class GroovyAnnotator implements Annotator {
 
     if (module == null) return;
 
-    DynamicPropertyReal dynamicPropertyReal = new DynamicPropertyRealBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
-    annotation.registerFix(new DynamicPropertyIntention(dynamicPropertyReal, referenceExpression));
+    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
+    annotation.registerFix(new DynamicPropertyIntention(dynamicProperty, referenceExpression), referenceExpression.getTextRange());
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {

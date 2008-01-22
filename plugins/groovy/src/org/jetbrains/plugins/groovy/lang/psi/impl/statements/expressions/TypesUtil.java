@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -9,14 +8,11 @@ import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.api.GspGroovyFile;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
@@ -217,10 +213,10 @@ public class TypesUtil {
 
   public static PsiClassType createJavaLangObject(PsiElement context) {
     final String typeText = "java.lang.Object";
-    return createPsiClassTypeFromText(context, typeText);
+    return createTypeFromCanonicalText(context, typeText);
   }
 
-  public static PsiClassType createPsiClassTypeFromText(PsiElement context, String typeText) {
-    return context.getManager().getElementFactory().createTypeByFQClassName(typeText, context.getResolveScope());
+  public static PsiClassType createTypeFromCanonicalText(PsiElement context, String canonicalTypeText) {
+    return context.getManager().getElementFactory().createTypeByFQClassName(canonicalTypeText, context.getResolveScope());
   }
 }

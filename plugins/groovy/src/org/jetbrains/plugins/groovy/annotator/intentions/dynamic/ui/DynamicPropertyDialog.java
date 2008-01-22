@@ -8,17 +8,18 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorTextField;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyReal;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
@@ -35,21 +36,21 @@ import java.util.Set;
  */
 public class DynamicPropertyDialog extends DialogWrapper {
   private JComboBox myContainingClassComboBox;
-  private JPanel myDynamicPropertyDialogPanel;
+  private JPanel myPanel;
   private JComboBox myTypeComboBox;
   //  private JComboBox myTypeComboBox;
   private final DynamicPropertiesManager myDynamicPropertiesManager;
   private final Project myProject;
-  private final DynamicPropertyReal myDynamicPropertyReal;
+  private final DynamicProperty myDynamicProperty;
   private EventListenerList myListenerList = new EventListenerList();
   private final GrReferenceExpression myReferenceExpression;
 
-  public DynamicPropertyDialog(Project project, DynamicPropertyReal dynamicPropertyReal, GrReferenceExpression referenceExpression) {
+  public DynamicPropertyDialog(Project project, DynamicProperty dynamicProperty, GrReferenceExpression referenceExpression) {
     super(project, true);
     myReferenceExpression = referenceExpression;
     setTitle(GroovyInspectionBundle.message("dynamic.property"));
     myProject = project;
-    myDynamicPropertyReal = dynamicPropertyReal;
+    myDynamicProperty = dynamicProperty;
     myDynamicPropertiesManager = DynamicPropertiesManager.getInstance(project);
 
     init();
@@ -57,13 +58,13 @@ public class DynamicPropertyDialog extends DialogWrapper {
     setUpTypeComboBox();
     setUpContainingClassComboBox();
 
-    myDynamicPropertyDialogPanel.addHierarchyListener(new HierarchyListener() {
+    myPanel.addHierarchyListener(new HierarchyListener() {
       public void hierarchyChanged(HierarchyEvent e) {
         myTypeComboBox.setCursor(Cursor.getDefaultCursor());
       }
     });
 
-    myDynamicPropertyDialogPanel.registerKeyboardAction(new ActionListener() {
+    myPanel.registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myTypeComboBox.requestFocus();
       }
@@ -71,7 +72,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   private void setUpContainingClassComboBox() {
-    final PsiClass typeDefinition = myDynamicPropertyReal.getContainingClass();
+    final PsiClass typeDefinition = myDynamicProperty.getContainingClass();
     assert typeDefinition != null;
 
     myContainingClassComboBox.addItem(new ContainingClassItem(typeDefinition));
@@ -116,7 +117,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
     });
 
     final PsiClassType objectType = TypesUtil.createJavaLangObject(myReferenceExpression);
-    myTypeComboBox.getEditor().setItem(createDocument(objectType.getCanonicalText()));
+    myTypeComboBox.getEditor().setItem(createDocument(objectType.getPresentableText()));
   }
 
   class DataChangedListener implements EventListener {
@@ -126,40 +127,38 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   private void updateOkStatus() {
-    //TODO
-    String text = getEnteredTypeName();
-    setOKActionEnabled(/*GroovyNamesUtil.isIdentifier(text)*/true);
+    GrTypeElement typeElement = getEnteredTypeName();
+
+    if (typeElement == null) {
+      setOKActionEnabled(false);
+
+    } else {
+      PsiType type = typeElement.getType();
+      if (type instanceof PsiClassType) {
+        setOKActionEnabled(((PsiClassType) type).resolve() != null);
+
+      } else if (type instanceof PsiPrimitiveType) {
+        setOKActionEnabled(true);
+      }
+    }
   }
 
   @Nullable
-  public String getEnteredTypeName() {
+  public GrTypeElement getEnteredTypeName() {
     final Object item = myTypeComboBox.getEditor().getItem();
 
     if (item instanceof Document) {
       final Document document = (Document) item;
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (psiFile instanceof GroovyFile) {
-        final GrTopStatement[] topStatements = ((GroovyFile) psiFile).getTopStatements();
+      String documentText = document.getText();
 
-        if (topStatements.length != 1) return null;
-        final GrTopStatement qualifierTypeName = topStatements[0];
-
-        if (!(qualifierTypeName instanceof GrReferenceExpression)) return null;
-        final GrReferenceExpression typeReferenceExpression = (GrReferenceExpression) qualifierTypeName;
-
-//        final PsiElement resolvedType = typeReferenceExpression.resolve();
-//
-//        if (resolvedType == null) return typeReferenceExpression.getName();
-//        if (resolvedType instanceof PsiClassType) return ((PsiClassType) resolvedType).getCanonicalText();
-//
-//        return typeReferenceExpression.getName();
-        return typeReferenceExpression.getCanonicalText();
+      if (!documentText.matches("[a-zA-Z(.)]+")) return null;
+      try {
+        return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(documentText);
+      } catch (IncorrectOperationException e) {
+        return null;
       }
-
-      return document.getText();
-    } else {
-      return null;
     }
+    return null;
   }
 
   public ContainingClassItem getEnteredContaningClass() {
@@ -181,13 +180,24 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    return myDynamicPropertyDialogPanel;
+    return myPanel;
   }
 
   protected void doOKAction() {
-    myDynamicPropertyReal.setType(getEnteredTypeName());
-    myDynamicPropertyReal.setContainingClass(getEnteredContaningClass().getContainingClass());
-    myDynamicPropertiesManager.addDynamicProperty(new DynamicPropertyVirtual(myDynamicPropertyReal.getPropertyName(), myDynamicPropertyReal.getContainingClassQualifiedName(), myDynamicPropertyReal.getModuleName(), myDynamicPropertyReal.getTypeName()));
+    GrTypeElement typeElement = getEnteredTypeName();
+
+    if (typeElement == null) {
+      myDynamicProperty.setType("java.lang.Object");
+    } else {
+      PsiType type = typeElement.getType();
+      if (type instanceof PsiPrimitiveType) {
+        type = TypesUtil.boxPrimitiveType(type, typeElement.getManager(), myProject.getAllScope());
+      }
+
+      myDynamicProperty.setType(type.getCanonicalText());
+    }
+    myDynamicProperty.setContainingClass(getEnteredContaningClass().getContainingClass());
+    myDynamicPropertiesManager.addDynamicProperty(new DynamicPropertyVirtual(myDynamicProperty.getPropertyName(), myDynamicProperty.getContainingClassQualifiedName(), myDynamicProperty.getModuleName(), myDynamicProperty.getTypeName()));
 
     super.doOKAction();
   }
@@ -223,5 +233,15 @@ public class DynamicPropertyDialog extends DialogWrapper {
     String getPresentableText() {
       return myPsiType.getPresentableText();
     }
+  }
+
+  public void doCancelAction() {
+    super.doCancelAction();
+
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return myTypeComboBox;
   }
 }
