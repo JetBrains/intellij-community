@@ -444,7 +444,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(myTree, DnDConstants.ACTION_COPY_OR_MOVE, new MyDragGestureListener());
-      new DropTarget(myTree, new MoveDropTargetListener(new MoveDropTargetListener.PsiRetriever() {
+      new DropTarget(myTree, new MoveDropTargetListener(new PsiRetriever() {
         @Nullable
         public PsiElement getPsiElement(@Nullable final TreeNode node) {
           return getPSIElement(getElement(node));

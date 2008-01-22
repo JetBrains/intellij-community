@@ -36,11 +36,6 @@ class MoveDropTargetListener implements DropTargetListener {
   final private JTree myTree;
   final private PsiRetriever myPsiRetriever;
 
-  public interface PsiRetriever {
-    @Nullable
-    PsiElement getPsiElement( @Nullable TreeNode node );
-  }
-
   public interface ModifierSource {
     int getModifiers();
   }

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.ide.CopyPasteSupport;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
