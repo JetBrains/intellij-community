@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -300,11 +300,11 @@ public class ForCanBeForeachInspection extends BaseInspection{
             final PsiStatement firstStatement = getFirstStatement(body);
             final PsiStatement initialization =
                     forStatement.getInitialization();
+	        if(!(initialization instanceof PsiDeclarationStatement)){
+		        return null;
+	        }
             final PsiDeclarationStatement declaration =
                     (PsiDeclarationStatement) initialization;
-            if(declaration == null){
-                return null;
-            }
             final PsiLocalVariable iterator =
                     (PsiLocalVariable) declaration.getDeclaredElements()[0];
             final PsiType iteratorType = iterator.getType();
@@ -1488,7 +1488,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
 
         private boolean indexVariableUsedOnlyAsIndex = true;
         private final PsiLocalVariable indexVariable;
-        private final PsiVariable collection;
+        @Nullable private final PsiVariable collection;
 
         VariableOnlyUsedAsListIndexVisitor(
                 @Nullable PsiVariable collection,
@@ -1613,7 +1613,7 @@ public class ForCanBeForeachInspection extends BaseInspection{
                 return false;
             }
             final PsiElement target = reference.resolve();
-            if(!collection.equals(target)){
+            if(collection == null || !collection.equals(target)){
                 return false;
             }
             return expressionIsListGetLookup(methodCallExpression);
