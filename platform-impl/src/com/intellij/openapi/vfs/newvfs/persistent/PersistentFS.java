@@ -711,6 +711,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     appendIdToParentList(newParentId, whatId);
 
     ((VirtualFileSystemEntry)what).setParent(newParent);
+    myRecords.setParent(whatId, newParentId);
   }
 
   public String getName(final int id) {
