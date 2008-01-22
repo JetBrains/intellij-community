@@ -140,4 +140,8 @@
   <extensionPoint name="favoriteNodeProvider"
                   interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider"
                   area="IDEA_PROJECT"/>
+
+  <!-- File-Based Index-->
+  <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
+
 </extensionPoints>

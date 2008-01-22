@@ -99,4 +99,6 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
 
   <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
+
+  <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.IdIndex" />
 </extensions>
