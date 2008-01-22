@@ -187,7 +187,7 @@ public class TypeSpec implements GroovyElementTypes {
     PsiBuilder.Marker arrMarker = builder.mark();
     PsiBuilder.Marker typeElementMarker = builder.mark();
 
-    if (WRONGWAY.equals(ReferenceElement.parseReferenceElement(builder))) {
+    if (!ReferenceElement.parseReferenceElement(builder)) {
       typeElementMarker.drop();
       arrMarker.rollbackTo();
       return WRONGWAY;
