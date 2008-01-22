@@ -20,15 +20,15 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NonNls;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
-import javax.swing.*;
-
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.project.Project;
-import com.intellij.refactoring.RefactoringBundle;
-import org.jetbrains.annotations.NonNls;
 
 public class ConflictsDialog extends DialogWrapper{
   private String[] myConflictDescriptions;
