@@ -118,6 +118,8 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     //Register factory for special Groovy elements
     Factory.addElementFactory(new GspElementFactory());
 
+    //register editor actions
+    GroovyEditorActionsManager.registerGroovyEditorActions();
 
     CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new GroovyCompletionData());
 
@@ -169,9 +171,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
             DynamicToolWindowUtil.setUpDynamicToolWindow(project, dynamicToolWindow);
           }
         });
-
-        //register editor actions
-        GroovyEditorActionsManager.registerGroovyEditorActions();
 
       }
     });
