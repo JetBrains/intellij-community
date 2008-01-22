@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
-public class FileBasedIndexProjectHandler extends AbstractProjectComponent {
+public class FileBasedIndexProjectHandler extends AbstractProjectComponent implements IndexableFileSet {
   private final FileBasedIndex myIndex;
   private final ProjectRootManagerEx myRootManager;
 
@@ -32,8 +32,22 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent {
         public void run() {
           startupManager.getFileSystemSynchronizer().registerCacheUpdater(updater);
           rootManager.registerChangeUpdater(updater);
+          myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this);
         }
       });
+    }
+  }
+
+  public boolean isInSet(final VirtualFile file) {
+    return myRootManager.getFileIndex().isInContent(file);
+  }
+
+  public void iterateIndexableFilesIn(final VirtualFile file, final ContentIterator iterator) {
+    if (file.isDirectory()) {
+      myRootManager.getFileIndex().iterateContentUnderDirectory(file, iterator);
+    }
+    else if (isInSet(file)) {
+      iterator.processFile(file);
     }
   }
 
@@ -60,5 +74,9 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent {
 
     public void canceled() {
     }
+  }
+  
+  public void disposeComponent() {
+    myIndex.removeIndexableSet(this);
   }
 }

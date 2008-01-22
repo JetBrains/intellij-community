@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CollectingContentIterator;
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Pair;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author Eugene Zhuravlev
@@ -68,6 +71,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private CompositeCommand myStopDataBuffering = new CompositeCommand();
   private static final boolean ourUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
   private ChangedFilesUpdater myChangedFilesUpdater;
+
+  private List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -421,30 +426,6 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  /*
-  private void updateIndicesForFile(final VirtualFile file, final @Nullable CharSequence oldContent) {
-    final FileContent oldFC = oldContent != null ? new FileContent(file, oldContent) : null;
-    final boolean isValidFile = file.isValid();
-    FileContent currentFC = null;
-    boolean fileContentLoaded = false;
-    
-    for (String indexKey : myIndices.keySet()) {
-      if (!isValidFile || getInputFilter(indexKey).acceptInput(file)) {
-        if (!fileContentLoaded) {
-          fileContentLoaded = true;
-          currentFC = isValidFile ? new FileContent(file, loadContent(file)) : null;
-        }
-        try {
-          updateSingleIndex(indexKey, file, currentFC, oldFC);
-        }
-        catch (StorageException e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
-  */
-
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
     final VirtualFile file = content.getVirtualFile();
     try {
@@ -559,13 +540,17 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
     private void markDirty(final VirtualFileEvent event) {
       final VirtualFile file = event.getFile();
-      if (!file.isDirectory()) {
-        myFileToUpdate.add(file);
-      }
+      includeToUpdateSet(file);
     }
 
     private void invalidateIndex(final VirtualFile file) {
-      if (file.isDirectory()) return;
+      if (file.isDirectory()) {
+        if (ManagingFS.getInstance().areChildrenLoaded(file)) {
+          for (VirtualFile child : file.getChildren()) {
+            invalidateIndex(child);
+          }
+        }
+      }
 
       FileContent fc = null;
       for (String indexId : myIndices.keySet()) {
@@ -576,11 +561,36 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                 fc = new FileContent(file, loadContent(file));
               }
               updateSingleIndex(indexId, file, null, fc);
-              myFileToUpdate.add(file);
+              includeToUpdateSet(file);
             }
           }
           catch (StorageException e) {
             LOG.error(e);
+          }
+        }
+      }
+    }
+
+    private void includeToUpdateSet(final VirtualFile file) {
+      if (file.isDirectory()) {
+        ContentIterator iterator = new ContentIterator() {
+          public boolean processFile(final VirtualFile fileOrDir) {
+            if (!fileOrDir.isDirectory()) {
+              myFileToUpdate.add(fileOrDir);
+            }
+            return true;
+          }
+        };
+
+        for (IndexableFileSet set : myIndexableSets) {
+          set.iterateIndexableFilesIn(file, iterator);
+        }
+      }
+      else {
+        for (IndexableFileSet set : myIndexableSets) {
+          if (set.isInSet(file)) {
+            myFileToUpdate.add(file);
+            break;
           }
         }
       }
@@ -663,5 +673,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   public CollectingContentIterator createContentIterator() {
     return new UnindexedFilesFinder(myIndices.keySet());
+  }
+
+  public void registerIndexableSet(IndexableFileSet set) {
+    myIndexableSets.add(set);
+  }
+
+  public void removeIndexableSet(IndexableFileSet set) {
+    myIndexableSets.remove(set);
   }
 }
