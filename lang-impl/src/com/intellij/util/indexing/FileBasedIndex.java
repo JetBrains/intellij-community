@@ -589,6 +589,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       updateIndexSynchronouslyBeforeChange(event);
     }
 
+    public void contentsChanged(final VirtualFileEvent event) {
+      markDirty(event);
+    }
+
     private void updateIndexSynchronouslyBeforeChange(final VirtualFileEvent event) {
       invalidateIndex(event.getFile());
     }
