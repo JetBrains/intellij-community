@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -44,9 +43,9 @@ public class Declaration implements GroovyElementTypes {
   public static GroovyElementType parse(PsiBuilder builder, boolean isInClass, boolean isInAnnotation) {
     PsiBuilder.Marker declMarker = builder.mark();
     //allows error messages
-    IElementType modifiers = Modifiers.parse(builder);
+    boolean modifiersParsed = Modifiers.parse(builder);
 
-    if (WRONGWAY != modifiers && mLT == builder.getTokenType()) {
+    if (modifiersParsed && mLT == builder.getTokenType()) {
       TypeParameters.parse(builder);
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 
@@ -64,7 +63,7 @@ public class Declaration implements GroovyElementTypes {
       }
       return METHOD_DEFINITION;
 
-    } else if (!WRONGWAY.equals(modifiers)) {
+    } else if (modifiersParsed) {
 
       PsiBuilder.Marker checkMarker = builder.mark(); //point to begin of type or variable
 

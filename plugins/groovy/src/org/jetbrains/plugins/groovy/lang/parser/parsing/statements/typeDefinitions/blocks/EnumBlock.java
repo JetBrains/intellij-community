@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.blocks;
 
 import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -40,10 +39,7 @@ public class EnumBlock implements GroovyElementTypes {
       return WRONGWAY;
     }
 
-    IElementType seps;
-    do {
-      seps = Separators.parse(builder);
-    } while (!WRONGWAY.equals(seps));
+    Separators.parse(builder);
 
     if (parseEnumConstantStart(builder)) {
       EnumConstants.parse(builder);
@@ -51,12 +47,8 @@ public class EnumBlock implements GroovyElementTypes {
       ClassMember.parse(builder, enumName);
     }
 
-    IElementType sep = Separators.parse(builder);
-
-    while (!WRONGWAY.equals(sep)) {
+    while (Separators.parse(builder)) {
       ClassMember.parse(builder, enumName);
-
-      sep = Separators.parse(builder);
     }
 
     if (builder.getTokenType() != mRCURLY) {

@@ -27,10 +27,9 @@ public class BalancedTokens implements GroovyElementTypes {
   public static IElementType parse(PsiBuilder builder) {
     //todo: handle differents brackets cases
 
-    IElementType balancedToken;
     do {
-      balancedToken = BalancedBrackets.parse(builder);
-    } while (!WRONGWAY.equals(balancedToken));
+      if (!BalancedBrackets.parse(builder)) break;
+    } while (true);
 
     return BALANCED_TOKENS;
   }

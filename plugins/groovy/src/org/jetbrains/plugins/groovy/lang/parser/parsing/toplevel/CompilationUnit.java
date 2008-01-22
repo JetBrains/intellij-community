@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel;
 
 import com.intellij.lang.PsiBuilder;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
@@ -43,11 +42,9 @@ public class CompilationUnit implements GroovyElementTypes {
     }
     cleanAfterError(builder);
 
-    GroovyElementType sepResult = Separators.parse(builder);
-    while (!WRONGWAY.equals(sepResult)) {
+    while (Separators.parse(builder)) {
       Statement.parseWithImports(builder);
       cleanAfterError(builder);
-      sepResult = Separators.parse(builder);
     }
   }
 

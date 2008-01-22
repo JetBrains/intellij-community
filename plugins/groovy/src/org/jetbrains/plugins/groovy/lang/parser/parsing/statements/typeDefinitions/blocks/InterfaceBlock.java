@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefiniti
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.members.InterfaceMember;
@@ -39,12 +38,8 @@ public class InterfaceBlock implements GroovyElementTypes {
     }
 
     InterfaceMember.parse(builder, interfaceName);
-    GroovyElementType sep = Separators.parse(builder);
-
-    while (!WRONGWAY.equals(sep)) {
+    while (Separators.parse(builder)) {
       InterfaceMember.parse(builder, interfaceName);
-
-      sep = Separators.parse(builder);
     }
 
     if (builder.getTokenType() != mRCURLY) {

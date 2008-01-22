@@ -40,12 +40,8 @@ public class AnnotationBlock implements GroovyElementTypes {
 
     AnnotationMember.parse(builder);
 
-    IElementType sep = Separators.parse(builder);
-
-    while (!WRONGWAY.equals(sep)) {
+    while (Separators.parse(builder)) {
       AnnotationMember.parse(builder);
-
-      sep = Separators.parse(builder);
     }
 
     if (builder.getTokenType() != mRCURLY) {

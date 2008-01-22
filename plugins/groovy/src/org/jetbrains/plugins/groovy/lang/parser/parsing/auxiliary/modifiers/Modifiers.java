@@ -33,13 +33,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 
 public class Modifiers implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
-    boolean endsWithNewLine = false;
+  public static boolean parse(PsiBuilder builder) {
+    boolean endsWithNewLine;
     PsiBuilder.Marker modifiersMarker = builder.mark();
 
     if (!Annotation.parse(builder) && !Modifier.parse(builder) && !ParserUtils.getToken(builder, kDEF)) {
       modifiersMarker.done(MODIFIERS);
-      return WRONGWAY;
+      return false;
     }
 
     PsiBuilder.Marker newLineMarker = builder.mark();
@@ -59,7 +59,7 @@ public class Modifiers implements GroovyElementTypes {
     }
     modifiersMarker.done(MODIFIERS);
     ParserUtils.getToken(builder, mNLS);
-    return MODIFIERS;
+    return true;
 
   }
 }

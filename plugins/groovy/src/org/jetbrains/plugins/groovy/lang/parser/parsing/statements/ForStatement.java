@@ -181,7 +181,7 @@ public class ForStatement implements GroovyElementTypes {
     }
 
     if (DeclarationStart.parse(builder)) {
-      if (!Modifiers.parse(builder).equals(WRONGWAY)) {
+      if (Modifiers.parse(builder)) {
         TypeSpec.parse(builder);
         return singleDeclNoInitParse(builder, marker, declMarker);
       }

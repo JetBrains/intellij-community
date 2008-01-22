@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.packaging;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -29,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class PackageDefinition implements GroovyElementTypes {
 
-  public static GroovyElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
 
     // TODO Add annotation parsing
 
@@ -37,7 +36,7 @@ public class PackageDefinition implements GroovyElementTypes {
 
     if (!ParserUtils.getToken(builder, kPACKAGE, GroovyBundle.message("package.keyword.expected"))) {
       pMarker.drop();
-      return WRONGWAY;
+      return false;
     }
     if (builder.getTokenType() == mIDENT) {
       ReferenceElement.parseForPackage(builder);
@@ -46,6 +45,6 @@ public class PackageDefinition implements GroovyElementTypes {
     }
 
     pMarker.done(PACKAGE_DEFINITION);
-    return PACKAGE_DEFINITION;
+    return true;
   }
 }

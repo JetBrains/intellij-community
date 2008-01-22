@@ -42,12 +42,8 @@ public class ClassBlock implements GroovyElementTypes {
 
     ClassMember.parse(builder, className);
 
-    IElementType sep = Separators.parse(builder);
-
-    while (!WRONGWAY.equals(sep)) {
+    while (Separators.parse(builder)) {
       ClassMember.parse(builder, className);
-
-      sep = Separators.parse(builder);
     }
 
     if (builder.getTokenType() != mRCURLY) {

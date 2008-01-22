@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @date: 16.03.2007
  */
 public class BalancedBrackets implements GroovyElementTypes {
-  public static IElementType parse(PsiBuilder builder) {
+  public static boolean parse(PsiBuilder builder) {
     PsiBuilder.Marker bbm = builder.mark();
 
     IElementType balancedTokens;
@@ -48,14 +48,14 @@ public class BalancedBrackets implements GroovyElementTypes {
     if (myBracket == null) {
       bbm.rollbackTo();
       builder.error(GroovyBundle.message("lbrack.or.lparen.or.lcurly.or.string_ctor_start.expected"));
-      return WRONGWAY;
+      return false;
     }
 
     balancedTokens = BalancedTokens.parse(builder);
 
     if (WRONGWAY.equals(balancedTokens)) {
       bbm.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     if (ParserUtils.getToken(builder, mRPAREN) && !mRPAREN.equals(Pairs.pairElementsMap.get(myBracket))
@@ -63,10 +63,10 @@ public class BalancedBrackets implements GroovyElementTypes {
             || ParserUtils.getToken(builder, mRCURLY) && !mRCURLY.equals(Pairs.pairElementsMap.get(myBracket))
             || ParserUtils.getToken(builder, mGSTRING_SINGLE_END) && !mGSTRING_SINGLE_END.equals(Pairs.pairElementsMap.get(myBracket))) {
       bbm.rollbackTo();
-      return WRONGWAY;
+      return false;
     } else {
       bbm.done(BALANCED_BRACKETS);
-      return BALANCED_BRACKETS;
+      return true;
     }
   }
 }

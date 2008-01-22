@@ -58,8 +58,6 @@ public class DeclarationStart implements GroovyElementTypes {
 
   public static boolean parseDeclarationStart(PsiBuilder builder) {
     PsiBuilder.Marker declStartMarker = builder.mark();
-    IElementType elementType;
-
     //def
     if (ParserUtils.getToken(builder, kDEF)) {
       if (parseNextTokenInDeclaration(builder)) {
@@ -72,8 +70,7 @@ public class DeclarationStart implements GroovyElementTypes {
     }
 
     //Modifiers
-    elementType = Modifiers.parse(builder);
-    if (!WRONGWAY.equals(elementType)) {
+    if (Modifiers.parse(builder)) {
       if (parseNextTokenInDeclaration(builder)) {
         declStartMarker.rollbackTo();
         return true;
