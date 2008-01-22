@@ -31,9 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ShowAutoImportPass extends TextEditorHighlightingPass {
-  protected final Editor myEditor;
+  private final Editor myEditor;
 
-  protected final PsiFile myFile;
+  private final PsiFile myFile;
 
   private final int myStartOffset;
   private final int myEndOffset;
@@ -68,10 +68,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!myEditor.getContentComponent().hasFocus()) return;
-    doMyJob();
-  }
-
-  protected boolean doMyJob() {
     HighlightInfo[] visibleHighlights = getVisibleHighlights(myStartOffset, myEndOffset, myProject, myEditor);
 
     PsiElement[] elements = new PsiElement[visibleHighlights.length];
@@ -86,14 +82,13 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     int caretOffset = myEditor.getCaretModel().getOffset();
     for (int i = visibleHighlights.length - 1; i >= 0; i--) {
       HighlightInfo info = visibleHighlights[i];
-      if (elements[i] != null && info.startOffset <= caretOffset && showAddImportHint(info, elements[i])) return true;
+      if (elements[i] != null && info.startOffset <= caretOffset && showAddImportHint(info, elements[i])) return;
     }
 
     for (int i = 0; i < visibleHighlights.length; i++) {
       HighlightInfo info = visibleHighlights[i];
-      if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return true;
+      if (elements[i] != null && info.startOffset > caretOffset && showAddImportHint(info, elements[i])) return;
     }
-    return false;
   }
 
   @NotNull
@@ -112,7 +107,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return array.toArray(new HighlightInfo[array.size()]);
   }
 
-  protected boolean showAddImportHint(HighlightInfo info, PsiElement element) {
+  private boolean showAddImportHint(HighlightInfo info, PsiElement element) {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return false;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return false;
     if (!element.isValid()) return false;
