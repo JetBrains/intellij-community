@@ -88,6 +88,8 @@
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
 
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
+
+    <saveFileAsTemplateHandler implementation="com.intellij.ide.actions.SaveFormAsTemplateHandler"/>
   </extensions>
 
   <project-components>

@@ -139,6 +139,8 @@
                   interface="com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider"/>
   <extensionPoint name="internalFileTemplate"
                   beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean"/>
+  <extensionPoint name="saveFileAsTemplateHandler"
+                  interface="com.intellij.ide.actions.SaveFileAsTemplateHandler"/>
 
   <extensionPoint name="favoriteNodeProvider"
                   interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider"

@@ -108,6 +108,7 @@
     <!-- Tools -->
     <group id="ToolsBasicGroup">
       <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
+      <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction"/>
       <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
