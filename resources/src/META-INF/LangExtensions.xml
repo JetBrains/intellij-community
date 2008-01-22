@@ -101,4 +101,7 @@
   <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
 
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.IdIndex" />
+
+  <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
+                  serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
 </extensions>

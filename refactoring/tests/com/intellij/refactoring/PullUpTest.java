@@ -6,8 +6,8 @@ package com.intellij.refactoring;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.MoveMemberListener;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -45,9 +45,9 @@ public class PullUpTest extends LightCodeInsightTestCase {
         countMoved[0]++;
       }
     };
-    RefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
+    JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
     new PullUpHelper(sourceClass, targetClass, infos, new JavaDocPolicy(JavaDocPolicy.ASIS)).moveMembersToBase();
-    RefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
+    JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
     assertEquals(countMoved[0], membersToFind.length);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }

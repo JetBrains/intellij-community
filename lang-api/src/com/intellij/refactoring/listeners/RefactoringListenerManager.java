@@ -44,18 +44,6 @@ public abstract class RefactoringListenerManager {
    */
   public abstract void removeListenerProvider(RefactoringElementListenerProvider provider);
 
-  /**
-   * Registers a listener for moving member by pull up, push down and extract super class/interface refactorings.
-   * @param moveMembersListener listener to register
-   */
-  public abstract void addMoveMembersListener(MoveMemberListener moveMembersListener);
-
-  /**
-   * Unregisters a previously registered listener.
-   * @param moveMembersListener listener to unregister
-   */
-  public abstract void removeMoveMembersListener(MoveMemberListener moveMembersListener);
-
   public static RefactoringListenerManager getInstance(Project project) {
     return ServiceManager.getService(project, RefactoringListenerManager.class);
   }

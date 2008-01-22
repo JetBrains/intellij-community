@@ -10,8 +10,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
+import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
+import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -269,8 +269,8 @@ public class PushDownProcessor extends BaseRefactoringProcessor {
 
       if (newMember != null) {
         decodeRefs(newMember, targetClass);
-        final RefactoringListenerManager listenerManager = RefactoringListenerManager.getInstance(newMember.getProject());
-        ((RefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
+        final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(newMember.getProject());
+        ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(myClass, newMember);
       }
     }
 

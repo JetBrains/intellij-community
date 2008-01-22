@@ -20,8 +20,8 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.listeners.RefactoringListenerManager;
-import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
+import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
+import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
 import com.intellij.refactoring.util.JavaDocPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -167,8 +167,8 @@ public class PullUpHelper {
     ChangeContextUtil.decodeContextInfo(myTargetSuperClass, null, null);
 
     for (final PsiMember movedMember : myMembersAfterMove) {
-      final RefactoringListenerManager listenerManager = RefactoringListenerManager.getInstance(movedMember.getProject());
-      ((RefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
+      final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(movedMember.getProject());
+      ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, movedMember);
     }
   }
 
