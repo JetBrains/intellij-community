@@ -7,6 +7,7 @@ import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.DataConstants;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -87,6 +88,16 @@ public class ResourceBundleGrouper implements TreeStructureProvider, ProjectComp
           return new ResourceBundleDeleteProvider((ResourceBundle)element);
         }
       }
+    }
+    if (DataConstantsEx.RESOURCE_BUNDLE_ARRAY.equals(dataName)) {
+      final List<ResourceBundle> selectedElements = new ArrayList<ResourceBundle>();
+      for (AbstractTreeNode node : selected) {
+        final Object value = node.getValue();
+        if (value instanceof ResourceBundle) {
+          selectedElements.add((ResourceBundle)value);
+        }
+      }
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ResourceBundle[selectedElements.size()]);
     }
     return null;
   }

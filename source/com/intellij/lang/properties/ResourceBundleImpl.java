@@ -111,18 +111,19 @@ public class ResourceBundleImpl implements ResourceBundle {
     if (!url.startsWith(RESOURCE_BUNDLE_PREFIX)) return null;
 
     String defaultPropertiesUrl = url.substring(RESOURCE_BUNDLE_PREFIX.length());
-    VirtualFile defaultProperties = VirtualFileManager.getInstance().findFileByUrl(defaultPropertiesUrl);
-    if (defaultProperties != null && FileTypeManager.getInstance().getFileTypeByFile(defaultProperties) == StdFileTypes.PROPERTIES) {
-      VirtualFile baseDirectory = defaultProperties.getParent();
-      assert baseDirectory != null;
-      return new ResourceBundleImpl(baseDirectory, PropertiesUtil.getBaseName(defaultProperties));
-
+    final int idx = defaultPropertiesUrl.lastIndexOf('/');
+    if (idx == -1) return null;
+    String baseDir = defaultPropertiesUrl.substring(0, idx);
+    String baseName = defaultPropertiesUrl.substring(idx + 1);
+    VirtualFile baseDirectory = VirtualFileManager.getInstance().findFileByUrl(baseDir);
+    if (baseDirectory != null) {
+      return new ResourceBundleImpl(baseDirectory, baseName);
     }
     return null;
   }
 
   public String getUrl() {
-    return RESOURCE_BUNDLE_PREFIX +getBaseName();
+    return RESOURCE_BUNDLE_PREFIX +getBaseDirectory() + "/" + getBaseName();
   }
 
   @NotNull
