@@ -605,6 +605,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     private void invalidateIndex(final VirtualFile file) {
+      if (file.isDirectory()) return;
+
       FileContent fc = null;
       for (String indexId : myIndices.keySet()) {
         if (getInputFilter(indexId).acceptInput(file)) {
