@@ -61,15 +61,15 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   private final CharFilter myCharFilter;
 
   private RangeMarker myLookupStartMarker;
-  private String myInitialPrefix;
-  private JList myList;
-  private LookupCellRenderer myCellRenderer;
+  private final String myInitialPrefix;
+  private final JList myList;
+  private final LookupCellRenderer myCellRenderer;
   private Boolean myPositionedAbove = null;
 
-  private CaretListener myEditorCaretListener;
-  private EditorMouseListener myEditorMouseListener;
+  private final CaretListener myEditorCaretListener;
+  private final EditorMouseListener myEditorMouseListener;
 
-  private ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
+  private final ArrayList<LookupListener> myListeners = new ArrayList<LookupListener>();
 
   private boolean myCanceled = true;
   private boolean myDisposed = false;
@@ -232,11 +232,6 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
       i = proximity == null ? -1 : proximity.ordinal();
     }
     return new int[]{i};
-  }
-
-
-  Project getProject(){
-    return myProject;
   }
 
   String getPrefix(){
