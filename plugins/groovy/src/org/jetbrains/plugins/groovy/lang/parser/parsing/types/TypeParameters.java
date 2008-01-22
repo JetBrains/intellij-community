@@ -86,7 +86,7 @@ public class TypeParameters implements GroovyElementTypes {
         ParserUtils.getToken(builder, mBAND);
         ParserUtils.getToken(builder, mNLS);
         if (!ReferenceElement.parseReferenceElement(builder)) {
-          builder.error(GroovyBundle.message("type.parameter.expected"));
+          builder.error(GroovyBundle.message("type.expected"));
         }
       }
     }
