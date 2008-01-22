@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.Separators;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.Statement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -106,7 +106,7 @@ public class OpenOrClosableBlock implements GroovyElementTypes {
 
 
   private static GroovyElementType closableBlockParamsOpt(PsiBuilder builder) {
-    ParameterDeclarationList.parse(builder, mCLOSABLE_BLOCK_OP);
+    ParameterList.parse(builder, mCLOSABLE_BLOCK_OP);
     ParserUtils.getToken(builder, mNLS);
     if (ParserUtils.getToken(builder, mCLOSABLE_BLOCK_OP)) {
       return PARAMETERS_LIST;

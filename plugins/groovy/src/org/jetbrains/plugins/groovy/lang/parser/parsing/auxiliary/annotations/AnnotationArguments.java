@@ -16,11 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations;
 
 import com.intellij.lang.PsiBuilder;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 /**
  * @author: Dmitry.Krasilschikov
@@ -45,7 +44,7 @@ public class AnnotationArguments implements GroovyElementTypes {
     if (!parseAnnotationMemberValueInitializer(builder)) {
       marker.rollbackTo();
 
-      if (WRONGWAY.equals(parseAnnotationMemberValuePairs(builder))) {
+      if (!parseAnnotationMemberValuePairs(builder)) {
         annArgs.rollbackTo();
         return;
       }
@@ -66,7 +65,7 @@ public class AnnotationArguments implements GroovyElementTypes {
 
   public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     if (builder.getTokenType() == mAT) {
-      return !WRONGWAY.equals(Annotation.parse(builder));
+      return Annotation.parse(builder);
     }
 
     //check
@@ -77,52 +76,52 @@ public class AnnotationArguments implements GroovyElementTypes {
    * anntotationMemberValuePairs ::= annotationMemberValuePair ( COMMA nls annotationMemberValuePair )*
    */
 
-  private static GroovyElementType parseAnnotationMemberValuePairs(PsiBuilder builder) {
+  private static boolean parseAnnotationMemberValuePairs(PsiBuilder builder) {
     PsiBuilder.Marker annmvps = builder.mark();
 
-    if (WRONGWAY.equals(parseAnnotationMemberValueSinglePair(builder))) {
+    if (!parseAnnotationMemberValueSinglePair(builder)) {
       annmvps.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     while (ParserUtils.getToken(builder, mCOMMA)) {
       ParserUtils.getToken(builder, mNLS);
 
-      if (WRONGWAY.equals(parseAnnotationMemberValueSinglePair(builder))) {
+      if (!parseAnnotationMemberValueSinglePair(builder)) {
         annmvps.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
     }
 
     annmvps.done(ANNOTATION_MEMBER_VALUE_PAIRS);
-    return ANNOTATION_MEMBER_VALUE_PAIRS;
+    return true;
   }
 
   /*
    * annotationMemberValuePair ::= IDENT ASSIGN nls annotationMemberValueInitializer
    */
 
-  private static GroovyElementType parseAnnotationMemberValueSinglePair(PsiBuilder builder) {
+  private static boolean parseAnnotationMemberValueSinglePair(PsiBuilder builder) {
     PsiBuilder.Marker annmvp = builder.mark();
 
     if (!ParserUtils.getToken(builder, mIDENT)) {
       annmvp.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     if (!ParserUtils.getToken(builder, mASSIGN)) {
       annmvp.rollbackTo();
-      return WRONGWAY;
+      return false;
     }
 
     ParserUtils.getToken(builder, mNLS);
 
     if (parseAnnotationMemberValueInitializer(builder)) {
       annmvp.done(ANNOTATION_MEMBER_VALUE_PAIR);
-      return ANNOTATION_MEMBER_VALUE_PAIR;
+      return true;
     }
 
     annmvp.rollbackTo();
-    return ANNOTATION_MEMBER_VALUE_PAIR;
+    return true;
   }
 }

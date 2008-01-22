@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.AnnotationArguments;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
@@ -74,7 +74,7 @@ public class VariableDefinitions implements GroovyElementTypes {
     }
 
     if (ParserUtils.getToken(builder, mLPAREN)) {
-      GroovyElementType paramDeclList = ParameterDeclarationList.parse(builder, mRPAREN);
+      ParameterList.parse(builder, mRPAREN);
 
 //      if (!ParserUtils.getToken(builder, mRPAREN)) {
 //        builder.error(GroovyBundle.message("rparen.expected"));
@@ -95,9 +95,6 @@ public class VariableDefinitions implements GroovyElementTypes {
       }
 
       if (ParserUtils.lookAhead(builder, GroovyTokenTypes.kDEFAULT)) {
-        if (isAnnotationMember && !NONE.equals(paramDeclList)) {
-          builder.error(GroovyBundle.message("empty.parameter.list.expected"));
-        }
 
         ParserUtils.getToken(builder, GroovyTokenTypes.kDEFAULT);
         ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);

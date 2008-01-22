@@ -38,7 +38,7 @@ public class ParameterDeclaration implements GroovyElementTypes {
    * @param ending  Given ending: -> or )
    * @return
    */
-  public static GroovyElementType parse(PsiBuilder builder, IElementType ending) {
+  public static boolean parse(PsiBuilder builder, IElementType ending) {
     PsiBuilder.Marker pdMarker = builder.mark();
 
     // Parse optional modifier(s)
@@ -63,19 +63,19 @@ public class ParameterDeclaration implements GroovyElementTypes {
           builder.getTokenType() == ending ||
               ParserUtils.lookAhead(builder, mNLS, ending)) {
         pdMarker.done(PARAMETER);
-        return PARAMETER;
+        return true;
       } else {
         pdMarker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
     } else {
       // If has triple dots
       if (hasDots) {
         pdMarker.error(GroovyBundle.message("identifier.expected"));
-        return PARAMETER;
+        return true;
       } else {
         pdMarker.rollbackTo();
-        return WRONGWAY;
+        return false;
       }
     }
   }

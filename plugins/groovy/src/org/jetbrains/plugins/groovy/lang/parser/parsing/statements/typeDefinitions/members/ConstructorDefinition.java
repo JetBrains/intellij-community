@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.ThrowClause;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.annotations.Annotation;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.modifiers.Modifier;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterDeclarationList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.auxiliary.parameters.ParameterList;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.constructor.ConstructorBody;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
@@ -52,7 +52,7 @@ public class ConstructorDefinition implements GroovyElementTypes {
       builder.error(GroovyBundle.message("lparen.expected"));
     }
 
-    ParameterDeclarationList.parse(builder, mRPAREN);
+    ParameterList.parse(builder, mRPAREN);
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN)) {

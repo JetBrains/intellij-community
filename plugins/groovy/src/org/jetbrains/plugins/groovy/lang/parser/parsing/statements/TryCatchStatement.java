@@ -96,7 +96,7 @@ public class TryCatchStatement implements GroovyElementTypes {
       return;
     }
 
-    if (ParameterDeclaration.parse(builder, mRPAREN).equals(WRONGWAY)) {
+    if (!ParameterDeclaration.parse(builder, mRPAREN)) {
       builder.error(GroovyBundle.message("param.expected"));
 //      catchMarker.drop();
 //      return;
