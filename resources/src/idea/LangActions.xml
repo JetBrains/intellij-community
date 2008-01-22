@@ -1,6 +1,11 @@
 <component>
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
+    <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
+    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>
+    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
+    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
+    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
@@ -108,6 +113,33 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
 
+    <group id="NewGroup" popup="true">
+      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
+      <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
+    </group>
+
+    <group id="ProjectViewPopupMenu">
+      <reference ref="NewGroup"/>
+      <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <reference ref="ChangesView.ApplyPatch"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <reference ref="AnalyzeMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction"/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+    </group>
 
     <group id="UsageView.Popup">
       <reference ref="EditSource"/>
@@ -115,11 +147,6 @@
       <action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>
       <separator/>
       <action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>
-    </group>
-
-    <group id="NewGroup" popup="true">
-      <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
-      <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
 
     <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">

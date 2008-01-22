@@ -27,11 +27,6 @@
 
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
 
-    <action id="AddToFavoritesPopup" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesPopupAction"/>
-    <group id="AddToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddToFavoritesActionGroup" popup="true"/>
-    <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
-    <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
-    <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
     <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
     <group id="RunContextGroup" popup="false">
       <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
@@ -541,12 +536,11 @@
       <action id="Add to migration roots" internal="true" class="com.intellij.refactoring.actions.TypeMigrationAddRootAction"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"/>
       <separator/>
       <reference ref="FoldingGroup"/>
       <separator/>
                                              
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="MoveToChangeList" anchor="before"/>
     </group>
 
     <action id="ConfigureFileDefaultEncoding" class="com.intellij.openapi.vfs.encoding.ConfigureFileDefaultEncodingAction">
@@ -605,24 +599,15 @@
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
     <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
-    <group id="ProjectViewPopupMenu">
-      <reference ref="NewGroup"/>
-      <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileType"/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <reference ref="EditSource"/>
-      <reference ref="ChangesView.ApplyPatch"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="FindInPath"/>
-      <reference ref="ReplaceInPath"/>
-      <reference ref="AnalyzeMenu"/>
+    <group id="ProjectViewPopupMenu1">
       <reference ref="RefactoringMenu"/>
       <reference ref="ValidateXml"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
+
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="AddToFavorites"/>
+    </group>
+
+    <group id="ProjectViewPopupMenu2">
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
@@ -635,15 +620,17 @@
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction"/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-      <separator/>
+
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="VersionControlsGroup"/>
+    </group>
+
+    <group id="ProjectViewPopupMenu3">
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ModuleSettings"/>
       <reference ref="MoveModuleToGroup"/>
+
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
     </group>
 
     <group id="FavoritesViewPopupMenu">

@@ -170,5 +170,9 @@
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
     </action>
+
+    <action id="MoveToChangeList" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction">
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="CutCopyPasteGroup" anchor="after"/>
+    </action>
   </actions>
 </component>
