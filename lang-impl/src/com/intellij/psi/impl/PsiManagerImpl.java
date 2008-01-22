@@ -191,8 +191,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
 
-    if (element instanceof PsiPackage) {
-      PsiDirectory[] dirs = ((PsiPackage) element).getDirectories();
+    if (element instanceof PsiDirectoryContainer) {
+      PsiDirectory[] dirs = ((PsiDirectoryContainer) element).getDirectories();
       for (PsiDirectory dir : dirs) {
         if (!isInProject(dir)) return false;
       }
@@ -763,8 +763,8 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   }
 
   public void checkMove(@NotNull PsiElement element, @NotNull PsiElement newContainer) throws IncorrectOperationException {
-    if (element instanceof PsiPackage) {
-      PsiDirectory[] dirs = ((PsiPackage)element).getDirectories();
+    if (element instanceof PsiDirectoryContainer) {
+      PsiDirectory[] dirs = ((PsiDirectoryContainer)element).getDirectories();
       if (dirs.length == 0) {
         throw new IncorrectOperationException();
       }

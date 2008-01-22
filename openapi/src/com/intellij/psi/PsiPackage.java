@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java package.
  */
-public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifierListOwner {
+public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifierListOwner, PsiDirectoryContainer {
   /**
    * Returns the full-qualified name of the package.
    *
@@ -34,15 +34,6 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifier
    */
   @NotNull
   String getQualifiedName();
-
-  /**
-   * Returns the array of all directories (under all source roots in the project)
-   * corresponding to the package.
-   *
-   * @return the array of directories.
-   */
-  @NotNull
-  PsiDirectory[] getDirectories();
 
   /**
    * Returns the array of directories corresponding to the package in the specified search scope.

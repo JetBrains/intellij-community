@@ -81,8 +81,8 @@ public class FindInProjectUtil {
       }
     }
 
-    if (directoryName == null && psiElement instanceof PsiPackage) {
-      final PsiDirectory[] directories = ((PsiPackage)psiElement).getDirectories();
+    if (directoryName == null && psiElement instanceof PsiDirectoryContainer) {
+      final PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
       directoryName = directories.length == 1 ? directories[0].getVirtualFile().getPresentableUrl():null;
     }
 

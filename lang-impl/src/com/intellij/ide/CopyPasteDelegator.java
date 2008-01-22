@@ -4,10 +4,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.refactoring.copy.CopyHandler;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
@@ -92,9 +89,8 @@ public abstract class CopyPasteDelegator implements CopyPasteSupport {
         PsiElement target = (PsiElement)dataContext.getData(DataConstantsEx.PASTE_TARGET_PSI_ELEMENT);
         if (isCopied[0]) {
           PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
-          PsiPackage targetPackage = target instanceof PsiPackage ? (PsiPackage)target : null;
-          if (targetDirectory == null && target instanceof PsiPackage) {
-            final PsiDirectory[] directories = ((PsiPackage)target).getDirectories();
+          if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
+            final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories();
             if (directories.length > 0) {
               targetDirectory = directories[0];
             }

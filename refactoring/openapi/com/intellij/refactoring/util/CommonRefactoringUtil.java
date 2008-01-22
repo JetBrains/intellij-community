@@ -101,8 +101,8 @@ public class CommonRefactoringUtil {
           }
         }
       }
-      else if (element instanceof PsiPackage) {
-        final PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
+      else if (element instanceof PsiDirectoryContainer) {
+        final PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
         for (PsiDirectory directory : directories) {
           VirtualFile virtualFile = directory.getVirtualFile();
           if (recursively) {
