@@ -41,7 +41,8 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   );
 
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
-      GroovyTokenTypes.mML_COMMENT
+      GroovyTokenTypes.mML_COMMENT,
+      GroovyTokenTypes.GROOVY_DOC_COMMENT
   );
 
   static final TokenSet tNUMBERS = TokenSet.create(

@@ -39,16 +39,17 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
   }
 
   private void appendDescriptors(ASTNode node, Document document, List<FoldingDescriptor> descriptors) {
-    final IElementType elemType = node.getElementType();
+    IElementType type = node.getElementType();
 
-    if (GroovyElementTypes.BLOCK_SET.contains(elemType) || elemType == GroovyElementTypes.CLOSABLE_BLOCK) {
+    if (GroovyElementTypes.BLOCK_SET.contains(type) || type == GroovyElementTypes.CLOSABLE_BLOCK) {
       if (isMultiline(node, document)) {
         descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
       }
     }
 
     // comments
-    if (node.getElementType().equals(mML_COMMENT) && isMultiline(node, document)) {
+    if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
+        isMultiline(node, document)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
@@ -71,7 +72,10 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
       return "{...}";
     }
     if (elemType.equals(mML_COMMENT)) {
-      return node.getText().startsWith("/**") ? "/**...*/" : "/*...*/";
+      return "/*...*/";
+    }
+    if (elemType.equals(GROOVY_DOC_COMMENT)) {
+      return "/**...*/";
     }
     return null;
   }
