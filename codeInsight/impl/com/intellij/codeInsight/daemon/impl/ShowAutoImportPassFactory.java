@@ -38,6 +38,6 @@ public class ShowAutoImportPassFactory extends AbstractProjectComponent implemen
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    return new ShowAutoImportPass(myProject, editor);
+    return new ShowAutoImportPass(myProject, file, editor);
   }
 }

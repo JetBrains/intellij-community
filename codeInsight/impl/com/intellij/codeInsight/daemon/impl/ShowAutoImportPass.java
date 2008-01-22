@@ -14,14 +14,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final int myStartOffset;
   private final int myEndOffset;
 
-  public ShowAutoImportPass(@NotNull Project project, @NotNull Editor editor) {
+  public ShowAutoImportPass(@NotNull Project project, final @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument());
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -47,8 +48,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     myStartOffset = range.getStartOffset();
     myEndOffset = range.getEndOffset();
 
-    myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+    myFile = file;
   }
 
   private static TextRange getVisibleRange(Editor editor) {
