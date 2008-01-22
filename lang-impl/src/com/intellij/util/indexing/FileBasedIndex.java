@@ -429,17 +429,21 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
     final VirtualFile file = content.getVirtualFile();
     try {
-      indexFile(file, LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), file, false));
+      indexFile(file, content);
     }
     catch (IOException e) {
       LOG.error(e);
     }
   }
 
-  private void indexFile(final VirtualFile file, @NotNull final CharSequence content) {
-    final FileContent fc = new FileContent(file, content);
+  private void indexFile(final VirtualFile file, @NotNull final com.intellij.ide.startup.FileContent content) throws IOException {
+    FileContent fc = null;
     for (String indexId : myIndices.keySet()) {
       if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
+        if (fc == null) {
+          fc = new FileContent(file, LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), file, false));
+        }
+
         try {
           updateSingleIndex(indexId, file, fc, null);
         }
@@ -604,11 +608,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       final VirtualFile file = fileContent.getVirtualFile();
       try {
         if (file.isValid()) {
-          indexFile(file, LoadTextUtil.getTextByBinaryPresentation(fileContent.getBytes(), file, false));
+          indexFileContent(fileContent);
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
       finally {
         myFileToUpdate.remove(file);
