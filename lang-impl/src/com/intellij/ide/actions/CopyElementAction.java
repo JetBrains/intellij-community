@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.copy.CopyHandler;
-import org.jetbrains.annotations.Nullable;
 
 public class CopyElementAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
@@ -20,15 +19,15 @@ public class CopyElementAction extends AnAction {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }}, "", null
     );
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
     PsiDirectory defaultTargetDirectory = null;
     if (editor != null) {
-      PsiClass aClass = getTopLevelClass(editor, project);
+      PsiElement aElement = getTargetElement(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      elements = new PsiElement[]{aClass};
-      if (aClass == null || !CopyHandler.canCopy(elements)) {
+      elements = new PsiElement[]{aElement};
+      if (aElement == null || !CopyHandler.canCopy(elements)) {
         elements = new PsiElement[]{file};
       }
       assert file != null;
@@ -36,13 +35,13 @@ public class CopyElementAction extends AnAction {
     } else {
       Object element = dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
       defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
-      elements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
     doCopy(elements, defaultTargetDirectory);
   }
 
   protected void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
-    CopyHandler.doCopy(elements, null, defaultTargetDirectory);
+    CopyHandler.doCopy(elements, defaultTargetDirectory);
   }
 
   public void update(AnActionEvent event){
@@ -54,7 +53,7 @@ public class CopyElementAction extends AnAction {
       return;
     }
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       updateForEditor(dataContext, presentation);
     }
@@ -65,7 +64,7 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForEditor(DataContext dataContext, Presentation presentation) {
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setVisible(false);
       return;
@@ -74,8 +73,8 @@ public class CopyElementAction extends AnAction {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-    PsiClass topLevelClass = getTopLevelClass(editor, project);
-    boolean result = topLevelClass != null && CopyHandler.canCopy(new PsiElement[]{topLevelClass});
+    PsiElement element = getTargetElement(editor, project);
+    boolean result = element != null && CopyHandler.canCopy(new PsiElement[]{element});
 
     if (!result) {
       result = CopyHandler.canCopy(new PsiElement[]{file});
@@ -86,29 +85,16 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForToolWindow(String toolWindowId, DataContext dataContext,Presentation presentation) {
-    PsiElement[] elements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     presentation.setEnabled(elements != null && CopyHandler.canCopy(elements));
   }
 
-  @Nullable
-  private static PsiClass getTopLevelClass(final Editor editor, final Project project) {
+  private static PsiElement getTargetElement(final Editor editor, final Project project) {
     int offset = editor.getCaretModel().getOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) return null;
     PsiElement element = file.findElementAt(offset);
     if (element == null) element = file;
-
-    while (true) {
-      if (element instanceof PsiFile) break;
-      if (element instanceof PsiClass && element.getParent() instanceof PsiFile) break;
-      element = element.getParent();
-    }
-    if (element instanceof PsiJavaFile) {
-      PsiClass[] classes = ((PsiJavaFile)element).getClasses();
-      if (classes.length > 0) {
-        element = classes[0];
-      }
-    }
-    return element instanceof PsiClass ? (PsiClass)element : null;
+    return element;
   }
 }

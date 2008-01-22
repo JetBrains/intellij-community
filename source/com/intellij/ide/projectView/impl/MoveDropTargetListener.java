@@ -284,7 +284,7 @@ class MoveDropTargetListener implements DropTargetListener {
         psiDirectory = (PsiDirectory)targetElement;
         psiPackage = psiDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(psiDirectory);
       }
-      CopyHandler.doCopy(sourceElements, psiPackage, psiDirectory );
+      CopyHandler.doCopy(sourceElements, psiDirectory );
     }
 
     public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {

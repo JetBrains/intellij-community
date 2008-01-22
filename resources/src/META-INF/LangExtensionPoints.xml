@@ -149,4 +149,6 @@
   <!-- File-Based Index-->
   <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
 
+  <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
+
 </extensionPoints>

@@ -12,6 +12,8 @@ import java.io.File;
 import java.util.StringTokenizer;
 
 public class DirectoryUtil {
+  private DirectoryUtil() {
+  }
 
 
   /**

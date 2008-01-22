@@ -101,7 +101,7 @@ public abstract class CopyPasteDelegator implements UIHelper.CopyPasteSupport {
             }
           }
           if (CopyHandler.canCopy(elements)) {
-            CopyHandler.doCopy(elements, targetPackage, targetDirectory);
+            CopyHandler.doCopy(elements, targetDirectory);
           }
         }
         else {

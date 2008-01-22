@@ -1,7 +1,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -24,7 +24,7 @@ public class CloneElementAction extends CopyElementAction {
 
   protected void updateForToolWindow(String id, DataContext dataContext,Presentation presentation) {
     // work only with single selection
-    PsiElement[] elements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     presentation.setEnabled(elements != null && elements.length == 1 && CopyHandler.canCopy(elements));
     presentation.setVisible(true);
 
