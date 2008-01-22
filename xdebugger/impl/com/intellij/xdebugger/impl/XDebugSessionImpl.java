@@ -55,6 +55,7 @@ public class XDebugSessionImpl implements XDebugSession {
     processAllBreakpoints(true);
     myBreakpointListener = new MyBreakpointListener();
     myDebuggerManager.getBreakpointManager().addBreakpointListener(myBreakpointListener);
+    process.sessionInitialized();
   }
 
   private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler, boolean register) {
@@ -104,7 +105,10 @@ public class XDebugSessionImpl implements XDebugSession {
     processAllBreakpoints(!muted);
   }
 
-  public void stepOver() {
+  public void stepOver(final boolean ignoreBreakpoints) {
+    if (ignoreBreakpoints) {
+      disableBreakpoints();
+    }
     doResume();
     myDebugProcess.startStepOver();
   }
@@ -123,9 +127,12 @@ public class XDebugSessionImpl implements XDebugSession {
     stepInto();
   }
 
-  public void forceStepOver() {
-    disableBreakpoints();
-    stepOver();
+  public void runToPosition(@NotNull final XSourcePosition position, final boolean ignoreBreakpoints) {
+    if (ignoreBreakpoints) {
+      disableBreakpoints();
+    }
+    doResume();
+    myDebugProcess.runToPosition(position);
   }
 
   private void processAllBreakpoints(final boolean register) {
@@ -183,7 +190,9 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     public void breakpointAdded(@NotNull final XBreakpoint<?> breakpoint) {
-      processAllHandlers(breakpoint, true);
+      if (!myBreakpointsDisabled) {
+        processAllHandlers(breakpoint, true);
+      }
     }
 
     public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {

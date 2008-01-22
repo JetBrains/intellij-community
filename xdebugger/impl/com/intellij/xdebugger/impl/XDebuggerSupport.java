@@ -33,7 +33,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     myToggleLineBreakpointActionHandler = new XToggleLineBreakpointActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-        session.stepOver();
+        session.stepOver(false);
       }
     };
     myStepIntoHandler = new XDebuggerSuspendedActionHandler() {
@@ -48,7 +48,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     };
     myForceStepOverHandler = new XDebuggerSuspendedActionHandler() {
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
-        session.forceStepOver();
+        session.stepOver(true);
       }
     };
     myForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {

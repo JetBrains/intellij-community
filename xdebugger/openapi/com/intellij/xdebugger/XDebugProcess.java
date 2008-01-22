@@ -37,6 +37,9 @@ public abstract class XDebugProcess {
     return XBreakpointHandler.EMPTY_ARRAY;
   }
 
+  public void sessionInitialized() {
+  }
+
   public abstract void startStepOver();
 
   public abstract void startStepInto();
@@ -46,4 +49,6 @@ public abstract class XDebugProcess {
   public abstract void stop();
 
   public abstract void resume();
+
+  public abstract void runToPosition(@NotNull XSourcePosition position);
 }

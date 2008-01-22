@@ -4,6 +4,12 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -88,5 +94,27 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Nullable 
   public XSourcePosition createPosition(@NotNull final VirtualFile file, final int line) {
     return XSourcePositionImpl.create(file, line);
+  }
+
+  @Nullable
+  public static XSourcePosition getCaretPosition(@NotNull Project project, DataContext context) {
+    Editor editor = getEditor(project, context);
+    if (editor == null) return null;
+
+    final Document document = editor.getDocument();
+    final int offset = editor.getCaretModel().getOffset();
+    int line = document.getLineNumber(offset);
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    return XSourcePositionImpl.create(file, line);
+  }
+
+  @Nullable
+  private static Editor getEditor(@NotNull Project project, DataContext context) {
+    Editor editor = DataKeys.EDITOR.getData(context);
+    if(editor == null) {
+      return FileEditorManager.getInstance(project).getSelectedTextEditor();
+    }
+    return editor;
   }
 }

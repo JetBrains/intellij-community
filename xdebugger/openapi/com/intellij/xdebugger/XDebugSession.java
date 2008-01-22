@@ -32,11 +32,11 @@ public interface XDebugSession {
 
   boolean isPaused();
 
-  void stepOver();
+  void stepOver(boolean ignoreBreakpoints);
   void stepInto();
   void stepOut();
   void forceStepInto();
-  void forceStepOver();
+  void runToPosition(@NotNull XSourcePosition position, final boolean ignoreBreakpoints);
 
   void resume();
 
