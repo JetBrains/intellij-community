@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -31,6 +32,7 @@ import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
+import org.jetbrains.plugins.groovy.GroovyLoader;
 
 import java.io.IOException;
 
@@ -40,7 +42,7 @@ import java.io.IOException;
 public class EnterActionTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data/";
+  private static final String DATA_PATH = "./test/org/jetbrains/plugins/groovy/lang/formatter/enterAction/data";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;
