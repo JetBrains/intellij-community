@@ -85,7 +85,6 @@ public class IdeaLogger extends Logger {
       myLogger.error("Do not log ProcessCanceledException. Thrown at:", t);
       throw (ProcessCanceledException)t;
     }
-    t.printStackTrace();
     String detailString = "";
     for (String detail : details) {
       detailString += (detail + "\n");
