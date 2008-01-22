@@ -39,7 +39,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -50,7 +49,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl");
 
   private final Project myProject;
-  private WindowManagerEx myWindowManager;
+  private final WindowManagerEx myWindowManager;
   private final EventListenerList myListenerList;
   private final DesktopLayout myLayout;
   private final HashMap<String, InternalDecorator> myId2InternalDecorator;
@@ -71,18 +70,18 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private ToolWindowsPane myToolWindowsPane;
   private IdeFrameImpl myFrame;
   private DesktopLayout myLayoutToRestoreLater = null;
-  @NonNls protected static final String EDITOR_ELEMENT = "editor";
-  @NonNls protected static final String ACTIVE_ATTR_VALUE = "active";
-  @NonNls protected static final String FRAME_ELEMENT = "frame";
-  @NonNls protected static final String X_ATTR = "x";
-  @NonNls protected static final String Y_ATTR = "y";
-  @NonNls protected static final String WIDTH_ATTR = "width";
-  @NonNls protected static final String HEIGHT_ATTR = "height";
-  @NonNls protected static final String EXTENDED_STATE_ATTR = "extended-state";
+  @NonNls private static final String EDITOR_ELEMENT = "editor";
+  @NonNls private static final String ACTIVE_ATTR_VALUE = "active";
+  @NonNls private static final String FRAME_ELEMENT = "frame";
+  @NonNls private static final String X_ATTR = "x";
+  @NonNls private static final String Y_ATTR = "y";
+  @NonNls private static final String WIDTH_ATTR = "width";
+  @NonNls private static final String HEIGHT_ATTR = "height";
+  @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
 
-  private Alarm myFocusedComponentAlaram;
+  private final Alarm myFocusedComponentAlaram;
 
-  private Alarm myForcedFocusRequestsAlarm;
+  private final Alarm myForcedFocusRequestsAlarm;
   private boolean myUnforcedFocusRequestsAllowed = true;
 
   private ActionCallback.Runnable myRequestFocusCmd;
@@ -171,8 +170,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     // Hide all tool windows
 
-    for (int i = 0; i < ids.length; i++) {
-      final String id = ids[i];
+    for (final String id : ids) {
       deactivateToolWindowImpl(id, true, commandsList);
     }
 
@@ -208,7 +206,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     activateEditorComponent(true);    
   }
 
-  public void activateEditorComponent(boolean forced) {
+  private void activateEditorComponent(boolean forced) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateEditorComponent()");
     }
@@ -228,8 +226,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           LOG.debug("editor activated");
         }
         final WindowInfoImpl[] infos = myLayout.getInfos();
-        for (int i = 0; i < infos.length; i++) {
-          final WindowInfoImpl info = infos[i];
+        for (final WindowInfoImpl info : infos) {
           final boolean shouldHide = (info.isAutoHide() || info.isSliding()) && !(info.isFloating() && hasModalChild(info));
           deactivateToolWindowImpl(info.getId(), shouldHide, postExecute);
         }
@@ -510,8 +507,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // hidden tool window when showing tool window will be closed.
 
       final WindowInfoImpl[] infos = myLayout.getInfos();
-      for (int i = 0; i < infos.length; i++) {
-        final WindowInfoImpl info = infos[i];
+      for (final WindowInfoImpl info : infos) {
         if (id.equals(info.getId())) {
           continue;
         }
@@ -687,8 +683,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
     // hide tool window that are invisible in new layout
     final WindowInfoImpl[] currentInfos = myLayout.getInfos();
-    for (int i = 0; i < currentInfos.length; i++) {
-      final WindowInfoImpl currentInfo = currentInfos[i];
+    for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
       if (info == null) {
         continue;
@@ -698,8 +693,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     // change anchor of tool windows
-    for (int i = 0; i < currentInfos.length; i++) {
-      final WindowInfoImpl currentInfo = currentInfos[i];
+    for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
       if (info == null) {
         continue;
@@ -709,8 +703,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     // change types of tool windows
-    for (int i = 0; i < currentInfos.length; i++) {
-      final WindowInfoImpl currentInfo = currentInfos[i];
+    for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
       if (info == null) {
         continue;
@@ -720,8 +713,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     // change auto-hide state
-    for (int i = 0; i < currentInfos.length; i++) {
-      final WindowInfoImpl currentInfo = currentInfos[i];
+    for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
       if (info == null) {
         continue;
@@ -731,8 +723,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     }
     // restore visibility
-    for (int i = 0; i < currentInfos.length; i++) {
-      final WindowInfoImpl currentInfo = currentInfos[i];
+    for (final WindowInfoImpl currentInfo : currentInfos) {
       final WindowInfoImpl info = layout.getInfo(currentInfo.getId(), false);
       if (info == null) {
         continue;
@@ -794,8 +785,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
       final WindowInfoImpl[] infos = myLayout.getInfos();
-      for (int i = 0; i < infos.length; i++) {
-        appendApplyWindowInfoCmd(infos[i], commandsList);
+      for (WindowInfoImpl info1 : infos) {
+        appendApplyWindowInfoCmd(info1, commandsList);
       }
       appendAddButtonCmd(getStripeButton(id), info, commandsList);
     }
@@ -807,8 +798,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       // update infos for all window. Actually we have to update only infos affected by
       // setAnchor method
       final WindowInfoImpl[] infos = myLayout.getInfos();
-      for (int i = 0; i < infos.length; i++) {
-        appendApplyWindowInfoCmd(infos[i], commandsList);
+      for (WindowInfoImpl info1 : infos) {
+        appendApplyWindowInfoCmd(info1, commandsList);
       }
       appendAddButtonCmd(getStripeButton(id), info, commandsList);
       showToolWindowImpl(id, false, commandsList);
@@ -831,16 +822,16 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void fireToolWindowRegistered(final String id) {
-    final ToolWindowManagerListener[] listeners = (ToolWindowManagerListener[])myListenerList.getListeners(ToolWindowManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].toolWindowRegistered(id);
+    final ToolWindowManagerListener[] listeners = myListenerList.getListeners(ToolWindowManagerListener.class);
+    for (ToolWindowManagerListener listener : listeners) {
+      listener.toolWindowRegistered(id);
     }
   }
 
   private void fireStateChanged() {
-    final ToolWindowManagerListener[] listeners = (ToolWindowManagerListener[])myListenerList.getListeners(ToolWindowManagerListener.class);
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].stateChanged();
+    final ToolWindowManagerListener[] listeners = myListenerList.getListeners(ToolWindowManagerListener.class);
+    for (ToolWindowManagerListener listener : listeners) {
+      listener.stateChanged();
     }
   }
 
@@ -1039,8 +1030,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void prepareForActivation(final String id, final List<FinalizableCommand> commandList) {
     final WindowInfoImpl toBeActivatedInfo = getInfo(id);
     final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (int i = 0; i < infos.length; i++) {
-      final WindowInfoImpl info = infos[i];
+    for (final WindowInfoImpl info : infos) {
       if (id.equals(info.getId())) {
         continue;
       }
@@ -1058,8 +1048,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   public void readExternal(final Element element) {
-    for (Iterator i = element.getChildren().iterator(); i.hasNext();) {
-      final Element e = (Element)i.next();
+    for (final Object o : element.getChildren()) {
+      final Element e = (Element)o;
       if (EDITOR_ELEMENT.equals(e.getName())) {
         myEditorComponentActive = Boolean.valueOf(e.getAttributeValue(ACTIVE_ATTR_VALUE)).booleanValue();
       }
@@ -1077,8 +1067,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final String[] ids = getToolWindowIds();
 
     // Update size of all open floating windows. See SCR #18439
-    for (int i = 0; i < ids.length; i++) {
-      final String id = ids[i];
+    for (final String id : ids) {
       final WindowInfoImpl info = getInfo(id);
       if (info.isVisible()) {
         final InternalDecorator decorator = getInternalDecorator(id);
@@ -1324,8 +1313,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void updateComponentTreeUI() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final WindowInfoImpl[] infos = myLayout.getInfos();
-    for (int i = 0; i < infos.length; i++) {
-      final WindowInfoImpl info = infos[i];
+    for (final WindowInfoImpl info : infos) {
       if (info.isVisible()) { // skip visible tool windows (optimization)
         continue;
       }

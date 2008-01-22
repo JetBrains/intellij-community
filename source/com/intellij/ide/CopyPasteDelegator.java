@@ -30,7 +30,8 @@ public abstract class CopyPasteDelegator implements UIHelper.CopyPasteSupport {
   @NotNull
   protected abstract PsiElement[] getSelectedElements();
 
-  @NotNull protected final PsiElement[] getValidSelectedElements() {
+  @NotNull
+  private PsiElement[] getValidSelectedElements() {
     PsiElement[] selectedElements = getSelectedElements();
     for (PsiElement element : selectedElements) {
       if (!element.isValid()) {
@@ -93,7 +94,7 @@ public abstract class CopyPasteDelegator implements UIHelper.CopyPasteSupport {
         if (isCopied[0]) {
           PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
           PsiPackage targetPackage = target instanceof PsiPackage ? (PsiPackage)target : null;
-          if (targetDirectory == null & target instanceof PsiPackage) {
+          if (targetDirectory == null && target instanceof PsiPackage) {
             final PsiDirectory[] directories = ((PsiPackage)target).getDirectories();
             if (directories.length > 0) {
               targetDirectory = directories[0];

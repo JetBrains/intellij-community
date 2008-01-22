@@ -14,8 +14,8 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -46,8 +46,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.GuiUtils;
@@ -79,38 +81,38 @@ import java.util.List;
 
 public final class ProjectViewImpl extends ProjectView implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
-  private CopyPasteDelegator myCopyPasteDelegator;
+  private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
   private final Project myProject;
 
   // + options
-  private Map<String, Boolean> myFlattenPackages = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myFlattenPackages = new THashMap<String, Boolean>();
   private static final boolean ourFlattenPackagesDefaults = false;
-  private Map<String, Boolean> myShowMembers = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myShowMembers = new THashMap<String, Boolean>();
   private static final boolean ourShowMembersDefaults = false;
-  private Map<String, Boolean> mySortByType = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> mySortByType = new THashMap<String, Boolean>();
   private static final boolean ourSortByTypeDefaults = false;
-  private Map<String, Boolean> myShowModules = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myShowModules = new THashMap<String, Boolean>();
   private static final boolean ourShowModulesDefaults = true;
-  private Map<String, Boolean> myShowLibraryContents = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myShowLibraryContents = new THashMap<String, Boolean>();
   private static final boolean ourShowLibraryContentsDefaults = true;
-  private Map<String, Boolean> myHideEmptyPackages = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myHideEmptyPackages = new THashMap<String, Boolean>();
   private static final boolean ourHideEmptyPackagesDefaults = true;
-  private Map<String, Boolean> myAbbreviatePackageNames = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myAbbreviatePackageNames = new THashMap<String, Boolean>();
   private static final boolean ourAbbreviatePackagesDefaults = false;
-  private Map<String, Boolean> myAutoscrollToSource = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myAutoscrollToSource = new THashMap<String, Boolean>();
   private static final boolean ourAutoscrollToSourceDefaults = false;
-  private Map<String, Boolean> myAutoscrollFromSource = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myAutoscrollFromSource = new THashMap<String, Boolean>();
   private static final boolean ourAutoscrollFromSourceDefaults = false;
-  private Map<String, Boolean> myShowStructure = new THashMap<String, Boolean>();
+  private final Map<String, Boolean> myShowStructure = new THashMap<String, Boolean>();
   private static final boolean ourShowStructureDefaults = false;
 
   private String myCurrentViewId;
   private String myCurrentViewSubId;
   // - options
 
-  private AutoScrollToSourceHandler myAutoScrollToSourceHandler;
-  private AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
+  private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
+  private final MyAutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
@@ -154,12 +156,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   };
   private final FileEditorManager myFileEditorManager;
   private final SelectInManager mySelectInManager;
-  private MyPanel myDataProvider;
+  private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private static final Icon BULLET_ICON = IconLoader.getIcon("/general/bullet.png");
   private final MessageBusConnection myConnection;
 
-  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager) {
+  public ProjectViewImpl(Project project, final FileEditorManager fileEditorManager, SelectInManager selectInManager, final ToolWindowManagerEx toolWindowManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     mySelectInManager = selectInManager;
@@ -183,6 +185,36 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     myDataProvider = new MyPanel();
     myDataProvider.add(myPanel, BorderLayout.CENTER);
+    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel) {
+      @NotNull
+      protected PsiElement[] getSelectedElements() {
+        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+        return viewPane == null ? PsiElement.EMPTY_ARRAY : viewPane.getSelectedPSIElements();
+      }
+    };
+    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
+    protected boolean isAutoScrollMode() {
+      return isAutoscrollToSource(myCurrentViewId);
+    }
+
+    protected void setAutoScrollMode(boolean state) {
+      setAutoscrollToSource(state, myCurrentViewId);
+    }
+  };
+    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter(){
+      public void stateChanged() {
+        ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+        if (window != null && window.isVisible()) {
+          String id = getCurrentViewId();
+          if (isAutoscrollToSource(id)) {
+            myAutoScrollToSourceHandler.onMouseClicked(getCurrentProjectViewPane().getTree());
+          }
+          if (isAutoscrollFromSource(id)) {
+            myAutoScrollFromSourceHandler.setAutoScrollMode(true);
+          }
+        }
+      }
+    });
   }
 
   public void disposeComponent() {
@@ -343,7 +375,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     newPane.restoreExpandedPaths();
     if (selectedPsiElement != null) {
-      VirtualFile virtualFile = PsiUtil.getVirtualFile(selectedPsiElement);
+      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(selectedPsiElement);
       if (((ProjectViewSelectInTarget)newPane.createSelectInTarget()).isSubIdSelectable(newSubId, virtualFile)) {
         newPane.select(selectedPsiElement, virtualFile, true);
       }
@@ -393,15 +425,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     myStructureViewPanel.add(myStructureViewWrapper.getComponent(), BorderLayout.CENTER);
 
     myActionGroup = new DefaultActionGroup();
-    myAutoScrollToSourceHandler = new AutoScrollToSourceHandler() {
-      protected boolean isAutoScrollMode() {
-        return isAutoscrollToSource(myCurrentViewId);
-      }
-
-      protected void setAutoScrollMode(boolean state) {
-        setAutoscrollToSource(state, myCurrentViewId);
-      }
-    };
 
     myAutoScrollFromSourceHandler.install();
 
@@ -417,14 +440,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.PROJECT_VIEW, getComponent(), ToolWindowAnchor.LEFT);
       toolWindow.setIcon(IconLoader.getIcon("/general/toolWindowProject.png"));
     }
-
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myPanel) {
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-        return viewPane == null ? PsiElement.EMPTY_ARRAY : viewPane.getSelectedPSIElements();
-      }
-    };
 
     myCombo.addPopupMenuListener(new PopupMenuListener() {
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -1181,7 +1196,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
   public void selectPsiElement(PsiElement element, boolean requestFocus) {
     if (element == null) return;
-    VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
+    VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
     select(element, virtualFile, requestFocus);
   }
 
@@ -1425,7 +1440,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    private Alarm myAlarm = new Alarm(myProject);
+    private final Alarm myAlarm = new Alarm(myProject);
     private FileEditorManagerAdapter myEditorManagerListener;
 
     public MyAutoScrollFromSourceHandler() {
@@ -1435,13 +1450,13 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     public void install() {
       myEditorManagerListener = new FileEditorManagerAdapter() {
         public void selectionChanged(final FileEditorManagerEvent event) {
+          final FileEditor newEditor = event.getNewEditor();
           PsiDocumentManager.getInstance(myProject).commitAllDocuments();
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
             public void run() {
               if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
               if (isAutoscrollFromSource(getCurrentViewId())) {
-                FileEditor newEditor = event.getNewEditor();
                 if (newEditor instanceof TextEditor) {
                   Editor editor = ((TextEditor)newEditor).getEditor();
                   selectElementAtCaretNotLosingFocus(editor);
