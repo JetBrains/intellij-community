@@ -1,6 +1,5 @@
 package com.intellij.refactoring.copy;
 
-import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -12,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -26,14 +24,7 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     return canCopyFiles(elements) || canCopyDirectories(elements);
   }
 
-  private static boolean canCopyFiles(PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) ||
-          element instanceof PsiJavaFile && !PsiUtil.isInJspFile(element)) {
-        return false;
-      }
-    }
-
+  protected boolean canCopyFiles(PsiElement[] elements) {
     // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
     HashSet<String> names = new HashSet<String>();
     for (PsiElement element1 : elements) {
@@ -49,37 +40,16 @@ public class CopyFilesOrDirectoriesHandler implements CopyHandlerDelegate {
     return true;
   }
 
-  private static boolean canCopyDirectories(PsiElement[] elements) {
+  protected boolean canCopyDirectories(PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!(element instanceof PsiDirectory)) {
         return false;
       }
     }
 
-    for (PsiElement element1 : elements) {
-      PsiDirectory directory = (PsiDirectory)element1;
-
-      if (hasPackages(directory)) {
-        return false;
-      }
-    }
-
-    PsiElement[] filteredElements = DeleteUtil.filterElements(elements);
+    PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
     return filteredElements.length == elements.length;
 
-  }
-
-  private static boolean hasPackages(PsiDirectory directory) {
-    if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
-      return true;
-    }
-    PsiDirectory[] subdirectories = directory.getSubdirectories();
-    for (PsiDirectory subdirectory : subdirectories) {
-      if (hasPackages(subdirectory)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public void doCopy(final PsiElement[] elements, PsiDirectory defaultTargetDirectory) {

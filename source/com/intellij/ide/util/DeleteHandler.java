@@ -19,6 +19,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -77,7 +78,7 @@ public class DeleteHandler {
   public static void deletePsiElement(final PsiElement[] elementsToDelete, final Project project) {
     if (elementsToDelete == null || elementsToDelete.length == 0) return;
 
-    final PsiElement[] elements = DeleteUtil.filterElements(elementsToDelete);
+    final PsiElement[] elements = PsiTreeUtil.filterAncestors(elementsToDelete);
 
     boolean safeDeleteApplicable = true;
     for (int i = 0; i < elements.length && safeDeleteApplicable; i++) {

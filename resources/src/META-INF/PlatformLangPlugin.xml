@@ -24,6 +24,8 @@
                     serviceImplementation="com.intellij.psi.impl.file.PsiDirectoryFactoryImpl"/>
     <projectService serviceInterface="com.intellij.ide.todo.nodes.TodoTreeHelper"
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
+
+    <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
   </extensions>
   <project-components>
     <component>

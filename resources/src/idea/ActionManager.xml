@@ -280,15 +280,18 @@
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
     </group>
 
-    <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringGroup" popup="true">
+    <group id="RefactoringMenu1">
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
       <separator/>
       <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
-      <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
-      <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
+
+      <add-to-group group-id="RefactoringMenu" anchor="first"/>
+    </group>
+
+    <group id="RefactoringMenu2">
       <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
       <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
@@ -320,7 +323,7 @@
       <separator/>
       <action id="I18nize" class="com.intellij.codeInspection.i18n.I18nizeAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
+      <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
 
     <group id="BuildMenu" popup="true">

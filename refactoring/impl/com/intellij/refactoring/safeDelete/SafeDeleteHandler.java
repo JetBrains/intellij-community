@@ -1,6 +1,5 @@
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.ide.util.DeleteUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
@@ -17,6 +16,7 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
@@ -62,7 +62,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         return;
       }
     }
-    final PsiElement[] temptoDelete = DeleteUtil.filterElements(elements);
+    final PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
     Set<PsiElement> elementsSet = new HashSet<PsiElement>(Arrays.asList(temptoDelete));
     Set<PsiElement> fullElementsSet = new HashSet<PsiElement>();
 

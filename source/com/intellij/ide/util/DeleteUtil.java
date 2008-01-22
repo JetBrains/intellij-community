@@ -1,22 +1,17 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.lang.properties.psi.Property;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 
 /**
  * @author dsl
  */
 public class DeleteUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.DeleteUtil");
-
   private DeleteUtil() {}
 
   public static void appendMessage(int count, @NonNls String propertyKey, StringBuffer buffer) {
@@ -28,45 +23,6 @@ public class DeleteUtil {
       buffer.append(' ');
       buffer.append(IdeBundle.message(propertyKey, count));
     }
-  }
-
-  public static PsiElement[] filterElements(PsiElement[] elements) {
-    if (LOG.isDebugEnabled()) {
-      for (PsiElement element : elements) {
-        LOG.debug("element = " + element);
-      }
-    }
-
-    ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
-    for (PsiElement element : elements) {
-      filteredElements.add(element);
-    }
-
-    int previousSize;
-    do {
-      previousSize = filteredElements.size();
-      outer:
-      for (PsiElement element : filteredElements) {
-        for (PsiElement element2 : filteredElements) {
-          if (element == element2) continue;
-          if (PsiTreeUtil.isAncestor(element, element2, false)) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("removing " + element2);
-            }
-            filteredElements.remove(element2);
-            break outer;
-          }
-        }
-      }
-    } while (filteredElements.size() != previousSize);
-
-    if (LOG.isDebugEnabled()) {
-      for (PsiElement element : filteredElements) {
-        LOG.debug("filtered element = " + element);
-      }
-    }
-
-    return filteredElements.toArray(new PsiElement[filteredElements.size()]);
   }
 
   public static String generateWarningMessage(String messageTemplate, final PsiElement[] elements) {

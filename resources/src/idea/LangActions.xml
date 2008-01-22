@@ -105,6 +105,15 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
     </group>
 
+    <!-- Refactor -->
+    <group id="RefactoringMenu" popup="true">
+      <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
+      <action id="CloneElement" class="com.intellij.ide.actions.CloneElementAction"/>
+
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
+    </group>
+
+
     <!-- Tools -->
     <group id="ToolsBasicGroup">
       <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>

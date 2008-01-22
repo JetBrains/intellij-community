@@ -16,6 +16,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -27,8 +28,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class PsiTreeUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
+
   private static final Key<Integer> INDEX = Key.create("PsiTreeUtil.copyElements.INDEX");
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.INDEX");
+
+  private PsiTreeUtil() {
+  }
 
   /**
    * Checks wheter one element in the psi tree is under another.
@@ -520,5 +526,44 @@ public class PsiTreeUtil {
     }
 
     return false;
+  }
+
+  public static PsiElement[] filterAncestors(PsiElement[] elements) {
+    if (LOG.isDebugEnabled()) {
+      for (PsiElement element : elements) {
+        LOG.debug("element = " + element);
+      }
+    }
+
+    ArrayList<PsiElement> filteredElements = new ArrayList<PsiElement>();
+    for (PsiElement element : elements) {
+      filteredElements.add(element);
+    }
+
+    int previousSize;
+    do {
+      previousSize = filteredElements.size();
+      outer:
+      for (PsiElement element : filteredElements) {
+        for (PsiElement element2 : filteredElements) {
+          if (element == element2) continue;
+          if (isAncestor(element, element2, false)) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("removing " + element2);
+            }
+            filteredElements.remove(element2);
+            break outer;
+          }
+        }
+      }
+    } while (filteredElements.size() != previousSize);
+
+    if (LOG.isDebugEnabled()) {
+      for (PsiElement element : filteredElements) {
+        LOG.debug("filtered element = " + element);
+      }
+    }
+
+    return filteredElements.toArray(new PsiElement[filteredElements.size()]);
   }
 }

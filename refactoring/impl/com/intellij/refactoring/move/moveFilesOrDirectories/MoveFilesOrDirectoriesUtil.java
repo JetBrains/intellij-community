@@ -1,7 +1,6 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -9,6 +8,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
@@ -233,7 +233,7 @@ public class MoveFilesOrDirectoriesUtil {
       }
     }
 
-    PsiElement[] filteredElements = DeleteUtil.filterElements(elements);
+    PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
     if (filteredElements.length != elements.length) {
       // there are nested dirs
       return false;
