@@ -7,19 +7,26 @@ package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
-
 public class ViewerTreeStructure extends AbstractTreeStructure {
 
   private boolean myShowWhiteSpaces = true;
+  private boolean myShowTreeNodes = true;
 
   private Project myProject;
   private PsiElement myRootPsiElement = null;
@@ -52,19 +59,42 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
     children[0] = ArrayUtil.EMPTY_OBJECT_ARRAY;
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        PsiElement[] elementChildren = ((PsiElement)element).getChildren();
-        if (elementChildren.length > 0) {
-          List<PsiElement> childrenList = new ArrayList<PsiElement>(elementChildren.length);
-          for (int idx = 0; idx < elementChildren.length; idx++) {
-            PsiElement psiElement = elementChildren[idx];
-            if (!myShowWhiteSpaces && psiElement instanceof PsiWhiteSpace) {
-              continue;
+        final Object[] result;
+        if (myShowTreeNodes) {
+          final ArrayList<Object> list = new ArrayList<Object>();
+          final ASTNode root = element instanceof PsiElement? SourceTreeToPsiMap.psiElementToTree((PsiElement)element) :
+                               element instanceof ASTNode? (ASTNode)element : null;
+          assert root != null;
+          if (root instanceof CompositeElement) {
+            ChameleonTransforming.transformChildren(root);
+            ASTNode child = root.getFirstChildNode();
+            while (child != null) {
+              if (myShowWhiteSpaces || child.getElementType() != TokenType.WHITE_SPACE) {
+                final PsiElement childElement = child.getPsi();
+                list.add(childElement == null ? child : childElement);
+              }
+              child = child.getTreeNext();
             }
-            childrenList.add(psiElement);
           }
-          elementChildren = childrenList.toArray(new PsiElement[childrenList.size()]);
+          result = list.toArray(new Object[list.size()]);
         }
-        children[0] = elementChildren;
+        else {
+          final PsiElement[] elementChildren = ((PsiElement)element).getChildren();
+          if (!myShowWhiteSpaces) {
+            final List<PsiElement> childrenList = new ArrayList<PsiElement>(elementChildren.length);
+            for (PsiElement psiElement : elementChildren) {
+              if (!myShowWhiteSpaces && psiElement instanceof PsiWhiteSpace) {
+                continue;
+              }
+              childrenList.add(psiElement);
+            }
+            result = childrenList.toArray(new PsiElement[childrenList.size()]);
+          }
+          else {
+            result = elementChildren;
+          }
+        }
+        children[0] = result;
       }
     });
     return children[0];
@@ -101,7 +131,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
         }
       };
     }
-    return new ViewerNodeDescriptor(myProject, (PsiElement)element, parentDescriptor);
+    return new ViewerNodeDescriptor(myProject, element, parentDescriptor);
   }
 
   public boolean isShowWhiteSpaces() {
@@ -110,5 +140,13 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
 
   public void setShowWhiteSpaces(boolean showWhiteSpaces) {
     myShowWhiteSpaces = showWhiteSpaces;
+  }
+
+  public boolean isShowTreeNodes() {
+    return myShowTreeNodes;
+  }
+
+  public void setShowTreeNodes(final boolean showTreeNodes) {
+    myShowTreeNodes = showTreeNodes;
   }
 }

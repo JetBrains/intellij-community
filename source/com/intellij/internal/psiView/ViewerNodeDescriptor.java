@@ -7,12 +7,11 @@ package com.intellij.internal.psiView;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
 
 public class ViewerNodeDescriptor extends NodeDescriptor {
-  private PsiElement myElement;
+  private Object myElement;
 
-  public ViewerNodeDescriptor(Project project, PsiElement element, NodeDescriptor parentDescriptor) {
+  public ViewerNodeDescriptor(Project project, Object element, NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
     myElement = element;
     myName = myElement.toString();

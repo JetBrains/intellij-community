@@ -6,6 +6,7 @@
 package com.intellij.internal.psiView;
 
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -65,6 +66,7 @@ public class PsiViewerDialog extends DialogWrapper {
   private JPanel myTextPanel;
   private JPanel myPanel;
   private JPanel myChoicesPanel;
+  private JCheckBox myShowTreeNodesCheckBox;
 
   public PsiViewerDialog(Project project,boolean modal) {
     super(project, true);
@@ -159,6 +161,12 @@ public class PsiViewerDialog extends DialogWrapper {
         myTreeBuilder.updateFromRoot();
       }
     });
+    myShowTreeNodesCheckBox.addActionListener(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        treeStructure.setShowTreeNodes(myShowTreeNodesCheckBox.isSelected());
+        myTreeBuilder.updateFromRoot();
+      }
+    });
     myTextPanel.setLayout(new BorderLayout());
     myTextPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -238,8 +246,9 @@ public class PsiViewerDialog extends DialogWrapper {
         if (!(node.getUserObject() instanceof ViewerNodeDescriptor)) return;
         ViewerNodeDescriptor descriptor = (ViewerNodeDescriptor)node.getUserObject();
         Object elementObject = descriptor.getElement();
-        if (elementObject instanceof PsiElement) {
-          PsiElement element = (PsiElement)elementObject;
+        final PsiElement element = elementObject instanceof PsiElement? (PsiElement)elementObject :
+                                   elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
+        if (element != null) {
           TextRange range = element.getTextRange();
           int start = range.getStartOffset();
           int end = range.getEndOffset();
