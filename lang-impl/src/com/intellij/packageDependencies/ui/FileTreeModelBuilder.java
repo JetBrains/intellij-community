@@ -289,10 +289,18 @@ public class FileTreeModelBuilder {
   }
 
   @Nullable
-  public PackageDependenciesNode findNode(PsiFile file) {
+  public PackageDependenciesNode findNode(PsiFile file, final PsiElement psiElement) {
     PackageDependenciesNode parent = getFileParentNode(file);
     PackageDependenciesNode[] nodes = findNodeForPsiElement(parent, file);
-    return nodes == null || nodes.length == 0 ? null : nodes[0];
+    if (nodes == null || nodes.length == 0) {
+      return null;
+    }
+    else {
+      for (PackageDependenciesNode node : nodes) {
+        if (node.getPsiElement() == psiElement) return node;
+      }
+      return nodes[0];
+    }
   }
 
   @Nullable

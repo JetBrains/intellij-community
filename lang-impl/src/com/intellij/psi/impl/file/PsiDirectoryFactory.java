@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -18,4 +19,7 @@ public abstract class PsiDirectoryFactory {
 
   @NotNull
   public abstract String getQualifiedName(@NotNull PsiDirectory directory);
+
+  @Nullable
+  public abstract String getComment(@NotNull PsiDirectory directory, final boolean forceLocation);
 }

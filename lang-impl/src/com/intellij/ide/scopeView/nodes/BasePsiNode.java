@@ -92,4 +92,9 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     final PsiElement element = getPsiElement();
     return element != null && element.isValid();
   }
+
+  public boolean isDeprecated() {
+    return false;
+  }
+
 }

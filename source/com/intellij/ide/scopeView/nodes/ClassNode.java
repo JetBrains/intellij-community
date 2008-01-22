@@ -1,5 +1,7 @@
 package com.intellij.ide.scopeView.nodes;
 
+import com.intellij.coverage.CoverageDataManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 
@@ -19,5 +21,20 @@ public class ClassNode extends BasePsiNode<PsiClass>{
 
   public int getWeight() {
     return 4;
+  }
+
+  @Override
+  public boolean isDeprecated() {
+    final PsiClass psiClass = (PsiClass)getPsiElement();
+    return psiClass != null && psiClass.isDeprecated();
+  }
+
+  @Override
+  public String getComment(final boolean forceLocation) {
+    if (forceLocation) return null;
+    final PsiClass psiClass = (PsiClass)getPsiElement();
+    if (psiClass == null || !psiClass.isValid()) return null;
+    final Project project = psiClass.getProject();
+    return CoverageDataManager.getInstance(project).getClassCoverageInformationString(psiClass.getQualifiedName());
   }
 }

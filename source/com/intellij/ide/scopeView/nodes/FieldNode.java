@@ -35,4 +35,10 @@ public class FieldNode extends BasePsiNode<PsiField> {
   public int getWeight() {
     return 5;
   }
+
+  @Override
+  public boolean isDeprecated() {
+    final PsiField psiField = (PsiField)getPsiElement();
+    return psiField != null && psiField.isDeprecated();
+  }
 }

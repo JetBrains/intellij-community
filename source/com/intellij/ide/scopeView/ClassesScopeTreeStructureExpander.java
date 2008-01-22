@@ -18,7 +18,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,19 +28,17 @@ import java.util.Set;
  * User: anna
  * Date: 30-Jan-2006
  */
-public class ScopeTreeViewExpander implements TreeWillExpandListener {
+public class ClassesScopeTreeStructureExpander implements ScopeTreeSctructureExpander {
 
-  private JTree myTree;
   private Project myProject;
 
-  public ScopeTreeViewExpander(final JTree tree, final Project project) {
-    myTree = tree;
+  public ClassesScopeTreeStructureExpander(final Project project) {
     myProject = project;
   }
 
   public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
     ProjectView projectView = ProjectView.getInstance(myProject);
-    final TreePath path = myTree.getPathForRow(myTree.getRowForPath(event.getPath()));
+    final TreePath path = event.getPath();
     if (path == null) return;
     final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
     if (node instanceof DirectoryNode) {
@@ -100,12 +97,15 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
         }
       }
       TreeUtil.sort(node, getNodeComparator());
-      ((DefaultTreeModel)myTree.getModel()).reload(node);
+      final Object source = event.getSource();
+      if (source instanceof JTree) {
+        ((DefaultTreeModel)((JTree)source).getModel()).reload(node);
+      }
     }
   }
 
   public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
-    final TreePath path = myTree.getPathForRow(myTree.getRowForPath(event.getPath()));
+    final TreePath path = event.getPath();
     if (path == null) return;
     final DefaultMutableTreeNode node = (PackageDependenciesNode)path.getLastPathComponent();
     if (node instanceof DirectoryNode) {
@@ -130,7 +130,10 @@ public class ScopeTreeViewExpander implements TreeWillExpandListener {
         }
       }
       TreeUtil.sort(node, getNodeComparator());
-      ((DefaultTreeModel)myTree.getModel()).reload(node);
+      final Object source = event.getSource();
+      if (source instanceof JTree) {
+        ((DefaultTreeModel)((JTree)source).getModel()).reload(node);
+      }
     }
   }
 

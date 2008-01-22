@@ -456,16 +456,10 @@ public class ScopeEditorPanel {
         if (!selected && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {
           setForeground(node.hasUnmarked() ? PARTIAL_INCLUDED : WHOLE_INCLUDED);
         }
-        if (node instanceof DirectoryNode) {
-          final DirectoryNode directoryNode = (DirectoryNode)node;
-          append(directoryNode.getDirName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          final String locationString = directoryNode.getLocationString();
-          if (locationString != null) {
-            append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
-          }
-        }
-        else {
-          append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(node.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        final String locationString = node.getComment(true);
+        if (locationString != null) {
+          append(" (" + locationString + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
         }
       }
     }

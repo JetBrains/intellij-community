@@ -3,12 +3,12 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
@@ -79,22 +79,6 @@ public class DirectoryNode extends PackageDependenciesNode {
     return myDirName;
   }
 
-  @Nullable
-  public String getLocationString() {
-    if (myDirectory != null && myDirectory.isValid()) {
-      final VirtualFile directory = myDirectory.getVirtualFile();
-      final Project project = myDirectory.getProject();
-      if (!project.isDisposed()) {
-        final VirtualFile contentRootForFile = ProjectRootManager.getInstance(project)
-          .getFileIndex().getContentRootForFile(directory);
-        if (Comparing.equal(contentRootForFile, directory)) {
-          return directory.getPresentableUrl();
-        }
-      }
-    }
-    return null;
-  }
-
   public String getDirName() {
     if (myDirectory == null || !myDirectory.isValid()) return "";
     if (myCompactPackages && myCompactedDirNode != null) {
@@ -141,18 +125,11 @@ public class DirectoryNode extends PackageDependenciesNode {
 
     if (!toString().equals(packageNode.toString())) return false;
 
-    if (!Comparing.strEqual(getLocationString(), packageNode.getLocationString())) return false;
-
     return true;
   }
 
   public int hashCode() {
-    int result = toString().hashCode();
-    final String location = getLocationString();
-    if (location != null) {
-      result = 31 * result + location.hashCode();
-    }
-    return result;
+    return toString().hashCode();
   }
 
   public Icon getOpenIcon() {
@@ -193,5 +170,13 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   public boolean canNavigate() {
     return false;
+  }
+
+  @Override
+  public String getComment(final boolean forceLocation) {
+    if (myDirectory != null && myDirectory.isValid()) {
+      return PsiDirectoryFactory.getInstance(myDirectory.getProject()).getComment(myDirectory, forceLocation);
+    }
+    return super.getComment(forceLocation);
   }
 }

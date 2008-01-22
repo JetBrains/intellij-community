@@ -1,5 +1,6 @@
 package com.intellij.psi.impl.file;
 
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -10,15 +11,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
-  private PsiManagerImpl myManager;
-
+public class PsiJavaDirectoryFactory extends PsiDirectoryFactoryImpl {
   public PsiJavaDirectoryFactory(final PsiManagerImpl manager) {
-    myManager = manager;
+    super(manager);
   }
 
   public PsiDirectory createDirectory(final VirtualFile file) {
-    return new PsiJavaDirectoryImpl(myManager, file);
+    return new PsiJavaDirectoryImpl(getManager(), file);
   }
 
   @NotNull
@@ -30,5 +29,14 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
     else {
       return directory.getVirtualFile().getPresentableUrl();
     }
+  }
+
+  public String getComment(@NotNull final PsiDirectory directory, final boolean forceLocation) {
+    if (!forceLocation) {
+      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(getManager().getProject());
+      final String informationString = coverageDataManager.getDirCoverageInformationString(directory);
+      if (informationString != null) return informationString;
+    }
+    return super.getComment(directory, forceLocation);
   }
 }

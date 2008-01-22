@@ -169,4 +169,9 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     }
     return myRegisteredFiles;
   }
+
+  @Nullable
+  public String getComment(final boolean forceLocation){
+    return null;
+  }
 }

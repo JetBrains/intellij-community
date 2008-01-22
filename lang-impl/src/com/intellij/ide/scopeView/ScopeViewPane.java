@@ -14,6 +14,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -125,6 +126,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return;
+    if (!(element instanceof PsiElement)) return;
 
     List<NamedScope> allScopes = new ArrayList<NamedScope>();
     allScopes.addAll(Arrays.asList(myDependencyValidationManager.getScopes()));
@@ -142,17 +144,18 @@ public class ScopeViewPane extends AbstractProjectViewPane {
       String name = scope.getName();
       PackageSet packageSet = scope.getValue();
       if (packageSet == null) continue;
-      if (changeView(packageSet, psiFile, name, myNamedScopeManager, requestFocus)) break;
-      if (changeView(packageSet, psiFile, name, myDependencyValidationManager, requestFocus)) break;
+      if (changeView(packageSet, ((PsiElement)element), psiFile, name, myNamedScopeManager, requestFocus)) break;
+      if (changeView(packageSet, ((PsiElement)element), psiFile, name, myDependencyValidationManager, requestFocus)) break;
     }
   }
 
-  private boolean changeView(final PackageSet packageSet, final PsiFile psiFile, final String name, final NamedScopesHolder holder, boolean requestFocus) {
+  private boolean changeView(final PackageSet packageSet, final PsiElement element, final PsiFile psiFile, final String name, final NamedScopesHolder holder,
+                             boolean requestFocus) {
     if (packageSet.contains(psiFile, holder)) {
       if (!name.equals(getSubId())) {
         myProjectView.changeView(getId(), name);
       }
-      myViewPanel.selectNode(psiFile, requestFocus);
+      myViewPanel.selectNode(element, psiFile, requestFocus);
       return true;
     }
     return false;

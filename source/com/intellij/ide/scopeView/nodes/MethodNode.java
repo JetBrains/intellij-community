@@ -36,4 +36,10 @@ public class MethodNode extends BasePsiNode<PsiMethod> {
   public int getWeight() {
     return 5;
   }
+
+  @Override
+  public boolean isDeprecated() {
+    final PsiMethod psiMethod = (PsiMethod)getPsiElement();
+    return psiMethod != null && psiMethod.isDeprecated();
+  }
 }
