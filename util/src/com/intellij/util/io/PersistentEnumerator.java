@@ -21,6 +21,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -84,12 +85,12 @@ public class PersistentEnumerator<Data> implements Forceable {
     return CacheKey.FLYWEIGHT;
   }
 
-  private static Map<Object, Integer> ourEnumerationCache = new LinkedHashMap<Object, Integer>(16, 0.75f, true) {
+  private static final Map<Object, Integer> ourEnumerationCache = Collections.synchronizedMap(new LinkedHashMap<Object, Integer>(16, 0.75f, true) {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<Object, Integer> eldest) {
       return size() > CACHE_SIZE;
     }
-  };
+  });
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
