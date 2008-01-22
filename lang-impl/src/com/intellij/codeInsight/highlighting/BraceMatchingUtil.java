@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
@@ -18,6 +17,7 @@ import java.util.Stack;
 
 public class BraceMatchingUtil {
   public static final int UNDEFINED_TOKEN_GROUP = -1;
+  private static BraceMatcher ourDefaultBraceMatcher = null;
 
   private BraceMatchingUtil() {}
 
@@ -293,6 +293,10 @@ public class BraceMatchingUtil {
     return lastRbraceOffset;
   }
 
+  public static void setDefaultBraceMatcher(final BraceMatcher defaultBraceMatcher) {
+    ourDefaultBraceMatcher = defaultBraceMatcher;
+  }
+
   public static BraceMatcher getBraceMatcher(FileType fileType) {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
     if (braceMatcher==null) {
@@ -303,7 +307,7 @@ public class BraceMatchingUtil {
           braceMatcher = new PairedBraceMatcherAdapter(matcher,language);
         }
       }
-      if (braceMatcher == null) braceMatcher = getBraceMatcher(StdFileTypes.JAVA);
+      if (braceMatcher == null) braceMatcher = ourDefaultBraceMatcher;
       BRACE_MATCHERS.put(fileType, braceMatcher);
     }
     return braceMatcher;
