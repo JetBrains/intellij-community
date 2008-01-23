@@ -45,7 +45,9 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ClassInterf
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.ImportFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.toplevel.PackageFilter;
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFilter;
+import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
+import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 import java.util.Set;
@@ -78,6 +80,15 @@ public class GroovyCompletionData extends CompletionData {
     registerFinalCompletion();
 
     registerSuggestVariableNameCompletion();
+    registerParameterTypeCompletion();
+  }
+
+  private void registerParameterTypeCompletion() {
+    CompletionVariant variant = new CompletionVariant(new ParameterTypeFilter());
+    variant.includeScopeClass(LeafPsiElement.class);
+    variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
+    variant.addCompletion(new ClassesGetter(), TailType.SPACE);
+    registerVariant(variant);
   }
 
   private void registerSuggestVariableNameCompletion() {
@@ -85,6 +96,8 @@ public class GroovyCompletionData extends CompletionData {
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
     variant.addCompletion(new SuggestedVariableNamesGetter(), TailType.NONE);
+
+    // register custom variable name suggesters
     VariableNameSuggesterRegistry registry = VariableNameSuggesterRegistry.getInstance();
     for (ContextGetter getter : registry.getNameSuggesters()) {
       variant.addCompletion(getter, TailType.NONE);
