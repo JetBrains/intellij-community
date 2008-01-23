@@ -213,10 +213,6 @@ public class TypesUtil {
 
   public static PsiClassType createJavaLangObject(PsiElement context) {
     final String typeText = "java.lang.Object";
-    return createTypeFromCanonicalText(context, typeText);
-  }
-
-  public static PsiClassType createTypeFromCanonicalText(PsiElement context, String canonicalTypeText) {
-    return context.getManager().getElementFactory().createTypeByFQClassName(canonicalTypeText, context.getResolveScope());
+    return context.getManager().getElementFactory().createTypeByFQClassName(typeText, context.getResolveScope());
   }
 }

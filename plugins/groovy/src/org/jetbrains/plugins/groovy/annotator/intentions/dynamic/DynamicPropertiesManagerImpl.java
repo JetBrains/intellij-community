@@ -2,8 +2,6 @@ package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -20,7 +18,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elem
 import static org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
 import java.io.*;
 import java.util.*;
@@ -213,7 +210,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
   @Nullable
   public Element findConcreateDynamicProperty(GrReferenceExpression referenceExpression, final String moduleName, final String containingClassName, final String propertyName) {
-    final PsiClassType type = TypesUtil.createTypeFromCanonicalText(referenceExpression, containingClassName);
+    final PsiClassType type = referenceExpression.getManager().getElementFactory().createTypeByFQClassName(containingClassName, referenceExpression.getResolveScope());
 
     final PsiClass psiClass = type.resolve();
     if (psiClass == null) return null;
