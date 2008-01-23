@@ -52,11 +52,24 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   @Nullable
   public final ComponentAdapter getComponentAdapter(Object componentKey) {
-    ComponentAdapter adapter = componentKeyToAdapterCache.get(componentKey);
+    ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter == null && parent != null) {
       adapter = parent.getComponentAdapter(componentKey);
     }
     return adapter;
+  }
+
+  @Nullable
+  private ComponentAdapter getFromCache(final Object componentKey) {
+    ComponentAdapter adapter = componentKeyToAdapterCache.get(componentKey);
+    if (adapter != null) return adapter;
+
+    if (componentKey instanceof Class) {
+      Class klass = (Class)componentKey;
+      return componentKeyToAdapterCache.get(klass.getName());
+    }
+
+    return null;
   }
 
   @Nullable
