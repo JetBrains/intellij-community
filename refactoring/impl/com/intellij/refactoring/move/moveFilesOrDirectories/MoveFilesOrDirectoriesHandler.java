@@ -35,6 +35,14 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
       MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
       return true;
     }
+    if (element instanceof PsiPlainText) {
+      PsiFile file = element.getContainingFile();
+      PsiElement[] elements = new PsiElement[]{file};
+      if (canMoveFiles(elements)) {
+        doMove(project, elements, null, null);
+      }
+      return true;
+    }
     return false;
   }
 

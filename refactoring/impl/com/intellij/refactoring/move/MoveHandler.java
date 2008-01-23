@@ -11,10 +11,11 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,6 @@ public class MoveHandler implements RefactoringActionHandler {
     while(true){
 
       if (element == null) {
-        if (file instanceof PsiPlainTextFile) {
-          PsiElement[] elements = new PsiElement[]{file};
-          if (MoveFilesOrDirectoriesHandler.canMoveFiles(elements)) {
-            doMove(project, elements, null, null);
-          }
-          return;
-        }
-
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.at.the.class.method.or.field.to.be.refactored"));
         CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, message, null, project);
         return;
