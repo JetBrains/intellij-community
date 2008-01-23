@@ -5,12 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiSuperExpressionImpl extends CompositePsiElement implements PsiSuperExpression, Constants {
+public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiSuperExpression, Constants {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiSuperExpressionImpl");
 
   public PsiSuperExpressionImpl() {

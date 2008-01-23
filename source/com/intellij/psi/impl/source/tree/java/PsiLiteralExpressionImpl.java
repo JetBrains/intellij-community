@@ -9,7 +9,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PsiLiteralExpressionImpl extends CompositePsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost, Constants {
+public class PsiLiteralExpressionImpl extends ExpressionPsiElement implements PsiLiteralExpression,PsiLanguageInjectionHost, Constants {
   @NonNls private static final String QUOT = "&quot;";
   @NonNls private static final String HEXPREFIX = "0x";
   @NonNls private static final String HEXPREFIX2 = "0X";

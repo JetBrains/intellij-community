@@ -3,8 +3,8 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -75,5 +75,18 @@ public class JavaFileElement extends FileElement implements Constants {
     else {
       return ChildRole.NONE;
     }
+  }
+
+  public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
+    if (newElement.getElementType() == ElementType.IMPORT_LIST) {
+      LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
+      if (newElement.getFirstChildNode() == null) { //empty import list
+        ASTNode next = child.getTreeNext();
+        if (next != null && next.getElementType() == WHITE_SPACE) {
+          removeChild(next);
+        }
+      }
+    }
+    super.replaceChildInternal(child, newElement);
   }
 }

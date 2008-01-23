@@ -12,7 +12,6 @@ import com.intellij.psi.impl.source.PsiElementArrayConstructor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
-import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -313,12 +312,6 @@ public class CompositeElement extends TreeElement implements Cloneable {
   }
 
   public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
-    if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-      boolean needParenth = ReplaceExpressionUtil.isNeedParenthesis(child, newElement);
-      if (needParenth) {
-        newElement = SourceUtil.addParenthToReplacedChild(JavaElementType.PARENTH_EXPRESSION, newElement, getManager());
-      }
-    }
     CodeEditUtil.replaceChild(this, child, newElement);
   }
 

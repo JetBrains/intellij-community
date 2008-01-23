@@ -2,14 +2,12 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.SrcRepositoryPsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NotNull;
 
 public class FileElement extends RepositoryTreeElement{
   private CharTable myCharTable = new CharTableImpl();
@@ -42,18 +40,5 @@ public class FileElement extends RepositoryTreeElement{
 
   public void setCharTable(CharTable table) {
     myCharTable = table;
-  }
-
-  public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
-    if (newElement.getElementType() == ElementType.IMPORT_LIST) {
-      LOG.assertTrue(child.getElementType() == ElementType.IMPORT_LIST);
-      if (newElement.getFirstChildNode() == null) { //empty import list
-        ASTNode next = child.getTreeNext();
-        if (next != null && next.getElementType() == TokenType.WHITE_SPACE) {
-          removeChild(next);
-        }
-      }
-    }
-    super.replaceChildInternal(child, newElement);
   }
 }
