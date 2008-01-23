@@ -1,5 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -8,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
@@ -175,7 +175,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   @Override
   public String getComment(final boolean forceLocation) {
     if (myDirectory != null && myDirectory.isValid()) {
-      return PsiDirectoryFactory.getInstance(myDirectory.getProject()).getComment(myDirectory, forceLocation);
+      return ProjectViewDirectoryHelper.getInstance(myDirectory.getProject()).getLocationString(myDirectory, forceLocation);
     }
     return super.getComment(forceLocation);
   }

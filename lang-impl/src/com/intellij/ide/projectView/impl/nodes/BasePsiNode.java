@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
   private VirtualFile getVirtualFileForValue() {
     T value = getValue();
     if (value == null) return null;
-    return PsiUtil.getVirtualFile(value);
+    return PsiUtilBase.getVirtualFile(value);
   }
   // Should be called in atomic action
 

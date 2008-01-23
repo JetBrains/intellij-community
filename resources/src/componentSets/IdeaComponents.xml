@@ -52,7 +52,7 @@
 
   <application-components>
     <component>
-      <implementation-class>com.intellij.psi.impl.DirectoryIconProvider</implementation-class>
+      <implementation-class>com.intellij.psi.impl.JavaDirectoryIconProvider</implementation-class>
     </component>
   </application-components>
 

@@ -31,37 +31,26 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.ide.IconProvider;
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.TreeViewUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ui.configuration.IconSet;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.DirectoryIconProvider;
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.LayeredIcon;
-import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.*;
 
 public class PackageUtil {
-  static private final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode");
 
   public static PsiPackage[] getSubpackages(PsiPackage aPackage,
                                             Module module,
@@ -172,7 +161,7 @@ public class PackageUtil {
           }
         }
         // add non-dir items
-        children.addAll(getDirectoryChildren(directory, settings, false));
+        children.addAll(ProjectViewDirectoryHelper.getInstance(project).getDirectoryChildren(directory, settings, false));
       }
       else {
         topLevelPackages.add(directoryPackage);
@@ -185,12 +174,6 @@ public class PackageUtil {
 
     return children;
   }
-  private static boolean isModuleContentRoot(VirtualFile directoryFile, Project project) {
-    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
-    return directoryFile.equals(contentRootForFile);
-  }
-
 
   public static boolean projectContainsFile(final Project project, VirtualFile file, boolean isLibraryElement) {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -200,111 +183,8 @@ public class PackageUtil {
     return false;
   }
 
-  private static boolean isPackage(final PsiDirectory psiDirectory) {
-    return JavaDirectoryService.getInstance().getPackage(psiDirectory) != null;
-  }
 
-  public static boolean isFQNameShown(final PsiDirectory value, final Object parentValue, final ViewSettings settings) {
-    PsiPackage aPackage;
-    return value != null
-           && !(parentValue instanceof Project)
-           && settings.isFlattenPackages()
-           && !ProjectRootsUtil.isSourceRoot(value)
-           && (aPackage = JavaDirectoryService.getInstance().getPackage(value)) != null
-           && aPackage.getQualifiedName().length() > 0;
-
-  }
-
-  public static void updatePsiDirectoryData(final PresentationData data,
-                                            final Project project,
-                                            final PsiDirectory psiDirectory,
-                                            final ViewSettings settings,
-                                            final Object parentValue,
-                                            final AbstractTreeNode node) {
-    final VirtualFile directoryFile = psiDirectory.getVirtualFile();
-    updateDefault(data, psiDirectory, settings, parentValue, node);
-    if (isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
-      data.setLocationString(directoryFile.getPresentableUrl());
-    }
-    else {
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
-      if (coverageDataManager.getCurrentSuite() != null && !ProjectRootsUtil.isInTestSource(directoryFile, project)) {
-        data.setLocationString(coverageDataManager.getDirCoverageInformationString(psiDirectory));
-      }
-    }
-  }
-
-  private static void updateDefault(PresentationData data,
-                                    final PsiDirectory psiDirectory,
-                                    final ViewSettings settings,
-                                    final Object parentValue,
-                                    final AbstractTreeNode<?> node) {
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-
-    if (aPackage != null
-        && !ProjectRootsUtil.isSourceRoot(psiDirectory)
-        && !settings.isFlattenPackages()
-        && settings.isHideEmptyMiddlePackages()
-        && !(node.getParent() instanceof LibraryGroupNode)
-        && TreeViewUtil.isEmptyMiddlePackage(psiDirectory, true)) {
-      node.setValue(null);
-      return;
-    }
-
-    final boolean isWritable = virtualFile.isWritable();
-
-    PsiPackage parentPackage;
-    if (!ProjectRootsUtil.isSourceRoot(psiDirectory) && aPackage != null && aPackage.getQualifiedName().length() > 0 &&
-                              parentValue instanceof PsiDirectory) {
-
-      parentPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parentValue));
-    }
-    else {
-      parentPackage = null;
-    }
-
-      final String name = parentValue instanceof Project ?
-      psiDirectory.getVirtualFile().getPresentableUrl() :
-      getNodeName(settings, aPackage,parentPackage, psiDirectory.getName(), isFQNameShown(psiDirectory, parentValue, settings));
-
-    final String packagePrefix = ProjectRootsUtil.isSourceRoot(psiDirectory) && aPackage != null ? aPackage.getQualifiedName() : "";
-
-    data.setPresentableText(name);
-    data.setLocationString(packagePrefix);
-
-    for (final IconProvider provider : ApplicationManager.getApplication().getComponents(IconProvider.class)) {
-      if (provider instanceof DirectoryIconProvider) continue;
-      final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
-      if (openIcon != null) {
-        final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
-        if (closedIcon != null) {
-          data.setOpenIcon(addReadMark(openIcon, isWritable));
-          data.setClosedIcon(addReadMark(closedIcon, isWritable));
-          return;
-        }
-      }
-    }
-
-    boolean inTestSource = ProjectRootsUtil.isInTestSource(virtualFile, psiDirectory.getProject());
-    boolean isSourceOrTestRoot = ProjectRootsUtil.isSourceOrTestRoot(virtualFile, psiDirectory.getProject());
-    boolean isPackage = isPackage(psiDirectory);
-    data.setOpenIcon(addReadMark(isSourceOrTestRoot
-                                 ? IconSet.getSourceRootIcon(inTestSource, true)
-                                 : isPackage
-                                   ? IconSet.getSourceFolderIcon(inTestSource, true)
-                                   : Icons.DIRECTORY_OPEN_ICON,
-                                 isWritable));
-    data.setClosedIcon(addReadMark(isSourceOrTestRoot
-                                   ? IconSet.getSourceRootIcon(inTestSource, false)
-                                   : isPackage
-                                     ? IconSet.getSourceFolderIcon(inTestSource, false)
-                                     : Icons.DIRECTORY_CLOSED_ICON,
-                                   isWritable));
-
-  }
-
-  static String getNodeName(final ViewSettings settings, final PsiPackage aPackage, final PsiPackage parentPackageInTree, String defaultShortName,
+  public static String getNodeName(final ViewSettings settings, final PsiPackage aPackage, final PsiPackage parentPackageInTree, String defaultShortName,
                             boolean isFQNameShown) {
     final String name;
     if (isFQNameShown) {
@@ -329,155 +209,6 @@ public class PackageUtil {
       name = defaultShortName;
     }
     return name;
-  }
-
-  private static Icon addReadMark(Icon originalIcon, boolean isWritable) {
-    if (isWritable) {
-      return originalIcon;
-    }
-    else {
-      return LayeredIcon.create(originalIcon, Icons.LOCKED_ICON);
-    }
-  }
-
-  public static Collection<AbstractTreeNode> getDirectoryChildren(final PsiDirectory psiDirectory,
-                                                                  final ViewSettings settings,
-                                                                  boolean withSubDirectories) {
-    final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
-    final Project project = psiDirectory.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
-    final ModuleFileIndex moduleFileIndex = module == null ? null : ModuleRootManager.getInstance(module).getFileIndex();
-    if (!settings.isFlattenPackages() || JavaDirectoryService.getInstance().getPackage(psiDirectory) == null) {
-      processPsiDirectoryChildren(psiDirectory, psiDirectory.getChildren(), children, fileIndex, moduleFileIndex, settings,
-                                  withSubDirectories);
-    }
-    else { // source directory in "flatten packages" mode
-      final PsiDirectory parentDir = psiDirectory.getParentDirectory();
-      if (parentDir == null || JavaDirectoryService.getInstance().getPackage(parentDir) == null /*|| !rootDirectoryFound(parentDir)*/ && withSubDirectories) {
-        addAllSubpackages(children, psiDirectory, moduleFileIndex, settings);
-      }
-      PsiDirectory[] subdirs = psiDirectory.getSubdirectories();
-      for (PsiDirectory subdir : subdirs) {
-        if (JavaDirectoryService.getInstance().getPackage(subdir) != null) {
-          continue;
-        }
-        if (moduleFileIndex != null) {
-          if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-            continue;
-          }
-        }
-        if (withSubDirectories) {
-          children.add(new PsiDirectoryNode(project, subdir, settings));
-        }
-      }
-      processPsiDirectoryChildren(psiDirectory, psiDirectory.getFiles(), children, fileIndex, moduleFileIndex, settings,
-                                  withSubDirectories);
-    }
-    return children;
-  }
-
-  // used only for non-flatten packages mode
-  private static void processPsiDirectoryChildren(final PsiDirectory psiDir,
-                                                  PsiElement[] children,
-                                                  List<AbstractTreeNode> container,
-                                                  ProjectFileIndex projectFileIndex,
-                                                  ModuleFileIndex moduleFileIndex,
-                                                  ViewSettings viewSettings,
-                                                  boolean withSubDirectories) {
-    for (PsiElement child : children) {
-      LOG.assertTrue(child.isValid());
-
-      final VirtualFile vFile;
-      if (child instanceof PsiFile) {
-        vFile = ((PsiFile)child).getVirtualFile();
-        addNode(moduleFileIndex, projectFileIndex, psiDir, vFile, container, PsiFileNode.class, child, viewSettings);
-      }
-      else if (child instanceof PsiDirectory) {
-        if (withSubDirectories) {
-          PsiDirectory dir = (PsiDirectory)child;
-          vFile = dir.getVirtualFile();
-          if (!vFile.equals(projectFileIndex.getSourceRootForFile(vFile))) { // if is not a source root
-            if (viewSettings.isHideEmptyMiddlePackages() && JavaDirectoryService.getInstance().getPackage(dir) != null && TreeViewUtil.isEmptyMiddlePackage(dir, true)) {
-              processPsiDirectoryChildren(dir, dir.getChildren(), container, projectFileIndex, moduleFileIndex, viewSettings,
-                                          withSubDirectories); // expand it recursively
-              continue;
-            }
-          }
-          addNode(moduleFileIndex, projectFileIndex, psiDir, vFile, container, PsiDirectoryNode.class, child, viewSettings);
-        }
-      }
-      else {
-        LOG.assertTrue(false, "Either PsiFile or PsiDirectory expected as a child of " + child.getParent() + ", but was " + child);
-      }
-    }
-  }
-
-  private static void addNode(ModuleFileIndex moduleFileIndex,
-                              ProjectFileIndex projectFileIndex,
-                              PsiDirectory psiDir,
-                              VirtualFile vFile,
-                              List<AbstractTreeNode> container,
-                              Class<? extends AbstractTreeNode> nodeClass,
-                              PsiElement element,
-                              final ViewSettings settings) {
-    if (vFile == null) {
-      return;
-    }
-    // this check makes sense for classes not in library content only
-    if (moduleFileIndex != null && !moduleFileIndex.isInContent(vFile)) {
-      return;
-    }
-    final boolean childInLibraryClasses = projectFileIndex.isInLibraryClasses(vFile);
-    if (!projectFileIndex.isInSourceContent(vFile)) {
-      if (childInLibraryClasses) {
-        final VirtualFile psiDirVFile = psiDir.getVirtualFile();
-        final boolean parentInLibraryContent =
-          projectFileIndex.isInLibraryClasses(psiDirVFile) || projectFileIndex.isInLibrarySource(psiDirVFile);
-        if (!parentInLibraryContent) {
-          return;
-        }
-      }
-    }
-    if (childInLibraryClasses && !projectFileIndex.isInContent(vFile) && FileIndexUtil.isJavaSourceFile(psiDir.getProject(), vFile)) {
-      return; // skip java sources in classpath
-    }
-
-    try {
-      container.add(ProjectViewNode.createTreeNode(nodeClass, element.getProject(), element, settings));
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
-
-  // used only in flatten packages mode
-  private static void addAllSubpackages(List<AbstractTreeNode> container,
-                                        PsiDirectory dir,
-                                        ModuleFileIndex moduleFileIndex,
-                                        ViewSettings viewSettings) {
-    final Project project = dir.getProject();
-    PsiDirectory[] subdirs = dir.getSubdirectories();
-    for (PsiDirectory subdir : subdirs) {
-      if (JavaDirectoryService.getInstance().getPackage(subdir) == null) {
-        continue;
-      }
-      if (moduleFileIndex != null) {
-        if (!moduleFileIndex.isInContent(subdir.getVirtualFile())) {
-          continue;
-        }
-      }
-      if (viewSettings.isHideEmptyMiddlePackages()) {
-        if (!TreeViewUtil.isEmptyMiddlePackage(subdir, false)) {
-
-          container.add(new PsiDirectoryNode(project, subdir, viewSettings));
-        }
-      }
-      else {
-        container.add(new PsiDirectoryNode(project, subdir, viewSettings));
-      }
-      addAllSubpackages(container, subdir, moduleFileIndex, viewSettings);
-    }
   }
 
   private static class ModuleLibrariesSearchScope extends GlobalSearchScope {

@@ -110,7 +110,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     final GlobalSearchScope scopeToShow = PackageUtil.getScopeToShow(myProject, module, isLibraryElement());
     final PsiDirectory[] dirs = aPackage.getDirectories(scopeToShow);
     for (final PsiDirectory dir : dirs) {
-      children.addAll(PackageUtil.getDirectoryChildren(dir, getSettings(), false));
+      children.addAll(ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(dir, getSettings(), false));
     }
     return children;
   }

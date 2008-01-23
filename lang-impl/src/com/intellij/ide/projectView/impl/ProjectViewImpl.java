@@ -48,6 +48,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -849,13 +850,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         final PsiElement element = elements[idx];
         if (element instanceof PsiDirectory) {
           PsiDirectory directory = (PsiDirectory)element;
-          if (isHideEmptyMiddlePackages(viewPane.getId()) && directory.getChildren().length == 0 && JavaDirectoryService.getInstance()
-            .getPackage(directory) != null) {
+          final ProjectViewDirectoryHelper directoryHelper = ProjectViewDirectoryHelper.getInstance(myProject);
+          if (isHideEmptyMiddlePackages(viewPane.getId()) && directory.getChildren().length == 0 && !directoryHelper.skipDirectory(directory)) {
             while (true) {
               PsiDirectory parent = directory.getParentDirectory();
               if (parent == null) break;
-              PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(parent);
-              if (psiPackage == null || psiPackage.getName() == null) break;
+              if (directoryHelper.skipDirectory(parent) || PsiDirectoryFactory.getInstance(myProject).getQualifiedName(parent).length() == 0) break;
               PsiElement[] children = parent.getChildren();
               if (children.length == 0 || children.length == 1 && children[0] == directory) {
                 directory = parent;
@@ -936,9 +936,6 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         Object element = getSelectedNodeElement();
         if (element instanceof PsiElement) {
           psiElement = (PsiElement)element;
-        }
-        else if (element instanceof PackageElement) {
-          psiElement = ((PackageElement)element).getPackage();
         }
         else {
           psiElement = null;
@@ -1142,8 +1139,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
           break;
         }
         final Object userObject = node.getUserObject();
-        if (userObject instanceof PsiDirectoryNode || userObject instanceof ProjectViewModuleNode ||
-            userObject instanceof PackageViewModuleNode || userObject instanceof PackageElementNode) {
+        if (userObject instanceof PsiDirectoryNode || userObject instanceof AbstractModuleNode ||
+             userObject instanceof PackageElementNode) {
           break;
         }
         node = (DefaultMutableTreeNode)node.getParent();

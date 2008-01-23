@@ -47,4 +47,10 @@ public class ProjectRootsUtil {
     }
     return false;
   }
+
+  public static boolean isModuleContentRoot(VirtualFile directoryFile, Project project) {
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
+    return directoryFile.equals(contentRootForFile);
+  }
 }

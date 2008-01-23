@@ -1,9 +1,11 @@
 package com.intellij.ide.projectView.impl.nodes;
 
+import com.intellij.ide.IconProvider;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -13,13 +15,16 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import javax.swing.*;
 import java.util.Collection;
 
 public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
@@ -28,11 +33,45 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   protected void updateImpl(PresentationData data) {
-    PackageUtil.updatePsiDirectoryData(data, getProject(), getValue(), getSettings(), getParentValue(), this);
+    final Project project = getProject();
+    final PsiDirectory psiDirectory = getValue();
+    final VirtualFile directoryFile = psiDirectory.getVirtualFile();
+    final String name = getParentValue() instanceof Project
+                        ? psiDirectory.getVirtualFile().getPresentableUrl()
+                        : ProjectViewDirectoryHelper.getInstance(psiDirectory.getProject()).getNodeName(getSettings(), getParentValue(), psiDirectory);
+    if (name == null) {
+      setValue(null);
+      return;
+    }
+
+    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
+    final boolean isWritable = virtualFile.isWritable();
+
+    data.setPresentableText(name);
+
+    for (final IconProvider provider : ApplicationManager.getApplication().getComponents(IconProvider.class)) {
+      final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
+      if (openIcon != null) {
+        final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
+        if (closedIcon != null) {
+          data.setOpenIcon(addReadMark(openIcon, isWritable));
+          data.setClosedIcon(addReadMark(closedIcon, isWritable));
+          return;
+        }
+      }
+    }
+    if (ProjectRootsUtil.isModuleContentRoot(directoryFile, project) || ProjectRootsUtil.isLibraryRoot(directoryFile, project)) {
+      data.setLocationString(directoryFile.getPresentableUrl());
+    }
+    else {
+      if (!ProjectRootsUtil.isInTestSource(directoryFile, project)) {
+        data.setLocationString(ProjectViewDirectoryHelper.getInstance(project).getLocationString(psiDirectory, false));
+      }
+    }
   }
 
   public Collection<AbstractTreeNode> getChildrenImpl() {
-    return PackageUtil.getDirectoryChildren(getValue(), getSettings(), true);
+    return ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(getValue(), getSettings(), true);
   }
 
   public String getTestPresentation() {
@@ -40,7 +79,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   }
 
   public boolean isFQNameShown() {
-    return PackageUtil.isFQNameShown(getValue(), getParentValue(), getSettings());
+    return ProjectViewDirectoryHelper.getInstance(getProject()).isShowFQName(getSettings(), getParentValue(), getValue());
   }
 
   public boolean contains(@NotNull VirtualFile file) {
@@ -73,15 +112,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
     if (super.canRepresent(element)) return true;
     PsiDirectory directory = getValue();
     if (directory == null) return false;
-    if (element instanceof PackageElement) {
-      final PackageElement packageElement = (PackageElement)element;
-      return Arrays.asList(packageElement.getPackage().getDirectories()).contains(directory);
-    }
-    if (element instanceof VirtualFile) {
-      VirtualFile vFile = (VirtualFile) element;
-      return directory.getVirtualFile() == vFile;
-    }
-    return false;
+    return ProjectViewDirectoryHelper.getInstance(getProject()).canRepresent(element, directory);
   }
 
   public boolean canNavigate() {
@@ -110,5 +141,14 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       return PsiDirectoryFactory.getInstance(getProject()).getQualifiedName(directory);
     }
     return super.getTitle();
+  }
+
+  private static Icon addReadMark(Icon originalIcon, boolean isWritable) {
+    if (isWritable) {
+      return originalIcon;
+    }
+    else {
+      return LayeredIcon.create(originalIcon, Icons.LOCKED_ICON);
+    }
   }
 }

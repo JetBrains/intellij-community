@@ -15,10 +15,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -62,6 +59,24 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
 
   public AbstractTreeStructure getTreeStructure() {
     return myTreeStructure;
+  }
+
+
+  @Override
+  public Object getData(final String dataId) {
+    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+      final DefaultMutableTreeNode selectedNode = getSelectedNode();
+      if (selectedNode != null) {
+        Object o = selectedNode.getUserObject();
+        if (o instanceof AbstractTreeNode) {
+          final Object element = ((AbstractTreeNode)o).getValue();
+          if (element instanceof PackageElement) {
+            return ((PackageElement)element).getPackage();
+          }
+        }
+      }
+    }
+    return super.getData(dataId);
   }
 
   private final class ShowModulesAction extends ToggleAction {

@@ -16,6 +16,10 @@
       <interface-class>com.intellij.openapi.project.ProjectManager</interface-class>
       <implementation-class>com.intellij.openapi.project.impl.ProjectManagerImpl</implementation-class>
     </component>
+    <component>
+      <interface-class>com.intellij.ide.IconProvider</interface-class>
+      <implementation-class>com.intellij.psi.impl.file.DirectoryIconProvider</implementation-class>
+    </component>
   </application-components>
   <project-components>
     <component>
