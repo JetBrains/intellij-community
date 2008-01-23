@@ -15,7 +15,10 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -25,9 +28,11 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -61,22 +66,12 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
     return myTreeStructure;
   }
 
-
   @Override
-  public Object getData(final String dataId) {
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode != null) {
-        Object o = selectedNode.getUserObject();
-        if (o instanceof AbstractTreeNode) {
-          final Object element = ((AbstractTreeNode)o).getValue();
-          if (element instanceof PackageElement) {
-            return ((PackageElement)element).getPackage();
-          }
-        }
-      }
+  protected PsiElement getPSIElement(@Nullable final Object element) {
+    if (element instanceof PackageElement) {
+      return ((PackageElement)element).getPackage();
     }
-    return super.getData(dataId);
+    return super.getPSIElement(element);
   }
 
   private final class ShowModulesAction extends ToggleAction {

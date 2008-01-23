@@ -341,18 +341,16 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       if (currentPane != newPane) {
         currentPane.saveExpandedPaths();
       }
-      Object selected = currentPane.getSelectedElement();
-      if (selected instanceof PsiElement) {
-        selectedPsiElement = (PsiElement)selected;
+      final PsiElement[] elements = currentPane.getSelectedPSIElements();
+      if (elements.length > 0) {
+        selectedPsiElement = elements[0];
+      } else {
+        Object selected = currentPane.getSelectedElement();
+        if (selected instanceof Module) {
+          selectedModule = (Module)selected;
+        }
       }
-      if (selected instanceof PackageElement) {
-        PsiPackage psiPackage = ((PackageElement)selected).getPackage();
-        PsiDirectory[] directories = psiPackage.getDirectories();
-        selectedPsiElement = directories.length == 0 ? null : directories[0];
-      }
-      if (selected instanceof Module) {
-        selectedModule = (Module)selected;
-      }
+
       Disposer.dispose(currentPane);
     }
     removeLabelFocusListener();
@@ -932,15 +930,9 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
       }
       
       if (DataConstants.PSI_ELEMENT.equals(dataId)) {
-        final PsiElement psiElement;
-        Object element = getSelectedNodeElement();
-        if (element instanceof PsiElement) {
-          psiElement = (PsiElement)element;
-        }
-        else {
-          psiElement = null;
-        }
-        return psiElement != null && psiElement.isValid() ? psiElement : null;
+        if (currentProjectViewPane == null) return null;
+        final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
+        return elements.length != 1 ? null : elements[0];
       }
       if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
         if (currentProjectViewPane == null) {

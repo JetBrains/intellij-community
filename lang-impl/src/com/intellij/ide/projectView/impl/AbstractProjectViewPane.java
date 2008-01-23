@@ -12,7 +12,6 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
-import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
@@ -28,7 +27,6 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
@@ -272,17 +270,11 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
   }
 
   @Nullable
-  private static PsiElement getPSIElement(@Nullable final Object element) {
+  protected PsiElement getPSIElement(@Nullable final Object element) {
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement)element;
       if (psiElement.isValid()) {
         return psiElement;
-      }
-    }
-    else if (element instanceof PackageElement) {
-      PsiPackage aPackage = ((PackageElement)element).getPackage();
-      if (aPackage != null && aPackage.isValid()) {
-        return aPackage;
       }
     }
     return null;
