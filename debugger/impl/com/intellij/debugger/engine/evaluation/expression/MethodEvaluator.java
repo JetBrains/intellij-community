@@ -70,7 +70,7 @@ public class MethodEvaluator implements Evaluator {
         //  referenceType = (ReferenceType)DebuggerUtilsEx.getSuperType(qualifierType, className);
         //}
         //else {
-          referenceType = debugProcess.findClass(context, qualifierType.name(), context.getClassLoader());
+          referenceType = debugProcess.findClass(context, qualifierType.name(), qualifierType.classLoader());
         //}
       }
       else if(object instanceof ClassType) {
