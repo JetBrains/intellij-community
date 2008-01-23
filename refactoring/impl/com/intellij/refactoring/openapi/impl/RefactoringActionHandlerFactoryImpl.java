@@ -4,9 +4,6 @@
  */
 package com.intellij.refactoring.openapi.impl;
 
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
-import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
@@ -116,11 +113,7 @@ public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandle
   }
 
   public RefactoringActionHandler createMoveHandler() {
-    return new MoveHandler(new MoveHandler.TargetContainerFinder() {
-      public PsiElement getTargetContainer(DataContext dataContext) {
-        return (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
-      }
-    });
+    return new MoveHandler();
   }
 
   public RefactoringActionHandler createRenameHandler() {

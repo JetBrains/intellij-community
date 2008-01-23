@@ -6,6 +6,7 @@ package com.intellij.refactoring.move;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,17 +31,6 @@ import org.jetbrains.annotations.Nullable;
 public class MoveHandler implements RefactoringActionHandler {
 
   public static final String REFACTORING_NAME = RefactoringBundle.message("move.tltle");
-
-
-  public static interface TargetContainerFinder {
-    PsiElement getTargetContainer(DataContext dataContext);
-  }
-
-  TargetContainerFinder myTargetContainerFinder;
-
-  public MoveHandler(TargetContainerFinder finder) {
-    myTargetContainerFinder = finder;
-  }
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
@@ -85,10 +75,10 @@ public class MoveHandler implements RefactoringActionHandler {
     }
   }
 
-  private boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
+  private static boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
         || element instanceof PsiDirectory) {
-      final PsiElement targetContainer = myTargetContainerFinder.getTargetContainer(dataContext);
+      final PsiElement targetContainer = (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
       MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
       return true;
     } else if (element instanceof PsiField) {
@@ -128,7 +118,8 @@ public class MoveHandler implements RefactoringActionHandler {
         return true;
       }
       if (!(element instanceof PsiAnonymousClass)) {
-        MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{aClass}, myTargetContainerFinder.getTargetContainer(dataContext), null);
+        MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{aClass},
+                                         (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
       }
       else {
         new AnonymousToInnerHandler().invoke(project, (PsiAnonymousClass)element);
@@ -144,7 +135,9 @@ public class MoveHandler implements RefactoringActionHandler {
    * called by an Action in AtomicAction
    */
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    doMove(project, elements, dataContext != null ? myTargetContainerFinder.getTargetContainer(dataContext) : null, null);
+    doMove(project, elements, dataContext != null
+                              ? (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT)
+                              : null, null);
   }
 
   /**
