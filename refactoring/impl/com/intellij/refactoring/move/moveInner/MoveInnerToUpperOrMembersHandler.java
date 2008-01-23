@@ -2,6 +2,7 @@ package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -10,6 +11,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveMembers.MoveMembersHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -19,9 +21,13 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
   public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
-    return element instanceof PsiClass && element.getParent() instanceof PsiClass &&
-           ((PsiClass) element).hasModifierProperty(PsiModifier.STATIC) &&
+    return isStaticInnerClass(element) &&
            (targetContainer == null || targetContainer.equals(MoveInnerImpl.getTargetContainer((PsiClass)elements[0], false)));
+  }
+
+  private static boolean isStaticInnerClass(final PsiElement element) {
+    return element instanceof PsiClass && element.getParent() instanceof PsiClass &&
+           ((PsiClass) element).hasModifierProperty(PsiModifier.STATIC);
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
@@ -36,7 +42,24 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     }
   }
 
-  public static class SelectInnerOrMembersRefactoringDialog extends DialogWrapper {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+    if (isStaticInnerClass(element)) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
+      PsiClass aClass = (PsiClass) element;
+      SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);
+      dialog.show();
+      if (dialog.isOK()) {
+        final MoveHandlerDelegate moveHandlerDelegate = dialog.getRefactoringHandler();
+        if (moveHandlerDelegate != null) {
+          moveHandlerDelegate.doMove(project, new PsiElement[] { aClass }, null, null);
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private static class SelectInnerOrMembersRefactoringDialog extends DialogWrapper {
     private JRadioButton myRbMoveInner;
     private JRadioButton myRbMoveMembers;
     private String myClassName;

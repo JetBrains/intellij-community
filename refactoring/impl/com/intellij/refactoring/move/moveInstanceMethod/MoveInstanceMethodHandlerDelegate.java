@@ -5,6 +5,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
@@ -17,6 +18,17 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
     if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
     return targetContainer == null ||
            (targetContainer instanceof PsiClass && !(targetContainer instanceof PsiAnonymousClass));
+  }
+
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+    if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod) element;
+      if (method.hasModifierProperty(PsiModifier.STATIC))  {
+        new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
+        return true;
+      }
+    }
+    return false;
   }
 
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {

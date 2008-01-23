@@ -4,7 +4,6 @@
  */
 package com.intellij.refactoring.move;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.editor.Editor;
@@ -13,17 +12,9 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler;
-import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
-import com.intellij.refactoring.move.moveInner.MoveInnerImpl;
-import com.intellij.refactoring.move.moveInner.MoveInnerToUpperOrMembersHandler;
-import com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler;
-import com.intellij.refactoring.move.moveMembers.MoveMembersImpl;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,56 +67,10 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   private static boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
-    if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
-        || element instanceof PsiDirectory) {
-      final PsiElement targetContainer = (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
-      MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
-      return true;
-    } else if (element instanceof PsiField) {
-      MoveMembersImpl.doMove(project, new PsiElement[]{element}, null, null);
-      return true;
-    } else if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-        new MoveInstanceMethodHandler().invoke(project, new PsiElement[]{method}, dataContext);
-      }
-      else {
-        MoveMembersImpl.doMove(project, new PsiElement[]{method}, null, null);
-      }
-      return true;
-    } else if (element instanceof PsiClass) {
-      PsiClass aClass = (PsiClass)element;
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass != null) { // this is inner class
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
-        if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
-          if (containingClass instanceof JspClass) {
-            CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, RefactoringBundle.message("move.nonstatic.class.from.jsp.not.supported"), null, project);
-            return true;
-          }
-          MoveInnerImpl.doMove(project, new PsiElement[]{aClass}, null);
-        }
-        else {
-          MoveInnerToUpperOrMembersHandler.SelectInnerOrMembersRefactoringDialog dialog = new MoveInnerToUpperOrMembersHandler.SelectInnerOrMembersRefactoringDialog(aClass, project);
-          dialog.show();
-          if (dialog.isOK()) {
-            final MoveHandlerDelegate moveHandlerDelegate = dialog.getRefactoringHandler();
-            if (moveHandlerDelegate != null) {
-              moveHandlerDelegate.doMove(project, new PsiElement[] { aClass }, null, null);
-            }
-          }
-        }
+    for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
+      if (delegate.tryToMove(element, project, dataContext)) {
         return true;
       }
-      if (!(element instanceof PsiAnonymousClass)) {
-        MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{aClass},
-                                         (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
-      }
-      else {
-        new AnonymousToInnerHandler().invoke(project, (PsiAnonymousClass)element);
-      }
-
-      return true;
     }
 
     return false;

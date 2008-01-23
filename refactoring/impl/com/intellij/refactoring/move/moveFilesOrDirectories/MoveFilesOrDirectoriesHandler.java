@@ -2,6 +2,8 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -24,6 +26,16 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
       return;
     }
     MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, callback);
+  }
+
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+    if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
+        || element instanceof PsiDirectory) {
+      final PsiElement targetContainer = (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);
+      MoveFilesOrDirectoriesUtil.doMove(project, new PsiElement[]{element}, targetContainer, null);
+      return true;
+    }
+    return false;
   }
 
   public static boolean canMoveFiles(@NotNull PsiElement[] elements) {
