@@ -147,6 +147,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
         addMessageFilter(filter);
       }
     }
+
+    Disposer.register(project, this);
   }
 
   public void attachToProcess(final ProcessHandler processHandler){
@@ -263,6 +265,8 @@ public final class ConsoleViewImpl extends JPanel implements ConsoleView, Observ
   }
 
   public void dispose(){
+    Disposer.dispose(this);
+
     myState = myState.dispose();
     if (myEditor != null){
       myFlushAlarm.cancelAllRequests();
