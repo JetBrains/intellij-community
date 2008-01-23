@@ -72,18 +72,21 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       usages.add(new UsageInfo(reference.getElement()));
     }
 
-    List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
-    if (mySearchInComments) {
-      RefactoringUtil.addUsagesInStringsAndComments(myClass, myClass.getQualifiedName(), nonCodeUsages,
-                                                    new NonCodeUsageInfoFactory(myClass, myClass.getQualifiedName()));
-    }
+    final String qName = myClass.getQualifiedName();
+    if (qName != null) {
+      List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
+      if (mySearchInComments) {
+        RefactoringUtil.addUsagesInStringsAndComments(myClass, qName, nonCodeUsages,
+                                                      new NonCodeUsageInfoFactory(myClass, qName));
+      }
 
-    if (mySearchInNonJavaFiles) {
-      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
-      TextOccurrencesUtil.addTextOccurences(myClass, myClass.getQualifiedName(), projectScope, nonCodeUsages,
-                                        new NonCodeUsageInfoFactory(myClass, myClass.getQualifiedName()));
+      if (mySearchInNonJavaFiles) {
+        GlobalSearchScope projectScope = GlobalSearchScope.projectScope(myClass.getProject());
+        TextOccurrencesUtil.addTextOccurences(myClass, qName, projectScope, nonCodeUsages,
+                                          new NonCodeUsageInfoFactory(myClass, qName));
+      }
+      usages.addAll(nonCodeUsages);
     }
-    usages.addAll(nonCodeUsages);
 
     return usages.toArray(new UsageInfo[usages.size()]);
   }

@@ -36,191 +36,195 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   public void testSimple() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testChangeToSuperType() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testImplementsInterface() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testClassInitializer() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testConstructor() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testConstructorWithArguments() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testConstructorWithArgumentsInExpression() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testMultipleConstructors() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testMethodUsage() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testConstructorArgumentToField() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testField() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testStaticConstantField() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testWritableInitializedField() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testNullInitializedField() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testInnerClass() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testConstructorToInstanceInitializer() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testNewExpressionContext() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testWritableFieldInitializedWithParameter() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testFieldInitializedWithVar() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testFieldVsLocalConflict() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testFieldVsParameterConflict() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testGenerics() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testGenericsSubstitute() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testGenericsFieldDeclaration() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testGenericsRawType() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testGenericsInTypeParameter() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testQualifyInner() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testQualifiedNew() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testChainedConstructors() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testInlineThisOnly() throws Exception {
-    doTest(true);
+    doTest(true, false);
   }
 
   public void testArrayType() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testArrayTypeWithGenerics() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testArrayInitializer() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testVarargs() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testSelfReference() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void _testOuterClassFieldAccess() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testPrivateFieldUsedFromInnerClass() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testOverwriteInitializer() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testMultipleInnerClasses() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
   
   public void testConstructorArgumentInExpression() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testMethodCallInNewExpression() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testMethodCallInNewExpressionWithParens() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testRedundantImplementsInterface() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testStringInMethodCallFromConstructor() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testMultipleGeneratedVars() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testFieldAsConstructorParameter() throws Exception {
-    doTest(false);
+    doTest(false, false);
   }
 
   public void testQualifyParentStaticReferences() throws Exception {
-    doTest(false);
+    doTest(false, false);
+  }
+
+  public void testLocalClass() throws Exception {
+    doTest(false, true);
   }
 
   public void testNoInlineAbstract() throws Exception {
@@ -348,11 +352,11 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     assertEquals(expectedMessage, message);
   }
 
-  private void doTest(final boolean inlineThisOnly) throws Exception {
+  private void doTest(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) throws Exception {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
-    performAction(inlineThisOnly);
+    performAction(inlineThisOnly, searchInNonJavaFiles);
     checkResultByFile(null, fileName + ".after", true);
   }
 
@@ -374,14 +378,14 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     return new InlineToAnonymousClassProcessor(getProject(), (PsiClass) element, null, false, false, false);
   }
 
-  private void performAction(final boolean inlineThisOnly) {
+  private void performAction(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) {
     PsiElement element = TargetElementUtil.findTargetElement(myEditor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(myEditor);
     PsiClass classToInline = (PsiClass) element;
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));
     final InlineToAnonymousClassProcessor processor = new InlineToAnonymousClassProcessor(getProject(), classToInline, callToInline, inlineThisOnly,
-                                                                                          false, false);
+                                                                                          false, searchInNonJavaFiles);
     UsageInfo[] usages = processor.findUsages();
     ArrayList<String> conflicts = processor.getConflicts(usages);
     assertEquals(0, conflicts.size());
