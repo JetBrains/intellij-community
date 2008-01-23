@@ -50,7 +50,7 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   */
 
   @Nullable
-  public abstract Element findConcreateDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, final String conatainingClassName, final String propertyName);
+  public abstract Element findConcreteDynamicProperty(GrReferenceExpression referenceExpression, String moduleName, final String conatainingClassName, final String propertyName);
 
   /*
    * Gets type of property

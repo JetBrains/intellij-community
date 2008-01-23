@@ -714,13 +714,13 @@ public class GroovyAnnotator implements Annotator {
     final String className = containingClass.getQualifiedName();
     if (className == null) return false;
 
-    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(referenceExpression, module.getName(), className, referenceExpression.getName());
+    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), className, referenceExpression.getName());
     if (propertyElement != null) return false;
 
     final Set<PsiClass> supers = GroovyUtils.findAllSupers(containingClass);
     Element superDynamicProperty;
     for (PsiClass aSuper : supers) {
-      superDynamicProperty = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreateDynamicProperty(referenceExpression, module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
+      superDynamicProperty = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
 
       if (superDynamicProperty != null) return false;
     }
