@@ -3,7 +3,6 @@
  */
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.ide.highlighter.JavaHighlighterFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -15,7 +14,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.RangeBlinker;
 import org.jetbrains.annotations.NonNls;
 
@@ -120,7 +118,7 @@ class IntentionUsagePanel extends JPanel{
       editor.getSelectionModel().setSelection(editorDocument.getLineStartOffset(selectedLine),
                                               editorDocument.getLineEndOffset(selectedLine));
     }
-    editor.setHighlighter(JavaHighlighterFactory.createJavaHighlighter(scheme, LanguageLevel.HIGHEST));
+
     return editor;
   }
 }

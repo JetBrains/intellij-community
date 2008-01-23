@@ -4,7 +4,6 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.impl.convert.ProjectConversionUtil;
@@ -54,6 +53,7 @@ public class InspectionApplication {
   @NonNls public static final String DESCRIPTIONS = ".descriptions";
   @NonNls public static final String PROFILE = "profile";
   @NonNls public static final String INSPECTIONS_NODE = "inspections";
+  @NonNls public static final String XML_EXTENSION = ".xml";
 
   public void startup() {
     if (myProjectPath == null || myOutPath == null || myProfileName == null) {
@@ -207,7 +207,7 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
-      describeInspections(myOutPath + File.separatorChar + DESCRIPTIONS + XmlFileType.DOT_DEFAULT_EXTENSION, !myRunWithEditorSettings ? inspectionProfile.getName() : null);
+      describeInspections(myOutPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION, !myRunWithEditorSettings ? inspectionProfile.getName() : null);
     }
     catch (IOException e) {
       LOG.error(e);

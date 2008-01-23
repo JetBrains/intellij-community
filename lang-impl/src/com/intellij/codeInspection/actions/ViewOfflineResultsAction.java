@@ -21,7 +21,6 @@ import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvi
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,6 +37,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -48,6 +48,7 @@ import java.util.Set;
 
 public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
+  @NonNls private static final String XML_EXTENSION = "xml";
 
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
@@ -75,6 +76,7 @@ public class ViewOfflineResultsAction extends AnAction {
           for (final VirtualFile inspectionFile : files) {
             if (inspectionFile.isDirectory()) continue;
             final String shortName = inspectionFile.getNameWithoutExtension();
+            final String extension = inspectionFile.getExtension();
             if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
               profileName[0] = ApplicationManager.getApplication().runReadAction(
                   new Computable<String>() {
@@ -85,7 +87,7 @@ public class ViewOfflineResultsAction extends AnAction {
                   }
               );
             }
-            else if (inspectionFile.getFileType() instanceof XmlFileType) {
+            else if (XML_EXTENSION.equals(extension)) {
               resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
                   new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
                     public Map<String, Set<OfflineProblemDescriptor>> compute() {

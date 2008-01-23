@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.util.RefEntityAlphabeticalComparator;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -141,7 +140,7 @@ public class ExportHTMLAction extends AnAction {
             PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
             try {
               JDOMUtil.writeDocument(new Document(problems),
-                                     outputDirectoryName + File.separator + tool.getShortName() + XmlFileType.DOT_DEFAULT_EXTENSION,
+                                     outputDirectoryName + File.separator + tool.getShortName() + InspectionApplication.XML_EXTENSION,
                                      CodeStyleSettingsManager.getSettings(null).getLineSeparator());
             }
             catch (IOException e) {
@@ -160,7 +159,7 @@ public class ExportHTMLAction extends AnAction {
         element.setAttribute(InspectionApplication.PROFILE, profileName);
       }
       JDOMUtil.writeDocument(new Document(element),
-                             outputDirectoryName + File.separator + InspectionApplication.DESCRIPTIONS + XmlFileType.DOT_DEFAULT_EXTENSION,
+                             outputDirectoryName + File.separator + InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION,
                              CodeStyleSettingsManager.getSettings(null).getLineSeparator());
     }
     catch (final IOException e) {
