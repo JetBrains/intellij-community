@@ -1,8 +1,8 @@
 package com.intellij.application.options;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.containers.HashMap;
 

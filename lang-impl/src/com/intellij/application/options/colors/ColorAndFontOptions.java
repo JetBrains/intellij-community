@@ -225,7 +225,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
   private static void initDiffDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
     DiffColorsForm.addSchemeDescriptions(descriptions, scheme);
   }
-
+                               
   private static void initFileStatusDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
 
     FileStatus[] statuses = PeerFactory.getInstance().getFileStatusFactory().getAllFileStatuses();

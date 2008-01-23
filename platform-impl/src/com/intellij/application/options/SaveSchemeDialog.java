@@ -3,17 +3,14 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.CommonBundle;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 public class SaveSchemeDialog extends DialogWrapper {
   private JTextField mySchemeName = new JTextField();
