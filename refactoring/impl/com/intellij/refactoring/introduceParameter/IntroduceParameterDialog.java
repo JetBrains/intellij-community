@@ -15,7 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -241,7 +241,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
       myCbReplaceAllOccurences.setSelected(false);
     }
 
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
 
     gbConstraints.gridy++;
     myCbDeclareFinal = new NonFocusableCheckBox(RefactoringBundle.message("declare.final"));
@@ -363,7 +363,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     gbConstraints.gridy++;
     radioButtonPanel.add(myReplaceFieldsWithGettersAllRadio, gbConstraints);
 
-    final int currentSetting = RefactoringSettings.getInstance().INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS;
+    final int currentSetting = JavaRefactoringSettings.getInstance().INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS;
 
     myReplaceFieldsWithGettersButtonGroup.add(myReplaceFieldsWithGettersNoneRadio);
     myReplaceFieldsWithGettersButtonGroup.add(myReplaceFieldsWithGettersInaccessibleRadio);
@@ -391,7 +391,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    final RefactoringSettings settings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.INTRODUCE_PARAMETER_REPLACE_FIELDS_WITH_GETTERS =
             getReplaceFieldsWithGetters();
     if (myCbDeclareFinal != null && !myMustBeFinal) {

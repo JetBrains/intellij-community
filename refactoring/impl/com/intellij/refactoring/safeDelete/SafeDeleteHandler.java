@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.Processor;
@@ -111,7 +111,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     final PsiElement[] elementsToDelete = fullElementsSet.toArray(new PsiElement[fullElementsSet.size()]);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      RefactoringSettings settings = RefactoringSettings.getInstance();
+      JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
       SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
                                          settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true).run();
     }

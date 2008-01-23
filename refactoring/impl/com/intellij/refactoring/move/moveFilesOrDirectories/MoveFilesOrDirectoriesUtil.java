@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -85,8 +85,8 @@ public class MoveFilesOrDirectoriesUtil {
     };
 
     final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
-    boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
-    boolean searchForTextOccurences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
+    boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
+    boolean searchForTextOccurences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
     moveDialog.setData(elements, initialTargetDirectory, searchInComments, searchForTextOccurences, HelpID.getMoveHelpID(elements[0]));
     moveDialog.show();
   }

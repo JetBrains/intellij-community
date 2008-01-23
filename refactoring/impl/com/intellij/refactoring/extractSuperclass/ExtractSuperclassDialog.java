@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.JavaDocPolicy;
@@ -154,12 +154,12 @@ class ExtractSuperclassDialog extends ExtractSuperBaseDialog {
 
   @Override
   protected int getJavaDocPolicySetting() {
-    return RefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC;
+    return JavaRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC;
   }
 
   @Override
   protected void setJavaDocPolicySetting(int policy) {
-    RefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC = policy;
+    JavaRefactoringSettings.getInstance().EXTRACT_SUPERCLASS_JAVADOC = policy;
   }
 
 

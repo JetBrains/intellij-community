@@ -15,7 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.ui.MemberSelectionTable;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -223,7 +223,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
       }
     }));
 
-    RefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
+    JavaRefactoringSettings.getInstance().MOVE_PREVIEW_USAGES = isPreviewUsages();
   }
 
   protected boolean areButtonsValid() {

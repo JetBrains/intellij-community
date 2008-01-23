@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
 
@@ -87,7 +87,7 @@ public class SafeDeleteDialog extends DialogWrapper {
       panel.add(myCbSearchTextOccurrences, gbc);
     }
 
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     myCbSearchInComments.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
     if (myCbSearchTextOccurrences != null) {
       myCbSearchTextOccurrences.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
@@ -115,7 +115,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     } else {
       super.doOKAction();
     }
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS = isSearchInComments();
     if (myCbSearchTextOccurrences != null) {
       refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA = isSearchForTextOccurences();

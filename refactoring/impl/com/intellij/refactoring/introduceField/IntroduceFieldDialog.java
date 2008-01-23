@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -126,7 +126,7 @@ class IntroduceFieldDialog extends DialogWrapper {
     } else {
       selectInCurrentMethod();
     }
-    String ourLastVisibility = RefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
+    String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY;
     if (PsiModifier.PUBLIC.equals(ourLastVisibility)) {
       myRbPublic.setSelected(true);
     } else if (PsiModifier.PROTECTED.equals(ourLastVisibility)) {
@@ -530,7 +530,7 @@ class IntroduceFieldDialog extends DialogWrapper {
 
     ourLastCbFinalState = myCbFinal.isSelected();
     ourLastInitializerPlace = getInitializerPlace();
-    RefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = getFieldVisibility();
+    JavaRefactoringSettings.getInstance().INTRODUCE_FIELD_VISIBILITY = getFieldVisibility();
 
     myNameSuggestionsManager.nameSelected();
     super.doOKAction();

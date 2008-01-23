@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.ui.IdeBorderFactory;
@@ -74,31 +74,31 @@ public class TypeCookDialog extends RefactoringDialog {
     optionsPanel.setBorder(IdeBorderFactory.createBorder());
 
     if (myCbDropCasts.isEnabled()) {
-      myCbDropCasts.setSelected(RefactoringSettings.getInstance().TYPE_COOK_DROP_CASTS);
+      myCbDropCasts.setSelected(JavaRefactoringSettings.getInstance().TYPE_COOK_DROP_CASTS);
     }
 
     if (myCbPreserveRawArrays.isEnabled()) {
-      myCbPreserveRawArrays.setSelected(RefactoringSettings.getInstance().TYPE_COOK_PRESERVE_RAW_ARRAYS);
+      myCbPreserveRawArrays.setSelected(JavaRefactoringSettings.getInstance().TYPE_COOK_PRESERVE_RAW_ARRAYS);
     }
 
     if (myCbLeaveObjectParameterizedTypesRaw.isEnabled()) {
       myCbLeaveObjectParameterizedTypesRaw.setSelected(
-        RefactoringSettings.getInstance().TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW);
+        JavaRefactoringSettings.getInstance().TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW);
     }
 
     if (myCbExhaustive.isEnabled()) {
       myCbExhaustive.setSelected(
-        RefactoringSettings.getInstance().TYPE_COOK_EXHAUSTIVE);
+        JavaRefactoringSettings.getInstance().TYPE_COOK_EXHAUSTIVE);
     }
 
     if (myCbCookObjects.isEnabled()) {
       myCbCookObjects.setSelected(
-        RefactoringSettings.getInstance().TYPE_COOK_COOK_OBJECTS);
+        JavaRefactoringSettings.getInstance().TYPE_COOK_COOK_OBJECTS);
     }
 
     if (myCbCookToWildcards.isEnabled()) {
       myCbCookToWildcards.setSelected(
-        RefactoringSettings.getInstance().TYPE_COOK_PRODUCE_WILDCARDS);
+        JavaRefactoringSettings.getInstance().TYPE_COOK_PRODUCE_WILDCARDS);
     }
 
     myCbDropCasts.setText(RefactoringBundle.message("type.cook.drop.obsolete.casts"));
@@ -147,7 +147,7 @@ public class TypeCookDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.TYPE_COOK_DROP_CASTS = myCbDropCasts.isSelected();
     settings.TYPE_COOK_PRESERVE_RAW_ARRAYS = myCbPreserveRawArrays.isSelected();
     settings.TYPE_COOK_LEAVE_OBJECT_PARAMETERIZED_TYPES_RAW = myCbLeaveObjectParameterizedTypesRaw.isSelected();

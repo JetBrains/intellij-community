@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -245,7 +245,7 @@ public class MoveInnerDialog extends RefactoringDialog {
       return;
     }
 
-    RefactoringSettings.getInstance().MOVE_INNER_PREVIEW_USAGES = isPreviewUsages();
+    JavaRefactoringSettings.getInstance().MOVE_INNER_PREVIEW_USAGES = isPreviewUsages();
     if (myCbPassOuterClass.isSelected() && mySuggestedNameInfo != null) {
       mySuggestedNameInfo.nameChoosen(getParameterName());
     }

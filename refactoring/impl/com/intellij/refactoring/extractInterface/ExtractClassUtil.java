@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessor;
 import com.intellij.refactoring.ui.YesNoPreviewUsagesDialog;
 
@@ -36,12 +36,12 @@ public class ExtractClassUtil {
           YesNoPreviewUsagesDialog dialog = new YesNoPreviewUsagesDialog(
             RefactoringBundle.message("analyze.and.replace.usages"),
             message,
-            RefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES,
+            JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES,
             /*HelpID.TURN_REFS_TO_SUPER*/null, project);
           dialog.show();
           if (dialog.isOK()) {
             final boolean isPreviewUsages = dialog.isPreviewUsages();
-            RefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES = isPreviewUsages;
+            JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_PREVIEW_USAGES = isPreviewUsages;
             TurnRefsToSuperProcessor processor =
                     new TurnRefsToSuperProcessor(project, (PsiClass) classElement, (PsiClass) interfaceElement, true);
             processor.setPreviewUsages(isPreviewUsages);

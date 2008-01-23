@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -210,7 +210,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
     myCbFinal = new NonFocusableCheckBox();
     myCbFinal.setText(RefactoringBundle.message("declare.final"));
-    final Boolean createFinals = RefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
+    final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     myCbFinalState = createFinals == null ?
                      CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :
                      createFinals;
@@ -260,7 +260,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     if (!myValidator.isOK(this)) return;
     myNameSuggestionsManager.nameSelected();
     if (myCbFinal.isEnabled()) {
-      RefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbFinalState;
+      JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS = myCbFinalState;
     }
     super.doOKAction();
   }

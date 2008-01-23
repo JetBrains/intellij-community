@@ -6,7 +6,7 @@ import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.HelpID;
 
 import javax.swing.*;
@@ -65,7 +65,7 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
     gbc.weightx = 1.0;
     panel.add(optionsPanel, gbc);
 
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     myCbSearchInComments = new JCheckBox(RefactoringBundle.message("search.in.comments.and.strings"),
                                          settings.INLINE_CLASS_SEARCH_IN_COMMENTS);
     myCbSearchTextOccurences = new JCheckBox(RefactoringBundle.message("search.for.text.occurrences"),
@@ -81,7 +81,7 @@ public class InlineToAnonymousClassDialog extends InlineOptionsDialog {
     final boolean searchInComments = myCbSearchInComments.isSelected();
     final boolean searchInNonJava = myCbSearchTextOccurences.isSelected();
 
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.INLINE_CLASS_SEARCH_IN_COMMENTS = searchInComments;
     settings.INLINE_CLASS_SEARCH_IN_NON_JAVA = searchInNonJava;
 

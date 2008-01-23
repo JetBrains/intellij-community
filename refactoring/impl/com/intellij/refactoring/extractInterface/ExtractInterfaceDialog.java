@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseDialog;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperBaseProcessor;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
@@ -177,12 +177,12 @@ class ExtractInterfaceDialog extends ExtractSuperBaseDialog {
 
   @Override
   protected int getJavaDocPolicySetting() {
-    return RefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC;
+    return JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC;
   }
 
   @Override
   protected void setJavaDocPolicySetting(int policy) {
-    RefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC = policy;
+    JavaRefactoringSettings.getInstance().EXTRACT_INTERFACE_JAVADOC = policy;
   }
 
   @Override

@@ -8,7 +8,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -106,7 +106,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    RefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER = myCbGenerateGetter.isSelected();
+    JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER = myCbGenerateGetter.isSelected();
 
     final MemberInfo[] selectedMemberInfos = getSelectedMemberInfos();
     final ArrayList<PsiClass> implementedInterfaces = new ArrayList<PsiClass>();
@@ -218,7 +218,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     myCbGenerateGetter = new JCheckBox(RefactoringBundle.message("generate.getter.for.delegated.component"));
     myCbGenerateGetter.setFocusable(false);
     panel.add(myCbGenerateGetter, gbc);
-    myCbGenerateGetter.setSelected(RefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER);
+    myCbGenerateGetter.setSelected(JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER);
     updateTargetClass();
 
     return panel;

@@ -18,7 +18,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
       file = "$APP_CONFIG$/other.xml"
     )}
 )
-public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
+public class JavaRefactoringSettings implements PersistentStateComponent<JavaRefactoringSettings> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.RefactoringSettings");
   // properties should be public in order to get saved by DefaultExternalizable implementation
 
@@ -95,8 +95,8 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_INHERITORS = true;
   @SuppressWarnings({"WeakerAccess"}) public boolean RENAME_VARIABLES = true;
 
-  public static RefactoringSettings getInstance() {
-    return ServiceManager.getService(RefactoringSettings.class);
+  public static JavaRefactoringSettings getInstance() {
+    return ServiceManager.getService(JavaRefactoringSettings.class);
   }
 
   public boolean isToSearchInCommentsForRename(PsiElement element) {
@@ -256,11 +256,11 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
     this.RENAME_VARIABLES = RENAME_VARIABLES;
   }
 
-  public RefactoringSettings getState() {
+  public JavaRefactoringSettings getState() {
     return this;
   }
 
-  public void loadState(RefactoringSettings state) {
+  public void loadState(JavaRefactoringSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

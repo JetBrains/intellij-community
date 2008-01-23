@@ -20,7 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -59,8 +59,8 @@ public class MoveClassesOrPackagesImpl {
     }
     final MoveClassesOrPackagesDialog moveDialog =
       new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, initialTargetElement, moveCallback);
-    boolean searchInComments = RefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
-    boolean searchForTextOccurences = RefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
+    boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
+    boolean searchForTextOccurences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
     moveDialog.setData(psiElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, searchInComments,
                        searchForTextOccurences, HelpID.getMoveHelpID(psiElements[0]));
     moveDialog.show();

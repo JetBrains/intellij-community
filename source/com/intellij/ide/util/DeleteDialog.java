@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.StateRestoringCheckBox;
 
@@ -91,7 +91,7 @@ public class DeleteDialog extends DialogWrapper {
     myCbSearchInNonJava = new StateRestoringCheckBox(IdeBundle.message("checkbox.search.in.non.java.files"));
     panel.add(myCbSearchInNonJava, gbc);
 
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     myCbSafeDelete.setSelected(refactoringSettings.SAFE_DELETE_WHEN_DELETE);
     myCbSearchInComments.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_COMMENTS);
     myCbSearchInNonJava.setSelected(refactoringSettings.SAFE_DELETE_SEARCH_IN_NON_JAVA);
@@ -122,7 +122,7 @@ public class DeleteDialog extends DialogWrapper {
 
 
   protected void doOKAction() {
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     refactoringSettings.SAFE_DELETE_WHEN_DELETE = myCbSafeDelete.isSelected();
     if (myCbSafeDelete.isSelected()) {
       if (myCallback != null) {

@@ -17,7 +17,7 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -92,11 +92,11 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   protected boolean isToSearchForTextOccurencesForRename() {
-    return RefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
+    return JavaRefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
   }
 
   protected boolean isToSearchInCommentsForRename() {
-    return RefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
+    return JavaRefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
   }
 
   private String getFullName() {
@@ -264,11 +264,11 @@ public class RenameDialog extends RefactoringDialog {
     return myCbSearchInComments.isSelected();
   }
   private boolean isToRenameInheritors() {
-    return RefactoringSettings.getInstance().isToRenameInheritors(myPsiElement);
+    return JavaRefactoringSettings.getInstance().isToRenameInheritors(myPsiElement);
   }
 
   private boolean isToRenameVariables() {
-    return RefactoringSettings.getInstance().isToRenameVariables(myPsiElement);
+    return JavaRefactoringSettings.getInstance().isToRenameVariables(myPsiElement);
   }
 
   public boolean isSearchInNonJavaFiles() {
@@ -398,7 +398,7 @@ public class RenameDialog extends RefactoringDialog {
   protected void doAction() {
     LOG.assertTrue(myPsiElement.isValid());
 
-    final RefactoringSettings settings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
 
     settings.setToSearchInCommentsForRename(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurences.isEnabled()) {

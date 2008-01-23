@@ -10,7 +10,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -283,7 +283,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     }
     );
     myCbUseAccessorsWhenAccessible.setSelected(
-            RefactoringSettings.getInstance().ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE
+            JavaRefactoringSettings.getInstance().ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE
     );
 
     myRbFieldPrivate.setSelected(true);
@@ -441,7 +441,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog {
     }
 
     invokeRefactoring(new EncapsulateFieldsProcessor(myProject, this));
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     settings.ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE = myCbUseAccessorsWhenAccessible.isSelected();
   }
 

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 
 public class InlineFieldDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.field.title");
@@ -46,12 +46,12 @@ public class InlineFieldDialog extends InlineOptionsDialog {
   }
 
   protected boolean isInlineThis() {
-    return RefactoringSettings.getInstance().INLINE_FIELD_THIS;
+    return JavaRefactoringSettings.getInstance().INLINE_FIELD_THIS;
   }
 
   protected void doAction() {
     invokeRefactoring(new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly()));
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();
     }

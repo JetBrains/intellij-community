@@ -9,7 +9,7 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 
 public class InlineMethodDialog extends InlineOptionsDialog {
   public static final String REFACTORING_NAME = RefactoringBundle.message("inline.method.title");
@@ -55,7 +55,7 @@ public class InlineMethodDialog extends InlineOptionsDialog {
 
   protected void doAction() {
     invokeRefactoring(new InlineMethodProcessor(getProject(), myMethod, myReferenceElement, myEditor, isInlineThisOnly()));
-    RefactoringSettings settings = RefactoringSettings.getInstance();
+    JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_METHOD_THIS = isInlineThisOnly();
     }
@@ -71,6 +71,6 @@ public class InlineMethodDialog extends InlineOptionsDialog {
   }
 
   protected boolean isInlineThis() {
-    return RefactoringSettings.getInstance().INLINE_METHOD_THIS;
+    return JavaRefactoringSettings.getInstance().INLINE_METHOD_THIS;
   }
 }

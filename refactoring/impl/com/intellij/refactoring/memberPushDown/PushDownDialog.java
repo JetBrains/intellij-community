@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.memberPullUp.JavaDocPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -89,7 +89,7 @@ public class PushDownDialog extends RefactoringDialog {
 
 
     myJavaDocPanel = new JavaDocPanel(RefactoringBundle.message("push.down.javadoc.panel.title"));
-    myJavaDocPanel.setPolicy(RefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
+    myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     return panel;
   }
@@ -97,7 +97,7 @@ public class PushDownDialog extends RefactoringDialog {
   protected void doAction() {
     if(!isOKActionEnabled()) return;
 
-    RefactoringSettings.getInstance().PUSH_DOWN_PREVIEW_USAGES = isPreviewUsages();
+    JavaRefactoringSettings.getInstance().PUSH_DOWN_PREVIEW_USAGES = isPreviewUsages();
 
     invokeRefactoring (new PushDownProcessor(
             getProject(), getSelectedMemberInfos(), myClass,

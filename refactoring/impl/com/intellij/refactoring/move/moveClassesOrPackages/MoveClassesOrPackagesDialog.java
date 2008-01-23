@@ -347,7 +347,7 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private void saveRefactoringSettings() {
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     final boolean searchInComments = isSearchInComments();
     final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;

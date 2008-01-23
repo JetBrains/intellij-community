@@ -24,7 +24,7 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
@@ -104,7 +104,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
     init();
 
-    final String ourLastVisibility = RefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    final String ourLastVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
     if (PsiModifier.PUBLIC.equals(ourLastVisibility)) {
       myRbPublic.setSelected(true);
     } else if (PsiModifier.PROTECTED.equals(ourLastVisibility)) {
@@ -428,7 +428,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       }
     }
 
-    RefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
+    JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY = getFieldVisibility();
 
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, targetClassName);
     super.doOKAction();

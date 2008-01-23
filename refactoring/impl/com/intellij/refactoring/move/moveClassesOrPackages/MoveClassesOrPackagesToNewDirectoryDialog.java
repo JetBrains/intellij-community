@@ -17,7 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringFactory;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.DocumentAdapter;
@@ -67,7 +67,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
                           ? RefactoringBundle.message("move.specified.classes")
                           : RefactoringBundle.message("move.specified.packages"));
     }
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     mySearchInCommentsAndStringsCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_IN_COMMENTS);
     mySearchForTextOccurrencesCheckBox.setSelected(refactoringSettings.MOVE_SEARCH_FOR_TEXT);
 
@@ -128,7 +128,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends DialogWrapper {
       return;
     }
 
-    final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
+    final JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
     final boolean searchInComments = isSearchInComments();
     final boolean searchForTextOccurences = isSearchInNonJavaFiles();
     refactoringSettings.MOVE_SEARCH_IN_COMMENTS = searchInComments;

@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.RefactoringSettings;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -108,7 +108,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
   }
 
   protected void doAction() {
-    RefactoringSettings.getInstance().TURN_REFS_TO_SUPER_PREVIEW_USAGES = isPreviewUsages();
+    JavaRefactoringSettings.getInstance().TURN_REFS_TO_SUPER_PREVIEW_USAGES = isPreviewUsages();
     final TurnRefsToSuperProcessor processor = new TurnRefsToSuperProcessor(
       getProject(), mySubClass, getSuperClass(), isUseInInstanceOf());
     invokeRefactoring(processor);
