@@ -60,6 +60,7 @@ public class IterableVariableMacro extends VariableTypeMacroBase {
         try {
           result.add(elementFactory.createExpressionFromText(var.getName() + ".keySet()", var.getParent()));
           result.add(elementFactory.createExpressionFromText(var.getName() + ".values()", var.getParent()));
+          result.add(elementFactory.createExpressionFromText(var.getName() + ".entrySet()", var.getParent()));
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
