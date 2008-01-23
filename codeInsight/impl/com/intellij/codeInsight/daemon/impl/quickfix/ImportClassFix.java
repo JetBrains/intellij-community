@@ -119,10 +119,10 @@ public class ImportClassFix implements HintAction {
 
   public boolean showHint(final Editor editor) {
 
-    return doFix(editor, true);
+    return doFix(editor, true, false);
   }
 
-  public boolean doFix(final Editor editor, boolean doShow) {
+  public boolean doFix(@NotNull final Editor editor, boolean doShow, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
     if (classesToImport.isEmpty()) {
       return false;
@@ -150,7 +150,7 @@ public class ImportClassFix implements HintAction {
 
     if (classes.length == 1
         && CodeStyleSettingsManager.getSettings(project).ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY
-        && !isCaretNearRef(editor, myRef)
+        && (allowCaretNearRef || !isCaretNearRef(editor, myRef)) 
         && !PsiUtil.isInJspFile(psiFile)
         && codeAnalyzer.canChangeFileSilently(psiFile)
         && !hasUnresolvedImportWhichCanImport(psiFile, classes[0].getName())) {

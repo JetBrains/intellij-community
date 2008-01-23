@@ -1,6 +1,8 @@
 package com.intellij.refactoring.ui;
 
+import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCodeFragment;
@@ -18,20 +20,22 @@ public class CodeFragmentTableCellEditor extends AbstractCellEditor implements T
   private Document myDocument;
   protected PsiCodeFragment myCodeFragment;
   private Project myProject;
+  private EditorTextField myEditorTextField;
 
   public CodeFragmentTableCellEditor(final Project project) {
-    CodeFragmentTableCellEditor.this.myProject = project;
+    myProject = project;
   }
 
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     myCodeFragment = (PsiCodeFragment)value;
 
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(myCodeFragment);
-    return new EditorTextField(myDocument, myProject, StdFileTypes.JAVA) {
+    myEditorTextField = new EditorTextField(myDocument, myProject, StdFileTypes.JAVA) {
       protected boolean shouldHaveBorder() {
         return false;
       }
     };
+    return myEditorTextField;
   }
 
   public PsiCodeFragment getCellEditorValue() {
@@ -43,6 +47,10 @@ public class CodeFragmentTableCellEditor extends AbstractCellEditor implements T
   }
 
   public boolean stopCellEditing() {
+    final Editor editor = myEditorTextField.getEditor();
+    if (editor != null) {
+      ShowAutoImportPass.autoImportReferenceAtCursor(editor, myCodeFragment, true);
+    }
     super.stopCellEditing();
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     return true;

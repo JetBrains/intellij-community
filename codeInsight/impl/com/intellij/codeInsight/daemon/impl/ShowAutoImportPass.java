@@ -122,7 +122,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return false;
   }
 
-  public static void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
+  public static void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file, final boolean allowCaretNearRef) {
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
@@ -134,7 +134,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;
         if (ref.resolve() == null) {
-          new ImportClassFix(ref).doFix(editor, false);
+          new ImportClassFix(ref).doFix(editor, false, allowCaretNearRef);
         }
       }
     }

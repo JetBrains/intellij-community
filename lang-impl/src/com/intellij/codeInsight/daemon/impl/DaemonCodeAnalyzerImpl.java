@@ -532,6 +532,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   }
 
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
-    ShowAutoImportPass.autoImportReferenceAtCursor(editor, file);
+    ShowAutoImportPass.autoImportReferenceAtCursor(editor, file, false);
   }
 }

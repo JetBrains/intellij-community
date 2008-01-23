@@ -78,7 +78,7 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
     EditorUtil.fillVirtualSpaceUntil(editor, editor.getCaretModel().getLogicalPosition().column, editor.getCaretModel().getLogicalPosition().line);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    ShowAutoImportPass.autoImportReferenceAtCursor(editor, file); //let autoimport complete
+    ShowAutoImportPass.autoImportReferenceAtCursor(editor, file, false); //let autoimport complete
     PostprocessReformattingAspect.getInstance(project).doPostponedFormatting(file.getViewProvider());
 
     final int offset1 = editor.getSelectionModel().hasSelection() ? editor.getSelectionModel().getSelectionStart() : editor.getCaretModel().getOffset();
