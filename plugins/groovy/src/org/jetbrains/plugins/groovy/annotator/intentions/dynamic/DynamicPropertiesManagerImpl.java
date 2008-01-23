@@ -197,7 +197,6 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     return dynamicProperty;
   }
 
-  @Nullable
   public void removeDynamicPropertiesOfClass(String moduleName, String containingClassName) {
     final Document document = loadModuleDynXML(moduleName);
 
@@ -265,7 +264,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
       result.add(((Element) o).getAttributeValue(PROPERTY_NAME_ATTRIBUTE));
     }
 
-    return result.toArray(new String[0]);
+    return result.toArray(new String[result.size()]);
   }
 
   @NotNull
