@@ -6,6 +6,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -15,8 +16,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.listeners.RefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
@@ -27,7 +26,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -299,9 +297,15 @@ public abstract class BaseRefactoringProcessor {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
-      Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(writableUsageInfos);
+      Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
+      for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+        preparedData.put(helper, helper.prepareOperation(writableUsageInfos));
+      }
       performRefactoring(writableUsageInfos);
-      removeRedundantImports(touchedJavaFiles);
+      for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
+        //noinspection unchecked
+        e.getKey().performOperation(myProject, e.getValue());
+      }
       myTransaction.commit();
       performPsiSpoilingRefactoring();
     }
@@ -318,34 +322,6 @@ public abstract class BaseRefactoringProcessor {
         WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("statusBar.noUsages"));
       }
     }
-  }
-
-  protected void removeRedundantImports(final Set<PsiJavaFile> javaFiles) {
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-    for (PsiJavaFile file : javaFiles) {
-      try {
-        if (file.isValid() && file.getVirtualFile() != null) {
-          styleManager.removeRedundantImports(file);
-        }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    }
-  }
-
-  protected static Set<PsiJavaFile> getTouchedJavaFiles(final UsageInfo[] usages) {
-    Set<PsiJavaFile> javaFiles = new HashSet<PsiJavaFile>();
-    for (UsageInfo usage : usages) {
-      final PsiElement element = usage.getElement();
-      if (element != null) {
-        final PsiFile file = element.getContainingFile();
-        if (file instanceof PsiJavaFile) {
-          javaFiles.add((PsiJavaFile)file);
-        }
-      }
-    }
-    return javaFiles;
   }
 
   /**
@@ -407,9 +383,15 @@ public abstract class BaseRefactoringProcessor {
 
     RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
     myTransaction = listenerManager.startTransaction();
-    Set<PsiJavaFile> touchedJavaFiles = getTouchedJavaFiles(usages);
+    Map<RefactoringHelper, Object> preparedData = new HashMap<RefactoringHelper, Object>();
+    for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+      preparedData.put(helper, helper.prepareOperation(usages));
+    }
     performRefactoring(usages);
-    removeRedundantImports(touchedJavaFiles);
+    for(Map.Entry<RefactoringHelper, Object> e: preparedData.entrySet()) {
+      //noinspection unchecked
+      e.getKey().performOperation(myProject, e.getValue());
+    }
     myTransaction.commit();
     performPsiSpoilingRefactoring();
   }

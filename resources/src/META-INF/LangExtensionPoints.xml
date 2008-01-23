@@ -150,5 +150,6 @@
   <extensionPoint name="fileBasedIndex" interface="com.intellij.util.indexing.FileBasedIndexExtension"/>
 
   <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
+  <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
 
 </extensionPoints>

@@ -5,6 +5,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMigration;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +135,11 @@ class MigrationProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      removeRedundantImports(getTouchedJavaFiles(usages));
+      for(RefactoringHelper helper: Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+        Object preparedData = helper.prepareOperation(usages);
+        //noinspection unchecked
+        helper.performOperation(myProject, preparedData);
+      }
     }
     finally {
       a.finish();
