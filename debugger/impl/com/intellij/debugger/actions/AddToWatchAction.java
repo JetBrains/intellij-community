@@ -16,9 +16,11 @@ import com.intellij.debugger.ui.impl.MainWatchPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
+import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,10 +29,16 @@ import com.intellij.openapi.ui.Messages;
 public class AddToWatchAction extends DebuggerAction {
 
   public void update(AnActionEvent e) {
-    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
+    DataContext context = DataManager.getInstance().getDataContext();
+    if (context == null) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+
+    DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(context);
     boolean enabled = false;
     if (selectedNodes != null && selectedNodes.length > 0) {
-      if (getPanel(e.getDataContext()) instanceof VariablesPanel) {
+      if (getPanel(context) instanceof VariablesPanel) {
         enabled = true;
         for (DebuggerTreeNodeImpl node : selectedNodes) {
           NodeDescriptorImpl descriptor = node.getDescriptor();
@@ -42,7 +50,7 @@ public class AddToWatchAction extends DebuggerAction {
       }
     }
     else {
-      final Editor editor = e.getData(DataKeys.EDITOR);
+      final Editor editor = (Editor)context.getData(DataKeys.EDITOR.getName());
       enabled = DebuggerUtilsEx.getEditorText(editor) != null;
     }
     e.getPresentation().setEnabled(enabled);
@@ -52,7 +60,10 @@ public class AddToWatchAction extends DebuggerAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
+    DataContext context = DataManager.getInstance().getDataContext();
+    if (context == null) return;
+
+    final DebuggerContextImpl debuggerContext = getDebuggerContext(context);
 
     if(debuggerContext == null) return;
 
@@ -66,16 +77,18 @@ public class AddToWatchAction extends DebuggerAction {
       return;
     }
 
-    final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
+    final DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(context);
 
     if(selectedNodes != null && selectedNodes.length > 0) {
       addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
-      final Editor editor = e.getData(DataKeys.EDITOR);
-      final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
-      if (editorText != null) {
-        doAddWatch(watchPanel, editorText, null);
+      final Editor editor = (Editor)context.getData(DataKeys.EDITOR.getName());
+      if (editor != null) {
+        final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
+        if (editorText != null) {
+          doAddWatch(watchPanel, editorText, null);
+        }
       }
     }
   }
