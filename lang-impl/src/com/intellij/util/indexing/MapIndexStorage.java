@@ -63,8 +63,8 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   public void flush() {
     //System.out.println("Cache hit rate = " + myCache.hitRate());
     myFlushingLock.lock();
-    myCache.removeAll();
     try {
+      myCache.removeAll();
       myMap.flush();
     }
     catch (IOException e) {
@@ -103,8 +103,8 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
     myFlushingLock.lock();
-    final ValueContainerImpl<Value> container = myCache.get(key);
     try {
+      final ValueContainerImpl<Value> container = myCache.get(key);
       if (container != null) {
         container.addValue(inputId, value);
       }
@@ -127,8 +127,8 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
     myFlushingLock.lock();
-    ValueContainerImpl<Value> container = myCache.get(key);
     try {
+      ValueContainerImpl<Value> container = myCache.get(key);
       if (container == null) {
         container = myMap.get(key);
         if (container != null) {
@@ -170,8 +170,8 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
 
   public void remove(final Key key) throws StorageException {
     myFlushingLock.lock();
-    myKeyBeingRemoved = key;
     try {
+      myKeyBeingRemoved = key;
       myCache.remove(key);
       myMap.remove(key);
     }
