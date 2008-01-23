@@ -34,8 +34,8 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 
 import javax.swing.*;
 import java.util.*;

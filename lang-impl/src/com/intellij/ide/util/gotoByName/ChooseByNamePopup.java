@@ -11,8 +11,8 @@ import com.intellij.psi.PsiElement;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");

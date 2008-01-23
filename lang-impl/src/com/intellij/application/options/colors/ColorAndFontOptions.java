@@ -27,8 +27,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -228,7 +228,7 @@ public class ColorAndFontOptions extends BaseConfigurable implements SearchableC
                                
   private static void initFileStatusDescriptors(ArrayList<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
 
-    FileStatus[] statuses = PeerFactory.getInstance().getFileStatusFactory().getAllFileStatuses();
+    FileStatus[] statuses = FileStatusFactory.SERVICE.getInstance().getAllFileStatuses();
 
     for (FileStatus fileStatus : statuses) {
       addEditorSettingDescription(descriptions,

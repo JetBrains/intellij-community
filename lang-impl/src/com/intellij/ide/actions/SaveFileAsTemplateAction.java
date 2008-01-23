@@ -4,7 +4,7 @@ import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.fileTemplates.ui.ConfigureTemplatesDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,7 @@ public class SaveFileAsTemplateAction extends AnAction{
     String nameWithoutExtension = file.getNameWithoutExtension();
     AllFileTemplatesConfigurable fileTemplateOptions = new AllFileTemplatesConfigurable();
     ConfigureTemplatesDialog dialog = new ConfigureTemplatesDialog(project, fileTemplateOptions);
-    PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
     for(SaveFileAsTemplateHandler handler: Extensions.getExtensions(SaveFileAsTemplateHandler.EP_NAME)) {
       String textFromHandler = handler.getTemplateText(psiFile, fileText, nameWithoutExtension);
       if (textFromHandler != null) {

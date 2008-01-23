@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
-import com.intellij.openapi.roots.ui.util.CellAppearanceUtils;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement>{
-
+  private static final Icon GENERIC_JDK_ICON = IconLoader.getIcon("/general/jdk.png");
   private static final Icon LIB_ICON_OPEN = IconLoader.getIcon("/nodes/ppLibOpen.png");
   private static final Icon LIB_ICON_CLOSED = IconLoader.getIcon("/nodes/ppLibClosed.png");
 
@@ -53,7 +52,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   private static Icon getJdkIcon(JdkOrderEntry entry, boolean isExpanded) {
     final Sdk jdk = entry.getJdk();
     if (jdk == null) {
-      return CellAppearanceUtils.GENERIC_JDK_ICON;
+      return GENERIC_JDK_ICON;
     }
     return isExpanded? jdk.getSdkType().getIconForExpandedTreeNode() : jdk.getSdkType().getIcon();
   }

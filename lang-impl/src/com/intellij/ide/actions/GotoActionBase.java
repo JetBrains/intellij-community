@@ -38,7 +38,7 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   public static PsiElement getPsiContext(final AnActionEvent e) {
-    PsiFile file = e.getData(DataKeys.PSI_FILE);
+    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null) return file;
     Project project = e.getData(PlatformDataKeys.PROJECT);
     return getPsiContext(project);

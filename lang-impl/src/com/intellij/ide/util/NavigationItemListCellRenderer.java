@@ -42,7 +42,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
@@ -100,7 +100,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         Color color = list.getForeground();
         boolean isProblemFile = element instanceof PsiElement
                                 && WolfTheProblemSolver.getInstance(((PsiElement)element).getProject())
-                                   .isProblemFile(PsiUtil.getVirtualFile((PsiElement)element));
+                                   .isProblemFile(PsiUtilBase.getVirtualFile((PsiElement)element));
         FileStatus status = element.getFileStatus();
         if (status != FileStatus.NOT_CHANGED) {
           color = status.getColor();
