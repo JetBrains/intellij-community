@@ -37,7 +37,7 @@ import java.util.Collections;
 public class CommonRefactoringUtil {
   private CommonRefactoringUtil() {}
 
-  public static void showErrorMessage(String title, String message, String helpId, @NotNull Project project) {
+  public static void showErrorMessage(String title, String message, @NonNls String helpId, @NotNull Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
     RefactoringMessageDialog dialog = new RefactoringMessageDialog(title, message, helpId, "OptionPane.errorIcon", false, project);
     dialog.show();

@@ -1,32 +1,22 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private PsiElement[] myElementsToMove;
-  private final boolean mySearchInComments;
-  private final boolean mySearchInNonJavaFiles;
   private String myProcessedElementsHeader;
   private String myCodeReferencesText;
-  private final String myHelpID;
 
-  public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove,
-                                              boolean isSearchInComments,
-                                              boolean searchInNonJavaFiles,
-                                              PsiDirectory newParent
-  ) {
+  public MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, PsiDirectory newParent) {
     myElementsToMove = elementsToMove;
-    mySearchInComments = isSearchInComments;
-    mySearchInNonJavaFiles = searchInNonJavaFiles;
     if (elementsToMove.length == 1) {
       myProcessedElementsHeader = StringUtil.capitalize(RefactoringBundle.message("move.single.element.elements.header",
                                                                                   UsageViewUtil.getType(elementsToMove[0]),
@@ -45,7 +35,6 @@ class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
       }
       myCodeReferencesText = RefactoringBundle.message("references.found.in.code");
     }
-    myHelpID = HelpID.getMoveHelpID(elementsToMove[0]);
   }
 
   @NotNull

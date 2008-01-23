@@ -50,7 +50,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   }
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
-    return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, mySearchInComments, mySearchInNonJavaFiles, myNewParent);
+    return new MoveFilesOrDirectoriesViewDescriptor(myElementsToMove, myNewParent);
   }
 
   @NotNull

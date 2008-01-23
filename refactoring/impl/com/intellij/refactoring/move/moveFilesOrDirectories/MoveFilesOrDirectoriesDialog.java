@@ -84,7 +84,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper{
     return panel;
   }
 
-  public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, boolean searchInComments, boolean searchForTextOccurences, String helpID) {
+  public void setData(PsiElement[] psiElements, PsiDirectory initialTargetDirectory, String helpID) {
     if (psiElements.length == 1) {
       String text;
       if (psiElements[0] instanceof PsiFile) {

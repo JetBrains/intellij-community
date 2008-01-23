@@ -1,17 +1,15 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
-import com.intellij.refactoring.move.FileReferenceContextUtil;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -78,16 +76,14 @@ public class MoveFilesOrDirectoriesUtil {
           }).run();
         }
         catch (IncorrectOperationException e) {
-          String helpId = HelpID.getMoveHelpID(elements[0]);
-          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(), helpId, project);
+          CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.getMessage(),
+                                                 "refactoring.movePackage", project);
         }
       }
     };
 
     final MoveFilesOrDirectoriesDialog moveDialog = new MoveFilesOrDirectoriesDialog(project, doRun);
-    boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
-    boolean searchForTextOccurences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
-    moveDialog.setData(elements, initialTargetDirectory, searchInComments, searchForTextOccurences, HelpID.getMoveHelpID(elements[0]));
+    moveDialog.setData(elements, initialTargetDirectory, "refactoring.movePackage");
     moveDialog.show();
   }
 
