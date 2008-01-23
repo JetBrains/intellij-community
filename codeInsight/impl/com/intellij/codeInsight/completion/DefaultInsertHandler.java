@@ -592,6 +592,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
     Object o = item.getObject();
     if (o instanceof PsiClass){
       PsiClass aClass = (PsiClass)o;
+      if (aClass.getQualifiedName() == null) return startOffset;
       final String lookupString = item.getLookupString();
       int length = lookupString.length();
       final int i = lookupString.indexOf('<');
