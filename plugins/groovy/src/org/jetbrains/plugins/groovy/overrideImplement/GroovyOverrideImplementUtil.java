@@ -247,7 +247,7 @@ public class GroovyOverrideImplementUtil {
 
     try {
       String bodyText = template.getText(properties);
-      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMetodBodyFormText("\n" + bodyText + "\n");
+      final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFormText("\n" + bodyText + "\n");
 
       final ASTNode resultNode = result.getNode();
       assert resultNode != null;

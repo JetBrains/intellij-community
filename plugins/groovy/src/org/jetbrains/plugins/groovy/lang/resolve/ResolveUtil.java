@@ -144,7 +144,7 @@ public class ResolveUtil {
 
   public static GroovyPsiElement resolveProperty(GroovyPsiElement place, String name) {
     PropertyResolverProcessor processor = new PropertyResolverProcessor(name, place, false);
-    return (GroovyPsiElement) resolveExistingElement(place, processor, GrVariable.class, GrReferenceExpression.class);
+    return resolveExistingElement(place, processor, GrVariable.class, GrReferenceExpression.class);
   }
 
   public static PsiClass resolveClass(GroovyPsiElement place, String name) {

@@ -226,7 +226,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return file.getTopLevelDefinitions()[0].getFirstChild().getFirstChild();
   }
 
-  public GrCodeBlock createMetodBodyFormText(String text) {
+  public GrCodeBlock createMethodBodyFormText(String text) {
     final GroovyFileBase file = createDummyFile("def foo () {" + text + "}");
     final GrMethod method = (GrMethod) file.getTopLevelDefinitions()[0];
     return method.getBlock();
