@@ -21,8 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +114,7 @@ public class CreateClassOrPackageFix implements IntentionAction, LocalQuickFix {
         }
       }
 
-      myDirectory = MoveClassesOrPackagesUtil.chooseDirectory(
+      myDirectory = DirectoryChooserUtil.chooseDirectory(
         myWritableDirectoryList.toArray(new PsiDirectory[myWritableDirectoryList.size()]),
         preferredDirectory,
         project,

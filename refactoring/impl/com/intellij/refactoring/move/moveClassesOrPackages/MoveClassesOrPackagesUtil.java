@@ -1,7 +1,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.ide.util.DirectoryChooserModuleTreeView;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -15,7 +14,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -25,7 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.lang.java.JavaFindUsagesProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -295,22 +292,6 @@ public class MoveClassesOrPackagesUtil {
     }
   }
 
-  public static @Nullable PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
-                                                       @Nullable PsiDirectory initialDirectory, Project project,
-                                                       Map<PsiDirectory, String> relativePathsToCreate) {
-    final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
-    chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
-    chooser.fillList(
-      targetDirectories,
-      initialDirectory,
-      project,
-      relativePathsToCreate
-    );
-    chooser.show();
-    if (!chooser.isOK()) return null;
-    return chooser.getSelectedDirectory();
-  }
-
   public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
                                              final VirtualFile[] contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
@@ -319,7 +300,7 @@ public class MoveClassesOrPackagesUtil {
     Map<PsiDirectory, String> relativePathsToCreate = new HashMap<PsiDirectory,String>();
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
-    final PsiDirectory selectedDirectory = chooseDirectory(
+    final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(
       targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
       initialDirectory,
       project,

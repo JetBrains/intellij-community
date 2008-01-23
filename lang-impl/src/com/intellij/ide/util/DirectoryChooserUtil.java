@@ -1,14 +1,17 @@
 package com.intellij.ide.util;
 
-import com.intellij.psi.PsiDirectory;
-import com.intellij.ide.IdeView;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class DirectoryChooserUtil {
   private DirectoryChooserUtil() {
@@ -51,5 +54,22 @@ public class DirectoryChooserUtil {
     chooser.fillList(possibleDirs.toArray(new PsiDirectory[possibleDirs.size()]), defaultDirectory, project, postfixToShow);
     chooser.show();
     return chooser.isOK() ? chooser.getSelectedDirectory() : null;
+  }
+
+  public static @Nullable
+  PsiDirectory chooseDirectory(PsiDirectory[] targetDirectories,
+                                                       @Nullable PsiDirectory initialDirectory, Project project,
+                                                       Map<PsiDirectory, String> relativePathsToCreate) {
+    final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
+    chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
+    chooser.fillList(
+      targetDirectories,
+      initialDirectory,
+      project,
+      relativePathsToCreate
+    );
+    chooser.show();
+    if (!chooser.isOK()) return null;
+    return chooser.getSelectedDirectory();
   }
 }

@@ -1,6 +1,6 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
-import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.refactoring.move.FileReferenceContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -9,9 +9,9 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.ide.util.DirectoryChooserUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -31,14 +31,14 @@ public class MoveFilesOrDirectoriesUtil {
 
   // Does not process non-code usages!
   public static void doMoveFile(final PsiFile file, final PsiDirectory newDirectory) throws IncorrectOperationException {
-    ChangeContextUtil.encodeFileReferences(file);
+    FileReferenceContextUtil.encodeFileReferences(file);
     PsiManager manager = file.getManager();
     // the class is already there, this is true when multiple classes are defined in the same file
     if (!newDirectory.equals(file.getContainingDirectory())) {
       // do actual move
       manager.moveFile(file, newDirectory);
     }
-    ChangeContextUtil.decodeFileReferences(file);
+    FileReferenceContextUtil.decodeFileReferences(file);
   }
 
   /**
@@ -104,7 +104,7 @@ public class MoveFilesOrDirectoriesUtil {
       case 1:
         return directories[0];
       default:
-        return MoveClassesOrPackagesUtil.chooseDirectory(directories, directories[0], project, new HashMap<PsiDirectory, String>());
+        return DirectoryChooserUtil.chooseDirectory(directories, directories[0], project, new HashMap<PsiDirectory, String>());
     }
 
   }
