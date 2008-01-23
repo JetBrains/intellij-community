@@ -3,25 +3,18 @@ package com.intellij.refactoring.move.moveFilesOrDirectories;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 
 public class MoveFilesOrDirectoriesUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil");
@@ -172,86 +165,5 @@ public class MoveFilesOrDirectoriesUtil {
     else {
       return null;
     }
-  }
-
-  public static boolean canMoveFiles(@NotNull PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiFile) || (element instanceof PsiJavaFile && !(PsiUtil.isInJspFile(element)))) {
-        return false;
-      }
-    }
-
-    // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
-    HashSet<String> names = new HashSet<String>();
-    for (PsiElement element : elements) {
-      PsiFile file = (PsiFile)element;
-      String name = file.getName();
-      if (names.contains(name)) {
-        return false;
-      }
-
-      names.add(name);
-    }
-
-    return true;
-  }
-
-  public static boolean canMoveOrRearrangePackages(PsiElement[] elements) {
-    if (elements.length == 0) return false;
-    final Project project = elements[0].getProject();
-    if (ProjectRootManager.getInstance(project).getContentSourceRoots().length == 1) {
-      return false;
-    }
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiDirectory)) return false;
-      final PsiDirectory directory = ((PsiDirectory)element);
-      if (RefactoringUtil.isSourceRoot(directory)) {
-        return false;
-      }
-      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-      if (aPackage == null) return false;
-      if ("".equals(aPackage.getQualifiedName())) return false;
-      final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(element.getProject()).getFileIndex()
-        .getSourceRootForFile(directory.getVirtualFile());
-      if (sourceRootForFile == null) return false;
-    }
-    return true;
-  }
-
-  public static boolean canMoveDirectories(@NotNull PsiElement[] elements) {
-    for (PsiElement element : elements) {
-      if (!(element instanceof PsiDirectory)) {
-        return false;
-      }
-    }
-
-    for (PsiElement element : elements) {
-      PsiDirectory directory = (PsiDirectory)element;
-
-      if (hasPackages(directory)) {
-        return false;
-      }
-    }
-
-    PsiElement[] filteredElements = PsiTreeUtil.filterAncestors(elements);
-    if (filteredElements.length != elements.length) {
-      // there are nested dirs
-      return false;
-    }
-
-    return true;
-  }
-
-  private static boolean hasPackages(PsiDirectory directory) {
-    if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
-      return true;
-    }
-    PsiDirectory[] subdirectories = directory.getSubdirectories();
-    for (PsiDirectory subdirectory : subdirectories) {
-      if (hasPackages(subdirectory)) {
-        return true;
-      }
-    }
-    return false;
   }
 }
