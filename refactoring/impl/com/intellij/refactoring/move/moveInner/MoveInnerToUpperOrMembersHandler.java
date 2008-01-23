@@ -6,9 +6,11 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesHandler;
 import com.intellij.refactoring.move.moveMembers.MoveMembersHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -42,8 +44,8 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     }
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
-    if (isStaticInnerClass(element)) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+    if (isStaticInnerClass(element) && !MoveClassesHandler.isReferenceInAnonymousClass(reference)) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       PsiClass aClass = (PsiClass) element;
       SelectInnerOrMembersRefactoringDialog dialog = new SelectInnerOrMembersRefactoringDialog(aClass, project);

@@ -21,7 +21,7 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
     MoveMembersImpl.doMove(project, elements, targetContainer, callback);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
     if (isFieldOrStaticMethod(element)) {
       MoveMembersImpl.doMove(project, new PsiElement[]{element}, null, null);
       return true;

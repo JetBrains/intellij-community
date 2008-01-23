@@ -1,9 +1,6 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -21,10 +18,20 @@ public class MoveClassesHandler extends MoveClassesOrPackagesHandlerBase {
            MovePackagesHandler.isPackageOrDirectory(targetContainer);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+    if (isReferenceInAnonymousClass(reference)) return false;
+
     if (element instanceof PsiClass && !(element instanceof PsiAnonymousClass) && element.getParent() instanceof PsiFile) {
       MoveClassesOrPackagesImpl.doMove(project, new PsiElement[]{element},
                                        (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT), null);
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean isReferenceInAnonymousClass(@Nullable final PsiReference reference) {
+    if (reference instanceof PsiJavaCodeReferenceElement &&
+       ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass) {
       return true;
     }
     return false;

@@ -3,9 +3,11 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.MoveCallback;
+import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.openapi.project.Project;
@@ -31,8 +33,8 @@ public class MoveInnerToUpperHandler extends MoveHandlerDelegate {
     MoveInnerImpl.doMove(project, elements, callback);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
-    if (isNonStaticInnerClass(element)) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
+    if (isNonStaticInnerClass(element) && !MoveClassesHandler.isReferenceInAnonymousClass(reference)) {
       PsiClass aClass = (PsiClass) element;
       FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.move.moveInner");
       final PsiClass containingClass = aClass.getContainingClass();

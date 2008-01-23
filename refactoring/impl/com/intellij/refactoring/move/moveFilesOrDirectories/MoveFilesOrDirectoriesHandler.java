@@ -28,7 +28,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     MoveFilesOrDirectoriesUtil.doMove(project, elements, targetContainer, callback);
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)
         || element instanceof PsiDirectory) {
       final PsiElement targetContainer = (PsiElement)dataContext.getData(DataConstantsEx.TARGET_PSI_ELEMENT);

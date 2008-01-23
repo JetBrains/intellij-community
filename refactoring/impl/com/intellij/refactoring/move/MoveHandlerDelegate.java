@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -16,7 +17,8 @@ public abstract class MoveHandlerDelegate {
     return false;
   }
 
-  public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
+  public void doMove(final Project project, final PsiElement[] elements,
+                     @Nullable final PsiElement targetContainer, @Nullable final MoveCallback callback) {
   }
 
   @Nullable
@@ -24,7 +26,8 @@ public abstract class MoveHandlerDelegate {
     return sourceElements;
   }
 
-  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext) {
+  public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext,
+                           @Nullable final PsiReference reference) {
     return false;
   }
 }

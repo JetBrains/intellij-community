@@ -46,18 +46,16 @@ public class MoveHandler implements RefactoringActionHandler {
         return;
       }
 
-      if (tryToMoveElement(element, project, dataContext)) {
+      if (tryToMoveElement(element, project, dataContext, null)) {
         return;
       } else {
         final TextRange range = element.getTextRange();
         if (range != null) {
           int relative = offset - range.getStartOffset();
           final PsiReference reference = element.findReferenceAt(relative);
-          if (reference != null &&
-              !(reference instanceof PsiJavaCodeReferenceElement &&
-                ((PsiJavaCodeReferenceElement)reference).getParent() instanceof PsiAnonymousClass)) {
+          if (reference != null) {
             final PsiElement refElement = reference.resolve();
-            if (refElement != null && tryToMoveElement(refElement, project, dataContext)) return;
+            if (refElement != null && tryToMoveElement(refElement, project, dataContext, reference)) return;
           }
         }
       }
@@ -66,9 +64,10 @@ public class MoveHandler implements RefactoringActionHandler {
     }
   }
 
-  private static boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext) {
+  private static boolean tryToMoveElement(final PsiElement element, final Project project, final DataContext dataContext,
+                                          final PsiReference reference) {
     for(MoveHandlerDelegate delegate: Extensions.getExtensions(MoveHandlerDelegate.EP_NAME)) {
-      if (delegate.tryToMove(element, project, dataContext)) {
+      if (delegate.tryToMove(element, project, dataContext, reference)) {
         return true;
       }
     }
