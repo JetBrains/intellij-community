@@ -16,12 +16,13 @@
 package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.jsp.JspFile;
 
 /**
  * @author peter
  */
-public interface JspClass extends PsiClass {
+public interface JspClass extends PsiClass, SyntheticElement {
   JspHolderMethod getHolderMethod();
 
   JspFile getJspxFile();

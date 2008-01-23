@@ -7,8 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +32,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = e.getData(DataKeys.EDITOR);
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
     RefactoringActionHandler handler = getHandler(dataContext);
     if (handler == null) return;
@@ -64,8 +62,8 @@ public abstract class BaseRefactoringAction extends AnAction {
       return;
     }
 
-    Editor editor = e.getData(DataKeys.EDITOR);
-    PsiFile file = e.getData(DataKeys.PSI_FILE);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
         disableAction(e);
@@ -74,7 +72,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
 
     if (editor != null) {
-      PsiElement element = e.getData(DataKeys.PSI_ELEMENT);
+      PsiElement element = e.getData(LangDataKeys.PSI_ELEMENT);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
           disableAction(e);
@@ -90,7 +88,7 @@ public abstract class BaseRefactoringAction extends AnAction {
           element = file.findElementAt(element.getTextRange().getStartOffset() - 1);
         }
       }
-      final boolean isEnabled = element != null && !isSyntheticJsp(element) && isAvailableForLanguage(element.getLanguage()) &&
+      final boolean isEnabled = element != null && !(element instanceof SyntheticElement) && isAvailableForLanguage(element.getLanguage()) &&
         isAvailableOnElementInEditor(element, editor);
       if (!isEnabled) {
         disableAction(e);
@@ -128,10 +126,6 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  private static boolean isSyntheticJsp(final PsiElement element) {
-    return element instanceof JspHolderMethod || element instanceof JspClass;
-  }
-
   protected boolean isAvailableForLanguage(Language language) {
     return language.equals(StdFileTypes.JAVA.getLanguage());
   }
@@ -142,9 +136,9 @@ public abstract class BaseRefactoringAction extends AnAction {
 
   @NotNull
   public static PsiElement[] getPsiElementArray(DataContext dataContext) {
-    PsiElement[] psiElements = DataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
         psiElements = new PsiElement[]{element};
       }
@@ -154,7 +148,7 @@ public abstract class BaseRefactoringAction extends AnAction {
 
     List<PsiElement> filtered = null;
     for (PsiElement element : psiElements) {
-      if (isSyntheticJsp(element)) {
+      if (element instanceof SyntheticElement) {
         if (filtered == null) filtered = new ArrayList<PsiElement>(Arrays.asList(element));
         filtered.remove(element);
       }

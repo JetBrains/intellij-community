@@ -286,8 +286,6 @@
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
       <separator/>
-      <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
-
       <add-to-group group-id="RefactoringMenu" anchor="first"/>
     </group>
 

@@ -16,12 +16,13 @@
 package com.intellij.psi.impl.source.jsp.jspJava;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.SyntheticElement;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
  */
-public interface JspHolderMethod extends PsiMethod {
+public interface JspHolderMethod extends PsiMethod, SyntheticElement {
   @NonNls String JSP_CONTEXT_VAR_NAME = "jspContext";
   @NonNls String APPLICATION_VAR_NAME = "application";
   @NonNls String OUT_VAR_NAME = "out";
