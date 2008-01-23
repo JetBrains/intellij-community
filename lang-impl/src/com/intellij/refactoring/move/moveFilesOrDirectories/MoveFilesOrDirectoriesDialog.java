@@ -1,4 +1,3 @@
-
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryUtil;

@@ -26,6 +26,7 @@
                     serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
+    <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>
   </extensions>
   <project-components>
     <component>

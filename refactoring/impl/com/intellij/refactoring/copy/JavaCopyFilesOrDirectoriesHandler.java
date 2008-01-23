@@ -31,7 +31,7 @@ public class JavaCopyFilesOrDirectoriesHandler extends CopyFilesOrDirectoriesHan
     return true;
   }
 
-  private static boolean hasPackages(PsiDirectory directory) {
+  public static boolean hasPackages(PsiDirectory directory) {
     if (JavaDirectoryService.getInstance().getPackage(directory) != null) {
       return true;
     }

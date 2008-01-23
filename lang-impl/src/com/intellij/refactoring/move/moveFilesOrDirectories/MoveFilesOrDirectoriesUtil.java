@@ -89,11 +89,11 @@ public class MoveFilesOrDirectoriesUtil {
 
   @Nullable
   private static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
-    if (!(element instanceof PsiPackage)) {
+    if (!(element instanceof PsiDirectoryContainer)) {
       return (PsiDirectory)element;
     }
 
-    PsiDirectory[] directories = ((PsiPackage)element).getDirectories();
+    PsiDirectory[] directories = ((PsiDirectoryContainer)element).getDirectories();
     switch (directories.length) {
       case 0:
         return null;
