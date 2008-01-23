@@ -87,11 +87,9 @@ public class VariableDefinitions implements GroovyElementTypes {
 
       ParserUtils.getToken(builder, mNLS);
       if (!ParserUtils.getToken(builder, mRPAREN)) {
-        /*ThrowClause.parse(builder);
-        ParserUtils.waitNextRCurly(builder);
-        builder.error(GroovyBundle.message("rparen.expected"));*/
-        varMarker.rollbackTo();
-        return WRONGWAY;
+        builder.error(GroovyBundle.message("rparen.expected"));
+        varMarker.drop();
+        return METHOD_DEFINITION;
       }
 
       if (ParserUtils.lookAhead(builder, GroovyTokenTypes.kDEFAULT)) {

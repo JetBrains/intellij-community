@@ -59,15 +59,8 @@ public class ParameterDeclaration implements GroovyElementTypes {
       if (mASSIGN.equals(builder.getTokenType())) {
         VariableInitializer.parse(builder);
       }
-      if (builder.getTokenType() == mCOMMA ||
-          builder.getTokenType() == ending ||
-              ParserUtils.lookAhead(builder, mNLS, ending)) {
-        pdMarker.done(PARAMETER);
-        return true;
-      } else {
-        pdMarker.rollbackTo();
-        return false;
-      }
+      pdMarker.done(PARAMETER);
+      return true;
     } else {
       // If has triple dots
       if (hasDots) {
