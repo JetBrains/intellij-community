@@ -164,4 +164,8 @@ public class ExtensionComponentAdapter implements ComponentAdapter, LoadingOrder
   public boolean isAssignableTo(Class aClass) {
     return aClass.getName().equals(myImplementationClassName);
   }
+
+  public String getAssignableToClassName() {
+    return myImplementationClassName;
+  }
 }

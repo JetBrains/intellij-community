@@ -24,6 +24,7 @@ import org.picocontainer.monitors.DefaultComponentMonitor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class IdeaPicoContainer extends DefaultPicoContainer {
 
@@ -66,15 +67,24 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
     if (componentType == null) return Collections.EMPTY_LIST;
 
     List<ComponentAdapter> result = new ArrayList<ComponentAdapter>();
-    for (final Object o : getComponentAdapters()) {
+
+    final Map<String,ComponentAdapter> cache = getAssignablesCache();
+    final ComponentAdapter cacheHit = cache.get(componentType.getName());
+    if (cacheHit != null) {
+      result.add(cacheHit);
+    }
+
+    for (final Object o : getNonAssignableAdapters()) {
       ComponentAdapter componentAdapter = (ComponentAdapter)o;
 
       if (componentAdapter instanceof AssignableToComponentAdapter) {
         AssignableToComponentAdapter assignableToComponentAdapter = (AssignableToComponentAdapter)componentAdapter;
         if (assignableToComponentAdapter.isAssignableTo(componentType)) result.add(assignableToComponentAdapter);
       }
-      else if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-        result.add(componentAdapter);
+      else {
+        if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+          result.add(componentAdapter);
+        }
       }
     }
     

@@ -26,15 +26,17 @@ import java.io.Serializable;
 import java.util.*;
 
 public class DefaultPicoContainer implements MutablePicoContainer, Serializable {
-  private ComponentAdapterFactory componentAdapterFactory;
+  private final ComponentAdapterFactory componentAdapterFactory;
 
-  private PicoContainer parent;
-  private Set<PicoContainer> children = new HashSet<PicoContainer>();
+  private final PicoContainer parent;
+  private final Set<PicoContainer> children = new HashSet<PicoContainer>();
 
-  private Map<Object, ComponentAdapter> componentKeyToAdapterCache = Collections.synchronizedMap(new HashMap<Object, ComponentAdapter>());
-  private Collection<ComponentAdapter> componentAdapters = Collections.synchronizedCollection(new OrderedSet<ComponentAdapter>());
+  private final Map<Object, ComponentAdapter> componentKeyToAdapterCache = Collections.synchronizedMap(new HashMap<Object, ComponentAdapter>());
+  private final Collection<ComponentAdapter> componentAdapters = Collections.synchronizedCollection(new OrderedSet<ComponentAdapter>());
   // Keeps track of instantiation order.
-  private List<ComponentAdapter> orderedComponentAdapters = Collections.synchronizedList(new OrderedSet<ComponentAdapter>());
+  private final List<ComponentAdapter> orderedComponentAdapters = Collections.synchronizedList(new OrderedSet<ComponentAdapter>());
+  private final Map<String, ComponentAdapter> classNameToAdapter = Collections.synchronizedMap(new HashMap<String, ComponentAdapter>());
+  private final Collection<ComponentAdapter> nonAssignableComponentAdapters = Collections.synchronizedCollection(new OrderedSet<ComponentAdapter>());
 
   public DefaultPicoContainer(@NotNull ComponentAdapterFactory componentAdapterFactory, PicoContainer parent) {
     this.componentAdapterFactory = componentAdapterFactory;
@@ -48,6 +50,15 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
 
   public Collection<ComponentAdapter> getComponentAdapters() {
     return Collections.unmodifiableCollection(componentAdapters);
+  }
+
+  public Map<String, ComponentAdapter> getAssignablesCache() {
+    return Collections.unmodifiableMap(classNameToAdapter);
+  }
+
+
+  public Collection<ComponentAdapter> getNonAssignableAdapters() {
+    return Collections.unmodifiableCollection(nonAssignableComponentAdapters);
   }
 
   @Nullable
@@ -123,6 +134,15 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     if (componentKeyToAdapterCache.containsKey(componentKey)) {
       throw new DuplicateComponentKeyRegistrationException(componentKey);
     }
+
+    if (componentAdapter instanceof AssignableToComponentAdapter) {
+      String classKey = ((AssignableToComponentAdapter)componentAdapter).getAssignableToClassName();
+      classNameToAdapter.put(classKey, componentAdapter);
+    }
+    else {
+      nonAssignableComponentAdapters.add(componentAdapter);
+    }
+
     componentAdapters.add(componentAdapter);
     componentKeyToAdapterCache.put(componentKey, componentAdapter);
     return componentAdapter;

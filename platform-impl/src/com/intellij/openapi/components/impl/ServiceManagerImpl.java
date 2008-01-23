@@ -132,5 +132,9 @@ public class ServiceManagerImpl implements BaseComponent {
     public boolean isAssignableTo(Class aClass) {
       return aClass.getName().equals(getComponentKey());
     }
+
+    public String getAssignableToClassName() {
+      return myDescriptor.serviceInterface;
+    }
   }
 }

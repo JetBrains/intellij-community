@@ -20,4 +20,5 @@ import org.picocontainer.ComponentAdapter;
 
 public interface AssignableToComponentAdapter extends ComponentAdapter {
   boolean isAssignableTo(Class aClass);
+  String getAssignableToClassName();
 }
