@@ -186,14 +186,14 @@ public class CompositeElement extends TreeElement implements Cloneable {
   @NotNull
   public String getText() {
     char[] buffer = new char[getTextLength()];
-    SourceUtil.toBuffer(this, buffer, 0);
+    AstBufferUtil.toBuffer(this, buffer, 0);
     return StringFactory.createStringFromConstantArray(buffer);    
   }
 
   @NotNull
   public char[] textToCharArray() {
     char[] buffer = new char[getTextLength()];
-    SourceUtil.toBuffer(this, buffer, 0);
+    AstBufferUtil.toBuffer(this, buffer, 0);
     return buffer;
   }
 

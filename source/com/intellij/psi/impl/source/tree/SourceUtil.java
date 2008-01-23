@@ -9,7 +9,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 
@@ -22,26 +21,10 @@ public class SourceUtil {
   private SourceUtil() {
   }
 
-  public static int toBuffer(ASTNode element, char[] buffer, int offset) {
-    return toBuffer(element, buffer, offset, null);
-  }
-
-  private static int toBuffer(ASTNode element, char[] buffer, int offset, TokenSet skipTypes) {
-    if (skipTypes != null && skipTypes.contains(element.getElementType())) return offset;
-    if (element instanceof LeafElement) {
-      return ((LeafElement)element).copyTo(buffer, offset);
-    }
-    int curOffset = offset;
-    for (TreeElement child = (TreeElement)element.getFirstChildNode(); child != null; child = child.next) {
-      curOffset = toBuffer(child, buffer, curOffset, skipTypes);
-    }
-    return curOffset;
-  }
-
   public static String getTextSkipWhiteSpaceAndComments(ASTNode element) {
-    int length = toBuffer(element, null, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    int length = AstBufferUtil.toBuffer(element, null, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
     char[] buffer = new char[length];
-    toBuffer(element, buffer, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
+    AstBufferUtil.toBuffer(element, buffer, 0, StdTokenSets.WHITE_SPACE_OR_COMMENT_BIT_SET);
     return new String(buffer);
   }
 

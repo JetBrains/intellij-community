@@ -55,7 +55,7 @@ public class ChameleonTransforming {
       char[] buffer = new char[length2];
       int offset = 0;
       for (ASTNode element = newElement; element != treeNext; element = element.getTreeNext()) {
-        offset = SourceUtil.toBuffer(element, buffer, offset);
+        offset = AstBufferUtil.toBuffer(element, buffer, offset);
       }
       String text2 = new String(buffer);
 
