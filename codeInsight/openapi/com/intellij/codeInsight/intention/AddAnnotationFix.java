@@ -108,12 +108,13 @@ public class AddAnnotationFix implements IntentionAction, LocalQuickFix {
     final PsiModifierListOwner owner;
     if (myModifierListOwner != null) {
       if (!myModifierListOwner.isValid()) return false;
-      if (!PsiManager.getInstance(project).isInProject(myModifierListOwner)
-          || myModifierListOwner.getModifierList() == null) {
-        if (myModifierListOwner.isPhysical()) { //we might want to apply fix to just created method
-          return false;
-        }
-      }
+      //if (!PsiManager.getInstance(project).isInProject(myModifierListOwner)
+      //    || myModifierListOwner.getModifierList() == null) {
+      //  if (!myModifierListOwner.isPhysical()) { //we might want to apply fix to just created method
+      //    return true;
+      //  }
+      //}
+      
       owner = myModifierListOwner;
     }
     else if (!file.getManager().isInProject(file)) {

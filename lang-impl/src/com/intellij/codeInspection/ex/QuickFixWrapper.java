@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -18,15 +19,24 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class QuickFixWrapper implements IntentionAction {
-  private ProblemDescriptor myDescriptor;
-  private int myFixNumber;
+
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.ex.QuickFixWrapper");
 
-  public QuickFixWrapper(@NotNull ProblemDescriptor descriptor, int fixNumber) {
-    myDescriptor = descriptor;
-    myFixNumber = fixNumber;
+  private final ProblemDescriptor myDescriptor;
+  private final int myFixNumber;
+
+
+  public static IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     LOG.assertTrue(fixNumber > -1);
     LOG.assertTrue(descriptor.getFixes() != null && descriptor.getFixes().length > fixNumber);
+
+    final QuickFix fix = descriptor.getFixes()[fixNumber];
+    return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, fixNumber);
+  }
+
+  private QuickFixWrapper(@NotNull ProblemDescriptor descriptor, int fixNumber) {
+    myDescriptor = descriptor;
+    myFixNumber = fixNumber;
   }
 
   @NotNull

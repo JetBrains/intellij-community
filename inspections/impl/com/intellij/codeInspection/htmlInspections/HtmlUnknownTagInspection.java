@@ -5,6 +5,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -189,10 +190,11 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
           final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
           final PsiElement endTagName = XmlTagUtil.getEndTagNameElement(tag);
 
-          holder.registerProblem(startTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
+          final CreateNSDeclarationIntentionFix declarationIntentionFix = new CreateNSDeclarationIntentionFix(tag, "", true);
+          holder.registerProblem(startTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action, declarationIntentionFix);
 
           if (endTagName != null) {
-            holder.registerProblem(endTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action);
+            holder.registerProblem(endTagName, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, action, declarationIntentionFix);
           }
         }
       }
