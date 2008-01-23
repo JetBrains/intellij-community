@@ -89,6 +89,14 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
+  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+    if (element instanceof PackageElement) {
+      return new PackageElementNode(project, element, viewSettings);
+    }
+    return super.createNode(project, element, viewSettings);
+  }
+
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof PackageElement) {
       final Set<Boolean> find = new HashSet<Boolean>();

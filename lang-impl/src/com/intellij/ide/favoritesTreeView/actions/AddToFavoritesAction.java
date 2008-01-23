@@ -115,8 +115,15 @@ public class AddToFavoritesAction extends AnAction {
   public static
   @NotNull
   Collection<AbstractTreeNode> createNodes(Project project, Module moduleContext, Object object, boolean inProjectView, ViewSettings favoritesConfig) {
-    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
     if (project == null) return Collections.emptyList();
+    ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
+    for (FavoriteNodeProvider provider : Extensions.getExtensions(FavoriteNodeProvider.EP_NAME, project)) {
+      final AbstractTreeNode treeNode = provider.createNode(project, object, favoritesConfig);
+      if (treeNode != null) {
+        result.add(treeNode);
+        return result;
+      }
+    }
     final PsiManager psiManager = PsiManager.getInstance(project);
 
     final String currentViewId = ProjectView.getInstance(project).getCurrentViewId();
@@ -214,6 +221,7 @@ public class AddToFavoritesAction extends AnAction {
                                        final ArrayList<AbstractTreeNode> result,
                                        final ViewSettings favoritesConfig,
                                        Module module) {
+
     Class<? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
     if (klass == null) {
       psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiFile.class);

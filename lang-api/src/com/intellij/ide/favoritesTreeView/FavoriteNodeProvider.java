@@ -42,6 +42,11 @@ public abstract class FavoriteNodeProvider {
   @Nullable
   public abstract Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
 
+  @Nullable
+  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+    return null;
+  }
+
   /**
    * Checks if the specified project view node element (the value of {@link AbstractTreeNode}) contains
    * the specified virtual file as one of its children.

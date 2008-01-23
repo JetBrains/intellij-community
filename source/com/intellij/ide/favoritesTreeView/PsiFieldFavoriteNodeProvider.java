@@ -49,6 +49,14 @@ public class PsiFieldFavoriteNodeProvider extends FavoriteNodeProvider {
     return null;
   }
 
+  @Override
+  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+    if (element instanceof PsiField) {
+      return new FieldSmartPointerNode(project, element, viewSettings);
+    }
+    return super.createNode(project, element, viewSettings);
+  }
+
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     return false;
   }
