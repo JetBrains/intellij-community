@@ -146,17 +146,18 @@
       <add-to-group group-id="ViewMenu" relative-to-action="ViewStatusBar" anchor="after"/>
     </action>
 
+    <group id="JavaCodeEditorGroup">
+      <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
+      <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction"/>
+      <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
+      <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
+      <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
+      <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
+
+      <add-to-group group-id="CodeEditorViewGroup" anchor="last"/>
+    </group>
+
     <group id="ViewCodeGroup">
-      <separator/>
-      <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
-        <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
-        <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
-        <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction"/>
-        <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
-        <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
-        <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>
-        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
-      </group>
       <separator/>
       <group id="ProjectViewGroup" class="com.intellij.ide.projectView.actions.ProjectViewActionGroup">
         <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
@@ -165,7 +166,7 @@
       <reference ref="AddToFavorites"/>
       <separator/>
 
-      <add-to-group group-id="ViewMenu" relative-to-action="ToggleFullScreenMode" anchor="after"/>
+      <add-to-group group-id="ViewMenu" relative-to-action="CodeEditorBaseGroup" anchor="after"/>
     </group>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">

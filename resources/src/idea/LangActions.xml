@@ -51,6 +51,16 @@
     </group>
 
     <!-- View -->
+    <group id="CodeEditorBaseGroup">
+      <separator/>
+      <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
+        <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
+      </group>
+      <separator/>
+
+      <add-to-group group-id="ViewMenu" relative-to-action="ViewModeActions" anchor="after"/>
+    </group>
+
     <group id="FoldingGroup" class="com.intellij.codeInsight.folding.impl.actions.FoldingGroup" popup="true">
       <action id="ExpandRegion" class="com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction"/>
       <action id="CollapseRegion" class="com.intellij.codeInsight.folding.impl.actions.CollapseRegionAction"/>
