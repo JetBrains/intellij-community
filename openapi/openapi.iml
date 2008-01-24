@@ -45,6 +45,7 @@
     <orderEntry type="module" module-name="platform-api" exported="" />
     <orderEntry type="module" module-name="lang-api" exported="" />
     <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="psi-extapi" exported="" />
     <orderEntryProperties />
   </component>
   <component name="copyright">
