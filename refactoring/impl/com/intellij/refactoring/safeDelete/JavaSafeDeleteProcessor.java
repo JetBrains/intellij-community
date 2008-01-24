@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -104,6 +105,36 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
       }
     }
     return null;
+  }
+
+  public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
+    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
+    ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
+    for (UsageInfo usage : usages) {
+      if (usage.isNonCodeUsage) {
+        result.add(usage);
+      }
+      else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
+        overridingMethods.add(usage);
+      }
+      else {
+        result.add(usage);
+      }
+    }
+
+    if(!overridingMethods.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        result.addAll(overridingMethods);
+      }
+      else {
+        OverridingMethodsDialog dialog = new OverridingMethodsDialog(project, overridingMethods);
+        dialog.show();
+        if(!dialog.isOK()) return null;
+        result.addAll(dialog.getSelected());
+      }
+    }
+
+    return result.toArray(new UsageInfo[result.size()]);
   }
 
   public static Condition<PsiElement> getUsageInsideDeletedFilter(final PsiElement[] allElementsToDelete) {

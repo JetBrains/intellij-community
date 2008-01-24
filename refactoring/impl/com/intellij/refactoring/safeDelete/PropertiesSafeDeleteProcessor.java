@@ -3,6 +3,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.openapi.project.Project;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,5 +35,9 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
 
   public Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete) {
     return null;
+  }
+
+  public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
+    return usages;
   }
 }

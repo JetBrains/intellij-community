@@ -184,7 +184,11 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    final UsageInfo[] filteredUsages = filterAndQueryOverriding(usages);
+    UsageInfo[] preprocessedUsages = usages;
+    for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+      preprocessedUsages = delegate.preprocessUsages(myProject, preprocessedUsages);
+    }
+    final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
     prepareSuccessful(); // dialog is always dismissed
     if(filteredUsages == null) {
       return false;
@@ -255,38 +259,6 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
           }
         });
     }
-  }
-
-  @Nullable
-  private UsageInfo[] filterAndQueryOverriding(UsageInfo[] usages) {
-    ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
-    ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();
-    for (UsageInfo usage : usages) {
-      if (usage.isNonCodeUsage) {
-        result.add(usage);
-      }
-      else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
-        overridingMethods.add(usage);
-      }
-      else {
-        result.add(usage);
-      }
-    }
-
-    if(!overridingMethods.isEmpty()) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        result.addAll(overridingMethods);
-      }
-      else {
-        OverridingMethodsDialog dialog = new OverridingMethodsDialog(myProject, overridingMethods);
-        dialog.show();
-        if(!dialog.isOK()) return null;
-        result.addAll(dialog.getSelected());
-      }
-    }
-
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
-    return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
   /**

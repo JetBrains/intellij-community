@@ -1,6 +1,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
@@ -23,4 +24,6 @@ public interface SafeDeleteProcessorDelegate {
 
   @Nullable
   Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete);
+
+  UsageInfo[] preprocessUsages(Project project, UsageInfo[] usages);
 }
