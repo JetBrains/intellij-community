@@ -6,7 +6,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.jsp.StructureViewComposite;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
@@ -36,7 +35,7 @@ public class ViewStructureAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    final Editor editor = e.getData(DataKeys.EDITOR);
+    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     final FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
     if (editor == null) return;
     if (fileEditor == null) return;
@@ -77,7 +76,7 @@ public class ViewStructureAction extends AnAction {
       StructureViewComposite structureViewComposite =
         (StructureViewComposite)LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
       StructureView structureView = structureViewComposite.getSelectedStructureView();
-      structureViewModel = ((StructureViewComponent)structureView).getTreeModel();
+      structureViewModel = structureView.getTreeModel();
       auxDisposable = structureViewComposite;
     }
     else {

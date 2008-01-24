@@ -9,7 +9,10 @@ import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
-import com.intellij.ide.util.*;
+import com.intellij.ide.util.DeleteHandler;
+import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.*;
@@ -27,7 +30,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -302,7 +305,7 @@ public class CommanderPanel extends JPanel {
     return (PsiElement)(value instanceof PsiElement ? value : null);
   }
 
-  private AbstractTreeNode getSelectedNode() {
+  public AbstractTreeNode getSelectedNode() {
     if (myBuilder == null) return null;
     final int[] indices = myList.getSelectedIndices();
     if (indices.length != 1) return null;
@@ -551,7 +554,7 @@ public class CommanderPanel extends JPanel {
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          myBuilder.selectElement(element, PsiUtil.getVirtualFile(element));
+          myBuilder.selectElement(element, PsiUtilBase.getVirtualFile(element));
           if (!isDirectory) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {

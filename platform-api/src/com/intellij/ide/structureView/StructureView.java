@@ -71,4 +71,6 @@ public interface StructureView extends Disposable {
    * @see FileEditor#putUserData(com.intellij.openapi.util.Key, Object)
    */
   void storeState();
+
+  StructureViewModel getTreeModel();
 }

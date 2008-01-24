@@ -1,6 +1,5 @@
-package com.intellij.ide.structureView.impl;
+package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.structureView.impl.java.AccessLevelProvider;
 import com.intellij.ide.util.treeView.AlphaComparator;
 import com.intellij.ide.util.treeView.SourceComparator;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public class VisibilityComparator implements Comparator {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.impl.VisibilityComparator");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.structureView.impl.java.VisibilityComparator");
   private static final int GROUP_ACCESS_SUBLEVEL = 1;
   public static Comparator THEN_SOURCE = new VisibilityComparator(SourceComparator.INSTANCE);
   public static Comparator THEN_ALPHA = new VisibilityComparator(AlphaComparator.INSTANCE);

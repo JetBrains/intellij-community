@@ -1,6 +1,9 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierListOwner;
@@ -39,4 +42,14 @@ public abstract class JavaClassTreeElementBase<Value extends PsiElement> extends
 
     return true;
   }
+
+  @Override
+  public TextAttributesKey getTextAttributesKey() {
+    return  isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : super.getTextAttributesKey();
+  }
+
+  private boolean isDeprecated(){
+    final Value element = getElement();
+    return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
+ }
 }

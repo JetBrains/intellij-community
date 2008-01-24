@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +96,7 @@ public class FileStructureDialog extends DialogWrapper {
         myCommanderPanel.getBuilder().enterElement(psiElement, psiElement.getContainingFile().getVirtualFile());
       }
       else {
-        myCommanderPanel.getBuilder().selectElement(psiElement, PsiUtil.getVirtualFile(psiElement));
+        myCommanderPanel.getBuilder().selectElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
       }
     }
 

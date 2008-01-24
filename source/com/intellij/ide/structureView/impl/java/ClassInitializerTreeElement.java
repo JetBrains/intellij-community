@@ -3,7 +3,6 @@ package com.intellij.ide.structureView.impl.java;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -40,10 +39,6 @@ public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInit
   @NotNull
   public Collection<StructureViewTreeElement> getChildrenBase() {
     return Collections.emptyList();
-  }
-
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
   }
 
   public int getAccessLevel() {

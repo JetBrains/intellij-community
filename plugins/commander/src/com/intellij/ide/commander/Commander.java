@@ -379,8 +379,10 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
   protected void updateToolWindowTitle(final CommanderPanel activePanel) {
     final ToolWindow toolWindow = myToolWindowManager.getToolWindow(ToolWindowId.COMMANDER);
     if (toolWindow != null) {
-      final PsiElement element = activePanel.getSelectedElement();
-      toolWindow.setTitle(CommanderUtil.getTitle(element));
+      final AbstractTreeNode node = activePanel.getSelectedNode();
+      if (node instanceof ProjectViewNode) {
+        toolWindow.setTitle(((ProjectViewNode)node).getTitle());
+      }
     }
   }
 

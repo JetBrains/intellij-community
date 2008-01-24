@@ -36,15 +36,13 @@ import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -105,14 +103,9 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   }
 
   public TextAttributesKey getTextAttributesKey() {
-    return isDeprecated() ? CodeInsightColors.DEPRECATED_ATTRIBUTES : null;
+    return null;
   }
 
-  private boolean isDeprecated(){
-    final T element = getElement();
-    return element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated();
-
-  }
 
   public final StructureViewTreeElement[] getChildren() {
     final T element = getElement();

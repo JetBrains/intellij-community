@@ -31,17 +31,15 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
-import com.intellij.ide.structureView.impl.VisibilityComparator;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
+import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Comparator;
-
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 public class VisibilitySorter implements Sorter{
 

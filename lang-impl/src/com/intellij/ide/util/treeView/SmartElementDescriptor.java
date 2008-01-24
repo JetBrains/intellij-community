@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,7 +49,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
     Color color = null;
 
     if (isMarkModified() ){
-      VirtualFile virtualFile = PsiUtil.getVirtualFile(myElement);
+      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(myElement);
       if (virtualFile != null) {
         color = FileStatusManager.getInstance(myProject).getStatus(virtualFile).getColor();
       }

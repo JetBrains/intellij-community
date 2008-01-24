@@ -2,6 +2,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -26,10 +27,10 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   public String getQualifiedName(@NotNull final PsiDirectory directory) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage != null) {
-      return aPackage.getQualifiedName();
+      final String qualifiedName = aPackage.getQualifiedName();
+      if (qualifiedName.length() > 0) return qualifiedName;
+      return PsiBundle.message("default.package.presentation") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
     }
-    else {
-      return directory.getVirtualFile().getPresentableUrl();
-    }
+    return directory.getVirtualFile().getPresentableUrl();
   }
 }

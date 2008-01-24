@@ -2,10 +2,8 @@ package com.intellij.ide.commander;
 
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -51,12 +49,8 @@ public class ProjectListBuilder extends AbstractListBuilder {
     if (myParentTitle == null) return;
 
     AbstractTreeNode node = getParentNode();
-    Object parentElement = node.getValue();
-    if (parentElement instanceof TreeElement){
-      parentElement = ((StructureViewTreeElement)parentElement).getValue();
-    }
-    if (parentElement instanceof PsiElement) {
-      myParentTitle.setText(CommanderUtil.getTitle(((PsiElement)parentElement)));
+    if (node instanceof ProjectViewNode) {
+      myParentTitle.setText(((ProjectViewNode)node).getTitle());
     }
     else {
       myParentTitle.setText(null);

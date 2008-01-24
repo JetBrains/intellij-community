@@ -1,6 +1,7 @@
 package com.intellij.ide.structureView.impl.jsp;
 
 import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -92,5 +93,9 @@ public class StructureViewComposite implements StructureView {
   @NotNull
   public StructureViewDescriptor[] getStructureViews() {
     return myStructureViews;
+  }
+
+  public StructureViewModel getTreeModel() {
+    return getSelectedStructureView().getTreeModel();
   }
 }
