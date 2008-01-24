@@ -44,7 +44,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
 
   private LightReferenceList myThrowsList;
   private LightParameterList myParameterList = null;
-  public LightModifierList myModifierList = null;
+  private LightModifierList myModifierList = null;
 
 
   public AccessorMethod(GrField property, boolean isSetter) {
@@ -160,6 +160,7 @@ public class AccessorMethod extends LightElement implements PsiMethod {
       Set<String> modifiers = new HashSet<String>();
       modifiers.add(PsiModifier.PUBLIC);
       final PsiModifierList original = myProperty.getModifierList();
+      assert original != null;
       if (original.hasExplicitModifier(PsiModifier.STATIC)) modifiers.add(PsiModifier.STATIC);
       if (original.hasExplicitModifier(PsiModifier.ABSTRACT)) modifiers.add(PsiModifier.ABSTRACT);
       if (original.hasExplicitModifier(PsiModifier.FINAL)) modifiers.add(PsiModifier.FINAL);
