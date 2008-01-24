@@ -138,7 +138,9 @@ public class TypesUtil {
 
     if (isNumericType(lType) && isNumericType(rType)) {
       lType = unboxPrimitiveTypeWrapper(lType);
+      if (lType.equalsToText("java.math.BigDecimal")) lType = PsiType.DOUBLE;
       rType = unboxPrimitiveTypeWrapper(rType);
+      if (rType.equalsToText("java.math.BigDecimal")) rType = PsiType.DOUBLE;
     } else {
       rType = boxPrimitiveType(rType, manager, scope);
       lType = boxPrimitiveType(lType, manager, scope);
@@ -165,7 +167,6 @@ public class TypesUtil {
     if (type instanceof PsiClassType) {
       PsiType unboxed = ourQNameToUnboxed.get(type.getCanonicalText());
       if (unboxed != null) type = unboxed;
-      if (type.equalsToText("java.math.BigDecimal")) return PsiType.DOUBLE;
     }
     return type;
   }
