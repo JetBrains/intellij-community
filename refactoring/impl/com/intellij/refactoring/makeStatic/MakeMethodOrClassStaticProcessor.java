@@ -24,6 +24,7 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -115,12 +116,12 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
             if (mySettings.getNameForField(field) == null) {
               String message = RefactoringBundle.message("0.uses.non.static.1.which.is.not.passed.as.a.parameter", typeString,
-                                                         ConflictsUtil.getDescription(field, true));
+                                                         RefactoringUIUtil.getDescription(field, true));
               conflicts.add(message);
             }
           }
           else {
-            String message = RefactoringBundle.message("0.uses.1.which.needs.class.instance", typeString, ConflictsUtil.getDescription(referencedElement, true));
+            String message = RefactoringBundle.message("0.uses.1.which.needs.class.instance", typeString, RefactoringUIUtil.getDescription(referencedElement, true));
             conflicts.add(message);
           }
         }
@@ -128,8 +129,8 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       if (usageInfo instanceof OverridingMethodUsageInfo) {
         LOG.assertTrue(myMember instanceof PsiMethod);
         final PsiMethod overridingMethod = ((PsiMethod)usageInfo.getElement());
-        String message = RefactoringBundle.message("method.0.is.overridden.by.1", ConflictsUtil.getDescription(myMember, false),
-                                                   ConflictsUtil.getDescription(overridingMethod, true));
+        String message = RefactoringBundle.message("method.0.is.overridden.by.1", RefactoringUIUtil.getDescription(myMember, false),
+                                                   RefactoringUIUtil.getDescription(overridingMethod, true));
         conflicts.add(message);
       }
       else {
@@ -159,7 +160,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       final PsiField field = inaccessible.get(0);
       return RefactoringBundle.message("field.0.is.not.accessible",
                                        CommonRefactoringUtil.htmlEmphasize(field.getName()),
-                                       ConflictsUtil.getDescription(container, true));
+                                       RefactoringUIUtil.getDescription(container, true));
     } else {
       StringBuffer fieldsBuffer = new StringBuffer();
       for (int j = 0; j < inaccessible.size(); j++) {
@@ -173,7 +174,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
 
       return RefactoringBundle.message("fields.0.are.not.accessible",
                                        fieldsBuffer.toString(),
-                                       ConflictsUtil.getDescription(container, true));
+                                       RefactoringUIUtil.getDescription(container, true));
     }
   }
 

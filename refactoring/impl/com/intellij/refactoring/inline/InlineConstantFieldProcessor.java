@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -157,15 +158,15 @@ class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     for (UsageInfo info : usagesIn) {
       PsiElement element = info.getElement();
       if (element instanceof PsiExpression && isAccessedForWriting((PsiExpression)element)) {
-        String message = RefactoringBundle.message("0.is.used.for.writing.in.1", ConflictsUtil.getDescription(myField, true),
-                                                   ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
+        String message = RefactoringBundle.message("0.is.used.for.writing.in.1", RefactoringUIUtil.getDescription(myField, true),
+                                                   RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
         conflicts.add(message);
       }
 
       for (PsiMember member : referencedWithVisibility) {
         if (!resolveHelper.isAccessible(member, element, null)) {
-          String message = RefactoringBundle.message("0.will.not.be.accessible.from.1.after.inlining", ConflictsUtil.getDescription(member, true),
-                                                     ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
+          String message = RefactoringBundle.message("0.will.not.be.accessible.from.1.after.inlining", RefactoringUIUtil.getDescription(member, true),
+                                                     RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
           conflicts.add(message);
         }
       }

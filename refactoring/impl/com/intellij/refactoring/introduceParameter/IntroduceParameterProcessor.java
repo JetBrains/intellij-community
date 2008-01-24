@@ -243,8 +243,8 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
                 String message =
                   RefactoringBundle.message(
                     "0.is.not.accesible.from.1.value.for.introduced.parameter.in.that.method.call.will.be.incorrect",
-                    ConflictsUtil.getDescription(element, true),
-                    ConflictsUtil.getDescription(ConflictsUtil.getContainer(place), true));
+                    RefactoringUIUtil.getDescription(element, true),
+                    RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(place), true));
                 conflicts.add(message);
               }
             }
@@ -281,7 +281,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor {
       if (variable == myLocalVariable) return;
       if (myParameterName.equals(variable.getName())) {
         String descr = RefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
-                                                 ConflictsUtil.getDescription(variable, true));
+                                                 RefactoringUIUtil.getDescription(variable, true));
 
         conflict = ConflictsUtil.capitalize(descr);
       }

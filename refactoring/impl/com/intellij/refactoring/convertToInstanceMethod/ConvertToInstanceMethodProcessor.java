@@ -145,7 +145,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
           instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
           if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
             String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
-                                                       ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
+                                                       RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                        CommonRefactoringUtil.htmlEmphasize(myTargetParameter.getName()));
             conflicts.add(message);
           }
@@ -189,8 +189,8 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
         if (!JavaResolveUtil.isAccessible(myMethod, myTargetClass, copy, call, accessObjectClass, null)) {
           final String newVisibility = myNewVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(myMethod) : myNewVisibility;
           String message = RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
-                                                     ConflictsUtil.getDescription(myMethod, true), newVisibility,
-                                                     ConflictsUtil.getDescription(ConflictsUtil.getContainer(call), true));
+                                                     RefactoringUIUtil.getDescription(myMethod, true), newVisibility,
+                                                     RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(call), true));
           conflicts.add(message);
         }
       }

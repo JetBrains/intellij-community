@@ -25,10 +25,7 @@ import com.intellij.refactoring.IntroduceHandlerBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.refactoring.util.occurences.NotInSuperCallOccurenceFilter;
 import com.intellij.util.IncorrectOperationException;
@@ -401,7 +398,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase impleme
 
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
-        final String message = RefactoringBundle.message("is.modified.in.loop.body", ConflictsUtil.getDescription(variable, false));
+        final String message = RefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
         conflicts.add(ConflictsUtil.capitalize(message));
       }
       conflicts.add(RefactoringBundle.message("introducing.variable.may.break.code.logic"));

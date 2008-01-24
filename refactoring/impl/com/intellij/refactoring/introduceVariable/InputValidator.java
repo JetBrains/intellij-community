@@ -7,7 +7,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.util.containers.HashSet;
 
@@ -38,7 +38,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
         if (collidingVariable instanceof PsiField) return;
         if (!reportedVariables.contains(collidingVariable)) {
           reportedVariables.add(collidingVariable);
-          String message = RefactoringBundle.message("introduced.variable.will.conflict.with.0", ConflictsUtil.getDescription(collidingVariable, true));
+          String message = RefactoringBundle.message("introduced.variable.will.conflict.with.0", RefactoringUIUtil.getDescription(collidingVariable, true));
           conflicts.add(message);
         }
       }

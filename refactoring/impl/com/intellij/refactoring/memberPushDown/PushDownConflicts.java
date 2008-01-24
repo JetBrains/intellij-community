@@ -6,6 +6,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 
@@ -60,7 +61,7 @@ public class PushDownConflicts {
       if (movedMember instanceof PsiField) {
         String name = movedMember.getName();
         if (targetClass.findFieldByName(name, false) != null) {
-          String message = RefactoringBundle.message("0.already.contains.field.1", ConflictsUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
+          String message = RefactoringBundle.message("0.already.contains.field.1", RefactoringUIUtil.getDescription(targetClass, false), CommonRefactoringUtil.htmlEmphasize(name));
           myConflicts.add(ConflictsUtil.capitalize(message));
         }
       }
@@ -68,7 +69,7 @@ public class PushDownConflicts {
         PsiMethod method = (PsiMethod)movedMember;
         if (targetClass.findMethodBySignature(method, false) != null) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
-                                                ConflictsUtil.getDescription(method, true), ConflictsUtil.getDescription(targetClass, false));
+                                                RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));
           myConflicts.add(ConflictsUtil.capitalize(message));
         }
       }
@@ -80,7 +81,7 @@ public class PushDownConflicts {
           if (innerClass.equals(movedMember)) continue;
 
           if (name.equals(innerClass.getName())) {
-            String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", ConflictsUtil.getDescription(targetClass, false),
+            String message = RefactoringBundle.message("0.already.contains.inner.class.named.1", RefactoringUIUtil.getDescription(targetClass, false),
                                                   CommonRefactoringUtil.htmlEmphasize(name));
             myConflicts.add(message);
           }
@@ -121,8 +122,8 @@ public class PushDownConflicts {
 
     protected void visitClassMemberReferenceElement(PsiMember classMember, PsiJavaCodeReferenceElement classMemberReference) {
       if(myMovedMembers.contains(classMember) && !myAbstractMembers.contains(classMember)) {
-        String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", ConflictsUtil.getDescription(mySource, false),
-                                              ConflictsUtil.getDescription(classMember, false));
+        String message = RefactoringBundle.message("0.uses.1.which.is.pushed.down", RefactoringUIUtil.getDescription(mySource, false),
+                                              RefactoringUIUtil.getDescription(classMember, false));
         message = ConflictsUtil.capitalize(message);
         myConflicts.add(message);
       }

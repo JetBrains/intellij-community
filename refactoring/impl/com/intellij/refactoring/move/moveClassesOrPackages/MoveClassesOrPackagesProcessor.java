@@ -216,7 +216,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
                   final String message = RefactoringBundle.message("a.package.local.class.0.will.no.longer.be.accessible.from.1",
                                                                    CommonRefactoringUtil.htmlEmphasize(aClass.getName()),
-                                                                   ConflictsUtil.getDescription(
+                                                                   RefactoringUIUtil.getDescription(
                                                                    container, true));
                   conflicts.add(message);
                 }
@@ -514,8 +514,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             if (directory != null) {
               PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
               if (!myTargetPackage.equalToPackage(aPackage)) {
-                String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", ConflictsUtil.getDescription(member, true),
-                                                      ConflictsUtil.getDescription(container, true));
+                String message = RefactoringBundle.message("0.will.be.inaccessible.from.1", RefactoringUIUtil.getDescription(member, true),
+                                                      RefactoringUIUtil.getDescription(container, true));
                 myConflicts.add(ConflictsUtil.capitalize(message));
               }
             }

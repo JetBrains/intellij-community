@@ -355,10 +355,10 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
         myReportedContainers.add(container);
         String targetDescription = (targetElement == myClassToMove)
                                    ? "Class " + CommonRefactoringUtil.htmlEmphasize(myClassToMove.getName())
-                                   : StringUtil.capitalize(ConflictsUtil.getDescription(targetElement, true));
+                                   : StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true));
         final String message = RefactoringBundle.message("element.will.no.longer.be.accessible",
                                                          targetDescription,
-                                                         ConflictsUtil.getDescription(container, true));
+                                                         RefactoringUIUtil.getDescription(container, true));
         myConflicts.add(message);
       }
     }

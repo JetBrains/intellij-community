@@ -27,10 +27,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -151,8 +148,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     for (PsiMember container : containers) {
       Set<PsiMember> referencedInaccessible = containersToReferenced.get(container);
       for (PsiMember referenced : referencedInaccessible) {
-        final String referencedDescription = ConflictsUtil.getDescription(referenced, true);
-        final String containerDescription = ConflictsUtil.getDescription(container, true);
+        final String referencedDescription = RefactoringUIUtil.getDescription(referenced, true);
+        final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
         conflicts.add(ConflictsUtil.capitalize(message));

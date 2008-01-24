@@ -6,6 +6,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.HashMap;
 
 import java.util.HashSet;
@@ -52,8 +53,8 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementVisitor {
               PsiElement container = ConflictsUtil.getContainer(reference);
               if (!reportedRefs.contains(container)) {
                 final String message = RefactoringBundle.message("0.uses.a.package.local.1",
-                                                                 ConflictsUtil.getDescription(container, true),
-                                                                 ConflictsUtil.getDescription(resolved, true));
+                                                                 RefactoringUIUtil.getDescription(container, true),
+                                                                 RefactoringUIUtil.getDescription(resolved, true));
                 myConflicts.add(ConflictsUtil.capitalize(message));
                 reportedRefs.add(container);
               }

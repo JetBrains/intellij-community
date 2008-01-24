@@ -387,9 +387,9 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
             .isAccessible(method, modifierList, element, accessObjectClass, null)) {
             String message =
               RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2",
-                                        ConflictsUtil.getDescription(method, true),
+                                        RefactoringUIUtil.getDescription(method, true),
                                         myNewVisibility,
-                                        ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
+                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
             conflictDescriptions.add(message);
             if (!needToChangeCalls()) {
               iterator.remove();
@@ -1103,8 +1103,8 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
 
     public String getDescription() {
       return RefactoringBundle.message("there.is.already.a.0.in.the.1.it.will.conflict.with.the.renamed.parameter",
-                                       ConflictsUtil.getDescription(myCollidingElement, true),
-                                       ConflictsUtil.getDescription(myMethod, true));
+                                       RefactoringUIUtil.getDescription(myCollidingElement, true),
+                                       RefactoringUIUtil.getDescription(myMethod, true));
     }
   }
 

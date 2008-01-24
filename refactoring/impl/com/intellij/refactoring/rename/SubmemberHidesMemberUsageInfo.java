@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageViewUtil;
 
 public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInfo {
@@ -23,12 +24,12 @@ public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInf
     String descr;
     if (!(getElement() instanceof PsiMethod)) {
       descr = RefactoringBundle.message("0.will.hide.renamed.1",
-                                        ConflictsUtil.getDescription(getElement(), true),
+                                        RefactoringUIUtil.getDescription(getElement(), true),
                                         UsageViewUtil.getType(getElement()));
     }
     else {
       descr = RefactoringBundle.message("0.will.override.renamed.1",
-                                        ConflictsUtil.getDescription(getElement(), true),
+                                        RefactoringUIUtil.getDescription(getElement(), true),
                                         UsageViewUtil.getType(getElement()));
     }
     return ConflictsUtil.capitalize(descr);

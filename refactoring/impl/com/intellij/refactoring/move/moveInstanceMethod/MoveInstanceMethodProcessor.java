@@ -15,10 +15,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveInstanceMembersUtil;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
@@ -99,7 +96,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
             instanceValue = RefactoringUtil.unparenthesizeExpression(instanceValue);
             if (instanceValue instanceof PsiLiteralExpression && ((PsiLiteralExpression)instanceValue).getValue() == null) {
               String message = RefactoringBundle.message("0.contains.call.with.null.argument.for.parameter.1",
-                                                         ConflictsUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
+                                                         RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(methodCall), true),
                                                          CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
               conflicts.add(message);
             }

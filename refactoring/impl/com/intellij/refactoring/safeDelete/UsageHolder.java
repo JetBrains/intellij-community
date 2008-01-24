@@ -5,7 +5,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo;
-import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
@@ -70,11 +70,11 @@ class UsageHolder {
     final PsiElement element = myElementPointer.getElement();
     if (unsafeUsages == nonCodeUsages) {
       return RefactoringBundle.message("0.has.1.usages.in.comments.and.strings",
-                                       ConflictsUtil.getDescription(element, true),
+                                       RefactoringUIUtil.getDescription(element, true),
                                        unsafeUsages);
     }
 
     return RefactoringBundle.message("0.has.1.usages.that.are.not.safe.to.delete.of.those.2",
-      ConflictsUtil.getDescription(element, true), unsafeUsages, nonCodeUsages);
+      RefactoringUIUtil.getDescription(element, true), unsafeUsages, nonCodeUsages);
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -126,13 +127,13 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(myProject).getResolveHelper();
     if (!helper.isAccessible(getConstructorContainingClass(), myTargetClass, null)) {
       String message = RefactoringBundle.message("class.0.is.not.accessible.from.target.1",
-                                                 ConflictsUtil.getDescription(getConstructorContainingClass(), true),
-                                                 ConflictsUtil.getDescription(myTargetClass, true));
+                                                 RefactoringUIUtil.getDescription(getConstructorContainingClass(), true),
+                                                 RefactoringUIUtil.getDescription(myTargetClass, true));
       conflicts.add(message);
     }
 
     HashSet<PsiElement> reportedContainers = new HashSet<PsiElement>();
-    final String targetClassDescription = ConflictsUtil.getDescription(myTargetClass, true);
+    final String targetClassDescription = RefactoringUIUtil.getDescription(myTargetClass, true);
     for (UsageInfo usage : usages) {
       final PsiElement container = ConflictsUtil.getContainer(usage.getElement());
       if (!reportedContainers.contains(container)) {
@@ -140,7 +141,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
         if (!helper.isAccessible(myTargetClass, usage.getElement(), null)) {
           String message = RefactoringBundle.message("target.0.is.not.accessible.from.1",
                                                      targetClassDescription,
-                                                     ConflictsUtil.getDescription(container, true));
+                                                     RefactoringUIUtil.getDescription(container, true));
           conflicts.add(message);
         }
       }
@@ -154,7 +155,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
 
           if (PsiTreeUtil.isAncestor(containingClass, myTargetClass, true)) {
             String message = RefactoringBundle.message("constructor.being.refactored.is.used.in.initializer.of.0",
-                                                       ConflictsUtil.getDescription(field, true), ConflictsUtil.getDescription(getConstructorContainingClass(), false));
+                                                       RefactoringUIUtil.getDescription(field, true), RefactoringUIUtil.getDescription(getConstructorContainingClass(), false));
             conflicts.add(message);
           }
         }

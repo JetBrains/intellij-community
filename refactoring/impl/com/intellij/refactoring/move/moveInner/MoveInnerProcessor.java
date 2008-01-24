@@ -24,10 +24,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.VisibilityUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -315,8 +312,8 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
           if (!containerSet.contains(container)) {
             containerSet.add(container);
             String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
-                                                       ConflictsUtil.getDescription(resolved, true),
-                                                       ConflictsUtil.getDescription(container, true));
+                                                       RefactoringUIUtil.getDescription(resolved, true),
+                                                       RefactoringUIUtil.getDescription(container, true));
             conflicts.add(message);
           }
         }

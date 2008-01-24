@@ -5,6 +5,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.ConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 
 /**
  *  @author dsl
@@ -22,8 +23,8 @@ public class NewParameterCollidesWithLocalUsageInfo extends UnresolvableCollisio
 
   public String getDescription() {
     String buffer = RefactoringBundle.message("there.is.already.a.0.in.1.it.will.conflict.with.the.new.parameter",
-                                     ConflictsUtil.getDescription(myConflictingElement, true),
-                                     ConflictsUtil.getDescription(myMethod, true));
+                                     RefactoringUIUtil.getDescription(myConflictingElement, true),
+                                     RefactoringUIUtil.getDescription(myMethod, true));
 
     return ConflictsUtil.capitalize(buffer);
   }

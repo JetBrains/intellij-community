@@ -11,8 +11,8 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -301,8 +301,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
       final String fieldName = convertToFieldName(mySettings.getClassParameterName());
       final PsiField existing = myMember.findFieldByName(fieldName, false);
       if (existing != null) {
-        String message = RefactoringBundle.message("there.is.already.a.0.in.1", ConflictsUtil.getDescription(existing, false),
-                                              ConflictsUtil.getDescription(myMember, false));
+        String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
+                                              RefactoringUIUtil.getDescription(myMember, false));
               conflicts.add(message);
       }
     }
@@ -314,8 +314,8 @@ public class MakeClassStaticProcessor extends MakeMethodOrClassStaticProcessor<P
         final PsiField existing = myMember.findFieldByName(fieldName, false);
 
         if (existing != null) {
-          String message = RefactoringBundle.message("there.is.already.a.0.in.1", ConflictsUtil.getDescription(existing, false),
-                                                ConflictsUtil.getDescription(myMember, false));
+          String message = RefactoringBundle.message("there.is.already.a.0.in.1", RefactoringUIUtil.getDescription(existing, false),
+                                                RefactoringUIUtil.getDescription(myMember, false));
           conflicts.add(message);
         }
       }

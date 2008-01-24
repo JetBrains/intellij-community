@@ -351,8 +351,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
             if (!JavaResolveUtil.isAccessible(member, myTargetClass, modifierListCopies.get(member), element, accessObjectClass, null)) {
               newVisibility = newVisibility == null ? VisibilityUtil.getVisibilityStringToDisplay(member) : newVisibility;
               String message =
-                RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", ConflictsUtil.getDescription(member, true),
-                                          newVisibility, ConflictsUtil.getDescription(ConflictsUtil.getContainer(element), true));
+                RefactoringBundle.message("0.with.1.visibility.is.not.accesible.from.2", RefactoringUIUtil.getDescription(member, true),
+                                          newVisibility, RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true));
               conflicts.add(message);
             }
           }
@@ -388,7 +388,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       if (member instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)member;
         if (hasMethod(targetClass, method)) {
-          String message = RefactoringBundle.message("0.already.exists.in.the.target.class", ConflictsUtil.getDescription(method, false));
+          String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(method, false));
           message = ConflictsUtil.capitalize(message);
           conflicts.add(message);
         }
@@ -396,7 +396,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       else if (member instanceof PsiField) {
         PsiField field = (PsiField)member;
         if (hasField(targetClass, field)) {
-          String message = RefactoringBundle.message("0.already.exists.in.the.target.class", ConflictsUtil.getDescription(field, false));
+          String message = RefactoringBundle.message("0.already.exists.in.the.target.class", RefactoringUIUtil.getDescription(field, false));
           message = ConflictsUtil.capitalize(message);
           conflicts.add(message);
         }
@@ -432,18 +432,18 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           //Check for target class accessibility
           if (!manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
             String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                       ConflictsUtil.getDescription(targetClass, true),
+                                                       RefactoringUIUtil.getDescription(targetClass, true),
                                                        VisibilityUtil.getVisibilityStringToDisplay(targetClass),
-                                                       ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
+                                                       RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
             message = ConflictsUtil.capitalize(message);
             conflicts.add(message);
           }
           //check for member accessibility
           else if (!manager.getResolveHelper().isAccessible(member, modifierList, ref, null, null)) {
             String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                       ConflictsUtil.getDescription(member, true),
+                                                       RefactoringUIUtil.getDescription(member, true),
                                                        VisibilityUtil.getVisibilityStringToDisplay(member),
-                                                       ConflictsUtil.getDescription(ConflictsUtil.getContainer(ref), true));
+                                                       RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
             message = ConflictsUtil.capitalize(message);
             conflicts.add(message);
           }
@@ -498,9 +498,9 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
                                          LinkedHashSet<String> conflicts) {
     if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                 ConflictsUtil.getDescription(refMember, true),
+                                                 RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
-                                                 ConflictsUtil.getDescription(member, false));
+                                                 RefactoringUIUtil.getDescription(member, false));
       message = ConflictsUtil.capitalize(message);
       conflicts.add(message);
     }
