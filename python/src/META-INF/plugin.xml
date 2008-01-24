@@ -17,6 +17,7 @@
     <lang.foldingBuilder language="Python" implementationClass="ru.yole.pythonid.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="ru.yole.pythonid.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="ru.yole.pythonid.PythonFormattingModelBuilder"/>
+    <lang.psiStructureViewFactory language="Python" implementationClass="ru.yole.pythonid.structureView.PyStructureViewFactory"/>
     <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
   </extensions>
 </idea-plugin>
