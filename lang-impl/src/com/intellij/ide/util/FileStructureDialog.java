@@ -31,7 +31,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
@@ -92,8 +94,8 @@ public class FileStructureDialog extends DialogWrapper {
     init();
 
     if (psiElement != null) {
-      if (psiElement instanceof PsiClass) {
-        myCommanderPanel.getBuilder().enterElement(psiElement, psiElement.getContainingFile().getVirtualFile());
+      if (myCommanderPanel.shouldDrillDownOnEmptyElement(psiElement)) {
+        myCommanderPanel.getBuilder().enterElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
       }
       else {
         myCommanderPanel.getBuilder().selectElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
@@ -130,36 +132,6 @@ public class FileStructureDialog extends DialogWrapper {
     if (psiFile == null) return null;
 
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-    PsiElement element = psiFile.findElementAt(myEditor.getCaretModel().getOffset());
-    for (; element != null; element = element.getParent()) {
-      if (element instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)element;
-        PsiElement parent = method.getParent();
-        if (parent instanceof PsiClass) {
-          PsiClass psiClass = (PsiClass)parent;
-          String name = psiClass.getQualifiedName();
-          if (name == null) continue;
-          return method;
-        }
-      }
-      else if (element instanceof PsiField) {
-        PsiField field = (PsiField)element;
-        PsiElement parent = field.getParent();
-        if (parent instanceof PsiClass) {
-          PsiClass psiClass = (PsiClass)parent;
-          String name = psiClass.getQualifiedName();
-          if (name == null) continue;
-          return field;
-        }
-      }
-      else if (element instanceof PsiClass) {
-        PsiClass psiClass = (PsiClass)element;
-        String name = psiClass.getQualifiedName();
-        if (name == null) continue;
-        return psiClass;
-      }
-    }
 
     Object elementAtCursor = myTreeModel.getCurrentEditorElement();
     if (elementAtCursor instanceof PsiElement) {

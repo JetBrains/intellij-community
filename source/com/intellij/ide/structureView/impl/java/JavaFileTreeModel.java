@@ -42,6 +42,30 @@ public class JavaFileTreeModel extends TextEditorBasedStructureViewModel {
     return myFile;
   }
 
+  @Override
+  protected boolean isSuitable(final PsiElement element) {
+    if (super.isSuitable(element)) {
+      if (element instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)element;
+        PsiElement parent = method.getParent();
+        if (parent instanceof PsiClass) {
+          return ((PsiClass)parent).getQualifiedName() != null;
+        }
+      }
+      else if (element instanceof PsiField) {
+        PsiField field = (PsiField)element;
+        PsiElement parent = field.getParent();
+        if (parent instanceof PsiClass) {
+          return ((PsiClass)parent).getQualifiedName() != null;
+        }
+      }
+      else if (element instanceof PsiClass) {
+        return ((PsiClass)element).getQualifiedName() != null;
+      }
+    }
+    return false;
+  }
+
   @NotNull
   protected Class[] getSuitableClasses() {
     return new Class[]{PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaFile.class};

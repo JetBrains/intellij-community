@@ -4,13 +4,9 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
-import com.intellij.ide.structureView.impl.jsp.StructureViewComposite;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.structureView.PropertiesFileStructureViewModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
@@ -22,8 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -35,6 +31,7 @@ public class ViewStructureAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) return;
     final Editor editor = e.getData(PlatformDataKeys.EDITOR);
     final FileEditor fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
     if (editor == null) return;
@@ -47,7 +44,7 @@ public class ViewStructureAction extends AnAction {
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
-    Navigatable navigatable = e.getData(DataKeys.NAVIGATABLE);
+    Navigatable navigatable = e.getData(PlatformDataKeys.NAVIGATABLE);
     DialogWrapper dialog = createDialog(psiFile, editor, project, navigatable, fileEditor);
     if (dialog != null) {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -58,40 +55,16 @@ public class ViewStructureAction extends AnAction {
     }
   }
 
+  @Nullable
   private DialogWrapper createDialog(PsiFile psiFile,
                                      final Editor editor, Project project, Navigatable navigatable, final FileEditor fileEditor) {
-    final StructureViewModel structureViewModel;
-    Disposable auxDisposable = null;
 
-    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
-
-    if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
-      structureViewModel = ((TreeBasedStructureViewBuilder)structureViewBuilder).createStructureViewModel();
-    }
-    else if (psiFile instanceof PropertiesFile) {
-      structureViewModel = new PropertiesFileStructureViewModel((PropertiesFile)psiFile);
-    }
-    else if (PsiUtil.isInJspFile(psiFile)) {
-      Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
-      StructureViewComposite structureViewComposite =
-        (StructureViewComposite)LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile).createStructureView(fileEditor, project);
-      StructureView structureView = structureViewComposite.getSelectedStructureView();
-      structureViewModel = structureView.getTreeModel();
-      auxDisposable = structureViewComposite;
-    }
-    else {
-      return null;
-    }
-
-    if (auxDisposable == null) {
-      auxDisposable = new Disposable() {
-        public void dispose() {
-          structureViewModel.dispose();
-        }
-      };
-    }
-
-    return createStructureViewBasedDialog(structureViewModel, editor, project, navigatable, auxDisposable);
+    Language language = ((LanguageFileType)psiFile.getFileType()).getLanguage();
+    final StructureViewBuilder structureViewBuilder =
+      LanguageStructureViewBuilder.INSTANCE.forLanguage(language).getStructureViewBuilder(psiFile);
+    if (structureViewBuilder == null) return null;
+    StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
+    return createStructureViewBasedDialog(structureView.getTreeModel(), editor, project, navigatable, structureView);
   }
 
   public static FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
@@ -110,7 +83,7 @@ public class ViewStructureAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
       return;
