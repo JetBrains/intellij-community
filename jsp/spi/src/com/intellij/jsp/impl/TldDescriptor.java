@@ -19,8 +19,9 @@ public interface TldDescriptor extends XmlNSDescriptor {
 
   /**
    *
-   * @return short name, or empty string if not present
+   * @return short name, or null if not present
    */
+  @Nullable
   String getDefaultPrefix();
 
   int getFunctionsCount();

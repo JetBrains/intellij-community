@@ -15,9 +15,8 @@ import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.jsp.impl.JspElementDescriptor;
 import com.intellij.lang.StdLanguages;
-import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
@@ -49,6 +48,7 @@ import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -70,9 +70,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   @NonNls private static final String URI_ATT = "uri";
   @NonNls private static final String TAGDIR_ATT = "tagdir";
   @NonNls private static final String IMPORT_ATTR_NAME = "import";
-
-  public static final HighlightInfoType UNKNOWN_NS_ERROR = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
-  public static final HighlightInfoType UNKNOWN_NS_WARNING = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+  @NonNls private static final String XML = "xml";
 
   public void setRefCountHolder(RefCountHolder refCountHolder) {
     myRefCountHolder = refCountHolder;
@@ -90,15 +88,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
                                  String localizedMessage,
                                  HighlightInfoType type,
                                  IntentionAction quickFixAction) {
-    addElementsForTagWithManyQuickFixes(tag, localizedMessage, type, null, quickFixAction);
+    addElementsForTagWithManyQuickFixes(tag, localizedMessage, type, quickFixAction);
   }
 
   private void addElementsForTagWithManyQuickFixes(XmlTag tag,
                                                    String localizedMessage,
-                                                   HighlightInfoType type,
-                                                   HighlightDisplayKey key,
-                                                   IntentionAction... quickFixActions) {
-    bindMessageToTag(tag, type,  0, -1, localizedMessage, key, quickFixActions);
+                                                   HighlightInfoType type, IntentionAction... quickFixActions) {
+    bindMessageToTag(tag, type, -1, localizedMessage, quickFixActions);
   }
 
   @Override public void visitXmlToken(XmlToken token) {
@@ -140,7 +136,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
           return;
         }
 
-        checkReferences(tag, QuickFixProvider.NULL);
+        checkReferences(tag);
       }
     }
   }
@@ -153,7 +149,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
         final PsiFile containingFile = context.getContainingFile();
         if (!HighlightLevelUtil.shouldInspect(containingFile)) return;
 
-        if (!"xml".equals(namespacePrefix) ) {
+        if (!XML.equals(namespacePrefix) ) {
           boolean taglibDeclaration = containingFile.getFileType() == StdFileTypes.JSP;
 
           ProgressManager progressManager = ProgressManager.getInstance();
@@ -184,7 +180,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
               addElementsForTag(tag,
                 localizedMessage,
                 HighlightInfoType.INFORMATION,
-                new CreateNSDeclarationIntentionFix(context, namespacePrefix,taglibDeclaration)
+                new CreateNSDeclarationIntentionFix(context, namespacePrefix)
               );
             }
 
@@ -195,15 +191,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
                                 containingFile.getFileType() == StdFileTypes.XML;
 
           final int messageLength = namespacePrefix.length();
-          final HighlightInfoType infoType = error ? UNKNOWN_NS_ERROR : UNKNOWN_NS_WARNING;
+          final HighlightInfoType infoType = error ? HighlightInfoType.ERROR:HighlightInfoType.WARNING;
 
           if (element instanceof XmlTag) {
             bindMessageToTag(
               (XmlTag)element,
-              infoType,
-              0,
-              messageLength,
-              localizedMessage, null, new CreateNSDeclarationIntentionFix(context, namespacePrefix,taglibDeclaration)
+              infoType, messageLength,
+              localizedMessage, null, new CreateNSDeclarationIntentionFix(context, namespacePrefix)
             );
           } else {
             bindMessageToAstNode(
@@ -211,29 +205,26 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
               infoType,
               0,
               messageLength,
-              localizedMessage, null, new CreateNSDeclarationIntentionFix(element, namespacePrefix,false)
-            );
+              localizedMessage);
           }
         }
       }
     }
   }
 
-  private void bindMessageToTag(final XmlTag tag, final HighlightInfoType warning, final int offset,
-                                final int messageLength, final String localizedMessage,
-                                final HighlightDisplayKey key, IntentionAction... quickFixActions) {
+  private void bindMessageToTag(final XmlTag tag, final HighlightInfoType warning, final int messageLength, final String localizedMessage, IntentionAction... quickFixActions) {
     XmlToken childByRole = XmlTagUtil.getStartTagNameElement(tag);
 
-    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
     childByRole = XmlTagUtil.getEndTagNameElement(tag);
-    bindMessageToAstNode(childByRole, warning, offset, messageLength, localizedMessage, key, quickFixActions);
+    bindMessageToAstNode(childByRole, warning, 0, messageLength, localizedMessage, quickFixActions);
   }
 
   private void bindMessageToAstNode(final PsiElement childByRole,
                                     final HighlightInfoType warning,
                                     final int offset,
                                     int length,
-                                    final String localizedMessage, final HighlightDisplayKey key, IntentionAction... quickFixActions) {
+                                    final String localizedMessage, IntentionAction... quickFixActions) {
     if(childByRole != null) {
       final TextRange textRange = childByRole.getTextRange();
       if (length == -1) length = textRange.getLength();
@@ -260,7 +251,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
 
       for (final IntentionAction quickFixAction : quickFixActions) {
         if (quickFixAction == null) continue;
-        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, key);
+        QuickFixAction.registerQuickFixAction(highlightInfo, textRange, quickFixAction, null);
       }
       addToResults(highlightInfo);
     }
@@ -300,7 +291,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
           tag,
           XmlErrorMessages.message("element.is.not.allowed.here", name),
           getTagProblemInfoType(tag),
-          null
+          new CreateNSDeclarationIntentionFix(tag, "")
         );
         return;
       }
@@ -390,7 +381,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
         tag,
         localizedMessage,
         SeverityRegistrar.getInstance(tag.getProject()).getHighlightInfoTypeBySeverity(profile.getErrorLevel(key).getSeverity()),
-        key,
         intentionAction,
         basicIntention);
     } else if (!htmlTag) {
@@ -423,9 +413,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
 
       if (uri == null) {
         if (tag.getAttributeValue(TAGDIR_ATT) == null) {
+          final XmlToken element = XmlTagUtil.getStartTagNameElement(tag);
+          assert element != null;
           final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-            HighlightInfoType.WRONG_REF,
-            XmlTagUtil.getStartTagNameElement(tag),
+            HighlightInfoType.WRONG_REF, element,
             XmlErrorMessages.message("either.uri.or.tagdir.attribute.should.be.specified")
           );
 
@@ -460,13 +451,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     XmlTag tag = attribute.getParent();
 
     if (attribute.isNamespaceDeclaration()) {
-      checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
+      checkReferences(attribute.getValueElement());
       return;
     }
     final String namespace = attribute.getNamespace();
 
     if (XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(namespace)) {
-      checkReferences(attribute.getValueElement(), QuickFixProvider.NULL);
+      checkReferences(attribute.getValueElement());
       return;
     }
 
@@ -505,6 +496,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     }
   }
 
+  @Nullable
   private HighlightInfo reportAttributeProblem(final XmlTag tag,
                                                final String localName,
                                                final XmlAttribute attribute,
@@ -531,9 +523,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
       final HighlightInfoType tagProblemInfoType = HighlightInfoType.WRONG_REF;
       IntentionAction[] quickFixes = new IntentionAction[]{removeAttributeIntention};
 
+      final ASTNode node = SourceTreeToPsiMap.psiElementToTree(attribute);
+      assert node != null;
+      final ASTNode child = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(node);
+      assert child != null;
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(
-        tagProblemInfoType,
-        XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(SourceTreeToPsiMap.psiElementToTree(attribute)),
+        tagProblemInfoType, child,
         localizedMessage
       );
       addToResults(highlightInfo);
@@ -592,7 +587,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
     final PsiElement parent = value.getParent();
     if (!(parent instanceof XmlAttribute)) {
-      checkReferences(value, QuickFixProvider.NULL);
+      checkReferences(value);
       return;
     }
 
@@ -634,10 +629,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     }
 
     if (refs == null) refs = value.getReferences();
-    QuickFixProvider quickFixProvider = attributeDescriptor instanceof QuickFixProvider ?
-                                        (QuickFixProvider)attributeDescriptor : QuickFixProvider.NULL;
 
-    doCheckRefs(value, quickFixProvider, refs);
+    doCheckRefs(value, refs);
   }
 
   private static boolean doAddValueWithIdType(final XmlAttributeValue value,
@@ -648,11 +641,16 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
   }
 
   private static boolean isSoftContext(@NotNull final XmlAttribute attr) {
-    if (attr.getDescriptor().hasIdType()) return false;
-    PsiReference reference = attr.getValueElement().getReference();
+    final XmlAttributeDescriptor xmlAttributeDescriptor = attr.getDescriptor();
+    assert xmlAttributeDescriptor != null;
+    if (xmlAttributeDescriptor.hasIdType()) return false;
+    final XmlAttributeValue element = attr.getValueElement();
+    assert element != null;
+    PsiReference reference = element.getReference();
     return reference != null && reference.isSoft();
   }
 
+  @Nullable
   public static HighlightInfo checkIdRefAttrValue(XmlAttributeValue value, RefCountHolder holder) {
     if (!(value.getParent() instanceof XmlAttribute) || holder==null) return null;
     XmlAttribute attribute = (XmlAttribute)value.getParent();
@@ -697,13 +695,13 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     return unquotedValue;
   }
 
-  private void checkReferences(PsiElement value, QuickFixProvider quickFixProvider) {
+  private void checkReferences(PsiElement value) {
     if (value == null) return;
 
-    doCheckRefs(value, quickFixProvider, value.getReferences());
+    doCheckRefs(value, value.getReferences());
   }
 
-  private void doCheckRefs(final PsiElement value, final QuickFixProvider quickFixProvider, final PsiReference[] references) {
+  private void doCheckRefs(final PsiElement value, final PsiReference[] references) {
     ProgressManager progressManager = ProgressManager.getInstance();
     for (final PsiReference reference : references) {
       progressManager.checkCanceled();
@@ -721,7 +719,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
             description
           );
           addToResults(info);
-          quickFixProvider.registerQuickfix(info, reference);
           if (reference instanceof QuickFixProvider) ((QuickFixProvider)reference).registerQuickfix(info, reference);
         }
       }
@@ -761,7 +758,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
 
   @Override public void visitXmlDoctype(XmlDoctype xmlDoctype) {
     if (xmlDoctype.getUserData(DO_NOT_VALIDATE_KEY) != null) return;
-    checkReferences(xmlDoctype, QuickFixProvider.NULL);
+    checkReferences(xmlDoctype);
   }
 
   private void addToResults(final HighlightInfo info) {
@@ -850,7 +847,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
       final XmlAttributeValue value = (XmlAttributeValue)entry.getKey();
 
       if (value.isValid()) {
-        processAttributeValue(value, entry.getValue(), refCountHolder, highlights);
+        processAttributeValue(value, entry.getValue().booleanValue(), refCountHolder, highlights);
       }
       else {
         iterator.remove();

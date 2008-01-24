@@ -25,28 +25,22 @@ import java.util.List;
 public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAction {
   @NonNls private static final String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
+  @NonNls private static final String SOMEWHERE_XSD = "somewhere.xsd";
 
   protected String getQuickFixKeyId() {
     return "add.xsi.schema.location.for.external.resource";
   }
 
-  protected void doInvoke(final PsiFile file, final int offset, final String uri, final Editor editor) throws IncorrectOperationException {
+  protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class);
     if (tag == null) return;
     final List<String> schemaLocations = new ArrayList<String>();
 
-    CreateNSDeclarationIntentionFix.processExternalUris(tag, file, new CreateNSDeclarationIntentionFix.ExternalUriProcessor() {
+    CreateNSDeclarationIntentionFix.processExternalUris(new CreateNSDeclarationIntentionFix.TagMetaHandler(tag.getLocalName()), file, new CreateNSDeclarationIntentionFix.ExternalUriProcessor() {
       public void process(@NotNull final String currentUri, final String url) {
         if (currentUri.equals(uri) && url != null) schemaLocations.add(url);
       }
 
-      public boolean acceptXmlNs() {
-        return true;
-      }
-
-      public boolean acceptTaglib() {
-        return false;
-      }
     });
 
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
@@ -58,7 +52,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
         throws IncorrectOperationException {
           return doIt(file, uri, tag, attrName);
         }
-      }, XmlErrorMessages.message("select.namespace.location.title"), this, editor, "somewhere.xsd"
+      }, XmlErrorMessages.message("select.namespace.location.title"), this, editor, SOMEWHERE_XSD
     );
   }
 
