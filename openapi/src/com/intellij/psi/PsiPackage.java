@@ -36,15 +36,6 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifier
   String getQualifiedName();
 
   /**
-   * Returns the array of directories corresponding to the package in the specified search scope.
-   *
-   * @param scope the scope in which directories are searched.
-   * @return the array of directories.
-   */
-  @NotNull
-  PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope);
-
-  /**
    * Returns the parent of the package.
    *
    * @return the parent package, or null for the default package.
