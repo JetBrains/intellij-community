@@ -20,6 +20,7 @@ import com.intellij.psi.scope.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -81,6 +82,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   protected boolean isStaticsOK(PsiNamedElement element) {
+    if (myCurrentFileResolveContext instanceof GrImportStatement) return true;
+    
     if (element instanceof PsiModifierListOwner) {
       return org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isStaticsOK((PsiModifierListOwner) element, myPlace);
     }
@@ -88,7 +91,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   }
 
   public GroovyResolveResult[] getCandidates() {
-    return myCandidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
+    return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
   }
 
   public <T> T getHint(Class<T> hintClass) {

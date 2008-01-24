@@ -159,7 +159,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       for (String importedMember : staticallyImportedMembers) {
         final String className = getParentName(importedMember);
-        if (!classCountMap.containsKey(className)) packageCountMap.put(className, 0);
+        if (!classCountMap.containsKey(className)) classCountMap.put(className, 0);
         classCountMap.increment(className);
       }
 
@@ -200,7 +200,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
       for (String importedMember : staticallyImportedMembers) {
         final String parentName = getParentName(importedMember);
-        if (classCountMap.get(parentName) >= settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
+        if (classCountMap.get(parentName) >= settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND) continue;
         result.add(factory.createImportStatementFromText(importedMember, true, false, null));
       }
 
