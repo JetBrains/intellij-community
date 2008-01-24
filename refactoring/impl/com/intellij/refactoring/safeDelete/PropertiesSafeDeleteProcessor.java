@@ -6,6 +6,7 @@ import com.intellij.usageView.UsageInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -24,5 +25,10 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
       SafeDeleteProcessor.findGenericElementUsages(psiElement, result, allElementsToDelete);
     }
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), elements);
+  }
+
+  public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,
+                                                              final boolean askUser) {
+    return null;
   }
 }

@@ -3,13 +3,20 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
+import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -47,6 +54,36 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
       findParameterUsages((PsiParameter)element, usages);
     }
     return new NonCodeUsageSearchInfo(insideDeletedCondition, element);
+  }
+
+  public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,
+                                                              final boolean askUser) {
+    if (element instanceof PsiField) {
+      PsiField field = (PsiField)element;
+      final Project project = element.getProject();
+      String propertyName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
+
+      PsiClass aClass = field.getContainingClass();
+      if (aClass != null) {
+        boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+        PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
+        if (allElementsToDelete.contains(getter)) getter = null;
+        PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
+        if (allElementsToDelete.contains(setter)) setter = null;
+        if (askUser && (getter != null || setter != null)) {
+          final String message = RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getter, setter);
+          if (Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
+            getter = null;
+            setter = null;
+          }
+        }
+        List<PsiElement> elements = new ArrayList<PsiElement>();
+        if (setter != null) elements.add(setter);
+        if (getter != null) elements.add(getter);
+        return elements;
+      }
+    }
+    return null;
   }
 
   public static Condition<PsiElement> getUsageInsideDeletedFilter(final PsiElement[] allElementsToDelete) {

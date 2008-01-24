@@ -7,23 +7,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
@@ -427,31 +422,17 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   public static SafeDeleteProcessor createInstance(Project project, @Nullable Runnable prepareSuccessfulCallBack,
                                                    PsiElement[] elementsToDelete, boolean isSearchInComments, boolean isSearchNonJava,
                                                    boolean askForAccessors) {
-    PsiManager manager = PsiManager.getInstance(project);
     ArrayList<PsiElement> elements = new ArrayList<PsiElement>(Arrays.asList(elementsToDelete));
     HashSet<PsiElement> elementsToDeleteSet = new HashSet<PsiElement>(Arrays.asList(elementsToDelete));
 
     for (PsiElement psiElement : elementsToDelete) {
-      if (psiElement instanceof PsiField) {
-        PsiField field = (PsiField)psiElement;
-        String propertyName = JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-
-        PsiClass aClass = field.getContainingClass();
-        if (aClass != null) {
-          boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-          PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
-          if (elementsToDeleteSet.contains(getter)) getter = null;
-          PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
-          if (elementsToDeleteSet.contains(setter)) setter = null;
-          if (askForAccessors && (getter != null || setter != null)) {
-            final String message = RefactoringMessageUtil.getGetterSetterMessage(field.getName(), RefactoringBundle.message("delete.title"), getter, setter);
-            if (Messages.showYesNoDialog(project, message, RefactoringBundle.message("safe.delete.title"), Messages.getQuestionIcon()) != 0) {
-              getter = null;
-              setter = null;
-            }
+      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+        if (delegate.handlesElement(psiElement)) {
+          Collection<PsiElement> addedElements = delegate.getAdditionalElementsToDelete(psiElement, elementsToDeleteSet, askForAccessors);
+          if (addedElements != null) {
+            elements.addAll(addedElements);
           }
-          if (setter != null) elements.add(setter);
-          if (getter != null) elements.add(getter);
+          break;
         }
       }
     }

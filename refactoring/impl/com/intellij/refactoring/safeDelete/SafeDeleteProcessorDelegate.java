@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -16,4 +17,7 @@ public interface SafeDeleteProcessorDelegate {
   boolean handlesElement(PsiElement element);
   @Nullable
   NonCodeUsageSearchInfo findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, List<UsageInfo> result);
+
+  @Nullable
+  Collection<PsiElement> getAdditionalElementsToDelete(PsiElement element, final Collection<PsiElement> allElementsToDelete, final boolean askUser);
 }
