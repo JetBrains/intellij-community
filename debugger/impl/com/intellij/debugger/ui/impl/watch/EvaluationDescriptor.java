@@ -4,6 +4,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -79,7 +80,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
       final ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build(getEvaluationCode(thisEvaluationContext));
+          return EvaluatorBuilderImpl.getInstance().build(getEvaluationCode(thisEvaluationContext), ContextUtil.getContextElement(thisEvaluationContext));
         }
       });
 

@@ -232,6 +232,20 @@ public class JVMNameUtil {
     return new JVMClassAt(SourcePosition.createFromElement(psiClass));
   }
 
+  public static @Nullable JVMName getContextClassJVMQualifiedName(SourcePosition pos) {
+    final PsiClass psiClass = getClassAt(pos);
+    if (psiClass == null) {
+      return null;
+    }
+    if (!PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+      final String name = getNonAnonymousClassName(psiClass);
+      if (name != null) {
+        return getJVMRawText(name);
+      }
+    }
+    return new JVMClassAt(pos);
+  }
+
   @Nullable
   public static String getNonAnonymousClassName(PsiClass aClass) {
     PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);

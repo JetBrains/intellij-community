@@ -5,6 +5,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
@@ -50,11 +51,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
     DebuggerUtils.checkSyntax(codeFragment);
 
-    return build(codeFragment);
+    return build(codeFragment, contextElement);
   }
 
-  public ExpressionEvaluator build(final PsiElement element) throws EvaluateException {
-    return new Builder().buildElement(element);
+  public ExpressionEvaluator build(final PsiElement codeFragment, final PsiElement contextElement) throws EvaluateException {
+    return new Builder(contextElement).buildElement(codeFragment);
   }
 
   private static class Builder extends JavaElementVisitor {
@@ -63,6 +64,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     private PsiClass myContextPsiClass;
     private CodeFragmentEvaluator myCurrentFragmentEvaluator;
     private Set<PsiCodeFragment> myVisitedFragments = new HashSet<PsiCodeFragment>();
+    private final PsiElement myContextElement;
+
+    private Builder(PsiElement contextElement) {
+      myContextElement = contextElement;
+    }
 
     @Override public void visitCodeFragment(PsiCodeFragment codeFragment) {
       myVisitedFragments.add(codeFragment);
@@ -386,7 +392,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
           Evaluator objectEvaluator = new ThisEvaluator(iterationCount);
           //noinspection HardCodedStringLiteral
-          myResult = new FieldEvaluator(objectEvaluator, JVMNameUtil.getJVMQualifiedName(getContextPsiClass()), "val$" + localName);
+          final JVMName contextClassName = JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(myContextElement));
+          myResult = new FieldEvaluator(objectEvaluator, contextClassName != null? contextClassName : JVMNameUtil.getJVMQualifiedName(getContextPsiClass()), "val$" + localName);
           return;
         }
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
@@ -394,15 +401,15 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         );
       }
       else if (element instanceof PsiField) {
-        PsiField psiField = (PsiField)element;
-        PsiClass fieldClass = psiField.getContainingClass();
+        final PsiField psiField = (PsiField)element;
+        final PsiClass fieldClass = psiField.getContainingClass();
         if(fieldClass == null) {
           throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
             DebuggerBundle.message("evaluation.error.cannot.resolve.field.class", psiField.getName())));
         }
         Evaluator objectEvaluator;
         if (psiField.hasModifierProperty(PsiModifier.STATIC)) {
-          objectEvaluator = new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(fieldClass));
+          objectEvaluator = new TypeEvaluator(JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(psiField)));
         }
         else if(qualifier != null) {
           qualifier.accept(this);
@@ -660,7 +667,8 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         else {
           objectEvaluator = new ThisEvaluator();
-          if(myContextPsiClass != null) {
+          contextClass = JVMNameUtil.getContextClassJVMQualifiedName(SourcePosition.createFromElement(myContextElement));
+          if(contextClass == null && myContextPsiClass != null) {
             contextClass = JVMNameUtil.getJVMQualifiedName(myContextPsiClass);
           }
           //else {

@@ -159,7 +159,7 @@ public class ValueHint {
     if(debuggerSession == null || !debuggerSession.isPaused()) return;
 
     try {
-      final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(myCurrentExpression);
+      final ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(myCurrentExpression, myCurrentExpression);
 
       debuggerContext.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(debuggerContext) {
         public void threadAction() {

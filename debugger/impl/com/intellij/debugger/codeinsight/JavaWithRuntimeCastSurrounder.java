@@ -6,6 +6,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.EvaluatingComputable;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -118,12 +119,12 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
       });
     }
 
-    protected String evaluate(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    protected String evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
       final Project project = evaluationContext.getProject();
 
       ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build(myElement);
+          return EvaluatorBuilderImpl.getInstance().build(myElement, ContextUtil.getContextElement(evaluationContext));
         }
       });
 
