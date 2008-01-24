@@ -4,6 +4,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,5 +40,8 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
 
   public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
     return usages;
+  }
+
+  public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
   }
 }

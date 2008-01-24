@@ -17,10 +17,13 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.safeDelete.usageInfo.*;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo;
+import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -305,8 +308,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
 
       for (PsiElement element : myElements) {
-        if (element instanceof PsiVariable) {
-          ((PsiVariable)element).normalizeDeclaration();
+        for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+          delegate.prepareForDeletion(element);
         }
 
         element.delete();

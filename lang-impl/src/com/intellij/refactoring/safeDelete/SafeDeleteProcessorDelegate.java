@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -26,4 +27,6 @@ public interface SafeDeleteProcessorDelegate {
   Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete);
 
   UsageInfo[] preprocessUsages(Project project, UsageInfo[] usages);
+
+  void prepareForDeletion(PsiElement element) throws IncorrectOperationException;
 }

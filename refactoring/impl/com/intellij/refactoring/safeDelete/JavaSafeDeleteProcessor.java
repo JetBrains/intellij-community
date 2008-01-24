@@ -137,6 +137,12 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     return result.toArray(new UsageInfo[result.size()]);
   }
 
+  public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
+    if (element instanceof PsiVariable) {
+      ((PsiVariable)element).normalizeDeclaration();
+    }
+  }
+
   public static Condition<PsiElement> getUsageInsideDeletedFilter(final PsiElement[] allElementsToDelete) {
     return new Condition<PsiElement>() {
       public boolean value(final PsiElement usage) {
