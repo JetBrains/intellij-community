@@ -1,0 +1,7 @@
+class Category {
+  static def plus(Category t, Cat<caret>) {
+
+  }
+}
+-----
+Category
