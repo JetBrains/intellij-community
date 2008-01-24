@@ -989,10 +989,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         Object selected = getSelectedNodeElement();
         return selected instanceof Module ? selected : null;
       }
-      if (DataConstantsEx.PACKAGE_ELEMENT.equals(dataId)) {
-        Object selected = getSelectedNodeElement();
-        return selected instanceof PackageElement ? selected : null;
-      }
+
       if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
         return getSelectedModules();
       }
@@ -1124,50 +1121,41 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
 
     public PsiDirectory[] getDirectories() {
       final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      DefaultMutableTreeNode node = viewPane != null ? viewPane.getSelectedNode() : null;
-
-      while (true) {
-        if (node == null) {
-          break;
-        }
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof PsiDirectoryNode || userObject instanceof AbstractModuleNode ||
-             userObject instanceof PackageElementNode) {
-          break;
-        }
-        node = (DefaultMutableTreeNode)node.getParent();
-      }
-
-      if (node == null) {
-        return PsiDirectory.EMPTY_ARRAY;
-      }
-      final Object userObject = node.getUserObject();
-      if (userObject instanceof PsiDirectoryNode) {
-        PsiDirectory directory = ((PsiDirectoryNode)userObject).getValue();
-        if (directory != null) {
-          return new PsiDirectory[]{directory};
-        }
-      }
-      else if (userObject instanceof AbstractModuleNode) {
-        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
-        final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
-        List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
-        final PsiManager psiManager = PsiManager.getInstance(myProject);
-        for (final VirtualFile sourceRoot : sourceRoots) {
-          final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
-          if (directory != null) {
-            dirs.add(directory);
+      if (viewPane != null) {
+        final PsiElement[] elements = viewPane.getSelectedPSIElements();
+        if (elements.length == 1) {
+          final PsiElement element = elements[0];
+          if (element instanceof PsiDirectory) {
+            return new PsiDirectory[]{(PsiDirectory)element};
+          }
+          else if (element instanceof PsiDirectoryContainer) {
+            return ((PsiDirectoryContainer)element).getDirectories();
+          }
+          else {
+            final PsiFile containingFile = element.getContainingFile();
+            if (containingFile != null) {
+              return new PsiDirectory[]{containingFile.getContainingDirectory()};
+            }
           }
         }
-        return dirs.toArray(new PsiDirectory[dirs.size()]);
-      }
-      else if (userObject instanceof PackageElementNode) {
-        final PsiPackage aPackage = ((PackageElementNode)userObject).getValue().getPackage();
-        if (aPackage == null || !aPackage.isValid()) {
-          return PsiDirectory.EMPTY_ARRAY;
-        }
         else {
-          return aPackage.getDirectories();
+          final DefaultMutableTreeNode node = viewPane.getSelectedNode();
+          if (node != null) {
+            final Object userObject = node.getUserObject();
+            if (userObject instanceof AbstractModuleNode) {
+              final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(((AbstractModuleNode)userObject).getValue());
+              final VirtualFile[] sourceRoots = moduleRootManager.getSourceRoots();
+              List<PsiDirectory> dirs = new ArrayList<PsiDirectory>(sourceRoots.length);
+              final PsiManager psiManager = PsiManager.getInstance(myProject);
+              for (final VirtualFile sourceRoot : sourceRoots) {
+                final PsiDirectory directory = psiManager.findDirectory(sourceRoot);
+                if (directory != null) {
+                  dirs.add(directory);
+                }
+              }
+              return dirs.toArray(new PsiDirectory[dirs.size()]);
+            }
+          }
         }
       }
 

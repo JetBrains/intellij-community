@@ -51,6 +51,11 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
     if (file != null) {
       return file.getVirtualFile().getPresentableUrl();
     }
-    return super.getTitle();    //To change body of overridden methods use File | Settings | File Templates.
+    return super.getTitle();
+  }
+
+  @Override
+  protected boolean isMarkReadOnly() {
+    return true;
   }
 }

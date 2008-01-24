@@ -50,7 +50,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends ProjectViewNode
 
   protected boolean isMarkReadOnly() {
     final Object parentValue = getParentValue();
-    return parentValue instanceof PsiDirectory || parentValue instanceof PackageElement || parentValue instanceof Module;
+    return parentValue instanceof PsiDirectory || parentValue instanceof Module;
   }
 
   public FileStatus getFileStatus() {

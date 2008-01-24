@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEntry;
@@ -72,6 +73,21 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
       return ((PackageElement)element).getPackage();
     }
     return super.getPSIElement(element);
+  }
+
+  @Override
+  public Object getData(final String dataId) {
+    if (DataConstantsEx.PACKAGE_ELEMENT.equals(dataId)) {
+      final DefaultMutableTreeNode selectedNode = getSelectedNode();
+      if (selectedNode != null) {
+        Object o = selectedNode.getUserObject();
+        if (o instanceof AbstractTreeNode) {
+          Object selected = ((AbstractTreeNode)o).getValue();
+          return selected instanceof PackageElement ? selected : null;
+        }
+      }
+    }
+    return super.getData(dataId);
   }
 
   private final class ShowModulesAction extends ToggleAction {
