@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -9,6 +10,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.position.PatternFilter;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.HashMap;
@@ -50,6 +52,9 @@ public class CompletionVariant {
     myPeer = new CompletionVariantPeerImpl(this);
   }
 
+  public CompletionVariant(ElementPattern<? extends PsiElement> position){
+    this(new PatternFilter(position));
+  }
   public CompletionVariant(ElementFilter position){
     myPosition = position;
     myPeer = new CompletionVariantPeerImpl(this);
