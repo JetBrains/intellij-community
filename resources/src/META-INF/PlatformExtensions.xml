@@ -83,4 +83,6 @@
   <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
 
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
+  <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
+                        serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
 </extensions>

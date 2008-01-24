@@ -60,4 +60,7 @@
 
   <extensionPoint name="codeInsight.linkHandler"
                   interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
+  <extensionPoint name="colorSettingsPage"
+                  interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
+  
 </extensionPoints>
