@@ -168,7 +168,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
             }
           }
           LOG.assertTrue(element.getTextRange() != null);
-          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, psiClass, parent instanceof PsiImportStatement));
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiClass, parent instanceof PsiImportStatement));
         }
         return true;
       }
@@ -203,7 +203,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
         if (reference instanceof PsiJavaCodeReferenceElement) {
           PsiTypeElement[] typeArgs = ((PsiJavaCodeReferenceElement)reference).getParameterList().getTypeParameterElements();
           if (typeArgs.length > index) {
-            usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(typeArgs[index], typeParameter, true));
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(typeArgs[index], typeParameter, true));
           }
         }
         return true;
@@ -226,7 +226,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     for (PsiReference reference : references) {
       final PsiElement element = reference.getElement();
       if (!isInside(element, allElementsToDelete) && !isInside(element, overridingMethods)) {
-        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, psiMethod, false));
+        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, psiMethod, false));
         anyRefs = true;
       }
     }
@@ -351,7 +351,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
             for (PsiReference reference : originalReferences) {
               final PsiElement element = reference.getElement();
               if (!isInside(element, allElementsToDelete) && !isInside(element, overridingMethods)) {
-                usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, originalMethod, false));
+                usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, originalMethod, false));
                 validOverriding.clear();
               }
             }
@@ -452,7 +452,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
           }
           else {
             TextRange range = reference.getRangeInElement();
-            usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(reference.getElement(), psiField, range.getStartOffset(),
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(reference.getElement(), psiField, range.getStartOffset(),
                                                                     range.getEndOffset(), false, false));
           }
         }
@@ -478,11 +478,11 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
             final PsiExpression[] args = argList.getExpressions();
             if (index < args.length) {
               if (!parameter.isVarArgs()) {
-                usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(args[index], parameter, true));
+                usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter, true));
               }
               else {
                 for (int i = index; i < args.length; i++) {
-                  usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(args[i], parameter, true));
+                  usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter, true));
                 }
               }
             }
@@ -497,7 +497,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
         PsiElement element = reference.getElement();
         final PsiDocTag docTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
         if (docTag != null) {
-          usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(docTag, parameter, true));
+          usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(docTag, parameter, true));
           return true;
         }
 
@@ -513,7 +513,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
           }
         }
 
-        usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(element, parameter, isSafeDelete));
+        usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(element, parameter, isSafeDelete));
         return true;
       }
     });
