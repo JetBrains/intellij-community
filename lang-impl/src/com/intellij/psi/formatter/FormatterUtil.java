@@ -32,28 +32,30 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlRootTag;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class FormatterUtil {
+  private static List<FormatterUtilHelper> ourHelpers = new CopyOnWriteArrayList<FormatterUtilHelper>();
+
   private FormatterUtil() {
   }
 
-  public static ASTNode getWsCandidate(ASTNode element) {
+  public static void addHelper(FormatterUtilHelper helper) {
+    ourHelpers.add(helper);
+  }
+
+  private static ASTNode getWsCandidate(ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
     if (treePrev != null) {
@@ -85,12 +87,11 @@ public class FormatterUtil {
       return element;
     }
     else {
-      ASTNode compositeElement = element;
-      final ASTNode node = compositeElement.getLastChildNode();
+      final ASTNode node = element.getLastChildNode();
       if (node instanceof LeafElement) ChameleonTransforming.transform((LeafElement)node);
-      final ASTNode lastChild = compositeElement.getLastChildNode();
+      final ASTNode lastChild = element.getLastChildNode();
       if (lastChild == null) {
-        return compositeElement;
+        return element;
       }
       else {
         return getLastChildOf(lastChild);
@@ -146,18 +147,15 @@ public class FormatterUtil {
 
       if (treePrev == null) {
         if (whiteSpace.length() > 0) {
-          addWhiteSpace(leafElement, whiteSpaceElement, leafElement, charTable);
+          addWhiteSpace(leafElement, whiteSpaceElement);
         }
       }
       else if (!isSpaceTextElement(treePrev)) {
         if (whiteSpace.length() > 0) {
-          addWhiteSpace(treePrev, whiteSpaceElement, leafElement, charTable);
+          addWhiteSpace(treePrev, whiteSpaceElement);
         }
       }
-      else if (!isWhiteSpaceElement(treePrev)) {
-        return;
-      }
-      else {
+      else if (isWhiteSpaceElement(treePrev)) {
         final CompositeElement treeParent = (CompositeElement)treePrev.getTreeParent();
         if (whiteSpace.length() > 0) {
 //          LOG.assertTrue(textRange == null || treeParent.getTextRange().equals(textRange));
@@ -168,7 +166,6 @@ public class FormatterUtil {
         }
         //treeParent.subtreeChanged();
       }
-
     }
   }
 
@@ -191,63 +188,27 @@ public class FormatterUtil {
     return result;
   }
 
-  private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement,
-                                    ASTNode leafAfter, final CharTable charTable) {
+  private static void addWhiteSpace(final ASTNode treePrev, final LeafElement whiteSpaceElement) {
+    for (FormatterUtilHelper helper : ourHelpers) {
+      if (helper.addWhitespace(treePrev, whiteSpaceElement)) return;
+    }
+
     final ASTNode treeParent = treePrev.getTreeParent();
-    if(isInsideTagBody(treePrev)){
-      final boolean before;
-      final XmlText xmlText;
-      if(treePrev.getElementType() == XmlElementType.XML_TEXT) {
-        xmlText = (XmlText)treePrev.getPsi();
-        before = true;
-      }
-      else if(treePrev.getTreePrev().getElementType() == XmlElementType.XML_TEXT){
-        xmlText = (XmlText)treePrev.getTreePrev().getPsi();
-        before = false;
-      }
-      else{
-        xmlText = (XmlText)Factory.createCompositeElement(XmlElementType.XML_TEXT, charTable, treeParent.getPsi().getManager());
-        CodeEditUtil.setNodeGenerated(xmlText.getNode(), true);
-        treeParent.addChild(xmlText.getNode(), treePrev);
-        before = true;
-      }
-      final ASTNode node = xmlText.getNode();
-      final TreeElement anchorInText = (TreeElement) (before ? node.getFirstChildNode() : node.getLastChildNode());
-      if (anchorInText == null) node.addChild(whiteSpaceElement);
-      else if (anchorInText.getElementType() != XmlTokenType.XML_WHITE_SPACE) node.addChild(whiteSpaceElement, before ? anchorInText : null);
-      else {
-        final String text = before ? whiteSpaceElement.getText() + anchorInText.getText() : anchorInText.getText() +
-                                                                                            whiteSpaceElement.getText();
-        final LeafElement singleLeafElement = Factory.createSingleLeafElement(XmlTokenType.XML_WHITE_SPACE, text, 0,
-                                                                              text.length(), charTable, xmlText.getManager());
-        node.replaceChild(anchorInText, singleLeafElement);
-      }
-    }
-    else treeParent.addChild(whiteSpaceElement, treePrev);
+    treeParent.addChild(whiteSpaceElement, treePrev);
   }
 
-  private static boolean isInsideTagBody(ASTNode place) {
-    final ASTNode treeParent = place.getTreeParent();
-    if(treeParent instanceof JspXmlRootTag) return true;
-    if(treeParent.getElementType() != XmlElementType.XML_TAG
-       && treeParent.getElementType() != XmlElementType.HTML_TAG) return false;
-    while(place != null){
-      if(place.getElementType() == XmlTokenType.XML_TAG_END) return true;
-      place = place.getTreePrev();
-    }
-    return false;
-  }
-
+  @Nullable
   private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement) {
     final int offset = leafElement.getTextRange().getStartOffset() - 1;
     if (offset < 0) return null;
     final PsiElement found = SourceTreeToPsiMap.treeElementToPsi(leafElement).getContainingFile().findElementAt(offset);
     if (found == null) return null;
-    final ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(found);
+    final ASTNode treeElement = found.getNode();
     if (treeElement.getElementType() == TokenType.WHITE_SPACE) return treeElement;
     return null;
   }
 
+  @Nullable
   public static ASTNode getLeafNonSpaceBefore(final ASTNode element) {
     if (element == null) return null;
     ASTNode treePrev = element.getTreePrev();
@@ -307,31 +268,13 @@ public class FormatterUtil {
     }
   }
 
-  public static void delete(final ASTNode prevElement) {
-    final ASTNode treeParent = prevElement.getTreeParent();
-    if (treeParent.getElementType() == XmlElementType.XML_TEXT && treeParent.getTextRange().equals(prevElement.getTextRange())) {
-      delete(treeParent);
-    } else {
-      treeParent.removeRange(prevElement, prevElement.getTreeNext());
-    }
-  }
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormatterUtil");
-
   public static boolean containsWhiteSpacesOnly(final ASTNode node) {
-    if (node.getElementType() == TokenType.WHITE_SPACE) return true;
-    if (node.getElementType() == ElementType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0) {
-      return true;
-      //EnterActionTest && JavaDocParamTest
+    if (node.getElementType() == TokenType.WHITE_SPACE || node.getTextLength() == 0) return true;
+    for (FormatterUtilHelper helper : ourHelpers) {
+      if (helper.containsWhitespacesOnly(node)) return true;
     }
 
-    if ((node.getElementType() == JspElementType.JSP_XML_TEXT || node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) && node.getText().trim().length() == 0) {
-      return true;
-    }
-
-    if (node.getTextLength() == 0) return true;
     if (node instanceof LeafElement) return false;
-
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (!containsWhiteSpacesOnly(child)) return false;

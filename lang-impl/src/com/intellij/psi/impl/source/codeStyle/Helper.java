@@ -25,11 +25,9 @@ public class Helper {
 
   private final CodeStyleSettings mySettings;
   private final FileType myFileType;
-  private final Project myProject;
 
   public Helper(FileType fileType, Project project) {
     mySettings = CodeStyleSettingsManager.getSettings(project);
-    myProject = project;
     myFileType = fileType;
   }
 
@@ -316,9 +314,4 @@ public class Helper {
   public FileType getFileType() {
     return myFileType;
   }
-
-  public Project getProject() {
-    return myProject;
-  }
-
 }

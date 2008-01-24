@@ -5,6 +5,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.formatter.FormatterUtil;
+import com.intellij.psi.formatter.JavadocFormatterUtilHlper;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 
@@ -16,6 +18,10 @@ import java.util.List;
  */
 public class JavadocManagerImpl implements JavadocManager {
   private JavadocTagInfo[] myInfos;
+
+  static {
+    FormatterUtil.addHelper(new JavadocFormatterUtilHlper());
+  }
 
   public JavadocManagerImpl() {
     List<JavadocTagInfo> infos = new ArrayList<JavadocTagInfo>();
