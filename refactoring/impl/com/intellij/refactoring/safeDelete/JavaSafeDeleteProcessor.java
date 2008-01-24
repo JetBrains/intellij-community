@@ -28,27 +28,25 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
   }
 
   @Nullable
-  public Condition<PsiElement> findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, final List<UsageInfo> usages) {
+  public NonCodeUsageSearchInfo findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, final List<UsageInfo> usages) {
+    Condition<PsiElement> insideDeletedCondition = getUsageInsideDeletedFilter(allElementsToDelete);
     if (element instanceof PsiClass) {
       findClassUsages((PsiClass) element, allElementsToDelete, usages);
       if (element instanceof PsiTypeParameter) {
         findTypeParameterExternalUsages((PsiTypeParameter)element, usages);
       }
-      return getUsageInsideDeletedFilter(allElementsToDelete);
     }
     else if (element instanceof PsiMethod) {
-      return findMethodUsages((PsiMethod) element, allElementsToDelete, usages);
+      insideDeletedCondition = findMethodUsages((PsiMethod) element, allElementsToDelete, usages);
     }
     else if (element instanceof PsiField) {
-      return findFieldUsages((PsiField)element, usages, allElementsToDelete);
+      insideDeletedCondition = findFieldUsages((PsiField)element, usages, allElementsToDelete);
     }
     else if (element instanceof PsiParameter) {
       LOG.assertTrue(((PsiParameter) element).getDeclarationScope() instanceof PsiMethod);
       findParameterUsages((PsiParameter)element, usages);
-      return getUsageInsideDeletedFilter(allElementsToDelete);
     }
-    assert false: "findUsages() got element for which handlesElement() returned false";
-    return null;
+    return new NonCodeUsageSearchInfo(insideDeletedCondition, element);
   }
 
   public static Condition<PsiElement> getUsageInsideDeletedFilter(final PsiElement[] allElementsToDelete) {

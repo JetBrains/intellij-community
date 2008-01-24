@@ -1,13 +1,11 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -17,5 +15,5 @@ public interface SafeDeleteProcessorDelegate {
 
   boolean handlesElement(PsiElement element);
   @Nullable
-  Condition<PsiElement> findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, List<UsageInfo> result);
+  NonCodeUsageSearchInfo findUsages(final PsiElement element, final PsiElement[] allElementsToDelete, List<UsageInfo> result);
 }

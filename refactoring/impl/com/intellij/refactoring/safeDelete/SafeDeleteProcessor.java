@@ -2,8 +2,6 @@ package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.LanguageRefactoringSupport;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,52 +103,41 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       boolean handled = false;
       for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
         if (delegate.handlesElement(element)) {
-          final Condition<PsiElement> filter = delegate.findUsages(element, myElements, usages);
+          final NonCodeUsageSearchInfo filter = delegate.findUsages(element, myElements, usages);
           if (filter != null) {
-            addNonCodeUsages(element, usages, filter);
+            for(PsiElement nonCodeUsageElement: filter.getElementsToSearch()) {
+              addNonCodeUsages(nonCodeUsageElement, usages, filter.getInsideDeletedCondition());
+            }
           }
           handled = true;
           break;
         }
       }
-      if (!handled) {
-        if (element instanceof PsiFile) {
-          findFileUsages((PsiFile)element, usages);
-        }
-        else if (element instanceof PsiNamedElement) {
-          findGenericElementUsages(element, usages);
-        }
+      if (!handled && element instanceof PsiNamedElement) {
+        findGenericElementUsages(element, usages, myElements);
+        addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements));
       }
     }
     final UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
     return UsageViewUtil.removeDuplicatedUsages(result);
   }
 
-  private void findFileUsages(final PsiFile file, final List<UsageInfo> usages) {
-    findGenericElementUsages(file, usages);
-    List<Property> declarations = Collections.emptyList();
-    if (file instanceof PropertiesFile) {
-      declarations = ((PropertiesFile)file).getProperties();
-    }
-
-    for (PsiElement declaration : declarations) {
-      findGenericElementUsages(declaration, usages);
-    }
+  public static Condition<PsiElement> getDefaultInsideDeletedCondition(final PsiElement[] elements) {
+    return new Condition<PsiElement>() {
+      public boolean value(final PsiElement usage) {
+        return !(usage instanceof PsiFile) && isInside(usage, elements);
+      }
+    };
   }
 
-  private void findGenericElementUsages(final PsiElement element, final List<UsageInfo> usages) {
+  public static void findGenericElementUsages(final PsiElement element, final List<UsageInfo> usages, final PsiElement[] allElementsToDelete) {
     ReferencesSearch.search(element).forEach(new Processor<PsiReference>() {
       public boolean process(final PsiReference reference) {
         final PsiElement refElement = reference.getElement();
-        if (!isInside(refElement, myElements)) {
+        if (!isInside(refElement, allElementsToDelete)) {
           usages.add(new SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, element, false));
         }
         return true;
-      }
-    });
-    addNonCodeUsages(element, usages, new Condition<PsiElement>() {
-      public boolean value(final PsiElement usage) {
-        return !(usage instanceof PsiFile) && isInside(usage, myElements);
       }
     });
   }
