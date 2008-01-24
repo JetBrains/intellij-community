@@ -25,12 +25,12 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   public Project doOpenProject(@NotNull final VirtualFile virtualFile, final Project projectToClose, final boolean forceOpenInNewFrame) {
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    final Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
-
     if (virtualFile.isDirectory()) {
       BASE_DIR = virtualFile;
     }
+
+    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    final Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
 
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
