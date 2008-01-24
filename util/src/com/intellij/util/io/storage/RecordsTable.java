@@ -32,7 +32,7 @@ class RecordsTable implements Disposable, Forceable {
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_VERSION_OFFSET = 4;
   private static final int CONNECTED_MAGIC = 0x12ad34e4;
-  private static final int VERSION = 2;
+  private static final int VERSION = 3;
   private static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f + VERSION;
 
   private static final int ADDRESS_OFFSET = 0;

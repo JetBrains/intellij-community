@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class FSRecords implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private final static int VERSION = 6;
+  private final static int VERSION = 7;
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -708,31 +708,9 @@ public class FSRecords implements Disposable, Forceable {
     synchronized (lock) {
       try {
         int encodedAttId = DbConnection.getAttributeId(attId);
-        int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
-        while (att_page != 0) {
-          assert att_page >= 0 && att_page <= getAttributes().getRecordsCount();
-
-          final DataInputStream page = getAttributes().readStream(att_page);
-          int attIdOnPage;
-          int next;
-          try {
-            attIdOnPage = page.readInt();
-            next = page.readInt();
-          }
-          catch (IOException e) {
-            LOG.error(DbConnection.handleError(e));
-            attIdOnPage = 0;
-            next = 0;
-          }
-          if (attIdOnPage == encodedAttId) {
-            return page;
-          }
-
-          att_page = next;
-          page.close();
-        }
-
-        return null;
+        final int att = findAttributePage(id, encodedAttId, false);
+        if (att == 0) return null;
+        return getAttributes().readStream(att);
       }
       catch (IOException e) {
         throw DbConnection.handleError(e);
@@ -740,44 +718,39 @@ public class FSRecords implements Disposable, Forceable {
     }
   }
 
-  private DataOutputStream findPageToWrite(int id, final int encodedAttId, final int headPage) throws IOException {
-    final DataOutputStream result;
-    final int resultId;
-    incModCount(id);
-
-    int att_page = headPage;
-
-    while (att_page != 0) {
-      int curPage = att_page;
-      final DataInputStream page = getAttributes().readStream(att_page);
-      final int attIdOnPage = page.readInt();
-      final int next = page.readInt();
-      if (attIdOnPage == encodedAttId) {
-        page.close();
-        result = getAttributes().writeStream(curPage);
-        result.writeInt(encodedAttId);
-        result.writeInt(next);
-
-        return result;
-      }
-
-      att_page = next;
-      page.close();
+  private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
+    int attrsRecord = getRecords().getInt(fileId * RECORD_SIZE + ATTREF_OFFSET);
+    if (attrsRecord == 0) {
+      attrsRecord = getAttributes().createNewRecord();
+      getRecords().putInt(fileId * RECORD_SIZE + ATTREF_OFFSET, attrsRecord);
     }
 
-    resultId = getAttributes().createNewRecord();
-    result = getAttributes().writeStream(resultId);
-    result.writeInt(encodedAttId);
-    result.writeInt(headPage);
+    final DataInputStream attrRefs = getAttributes().readStream(attrsRecord);
 
-    getRecords().putInt(id * RECORD_SIZE + ATTREF_OFFSET, resultId);
+    while (attrRefs.available() > 0) {
+      final int attIdOnPage = attrRefs.readInt();
+      final int attAddress = attrRefs.readInt();
 
-    return result;
+      if (attIdOnPage == attributeId) return attAddress;
+    }
+
+    attrRefs.close();
+
+    if (createIfNotFound) {
+      Storage.AppenderStream appender = getAttributes().appendStream(attrsRecord);
+      appender.writeInt(attributeId);
+      int attAddress = getAttributes().createNewRecord();
+      appender.writeInt(attAddress);
+      appender.close();
+      return attAddress;
+    }
+
+    return 0;
   }
 
   private class AttributeOutputStream extends DataOutputStream {
-    private String myAttributeId;
-    private int myFileId;
+    private final String myAttributeId;
+    private final int myFileId;
 
     private AttributeOutputStream(final int fileId, final String attributeId) {
       super(new ByteArrayOutputStream());
@@ -791,9 +764,10 @@ public class FSRecords implements Disposable, Forceable {
       synchronized (lock) {
         try {
           DbConnection.markDirty();
+          incModCount(myFileId);
           final int encodedAttId = DbConnection.getAttributeId(myAttributeId);
-          final int headPage = getRecords().getInt(myFileId * RECORD_SIZE + ATTREF_OFFSET);
-          final DataOutputStream sinkStream = findPageToWrite(myFileId, encodedAttId, headPage);
+          final int att = findAttributePage(myFileId, encodedAttId, true);
+          final DataOutputStream sinkStream = getAttributes().writeStream(att);
           sinkStream.write(((ByteArrayOutputStream)out).toByteArray());
           sinkStream.close();
         }
