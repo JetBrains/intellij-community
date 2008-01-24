@@ -6,7 +6,7 @@ import com.intellij.util.IncorrectOperationException;
 /**
  * @author dsl
  */
-public abstract class SafeDeleteReferenceUsageInfo extends SafeDeleteUsageInfo {
+public abstract class SafeDeleteReferenceUsageInfo extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
   protected final boolean mySafeDelete;
 
   public boolean isSafeDelete() {
@@ -24,5 +24,11 @@ public abstract class SafeDeleteReferenceUsageInfo extends SafeDeleteUsageInfo {
   public SafeDeleteReferenceUsageInfo(PsiElement element, PsiElement referencedElement, boolean safeDelete) {
     super(element, referencedElement);
     mySafeDelete = safeDelete;
+  }
+
+  public void performRefactoring() throws IncorrectOperationException {
+    if (isSafeDelete()) {
+      deleteElement();
+    }
   }
 }

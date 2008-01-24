@@ -298,15 +298,8 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       for (UsageInfo usage : usages) {
-        if (usage instanceof SafeDeleteReferenceUsageInfo && ((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()) {
-          ((SafeDeleteReferenceUsageInfo)usage).deleteElement();
-        }
-        else if (usage instanceof SafeDeletePrivatizeMethod) {
-          ((SafeDeletePrivatizeMethod)usage).getMethod().getModifierList().setModifierProperty(PsiModifier.PRIVATE, true);
-        }
-        else if (usage instanceof SafeDeleteOverridingMethodUsageInfo) {
-          ((SafeDeleteOverridingMethodUsageInfo)usage).getOverridingMethod().delete();
-
+        if (usage instanceof SafeDeleteCustomUsageInfo) {
+          ((SafeDeleteCustomUsageInfo) usage).performRefactoring();
         }
       }
 
