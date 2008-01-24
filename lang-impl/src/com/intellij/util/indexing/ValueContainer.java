@@ -19,6 +19,8 @@ public interface ValueContainer<Value> {
   
   IntIterator getInputIdsIterator(Value value);
 
+  boolean isAssociated(Value value, int inputId);
+  
   Iterator<Value> getValueIterator();
 
   int[] getInputIds(Value value);

@@ -54,7 +54,10 @@ public class IdIndex extends ScalarIndexExtension<IdIndexEntry>{
   private DataIndexer<IdIndexEntry, Void, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Void, FileBasedIndex.FileContent>() {
     public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
       final VirtualFile file = inputData.file;
-      IdTableBuilding.getFileTypeIndexer(file.getFileType(), file).map(inputData, consumer);
+      final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
+      if (indexer != null) {
+        indexer.map(inputData, consumer);
+      }
     }
   };
   

@@ -34,6 +34,10 @@ public abstract class BaseFilterLexer extends LexerBase implements IdTableBuildi
     myOccurrenceConsumer = occurrenceConsumer;
   }
 
+  public OccurrenceConsumer getOccurrenceConsumer() {
+    return myOccurrenceConsumer;
+  }
+
   public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
     myOriginalLexer.start(buffer, startOffset, endOffset, initialState);
   }

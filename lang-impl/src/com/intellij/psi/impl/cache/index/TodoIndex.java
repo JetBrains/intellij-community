@@ -1,10 +1,22 @@
 package com.intellij.psi.impl.cache.index;
 
+import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.IndexDataConsumer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -15,6 +27,8 @@ import java.io.IOException;
  *         Date: Jan 20, 2008
  */
 public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Integer> {
+
+  @NonNls public static final String NAME = "TodoIndex";
 
   private final PersistentEnumerator.DataDescriptor<TodoIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<TodoIndexEntry>() {
     public int getHashCode(final TodoIndexEntry value) {
@@ -46,17 +60,44 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
       return new Integer(in.readInt());
     }
   };
+
+  private DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>() {
+    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<TodoIndexEntry, Integer> consumer) {
+      final VirtualFile file = inputData.file;
+      final DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
+      if (indexer != null) {
+        indexer.map(inputData, consumer);
+      }
+    }
+  };
   
+  private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
+    private FileTypeManager myFtManager = FileTypeManager.getInstance();
+    public boolean acceptInput(final VirtualFile file) {
+      final FileType fileType = myFtManager.getFileTypeByFile(file);
+      
+      if (fileType instanceof LanguageFileType) {
+        final Language lang = ((LanguageFileType)fileType).getLanguage();
+        final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+        final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+        return commentTokens != null;
+      }
+      
+      return IdTableBuilding.isTodoIndexerRegistered(fileType) ||
+             fileType instanceof CustomFileType; 
+    }
+  };
+
   public int getVersion() {
     return 1;
   }
 
   public String getName() {
-    return "TodoIndex";
+    return NAME;
   }
 
   public DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> getIndexer() {
-    return null;
+    return myIndexer;
   }
 
   public PersistentEnumerator.DataDescriptor<TodoIndexEntry> getKeyDescriptor() {
@@ -68,7 +109,7 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
   }
 
   public FileBasedIndex.InputFilter getInputFilter() {
-    return null;
+    return myInputFilter;
   }
 
 }

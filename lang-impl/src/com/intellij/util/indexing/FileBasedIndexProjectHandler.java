@@ -7,9 +7,10 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.ide.startup.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.CollectingContentIterator;
-import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,10 +65,34 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
     }
 
     private void iterateIndexableFiles(final ContentIterator processor) {
-      // todo: iterate all files that can be indexed, not just content
-      myRootManager.getFileIndex().iterateContent(processor);
+      final ProjectFileIndex projectFileIndex = myRootManager.getFileIndex();
+      // iterate associated libraries
+      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      for (Module module : modules) {
+        OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
+        for (OrderEntry orderEntry : orderEntries) {
+          if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
+            VirtualFile[] roots = orderEntry.getFiles(OrderRootType.SOURCES);
+            for (VirtualFile root : roots) {
+              iterateRecursively(root, processor);
+            }
+          }
+        }
+      }
+      // iterate project content 
+      projectFileIndex.iterateContent(processor);
     }
 
+    private void iterateRecursively(final VirtualFile root, final ContentIterator processor) {
+      for (VirtualFile file : root.getChildren()) {
+        if (file.isDirectory()) {
+          iterateRecursively(file, processor);
+        }
+        else {
+          processor.processFile(file);
+        }
+      }
+    }
 
     public void updatingDone() {
     }

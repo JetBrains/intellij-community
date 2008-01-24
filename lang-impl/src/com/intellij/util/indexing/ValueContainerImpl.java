@@ -78,6 +78,17 @@ class ValueContainerImpl<Value> implements ValueContainer<Value>, Cloneable{
     return idSet;
   }
 
+  public boolean isAssociated(final Value value, final int inputId) {
+    final Object input = myInputIdMapping.get(value);
+    if (input instanceof TIntHashSet) {
+      return ((TIntHashSet)input).contains(inputId);
+    }
+    if (input instanceof Integer ){
+      return inputId == ((Integer)input).intValue();
+    }
+    return false;
+  }
+
   public IntIterator getInputIdsIterator(final Value value) {
     final Object input = myInputIdMapping.get(value);
     final IntIterator it;

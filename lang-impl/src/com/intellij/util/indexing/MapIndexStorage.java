@@ -1,7 +1,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -13,8 +12,6 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author Eugene Zhuravlev
@@ -26,15 +23,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private final DataExternalizer<Value> myValueExternalizer;
   private final ObjectCache<Key, ValueContainerImpl<Value>> myCache;
   private Key myKeyBeingRemoved = null;
-  private Lock myFlushingLock = new ReentrantLock();
   
-  private Alarm myCacheFlushingAlarm  = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private Runnable myFlushCachesRequest = new Runnable() {
-    public void run() {
-      flush();
-    }
-  };
-
   public MapIndexStorage(
     File storageFile, 
     final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, 
@@ -62,7 +51,6 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   
   public void flush() {
     //System.out.println("Cache hit rate = " + myCache.hitRate());
-    myFlushingLock.lock();
     try {
       myCache.removeAll();
       myMap.flush();
@@ -70,11 +58,8 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     catch (IOException e) {
       LOG.error(e);
     }
-    finally {
-      myFlushingLock.unlock();
-    }
   }
-  
+
   public void close() throws StorageException {
     try {
       flush();
@@ -85,24 +70,16 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
   }
 
-  
   @NotNull
   public ValueContainer<Value> read(final Key key) throws StorageException {
-    myFlushingLock.lock();
-    try {
-      final ValueContainer<Value> container = myCache.get(key);
-      if (container != null) {
-        return container;
-      }
-      return readAndCache(key);
+    final ValueContainer<Value> container = myCache.get(key);
+    if (container != null) {
+      return container;
     }
-    finally {
-      myFlushingLock.unlock();
-    }
+    return readAndCache(key);
   }
 
   public void addValue(final Key key, final int inputId, final Value value) throws StorageException {
-    myFlushingLock.lock();
     try {
       final ValueContainerImpl<Value> container = myCache.get(key);
       if (container != null) {
@@ -120,19 +97,15 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     catch (IOException e) {
       throw new StorageException(e);
     }
-    finally {
-      myFlushingLock.unlock();
-    }
   }
 
   public void removeValue(final Key key, final int inputId, final Value value) throws StorageException {
-    myFlushingLock.lock();
     try {
       ValueContainerImpl<Value> container = myCache.get(key);
       if (container == null) {
         container = myMap.get(key);
         if (container != null) {
-          cacheObject(key, container);
+          myCache.cacheObject(key, container);
         }
       }
       if (container != null) {
@@ -142,15 +115,6 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     catch (IOException e) {
       throw new StorageException(e);
     }
-    finally {
-      myFlushingLock.unlock();
-    }
-  }
-
-  private void cacheObject(final Key key, final ValueContainerImpl<Value> value) {
-    myCache.cacheObject(key, value);
-    myCacheFlushingAlarm.cancelAllRequests();
-    myCacheFlushingAlarm.addRequest(myFlushCachesRequest, 15000 /* 15 sec */);
   }
 
   @NotNull
@@ -160,7 +124,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       if (value == null) {
         value = new ValueContainerImpl<Value>();
       }
-      cacheObject(key, value);
+      myCache.cacheObject(key, value);
       return value;
     }
     catch (IOException e) {
@@ -169,7 +133,6 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   }
 
   public void remove(final Key key) throws StorageException {
-    myFlushingLock.lock();
     try {
       myKeyBeingRemoved = key;
       myCache.remove(key);
@@ -180,7 +143,6 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
     finally {
       myKeyBeingRemoved = null;
-      myFlushingLock.unlock();
     }
   }
   

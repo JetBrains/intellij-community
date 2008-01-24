@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
+import com.intellij.psi.impl.cache.impl.idCache.IdCacheUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -16,10 +17,10 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.ValueContainer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
@@ -92,15 +93,57 @@ public class IndexCacheManagerImpl implements CacheManager{
 
   @NotNull
   public PsiFile[] getFilesWithTodoItems() {
-    return PsiFile.EMPTY_ARRAY; // todo
+    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    final Set<PsiFile> allFiles = new HashSet<PsiFile>();
+    for (IndexPattern indexPattern : IdCacheUtil.getIndexPatterns()) {
+      final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
+        TodoIndex.NAME, 
+        new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), 
+        myProject
+      );
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        public void run() {
+          for (VirtualFile file : files) {
+            final PsiFile psiFile = myPsiManager.findFile(file);
+            if (psiFile != null) {
+              allFiles.add(psiFile);
+            }
+          }
+        }
+        });
+    }
+    return allFiles.toArray(new PsiFile[allFiles.size()]);
   }
 
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPatternProvider patternProvider) {
-    return 0; // todo
+    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+    final int fileId = FileBasedIndex.getFileId(file);
+    int count = 0;
+    for (IndexPattern indexPattern : patternProvider.getIndexPatterns()) {
+      count += fetchCount(fileBasedIndex, fileId, indexPattern);
+    }
+    return count;
+  }
+   
+  public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
+    return fetchCount(FileBasedIndex.getInstance(), FileBasedIndex.getFileId(file), pattern);
   }
 
-  public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
-    return 0; // todo
+  private int fetchCount(final FileBasedIndex fileBasedIndex, final int fileId, final IndexPattern indexPattern) {
+    final int[] count = new int[] {0};
+    fileBasedIndex.getData(TodoIndex.NAME, new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), myProject, new FileBasedIndex.DataFilter<TodoIndexEntry, Integer>() {
+      public List<Integer> process(final TodoIndexEntry entry, final ValueContainer<Integer> container) {
+        for (final Iterator<Integer> valueIterator = container.getValueIterator(); valueIterator.hasNext(); ) {
+          final Integer value = valueIterator.next();
+          if (container.isAssociated(value, fileId)) {
+            count[0] = value.intValue();
+            return Collections.emptyList();
+          }
+        }
+        return Collections.emptyList();
+      }
+    });
+    return count[0];
   }
 
   public void addOrInvalidateFile(@NotNull final VirtualFile file) {

@@ -12,11 +12,6 @@ import com.intellij.util.indexing.IndexDataConsumer;
  */
 public abstract class FileTypeIdIndexer implements DataIndexer<IdIndexEntry, Void, FileBasedIndex.FileContent> {
 
-  public static void addOccurrence(IndexDataConsumer<IdIndexEntry, Void> consumer, CharSequence charSequence, int occurrenceMask) {
-    addOccurrence(consumer, StringUtil.stringHashCode(charSequence),occurrenceMask);
-    addOccurrence(consumer, StringUtil.stringHashCodeInsensitive(charSequence),occurrenceMask);
-  }
-  
   public static void addOccurrence(IndexDataConsumer<IdIndexEntry, Void> consumer, CharSequence charSequence, int start, int end, int occurrenceMask) {
     addOccurrence(consumer, StringUtil.stringHashCode(charSequence, start, end),occurrenceMask);
     addOccurrence(consumer, StringUtil.stringHashCodeInsensitive(charSequence, start, end),occurrenceMask);
