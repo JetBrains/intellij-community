@@ -165,6 +165,7 @@ public class TypesUtil {
     if (type instanceof PsiClassType) {
       PsiType unboxed = ourQNameToUnboxed.get(type.getCanonicalText());
       if (unboxed != null) type = unboxed;
+      if (type.equalsToText("java.math.BigDecimal")) return PsiType.DOUBLE;
     }
     return type;
   }
