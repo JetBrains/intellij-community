@@ -20,6 +20,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -311,12 +312,12 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         element.delete();
       }
     } catch (IncorrectOperationException e) {
-      RefactoringUtil.processIncorrectOperation(myProject, e);
+      RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
   }
 
   private String calcCommandName() {
-    return RefactoringBundle.message("safe.delete.command", RefactoringUtil.calculatePsiElementDescriptionList(myElements));
+    return RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(myElements));
   }
 
   private String myCachedCommandName = null;

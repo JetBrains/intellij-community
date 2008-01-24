@@ -409,7 +409,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
     catch (IncorrectOperationException e) {
       myNonCodeUsages = new NonCodeUsageInfo[0];
-      RefactoringUtil.processIncorrectOperation(myProject, e);
+      RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
   }
 
@@ -442,7 +442,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   protected String getCommandName() {
-    String elements = RefactoringUtil.calculatePsiElementDescriptionList(myElementsToMove);
+    String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
     String target = myTargetPackage.getQualifiedName();
     return RefactoringBundle.message("move.classes.command", elements, target);
   }

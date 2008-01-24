@@ -9,7 +9,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +21,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,12 +46,10 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameInputValidatorRegistry;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1250,19 +1246,6 @@ public class RefactoringUtil {
     return current;
   }
 
-  public static String calculatePsiElementDescriptionList(PsiElement[] elements) {
-    StringBuilder buffer = new StringBuilder();
-    for (int i = 0; i < elements.length; i++) {
-      if (i > 0) buffer.append(", ");
-      buffer.append(UsageViewUtil.getType(elements[i]));
-      buffer.append(" ");
-      buffer.append(UsageViewUtil.getDescriptiveName(elements[i]));
-    }
-
-    return buffer.toString();
-  }
-
-
   public static class ConditionCache<T> implements Condition<T> {
     private final Condition<T> myCondition;
     private final HashSet<T> myProcessedSet = new HashSet<T>();
@@ -1302,21 +1285,6 @@ public class RefactoringUtil {
     public boolean value(PsiClass aClass) {
       return myConditionCache.value(aClass);
     }
-  }
-
-  public static void processIncorrectOperation(final Project project, IncorrectOperationException e) {
-    @NonNls String message = e.getMessage();
-    final int index = message != null ? message.indexOf("java.io.IOException") : -1;
-    if (index > 0) {
-      message = message.substring(index + "java.io.IOException".length());
-    }
-
-    final String s = message;
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-      }
-    });
   }
 
   public static void analyzeModuleConflicts(Project project,

@@ -25,6 +25,7 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -313,7 +314,7 @@ public class MoveClassesOrPackagesImpl {
     };
     CommandProcessor.getInstance().executeCommand(project, runnable, commandDescription, null);
     if (ex.get() != null) {
-      RefactoringUtil.processIncorrectOperation(project, ex.get());
+      RefactoringUIUtil.processIncorrectOperation(project, ex.get());
     }
   }
 

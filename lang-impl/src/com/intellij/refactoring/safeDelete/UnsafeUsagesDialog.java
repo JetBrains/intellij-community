@@ -7,12 +7,11 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-
-import org.jetbrains.annotations.NonNls;
 
 public class UnsafeUsagesDialog extends DialogWrapper {
   private JEditorPane myMessagePane;

@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.SafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import org.jetbrains.annotations.Nullable;
@@ -199,7 +199,7 @@ public class DeleteHandler {
           });
         }
       }
-    }, RefactoringBundle.message("safe.delete.command", RefactoringUtil.calculatePsiElementDescriptionList(elements)), null);
+    }, RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(elements)), null);
   }
 
   private static boolean clearReadOnlyFlag(final VirtualFile virtualFile, final Project project) {
