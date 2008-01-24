@@ -66,14 +66,20 @@
 
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 
-  <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
   <!-- Live Templates -->
+  <applicationConfigurable implementation="com.intellij.codeInsight.template.impl.LiveTemplatesConfigurable"/>
 
-  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
+  <!-- Colors & Fonts-->
+  <applicationConfigurable implementation="com.intellij.application.options.colors.ColorAndFontOptions"/>
+
+  <!-- T.O.D.O -->
+  <applicationConfigurable implementation="com.intellij.ide.todo.configurable.TodoConfigurable"/>
+
   <!-- File Templates-->
+  <applicationConfigurable implementation="com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable"/>
 
-  <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
   <!-- Errors -->
+  <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>
