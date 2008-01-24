@@ -247,6 +247,13 @@
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.ide.structureView.StructureViewFactory</interface-class>
+      <implementation-class>com.intellij.ide.structureView.impl.StructureViewFactoryImpl</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>

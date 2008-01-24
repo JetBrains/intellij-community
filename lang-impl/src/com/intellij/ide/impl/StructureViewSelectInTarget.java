@@ -1,9 +1,9 @@
 package com.intellij.ide.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewWrapper;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -47,7 +47,7 @@ public class StructureViewSelectInTarget implements SelectInTarget {
   }
 
   private StructureViewWrapper getStructureViewWrapper() {
-    return StructureViewFactoryEx.getInstance(myProject).getStructureViewWrapper();
+    return StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
   }
 
   public String getToolWindowId() {

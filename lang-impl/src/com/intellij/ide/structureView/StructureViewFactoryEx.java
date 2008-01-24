@@ -8,10 +8,7 @@ import java.util.Collection;
 /**
  * @author Eugene Belyaev
  */
-public abstract class StructureViewFactoryEx {
-  public static StructureViewFactoryEx getInstance(Project project) {
-    return project.getComponent(StructureViewFactoryEx.class);
-  }
+public abstract class StructureViewFactoryEx extends StructureViewFactory {
 
   public abstract StructureViewWrapper getStructureViewWrapper();
 
@@ -23,4 +20,8 @@ public abstract class StructureViewFactoryEx {
   public abstract void setActiveAction(final String name, final boolean state);
 
   public abstract boolean isActionActive(final String name);
+
+  public static StructureViewFactoryEx getInstanceEx(final Project project) {
+    return (StructureViewFactoryEx)getInstance(project);
+  }
 }

@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.ide.IdeBundle;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
@@ -36,6 +36,8 @@ public interface Sorter extends TreeAction {
    * @return the comparator for comparing nodes.
    */
   Comparator getComparator();
+
+  boolean isVisible();
 
   @NonNls String ALPHA_SORTER_ID = "ALPHA_COMPARATOR";
 
@@ -64,6 +66,10 @@ public interface Sorter extends TreeAction {
           }
         }
       };
+    }
+
+    public boolean isVisible() {
+      return true;
     }
 
     public String toString() {

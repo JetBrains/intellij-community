@@ -13,12 +13,7 @@
       <option name="workspace" value="true"/>
       <skipForDummyProject/>
     </component>
-    <component>
-      <interface-class>com.intellij.ide.structureView.StructureViewFactoryEx</interface-class>
-      <implementation-class>com.intellij.ide.structureView.impl.StructureViewFactoryImpl</implementation-class>
-      <option name="workspace" value="true"/>
-      <skipForDummyProject/>
-    </component>
+   
 
     <component>
       <implementation-class>com.intellij.ide.projectView.impl.ClassesTreeStructureProvider</implementation-class>

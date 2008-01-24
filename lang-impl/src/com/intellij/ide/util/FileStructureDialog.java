@@ -8,7 +8,6 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.impl.java.InheritedMembersFilter;
-import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -400,7 +399,7 @@ public class FileStructureDialog extends DialogWrapper {
     };
   }
 
-  private static class MyTreeActionsOwner implements TreeActionsOwner {
+  private class MyTreeActionsOwner implements TreeActionsOwner {
     private boolean myIncludeInherited = false;
 
     public void setIncludeInherited(final boolean includeInherited) {
@@ -411,8 +410,11 @@ public class FileStructureDialog extends DialogWrapper {
     }
 
     public boolean isActionActive(String name) {
+      for (final Sorter sorter : myBaseTreeModel.getSorters()) {
+        if (sorter.getName().equals(name)) return !sorter.isVisible();
+      }
       return (!myIncludeInherited && InheritedMembersFilter.ID.equals(name)) ||
-             KindSorter.ID.equals(name) || Sorter.ALPHA_SORTER_ID.equals(name);
+             Sorter.ALPHA_SORTER_ID.equals(name);
     }
   }
 }

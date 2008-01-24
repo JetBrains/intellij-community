@@ -2,12 +2,8 @@ package com.intellij.peer.impl;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.CopyPasteSupport;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewFactory;
-import com.intellij.ide.structureView.StructureViewModel;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.PackageChooserDialog;
@@ -24,7 +20,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileChooser.FileSystemTreeFactory;
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeFactoryImpl;
-import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
@@ -236,19 +231,6 @@ public class PeerFactoryImpl extends PeerFactory {
 
   public VcsContextFactory getVcsContextFactory() {
     return VcsContextFactory.SERVICE.getInstance();
-  }
-
-  public StructureViewFactory getStructureViewFactory() {
-    return new StructureViewFactory() {
-
-      public StructureView createStructureView(final FileEditor editor, StructureViewModel treeModel, Project project) {
-        return new StructureViewComponent(editor, treeModel, project);
-      }
-
-      public StructureView createStructureView(FileEditor editor, StructureViewModel treeModel, Project project, boolean showRootNode) {
-        return new StructureViewComponent(editor, treeModel, project, showRootNode);
-      }
-    };
   }
 
   public PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project) {

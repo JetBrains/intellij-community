@@ -7,7 +7,6 @@ import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.StructureViewState;
-import com.intellij.ide.structureView.impl.java.KindSorter;
 import com.intellij.ide.ui.customization.CustomizableActionsSchemas;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -68,7 +67,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   private static final Key<StructureViewState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private final Project myProject;
   private final StructureViewModel myTreeModel;
-  private boolean mySortByKind = true;
   private static int ourSettingsModificationCount;
 
   public StructureViewComponent(FileEditor editor, StructureViewModel structureViewModel, Project project) {
@@ -348,7 +346,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     DefaultActionGroup result = new DefaultActionGroup();
     Sorter[] sorters = myTreeModel.getSorters();
     for (final Sorter sorter : sorters) {
-      if (shouldBeShown(sorter)) {
+      if (sorter.isVisible()) {
         result.add(new TreeActionWrapper(sorter, this));
       }
     }
@@ -378,10 +376,6 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
 
   protected boolean showScrollToFromSourceActions() {
     return true;
-  }
-
-  private static boolean shouldBeShown(Sorter sorter) {
-    return !sorter.getName().equals(KindSorter.ID);
   }
 
   public FileEditor getFileEditor() {
@@ -548,7 +542,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public void setActionActive(String name, boolean state) {
-    StructureViewFactoryEx.getInstance(myProject).setActiveAction(name, state);
+    StructureViewFactoryEx.getInstanceEx(myProject).setActiveAction(name, state);
     rebuild();
   }
 
@@ -561,12 +555,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
   }
 
   public boolean isActionActive(String name) {
-    if (KindSorter.ID.equals(name)) {
-      return mySortByKind;
-    }
-    else {
-      return StructureViewFactoryEx.getInstance(myProject).isActionActive(name);
-    }
+    return StructureViewFactoryEx.getInstanceEx(myProject).isActionActive(name);
   }
 
   public AbstractTreeStructure getTreeStructure() {
@@ -577,11 +566,7 @@ public class StructureViewComponent extends JPanel implements TreeActionsOwner, 
     return myAbstractTreeBuilder == null ? null : myAbstractTreeBuilder.getTree();
   }
 
-  public void setKindSortingIsActive(boolean state) {
-    mySortByKind = state;
-    rebuild();
- }
-
+ 
   private final class MyAutoScrollToSourceHandler extends AutoScrollToSourceHandler {
     private boolean myShouldAutoScroll = true;
 

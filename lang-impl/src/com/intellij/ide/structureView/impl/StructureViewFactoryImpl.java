@@ -1,10 +1,10 @@
 package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
-import com.intellij.ide.structureView.StructureViewExtension;
-import com.intellij.ide.structureView.StructureViewFactoryEx;
-import com.intellij.ide.structureView.StructureViewWrapper;
+import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
@@ -132,5 +132,14 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
 
   public boolean isActionActive(final String name) {
     return collectActiveActions().contains(name);
+  }
+
+  public StructureView createStructureView(final FileEditor fileEditor, final StructureViewModel treeModel, final Project project) {
+    return new StructureViewComponent(fileEditor, treeModel, project);
+  }
+
+  public StructureView createStructureView(final FileEditor fileEditor,
+                                           final StructureViewModel treeModel, final Project project, final boolean showRootNode) {
+    return new StructureViewComponent(fileEditor, treeModel, project, showRootNode);
   }
 }

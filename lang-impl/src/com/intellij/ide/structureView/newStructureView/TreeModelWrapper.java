@@ -35,7 +35,7 @@ public class TreeModelWrapper implements StructureViewModel {
   private ArrayList<TreeAction> filterActive(TreeAction[] actions) {
     ArrayList<TreeAction> filtered = new ArrayList<TreeAction>();
     for (TreeAction action : actions) {
-      if (myStructureView.isActionActive(action.getName())) filtered.add(action);
+      if (action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName())) filtered.add(action);
     }
     return filtered;
   }
@@ -57,7 +57,13 @@ public class TreeModelWrapper implements StructureViewModel {
   }
 
   public static boolean isActive(final TreeAction action, final TreeActionsOwner actionsOwner) {
-    return shouldRevert(action) ?  !actionsOwner.isActionActive(action.getName()) : actionsOwner.isActionActive(action.getName());
+    if (shouldRevert(action)) {
+      return !actionsOwner.isActionActive(action.getName());
+    }
+    else {
+      if (action instanceof Sorter && !((Sorter)action).isVisible()) return true;
+      return actionsOwner.isActionActive(action.getName());
+    }
   }
 
   public static boolean shouldRevert(final TreeAction action) {

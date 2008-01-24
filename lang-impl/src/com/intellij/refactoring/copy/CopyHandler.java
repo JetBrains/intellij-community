@@ -70,7 +70,7 @@ public class CopyHandler {
     else if (ToolWindowId.STRUCTURE_VIEW.equals(id)) {
       VirtualFile virtualFile = newElement.getContainingFile().getVirtualFile();
       FileEditor editor = FileEditorManager.getInstance(newElement.getProject()).getSelectedEditor(virtualFile);
-      StructureViewFactoryEx.getInstance(project).getStructureViewWrapper().selectCurrentElement(editor, true);
+      StructureViewFactoryEx.getInstanceEx(project).getStructureViewWrapper().selectCurrentElement(editor, true);
     }
   }
 }

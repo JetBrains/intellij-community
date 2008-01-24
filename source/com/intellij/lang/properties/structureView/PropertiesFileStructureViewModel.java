@@ -1,16 +1,16 @@
 package com.intellij.lang.properties.structureView;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
 import com.intellij.ide.util.treeView.smartTree.*;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.psi.PsiFile;
 import com.intellij.openapi.util.IconLoader;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
@@ -30,6 +30,10 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
           return weight1 - weight2;
         }
       };
+    }
+
+    public boolean isVisible() {
+      return true;
     }
 
     @NotNull

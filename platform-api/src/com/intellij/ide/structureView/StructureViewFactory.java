@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
  *
  * @see com.intellij.peer.PeerFactory#getStructureViewFactory()
  */
-public interface StructureViewFactory {
+public abstract class StructureViewFactory {
   /**
    * Creates a structure view component instance for the specified editor.
    *
@@ -32,7 +32,7 @@ public interface StructureViewFactory {
    * @param project    the project containing the file for which the structure view is requested.
    * @return the structure view instance.
    */
-  StructureView createStructureView(FileEditor fileEditor,
+  public abstract StructureView createStructureView(FileEditor fileEditor,
                                     StructureViewModel treeModel,
                                     Project project); 
 
@@ -45,8 +45,12 @@ public interface StructureViewFactory {
    * @param showRootNode pass <code>false</code> if root node of the structure built should not actually be shown in result tree.
    * @return the structure view instance.
    */
-  StructureView createStructureView(FileEditor fileEditor,
+  public abstract StructureView createStructureView(FileEditor fileEditor,
                                     StructureViewModel treeModel,
                                     Project project,
                                     boolean showRootNode);
+
+  public static StructureViewFactory getInstance(Project project) {
+    return project.getComponent(StructureViewFactory.class);
+  }
 }

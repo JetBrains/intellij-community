@@ -65,6 +65,10 @@ public class VisibilitySorter implements Sorter{
     return VisibilityComparator.IMSTANCE;
   }
 
+  public boolean isVisible() {
+    return true;
+  }
+
   @NotNull
   public ActionPresentation getPresentation() {
     return PRESENTATION;

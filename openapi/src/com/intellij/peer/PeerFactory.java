@@ -16,7 +16,6 @@
 package com.intellij.peer;
 
 import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
@@ -75,8 +74,6 @@ public abstract class PeerFactory {
 
   @Deprecated
   public abstract VcsContextFactory getVcsContextFactory();
-
-  public abstract StructureViewFactory getStructureViewFactory();
 
   @Deprecated
   public abstract PsiBuilder createBuilder(ASTNode tree, Language lang, CharSequence seq, final Project project);

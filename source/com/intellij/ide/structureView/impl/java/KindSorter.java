@@ -78,6 +78,10 @@ public class KindSorter implements Sorter {
     return COMPARATOR;
   }
 
+  public boolean isVisible() {
+    return false;
+  }
+
   @NotNull
   public ActionPresentation getPresentation() {
     throw new IllegalStateException();

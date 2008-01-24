@@ -24,7 +24,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.peer.PeerFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiUtil;
@@ -86,7 +85,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
                 }
                 else {
                   myTemplateDataLanguage = baseLanguage;
-                  StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstance(myMainFile.getProject()).getStructureViewWrapper();
+                  StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myMainFile.getProject()).getStructureViewWrapper();
                   ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
                   ((ProjectViewImpl)ProjectView.getInstance(myMainFile.getProject())).rebuildStructureViewPane();
                 }
@@ -195,7 +194,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     if (baseViewBuilder == null) return null;
 
     StructureViewModel modelWrapper = new StructureViewModelWrapper(baseViewBuilder.createStructureViewModel(), myMainFile);
-    StructureView structureView = PeerFactory.getInstance().getStructureViewFactory().createStructureView(fileEditor, modelWrapper, project);
+    StructureView structureView = StructureViewFactory.getInstance(project).createStructureView(fileEditor, modelWrapper, project);
     return new StructureViewComposite.StructureViewDescriptor(IdeBundle.message("tab.structureview.baselanguage.view", language.getID()), structureView, fileType.getIcon());
   }
 

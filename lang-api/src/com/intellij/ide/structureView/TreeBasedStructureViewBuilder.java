@@ -43,7 +43,7 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
 
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
-    return PeerFactory.getInstance().getStructureViewFactory().createStructureView(fileEditor, createStructureViewModel(), project, isRootNodeShown());
+    return StructureViewFactory.getInstance(project).createStructureView(fileEditor, createStructureViewModel(), project, isRootNodeShown());
   }
 
   /**
