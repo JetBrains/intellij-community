@@ -152,5 +152,6 @@
   <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
   <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
   <extensionPoint name="refactoring.helper" interface="com.intellij.refactoring.RefactoringHelper"/>
+  <extensionPoint name="refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate"/>
 
 </extensionPoints>
