@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
@@ -81,6 +82,25 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
         if (setter != null) elements.add(setter);
         if (getter != null) elements.add(getter);
         return elements;
+      }
+    }
+    return null;
+  }
+
+  public Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete) {
+    if (element instanceof PsiMethod) {
+      final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
+
+      if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        final PsiMethod[] superMethods = ((PsiMethod) element).findSuperMethods();
+        for (PsiMethod superMethod : superMethods) {
+          if (isInside(superMethod, allElementsToDelete)) continue;
+          if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            String message = RefactoringBundle.message("0.implements.1", ConflictsUtil.getDescription(element, true),
+                                                       ConflictsUtil.getDescription(superMethod, true));
+            return Collections.singletonList(message);
+          }
+        }
       }
     }
     return null;

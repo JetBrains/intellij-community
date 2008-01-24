@@ -31,4 +31,8 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
                                                               final boolean askUser) {
     return null;
   }
+
+  public Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete) {
+    return null;
+  }
 }

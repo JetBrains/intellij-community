@@ -20,4 +20,7 @@ public interface SafeDeleteProcessorDelegate {
 
   @Nullable
   Collection<PsiElement> getAdditionalElementsToDelete(PsiElement element, final Collection<PsiElement> allElementsToDelete, final boolean askUser);
+
+  @Nullable
+  Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete);
 }

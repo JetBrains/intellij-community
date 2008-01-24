@@ -18,7 +18,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
@@ -142,20 +141,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     ArrayList<String> conflicts = new ArrayList<String>();
 
     for (PsiElement element : myElements) {
-      if (element instanceof PsiMethod) {
-        final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
-
-        if (!containingClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          final PsiMethod[] superMethods = ((PsiMethod) element).findSuperMethods();
-          for (PsiMethod superMethod : superMethods) {
-            if (isInside(superMethod, myElements)) continue;
-            if (superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-              String message = RefactoringBundle.message("0.implements.1", ConflictsUtil.getDescription(element, true),
-                                                         ConflictsUtil.getDescription(superMethod, true));
-              conflicts.add(message);
-              break;
-            }
+      for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+        if (delegate.handlesElement(element)) {
+          Collection<String> foundConflicts = delegate.findConflicts(element, myElements);
+          if (foundConflicts != null) {
+            conflicts.addAll(foundConflicts);
           }
+          break;
         }
       }
     }
