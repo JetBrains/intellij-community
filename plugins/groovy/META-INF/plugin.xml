@@ -106,7 +106,11 @@
       <implementation-class>org.jetbrains.plugins.grails.module.GrailsModuleEditorsProvider</implementation-class>
       <option name="type" value="GRAILS_MODULE"/>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.GrailsModuleActions</implementation-class>
+    </component>
   </module-components>
+
   <actions>
     <action id="Grails.GenerateViews" class="org.jetbrains.plugins.grails.actions.GenerateViewsAction"
             text="Grails Views" description="Generate Grails Views">
