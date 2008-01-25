@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.JavaDirectoryService;
@@ -30,7 +30,7 @@ public class CreatePackageTestAction extends AnAction
         event.getPresentation().setEnabled(pkg != null);
         if (pkg != null) {
             event.getPresentation().setText("Create \"Tests in '" + pkg.getQualifiedName() + "'\"...");
-            module = (Module) event.getDataContext().getData(DataKeys.MODULE.getName());
+            module = (Module) event.getDataContext().getData(LangDataKeys.MODULE.getName());
         } else {
             module = null;
         }
@@ -46,7 +46,7 @@ public class CreatePackageTestAction extends AnAction
     }
 
     PsiPackage getSelectedPackage(DataContext context) {
-        final PsiElement element = (PsiElement) context.getData(DataKeys.PSI_ELEMENT.getName());
+        final PsiElement element = (PsiElement) context.getData(LangDataKeys.PSI_ELEMENT.getName());
         if (element == null) {
             return null;
         }

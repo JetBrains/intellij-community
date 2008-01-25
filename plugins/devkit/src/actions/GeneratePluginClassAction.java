@@ -115,12 +115,12 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       final DataContext context = e.getDataContext();
-      Module module = DataKeys.MODULE.getData(context);
+      Module module = LangDataKeys.MODULE.getData(context);
       if (module == null || !PluginModuleType.isPluginModuleOrDependency(module)) {
         presentation.setEnabled(false);
         presentation.setVisible(false);
       }
-      final IdeView view = DataKeys.IDE_VIEW.getData(e.getDataContext());
+      final IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
       final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
       if (view != null && project != null) {
         // from com.intellij.ide.actions.CreateClassAction.update()

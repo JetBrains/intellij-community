@@ -1,7 +1,10 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.Location;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.MavenDataKeys;
 import org.jetbrains.idea.maven.core.util.MavenEnv;
 import org.jetbrains.idea.maven.core.util.MavenId;
-import org.jetbrains.idea.maven.state.MavenProjectsState;
 import org.jetbrains.idea.maven.runner.execution.MavenGoalLocation;
+import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
 import java.awt.*;
@@ -99,7 +102,7 @@ public class MavenNavigatorPanel extends JPanel implements DataProvider {
     if (dataId.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) return extractVirtualFiles();
 
     if (dataId.equals(Location.LOCATION)) return extractLocation();
-    if (dataId.equals(DataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
+    if (dataId.equals(PlatformDataKeys.NAVIGATABLE_ARRAY.getName())) return extractNavigatables();
 
     if (dataId.equals(MavenDataKeys.MAVEN_GOALS_KEY.getName())) return extractGoals();
     if (dataId.equals(MavenDataKeys.MAVEN_PROFILES_KEY.getName())) return extractProfiles();
