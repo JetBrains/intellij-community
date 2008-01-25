@@ -10,7 +10,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="ru.yole.pythonid.PythonFileTypeFactory"/>
-    <syntaxHighlighter key="Python" implementationClass="ru.yole.pythonid.PyHighlighter"/>
+    <lang.syntaxHighlighterFactory key="Python" implementationClass="ru.yole.pythonid.PySyntaxHighlighterFactory"/>
     <lang.braceMatcher language="Python" implementationClass="ru.yole.pythonid.PyBraceMatcher"/>
     <lang.parserDefinition language="Python" implementationClass="ru.yole.pythonid.PythonParserDefinition"/>
     <lang.commenter language="Python" implementationClass="ru.yole.pythonid.PythonCommenter"/>
