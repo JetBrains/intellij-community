@@ -35,20 +35,18 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
+import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
-import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionUtil;
 
 /**
  * @author ilyas
  */
 public class GroovyEnterHandler extends EditorWriteActionHandler {
-  private EditorActionHandler myOriginalHandler;
+  protected EditorActionHandler myOriginalHandler;
 
   public static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler");
 
@@ -81,15 +79,14 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     }
   }
 
-  private boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) {
+  protected boolean handleEnter(Editor editor, DataContext dataContext, @NotNull Project project) {
     if (!HandlerUtils.canBeInvoked(editor, dataContext)) {
       return false;
     }
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset < 1) return false;
 
-    if (handleJspLikeScriptlet(editor, caretOffset, dataContext)) {
-      GroovyEditorActionUtil.insertSpacesByIndent(editor, project);
+    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project)) {
       return true;
     }
     if (handleInLineComment(editor, caretOffset, dataContext)) {
@@ -97,6 +94,26 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     }
     if (handleInString(editor, caretOffset, dataContext)) {
       return true;
+    }
+    return false;
+  }
+
+  private boolean handleBetweenSquareBraces(Editor editor, int caret, DataContext context, Project project) {
+    String text = editor.getDocument().getText();
+    if (text == null || text.length() == 0) return false;
+    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
+    HighlighterIterator iterator = highlighter.createIterator(caret - 1);
+    if (GroovyTokenTypes.mLBRACK == iterator.getTokenType()) {
+      if (text.length() > caret) {
+        iterator = highlighter.createIterator(caret);
+        if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
+          myOriginalHandler.execute(editor, context);
+          myOriginalHandler.execute(editor, context);
+          editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
+          GroovyEditorActionUtil.insertSpacesByGroovyContinuationIndent(editor, project);
+          return true;
+        }
+      }
     }
     return false;
   }
@@ -261,32 +278,5 @@ public class GroovyEnterHandler extends EditorWriteActionHandler {
     return false;
   }
 
-  private boolean handleJspLikeScriptlet(Editor editor, int caret, DataContext dataContext) {
-
-    final EditorHighlighter highlighter = ((EditorEx) editor).getHighlighter();
-    HighlighterIterator iterator = highlighter.createIterator(caret - 1);
-    if (iterator.getTokenType() != GspTokenTypesEx.JSCRIPT_BEGIN) {
-      return false;
-    }
-    String text = editor.getDocument().getText();
-    if (caret < 2 || text.length() < Math.min(caret - 2, 2)) {
-      return false;
-    }
-    if (text.charAt(caret - 1) == '%' && text.charAt(caret - 2) == '<') {
-      if (!GroovyEditorActionUtil.areSciptletSeparatorsUnbalanced(iterator)) {
-        myOriginalHandler.execute(editor, dataContext);
-        return true;
-      } else {
-        EditorModificationUtil.insertStringAtCaret(editor, "%>");
-        editor.getCaretModel().moveCaretRelatively(-2, 0, false, false, true);
-        myOriginalHandler.execute(editor, dataContext);
-        myOriginalHandler.execute(editor, dataContext);
-        editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
-        return true;
-      }
-    } else {
-      return false;
-    }
-  }
 
 }

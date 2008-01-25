@@ -28,44 +28,20 @@ import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.grails.lang.gsp.lexer.GspTokenTypesEx;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
  */
 public abstract class GroovyEditorActionUtil {
-  public static void insertSpacesByIndent(Editor editor, Project project) {
-    int indentSize = CodeStyleSettingsManager.getSettings(project).getIndentSize(GspFileType.GSP_FILE_TYPE);
+
+  public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
+    int indentSize = CodeStyleSettingsManager.getSettings(project).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
     StringBuffer buffer = new StringBuffer();
     for (int i = 0; i < indentSize; i++) {
       buffer.append(" ");
     }
     EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
-  }
-
-  public static void insertSpacesByIndent(Editor editor, DataContext dataContext) {
-    final Project project = DataKeys.PROJECT.getData(dataContext);
-    int indentSize = CodeStyleSettingsManager.getSettings(project).getIndentSize(GspFileType.GSP_FILE_TYPE);
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < indentSize; i++) {
-      buffer.append(" ");
-    }
-    EditorModificationUtil.insertStringAtCaret(editor, buffer.toString());
-  }
-
-  public static boolean areSciptletSeparatorsUnbalanced(HighlighterIterator iterator) {
-    int balance = 0;
-    while (!iterator.atEnd()) {
-      if (GspTokenTypesEx.JSCRIPT_BEGIN == iterator.getTokenType() ||
-          GspTokenTypesEx.JEXPR_BEGIN == iterator.getTokenType() ||
-          GspTokenTypesEx.JDIRECT_BEGIN == iterator.getTokenType() ||
-          GspTokenTypesEx.JDECLAR_BEGIN == iterator.getTokenType()) balance++;
-
-      if (GspTokenTypesEx.JSCRIPT_END == iterator.getTokenType() ||
-          GspTokenTypesEx.JDIRECT_END == iterator.getTokenType() ||
-          GspTokenTypesEx.JDECLAR_END == iterator.getTokenType()) balance--;
-      iterator.advance();
-    }
-    return balance >= 0;
   }
 
   public static boolean isWhiteSpace(String text, int i) {
