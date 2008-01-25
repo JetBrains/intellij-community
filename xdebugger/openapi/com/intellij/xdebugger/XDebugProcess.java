@@ -16,8 +16,8 @@
 
 package com.intellij.xdebugger;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik

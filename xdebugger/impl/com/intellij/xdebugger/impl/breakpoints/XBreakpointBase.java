@@ -3,12 +3,14 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -22,7 +24,7 @@ import java.lang.reflect.TypeVariable;
 /**
  * @author nik
  */
-public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> implements XBreakpoint<P> {
+public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointProperties, S extends XBreakpointBase.BreakpointState> extends UserDataHolderBase implements XBreakpoint<P> {
   private final XBreakpointType<Self, P> myType;
   private final @Nullable P myProperties;
   private final S myState;
@@ -92,6 +94,43 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     fireBreakpointChanged();
   }
 
+  @NotNull
+  public SuspendPolicy getSuspendPolicy() {
+    return myState.mySuspendPolicy;
+  }
+
+  public void setSuspendPolicy(@NotNull SuspendPolicy policy) {
+    myState.mySuspendPolicy = policy;
+    fireBreakpointChanged();
+  }
+
+  public boolean isLogMessage() {
+    return myState.isLogMessage();
+  }
+
+  public void setLogMessage(final boolean logMessage) {
+    myState.setLogMessage(logMessage);
+    fireBreakpointChanged();
+  }
+
+  public String getLogExpression() {
+    return myState.getLogExpression();
+  }
+
+  public void setLogExpression(@Nullable final String expression) {
+    myState.setLogExpression(expression);
+    fireBreakpointChanged();
+  }
+
+  public String getCondition() {
+    return myState.getCondition();
+  }
+
+  public void setCondition(@Nullable final String condition) {
+    myState.setCondition(condition);
+    fireBreakpointChanged();
+  }
+
   public boolean isValid() {
     return true;
   }
@@ -117,9 +156,13 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   @Tag("breakpoint")
   public static class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProperties, T extends XBreakpointType<B,P>> {
-    private boolean myEnabled;
     private String myTypeId;
+    private boolean myEnabled;
     private Element myPropertiesElement;
+    private SuspendPolicy mySuspendPolicy = SuspendPolicy.ALL;
+    private boolean myLogMessage;
+    private String myLogExpression;
+    private String myCondition;
 
     public BreakpointState() {
     }
@@ -154,6 +197,42 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     public void setPropertiesElement(final Element propertiesElement) {
       myPropertiesElement = propertiesElement;
+    }
+
+    @Attribute("suspend")
+    public String getSuspendPolicy() {
+      return mySuspendPolicy.name();
+    }
+
+    public void setSuspendPolicy(final String suspendPolicy) {
+      mySuspendPolicy = SuspendPolicy.valueOf(suspendPolicy);
+    }
+
+    @Attribute("log-message")
+    public boolean isLogMessage() {
+      return myLogMessage;
+    }
+
+    public void setLogMessage(final boolean logMessage) {
+      myLogMessage = logMessage;
+    }
+
+    @Tag("log-expression")
+    public String getLogExpression() {
+      return myLogExpression;
+    }
+
+    public void setLogExpression(final String logExpression) {
+      myLogExpression = logExpression;
+    }
+
+    @Tag("condition")
+    public String getCondition() {
+      return myCondition;
+    }
+
+    public void setCondition(final String condition) {
+      myCondition = condition;
     }
 
     public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull XBreakpointManagerImpl breakpointManager) {

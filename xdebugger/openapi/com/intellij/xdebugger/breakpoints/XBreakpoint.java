@@ -18,18 +18,17 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.pom.Navigatable;
+import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
-public interface XBreakpoint<P extends XBreakpointProperties> {
+public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHolder {
 
   boolean isEnabled();
   void setEnabled(boolean enabled);
-
-  boolean isValid();
 
   @NotNull
   XBreakpointType<?,P> getType();
@@ -41,4 +40,19 @@ public interface XBreakpoint<P extends XBreakpointProperties> {
 
   @Nullable
   Navigatable getNavigatable();
+
+  @NotNull
+  SuspendPolicy getSuspendPolicy();
+  void setSuspendPolicy(@NotNull SuspendPolicy policy);
+
+  boolean isLogMessage();
+  void setLogMessage(boolean logMessage);
+
+  @Nullable
+  String getLogExpression();
+  void setLogExpression(@Nullable String expression);
+
+  @Nullable
+  String getCondition();
+  void setCondition(@Nullable String condition);
 }

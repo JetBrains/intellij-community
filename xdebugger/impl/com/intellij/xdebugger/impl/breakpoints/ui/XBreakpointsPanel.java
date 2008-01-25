@@ -2,6 +2,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -9,7 +10,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.breakpoints.ui.actions.GoToBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.ui.actions.RemoveBreakpointAction;
-import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,6 +38,7 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   private XBreakpointsTree<B> myTree;
   private XBreakpointPanelAction<B>[] myActions;
   private Map<XBreakpointPanelAction<B>, JButton> myButtons;
+  private XBreakpointPropertiesPanel<B> mySelectedPropertiesPanel;
 
   public XBreakpointsPanel(@NotNull Project project, @NotNull DialogWrapper parentDialog, @NotNull XBreakpointType<B, ?> type) {
     super(type.getTitle(), null, XBreakpoint.class);
@@ -69,7 +70,30 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
       JButton button = myButtons.get(action);
       button.setEnabled(action.isEnabled(breakpoints));
     }
+
+    B selectedBreakpoint = breakpoints.size() == 1 ? breakpoints.get(0) : null;
+    B oldBreakpoint = mySelectedPropertiesPanel != null ? mySelectedPropertiesPanel.getBreakpoint() : null;
+    if (mySelectedPropertiesPanel != null && oldBreakpoint != selectedBreakpoint) {
+      mySelectedPropertiesPanel.saveProperties();
+      mySelectedPropertiesPanel.dispose();
+      mySelectedPropertiesPanel = null;
+      myPropertiesPanel.removeAll();
+    }
+
+    if (selectedBreakpoint != null && selectedBreakpoint != oldBreakpoint) {
+      mySelectedPropertiesPanel = new XBreakpointPropertiesPanel<B>(myProject, selectedBreakpoint);
+      myPropertiesPanel.add(mySelectedPropertiesPanel.getMainPanel(), BorderLayout.CENTER);
+      myPropertiesPanelWrapper.revalidate();
+    }
+
+    updatePropertiesWrapper();
   }
+
+  private void updatePropertiesWrapper() {
+    CardLayout cardLayout = (CardLayout)myPropertiesPanelWrapper.getLayout();
+    cardLayout.show(myPropertiesPanelWrapper, mySelectedPropertiesPanel != null ? "properties" : "empty");
+  }
+
 
   private void initButtons() {
     myButtons = new HashMap<XBreakpointPanelAction<B>, JButton>();
@@ -96,6 +120,9 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   }
 
   public void dispose() {
+    if (mySelectedPropertiesPanel != null) {
+      mySelectedPropertiesPanel.dispose();
+    }
   }
 
   public Icon getTabIcon() {
@@ -108,6 +135,9 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   }
 
   public void saveBreakpoints() {
+    if (mySelectedPropertiesPanel != null) {
+      mySelectedPropertiesPanel.saveProperties();
+    }
   }
 
   public XBreakpointManager getBreakpointManager() {
@@ -133,10 +163,19 @@ public class XBreakpointsPanel<B extends XBreakpoint<?>> extends AbstractBreakpo
   }
 
   public void selectBreakpoint(final XBreakpoint breakpoint) {
+    //noinspection unchecked
     myTree.selectBreakpoint((B)breakpoint);
   }
 
   public DialogWrapper getParentDialog() {
     return myParentDialog;
+  }
+
+  public void hideBreakpointProperties() {
+    if (mySelectedPropertiesPanel != null) {
+      mySelectedPropertiesPanel.dispose();
+      mySelectedPropertiesPanel = null;
+      updatePropertiesWrapper();
+    }
   }
 }

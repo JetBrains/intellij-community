@@ -32,7 +32,7 @@ public class ViewBreakpointsAction extends AnAction {
     if (project == null) return;
 
     if (myInitialBreakpoint == null) {
-      Editor editor = DataKeys.EDITOR.getData(dataContext);
+      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
       if (editor != null) {
         myInitialBreakpoint = findSelectedBreakpoint(project, editor);
       }

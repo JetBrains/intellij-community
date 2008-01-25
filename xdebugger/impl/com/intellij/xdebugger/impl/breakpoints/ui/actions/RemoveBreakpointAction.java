@@ -32,6 +32,7 @@ public class RemoveBreakpointAction<B extends XBreakpoint<?>> extends XBreakpoin
         }
       }
     }.execute();
+    myBreakpointsPanel.hideBreakpointProperties();
     myBreakpointsPanel.resetBreakpoints();
   }
 }

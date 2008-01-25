@@ -1,15 +1,15 @@
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -18,9 +18,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
  * @author nik
@@ -111,10 +111,15 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Nullable
   private static Editor getEditor(@NotNull Project project, DataContext context) {
-    Editor editor = DataKeys.EDITOR.getData(context);
+    Editor editor = PlatformDataKeys.EDITOR.getData(context);
     if(editor == null) {
       return FileEditorManager.getInstance(project).getSelectedTextEditor();
     }
     return editor;
+  }
+
+  public static <B extends XBreakpoint<?>> XBreakpointType<B, ?> getType(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return (XBreakpointType<B,?>)breakpoint.getType();
   }
 }

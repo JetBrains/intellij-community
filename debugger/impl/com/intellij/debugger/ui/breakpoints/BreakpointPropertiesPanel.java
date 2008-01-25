@@ -14,7 +14,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.CompletionEditor;
 import com.intellij.debugger.ui.DebuggerExpressionComboBox;
 import com.intellij.debugger.ui.DebuggerStatementEditor;
-import com.intellij.debugger.ui.impl.UIUtil;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -198,7 +198,7 @@ public abstract class BreakpointPropertiesPanel {
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
     insert(myClassFiltersFieldPanel, myClassFiltersField);
 
-    UIUtil.enableEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
+    DebuggerUIUtil.enableEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     ActionListener listener = new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateCheckboxes();
@@ -208,11 +208,11 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCheckbox.addActionListener(listener);
     myInstanceFiltersCheckBox.addActionListener(listener);
     myClassFiltersCheckBox.addActionListener(listener);
-    UIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
-    UIUtil.focusEditorOnCheck(myConditionCheckbox, myConditionCombo);
-    UIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
-    UIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
-    UIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
+    DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
+    DebuggerUIUtil.focusEditorOnCheck(myConditionCheckbox, myConditionCombo);
+    DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
+    DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
+    DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
   }
 
   protected TreeClassChooser.ClassFilter createClassConditionFilter() {

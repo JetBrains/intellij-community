@@ -18,6 +18,7 @@ package com.intellij.xdebugger;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,9 +43,15 @@ public interface XDebugSession {
 
   void showExecutionPoint();
 
+  /**
+   * Call this method when a breakpoint is reached.
+   * @param breakpoint reached breakpoint
+   * @param suspendContext {@link com.intellij.xdebugger.frame.XSuspendContext} instance
+   * @return <code>true</code> if the debug process should be suspended
+   */
+  boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
-  void breakpointReached(@NotNull XBreakpoint<?> breakpoint);
-  void positionReached(@NotNull XSourcePosition position);
+  void positionReached(@NotNull XSourcePosition position, @NotNull XSuspendContext suspendContext);
 
 
   void stop();

@@ -19,6 +19,7 @@ package com.intellij.xdebugger.breakpoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +34,16 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
   private @NonNls @NotNull String myId;
   private @Nls @NotNull String myTitle;
+  private boolean mySuspendThreadSupported;
 
   protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title) {
+    this(id, title, false);
+  }
+
+  protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
     myId = id;
     myTitle = title;
+    mySuspendThreadSupported = suspendThreadSupported;
   }
 
   @Nullable
@@ -57,6 +64,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   @Nullable 
   public P createProperties() {
     return null;
+  }
+
+  public final boolean isSuspendThreadSupported() {
+    return mySuspendThreadSupported;
   }
 
   @NotNull
@@ -80,4 +91,19 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   public abstract String getDisplayText(B breakpoint);
+
+  @Nullable 
+  public XBreakpointCustomPropertiesPanel<B> createCustomConditionsPanel() {
+    return null;
+  }
+
+  @Nullable
+  public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
+    return null;
+  }
+
+  @Nullable
+  public XDebuggerEditorsProvider getEditorsProvider() {
+    return null;
+  }
 }
