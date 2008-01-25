@@ -85,4 +85,8 @@
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
+
+  <!-- Scopes -->
+  <projectConfigurable implementation="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable"/>
+
 </extensions>
