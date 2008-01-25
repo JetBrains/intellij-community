@@ -218,6 +218,12 @@ public class TemplateSettings implements JDOMExternalizable, ExportableApplicati
     saveTemplates(getTemplates());
   }
 
+  public void removeTemplate(Template template) {
+    myTemplates.remove(template.getKey());
+    myTemplatesById.remove(template.getId());
+    saveTemplates(getTemplates());
+  }
+
   private TemplateImpl addTemplate(String key, String string, String group, String description, String shortcut, boolean isDefault,
                                    final String id) {
     TemplateImpl template = new TemplateImpl(key, string, group);
