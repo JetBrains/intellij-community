@@ -50,9 +50,14 @@ public class PersistentEnumerator<Data> implements Forceable {
   private final byte[] myBuffer = new byte[8];
 
   private static final int CACHE_SIZE = 8192;
+  
+  private static ThreadLocal<CacheKey> ourFlyWeights = new ThreadLocal<CacheKey>() {
+    protected CacheKey initialValue() {
+      return new CacheKey(null, null);
+    }
+  };
+  
   private static class CacheKey {
-    public static final CacheKey FLYWEIGHT = new CacheKey(null, null);
-
     public PersistentEnumerator owner;
     public Object key;
 
@@ -80,9 +85,10 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public static CacheKey sharedKey(Object key, PersistentEnumerator owner) {
-    CacheKey.FLYWEIGHT.key = key;
-    CacheKey.FLYWEIGHT.owner = owner;
-    return CacheKey.FLYWEIGHT;
+    final CacheKey cacheKey = ourFlyWeights.get();
+    cacheKey.key = key;
+    cacheKey.owner = owner;
+    return cacheKey;
   }
 
   private static final Map<Object, Integer> ourEnumerationCache = Collections.synchronizedMap(new LinkedHashMap<Object, Integer>(16, 0.75f, true) {
