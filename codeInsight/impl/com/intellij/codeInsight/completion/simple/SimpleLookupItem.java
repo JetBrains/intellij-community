@@ -17,6 +17,10 @@ public class SimpleLookupItem<T> extends LookupItem<T> {
     super(o, lookupString);
   }
 
+  public SimpleLookupItem(final T o) {
+    super(o, o.toString());
+  }
+
   @NotNull
   public LookupItem<T> setTailType(@NotNull final TailType type) {
     super.setTailType(type);
