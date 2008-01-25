@@ -138,7 +138,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
   public String getTitle() {
     final PsiDirectory directory = getValue();
     if (directory != null) {
-      return PsiDirectoryFactory.getInstance(getProject()).getQualifiedName(directory);
+      return PsiDirectoryFactory.getInstance(getProject()).getQualifiedName(directory, true);
     }
     return super.getTitle();
   }

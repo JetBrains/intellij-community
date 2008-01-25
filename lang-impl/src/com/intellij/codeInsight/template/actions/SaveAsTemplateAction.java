@@ -70,7 +70,7 @@ public class SaveAsTemplateAction extends AnAction {
         PsiClass psiClass = (PsiClass)ref;
         if (!(psiClass.getParent() instanceof PsiJavaFile)) return false;
         PsiDirectory directory = PsiTreeUtil.getParentOfType(psiClass, PsiDirectory.class);
-        if (directory == null || PsiDirectoryFactory.getInstance(project).getQualifiedName(directory).equals(JAVA_LANG_PACKAGE_PREFIX)) return false;
+        if (directory == null || PsiDirectoryFactory.getInstance(project).getQualifiedName(directory, true).equals(JAVA_LANG_PACKAGE_PREFIX)) return false;
         return true;
       }
     });

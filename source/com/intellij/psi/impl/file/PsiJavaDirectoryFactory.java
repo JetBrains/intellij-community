@@ -24,13 +24,16 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   }
 
   @NotNull
-  public String getQualifiedName(@NotNull final PsiDirectory directory) {
+  public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (aPackage != null) {
       final String qualifiedName = aPackage.getQualifiedName();
       if (qualifiedName.length() > 0) return qualifiedName;
-      return PsiBundle.message("default.package.presentation") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
+      if (presentable) {
+        return PsiBundle.message("default.package.presentation") + " (" + directory.getVirtualFile().getPresentableUrl() + ")";
+      }
+      return "";
     }
-    return directory.getVirtualFile().getPresentableUrl();
+    return presentable ? directory.getVirtualFile().getPresentableUrl() : "";
   }
 }

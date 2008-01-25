@@ -19,7 +19,10 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   }
 
   @NotNull
-  public String getQualifiedName(@NotNull final PsiDirectory directory) {
-    return directory.getVirtualFile().getPresentableUrl();
+  public String getQualifiedName(@NotNull final PsiDirectory directory, final boolean presentable) {
+    if (presentable) {
+      return directory.getVirtualFile().getPresentableUrl();
+    }
+    return "";
   }
 }

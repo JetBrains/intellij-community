@@ -94,7 +94,9 @@ public class RenameUtil {
 
 
     if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
-      String stringToSearch = RefactoringUtil.getStringToSearch(element, false);
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, false
+                                                                                    ? NonCodeSearchDescriptionLocation.NON_JAVA
+                                                                                    : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, false);
         TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
@@ -104,7 +106,9 @@ public class RenameUtil {
 
 
     if (searchForTextOccurences && !(element instanceof PsiDirectory)) {
-      String stringToSearch = RefactoringUtil.getStringToSearch(element, true);
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, true
+                                                                                    ? NonCodeSearchDescriptionLocation.NON_JAVA
+                                                                                    : NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
 
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, true);

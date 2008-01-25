@@ -17,6 +17,6 @@ public abstract class PsiDirectoryFactory {
   public abstract PsiDirectory createDirectory(VirtualFile file);
 
   @NotNull
-  public abstract String getQualifiedName(@NotNull PsiDirectory directory);
+  public abstract String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
 
 }

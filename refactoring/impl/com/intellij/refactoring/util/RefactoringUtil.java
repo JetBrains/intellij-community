@@ -33,8 +33,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
@@ -939,54 +937,6 @@ public class RefactoringUtil {
       expression = (PsiParenthesizedExpression)expression.getParent();
     }
     return expression;
-  }
-
-  public static String getStringToSearch(PsiElement element, boolean nonJava) {
-    if (element instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)element;
-      final PsiMetaData metaData = psiMetaOwner.getMetaData();
-      if (metaData != null) {
-        return metaData.getName();
-      }
-    }
-    if (element instanceof PsiDirectory) {  // normalize a directory to a corresponding package
-      final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-      if (aPackage != null) element = aPackage;
-    }
-
-    if (element instanceof PsiPackage) {
-      return nonJava ? ((PsiPackage)element).getQualifiedName() : ((PsiPackage)element).getName();
-    }
-    else if (element instanceof PsiClass) {
-      return nonJava ? ((PsiClass)element).getQualifiedName() : ((PsiClass)element).getName();
-    }
-    else if (element instanceof XmlTag) {
-      return ((XmlTag)element).getValue().getTrimmedText();
-    }
-    else if (element instanceof XmlAttribute) {
-      return ((XmlAttribute)element).getValue();
-    }
-    else if (element instanceof XmlAttributeValue) {
-      return ((XmlAttributeValue)element).getValue();
-    }
-    else if (element instanceof PsiMember) {
-      PsiMember member = (PsiMember)element;
-      String name = member.getName();
-      if (name == null) return null;
-      if (!nonJava) {
-        return name;
-      }
-      PsiClass containingClass = member.getContainingClass();
-      if (containingClass == null || containingClass.getQualifiedName() == null) return null;
-      return containingClass.getQualifiedName() + "." + name;
-    }
-    else if (element instanceof PsiNamedElement) {
-      return ((PsiNamedElement)element).getName();
-    }
-    else {
-      LOG.error("Unknown element type: " + element);
-      return null;
-    }
   }
 
   public static String getNewInnerClassName(PsiClass aClass, String oldInnerClassName, String newName) {

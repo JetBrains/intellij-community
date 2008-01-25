@@ -853,7 +853,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
             while (true) {
               PsiDirectory parent = directory.getParentDirectory();
               if (parent == null) break;
-              if (directoryHelper.skipDirectory(parent) || PsiDirectoryFactory.getInstance(myProject).getQualifiedName(parent).length() == 0) break;
+              if (directoryHelper.skipDirectory(parent) || PsiDirectoryFactory.getInstance(myProject).getQualifiedName(parent, true).length() == 0) break;
               PsiElement[] children = parent.getChildren();
               if (children.length == 0 || children.length == 1 && children[0] == directory) {
                 directory = parent;

@@ -24,6 +24,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
+import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -343,13 +344,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     };
     if (mySearchInCommentsAndStrings) {
-      String stringToSearch = RefactoringUtil.getStringToSearch(element, false);
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.STRINGS_AND_COMMENTS);
       if (stringToSearch != null) {
         RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, usages, nonCodeUsageFactory);
       }
     }
-    if (mySearchNonJava && (element instanceof PsiClass || element instanceof PsiPackage)) {
-      String stringToSearch = RefactoringUtil.getStringToSearch(element, true);
+    if (mySearchNonJava) {
+      String stringToSearch = ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA);
       if (stringToSearch != null) {
         TextOccurrencesUtil.addTextOccurences(element, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
       }

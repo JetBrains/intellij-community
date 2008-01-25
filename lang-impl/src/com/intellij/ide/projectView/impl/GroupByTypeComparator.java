@@ -74,7 +74,7 @@ public abstract class GroupByTypeComparator implements Comparator<NodeDescriptor
         final PsiDirectory aDirectory2 = ((PsiDirectoryNode)descriptor2).getValue();
         if (aDirectory1 != null && aDirectory2 != null) {
           final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(aDirectory1.getProject());
-          return factory.getQualifiedName(aDirectory1).compareToIgnoreCase(factory.getQualifiedName(aDirectory2));
+          return factory.getQualifiedName(aDirectory1, true).compareToIgnoreCase(factory.getQualifiedName(aDirectory2, true));
         }
       } else if (descriptor1 instanceof PackageElementNode) {
         final PackageElement packageElement1 = ((PackageElementNode)descriptor1).getValue();
