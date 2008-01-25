@@ -55,6 +55,11 @@
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndex</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.usageView.UsageTreeColorsScheme</interface-class>
+      <implementation-class>com.intellij.usageView.UsageTreeColorsScheme</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

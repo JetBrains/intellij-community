@@ -1,11 +1,4 @@
 <components>
-  <application-components>
-    <component>
-      <interface-class>com.intellij.usageView.UsageTreeColorsScheme</interface-class>
-      <implementation-class>com.intellij.usageView.UsageTreeColorsScheme</implementation-class>
-    </component>
-
-  </application-components>
   <project-components>
     <component>
       <interface-class>com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration</interface-class>
