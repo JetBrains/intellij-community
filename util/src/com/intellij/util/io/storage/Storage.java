@@ -206,7 +206,7 @@ public class Storage implements Disposable, Forceable {
     synchronized (lock) {
       for (AppenderCacheKey key : new ArrayList<AppenderCacheKey>(ourAppendersCache.keySet())) {
         AppenderStream stream = ourAppendersCache.get(key);
-        if (stream.myStorage == this) {
+        if (stream != null && stream.myStorage == this) {
           try {
             stream.realClose();
           }
