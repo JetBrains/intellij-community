@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.treetable.TreeTable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class PopupChooserBuilder {
   }
 
   @NotNull
-  public PopupChooserBuilder setTitle(@NotNull String title) {
+  public PopupChooserBuilder setTitle(@NotNull @Nls String title) {
     myTitle = title;
     return this;
   }

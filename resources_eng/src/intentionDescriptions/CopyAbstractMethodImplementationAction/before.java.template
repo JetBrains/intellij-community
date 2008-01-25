@@ -1,0 +1,12 @@
+interface I {
+  <spot>void m();</spot>
+}
+
+class A implements I {
+  void m() {
+    doSomething();
+  }
+}
+
+class B implements I {
+}

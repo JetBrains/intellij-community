@@ -1,0 +1,15 @@
+interface I {
+  void m();
+}
+
+class A implements I {
+  void m() {
+    doSomething();
+  }
+}
+
+class B implements I {
+  void m() {
+    doSomething();
+  }
+}

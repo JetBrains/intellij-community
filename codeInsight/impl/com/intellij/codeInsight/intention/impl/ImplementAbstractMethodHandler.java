@@ -30,7 +30,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.IncorrectOperationException;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -41,13 +40,11 @@ public class ImplementAbstractMethodHandler {
   private final Editor myEditor;
   private final PsiMethod myMethod;
   private JList myList;
-  private Point myLocation;
 
   public ImplementAbstractMethodHandler(Project project, Editor editor, PsiMethod method) {
     myProject = project;
     myEditor = editor;
     myMethod = method;
-    myLocation = myEditor.getContentComponent().getLocationOnScreen();
   }
 
   public void invoke() {
