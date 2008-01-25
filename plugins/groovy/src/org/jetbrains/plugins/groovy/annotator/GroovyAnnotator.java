@@ -79,6 +79,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -598,9 +599,18 @@ public class GroovyAnnotator implements Annotator {
           if (name.length() > 0) packageName = name;
         }
 
-        holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("duplicate.class", typeDefinition.getName(), packageName));
+        if (!isScriptGeneratedClass(classes)) {
+          holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("duplicate.class", typeDefinition.getName(), packageName));
+        } else {
+          holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("script.generated.with.same.name", qName));
+        }
       }
     }
+  }
+
+  private boolean isScriptGeneratedClass(PsiClass[] allClasses) {
+    return allClasses.length == 2 &&
+        (allClasses[0] instanceof GroovyScriptClass || allClasses[1] instanceof GroovyScriptClass);
   }
 
   private void checkForExtendingInterface(AnnotationHolder holder, GrExtendsClause extendsClause, GrImplementsClause implementsClause, GrTypeDefinition myClass) {
