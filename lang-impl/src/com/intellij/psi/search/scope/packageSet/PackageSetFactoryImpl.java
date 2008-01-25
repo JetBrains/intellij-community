@@ -3,6 +3,7 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenTypeEx;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
@@ -66,121 +67,23 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
     }
 
     private PackageSet parsePattern() throws ParsingException {
-      String scope = parseScope();
+      String scope = null;
+      for (PackageSetParserExtension extension : Extensions.getExtensions(PackageSetParserExtension.EP_NAME)) {
+        scope = extension.parseScope(myLexer);
+        if (scope != null) break;
+      }
+      if (scope == null) error("Unknown scope type");
       String modulePattern = parseModulePattern();
 
       if (myLexer.getTokenType() == TokenTypeEx.COLON) {
-        if (scope == PatternPackageSet.SCOPE_ANY && modulePattern == null) {
-          error(AnalysisScopeBundle.message("error.packageset.common.expectations"));
-        }
         myLexer.advance();
       }
-
-      return scope == FilePatternPackageSet.SCOPE_FILE
-             ? new FilePatternPackageSet(modulePattern, parseFilePattern())
-             : new PatternPackageSet(parseAspectJPattern(), scope, modulePattern);
-    }
-
-    private String parseFilePattern() throws ParsingException {
-      StringBuffer pattern = new StringBuffer();
-      boolean wasIdentifier = false;
-      while (true) {
-        if (myLexer.getTokenType() == TokenTypeEx.DIV) {
-          wasIdentifier = false;
-          pattern.append("/");
-        }
-        else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER ||
-                 myLexer.getTokenType() == JavaTokenType.INTEGER_LITERAL) {
-          if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
-          wasIdentifier = true;
-          pattern.append(getTokenText());
-        }
-        else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK){
-          wasIdentifier = false;
-          pattern.append("*");
-        } else if (myLexer.getTokenType() == TokenTypeEx.DOT){
-          wasIdentifier = false;
-          pattern.append(".");
-        } else if (myLexer.getTokenType() == TokenTypeEx.WHITE_SPACE){
-          wasIdentifier = false;
-          pattern.append(" ");
-        } else if (myLexer.getTokenType() == TokenTypeEx.MINUS) {
-          wasIdentifier = false;
-          pattern.append("-");
-        }
-        else {
-          break;
-        }
-        myLexer.advance();
+      for (PackageSetParserExtension extension : Extensions.getExtensions(PackageSetParserExtension.EP_NAME)) {
+        final PackageSet packageSet = extension.parsePackageSet(myLexer, scope, modulePattern);
+        if (packageSet != null) return packageSet;
       }
-
-      if (pattern.length() == 0) {
-        error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
-      }
-
-      return pattern.toString();
-    }
-
-    private String parseScope() {
-      if (myLexer.getTokenType() != TokenTypeEx.IDENTIFIER) return PatternPackageSet.SCOPE_ANY;
-      String id = getTokenText();
-      String scope = PatternPackageSet.SCOPE_ANY;
-      if (PatternPackageSet.SCOPE_SOURCE.equals(id)) {
-        scope = PatternPackageSet.SCOPE_SOURCE;
-      }
-      if (PatternPackageSet.SCOPE_TEST.equals(id)) {
-        scope = PatternPackageSet.SCOPE_TEST;
-      }
-      if (PatternPackageSet.SCOPE_PROBLEM.equals(id)) {
-        scope = PatternPackageSet.SCOPE_PROBLEM;
-      }
-      if (PatternPackageSet.SCOPE_LIBRARY.equals(id)) {
-        scope = PatternPackageSet.SCOPE_LIBRARY;
-      }
-      if (FilePatternPackageSet.SCOPE_FILE.equals(id)){
-        scope = FilePatternPackageSet.SCOPE_FILE;
-      }
-      final CharSequence buf = myLexer.getBufferSequence();
-      int end = myLexer.getTokenEnd();
-      int bufferEnd = myLexer.getBufferEnd();
-
-      if (scope == PatternPackageSet.SCOPE_ANY || end >= bufferEnd || buf.charAt(end) != ':' && buf.charAt(end) != '[') {
-        return PatternPackageSet.SCOPE_ANY;
-      }
-
-      myLexer.advance();
-
-      return scope;
-    }
-
-    private String parseAspectJPattern() throws ParsingException {
-      StringBuffer pattern = new StringBuffer();
-      boolean wasIdentifier = false;
-      while (true) {
-        if (myLexer.getTokenType() == TokenTypeEx.DOT) {
-          pattern.append('.');
-          wasIdentifier = false;
-        }
-        else if (myLexer.getTokenType() == TokenTypeEx.ASTERISK) {
-          pattern.append('*');
-          wasIdentifier = false;
-        }
-        else if (myLexer.getTokenType() == TokenTypeEx.IDENTIFIER) {
-          if (wasIdentifier) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
-          wasIdentifier = true;
-          pattern.append(getTokenText());
-        }
-        else {
-          break;
-        }
-        myLexer.advance();
-      }
-
-      if (pattern.length() == 0) {
-        error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
-      }
-
-      return pattern.toString();
+      error("Unknown scope type");
+      return null; //not reachable
     }
 
     private String getTokenText() {

@@ -62,5 +62,6 @@
                   interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
   <extensionPoint name="colorSettingsPage"
                   interface="com.intellij.openapi.options.colors.ColorSettingsPage"/>
+  <extensionPoint name="scopeParserExtension" interface="com.intellij.psi.search.scope.packageSet.PackageSetParserExtension"/>
   
 </extensionPoints>
