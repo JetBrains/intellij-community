@@ -686,7 +686,7 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refExpr, annotation);
       }
 
-      if (isNeedsAddDynPropertiesAnnotation(refExpr) && refExpr.resolve() == null) {
+      if (isNeedsDynamic(refExpr) && refExpr.resolve() == null) {
         addDynPropertyAnnotation(annotation, refExpr);
       }
 
@@ -696,7 +696,7 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private boolean isNeedsAddDynPropertiesAnnotation(@NotNull GrReferenceExpression referenceExpression) {
+  private boolean isNeedsDynamic(@NotNull GrReferenceExpression referenceExpression) {
     PsiClass containingClass = DynamicReferenceUtils.findDynamicValueContainingClass(referenceExpression);
     final PsiFile containingFile = referenceExpression.getContainingFile();
 

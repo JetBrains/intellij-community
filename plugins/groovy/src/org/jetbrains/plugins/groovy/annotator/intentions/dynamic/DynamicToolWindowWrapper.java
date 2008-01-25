@@ -1,48 +1,50 @@
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.Disposable;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.treetable.TreeTable;
-import com.intellij.util.ui.treetable.TreeTableModel;
-import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
-import com.intellij.util.IJSwingUtilities;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.treetable.ListTreeTableModelOnColumns;
+import com.intellij.util.ui.treetable.TreeTable;
+import com.intellij.util.ui.treetable.TreeTableModel;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPContainingClassElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyTypeElement;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPClassNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPopertyNode;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 
 import javax.swing.*;
-import javax.swing.table.TableCellEditor;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.*;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
-import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -69,7 +71,9 @@ public class DynamicToolWindowWrapper {
     myProject = project;
     myDynamicToolWindow = dynamicToolWindow;
 
-    buildWholePanel();
+    //todo: doesn't work on init
+//    buildWholePanel();
+//    setupToolWindow(dynamicToolWindow);
 
     DynamicPropertiesManager.getInstance(myProject).addDynamicChangeListener(new DynamicPropertyChangeListener() {
       public void dynamicPropertyChange() {
@@ -84,6 +88,15 @@ public class DynamicToolWindowWrapper {
         storeState();
       }
     });
+
+
+  }
+
+  public void setupToolWindow(ToolWindow dynamicToolWindow) {
+    dynamicToolWindow.setTitle(GroovyBundle.message("toolwindow.dynamic.properties"));
+    dynamicToolWindow.setToHideOnEmptyContent(true);
+
+    dynamicToolWindow.getComponent().add(getContentPane());
   }
 
   private void buildWholePanel() {
@@ -108,7 +121,7 @@ public class DynamicToolWindowWrapper {
   private void rebuildTreePanel() {
 
 //    storeState();
-    if (!isDynamicToolWindowShowing()) return;
+//    if (!isDynamicToolWindowShowing()) return;
 
     DefaultMutableTreeNode myRootNode = new DefaultMutableTreeNode();
     buildTree(myRootNode);
@@ -120,7 +133,7 @@ public class DynamicToolWindowWrapper {
 
   private void rebuildTreeView(DefaultMutableTreeNode root, boolean expandAll) {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (!isDynamicToolWindowShowing()) return;
+//    if (!isDynamicToolWindowShowing()) return;
 
 //    storeState();
     myTreeTablePanel.removeAll();
@@ -132,13 +145,13 @@ public class DynamicToolWindowWrapper {
       TreeUtil.expandAll(myTreeTable.getTree());
     }
 
-    boolean hadFocus = IJSwingUtilities.hasFocus2(myTreeTable);
-    if (hadFocus) {
-      JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTreeTable);
-      if (focusedComponent != null) {
-        focusedComponent.requestFocus();
-      }
-    }
+//    boolean hadFocus = IJSwingUtilities.hasFocus2(myTreeTable);
+//    if (hadFocus) {
+//      JComponent focusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myTreeTable);
+//      if (focusedComponent != null) {
+//        focusedComponent.requestFocus();
+//      }
+//    }
 
     myTreeTablePanel.add(treeTable);
   }
@@ -151,7 +164,7 @@ public class DynamicToolWindowWrapper {
 
     DefaultMutableTreeNode containingClassNode;
     for (String containingClassName : containingClasses) {
-      containingClassNode = new DefaultMutableTreeNode(new DPContainingClassElement(containingClassName));
+      containingClassNode = new DefaultMutableTreeNode(new DPClassNode(new DPContainingClassElement(containingClassName)));
 
       final String[] properties = DynamicPropertiesManager.getInstance(myProject).findDynamicPropertiesOfClass(module.getName(), containingClassName);
 
@@ -160,7 +173,8 @@ public class DynamicToolWindowWrapper {
       DefaultMutableTreeNode propertyTreeNode;
       for (String propertyName : properties) {
         final String propertyType = DynamicPropertiesManager.getInstance(myProject).findDynamicPropertyType(module.getName(), containingClassName, propertyName);
-        propertyTreeNode = new DefaultMutableTreeNode(new DPPropertyElement(new DynamicPropertyVirtual(propertyName, containingClassName, module.getName(), propertyType)));
+        //TODO: simplify Hierarchy
+        propertyTreeNode = new DefaultMutableTreeNode(new DPPopertyNode(new DPPropertyElement(new DynamicPropertyVirtual(propertyName, containingClassName, module.getName(), propertyType))));
         containingClassNode.add(propertyTreeNode);
       }
 
@@ -179,7 +193,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.registerKeyboardAction(
         new ActionListener() {
           public void actionPerformed(ActionEvent event) {
-            final List<TreePath> expandedTreePathList = TreeUtil.collectExpandedPaths(myTreeTable.getTree());
+//            final List<TreePath> expandedTreePathList = TreeUtil.collectExpandedPaths(myTreeTable.getTree());
             final int[] rows = myTreeTable.getSelectedRows();
 //            for (int row : rows) {
             final TreePath selectionPath = myTreeTable.getTree().getAnchorSelectionPath();
@@ -247,13 +261,13 @@ public class DynamicToolWindowWrapper {
 
         if (value != null) {
 
-          if (value instanceof DPContainingClassElement) {
-            append(((DPContainingClassElement) value).getContainingClassName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          if (value instanceof DPClassNode) {
+            append(((DPClassNode) value).getElement().getContainingClassName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
 
-          } else if (value instanceof DPPropertyElement) {
-            final DPPropertyElement propertyElement = (DPPropertyElement) value;
-            final String substringToHighlight = propertyElement.getHightlightedText();
-            final String propertyName = propertyElement.getPropertyName();
+          } else if (value instanceof DPPopertyNode) {
+            final DPPopertyNode propertyElement = (DPPopertyNode) value;
+            final String substringToHighlight = propertyElement.getElement().getHightlightedText();
+            final String propertyName = propertyElement.getElement().getPropertyName();
 
             if (substringToHighlight != null) {
               final int begin = propertyName.indexOf(substringToHighlight);
@@ -268,9 +282,9 @@ public class DynamicToolWindowWrapper {
               append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
             }
 
-          } else if (value instanceof DPPropertyTypeElement) {
+          }/* else if (value instanceof DPPropertyTypeElement) {
             append(((DPPropertyTypeElement) value).getPropertyType(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-          }
+          }*/
         }
       }
     });
@@ -303,7 +317,10 @@ public class DynamicToolWindowWrapper {
     return toolWindow != null && toolWindow.isVisible();
   }
 
-  public JPanel getComponent() {
+  public JPanel getContentPane() {
+    if (myPanel == null) {
+      buildWholePanel();
+    }
     return myPanel;
   }
 
@@ -365,7 +382,7 @@ public class DynamicToolWindowWrapper {
 
       DefaultMutableTreeNode newContainingClassNode;
 
-      TreeNode containingClassNode = null;
+      TreeNode containingClassNode;
       try {
         containingClassNode = rootNode.getFirstChild();
       } catch (Exception e) {
@@ -375,7 +392,13 @@ public class DynamicToolWindowWrapper {
       while (containingClassNode != null) {
         if (!(containingClassNode instanceof DefaultMutableTreeNode)) break;
 
-        TreeNode child = ((DefaultMutableTreeNode) containingClassNode).getFirstChild();
+        TreeNode child;
+        try {
+          child = ((DefaultMutableTreeNode) containingClassNode).getFirstChild();
+        } catch (Exception e) {
+          return;
+        }
+
         DefaultMutableTreeNode newChild;
         while (child != null) {
           if (!(child instanceof DefaultMutableTreeNode)) break;
@@ -468,7 +491,7 @@ public class DynamicToolWindowWrapper {
 
   private List<TreePath> getExpandedElements() {
     final JTree tree = myTreeTable.getTree();
-    if (tree == null) return Collections.EMPTY_LIST;
+    if (tree == null) return new ArrayList<TreePath>();
     return TreeUtil.collectExpandedPaths(tree);
   }
 
@@ -477,10 +500,14 @@ public class DynamicToolWindowWrapper {
     TreePath[] selectionPaths = tree.getSelectionPaths();
     selectionPaths = selectionPaths != null ? selectionPaths : new TreePath[0];
 
-    return tree != null ? Arrays.asList(selectionPaths) : Collections.EMPTY_LIST;
+    return Arrays.asList(selectionPaths);
   }
 
   public TreeTable getTreeTable() {
     return myTreeTable;
+  }
+
+  public ListTreeTableModelOnColumns getTreeTableModel() {
+    return myTreeTableModel;
   }
 }

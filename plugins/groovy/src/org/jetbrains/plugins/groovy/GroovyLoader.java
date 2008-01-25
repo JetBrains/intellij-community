@@ -48,6 +48,7 @@ import com.intellij.ide.IconProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;

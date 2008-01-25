@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
 import java.awt.event.*;
-import java.awt.*;
 import java.util.EventListener;
 import java.util.Set;
 
@@ -35,9 +34,11 @@ import java.util.Set;
  * Date: 18.12.2007
  */
 public class DynamicPropertyDialog extends DialogWrapper {
-  private JComboBox myContainingClassComboBox;
+  private JComboBox myClassComboBox;
   private JPanel myPanel;
   private JComboBox myTypeComboBox;
+  private JLabel myClassLabel;
+  private JLabel myTypeLabel;
   //  private JComboBox myTypeComboBox;
   private final DynamicPropertiesManager myDynamicPropertiesManager;
   private final Project myProject;
@@ -58,28 +59,34 @@ public class DynamicPropertyDialog extends DialogWrapper {
     setUpTypeComboBox();
     setUpContainingClassComboBox();
 
-    myPanel.addHierarchyListener(new HierarchyListener() {
-      public void hierarchyChanged(HierarchyEvent e) {
-        myTypeComboBox.setCursor(Cursor.getDefaultCursor());
-      }
-    });
+//    myPanel.addHierarchyListener(new HierarchyListener() {
+//      public void hierarchyChanged(HierarchyEvent e) {
+//        myTypeComboBox.setCursor(Cursor.getDefaultCursor());
+//      }
+//    });
 
-    myPanel.registerKeyboardAction(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myTypeComboBox.requestFocus();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    myTypeLabel.setLabelFor(myTypeComboBox);
+    myClassLabel.setLabelFor(myClassComboBox);
+    
   }
+
+
 
   private void setUpContainingClassComboBox() {
     final PsiClass typeDefinition = myDynamicProperty.getContainingClass();
     assert typeDefinition != null;
 
-    myContainingClassComboBox.addItem(new ContainingClassItem(typeDefinition));
+    myClassComboBox.addItem(new ContainingClassItem(typeDefinition));
     final Set<PsiClass> classes = GroovyUtils.findAllSupers(typeDefinition);
     for (PsiClass aClass : classes) {
-      myContainingClassComboBox.addItem(new ContainingClassItem(aClass));
+      myClassComboBox.addItem(new ContainingClassItem(aClass));
     }
+
+    myPanel.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myClassComboBox.requestFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
   }
 
   private Document createDocument(final String text) {
@@ -107,6 +114,13 @@ public class DynamicPropertyDialog extends DialogWrapper {
         }
     );
 
+    myPanel.registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        myTypeComboBox.requestFocus();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+
     ((EditorTextField) myTypeComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
       }
@@ -133,13 +147,14 @@ public class DynamicPropertyDialog extends DialogWrapper {
       setOKActionEnabled(false);
 
     } else {
-      PsiType type = typeElement.getType();
-      if (type instanceof PsiClassType) {
-        setOKActionEnabled(((PsiClassType) type).resolve() != null);
-
-      } else if (type instanceof PsiPrimitiveType) {
-        setOKActionEnabled(true);
-      }
+//      PsiType type = typeElement.getType();
+//      if (type instanceof PsiClassType) {
+//        setOKActionEnabled(((PsiClassType) type).resolve() != null);
+//
+//      } else if (type instanceof PsiPrimitiveType) {
+//        setOKActionEnabled(true);
+//      }
+      setOKActionEnabled(true);
     }
   }
 
@@ -162,7 +177,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
   }
 
   public ContainingClassItem getEnteredContaningClass() {
-    final Object item = myContainingClassComboBox.getSelectedItem();
+    final Object item = myClassComboBox.getSelectedItem();
     if (!(item instanceof ContainingClassItem)) return null;
 
     return ((ContainingClassItem) item);
