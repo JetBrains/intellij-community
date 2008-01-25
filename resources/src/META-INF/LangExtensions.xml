@@ -29,6 +29,10 @@
                       serviceImplementation="com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl"/>
   <exportable serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"/>
 
+  <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
+                      serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
+
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"
@@ -63,6 +67,9 @@
 
   <projectService serviceInterface="com.intellij.ide.util.gotoByName.ChooseByNameFactory"
                   serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>  
+
+  <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
+                  serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
 
   <applicationConfigurable implementation="com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable"/>
 
@@ -112,6 +119,5 @@
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.IdIndex" />
 
-  <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
-                  serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
+  <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>
 </extensions>
