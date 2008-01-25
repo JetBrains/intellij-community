@@ -17,7 +17,6 @@ package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.peer.PeerFactory;
 import org.jetbrains.annotations.NotNull;
 
 
