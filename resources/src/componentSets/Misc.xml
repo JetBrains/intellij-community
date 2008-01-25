@@ -1,9 +1,6 @@
 <components>
   <application-components>
-    <component>
-      <interface-class>com.intellij.tools.ToolManager</interface-class>
-      <implementation-class>com.intellij.tools.ToolManager</implementation-class>
-    </component>
+    
     <component>
       <implementation-class>com.intellij.ide.EvaluationSupport</implementation-class>
       <headless-implementation-class/>

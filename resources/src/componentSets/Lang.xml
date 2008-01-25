@@ -60,6 +60,11 @@
       <interface-class>com.intellij.usageView.UsageTreeColorsScheme</interface-class>
       <implementation-class>com.intellij.usageView.UsageTreeColorsScheme</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.tools.ToolManager</interface-class>
+      <implementation-class>com.intellij.tools.ToolManager</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
