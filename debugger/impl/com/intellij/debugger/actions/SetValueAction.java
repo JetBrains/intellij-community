@@ -376,7 +376,7 @@ public class SetValueAction extends DebuggerAction {
           protected Object evaluate(final EvaluationContextImpl evaluationContext) throws EvaluateException {
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(evaluationContext.getProject(), new com.intellij.debugger.EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.getInstance().build(text, ContextUtil.getContextElement(evaluationContext));
+                return EvaluatorBuilderImpl.getInstance().build(text, ContextUtil.getContextElement(evaluationContext), ContextUtil.getSourcePosition(evaluationContext));
               }
             });
 

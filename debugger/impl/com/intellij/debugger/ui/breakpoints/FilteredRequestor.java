@@ -8,6 +8,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -131,7 +132,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
     DebuggerUtilsEx.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
   }
 
-  public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
+  public boolean evaluateCondition(final EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     if(COUNT_FILTER_ENABLED) {
       context.getDebugProcess().getVirtualMachineProxy().suspend();
       context.getDebugProcess().getRequestsManager().deleteRequest(this);
@@ -150,7 +151,7 @@ public abstract class FilteredRequestor implements LocatableEventRequestor, JDOM
       try {
         ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(context.getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
           public ExpressionEvaluator compute() throws EvaluateException {
-            return EvaluatorBuilderImpl.getInstance().build(getCondition(), getEvaluationElement());
+            return EvaluatorBuilderImpl.getInstance().build(getCondition(), getEvaluationElement(), ContextUtil.getSourcePosition(context));
           }
         });
         Value value = evaluator.evaluate(context);

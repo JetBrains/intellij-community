@@ -232,7 +232,10 @@ public class JVMNameUtil {
     return new JVMClassAt(SourcePosition.createFromElement(psiClass));
   }
 
-  public static @Nullable JVMName getContextClassJVMQualifiedName(SourcePosition pos) {
+  public static @Nullable JVMName getContextClassJVMQualifiedName(@Nullable SourcePosition pos) {
+    if (pos == null) {
+      return null;
+    }
     final PsiClass psiClass = getClassAt(pos);
     if (psiClass == null) {
       return null;

@@ -80,7 +80,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
       final ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build(getEvaluationCode(thisEvaluationContext), ContextUtil.getContextElement(thisEvaluationContext));
+          return EvaluatorBuilderImpl.getInstance().build(getEvaluationCode(thisEvaluationContext), ContextUtil.getSourcePosition(thisEvaluationContext));
         }
       });
 

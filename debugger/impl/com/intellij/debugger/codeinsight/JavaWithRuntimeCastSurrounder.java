@@ -124,7 +124,7 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
       ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
         public ExpressionEvaluator compute() throws EvaluateException {
-          return EvaluatorBuilderImpl.getInstance().build(myElement, ContextUtil.getContextElement(evaluationContext));
+          return EvaluatorBuilderImpl.getInstance().build(myElement, ContextUtil.getSourcePosition(evaluationContext));
         }
       });
 

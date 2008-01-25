@@ -210,7 +210,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
           try {
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(getProject(), new EvaluatingComputable<ExpressionEvaluator>() {
               public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context));
+                return EvaluatorBuilderImpl.getInstance().build(getLogMessage(), ContextUtil.getContextElement(context), ContextUtil.getSourcePosition(context));
               }
             });
             String result = DebuggerUtils.getValueAsString(context, evaluator.evaluate(context));

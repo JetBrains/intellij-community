@@ -59,7 +59,7 @@ public abstract class CachedEvaluator {
       codeFragment.setThisType(contextType);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = ((PsiExpressionCodeFragment)codeFragment).getExpression();
-      cache.myEvaluator = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getEvaluatorBuilder().build(cache.myPsiChildrenExpression, contextClass);
+      cache.myEvaluator = ((DebuggerUtilsEx)DebuggerUtils.getInstance()).getEvaluatorBuilder().build(cache.myPsiChildrenExpression, null);
     }
     catch (EvaluateException e) {
       cache.myException = e;
