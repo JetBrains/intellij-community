@@ -37,7 +37,6 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -119,11 +118,12 @@ public class FindUsagesManager implements JDOMExternalizable {
   }
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    return !ContainerUtil.mapNotNull(myHandlers, new Function<Function<PsiElement, Factory<FindUsagesHandler>>, Factory<FindUsagesHandler>>() {
-          public Factory<FindUsagesHandler> fun(final Function<PsiElement, Factory<FindUsagesHandler>> function) {
-            return function.fun(element);
-          }
-        }).isEmpty();
+    for (Function<PsiElement, Factory<FindUsagesHandler>> t : myHandlers) {
+      if (t.fun(element) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void clearFindingNextUsageInFile() {
