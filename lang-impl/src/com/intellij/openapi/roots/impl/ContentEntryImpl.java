@@ -1,12 +1,11 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -117,26 +116,11 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   private ExcludeFolder[] calculateExcludeFolders() {
     final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
-    final CompilerModuleExtension compilerModuleExtension = myRootModel.getModuleExtension(CompilerModuleExtension.class);
-    final boolean excludeOutput = compilerModuleExtension.isExcludeOutput();
-    if (!excludeOutput && !myRootModel.isExcludeExplodedDirectory() && myExcludedOutputFolders.isEmpty()) { // optimization
-      return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
-    }
-
-    result.addAll(myExcludedOutputFolders);
-    if (excludeOutput) {
-      if (!compilerModuleExtension.isCompilerOutputPathInherited()) {
-        addExcludeForOutputPath(compilerModuleExtension.getCompilerOutputPointer(), result);
-        addExcludeForOutputPath(compilerModuleExtension.getCompilerOutputForTestsPointer(), result);
-      } else {
-        final Project project = myRootModel.getModule().getProject();
-        final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(project);
-        final String outputUrl = compilerProjectExtension.getCompilerOutputUrl();
-        if (outputUrl != null){
-          if (new File(VfsUtil.urlToPath(outputUrl)).exists()) {
-            addExcludeForOutputPath(compilerProjectExtension.getCompilerOutputPointer(), result);
-          }
-        }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions
+      .getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myRootModel.getProject())) {
+      final VirtualFilePointer[] files = excludePolicy.getExcludeRootsForModule(myRootModel);
+      for (VirtualFilePointer file : files) {
+        addExcludeForOutputPath(file, result);
       }
     }
     if (myRootModel.isExcludeExplodedDirectory()) {

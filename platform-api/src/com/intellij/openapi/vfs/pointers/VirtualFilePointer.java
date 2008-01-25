@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface VirtualFilePointer extends JDOMExternalizable {
+  VirtualFilePointer[] EMPTY_ARRAY = new VirtualFilePointer[0];
+
   @NotNull
   String getFileName();
 
