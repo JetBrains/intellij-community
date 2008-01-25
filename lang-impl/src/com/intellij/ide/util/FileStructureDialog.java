@@ -93,7 +93,7 @@ public class FileStructureDialog extends DialogWrapper {
     init();
 
     if (psiElement != null) {
-      if (myCommanderPanel.shouldDrillDownOnEmptyElement(psiElement)) {
+      if (myCommanderPanel.shouldEnterElement(psiElement)) {
         myCommanderPanel.getBuilder().enterElement(psiElement, PsiUtilBase.getVirtualFile(psiElement));
       }
       else {

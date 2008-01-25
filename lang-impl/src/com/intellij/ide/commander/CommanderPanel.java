@@ -246,6 +246,10 @@ public class CommanderPanel extends JPanel {
            value instanceof PsiDirectory;
   }
 
+  public boolean shouldEnterElement(PsiElement element) {
+    return element instanceof PsiClass;
+  }
+
   private boolean topElementIsSelected() {
     int[] selectedIndices = myList.getSelectedIndices();
     return selectedIndices.length == 1 && selectedIndices[0] == 0 && myModel.getElementAt(selectedIndices[0]) instanceof TopLevelNode;
