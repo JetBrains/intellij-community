@@ -471,7 +471,7 @@ public class OverrideImplementUtil {
   }
 
   @Nullable
-  private static PsiElement getDefaultAnchorToOverrideOrImplement(PsiClass aClass, PsiMethod baseMethod, PsiSubstitutor substitutor){
+  public static PsiElement getDefaultAnchorToOverrideOrImplement(PsiClass aClass, PsiMethod baseMethod, PsiSubstitutor substitutor){
     PsiMethod prevBaseMethod = PsiTreeUtil.getPrevSiblingOfType(baseMethod, PsiMethod.class);
     while(prevBaseMethod != null) {
       String name = prevBaseMethod.isConstructor() ? aClass.getName() : prevBaseMethod.getName();

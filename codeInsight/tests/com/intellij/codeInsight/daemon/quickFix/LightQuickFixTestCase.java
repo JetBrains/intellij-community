@@ -32,7 +32,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     return false;
   }
 
-  private void doTestFor(final String testName) {
+  protected void doTestFor(final String testName) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
