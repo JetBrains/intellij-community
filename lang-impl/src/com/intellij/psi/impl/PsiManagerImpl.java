@@ -121,8 +121,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
                                                                                                     projectRootManagerEx);
     mySearchHelper = new PsiSearchHelperImpl(this);
     final CompositeCacheManager cacheManager = new CompositeCacheManager();
-    if (psiManagerConfiguration.REPOSITORY_ENABLED && !isProjectDefault) {
-      //cacheManager.addCacheManager(new CacheManagerImpl(this));
+    if (!isProjectDefault) {
       cacheManager.addCacheManager(new IndexCacheManagerImpl(this));
     }
     else {
