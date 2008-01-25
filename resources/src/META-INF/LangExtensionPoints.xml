@@ -156,4 +156,6 @@
 
   <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider"/>
 
+  <extensionPoint name="structureViewBuilder"
+                  beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 </extensionPoints>
