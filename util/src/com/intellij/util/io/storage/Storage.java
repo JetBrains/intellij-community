@@ -41,48 +41,15 @@ public class Storage implements Disposable, Forceable {
   private DataTable myDataTable;
 
   private static final int CACHE_SIZE = 8192;
-  private final static Map<AppenderCacheKey, AppenderStream> ourAppendersCache = Collections.synchronizedMap(new LinkedHashMap<AppenderCacheKey, AppenderStream>(16, 0.75f, true) {
+  private final Map<Integer, AppenderStream> myAppendersCache = Collections.synchronizedMap(new LinkedHashMap<Integer, AppenderStream>(16, 0.75f, true) {
     @Override
-    protected boolean removeEldestEntry(final Map.Entry<AppenderCacheKey, AppenderStream> eldest) {
+    protected boolean removeEldestEntry(final Map.Entry<Integer, AppenderStream> eldest) {
       if (size() < CACHE_SIZE) return false;
 
       closeStream(eldest.getValue());
       return true;
     }
   });
-
-  private static final ThreadLocal<AppenderCacheKey> KEY_FLYWEIGHT = new ThreadLocal<AppenderCacheKey>() {
-    @Override
-    protected AppenderCacheKey initialValue() {
-      return new AppenderCacheKey(0, null);
-    }
-  };
-
-  private static class AppenderCacheKey {
-    public Storage storage;
-    public int record;
-
-    public AppenderCacheKey(final int record, final Storage storage) {
-      this.record = record;
-      this.storage = storage;
-    }
-
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (!(o instanceof AppenderCacheKey)) return false;
-
-      final AppenderCacheKey that = (AppenderCacheKey)o;
-
-      if (record != that.record) return false;
-      if (!storage.equals(that.storage)) return false;
-
-      return true;
-    }
-
-    public int hashCode() {
-      return record;
-    }
-  }
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + ".rindex");
@@ -204,16 +171,16 @@ public class Storage implements Disposable, Forceable {
 
   public void force() {
     synchronized (lock) {
-      for (AppenderCacheKey key : new ArrayList<AppenderCacheKey>(ourAppendersCache.keySet())) {
-        AppenderStream stream = ourAppendersCache.get(key);
-        if (stream != null && stream.myStorage == this) {
+      for (Integer key : new ArrayList<Integer>(myAppendersCache.keySet())) {
+        AppenderStream stream = myAppendersCache.get(key);
+        if (stream != null) {
           try {
             stream.realClose();
           }
           catch (IOException e) {
             LOG.error(e);
           }
-          ourAppendersCache.remove(key);
+          myAppendersCache.remove(key);
         }
       }
 
@@ -293,19 +260,11 @@ public class Storage implements Disposable, Forceable {
   }
 
   private void dropRecordCache(final int record) {
-    final AppenderCacheKey key = setupKey(record, this);
-    final AppenderStream stream = ourAppendersCache.get(key);
+    final AppenderStream stream = myAppendersCache.get(record);
     if (stream != null) {
       closeStream(stream);
-      ourAppendersCache.remove(key);
+      myAppendersCache.remove(record);
     }
-  }
-
-  private static AppenderCacheKey setupKey(int record, Storage storage) {
-    AppenderCacheKey key = KEY_FLYWEIGHT.get();
-    key.storage = storage;
-    key.record = record;
-    return key;
   }
 
   private static int calcCapacity(int requiredLength) {
@@ -327,7 +286,7 @@ public class Storage implements Disposable, Forceable {
   }
 
   public AppenderStream appendStream(int record) {
-    AppenderStream appenderStream = ourAppendersCache.get(setupKey(record, this));
+    AppenderStream appenderStream = myAppendersCache.get(record);
     if (appenderStream != null) {
       if (appenderStream.size() > 4048) {
         closeStream(appenderStream);
@@ -339,7 +298,7 @@ public class Storage implements Disposable, Forceable {
 
     appenderStream = new AppenderStream(this, record);
 
-    ourAppendersCache.put(new AppenderCacheKey(record, this), appenderStream);
+    myAppendersCache.put(record, appenderStream);
     return appenderStream;
   }
 
