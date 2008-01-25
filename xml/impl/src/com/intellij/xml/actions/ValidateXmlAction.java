@@ -37,7 +37,7 @@ public class ValidateXmlAction extends AnAction /*extends BaseCodeInsightAction*
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final PsiFile psiFile = DataKeys.PSI_FILE.getData(e.getDataContext());
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile == null) return;
     doRunAction(psiFile);
   }

@@ -6,7 +6,7 @@ package com.intellij.ide.util.frameworkSupport;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 
 /**
@@ -14,7 +14,7 @@ import com.intellij.openapi.module.Module;
  */
 public class AddFrameworkSupportAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
-    Module module = e.getData(DataKeys.MODULE_CONTEXT);
+    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     if (module == null) return;
     
     AddFrameworkSupportDialog dialog = AddFrameworkSupportDialog.createDialog(module);
@@ -24,7 +24,7 @@ public class AddFrameworkSupportAction extends AnAction {
   }
 
   public void update(final AnActionEvent e) {
-    Module module = e.getData(DataKeys.MODULE_CONTEXT);
+    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     boolean enable = module != null && AddFrameworkSupportDialog.isAvailable(module);
     e.getPresentation().setEnabled(enable);
   }

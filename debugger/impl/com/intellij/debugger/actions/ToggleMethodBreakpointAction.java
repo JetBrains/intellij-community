@@ -79,13 +79,13 @@ public class ToggleMethodBreakpointAction extends AnAction {
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
-      final PsiElement psiElement = event.getData(DataKeys.PSI_ELEMENT);
+      final PsiElement psiElement = event.getData(LangDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiMethod) {
         method = psiElement;
         document = PsiDocumentManager.getInstance(project).getDocument(method.getContainingFile());
       }
     } else {
-      Editor editor = event.getData(DataKeys.EDITOR);
+      Editor editor = event.getData(PlatformDataKeys.EDITOR);
       if(editor == null) {
         editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       }

@@ -2,7 +2,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -34,11 +34,11 @@ class ExportToHTMLManager {
    */
   public static void executeExport(final DataContext dataContext) throws FileNotFoundException {
     PsiDirectory psiDirectory = null;
-    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       psiDirectory = (PsiDirectory)psiElement;
     }
-    final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     String shortFileName = null;
     String directoryName = null;
@@ -54,7 +54,7 @@ class ExportToHTMLManager {
       }
     }
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     boolean isSelectedTextEnabled = false;
     if(editor != null && editor.getSelectionModel().hasSelection()) {
       isSelectedTextEnabled = true;

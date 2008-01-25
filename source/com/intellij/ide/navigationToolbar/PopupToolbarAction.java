@@ -2,7 +2,10 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 
@@ -24,7 +27,7 @@ public class PopupToolbarAction extends AnAction {
     if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) {
       return;
     }
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final NavBarPanel toolbarPanel = new NavBarPanel(project) {
       public Dimension getPreferredSize() {
         final Dimension dimension = super.getPreferredSize();

@@ -8,7 +8,7 @@ import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -53,7 +53,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
 
   @Nullable
   private static ResourceBundle getResourceBundleFromDataContext(DataContext dataContext) {
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof Property) return null; //rename property
     VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {

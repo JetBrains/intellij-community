@@ -89,7 +89,7 @@ public final class BrowseCallHierarchyAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 }

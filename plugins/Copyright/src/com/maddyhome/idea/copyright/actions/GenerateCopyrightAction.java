@@ -40,7 +40,7 @@ public class GenerateCopyrightAction extends AnAction
             return;
         }
 
-        PsiFile file = DataKeys.PSI_FILE.getData(context);
+        PsiFile file = LangDataKeys.PSI_FILE.getData(context);
         if (file == null) {
             Editor editor = (Editor)context.getData(DataConstants.EDITOR);
             if (editor != null)

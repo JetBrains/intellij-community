@@ -9,7 +9,8 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -33,7 +34,7 @@ public class RunToCursorActionHandler extends DebuggerActionHandler {
 
   public boolean isEnabled(final @NotNull Project project, final AnActionEvent event) {
 
-    Editor editor = event.getData(DataKeys.EDITOR);
+    Editor editor = event.getData(PlatformDataKeys.EDITOR);
 
     if (editor == null) {
       return false;
@@ -57,7 +58,7 @@ public class RunToCursorActionHandler extends DebuggerActionHandler {
 
 
   public void perform(@NotNull final Project project, final AnActionEvent event) {
-    Editor editor = event.getData(DataKeys.EDITOR);
+    Editor editor = event.getData(PlatformDataKeys.EDITOR);
     if (editor == null) {
       return;
     }

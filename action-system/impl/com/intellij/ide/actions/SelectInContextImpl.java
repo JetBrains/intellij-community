@@ -65,7 +65,7 @@ abstract class SelectInContextImpl implements SelectInContext {
     }
 
     if (selectInContext == null) {
-      Navigatable descriptor = DataKeys.NAVIGATABLE.getData(dataContext);
+      Navigatable descriptor = PlatformDataKeys.NAVIGATABLE.getData(dataContext);
       if (descriptor instanceof OpenFileDescriptor) {
         final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
         if (file.isValid()) {
@@ -112,7 +112,7 @@ abstract class SelectInContextImpl implements SelectInContext {
   @Nullable
   private static SelectInContext createPsiContext(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiElement == null || !psiElement.isValid()) {
       return null;
     }

@@ -16,8 +16,8 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.OrderEntry;
@@ -175,8 +175,8 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
-      if (DataKeys.MODULE_CONTEXT == key) {
-        sink.put(DataKeys.MODULE_CONTEXT, myModule);
+      if (LangDataKeys.MODULE_CONTEXT == key) {
+        sink.put(LangDataKeys.MODULE_CONTEXT, myModule);
       }
     }
   }

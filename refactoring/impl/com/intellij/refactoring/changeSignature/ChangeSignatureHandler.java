@@ -3,7 +3,8 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element instanceof PsiMethod) {
       invoke((PsiMethod) element, project, editor);
     }
@@ -39,7 +40,7 @@ public class ChangeSignatureHandler implements RefactoringActionHandler {
     if (elements[0] instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)elements[0];
 
-      invoke(method, project, DataKeys.EDITOR.getData(dataContext));
+      invoke(method, project, PlatformDataKeys.EDITOR.getData(dataContext));
     }
     else if (elements[0] instanceof PsiClass){
       invoke((PsiClass) elements[0]);

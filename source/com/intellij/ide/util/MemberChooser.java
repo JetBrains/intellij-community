@@ -482,11 +482,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   public void calcData(final DataKey key, final DataSink sink) {
-    if (key.equals(DataKeys.PSI_ELEMENT)) {
+    if (key.equals(LangDataKeys.PSI_ELEMENT)) {
       if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
         T selectedElement = mySelectedElements.iterator().next();
         if (selectedElement instanceof PsiElementClassMember) {
-          sink.put(DataKeys.PSI_ELEMENT, ((PsiElementClassMember) selectedElement).getElement());
+          sink.put(LangDataKeys.PSI_ELEMENT, ((PsiElementClassMember) selectedElement).getElement());
         }
       }
     }

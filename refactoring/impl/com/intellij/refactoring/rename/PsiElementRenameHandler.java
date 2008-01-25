@@ -4,7 +4,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +48,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);
     LOG.assertTrue(element != null);
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     invoke(element, project, element, editor);
   }
 

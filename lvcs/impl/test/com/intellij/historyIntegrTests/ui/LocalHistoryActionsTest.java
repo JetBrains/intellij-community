@@ -5,7 +5,10 @@ import com.intellij.history.integration.ui.actions.LocalHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction;
 import com.intellij.historyIntegrTests.IntegrationTestCase;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -112,7 +115,7 @@ public class LocalHistoryActionsTest extends IntegrationTestCase {
       @Nullable
       public Object getData(String id) {
         if (id.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName())) return files;
-        if (id.equals(DataKeys.EDITOR.getName())) return editor;
+        if (id.equals(PlatformDataKeys.EDITOR.getName())) return editor;
         if (id.equals(PlatformDataKeys.PROJECT.getName())) return p;
         return null;
       }

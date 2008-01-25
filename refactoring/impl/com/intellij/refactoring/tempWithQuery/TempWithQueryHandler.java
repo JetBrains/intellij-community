@@ -3,7 +3,8 @@ package com.intellij.refactoring.tempWithQuery;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -161,8 +162,8 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
       if (dataContext != null) {
-        final PsiFile file = DataKeys.PSI_FILE.getData(dataContext);
-        final Editor editor = DataKeys.EDITOR.getData(dataContext);
+        final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+        final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
         if (file != null && editor != null) {
           invokeOnVariable(file, project, (PsiLocalVariable)elements[0], editor);
         }

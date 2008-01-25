@@ -17,7 +17,7 @@ public class ExternalJavaDocAction extends AnAction {
       return;
     }
 
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       Messages.showMessageDialog(
         project,
@@ -29,8 +29,8 @@ public class ExternalJavaDocAction extends AnAction {
     }
 
 
-    PsiFile context = DataKeys.PSI_FILE.getData(dataContext);
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    PsiFile context = LangDataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     PsiElement originalElement = (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
     try {
       element.putUserData(
@@ -48,8 +48,8 @@ public class ExternalJavaDocAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
-    final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (editor != null) {
       Project project = PlatformDataKeys.PROJECT.getData(dataContext);

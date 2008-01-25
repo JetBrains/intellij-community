@@ -8,7 +8,8 @@ package com.intellij.xml.refactoring;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class XmlTagRenameHandler implements RenameHandler {
 
   @Nullable
   private static Editor getEditor(@Nullable DataContext context) {
-    return DataKeys.EDITOR.getData(context);
+    return PlatformDataKeys.EDITOR.getData(context);
   }
 
   @Nullable
@@ -59,7 +60,7 @@ public class XmlTagRenameHandler implements RenameHandler {
       final Editor editor = getEditor(context);
       if (editor != null) {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiFile file = DataKeys.PSI_FILE.getData(context);
+        final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
         if (file instanceof XmlFile) {
           return file.getViewProvider().findElementAt(offset);
         }

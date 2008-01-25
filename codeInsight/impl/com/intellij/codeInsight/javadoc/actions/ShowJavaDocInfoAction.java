@@ -54,8 +54,8 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       return;
     }
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (editor == null && element == null) {
       presentation.setEnabled(false);
       return;
@@ -101,8 +101,8 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
-    final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (project != null && editor != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc");

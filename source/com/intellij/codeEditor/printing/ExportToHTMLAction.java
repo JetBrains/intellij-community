@@ -30,12 +30,12 @@ public class ExportToHTMLAction extends AnAction{
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       presentation.setEnabled(true);
       return;
     }
-    PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null);
   }
 

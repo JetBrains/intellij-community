@@ -14,8 +14,8 @@ public abstract class CompileActionBase extends AnAction {
     if (project == null) {
       return;
     }
-    Editor editor = e.getData(DataKeys.EDITOR);
-    PsiFile file = e.getData(DataKeys.PSI_FILE);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null && editor != null) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }

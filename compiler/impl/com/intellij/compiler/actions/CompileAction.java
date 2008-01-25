@@ -22,7 +22,7 @@ import java.util.List;
 public class CompileAction extends CompileActionBase {
   
   protected void doAction(DataContext dataContext, Project project) {
-    final Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
+    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     final boolean trackDependencies = CompilerWorkspaceConfiguration.getInstance(project).COMPILE_DEPENDENT_FILES;
     if (module != null) {
       CompilerManager.getInstance(project).compile(module, null, trackDependencies);
@@ -54,7 +54,7 @@ public class CompileAction extends CompileActionBase {
     }
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
+    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
     final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (module == null && files.length == 0) {
@@ -75,7 +75,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }

@@ -2,7 +2,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -27,12 +27,12 @@ class PrintManager {
     final PrinterJob printerJob = PrinterJob.getPrinterJob();
 
     final PsiDirectory[] psiDirectory = new PsiDirectory[1];
-    PsiElement psiElement = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if(psiElement instanceof PsiDirectory) {
       psiDirectory[0] = (PsiDirectory)psiElement;
     }
 
-    final PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     final String[] shortFileName = new String[1];
     final String[] directoryName = new String[1];
     if(psiFile != null || psiDirectory[0] != null) {
@@ -47,7 +47,7 @@ class PrintManager {
       }
     }
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     boolean isSelectedTextEnabled = false;
     if(editor != null && editor.getSelectionModel().hasSelection()) {
       isSelectedTextEnabled = true;

@@ -18,7 +18,7 @@ public class ReloadFromDiskAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (psiFile == null) return;
@@ -57,7 +57,7 @@ public class ReloadFromDiskAction extends AnAction {
       presentation.setEnabled(false);
       return;
     }
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null){
       presentation.setEnabled(false);
       return;

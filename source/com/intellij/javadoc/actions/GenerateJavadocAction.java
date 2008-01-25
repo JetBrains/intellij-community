@@ -24,12 +24,12 @@ public final class GenerateJavadocAction extends AnAction{
   private static PsiDirectory getDirectoryFromContext(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) return psiFile.getContainingDirectory();
     } else {
-      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
         if (element instanceof PsiDirectory) return (PsiDirectory)element;
         else{

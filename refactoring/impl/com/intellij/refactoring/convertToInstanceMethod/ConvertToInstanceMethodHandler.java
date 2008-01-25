@@ -1,7 +1,7 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -24,7 +24,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
   static final String REFACTORING_NAME = RefactoringBundle.message("convert.to.instance.method.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null) {
       element = file.findElementAt(editor.getCaretModel().getOffset());

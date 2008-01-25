@@ -126,9 +126,9 @@ public class CreateHtmlAction extends CreateElementActionBase {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      Module module = DataKeys.MODULE.getData(dataContext);
+      Module module = LangDataKeys.MODULE.getData(dataContext);
       if (module != null) {
-        IdeView view = DataKeys.IDE_VIEW.getData(dataContext);
+        IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
         if (view != null) {
           ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           PsiDirectory[] dirs = view.getDirectories();

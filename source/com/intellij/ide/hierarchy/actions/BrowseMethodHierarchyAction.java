@@ -97,14 +97,14 @@ public final class BrowseMethodHierarchyAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
 
     if (method != null) {
       return method;
     }
 
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }

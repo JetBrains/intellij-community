@@ -21,7 +21,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -50,7 +50,7 @@ public class AddToWatchAction extends DebuggerAction {
       }
     }
     else {
-      final Editor editor = (Editor)context.getData(DataKeys.EDITOR.getName());
+      final Editor editor = (Editor)context.getData(PlatformDataKeys.EDITOR.getName());
       enabled = DebuggerUtilsEx.getEditorText(editor) != null;
     }
     e.getPresentation().setEnabled(enabled);
@@ -83,7 +83,7 @@ public class AddToWatchAction extends DebuggerAction {
       addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
-      final Editor editor = (Editor)context.getData(DataKeys.EDITOR.getName());
+      final Editor editor = (Editor)context.getData(PlatformDataKeys.EDITOR.getName());
       if (editor != null) {
         final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
         if (editorText != null) {

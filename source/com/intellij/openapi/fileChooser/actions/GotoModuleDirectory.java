@@ -1,7 +1,7 @@
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileSystemTree;
@@ -28,9 +28,9 @@ public final class GotoModuleDirectory extends FileChooserAction {
   }
 
   private static VirtualFile getModulePath(AnActionEvent e) {
-    Module module = e.getData(DataKeys.MODULE_CONTEXT);
+    Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
     if (module == null) {
-      module = e.getData(DataKeys.MODULE);
+      module = e.getData(LangDataKeys.MODULE);
     }
     if (module == null) {
       return null;

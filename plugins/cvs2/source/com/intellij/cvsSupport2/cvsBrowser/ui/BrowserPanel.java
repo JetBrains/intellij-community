@@ -86,14 +86,14 @@ public class BrowserPanel extends JPanel implements DataProvider {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(DataKeys.NAVIGATABLE_ARRAY);
+      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
       if (navigatableArray != null && navigatableArray.length > 0) {
         OpenSourceUtil.navigate(navigatableArray, true);
       }
     }
 
     public void update(final AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(DataKeys.NAVIGATABLE_ARRAY);
+      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
       e.getPresentation().setEnabled(navigatableArray != null && navigatableArray.length > 0);
     }
   }

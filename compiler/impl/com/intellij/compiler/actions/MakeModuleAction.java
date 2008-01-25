@@ -15,7 +15,7 @@ public class MakeModuleAction extends CompileActionBase {
     Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     Module module;
     if (modules == null) {
-      module = DataKeys.MODULE.getData(dataContext);
+      module = LangDataKeys.MODULE.getData(dataContext);
       if (module == null) {
         return;
       }
@@ -38,7 +38,7 @@ public class MakeModuleAction extends CompileActionBase {
       return;
     }
     final DataContext dataContext = event.getDataContext();
-    final Module module = DataKeys.MODULE.getData(dataContext);
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
     Module[] modules = (Module[])dataContext.getData(DataConstants.MODULE_CONTEXT_ARRAY);
     final boolean isEnabled = module != null || modules != null;
     presentation.setEnabled(isEnabled);

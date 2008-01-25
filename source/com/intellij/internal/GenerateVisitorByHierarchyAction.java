@@ -12,7 +12,7 @@ import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -121,7 +121,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
 
     };
-    final PsiElement element = DataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     if (element instanceof PsiPackage) {
       dialog.selectPackage(((PsiPackage)element).getQualifiedName());
     }
@@ -141,7 +141,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     final String visitorName = visitorNameRef.get();
     final String visitorQName = PsiNameHelper.getShortClassName(visitorName).equals(visitorName)? aPackage.getQualifiedName()+"."+visitorName : visitorName;
     generateVisitorClass(visitorQName, aPackage, psiClass);
-    final IdeView ideView = DataKeys.IDE_VIEW.getData(e.getDataContext());
+    final IdeView ideView = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
     final PsiClass visitorClass = JavaPsiFacade.getInstance(project).findClass(visitorQName, GlobalSearchScope.projectScope(project));
     if (ideView != null && visitorClass != null) {
       ideView.selectElement(visitorClass);

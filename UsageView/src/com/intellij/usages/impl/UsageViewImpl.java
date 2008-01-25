@@ -1081,8 +1081,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
       }
 
-      else if (key == DataKeys.NAVIGATABLE_ARRAY) {
-        sink.put(DataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
+      else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
+        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
       }
 
       else if (key == DataKeys.EXPORTER_TO_TEXT_FILE) {

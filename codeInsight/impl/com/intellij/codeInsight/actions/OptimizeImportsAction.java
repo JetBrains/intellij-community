@@ -18,7 +18,7 @@ public class OptimizeImportsAction extends AnAction {
     DataContext dataContext = event.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 
     final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
 
@@ -61,7 +61,7 @@ public class OptimizeImportsAction extends AnAction {
         return;
       }
 
-      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiPackage) {
         dir = ((PsiPackage)element).getDirectories()[0];
@@ -99,7 +99,7 @@ public class OptimizeImportsAction extends AnAction {
 
     final VirtualFile[] files = (VirtualFile[])dataContext.getData(DataConstants.VIRTUAL_FILE_ARRAY);
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !isOptimizeImportsAvailable(file)){
@@ -121,7 +121,7 @@ public class OptimizeImportsAction extends AnAction {
     }
     else if (dataContext.getData(DataConstants.MODULE_CONTEXT) == null &&
              dataContext.getData(DataConstants.PROJECT_CONTEXT) == null) {
-      PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null){
         presentation.setEnabled(false);
         return;

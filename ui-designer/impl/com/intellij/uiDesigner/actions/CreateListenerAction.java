@@ -218,7 +218,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
             final PsiClass newClass = (PsiClass) ptr.getElement();
-            final Editor editor = DataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+            final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
             if (editor != null && newClass != null) {
               CommandProcessor.getInstance().executeCommand(
                 myClass.getProject(),

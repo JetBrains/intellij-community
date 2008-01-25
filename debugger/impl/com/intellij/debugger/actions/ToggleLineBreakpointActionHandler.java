@@ -7,7 +7,7 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -67,7 +67,7 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
   @Nullable
   private static PlaceInDocument getPlace(@NotNull final Project project, AnActionEvent event) {
-    Editor editor = event.getData(DataKeys.EDITOR);
+    Editor editor = event.getData(PlatformDataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     }

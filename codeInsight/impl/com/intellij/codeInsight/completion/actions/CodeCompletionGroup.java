@@ -18,7 +18,7 @@ public class CodeCompletionGroup extends DefaultActionGroup {
       return;
     }
 
-    Editor editor = DataKeys.EDITOR.getData(dataContext);
+    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor == null){
       presentation.setEnabled(false);
       return;

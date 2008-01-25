@@ -16,8 +16,8 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -173,8 +173,8 @@ public class ClassGroupingRule implements UsageGroupingRule {
 
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
-      if (DataKeys.PSI_ELEMENT == key) {
-        sink.put(DataKeys.PSI_ELEMENT, getPsiClass());
+      if (LangDataKeys.PSI_ELEMENT == key) {
+        sink.put(LangDataKeys.PSI_ELEMENT, getPsiClass());
       }
       if (UsageView.USAGE_INFO_KEY == key) {
         PsiClass psiClass = getPsiClass();

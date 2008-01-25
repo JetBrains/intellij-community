@@ -82,7 +82,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
     }
 
     final DataContext dataContext = event.getDataContext();
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -101,7 +101,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;
@@ -123,7 +123,7 @@ public final class BrowseTypeHierarchyAction extends AnAction {
       return null;
     }
     else {
-      final PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
   }

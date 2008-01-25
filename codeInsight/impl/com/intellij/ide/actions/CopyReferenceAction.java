@@ -76,7 +76,7 @@ public class CopyReferenceAction extends AnAction {
     }
 
     if (element == null) {
-      element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element != null && !(element instanceof PsiMember) && element.getParent() instanceof PsiMember) {
       element = element.getParent();

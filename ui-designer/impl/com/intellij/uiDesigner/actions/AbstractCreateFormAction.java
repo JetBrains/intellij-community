@@ -7,7 +7,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -38,7 +38,7 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
-      final IdeView view = e.getData(DataKeys.IDE_VIEW);
+      final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
       if (view != null) {
         final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
         final PsiDirectory[] dirs = view.getDirectories();

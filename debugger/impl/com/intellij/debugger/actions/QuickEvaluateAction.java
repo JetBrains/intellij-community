@@ -42,7 +42,7 @@ public class QuickEvaluateAction extends AnAction {
     DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
     if (debuggerSession == null || !debuggerSession.isPaused()) return;
 
-    Editor editor = e.getData(DataKeys.EDITOR);
+    Editor editor = e.getData(PlatformDataKeys.EDITOR);
 
     if(editor != null) {
       LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();

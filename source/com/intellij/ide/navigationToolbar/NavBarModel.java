@@ -9,7 +9,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -90,7 +90,7 @@ public class NavBarModel {
       return updateModel(psiElement);
     }
     else {
-      final Module module = DataKeys.MODULE_CONTEXT.getData(dataContext);
+      final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
       if (module != null) {
         if (size() == 1 && getElement(0) == module) { //no need to update
           return false;

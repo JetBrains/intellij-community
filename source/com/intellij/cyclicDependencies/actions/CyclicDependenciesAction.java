@@ -39,9 +39,9 @@ public class CyclicDependenciesAction extends AnAction{
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Module module = DataKeys.MODULE.getData(dataContext);
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (project != null) {
-      PsiFile psiFile = DataKeys.PSI_FILE.getData(dataContext);
+      PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
       if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
         return;
       }
@@ -93,7 +93,7 @@ public class CyclicDependenciesAction extends AnAction{
       return new AnalysisScope(modulesArray);
     }
 
-    PsiElement psiTarget = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;
@@ -103,7 +103,7 @@ public class CyclicDependenciesAction extends AnAction{
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs == null || dirs.length == 0) return null;
-      return new JavaAnalysisScope(pack, DataKeys.MODULE.getData(dataContext));
+      return new JavaAnalysisScope(pack, LangDataKeys.MODULE.getData(dataContext));
     } else if (psiTarget != null){
       return null;
     }
@@ -117,7 +117,7 @@ public class CyclicDependenciesAction extends AnAction{
   }
 
   private AnalysisScope getModuleScope(DataContext dataContext) {
-    return new AnalysisScope(DataKeys.MODULE.getData(dataContext));
+    return new AnalysisScope(LangDataKeys.MODULE.getData(dataContext));
   }
 
   private class ProjectModuleOrPackageDialog extends DialogWrapper {

@@ -7,10 +7,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.PropertyCreationHandler;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +43,7 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
   public I18nQuickFixHandler getHandler(final AnActionEvent e) {
     final Editor editor = getEditor(e);
     if (editor == null) return null;
-    PsiFile psiFile = e.getData(DataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
     if (psiFile == null) return null;
     final PsiLiteralExpression literalExpression = getEnclosingStringLiteral(psiFile, editor);
     TextRange range = getSelectedRange(getEditor(e), psiFile);
@@ -133,13 +130,13 @@ public class I18nizeAction extends AnAction implements I18nQuickFixHandler{
   }
 
   private static Editor getEditor(final AnActionEvent e) {
-    return DataKeys.EDITOR.getData(e.getDataContext());
+    return PlatformDataKeys.EDITOR.getData(e.getDataContext());
   }
 
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = getEditor(e);
     final Project project = editor.getProject();
-    final PsiFile psiFile = DataKeys.PSI_FILE.getData(e.getDataContext());
+    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile == null) return;
     final I18nQuickFixHandler handler = getHandler(e);
     if (handler == null) return;

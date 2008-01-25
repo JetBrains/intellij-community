@@ -5,7 +5,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -24,7 +24,7 @@ public abstract class IntroduceHandlerBase {
     final PsiElement tempExpr = elements[0];
     final Editor editor;
     if (dataContext != null) {
-      final Editor editorFromDC = DataKeys.EDITOR.getData(dataContext);
+      final Editor editorFromDC = PlatformDataKeys.EDITOR.getData(dataContext);
       final PsiFile cachedPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument());
       if (cachedPsiFile != null && PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
         editor = editorFromDC;

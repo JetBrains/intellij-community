@@ -8,7 +8,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -31,7 +32,7 @@ public class InlineHandler implements RefactoringActionHandler {
     if (dataContext == null) {
       dataContext = DataManager.getInstance().getDataContext();
     }
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (elements[0] instanceof PsiMethod) {
       InlineMethodHandler.invoke(project, editor, (PsiMethod) elements[0]);
     } else if (elements[0] instanceof  PsiField) {
@@ -49,7 +50,7 @@ public class InlineHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    PsiElement element = DataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element != null) {
       final com.intellij.lang.refactoring.InlineHandler languageSpecific =
         LanguageRefactoringSupport.INSTANCE.forLanguage(element.getLanguage()).getInlineHandler();

@@ -37,6 +37,6 @@ final class ShowHintAction extends AnAction{
 
   public void update(AnActionEvent e) {
     // Alt-Enter hotkey for editor takes precedence over this action
-    e.getPresentation().setEnabled(e.getData(DataKeys.EDITOR) == null);
+    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.EDITOR) == null);
   }
 }
