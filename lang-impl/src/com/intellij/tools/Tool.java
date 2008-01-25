@@ -2,7 +2,6 @@ package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.RunStrategy;
 import com.intellij.execution.util.ExecutionErrorDialog;
@@ -227,7 +226,7 @@ public class Tool {
         if (commandLine == null) {
           return;
         }
-        OSProcessHandler handler = new DefaultJavaProcessHandler(commandLine);
+        OSProcessHandler handler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
         handler.startNotify();
         /*

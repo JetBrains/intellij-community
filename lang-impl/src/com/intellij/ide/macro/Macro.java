@@ -1,7 +1,7 @@
-
 package com.intellij.ide.macro;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public abstract class Macro {
+  public static final ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.macro");
+
   public static final class ExecutionCancelledException extends Exception {
   }
 

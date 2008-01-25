@@ -1,18 +1,17 @@
-
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.DataContext;
 
 import java.io.File;
 
-public final class FileDirRelativeToProjectRootMacro2 extends FileDirRelativeToProjectRootMacro {
+public final class FilePathRelativeToProjectRootMacro2 extends FilePathRelativeToProjectRootMacro {
   public String getName() {
-    return "/FileDirRelativeToProjectRoot";
+    return "/FilePathRelativeToProjectRoot";
   }
 
   public String getDescription() {
-    return IdeBundle.message("macro.file.dir.relative.to.root.fwd.slash");
+    return IdeBundle.message("macro.file.path.relative.to.root.fwd.slash");
   }
 
   public String expand(DataContext dataContext) {

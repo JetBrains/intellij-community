@@ -1,4 +1,3 @@
-
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
@@ -7,13 +6,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
 
-public final class ProjectPathMacro extends Macro {
+public final class SourcepathMacro extends Macro {
   public String getName() {
-    return "Projectpath";
+    return "Sourcepath";
   }
 
   public String getDescription() {
-    return IdeBundle.message("macro.project.source.path");
+    return IdeBundle.message("macro.project.sourcepath");
   }
 
   public String expand(DataContext dataContext) {

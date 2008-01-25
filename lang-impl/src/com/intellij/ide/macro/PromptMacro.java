@@ -1,8 +1,8 @@
 package com.intellij.ide.macro;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ide.IdeBundle;
 
 public final class PromptMacro extends Macro implements SecondQueueExpandMacro {
   public String getName() {

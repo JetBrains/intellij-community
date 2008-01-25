@@ -88,6 +88,9 @@
   <!-- Errors -->
   <projectConfigurable implementation="com.intellij.profile.codeInspection.ui.ErrorOptionsConfigurable"/>
 
+  <!-- External Tools -->
+  <applicationConfigurable implementation="com.intellij.tools.ToolConfigurable"/>
+
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainSyntaxHighlighterFactory"/>
 
@@ -114,11 +117,11 @@
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
   <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.LineNumberMacro"/>
 
-  <favoriteNodeProvider implementation="com.intellij.ide.favoritesTreeView.ResourcesFavoriteNodeProvider"/>
-
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.IdIndex" />
 
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>
+
+  <applicationService serviceInterface="com.intellij.ide.macro.MacroManager" serviceImplementation="com.intellij.ide.macro.MacroManager"/>
 </extensions>

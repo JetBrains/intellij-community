@@ -1,4 +1,3 @@
-
 package com.intellij.ide.macro;
 
 import com.intellij.ide.DataManager;
@@ -8,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -29,26 +29,19 @@ public final class MacroManager {
   }
 
   private MacroManager() {
-    registerMacro(new ClasspathMacro());
     registerMacro(new SourcepathMacro());
     registerMacro(new FileDirMacro());
     registerMacro(new FileExtMacro());
     registerMacro(new FileNameMacro());
     registerMacro(new FileNameWithoutExtension());
-    registerMacro(new FilePackageMacro());
-    registerMacro(new FileFQPackage());
-    registerMacro(new FileClassMacro());
     registerMacro(new FilePathMacro());
     registerMacro(new FileDirRelativeToProjectRootMacro());
     registerMacro(new FilePathRelativeToProjectRootMacro());
     registerMacro(new FileDirRelativeToSourcepathMacro());
     registerMacro(new FilePathRelativeToSourcepathMacro());
     registerMacro(new JdkPathMacro());
-    registerMacro(new OutputPathMacro());
     registerMacro(new PromptMacro());
     registerMacro(new SourcepathEntryMacro());
-    registerMacro(new ClasspathEntryMacro());
-
     //registerMacro(new ProjectFilePathMacro());
     registerMacro(new ProjectFileDirMacro());
     registerMacro(new ProjectNameMacro());
@@ -61,7 +54,6 @@ public final class MacroManager {
 
     registerMacro(new FileRelativePathMacro());
     registerMacro(new FileRelativeDirMacro());
-    registerMacro(new JavaDocPathMacro());
     registerMacro(new LineNumberMacro());
     registerMacro(new ColumnNumberMacro());
     if (File.separatorChar != '/') {
@@ -71,6 +63,9 @@ public final class MacroManager {
       registerMacro(new FilePathRelativeToSourcepathMacro2());
       registerMacro(new FileRelativeDirMacro2());
       registerMacro(new FileRelativePathMacro2());
+    }
+    for (Macro macro : Extensions.getExtensions(Macro.EP_NAME)) {
+      registerMacro(macro);
     }
   }
 

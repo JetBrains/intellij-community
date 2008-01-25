@@ -1,27 +1,29 @@
 package com.intellij.ide.macro;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.DataAccessors;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
 
-public final class ProjectFileDirMacro extends Macro {
+public class FileRelativePathMacro extends Macro {
   public String getName() {
-    return "ProjectFileDir";
+    return "FileRelativePath";
   }
 
   public String getDescription() {
-    return IdeBundle.message("macro.project.file.directory");
+    return IdeBundle.message("macro.file.path.relative");
   }
 
-  @Nullable
   public String expand(DataContext dataContext) {
     final VirtualFile baseDir = DataAccessors.PROJECT_BASE_DIR.from(dataContext);
     if (baseDir == null) {
       return null;
     }
-    return VfsUtil.virtualToIoFile(baseDir).getPath();
+
+    VirtualFile file = DataAccessors.VIRTUAL_FILE.from(dataContext);
+    if (file == null) return null;
+    return FileUtil.getRelativePath(VfsUtil.virtualToIoFile(baseDir), VfsUtil.virtualToIoFile(file));
   }
 }

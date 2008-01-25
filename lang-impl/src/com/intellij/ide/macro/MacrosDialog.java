@@ -1,8 +1,8 @@
 package com.intellij.ide.macro;
 
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
