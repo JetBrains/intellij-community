@@ -697,7 +697,7 @@ public class GroovyAnnotator implements Annotator {
       }
 
       if (isNeedsDynamic(refExpr) && refExpr.resolve() == null) {
-        addDynPropertyAnnotation(annotation, refExpr);
+        addDynamicAnnotation(annotation, refExpr);
       }
 
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
@@ -738,7 +738,7 @@ public class GroovyAnnotator implements Annotator {
     return true;
   }
 
-  private void addDynPropertyAnnotation(Annotation annotation, GrReferenceExpression referenceExpression) {
+  private void addDynamicAnnotation(Annotation annotation, GrReferenceExpression referenceExpression) {
     final PsiFile containingFile = referenceExpression.getContainingFile();
     VirtualFile file;
     if (containingFile != null) {
