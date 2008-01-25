@@ -34,11 +34,18 @@ public class PersistentEnumerator<Data> implements Forceable {
   protected static final int DATA_OFFSET = 8;
   private static final int FIRST_VECTOR_OFFSET = 4;
   private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac;
-  private static final int BITS_PER_LEVEL = 4;
+  private static final int VERSION = 2;
+  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
+
+  private static final int BITS_PER_LEVEL = 5;
   private static final int SLOTS_PER_VECTOR = 1 << BITS_PER_LEVEL;
   private static final int LEVEL_MASK = SLOTS_PER_VECTOR - 1;
   private static final byte[] EMPTY_VECTOR = new byte[SLOTS_PER_VECTOR * 4];
+
+  private static final int BITS_PER_FIRST_LEVEL = 12;
+  private static final int SLOTS_PER_FIRST_VECTOR = 1 << BITS_PER_FIRST_LEVEL;
+  private static final int FIRST_LEVEL_MASK = SLOTS_PER_FIRST_VECTOR - 1;
+  private static final byte[] FIRST_VECTOR = new byte[SLOTS_PER_FIRST_VECTOR * 4];
 
   protected final MappedFile myStorage;
   private final MappedFileDataOutput myOut;
@@ -116,7 +123,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     
     if (myStorage.length() == 0) {
       markDirty(true);
-      allocVector();
+      allocVector(FIRST_VECTOR);
     }
     else {
       int sign;
@@ -155,12 +162,17 @@ public class PersistentEnumerator<Data> implements Forceable {
     int pos;
     int lastVector;
 
+    int levelMask = FIRST_LEVEL_MASK;
+    int bitsPerLevel = BITS_PER_FIRST_LEVEL;
     do {
       lastVector = vector;
-      pos = vector + (hc & LEVEL_MASK) * 4;
-      hc >>>= BITS_PER_LEVEL;
+      pos = vector + (hc & levelMask) * 4;
+      hc >>>= bitsPerLevel;
       vector = myStorage.getInt(pos);
       depth++;
+
+      levelMask = LEVEL_MASK;
+      bitsPerLevel = BITS_PER_LEVEL;
     }
     while (vector > 0);
 
@@ -204,7 +216,7 @@ public class PersistentEnumerator<Data> implements Forceable {
           final int valueHCByte = hcByte(valueHC, depth);
           final int oldHCByte = hcByte(candidateHC, depth);
           if (valueHCByte == oldHCByte) {
-            int newVector = allocVector();
+            int newVector = allocVector(EMPTY_VECTOR);
             myStorage.putInt(lastVector + oldHCByte * 4, newVector);
             lastVector = newVector;
           }
@@ -227,13 +239,20 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   private static int hcByte(int hashcode, int byteN) {
+    if (byteN == 0) {
+      return hashcode & FIRST_LEVEL_MASK;
+    }
+
+    hashcode >>>= BITS_PER_FIRST_LEVEL;
+    byteN--;
+    
     return (hashcode >>> (byteN * BITS_PER_LEVEL)) & LEVEL_MASK;
   }
 
-  private int allocVector() throws IOException {
+  private int allocVector(final byte[] empty) throws IOException {
     final int pos = (int)myStorage.length();
     myStorage.seek(pos);
-    myStorage.put(EMPTY_VECTOR, 0, EMPTY_VECTOR.length);
+    myStorage.put(empty, 0, empty.length);
     return pos;
   }
 
