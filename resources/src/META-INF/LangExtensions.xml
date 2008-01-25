@@ -119,5 +119,6 @@
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.TodoIndex" />
   <fileBasedIndex implementation="com.intellij.psi.impl.cache.index.IdIndex" />
 
+  <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>
 </extensions>
