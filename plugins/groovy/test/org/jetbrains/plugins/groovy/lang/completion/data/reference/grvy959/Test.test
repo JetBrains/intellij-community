@@ -1,0 +1,8 @@
+class MyClass {
+public String fooooo(){}
+}
+
+MyClass.fo<caret>
+-----
+forName
+forName

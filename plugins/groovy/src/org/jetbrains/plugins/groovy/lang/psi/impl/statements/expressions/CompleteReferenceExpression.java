@@ -183,11 +183,20 @@ public class CompleteReferenceExpression {
 
     GroovyResolveResult[] candidates = processor.getCandidates();
     if (candidates.length == 0 && sameQualifier.length == 0) return PsiNamedElement.EMPTY_ARRAY;
+    candidates = filterStaticsOK(candidates);
     PsiElement[] elements = ResolveUtil.mapToElements(candidates);
     LookupElement[] propertyLookupElements = addPretendedProperties(elements);
     Object[] variants = GroovyCompletionUtil.getCompletionVariants(candidates);
     variants = ArrayUtil.mergeArrays(variants, propertyLookupElements, Object.class);
     return ArrayUtil.mergeArrays(variants, sameQualifier, Object.class);
+  }
+
+  private static GroovyResolveResult[] filterStaticsOK(GroovyResolveResult[] candidates) {
+    List<GroovyResolveResult> result = new ArrayList<GroovyResolveResult>(candidates.length);
+    for (GroovyResolveResult resolveResult : candidates) {
+      if (resolveResult.isStaticsOK()) result.add(resolveResult);
+    }
+    return result.toArray(new GroovyResolveResult[result.size()]);
   }
 
   private static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr, ResolverProcessor processor, GrExpression qualifier) {
@@ -258,7 +267,7 @@ public class CompleteReferenceExpression {
           PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
           if (resolved instanceof PsiClass) { ////omitted .class
             GlobalSearchScope scope = refExpr.getResolveScope();
-            PsiClass javaLangClass = PsiUtil.getJavaLangObject(resolved, scope);
+            PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, scope);
             if (javaLangClass != null) {
               javaLangClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
             }

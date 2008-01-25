@@ -405,7 +405,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
           if (qualifier instanceof GrReferenceExpression) {
             PsiElement resolved = ((GrReferenceExpression) qualifier).resolve();
             if (resolved instanceof PsiClass) { //omitted .class
-              PsiClass javaLangClass = PsiUtil.getJavaLangObject(resolved, refExpr.getResolveScope());
+              PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, refExpr.getResolveScope());
               if (javaLangClass != null) {
                 javaLangClass.processDeclarations(processor, PsiSubstitutor.EMPTY, null, refExpr);
               }

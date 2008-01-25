@@ -264,7 +264,7 @@ public class PsiUtil {
     });
   }
 
-  public static PsiClass getJavaLangObject(PsiElement resolved, GlobalSearchScope scope) {
+  public static PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
     return resolved.getManager().findClass("java.lang.Class", scope);
   }
 
@@ -397,6 +397,24 @@ public class PsiUtil {
         while (run != null && run != owner) {
           if (run instanceof GrClosableBlock) return false;
           run = run.getContext();
+        }
+      }
+    } else {
+      if (place instanceof GrReferenceExpression) {
+        GrExpression qualifier = ((GrReferenceExpression) place).getQualifierExpression();
+        if (qualifier instanceof GrReferenceExpression) {
+          PsiElement qualifierResolved = ((GrReferenceExpression) qualifier).resolve();
+          if (qualifierResolved instanceof PsiClass) {
+
+            if (owner instanceof PsiMember) {
+              //members from java.lang.Class can be invoked without ".class"
+              PsiClass containingClass = ((PsiMember) owner).getContainingClass();
+              if (containingClass != null && "java.lang.Class".equals(containingClass.getQualifiedName())) {
+                return true;
+              }
+            }
+            return false;
+          }
         }
       }
     }
