@@ -332,9 +332,6 @@ public class XmlCompletionData extends CompletionData {
             }
           }
         }
-        else if (attributeDecl.isFixed() && attributeDecl.getDefaultValue() != null && !htmlCode) {
-          template.addTextSegment(" " + attributeName + "=\"" + attributeDecl.getDefaultValue() + "\"");
-        }
       }
 
       if (completionChar == '>' || (completionChar == '/' && indirectRequiredAttrs != null)) {
