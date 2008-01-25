@@ -411,7 +411,9 @@ public class FileStructureDialog extends DialogWrapper {
 
     public boolean isActionActive(String name) {
       for (final Sorter sorter : myBaseTreeModel.getSorters()) {
-        if (sorter.getName().equals(name)) return !sorter.isVisible();
+        if (sorter.getName().equals(name)) {
+          if (!sorter.isVisible()) return true;
+        }
       }
       return (!myIncludeInherited && InheritedMembersFilter.ID.equals(name)) ||
              Sorter.ALPHA_SORTER_ID.equals(name);
