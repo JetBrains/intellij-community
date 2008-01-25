@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.template.*;
@@ -61,18 +62,18 @@ public class ExpectedTypeMacro implements Macro{
     int offset = context.getTemplateStartOffset();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
 
-    PsiElement element = file.findElementAt(offset);
-    if (!(element instanceof PsiIdentifier)) {
+    //PsiElement element = file.findElementAt(offset);
+    //if (!(element instanceof PsiIdentifier)) {
       PsiFile fileCopy = (PsiFile)file.copy();
       BlockSupport blockSupport = ServiceManager.getService(project, BlockSupport.class);
       try{
-        blockSupport.reparseRange(fileCopy, offset, offset, "xxx)");
+        blockSupport.reparseRange(fileCopy, offset, offset, CompletionUtil.DUMMY_IDENTIFIER);
       }
       catch(IncorrectOperationException e){
         LOG.error(e);
       }
-      element = fileCopy.findElementAt(offset);
-    }
+      PsiElement element = fileCopy.findElementAt(offset);
+    //}
 
     if (element instanceof PsiIdentifier && element.getParent() instanceof PsiExpression) {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(project).getExpectedTypes((PsiExpression)element.getParent(), false);
