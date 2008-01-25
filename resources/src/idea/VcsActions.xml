@@ -166,6 +166,12 @@
       <reference ref="$Delete"/>
     </group>
 
+    <group id="Vcs.MessageActionGroup">
+      <action id="Vcs.ShowMessageHistory"
+              class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
+              icon="/debugger/console.png"/>
+    </group>
+
     <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>

@@ -58,6 +58,13 @@
       </group>
       <separator/>
 
+      <group id="ProjectViewGroup" class="com.intellij.ide.projectView.actions.ProjectViewActionGroup">
+        <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
+      </group>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <separator/>
+
       <add-to-group group-id="ViewMenu" relative-to-action="ViewModeActions" anchor="after"/>
     </group>
 
@@ -92,6 +99,8 @@
       <action id="GotoPreviousError" class="com.intellij.codeInsight.daemon.impl.actions.GotoPreviousErrorAction"/>
       <separator/>
 
+      <action id="GotoNextBookmark" class="com.intellij.ide.bookmarks.actions.NextBookmarkAction"/>
+      <action id="GotoPreviousBookmark" class="com.intellij.ide.bookmarks.actions.PreviousBookmarkAction"/>
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
     </group>
 
@@ -142,6 +151,47 @@
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
     </group>
+
+
+    <!-- Toolbar -->
+    <group id="ToolbarFindGroup">
+      <separator/>
+
+      <reference ref="Find"/>
+      <reference ref="Replace"/>
+
+      <add-to-group group-id="MainToolBar" relative-to-action="$Paste" anchor="after"/>
+    </group>
+
+    <group id="Bookmarks">
+      <reference ref="ToggleBookmark"/>
+      <reference ref="ShowBookmarks"/>
+      <reference ref="GotoNextBookmark"/>
+      <reference ref="GotoPreviousBookmark"/>
+
+      <action id="ToggleBookmark0" class="com.intellij.ide.bookmarks.actions.ToggleBookmark0Action"/>
+      <action id="ToggleBookmark1" class="com.intellij.ide.bookmarks.actions.ToggleBookmark1Action"/>
+      <action id="ToggleBookmark2" class="com.intellij.ide.bookmarks.actions.ToggleBookmark2Action"/>
+      <action id="ToggleBookmark3" class="com.intellij.ide.bookmarks.actions.ToggleBookmark3Action"/>
+      <action id="ToggleBookmark4" class="com.intellij.ide.bookmarks.actions.ToggleBookmark4Action"/>
+      <action id="ToggleBookmark5" class="com.intellij.ide.bookmarks.actions.ToggleBookmark5Action"/>
+      <action id="ToggleBookmark6" class="com.intellij.ide.bookmarks.actions.ToggleBookmark6Action"/>
+      <action id="ToggleBookmark7" class="com.intellij.ide.bookmarks.actions.ToggleBookmark7Action"/>
+      <action id="ToggleBookmark8" class="com.intellij.ide.bookmarks.actions.ToggleBookmark8Action"/>
+      <action id="ToggleBookmark9" class="com.intellij.ide.bookmarks.actions.ToggleBookmark9Action"/>
+
+      <action id="GotoBookmark0" class="com.intellij.ide.bookmarks.actions.GotoBookmark0Action"/>
+      <action id="GotoBookmark1" class="com.intellij.ide.bookmarks.actions.GotoBookmark1Action"/>
+      <action id="GotoBookmark2" class="com.intellij.ide.bookmarks.actions.GotoBookmark2Action"/>
+      <action id="GotoBookmark3" class="com.intellij.ide.bookmarks.actions.GotoBookmark3Action"/>
+      <action id="GotoBookmark4" class="com.intellij.ide.bookmarks.actions.GotoBookmark4Action"/>
+      <action id="GotoBookmark5" class="com.intellij.ide.bookmarks.actions.GotoBookmark5Action"/>
+      <action id="GotoBookmark6" class="com.intellij.ide.bookmarks.actions.GotoBookmark6Action"/>
+      <action id="GotoBookmark7" class="com.intellij.ide.bookmarks.actions.GotoBookmark7Action"/>
+      <action id="GotoBookmark8" class="com.intellij.ide.bookmarks.actions.GotoBookmark8Action"/>
+      <action id="GotoBookmark9" class="com.intellij.ide.bookmarks.actions.GotoBookmark9Action"/>
+    </group>
+
 
     <group id="ProjectViewPopupMenu">
       <reference ref="NewGroup"/>
