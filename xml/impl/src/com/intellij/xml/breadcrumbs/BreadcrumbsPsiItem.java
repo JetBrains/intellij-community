@@ -16,11 +16,11 @@ public class BreadcrumbsPsiItem extends BreadcrumbsItem {
   }
 
   public String getDisplayText() {
-    return myProvider.getElementInfo(myElement);
+    return isValid() ? myProvider.getElementInfo(myElement) : "INVALID";
   }
 
   public String getTooltip() {
-    final String s = myProvider.getElementTooltip(myElement);
+    final String s = isValid() ? myProvider.getElementTooltip(myElement) : "";
     return s == null ? "" : s;
   }
 
