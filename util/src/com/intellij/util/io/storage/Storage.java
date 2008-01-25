@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class Storage implements Disposable, Forceable {
   private DataTable myDataTable;
 
   private static final int CACHE_SIZE = 8192;
-  private final static LinkedHashMap<AppenderCacheKey, AppenderStream> ourAppendersCache = new LinkedHashMap<AppenderCacheKey, AppenderStream>(16, 0.75f, true) {
+  private final static Map<AppenderCacheKey, AppenderStream> ourAppendersCache = Collections.synchronizedMap(new LinkedHashMap<AppenderCacheKey, AppenderStream>(16, 0.75f, true) {
     @Override
     protected boolean removeEldestEntry(final Map.Entry<AppenderCacheKey, AppenderStream> eldest) {
       if (size() < CACHE_SIZE) return false;
@@ -48,10 +49,16 @@ public class Storage implements Disposable, Forceable {
       closeStream(eldest.getValue());
       return true;
     }
-  };
-  private static final AppenderCacheKey KEY_FLYWEIGHT = new AppenderCacheKey(0, null);
+  });
 
- private static class AppenderCacheKey {
+  private static final ThreadLocal<AppenderCacheKey> KEY_FLYWEIGHT = new ThreadLocal<AppenderCacheKey>() {
+    @Override
+    protected AppenderCacheKey initialValue() {
+      return new AppenderCacheKey(0, null);
+    }
+  };
+
+  private static class AppenderCacheKey {
     public Storage storage;
     public int record;
 
@@ -197,20 +204,19 @@ public class Storage implements Disposable, Forceable {
 
   public void force() {
     synchronized (lock) {
-      synchronized (ourAppendersCache) {
-        for (AppenderCacheKey key : new ArrayList<AppenderCacheKey>(ourAppendersCache.keySet())) {
-          AppenderStream stream = ourAppendersCache.get(key);
-          if (stream.myStorage == this) {
-            try {
-              stream.realClose();
-            }
-            catch (IOException e) {
-              LOG.error(e);
-            }
-            ourAppendersCache.remove(key);
+      for (AppenderCacheKey key : new ArrayList<AppenderCacheKey>(ourAppendersCache.keySet())) {
+        AppenderStream stream = ourAppendersCache.get(key);
+        if (stream.myStorage == this) {
+          try {
+            stream.realClose();
           }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+          ourAppendersCache.remove(key);
         }
       }
+
       myDataTable.force();
       myRecordsTable.force();
     }
@@ -287,20 +293,19 @@ public class Storage implements Disposable, Forceable {
   }
 
   private void dropRecordCache(final int record) {
-    synchronized (ourAppendersCache) {
-      final AppenderCacheKey key = setupKey(record, this);
-      final AppenderStream stream = ourAppendersCache.get(key);
-      if (stream != null) {
-        closeStream(stream);
-        ourAppendersCache.remove(key);
-      }
+    final AppenderCacheKey key = setupKey(record, this);
+    final AppenderStream stream = ourAppendersCache.get(key);
+    if (stream != null) {
+      closeStream(stream);
+      ourAppendersCache.remove(key);
     }
   }
 
   private static AppenderCacheKey setupKey(int record, Storage storage) {
-    KEY_FLYWEIGHT.storage = storage;
-    KEY_FLYWEIGHT.record = record;
-    return KEY_FLYWEIGHT;
+    AppenderCacheKey key = KEY_FLYWEIGHT.get();
+    key.storage = storage;
+    key.record = record;
+    return key;
   }
 
   private static int calcCapacity(int requiredLength) {
@@ -322,22 +327,20 @@ public class Storage implements Disposable, Forceable {
   }
 
   public AppenderStream appendStream(int record) {
-    synchronized (ourAppendersCache) {
-      AppenderStream appenderStream = ourAppendersCache.get(setupKey(record, this));
-      if (appenderStream != null) {
-        if (appenderStream.size() > 4048) {
-          closeStream(appenderStream);
-        }
-        else {
-          return appenderStream;
-        }
+    AppenderStream appenderStream = ourAppendersCache.get(setupKey(record, this));
+    if (appenderStream != null) {
+      if (appenderStream.size() > 4048) {
+        closeStream(appenderStream);
       }
-
-      appenderStream = new AppenderStream(this, record);
-      
-      ourAppendersCache.put(new AppenderCacheKey(record, this), appenderStream);
-      return appenderStream;
+      else {
+        return appenderStream;
+      }
     }
+
+    appenderStream = new AppenderStream(this, record);
+
+    ourAppendersCache.put(new AppenderCacheKey(record, this), appenderStream);
+    return appenderStream;
   }
 
   private static void closeStream(final AppenderStream appenderStream) {
