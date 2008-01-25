@@ -49,6 +49,9 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     // the second 'for' statement is for effectivity - to prevent creation of the 'names' array
     HashSet<String> names = new HashSet<String>();
     for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile)) {
+        return false;
+      }
       PsiFile file = (PsiFile)element;
       String name = file.getName();
       if (names.contains(name)) {
