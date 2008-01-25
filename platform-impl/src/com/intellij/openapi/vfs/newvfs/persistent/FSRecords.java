@@ -331,13 +331,15 @@ public class FSRecords implements Disposable, Forceable {
       try {
         DbConnection.markDirty();
         int att_page = getRecords().getInt(id * RECORD_SIZE + ATTREF_OFFSET);
-        final DataInputStream attStream = getAttributes().readStream(att_page);
-        while (attStream.available() > 0) {
-          attStream.readInt(); // Attribute ID;
-          int attAddress = attStream.readInt();
-          getAttributes().deleteRecord(attAddress);
+        if (att_page != 0) {
+          final DataInputStream attStream = getAttributes().readStream(att_page);
+          while (attStream.available() > 0) {
+            attStream.readInt(); // Attribute ID;
+            int attAddress = attStream.readInt();
+            getAttributes().deleteRecord(attAddress);
+          }
+          attStream.close();
         }
-        attStream.close();
 
         DbConnection.cleanRecord(id);
         addToFreeRecordsList(id);
