@@ -1,7 +1,6 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -30,10 +29,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.List;
 
 public class TextPainter implements Printable {
   private DocumentEx myDocument;
@@ -86,29 +82,8 @@ public class TextPainter implements Printable {
     myFileType = psiFile.getFileType();
 
 
-    final ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        LineMarkersPass action = new LineMarkersPass(project, psiFile, myDocument, 0, psiFile.getTextLength(), true);
-        Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
-        for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
-          if (lineMarkerInfo.separatorColor != null) {
-            methodSeparators.add(lineMarkerInfo);
-          }
-        }
-      }
-    });
-
-    Collections.sort(methodSeparators, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        LineMarkerInfo i1 = (LineMarkerInfo) o1;
-        LineMarkerInfo i2 = (LineMarkerInfo) o2;
-
-        return i1.startOffset - i2.startOffset;
-      }
-    });
-
-    myMethodSeparators = methodSeparators.toArray(new LineMarkerInfo[methodSeparators.size()]);
+    final List<LineMarkerInfo> methodSeparators = FileSeparatorProvider.getInstance().getFileSeparators(psiFile, editorDocument);
+    myMethodSeparators = methodSeparators != null ? methodSeparators.toArray(new LineMarkerInfo[methodSeparators.size()]) : new LineMarkerInfo[0];
     myCurrentMethodSeparator = 0;
   }
 
@@ -452,7 +427,7 @@ public class TextPainter implements Printable {
     FontRenderContext fontRenderContext = (g).getFontRenderContext();
     double numbersStripWidth = 0;
     for (int i = myLineNumber; i < maxLineNumber; i++) {
-      double width = myPlainFont.getStringBounds("" + i, fontRenderContext).getWidth();
+      double width = myPlainFont.getStringBounds(String.valueOf(i), fontRenderContext).getWidth();
       if (numbersStripWidth < width) {
         numbersStripWidth = width;
       }
@@ -465,12 +440,12 @@ public class TextPainter implements Printable {
       return;
     }
     FontRenderContext fontRenderContext = (g).getFontRenderContext();
-    double width = myPlainFont.getStringBounds("" + myLineNumber, fontRenderContext).getWidth() + getCharWidth(g);
+    double width = myPlainFont.getStringBounds(String.valueOf(myLineNumber), fontRenderContext).getWidth() + getCharWidth(g);
     Color savedColor = g.getColor();
     Font savedFont = g.getFont();
     g.setColor(Color.black);
     g.setFont(myPlainFont);
-    drawStringToGraphics(g, "" + myLineNumber, x - width, getLineHeight(g) - getDescent(g) + y);
+    drawStringToGraphics(g, String.valueOf(myLineNumber), x - width, getLineHeight(g) - getDescent(g) + y);
     g.setColor(savedColor);
     g.setFont(savedFont);
   }

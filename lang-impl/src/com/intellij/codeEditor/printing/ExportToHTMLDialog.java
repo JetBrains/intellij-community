@@ -1,9 +1,11 @@
 package com.intellij.codeEditor.printing;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -20,7 +22,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
   private JRadioButton myRbCurrentPackage;
   private JCheckBox myCbIncludeSubpackages;
   private JCheckBox myCbLineNumbers;
-  private JCheckBox myCbGenerateHyperlinksToClasses;
+
   private JCheckBox myCbOpenInBrowser;
   private TextFieldWithBrowseButton myTargetDirectoryField;
   private String myFileName;
@@ -96,9 +98,9 @@ public class ExportToHTMLDialog extends DialogWrapper {
     myCbLineNumbers = new JCheckBox(CodeEditorBundle.message("export.to.html.options.show.line.numbers.checkbox"));
     optionGroup.add(myCbLineNumbers);
 
-
-    myCbGenerateHyperlinksToClasses = new JCheckBox(CodeEditorBundle.message("export.to.html.generate.hyperlinks.checkbox"));
-    optionGroup.add(myCbGenerateHyperlinksToClasses);
+    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+      optionGroup.add(printOption.createComponent());
+    }
 
     myCbOpenInBrowser = new JCheckBox(CodeEditorBundle.message("export.to.html.open.generated.html.checkbox"));
     optionGroup.add(myCbOpenInBrowser);
@@ -120,12 +122,15 @@ public class ExportToHTMLDialog extends DialogWrapper {
 
     myCbLineNumbers.setSelected(exportToHTMLSettings.PRINT_LINE_NUMBERS);
     myCbOpenInBrowser.setSelected(exportToHTMLSettings.OPEN_IN_BROWSER);
-    myCbGenerateHyperlinksToClasses.setSelected(exportToHTMLSettings.isGenerateHyperlinksToClasses());
 
     myTargetDirectoryField.setText(exportToHTMLSettings.OUTPUT_DIRECTORY);
+
+    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+      printOption.reset();
+    }
   }
 
-  public void apply() {
+  public void apply() throws ConfigurationException {
     ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(myProject);
 
     if (myRbCurrentFile.isSelected()){
@@ -142,7 +147,9 @@ public class ExportToHTMLDialog extends DialogWrapper {
     exportToHTMLSettings.PRINT_LINE_NUMBERS = myCbLineNumbers.isSelected();
     exportToHTMLSettings.OPEN_IN_BROWSER = myCbOpenInBrowser.isSelected();
     exportToHTMLSettings.OUTPUT_DIRECTORY = myTargetDirectoryField.getText();
-    exportToHTMLSettings.setGenerateHyperlinksToClasses(myCbGenerateHyperlinksToClasses.isSelected());
+    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+      printOption.apply();
+    }
   }
 
   protected Action[] createActions() {

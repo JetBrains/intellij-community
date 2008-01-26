@@ -1,7 +1,6 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.impl.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,13 +13,18 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 class HTMLTextPainter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.HTMLTextPainter");
@@ -65,19 +69,10 @@ class HTMLTextPainter {
 
     ArrayList<LineMarkerInfo> methodSeparators = new ArrayList<LineMarkerInfo>();
     if (document != null) {
-      LineMarkersPass action = new LineMarkersPass(myProject, psiFile, document, 0, psiFile.getTextLength(), true);
-      Collection<LineMarkerInfo> lineMarkerInfos = action.queryLineMarkers();
-      for (LineMarkerInfo lineMarkerInfo : lineMarkerInfos) {
-        if (lineMarkerInfo.separatorColor != null) {
-          methodSeparators.add(lineMarkerInfo);
-        }
+      final List<LineMarkerInfo> separators = FileSeparatorProvider.getInstance().getFileSeparators(psiFile, document);
+      if (separators != null) {
+        methodSeparators.addAll(separators);
       }
-
-      Collections.sort(methodSeparators, new Comparator<LineMarkerInfo>() {
-        public int compare(LineMarkerInfo o1, LineMarkerInfo o2) {
-          return o1.startOffset - o2.startOffset;
-        }
-      });
     }
 
     myMethodSeparators = methodSeparators.toArray(new LineMarkerInfo[methodSeparators.size()]);
@@ -199,20 +194,11 @@ class HTMLTextPainter {
   }
 
   private int writeReferenceTag(Writer writer, PsiReference ref) throws IOException {
-    PsiClass refClass = (PsiClass)ref.resolve();
+    PsiElement refClass = ref.resolve();
 
     PsiFile refFile = refClass.getContainingFile();
-    PsiPackage refPackage = JavaDirectoryService.getInstance().getPackage(refFile.getContainingDirectory());
-    String refPackageName = "";
-    if(refPackage != null) {
-      refPackageName = refPackage.getQualifiedName();
-    }
-
-    PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(myPsiFile.getContainingDirectory());
-    String psiPackageName = "";
-    if(psiPackage != null) {
-      psiPackageName = psiPackage.getQualifiedName();
-    }
+    String refPackageName = PsiDirectoryFactory.getInstance(myProject).getQualifiedName(refFile.getContainingDirectory(), false);
+    String psiPackageName = PsiDirectoryFactory.getInstance(myProject).getQualifiedName(myPsiFile.getContainingDirectory(), false);
 
     StringBuffer fileName = new StringBuffer();
     if (!psiPackageName.equals(refPackageName)) {

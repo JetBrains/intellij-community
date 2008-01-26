@@ -29,6 +29,8 @@
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler"/>
+    <applicationService serviceInterface="com.intellij.codeEditor.printing.FileSeparatorProvider"
+                        serviceImplementation="com.intellij.codeEditor.printing.FileSeparatorProvider"/>
   </extensions>
   <project-components>
     <component>

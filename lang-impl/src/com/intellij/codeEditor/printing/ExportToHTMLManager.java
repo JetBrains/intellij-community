@@ -1,25 +1,26 @@
 package com.intellij.codeEditor.printing;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.containers.HashMap;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.TreeMap;
 
 class ExportToHTMLManager {
@@ -77,7 +78,12 @@ class ExportToHTMLManager {
     if(!exportToHTMLDialog.isOK()) {
       return;
     }
-    exportToHTMLDialog.apply();
+    try {
+      exportToHTMLDialog.apply();
+    }
+    catch (ConfigurationException e) {
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
+    }
 
     final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
     if(exportToHTMLSettings.getPrintScope() != PrintSettings.PRINT_DIRECTORY) {
@@ -105,48 +111,19 @@ class ExportToHTMLManager {
     }
   }
 
-  private static void findClassReferences(PsiElement psiElement, TreeMap refMap, HashMap filesMap, PsiFile psiFile) {
-    PsiReference ref = psiElement.getReference();
-    if(ref instanceof PsiJavaCodeReferenceElement) {
-      PsiElement refElement = ref.resolve();
-      if(refElement instanceof PsiClass) {
-        PsiFile containingFile = refElement.getContainingFile();
-        if(!containingFile.equals(psiFile) && filesMap.get(containingFile) != null) {
-          TextRange textRange = psiElement.getTextRange();
-          refMap.put(new Integer(textRange.getStartOffset()), ref);
-        }
-        return;
-      }
-    }
-
-    PsiElement[] children = psiElement.getChildren();
-    for(int i=0; i<children.length; i++) {
-      findClassReferences(children[i], refMap, filesMap, psiFile);
-    }
-  }
-
-  private static boolean exportPsiFile(final PsiFile psiFile, String outputDirectoryName, Project project, HashMap filesMap) {
+  private static boolean exportPsiFile(final PsiFile psiFile, String outputDirectoryName, Project project, HashMap<PsiFile, PsiFile> filesMap) {
     ExportToHTMLSettings exportToHTMLSettings = ExportToHTMLSettings.getInstance(project);
 
     if (psiFile instanceof PsiBinaryFile) {
       return true;
     }
 
-    TreeMap refMap = null;
-    if(exportToHTMLSettings.isGenerateHyperlinksToClasses()) {
-      FileType fileType = psiFile.getFileType();
-      if(StdFileTypes.JAVA == fileType || StdFileTypes.JSP == fileType) {
-        refMap = new TreeMap(
-          new Comparator(){
-            public int compare(Object o1, Object o2) {
-              if(o1 instanceof Integer && o2 instanceof Integer) {
-                return ((Integer)o1).intValue() - ((Integer)o2).intValue();
-              }
-              return 0;
-            }
-          }
-        );
-        findClassReferences(psiFile, refMap, filesMap, psiFile);
+    TreeMap<Integer, PsiReference> refMap = null;
+    for (PrintOption printOption : Extensions.getExtensions(PrintOption.EP_NAME)) {
+      final TreeMap<Integer, PsiReference> map = printOption.collectReferences(psiFile, filesMap);
+      if (map != null) {
+        refMap = new TreeMap<Integer, PsiReference>();
+        refMap.putAll(map);
       }
     }
 
@@ -167,13 +144,10 @@ class ExportToHTMLManager {
   }
 
   private static String constructOutputDirectory(final PsiDirectory directory, final String outputDirectoryName) {
-    PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
+    String qualifiedName = PsiDirectoryFactory.getInstance(directory.getProject()).getQualifiedName(directory, false);
     String dirName = outputDirectoryName;
-    if(psiPackage != null) {
-      String packageName = psiPackage.getQualifiedName();
-      if (packageName.length() > 0) {
-        dirName += File.separator + packageName.replace('.', File.separatorChar);
-      }
+    if(qualifiedName.length() > 0) {
+      dirName += File.separator + qualifiedName.replace('.', File.separatorChar);
     }
     File dir = new File(dirName);
     dir.mkdirs();
@@ -202,9 +176,9 @@ class ExportToHTMLManager {
     throws FileNotFoundException {
     String indexHtmlName = constructOutputDirectory(psiDirectory, outputDirectoryName) + File.separator + "index.html";
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(indexHtmlName), CharsetToolkit.UTF8_CHARSET);
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
+    final String title = PsiDirectoryFactory.getInstance(psiDirectory.getProject()).getQualifiedName(psiDirectory, true);
     try {
-      writer.write("<html><head><title>" + (aPackage != null ? aPackage.getQualifiedName() : psiDirectory.getName()) + "</title></head><body>");
+      writer.write("<html><head><title>" + title + "</title></head><body>");
       if (recursive) {
         PsiDirectory[] directories = psiDirectory.getSubdirectories();
         for(PsiDirectory directory: directories) {
@@ -254,9 +228,8 @@ class ExportToHTMLManager {
         myLastException = e;
         return;
       }
-      HashMap filesMap = new HashMap();
-      for(int i = 0; i < filesList.size(); i++) {
-        PsiFile psiFile = filesList.get(i);
+      HashMap<PsiFile, PsiFile> filesMap = new HashMap<PsiFile, PsiFile>();
+      for (PsiFile psiFile : filesList) {
         filesMap.put(psiFile, psiFile);
       }
       for(int i = 0; i < filesList.size(); i++) {
@@ -275,10 +248,7 @@ class ExportToHTMLManager {
         if (!dirToShow.endsWith(File.separator)) {
           dirToShow += File.separatorChar;
         }
-        PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(myPsiDirectory);
-        if (aPackage != null) {
-          dirToShow += aPackage.getQualifiedName().replace('.', File.separatorChar);
-        }
+        dirToShow += PsiDirectoryFactory.getInstance(myProject).getQualifiedName(myPsiDirectory, false).replace('.', File.separatorChar);
         BrowserUtil.launchBrowser(dirToShow);
       }
     }

@@ -160,4 +160,6 @@
                   beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"/>
 
   <extensionPoint name="macro" beanClass="com.intellij.ide.macro.Macro"/>
+  <extensionPoint name="printOption" beanClass="com.intellij.codeEditor.printing.PrintOption"/>
+
 </extensionPoints>

@@ -1,8 +1,8 @@
 package com.intellij.codeEditor.printing;
 
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.ui.MappingListCellRenderer;
@@ -11,8 +11,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 class PrintDialog extends DialogWrapper {
   private JRadioButton myRbCurrentFile = null;

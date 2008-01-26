@@ -24,7 +24,6 @@ public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHT
   private int myPrintScope;
 
   private boolean isIncludeSubpackages = false;
-  private boolean isGenerateHyperlinksToClasses = false;
 
   public static ExportToHTMLSettings getInstance(Project project) {
     return ServiceManager.getService(project, ExportToHTMLSettings.class);
@@ -46,13 +45,6 @@ public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHT
     isIncludeSubpackages = includeSubpackages;
   }
 
-  public boolean isGenerateHyperlinksToClasses() {
-    return isGenerateHyperlinksToClasses;
-  }
-
-  public void setGenerateHyperlinksToClasses(boolean generateHyperlinksToClasses) {
-    isGenerateHyperlinksToClasses = generateHyperlinksToClasses;
-  }
 
   public ExportToHTMLSettings getState() {
     return this;
