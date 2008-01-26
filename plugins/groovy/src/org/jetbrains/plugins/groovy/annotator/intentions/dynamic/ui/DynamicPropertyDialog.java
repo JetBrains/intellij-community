@@ -74,7 +74,6 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
   private void setUpContainingClassComboBox() {
     final PsiClass typeDefinition = myDynamicProperty.getContainingClass();
-    assert typeDefinition != null;
 
     myClassComboBox.addItem(new ContainingClassItem(typeDefinition));
     final Set<PsiClass> classes = GroovyUtils.findAllSupers(typeDefinition);
