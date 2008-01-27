@@ -48,9 +48,14 @@ public class CvsEntriesManager extends VirtualFileAdapter {
   private final Map<String, CvsConnectionSettings> myStringToSettingsMap = new HashMap<String, CvsConnectionSettings>();
   private final UserDirIgnores myUserDirIgnores = new UserDirIgnores();
   private MyVirtualFileManagerListener myVirtualFileManagerListener = new MyVirtualFileManagerListener();
+  private CvsApplicationLevelConfiguration myApplicationLevelConfiguration;
 
   public static CvsEntriesManager getInstance() {
     return ServiceManager.getService(CvsEntriesManager.class);
+  }
+
+  public CvsEntriesManager(final CvsApplicationLevelConfiguration applicationLevelConfiguration) {
+    myApplicationLevelConfiguration = applicationLevelConfiguration;
   }
 
   private class MyVirtualFileManagerListener implements VirtualFileManagerListener {
@@ -353,8 +358,7 @@ public class CvsEntriesManager extends VirtualFileAdapter {
 
   public CvsConnectionSettings createConnectionSettingsOn(String cvsRoot) {
     if (!myStringToSettingsMap.containsKey(cvsRoot)) {
-      final CvsRootConfiguration rootConfiguration = CvsApplicationLevelConfiguration.getInstance()
-        .getConfigurationForCvsRoot(cvsRoot);
+      final CvsRootConfiguration rootConfiguration = myApplicationLevelConfiguration.getConfigurationForCvsRoot(cvsRoot);
       CvsConnectionSettings settings = new IDEARootFormatter(rootConfiguration).createConfiguration();
       myStringToSettingsMap.put(cvsRoot, settings);
     }
