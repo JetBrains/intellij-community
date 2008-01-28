@@ -1,6 +1,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -129,19 +130,23 @@ public class PropertiesFilesManager implements ApplicationComponent {
   }
 
   private void encodingChanged() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable(){
+    ApplicationManager.getApplication().invokeLater(new Runnable(){
       public void run() {
-        Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());
-        VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
-        FileDocumentManager.getInstance().saveAllDocuments();
-        
-        //force to re-detect encoding
-        for (VirtualFile virtualFile : virtualFiles) {
-          virtualFile.setCharset(null);
-        }
-        FileDocumentManager.getInstance().reloadFiles(virtualFiles);
+        ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          public void run() {
+            Collection<VirtualFile> filesToRefresh = new THashSet<VirtualFile>(getAllPropertiesFiles());
+            VirtualFile[] virtualFiles = filesToRefresh.toArray(new VirtualFile[filesToRefresh.size()]);
+            FileDocumentManager.getInstance().saveAllDocuments();
+
+            //force to re-detect encoding
+            for (VirtualFile virtualFile : virtualFiles) {
+              virtualFile.setCharset(null);
+            }
+            FileDocumentManager.getInstance().reloadFiles(virtualFiles);
+          }
+        });
       }
-    });
+    }, ModalityState.NON_MODAL);
   }
 
   public void addPropertiesFileListener(PropertiesFileListener fileListener) {
