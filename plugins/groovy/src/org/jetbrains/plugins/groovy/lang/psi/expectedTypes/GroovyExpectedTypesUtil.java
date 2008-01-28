@@ -25,8 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  */
 public class GroovyExpectedTypesUtil {
   public static ExpectedTypeInfo[] calculateExpectedType(GrExpression expression) {
-    ((GroovyPsiElement) expression.getParent()).accept(new MyCalculator(expression));
-    return new ExpectedTypeInfo[0]; //todo
+    MyCalculator calculator = new MyCalculator(expression);
+    ((GroovyPsiElement) expression.getParent()).accept(calculator);
+    return calculator.getResult();
   }
 
 
