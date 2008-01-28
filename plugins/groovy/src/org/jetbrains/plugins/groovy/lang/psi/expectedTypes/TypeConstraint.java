@@ -19,12 +19,12 @@ import com.intellij.psi.PsiType;
 /**
  * @author ven
  */
-public abstract class ExpectedTypeInfo {
+public abstract class TypeConstraint {
   protected final PsiType myType;
 
   public abstract boolean satisfied(PsiType type);
 
-  protected ExpectedTypeInfo(PsiType type) {
+  protected TypeConstraint(PsiType type) {
     myType = type;
   }
 

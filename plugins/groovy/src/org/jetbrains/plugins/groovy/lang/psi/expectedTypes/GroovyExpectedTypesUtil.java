@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
  * @author ven
  */
 public class GroovyExpectedTypesUtil {
-  public static ExpectedTypeInfo[] calculateExpectedType(GrExpression expression) {
+  public static TypeConstraint[] calculateTypeConstraints(GrExpression expression) {
     MyCalculator calculator = new MyCalculator(expression);
     ((GroovyPsiElement) expression.getParent()).accept(calculator);
     return calculator.getResult();
@@ -32,7 +32,7 @@ public class GroovyExpectedTypesUtil {
 
 
   private static class MyCalculator extends GroovyElementVisitor {
-    private ExpectedTypeInfo[] myResult;
+    private TypeConstraint[] myResult;
     private GrExpression myExpression;
 
     public MyCalculator(GrExpression expression) {
@@ -49,7 +49,7 @@ public class GroovyExpectedTypesUtil {
         PsiType lType = expression.getLValue().getType();
         if (lType == null) makeDefault(expression);
         else {
-          myResult = new ExpectedTypeInfo[]{SubtypeConstraint.create(lType)};
+          myResult = new TypeConstraint[]{SubtypeConstraint.create(lType)};
         }
       } else if (myExpression.equals(expression.getLValue())) {
         if (rValue == null) makeDefault(expression);
@@ -57,19 +57,19 @@ public class GroovyExpectedTypesUtil {
           PsiType rType = rValue.getType();
           if (rType == null) makeDefault(expression);
           else {
-            myResult = new ExpectedTypeInfo[]{SupertypeConstraint.create(rType)};
+            myResult = new TypeConstraint[]{SupertypeConstraint.create(rType)};
           }
         }
       }
     }
 
     private void makeDefault(GroovyPsiElement element) {
-      myResult = new ExpectedTypeInfo[]{
+      myResult = new TypeConstraint[]{
           SubtypeConstraint.create("java.lang.Object", element)
       };
     }
 
-    public ExpectedTypeInfo[] getResult() {
+    public TypeConstraint[] getResult() {
       return myResult;
     }
   }

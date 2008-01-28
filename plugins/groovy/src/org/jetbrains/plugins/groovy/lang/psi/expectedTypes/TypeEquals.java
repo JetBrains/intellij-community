@@ -22,7 +22,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 /**
  * @author ven
  */
-public  class TypeEquals extends ExpectedTypeInfo {
+public  class TypeEquals extends TypeConstraint {
   protected TypeEquals(PsiType type) {
     super(type);
   }
