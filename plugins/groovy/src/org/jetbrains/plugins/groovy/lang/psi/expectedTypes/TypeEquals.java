@@ -15,6 +15,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClassType;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
 /**
  * @author ven
@@ -26,5 +29,14 @@ public  class TypeEquals extends ExpectedTypeInfo {
 
   public boolean satisfied(PsiType type){
     return type.equals(myType);
+  }
+
+  public static TypeEquals create (PsiType type) {
+    return new TypeEquals(type);
+  }
+
+  public static TypeEquals create (String fqName, PsiElement context) {
+    PsiClassType type = createType(fqName, context);
+    return new TypeEquals(type);
   }
 }
