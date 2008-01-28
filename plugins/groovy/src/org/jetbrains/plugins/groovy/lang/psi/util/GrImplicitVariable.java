@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -35,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elements.DPPropertyElement;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPopertyNode;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPropertyNode;
+//import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -101,43 +100,31 @@ public class GrImplicitVariable extends LightVariableBase implements ItemPresent
 
   public void navigate(boolean requestFocus) {
     final Project myProject = myNameIdentifier.getProject();
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowUtil.DYNAMIC_TOOLWINDOW_ID);
-    DynamicToolWindowWrapper dynamicToolWindowWrapper = new DynamicToolWindowWrapper(myProject, window);
-    dynamicToolWindowWrapper.setupToolWindow(window);
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
 
-    final ListTreeTableModelOnColumns model = dynamicToolWindowWrapper.getTreeTableModel();
-    final TreeTable treeTable = dynamicToolWindowWrapper.getTreeTable();
+    window.activate(new Runnable() {
+      public void run() {
+        final TreeTable treeTable = DynamicToolWindowWrapper.getTreeTable(window, myProject);
+        final ListTreeTableModelOnColumns model = DynamicToolWindowWrapper.getTreeTableModel(window, myProject);
 
-    if (model != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          window.activate(new Runnable() {
-            public void run() {
-              Object root = model.getRoot();
+        Object root = model.getRoot();
 
-              if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
+        if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
 
-              DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
+        DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
 
-              final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(treeRoot, new DPPopertyNode(new DPPropertyElement(myNameIdentifier.getText())));
-//          int rootNum = treeModel.getIndexOfChild(root, desiredNode);
-              final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
+        final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(treeRoot, new DPPropertyNode(new DPPropertyElement(myNameIdentifier.getText())));
+        final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
 
-              treeTable.getTree().setSelectionPath(path);
-//          final int rowToSelect = treeTable.getTree().getRowForPath(path);
+        treeTable.getTree().expandPath(path);
+        treeTable.getTree().setSelectionPath(path);
+        treeTable.getTree().fireTreeExpanded(path);
 
-//          ToolWindowManager.getInstance(myProject).requestFocus(new ActionCallback.Runnable(){
-//            public ActionCallback run() {
-//              window.show(null);
-//              return new ActionCallback.Done();
-//            }
-//          }, true);
-            }
-          }, true);
-        }
-      });
-
-    }
+        treeTable.getTree().requestFocus();
+        treeTable.revalidate();
+        treeTable.repaint();
+      }
+    }, true);
   }
 
   public boolean canNavigateToSource() {

@@ -49,7 +49,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
+//import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompiler;
 import org.jetbrains.plugins.groovy.compiler.generator.GroovyToJavaGenerator;
@@ -166,10 +166,10 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
 
         StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
           public void run() {
-            final ToolWindow dynamicToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(DynamicToolWindowUtil.DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
+            final ToolWindow dynamicToolWindow = ToolWindowManager.getInstance(project).registerToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT);
             dynamicToolWindow.setIcon(IconLoader.getIcon("/org/jetbrains/plugins/groovy/images/dynamicProperty.png"));
 
-            DynamicToolWindowUtil.setUpDynamicToolWindow(project, dynamicToolWindow);
+            DynamicToolWindowWrapper.configureWindow(project, dynamicToolWindow);
           }
         });
 
