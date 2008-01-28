@@ -162,4 +162,6 @@
   <extensionPoint name="macro" beanClass="com.intellij.ide.macro.Macro"/>
   <extensionPoint name="printOption" beanClass="com.intellij.codeEditor.printing.PrintOption"/>
 
+  <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
+
 </extensionPoints>

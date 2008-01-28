@@ -4,12 +4,8 @@ import com.intellij.ide.highlighter.custom.impl.CustomFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.LexerBase;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -18,23 +14,14 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
-import com.intellij.psi.impl.source.tree.StdTokenSets;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import com.intellij.util.text.CharArrayCharSequence;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
 
@@ -90,8 +77,6 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     return true;
   }
 
-  private static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlElementType.XML_COMMENT_CHARACTERS);
-  private static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
 
   private static void findCommentTokenRanges(final PsiFile file,
                                              final CharSequence chars,
@@ -104,7 +89,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         if (fType instanceof CustomFileType) {
           TokenSet commentTokens = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
           Lexer lexer = SyntaxHighlighter.PROVIDER.create(fType, file.getProject(), file.getVirtualFile()).getHighlightingLexer();
-          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
+          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, null);
         }
         else {
           commentStarts.add(0);
@@ -117,30 +102,18 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       synchronized (PsiLock.LOCK) {
         final Language lang = file.getLanguage();
         final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, file.getProject(), file.getVirtualFile());
-
         Lexer lexer = syntaxHighlighter.getHighlightingLexer();
         TokenSet commentTokens = null;
-        if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
-          lexer = new JavaLexer(((PsiJavaFile)file).getLanguageLevel());
-          commentTokens = TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
-        }
-        else if (PsiUtil.isInJspFile(file)) {
-          final JspFile jspFile = PsiUtil.getJspFile(file);
-          commentTokens = TokenSet.orSet(XML_COMMENT_BIT_SET, StdTokenSets.COMMENT_BIT_SET);
-          final ParserDefinition parserDefinition =
-            LanguageParserDefinitions.INSTANCE.forLanguage(jspFile.getViewProvider().getTemplateDataLanguage());
-          if (parserDefinition != null) {
-            commentTokens = TokenSet.orSet(commentTokens, parserDefinition.getCommentTokens());
+        IndexPatternBuilder builderForFile = null;
+        for(IndexPatternBuilder builder: Extensions.getExtensions(IndexPatternBuilder.EP_NAME)) {
+          Lexer lexerFromBuilder = builder.getIndexingLexer(file);
+          if (lexerFromBuilder != null) {
+            lexer = lexerFromBuilder;
+            commentTokens = builder.getCommentTokenSet(file);
+            builderForFile = builder;
           }
-
-          final EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(file.getProject(),
-                                                                                                               file.getVirtualFile());
-          lexer = new LexerEditorHighlighterLexer(highlighter);
         }
-        else if (file instanceof XmlFile) {
-          commentTokens = XML_COMMENT_BIT_SET;
-        }
-        else {
+        if (builderForFile == null) {
           final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
           if (parserDefinition != null) {
             commentTokens = parserDefinition.getCommentTokens();
@@ -148,7 +121,7 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         }
 
         if (commentTokens != null) {
-          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds);
+          findComments(lexer, chars, range, commentTokens, commentStarts, commentEnds, builderForFile);
         }
       }
     }
@@ -158,7 +131,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                    final CharSequence chars,
                                    final TextRange range,
                                    final TokenSet commentTokens,
-                                   final TIntArrayList commentStarts, final TIntArrayList commentEnds) {
+                                   final TIntArrayList commentStarts, final TIntArrayList commentEnds,
+                                   final IndexPatternBuilder builderForFile) {
     for (lexer.start(chars,0,chars.length(),0); ; lexer.advance()) {
       IElementType tokenType = lexer.getTokenType();
       if (tokenType == null) break;
@@ -179,9 +153,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       }
 
       if (isComment) {
-        final boolean jspToken = lexer.getTokenType() == JspTokenType.JSP_COMMENT;
-        final int startDelta = jspToken ? "<%--".length() : 0;
-        final int endDelta = jspToken ? "--%>".length() : 0;
+        final int startDelta = builderForFile != null ? builderForFile.getCommentStartDelta(lexer.getTokenType()) : 0;
+        final int endDelta = builderForFile != null ? builderForFile.getCommentEndDelta(lexer.getTokenType()) : 0;
 
         commentStarts.add(lexer.getTokenStart() + startDelta);
         commentEnds.add(lexer.getTokenEnd() - endDelta);
@@ -223,59 +196,5 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       }
     }
     return true;
-  }
-
-  private static class LexerEditorHighlighterLexer extends LexerBase {
-    HighlighterIterator iterator;
-    CharSequence buffer;
-    int start;
-    int end;
-    private final EditorHighlighter myHighlighter;
-
-    public LexerEditorHighlighterLexer(final EditorHighlighter highlighter) {
-      myHighlighter = highlighter;
-    }
-
-    public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
-      myHighlighter.setText(new CharSequenceSubSequence(this.buffer = buffer, start = startOffset, end = endOffset));
-      iterator = myHighlighter.createIterator(0);
-    }
-
-    public void start(char[] buffer, int startOffset, int endOffset, int initialState) {
-      start(new CharArrayCharSequence(buffer), startOffset, endOffset, initialState);
-    }
-
-    public int getState() {
-      return 0;
-    }
-
-    public IElementType getTokenType() {
-      if (iterator.atEnd()) return null;
-      return iterator.getTokenType();
-    }
-
-    public int getTokenStart() {
-      return iterator.getStart();
-    }
-
-    public int getTokenEnd() {
-      return iterator.getEnd();
-    }
-
-    public void advance() {
-      iterator.advance();
-    }
-
-    public char[] getBuffer() {
-      return CharArrayUtil.fromSequence(buffer);
-    }
-
-    public CharSequence getBufferSequence() {
-      return buffer;
-    }
-
-    public int getBufferEnd() {
-      return end;
-    }
   }
 }
