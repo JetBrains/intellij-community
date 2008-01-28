@@ -25,21 +25,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiManager;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.CompilerMessage;
-import org.jetbrains.groovy.compiler.rt.*;
+import org.jetbrains.groovy.compiler.rt.GroovycRunner;
+import org.jetbrains.groovy.compiler.rt.MessageCollector;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -132,15 +136,13 @@ public class GroovyCompiler implements TranslatingCompiler {
 
           final String url = compilerMessage.getUrl();
 
-          final GroovyFile groovyFile = ApplicationManager.getApplication().runReadAction(new Computable<GroovyFile>() {
-            public GroovyFile compute() {
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
               try {
                 final VirtualFile vFile = VfsUtil.findFileByURL(new URL("file://" + url));
                 assert vFile != null;
-                return (GroovyFile) PsiManager.getInstance(myProject).findFile(vFile);
               } catch (MalformedURLException e) {
                 LOG.error(e);
-                return null;
               }
             }
           });
@@ -159,7 +161,15 @@ public class GroovyCompiler implements TranslatingCompiler {
         LOG.error(e);
       }
     }
+
+    refresh(successfullyCompiled); //make VFS know about our files
     return new GroovyCompileExitStatus(successfullyCompiled, toRecompile.toArray(new VirtualFile[toRecompile.size()]));
+  }
+
+  private void refresh(Set<OutputItem> successfullyCompiled) {
+    for (OutputItem item : successfullyCompiled) {
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(item.getOutputPath());
+    }
   }
 
 
