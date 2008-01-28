@@ -32,6 +32,8 @@
   <applicationService serviceInterface="com.intellij.ide.PsiCopyPasteManager"
                       serviceImplementation="com.intellij.ide.PsiCopyPasteManager"/>
 
+  <applicationService serviceInterface="com.intellij.usages.UsageViewSettings"
+                      serviceImplementation="com.intellij.usages.UsageViewSettings"/>
 
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
