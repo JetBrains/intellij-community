@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiJavaToken, PsiLanguageInjectionHost, Navigatable {
+public class PsiCommentImpl extends LeafPsiElement implements PsiComment, PsiLanguageInjectionHost, Navigatable {
   public PsiCommentImpl(IElementType type, CharSequence buffer, int startOffset, int endOffset, CharTable table) {
     super(type, buffer, startOffset, endOffset, table);
   }
