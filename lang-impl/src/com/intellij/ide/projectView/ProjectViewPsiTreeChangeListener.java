@@ -3,16 +3,23 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiModificationTracker;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private final FileTypeManager myFileTypeManager;
+  private PsiModificationTracker myModificationTracker;
+  private long myOutOfCodeBlockModificationCount;
 
-  protected ProjectViewPsiTreeChangeListener() {
+  protected ProjectViewPsiTreeChangeListener(Project project) {
     myFileTypeManager = FileTypeManager.getInstance();
+    myModificationTracker = PsiManager.getInstance(project).getModificationTracker();
+    myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
   }
 
   protected abstract AbstractTreeUpdater getUpdater();
@@ -37,7 +44,6 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     PsiElement oldChild = event.getOldChild();
     PsiElement newChild = event.getNewChild();
     if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
-    if (oldChild instanceof PsiCodeBlock && newChild instanceof PsiCodeBlock) return; //optimization
     childrenChanged(event.getParent());
   }
 
@@ -56,9 +62,11 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       return;
     }
 
+    long newModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    if (newModificationCount == myOutOfCodeBlockModificationCount) return;
+    myOutOfCodeBlockModificationCount = newModificationCount;
     while(true){
       if (parent == null) break;
-      if (parent instanceof PsiCodeBlock) break;
       if (parent instanceof PsiFile) {
         VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
         if (virtualFile != null && myFileTypeManager.getFileTypeByFile(virtualFile) != FileTypes.PLAIN_TEXT) {
@@ -72,8 +80,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
         break;
       }
 
-      if (parent instanceof PsiMember ||
-          parent instanceof PsiFile ||
+      if (parent instanceof PsiFile ||
           parent instanceof PsiDirectory) break;
       parent = parent.getParent();
     }
@@ -88,8 +95,8 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       updater.addSubtreeToUpdate(rootNode);
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-      if (!updater.addSubtreeToUpdateByElement(element) && element instanceof PsiJavaFile) {
-        updater.addSubtreeToUpdateByElement(((PsiJavaFile)element).getContainingDirectory());
+      if (!updater.addSubtreeToUpdateByElement(element) && element instanceof PsiFile && ((PsiFile) element).getFileType() == StdFileTypes.JAVA) {
+        updater.addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)){

@@ -49,7 +49,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     super(project, tree, treeModel, treeStructure, null);
     myListName = name;
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener() {
+    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
       protected DefaultMutableTreeNode getRootNode() {
         return myRootNode;
       }

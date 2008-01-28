@@ -46,7 +46,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     final MessageBusConnection connection = project.getMessageBus().connect(this);
 
-    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(){
+    myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject){
       protected DefaultMutableTreeNode getRootNode(){
         return myRootNode;
       }
