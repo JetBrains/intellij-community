@@ -64,9 +64,7 @@ public class GroovyColorsAndFontsPage implements ColorSettingsPage {
         new AttributesDescriptor(DefaultHighlighter.WRONG_STRING_ID, DefaultHighlighter.WRONG_STRING),
         new AttributesDescriptor(DefaultHighlighter.UNTYPED_ACCESS_ID, DefaultHighlighter.UNTYPED_ACCESS),
         new AttributesDescriptor(DefaultHighlighter.ANNOTATION_ID, DefaultHighlighter.ANNOTATION),
-//        new AttributesDescriptor(DefaultHighlighter.INSTANCE_FIELD_ID, DefaultHighlighter.INSTANCE_FIELD),
         new AttributesDescriptor(DefaultHighlighter.STATIC_FIELD_ID, DefaultHighlighter.STATIC_FIELD),
-//        new AttributesDescriptor(DefaultHighlighter.METHOD_CALL_ID, DefaultHighlighter.METHOD_CALL),
         new AttributesDescriptor(DefaultHighlighter.STATIC_METHOD_ACCESS_ID, DefaultHighlighter.STATIC_METHOD_ACCESS),
     };
   }

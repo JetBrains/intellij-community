@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,28 +13,25 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.parser;
+package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
+import com.intellij.lang.PsiParser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.config.GroovyGrailsConfiguration;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
 
 /**
- * Parser for Groovy script files
- *
- * @author ilyas, Dmitry.Krasilschikov
+ * @author ilyas
  */
-public class GroovyParser implements PsiParser {
-
+public class GroovyDocParser implements PsiParser {
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
-
     PsiBuilder.Marker rootMarker = builder.mark();
-    CompilationUnit.parse(builder);
+    while (!builder.eof()) {
+      builder.advanceLexer();
+    }
     rootMarker.done(root);
     return builder.getTreeBuilt();
 

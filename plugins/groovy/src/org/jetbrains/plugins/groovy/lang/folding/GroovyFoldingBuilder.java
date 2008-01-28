@@ -49,7 +49,8 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
 
     // comments
     if ((type.equals(mML_COMMENT) || type.equals(GROOVY_DOC_COMMENT)) &&
-        isMultiline(node, document)) {
+        isMultiline(node, document) &&
+        isWellEndedComment(node)) {
       descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
     }
 
@@ -59,6 +60,11 @@ public class GroovyFoldingBuilder implements FoldingBuilder, GroovyElementTypes 
       child = child.getTreeNext();
     }
 
+  }
+
+  private boolean isWellEndedComment(ASTNode node) {
+    String text = node.getText();
+    return text != null && text.endsWith("*/");
   }
 
   private boolean isMultiline(ASTNode node, Document document) {

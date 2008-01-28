@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,20 +13,23 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.parsing;
+package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.psi.tree.IChameleonElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parsing.elements.GroovyDocCommentElement;
+import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author ilyas
  */
-public interface GroovyDocElementTypes extends GroovyDocTokenTypes{
+public class GroovyDocLexer extends MergingLexerAdapter{
 
-  /**
-   * GroovyDoc comment 
-   */
-  IChameleonElementType GROOVY_DOC_COMMENT = new GroovyDocCommentElement();
+  private static TokenSet tokensToMerge = TokenSet.create(
+      GroovyDocTokenTypes.mGDOC_COMMENT_DATA
+  );
 
+  public GroovyDocLexer() {
+    super(new GroovyDocFlexLexer(),
+        tokensToMerge);
+  }
+  
 }

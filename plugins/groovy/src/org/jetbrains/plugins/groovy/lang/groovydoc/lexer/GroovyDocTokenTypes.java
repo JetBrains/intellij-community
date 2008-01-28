@@ -15,8 +15,26 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+
 /**
  * @author ilyas
  */
 public interface GroovyDocTokenTypes {
+
+  IElementType mGDOC_COMMENT_DATA = new GroovyDocElementType("GDOC_COMMENT_DATA");
+  IElementType mGDOC_TAG_NAME = new GroovyDocElementType("GDOC_TAG_NAME");
+  IElementType mGDOC_WHITESPACE = new GroovyDocElementType("GDOC_WHITESPACE");
+
+
+
+  /// TokenSets
+  TokenSet GDOC_WHITE_SPACES = TokenSet.create(
+      mGDOC_WHITESPACE
+  );
+  TokenSet GDOC_COMMENTS = TokenSet.create();
+
+
 }

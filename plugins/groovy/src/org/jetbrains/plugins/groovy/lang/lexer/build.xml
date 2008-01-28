@@ -14,10 +14,16 @@
   -->
 
 <project name="generate lexer from groovy.flex" default="generate.lexer">
+  <property name="skeleton" value="idea-flex.skeleton"/>
   <property name="lexer.file" value="_GroovyLexer.java"/>
   <property name="lexer.log" value="jflex.log"/>
   <property name="lexer.source" value="groovy.flex"/>
-  <property name="skeleton" value="idea-flex.skeleton"/>
+
+  <property name="groovydoc.path" value="../groovydoc/lexer"/>
+
+  <property name="groovydoc.lexer.file" value="${groovydoc.path}/_GroovyDocLexer.java"/>
+  <property name="groovydoc.lexer.log" value="${groovydoc.path}/jflex.log"/>
+  <property name="groovydoc.lexer.source" value="${groovydoc.path}/groovydoc.flex"/>
 
   <target name="jflex" description="Produces Jflex based lexer">
     <delete file="${lexer.file}"/>
@@ -31,7 +37,20 @@
     </java>
   </target>
 
+  <target name="groovydoc.lexer">
+    <delete file="${groovydoc.lexer.file}"/>
+    <delete file="${groovydoc.lexer.log}"/>
 
-  <target name="generate.lexer" depends="jflex" description="main target"/>
+    <java jar="JFlex.jar" output="jflex.log" fork="true" maxmemory="512m">
+      <arg value="--charat"/>
+      <arg value="-skel"/>
+      <arg value="${skeleton}"/>
+      <arg value="${groovydoc.lexer.source}"/>
+    </java>
+  </target>
+
+
+
+  <target name="generate.lexer" depends="jflex, groovydoc.lexer" description="main target"/>
 
 </project>

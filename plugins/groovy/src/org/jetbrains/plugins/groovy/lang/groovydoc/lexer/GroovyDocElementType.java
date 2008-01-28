@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
+ * Copyright 2000-2008 JetBrains s.r.o.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,26 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
+package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
 
 /**
  * @author ilyas
  */
-public class GroovyDocCommentImpl extends CompositePsiElement implements GroovyDocElementTypes, GroovyDocComment {
-  public GroovyDocCommentImpl() {
-    super(GROOVY_DOC_COMMENT);
+public class GroovyDocElementType extends IElementType {
+
+  private String debugName = null;
+
+  public GroovyDocElementType(String debugName) {
+    super(debugName, GroovyDocLanguage.LANGUAGE);
+    this.debugName = debugName;
   }
 
   public String toString() {
-    return "GroovyDocComment";
-  }
-
-  public IElementType getTokenType() {
-    return getElementType();
+    return debugName;
   }
 }

@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.lang.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parsing.GroovyDocElementTypes;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 
 /**
  * Interface that contains all tokens returned by GroovyLexer

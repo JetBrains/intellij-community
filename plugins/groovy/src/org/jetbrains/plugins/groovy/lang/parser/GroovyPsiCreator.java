@@ -41,12 +41,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrCaseSecti
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrForInClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.clauses.GrTraditionalForClauseImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrExclusiveOrExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrInclusiveOrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrRegexImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrStringImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalAndExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.logical.GrLogicalOrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrIndexPropertyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrPropertySelectionImpl;
@@ -61,8 +64,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.auxilary.GrBalancedBracketsImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrEnumDefinitionBodyImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.bodies.GrTypeDefinitionBodyImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant.GrEnumConstantListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrConstructorDefinitionImpl;
@@ -71,7 +74,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports.GrImportStatementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.packaging.GrPackageDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.types.*;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GroovyDocCommentImpl;
 
 /**
  * Creates Groovy PSI element by given AST node
@@ -244,10 +246,6 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
     if (GSP_CLASS.equals(elem)) return new GrGspClassImpl(node);
     if (GSP_RUN_METHOD.equals(elem)) return new GrGspRunMethodImpl(node);
     if (GSP_RUN_BLOCK.equals(elem)) return new GrGspRunBlockImpl(node);
-
-    // GroovyDoc comments
-    if (GROOVY_DOC_COMMENT.equals(elem)) return new GroovyDocCommentImpl();
-
 
     return new ASTWrapperPsiElement(node);
   }
