@@ -1,0 +1,23 @@
+<project name="Layout Python plugin distribution" default="layout">
+  <target name="layout">
+    <patternset id="resources.included">
+      <include name="**/*.properties"/>
+    </patternset>
+    <patternset id="resources.excluded">
+      <exclude name="**/*.properties"/>
+    </patternset>
+
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="python">
+        <dir name="lib">
+          <jar name="python.jar">
+            <module name="python"> <patternset refid="resources.excluded"/> </module>
+          </jar>
+          <jar name="resources_en.jar">
+            <module name="python">  <patternset refid="resources.included"/> </module>
+          </jar>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>
