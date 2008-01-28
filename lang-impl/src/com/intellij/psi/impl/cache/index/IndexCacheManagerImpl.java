@@ -4,6 +4,8 @@ import com.intellij.ide.startup.CacheUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -95,6 +97,7 @@ public class IndexCacheManagerImpl implements CacheManager{
   public PsiFile[] getFilesWithTodoItems() {
     final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
     final Set<PsiFile> allFiles = new HashSet<PsiFile>();
+    final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     for (IndexPattern indexPattern : IdCacheUtil.getIndexPatterns()) {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
         TodoIndex.NAME, 
@@ -104,9 +107,11 @@ public class IndexCacheManagerImpl implements CacheManager{
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         public void run() {
           for (VirtualFile file : files) {
-            final PsiFile psiFile = myPsiManager.findFile(file);
-            if (psiFile != null) {
-              allFiles.add(psiFile);
+            if (projectFileIndex.isInContent(file)) {
+              final PsiFile psiFile = myPsiManager.findFile(file);
+              if (psiFile != null) {
+                allFiles.add(psiFile);
+              }
             }
           }
         }
