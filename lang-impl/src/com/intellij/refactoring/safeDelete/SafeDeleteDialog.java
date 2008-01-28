@@ -6,7 +6,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
@@ -53,7 +52,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.SAFE_DELETE);
+    HelpManager.getInstance().invokeHelp("refactoring.safeDelete");
   }
 
   protected JComponent createNorthPanel() {
