@@ -21,11 +21,13 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -156,9 +158,10 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
   }
 
   private static void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
+    EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
+    EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     deleteVFile();
     myVFile = getSourceRoot().createChildData(null, fileName);
-    myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     VfsUtil.saveText(myVFile, fileText);
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     final Document document = manager.getDocument(myVFile);
@@ -168,6 +171,7 @@ public class LightCodeInsightTestCase extends LightIdeaTestCase {
     assertNotNull("Can't create PsiFile for '" + fileName + "'. Unknown file type most probably.", myFile);
     assertTrue(myFile.isPhysical());
     myEditor = createEditor(myVFile);
+    myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
   }
 
   private static void setupEditorForInjectedLanguage() {
