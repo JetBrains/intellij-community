@@ -26,6 +26,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public class MoveClassesOrPackagesImpl {
     boolean searchTextOccurences = false;
     for (int i = 0; i < psiElements.length && !searchTextOccurences; i++) {
       PsiElement psiElement = psiElements[i];
-      searchTextOccurences = RefactoringUtil.isSearchTextOccurencesEnabled(psiElement);
+      searchTextOccurences = TextOccurrencesUtil.isSearchTextOccurencesEnabled(psiElement);
     }
     final MoveClassesOrPackagesDialog moveDialog =
       new MoveClassesOrPackagesDialog(project, searchTextOccurences, psiElements, initialTargetElement, moveCallback);

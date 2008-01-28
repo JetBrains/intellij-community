@@ -1,18 +1,15 @@
 package com.intellij.refactoring.util;
 
-import com.intellij.usageView.UsageInfo;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.*;
-import com.intellij.util.Processor;
-import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.psi.*;
+import com.intellij.psi.search.*;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TextOccurrencesUtil {
   private TextOccurrencesUtil() {
@@ -123,6 +120,10 @@ public class TextOccurrencesUtil {
 
       index += stringToSearch.length();
     }
+  }
+
+  public static boolean isSearchTextOccurencesEnabled(PsiElement element) {
+    return ElementDescriptionUtil.getElementDescription(element, NonCodeSearchDescriptionLocation.NON_JAVA) != null;
   }
 
   public static interface UsageInfoFactory {

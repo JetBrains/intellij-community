@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,7 +101,7 @@ public class SafeDeleteDialog extends DialogWrapper {
 
   private boolean needSearchForTextOccurrences() {
     for (PsiElement element : myElements) {
-      if (RefactoringUtil.isSearchTextOccurencesEnabled(element)) {
+      if (TextOccurrencesUtil.isSearchTextOccurencesEnabled(element)) {
         return true;
       }
     }

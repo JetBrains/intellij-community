@@ -21,6 +21,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
@@ -344,7 +345,7 @@ public class RenameDialog extends RefactoringDialog {
     myCbSearchTextOccurences.setText(RefactoringBundle.getSearchForTextOccurrencesText());
     myCbSearchTextOccurences.setSelected(true);
     panel.add(myCbSearchTextOccurences, gbConstraints);
-    if (!RefactoringUtil.isSearchTextOccurencesEnabled(myPsiElement)) {
+    if (!TextOccurrencesUtil.isSearchTextOccurencesEnabled(myPsiElement)) {
       myCbSearchTextOccurences.setEnabled(false);
       myCbSearchTextOccurences.setSelected(false);
       myCbSearchTextOccurences.setVisible(false);

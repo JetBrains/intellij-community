@@ -252,11 +252,6 @@ public class RefactoringUtil {
     return replaceIn;
   }
 
-  public static boolean isSearchTextOccurencesEnabled(PsiElement element) {
-    return element instanceof PsiPackage || (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null) ||
-           (element instanceof PsiFile && !StdLanguages.JAVA.equals(element.getLanguage()));
-  }
-
   public static PsiElement getVariableScope(PsiLocalVariable localVar) {
     if (!(localVar instanceof ImplicitVariable)) {
       return localVar.getParent().getParent();
