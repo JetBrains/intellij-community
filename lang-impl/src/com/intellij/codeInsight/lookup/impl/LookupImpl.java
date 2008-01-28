@@ -35,6 +35,7 @@ import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -100,6 +101,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     myBottomLabel = new JLabel();
     myBottomLabel.setText(bottomText);
     myBottomLabel.setFont(myBottomLabel.getFont().deriveFont((float) (CodeInsightSettings.getInstance().LOOKUP_HEIGHT*10.0/11)));
+    myBottomLabel.setBorder(new EmptyBorder(1, 2, 1, 2));
 
     myList = new JList() ;
     myList.setFocusable(false);
@@ -581,6 +583,7 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
   }
 
   public void hide(){
+    //ApplicationManager.getApplication().assertIsDispatchThread();
     if (myDisposed) return;
     if (IdeEventQueue.getInstance().getPopupManager().closeActivePopup()) {
       return;
