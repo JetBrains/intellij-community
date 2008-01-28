@@ -16,16 +16,16 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.ide.DataManager;
-import com.siyeh.ig.InspectionGadgetsFix;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.RefactoringActionHandler;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class IntroduceConstantFix extends InspectionGadgetsFix {
@@ -43,8 +43,8 @@ public class IntroduceConstantFix extends InspectionGadgetsFix {
         application.invokeLater(new Runnable() {
 
             public void run() {
-                final RefactoringActionHandlerFactory factory =
-                        RefactoringActionHandlerFactory.getInstance();
+                final JavaRefactoringActionHandlerFactory factory =
+                        JavaRefactoringActionHandlerFactory.getInstance();
                 final RefactoringActionHandler introduceHandler =
                         factory.createIntroduceConstantHandler();
                 final DataManager dataManager = DataManager.getInstance();

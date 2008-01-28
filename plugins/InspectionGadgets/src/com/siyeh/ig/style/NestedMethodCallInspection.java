@@ -21,8 +21,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,8 +77,8 @@ public class NestedMethodCallInspection extends BaseInspection {
         }
 
         public void doFix(Project project, ProblemDescriptor descriptor) {
-            final RefactoringActionHandlerFactory factory =
-                    RefactoringActionHandlerFactory.getInstance();
+            final JavaRefactoringActionHandlerFactory factory =
+                    JavaRefactoringActionHandlerFactory.getInstance();
             final RefactoringActionHandler introduceHandler =
                     factory.createIntroduceVariableHandler();
             final PsiElement methodNameElement = descriptor.getPsiElement();

@@ -16,15 +16,15 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.ide.DataManager;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
@@ -49,8 +49,8 @@ public class MoveAnonymousToInnerClassFix extends InspectionGadgetsFix {
         final PsiElement nameElement = descriptor.getPsiElement();
         final PsiAnonymousClass aClass =
                 (PsiAnonymousClass) nameElement.getParent();
-        final RefactoringActionHandlerFactory factory =
-                RefactoringActionHandlerFactory.getInstance();
+        final JavaRefactoringActionHandlerFactory factory =
+                JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler anonymousToInner =
                 factory.createAnonymousToInnerHandler();
         final DataManager dataManager = DataManager.getInstance();

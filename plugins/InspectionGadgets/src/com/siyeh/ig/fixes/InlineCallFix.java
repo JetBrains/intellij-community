@@ -20,10 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
 public class InlineCallFix extends InspectionGadgetsFix {
@@ -40,8 +40,8 @@ public class InlineCallFix extends InspectionGadgetsFix {
         assert methodExpression != null;
         final PsiMethodCallExpression methodCallExpression =
                 (PsiMethodCallExpression) methodExpression.getParent();
-        final RefactoringActionHandlerFactory factory =
-                RefactoringActionHandlerFactory.getInstance();
+        final JavaRefactoringActionHandlerFactory factory =
+                JavaRefactoringActionHandlerFactory.getInstance();
         final RefactoringActionHandler inlineHandler = factory.createInlineHandler();
         inlineHandler.invoke(project, new PsiElement[]{methodCallExpression}, null);
     }
