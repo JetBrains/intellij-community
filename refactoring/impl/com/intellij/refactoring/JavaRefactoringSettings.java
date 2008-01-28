@@ -80,9 +80,6 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
   //public boolean INHERITANCE_TO_DELEGATION_PREVIEW_USAGES;
   public boolean INHERITANCE_TO_DELEGATION_DELEGATE_OTHER;
   //public boolean REPLACE_CONSTRUCTOR_WITH_FACTORY_PREVIEW_USAGES;
-  public boolean SAFE_DELETE_SEARCH_IN_COMMENTS = true;
-  public boolean SAFE_DELETE_SEARCH_IN_NON_JAVA = true;
-  public boolean SAFE_DELETE_WHEN_DELETE = true;
   public String INTRODUCE_CONSTANT_VISIBILITY;
   public boolean CONVERT_TO_INSTANCE_METHOD_PREVIEW_USAGES = true;
 

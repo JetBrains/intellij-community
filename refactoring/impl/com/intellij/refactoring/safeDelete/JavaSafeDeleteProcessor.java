@@ -152,6 +152,7 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
     return null;
   }
 
+  @Nullable
   public UsageInfo[] preprocessUsages(final Project project, final UsageInfo[] usages) {
     ArrayList<UsageInfo> result = new ArrayList<UsageInfo>();
     ArrayList<UsageInfo> overridingMethods = new ArrayList<UsageInfo>();

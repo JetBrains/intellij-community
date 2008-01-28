@@ -197,7 +197,7 @@ public class UsageViewUtil {
     return false;
   }
 
-  public static UsageInfo[] removeDuplicatedUsages(UsageInfo[] usages) {
+  public static UsageInfo[] removeDuplicatedUsages(@NotNull UsageInfo[] usages) {
     Set<UsageInfo> set = new LinkedHashSet<UsageInfo>(Arrays.asList(usages));
     return set.toArray(new UsageInfo[set.size()]);
   }

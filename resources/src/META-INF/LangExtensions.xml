@@ -34,6 +34,8 @@
 
   <applicationService serviceInterface="com.intellij.usages.UsageViewSettings"
                       serviceImplementation="com.intellij.usages.UsageViewSettings"/>
+  <applicationService serviceInterface="com.intellij.refactoring.RefactoringSettings"
+                      serviceImplementation="com.intellij.refactoring.RefactoringSettings"/>
 
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>

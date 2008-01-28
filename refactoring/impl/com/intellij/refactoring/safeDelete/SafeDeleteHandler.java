@@ -11,10 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.*;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -66,12 +63,8 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
           if (delegate.handlesElement(element)) {
             found = true;
             Collection<? extends PsiElement> addElements = delegate.getElementsToSearch(element, elementsSet);
-            if (addElements != null) {
-              fullElementsSet.addAll(addElements);
-            }
-            else {
-              return;
-            }
+            if (addElements == null) return;
+            fullElementsSet.addAll(addElements);
             break;
           }
         }
@@ -88,7 +81,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     final PsiElement[] elementsToDelete = fullElementsSet.toArray(new PsiElement[fullElementsSet.size()]);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
+      RefactoringSettings settings = RefactoringSettings.getInstance();
       SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
                                          settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true).run();
     }

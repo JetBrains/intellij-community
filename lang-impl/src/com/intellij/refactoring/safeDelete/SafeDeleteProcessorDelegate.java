@@ -27,7 +27,7 @@ public interface SafeDeleteProcessorDelegate {
    * specified selected element.
    *
    * @param element an element selected for deletion.
-   * @param allElementsToDelete
+   * @param allElementsToDelete all elements selected for deletion.
    * @return additional elements to search for usages, or null if the user has cancelled the refactoring.
    */
   @Nullable
@@ -39,6 +39,16 @@ public interface SafeDeleteProcessorDelegate {
   @Nullable
   Collection<String> findConflicts(final PsiElement element, final PsiElement[] allElementsToDelete);
 
+  /**
+   * Called after the user has confirmed the refactoring. Can filter out some of the usages
+   * found by the refactoring. May show UI to ask the user if some of the usages should
+   * be excluded.
+   *
+   * @param project the project where the refactoring happens.
+   * @param usages all usages to be processed by the refactoring. 
+   * @return the filtered list of usages, or null if the user has cancelled the refactoring.
+   */
+  @Nullable
   UsageInfo[] preprocessUsages(Project project, UsageInfo[] usages);
 
   void prepareForDeletion(PsiElement element) throws IncorrectOperationException;
