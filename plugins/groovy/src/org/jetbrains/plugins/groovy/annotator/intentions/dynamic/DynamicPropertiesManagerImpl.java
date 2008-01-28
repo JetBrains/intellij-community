@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -353,6 +355,18 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
       listener.dynamicPropertyChange();
     }
 
+    fireChangeCodeAnalize();
+    fireChangeToolWindow();
+
+  }
+
+  private void fireChangeToolWindow() {
+    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
+    window.getComponent().revalidate();
+    window.getComponent().repaint();
+  }
+
+  private void fireChangeCodeAnalize() {
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 

@@ -106,4 +106,10 @@ public abstract class DynamicPropertiesManager implements ProjectComponent {
   * Changes dynamic property type
   */
   public abstract DynamicPropertyVirtual replaceDynamicPropertyType(DynamicPropertyVirtual oldProperty, DynamicPropertyVirtual newProperty);
+
+  /*
+   * Fire changes
+   */
+
+  public abstract void fireChange();
 }
