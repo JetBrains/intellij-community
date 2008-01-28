@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.TestClassFilter");
@@ -49,7 +49,7 @@ public class TestClassFilter implements TreeClassChooser.ClassFilterWithScope {
   public boolean isAccepted(final PsiClass aClass) {
     return ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
            (aClass.isInheritor(myBase, true) || TestUtil.isTestClass(aClass))
-           && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtil.getVirtualFile(aClass))
+           && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilBase.getVirtualFile(aClass))
       ;
   }
 
