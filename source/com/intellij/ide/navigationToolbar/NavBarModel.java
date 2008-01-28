@@ -25,7 +25,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -115,7 +115,7 @@ public class NavBarModel {
     Module module = ModuleUtil.findModuleForPsiElement(psiElement);
     final ProjectFileIndex projectFileIndex = projectRootManager.getFileIndex();
     if (module != null) {
-      VirtualFile vFile = PsiUtil.getVirtualFile(psiElement);
+      VirtualFile vFile = PsiUtilBase.getVirtualFile(psiElement);
       if (vFile != null && (projectFileIndex.isInLibrarySource(vFile) || projectFileIndex.isInLibraryClasses(vFile))) {
         module = null;
       }
@@ -345,7 +345,7 @@ public class NavBarModel {
     for (PsiElement child : children) {
       if (child != null && child.isValid()) {
         if (moduleFileIndex != null) {
-          final VirtualFile virtualFile = PsiUtil.getVirtualFile(child);
+          final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(child);
           if (virtualFile != null && !moduleFileIndex.isInContent(virtualFile)) continue;
         }
         result.add(normalize(child));

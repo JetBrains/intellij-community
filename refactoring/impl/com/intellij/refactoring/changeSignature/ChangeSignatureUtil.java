@@ -1,7 +1,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class ChangeSignatureUtil {
           index--;
         }
         else {
-          assert list.isWritable() : PsiUtil.getVirtualFile(list);
+          assert list.isWritable() : PsiUtilBase.getVirtualFile(list);
           list.addBefore(newElement, oldElement);
           if (list.equals(newElement.getParent())) {
             newElement.delete();

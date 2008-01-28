@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -140,7 +140,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
-        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtil.getVirtualFile(parentElement));
+        myLeftPanel.getBuilder().enterElement(parentElement, PsiUtilBase.getVirtualFile(parentElement));
       }
     }
 
@@ -148,7 +148,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     if (element != null) {
       final PsiElement parentElement = readParentElement(element);
       if (parentElement != null) {
-        myRightPanel.getBuilder().enterElement(parentElement, PsiUtil.getVirtualFile(parentElement));
+        myRightPanel.getBuilder().enterElement(parentElement, PsiUtilBase.getVirtualFile(parentElement));
       }
     }
 
@@ -423,7 +423,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
     } else {
       activePanel = myRightPanel;
     }
-    activePanel.getBuilder().enterElement(element, PsiUtil.getVirtualFile(element));
+    activePanel.getBuilder().enterElement(element, PsiUtilBase.getVirtualFile(element));
   }
 
   public void swapPanels() {
@@ -600,7 +600,7 @@ public class Commander extends JPanel implements JDOMExternalizable, DataProvide
 
   public void selectElement(PsiElement element, boolean selectInActivePanel) {
     CommanderPanel panel = selectInActivePanel ? getActivePanel() : getInactivePanel();
-    panel.getBuilder().selectElement(element, PsiUtil.getVirtualFile(element));
+    panel.getBuilder().selectElement(element, PsiUtilBase.getVirtualFile(element));
   }
 }
 

@@ -15,7 +15,7 @@ import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -129,7 +129,7 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   private static VirtualFile[] getFiles(AbstractTreeNode kid) {
     if (kid instanceof BasePsiNode) {
       Object value = kid.getValue();
-      VirtualFile virtualFile = PsiUtil.getVirtualFile((PsiElement)value);
+      VirtualFile virtualFile = PsiUtilBase.getVirtualFile((PsiElement)value);
       return new VirtualFile[]{virtualFile};
     }
     else if (kid instanceof PackageElementNode) {

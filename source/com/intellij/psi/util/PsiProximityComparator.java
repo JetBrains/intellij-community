@@ -66,7 +66,7 @@ public class PsiProximityComparator implements Comparator<Object> {
     if (PsiTreeUtil.getContextOfType(commonContext, PsiMethod.class, false) != null) return PsiProximity.SAME_METHOD;
     if (PsiTreeUtil.getContextOfType(commonContext, PsiClass.class, false) != null) return PsiProximity.SAME_CLASS;
 
-    final VirtualFile virtualFile = PsiUtil.getVirtualFile(element);
+    final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(element);
     if (isOpenedInEditor(virtualFile)) return PsiProximity.OPENED_IN_EDITOR;
 
     if (element instanceof PsiClass) {

@@ -5,7 +5,8 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.lang.*;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -31,12 +32,16 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.search.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.xml.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
@@ -1158,7 +1163,7 @@ public class RefactoringUtil {
                                             PsiElement target,
                                             final Collection<String> conflicts) {
     if (scope == null) return;
-    final VirtualFile vFile = PsiUtil.getVirtualFile(target);
+    final VirtualFile vFile = PsiUtilBase.getVirtualFile(target);
     if (vFile == null) return;
     analyzeModuleConflicts(project, scope, usages, vFile, conflicts);
   }

@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
@@ -71,7 +72,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
     else if (navElement != null) {
       int navOffset = navElement.getTextOffset();
-      VirtualFile virtualFile = PsiUtil.getVirtualFile(navElement);
+      VirtualFile virtualFile = PsiUtilBase.getVirtualFile(navElement);
       if (virtualFile != null) {
         new OpenFileDescriptor(project, virtualFile, navOffset).navigate(true);
       }

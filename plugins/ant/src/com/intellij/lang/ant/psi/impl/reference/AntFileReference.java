@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +72,7 @@ public class AntFileReference extends FileReference implements AntReference {
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element");
-    final VirtualFile dstVFile = PsiUtil.getVirtualFile(element);
+    final VirtualFile dstVFile = PsiUtilBase.getVirtualFile(element);
     final AntStructuredElement se = getElement();
     final PsiFile file = se.getContainingFile();
     if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);

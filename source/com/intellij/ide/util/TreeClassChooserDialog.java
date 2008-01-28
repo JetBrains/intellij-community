@@ -24,7 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.FilteringIterator;
@@ -313,7 +313,7 @@ public class TreeClassChooserDialog extends DialogWrapper implements TreeClassCh
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         if (myBuilder == null) return;
-        final VirtualFile vFile = PsiUtil.getVirtualFile(element);
+        final VirtualFile vFile = PsiUtilBase.getVirtualFile(element);
         myBuilder.select(element, vFile, false);
       }
     }, getModalityState());

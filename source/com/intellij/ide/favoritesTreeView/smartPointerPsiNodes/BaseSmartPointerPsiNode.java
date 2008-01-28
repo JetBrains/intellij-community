@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -57,7 +57,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
   private VirtualFile getVirtualFileForValue() {
     PsiElement value = getPsiElement();
     if (value == null) return null;
-    return PsiUtil.getVirtualFile(value);
+    return PsiUtilBase.getVirtualFile(value);
   }
   // Should be called in atomic action
 

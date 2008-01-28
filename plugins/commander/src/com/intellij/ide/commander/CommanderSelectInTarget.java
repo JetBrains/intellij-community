@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
   public CommanderSelectInTarget(final Project project) {
@@ -45,7 +45,7 @@ public final class CommanderSelectInTarget extends SelectInTargetPsiWrapper {
 
     selectElementInCommander(new Runnable() {
       public void run() {
-        Commander.getInstance(myProject).selectElementInLeftPanel(_element, PsiUtil.getVirtualFile(_element));
+        Commander.getInstance(myProject).selectElementInLeftPanel(_element, PsiUtilBase.getVirtualFile(_element));
       }
     }, requestFocus);
   }
