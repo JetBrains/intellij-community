@@ -1,13 +1,26 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class UnwrapHandler implements CodeInsightActionHandler {
   private Project myProject;
+  private Editor myEditor;
 
   public boolean startInWriteAction() {
     return true;
@@ -15,15 +28,13 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     myProject = project;
-    try {
-      PsiElement el = getSelectedElement(editor, file);
-      while (el != null && !dispatch(el)) {
-        el = el.getParent();
-      }
-    }
-    catch (IncorrectOperationException e) {
-      throw new RuntimeException(e);
-    }
+    myEditor = editor;
+
+    PsiElement el = getSelectedElement(editor, file);
+
+    ArrayList<Action> options = new ArrayList<Action>();
+    collectOptions(el, options);
+    showOptions(options);
   }
 
   private PsiElement getSelectedElement(Editor editor, PsiFile file) {
@@ -31,27 +42,56 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return file.findElementAt(offset);
   }
 
-  private boolean dispatch(PsiElement el) throws IncorrectOperationException {
-    if (isElseBlock(el)) {
-      unwrapElse((PsiStatement)el);
-    }
-    else if (isElseKeyword(el)) {
-      PsiStatement elseBranch = ((PsiIfStatement)el.getParent()).getElseBranch();
-      if (elseBranch != null) unwrapElse(elseBranch);
+  private void collectOptions(final PsiElement el, List<Action> result) {
+    if (el == null) return;
+
+    Action a = null;
+    if (isElseBlock(el) || isElseKeyword(el)) {
+      a = new Action("'Else' block") {
+        protected void unwrap() throws IncorrectOperationException {
+          PsiStatement elseBranch;
+
+          if (isElseKeyword(el)) {
+            elseBranch = ((PsiIfStatement)el.getParent()).getElseBranch();
+            if (elseBranch == null) return;
+          }
+          else {
+            elseBranch = (PsiStatement)el;
+          }
+
+          unwrapElse(elseBranch);
+        }
+      };
     }
     else if (el instanceof PsiIfStatement) {
-      uwrapIf((PsiIfStatement)el);
+      a = new Action("'If' statement") {
+        protected void unwrap() throws IncorrectOperationException {
+          unwrapIf((PsiIfStatement)el);
+        }
+      };
+    }
+    else if (el instanceof PsiCatchSection && tryHasSeveralCatches(el)) {
+      a = new Action("'Catch' block") {
+        protected void unwrap() throws IncorrectOperationException {
+          unwrapCatch((PsiCatchSection)el);
+        }
+      };
     }
     else if (el instanceof PsiTryStatement) {
-      unwrapTry((PsiTryStatement)el);
+      a = new Action("'Try' statement") {
+        protected void unwrap() throws IncorrectOperationException {
+          unwrapTry((PsiTryStatement)el);
+        }
+      };
     }
-    else if (el instanceof PsiCatchSection) {
-      unwrapCatch((PsiCatchSection)el);
-    }
-    else {
-      return false;
-    }
-    return true;
+
+    if (a != null) result.add(a);
+
+    collectOptions(el.getParent(), result);
+  }
+
+  private boolean tryHasSeveralCatches(PsiElement el) {
+    return ((PsiTryStatement)el.getParent()).getCatchBlocks().length > 1;
   }
 
   private boolean isElseBlock(PsiElement el) {
@@ -64,7 +104,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     return p instanceof PsiIfStatement && el == ((PsiIfStatement)p).getElseElement();
   }
 
-  private void uwrapIf(PsiIfStatement el) throws IncorrectOperationException {
+  private void unwrapIf(PsiIfStatement el) throws IncorrectOperationException {
     PsiStatement then = el.getThenBranch();
 
     if (then instanceof PsiBlockStatement) {
@@ -118,7 +158,8 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     PsiTryStatement tryEl = (PsiTryStatement)el.getParent();
     if (tryEl.getCatchBlocks().length > 1) {
       el.delete();
-    } else {
+    }
+    else {
       unwrapTry(tryEl);
     }
   }
@@ -134,5 +175,51 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     PsiElement first = elements[0];
     PsiElement last = elements[elements.length - 1];
     from.getParent().addRangeBefore(first, last, from);
+  }
+
+  protected void showOptions(List<Action> options) {
+    if (options.isEmpty()) return;
+
+    if (options.size() == 1) {
+      options.get(0).actionPerformed(null);
+      return;
+    }
+
+    DefaultActionGroup group = new DefaultActionGroup();
+    for (Action each : options) {
+      group.add(each);
+    }
+
+    DataContext context = DataManager.getInstance().getDataContext(myEditor.getContentComponent());
+    ListPopup popup = JBPopupFactory.getInstance().
+      createActionGroupPopup("Unwrap", group, context, JBPopupFactory.ActionSelectionAid.NUMBERING, false);
+
+    popup.showInBestPositionFor(myEditor);
+
+  }
+
+  protected abstract class Action extends AnAction {
+    protected Action(String text) {
+      super(text);
+    }
+
+    public void actionPerformed(AnActionEvent e) {
+      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            public void run() {
+              try {
+                unwrap();
+              }
+              catch (IncorrectOperationException ex) {
+                throw new RuntimeException(ex);
+              }
+            }
+          });
+        }
+      }, null, null);
+    }
+
+    protected abstract void unwrap() throws IncorrectOperationException;
   }
 }
