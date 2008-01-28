@@ -38,9 +38,13 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
   public void testInvalidProjectModelException() throws IOException, MavenException {
     try {
+      createModulePom("foo", "<groupId>test</groupId>" +
+                             "<artifactId>foo</artifactId>" +
+                             "<version>1</version>");
+
       importProjectUnsafe("<groupId>test</groupId>" +
                           "<artifactId>project</artifactId>" +
-                          "<version>project</version>" +
+                          "<version>1</version>" +
                           "<packaging>jar</packaging>" +
 
                           "<modules>" +
@@ -55,6 +59,10 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
 
   public void testExceptionFromReadResolved() throws IOException, MavenException {
     try {
+      createModulePom("foo", "<groupId>test</groupId>" +
+                             "<artifactId>foo</artifactId>" +
+                             "<version>1</version");
+
       importProjectUnsafe("<groupId>test</groupId>" +
                           "<artifactId>project</artifactId>" +
                           "<version>project</version>" +
@@ -66,7 +74,7 @@ public class InvalidProjectImportingTest extends ImportingTestCase {
       fail();
     }
     catch (MavenException e) {
-      assertMessageContains(e, "Failed to build MavenProject instance",
+      assertMessageContains(e, "Failed to parse model",
                                "foo\\pom.xml");
     }
   }

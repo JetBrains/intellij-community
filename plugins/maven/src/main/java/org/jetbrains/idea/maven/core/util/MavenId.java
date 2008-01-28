@@ -88,8 +88,14 @@ public class MavenId implements Comparable<MavenId>{
   }
 
   public boolean matches(@NotNull final MavenId that) {
-    return groupId.equals(that.groupId) && artifactId.equals(that.artifactId) &&
-           (version == null || that.version == null || version.equals(that.version));
+    return nullAwareEqual(groupId, that.groupId)
+           && nullAwareEqual(artifactId, that.artifactId)
+           && (version == null || that.version == null || version.equals(that.version));
+  }
+
+  private boolean nullAwareEqual(Object o1, Object o2) {
+    if (o1 == null) return o2 == null;
+    return o1.equals(o2);
   }
 
   public int compareTo(final MavenId that) {
