@@ -36,6 +36,7 @@
   <xi:include href="Editor.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="VCS.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Lang.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="ProjectView.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Profiles.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>

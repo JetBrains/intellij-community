@@ -1,0 +1,34 @@
+<components>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.ide.projectView.ProjectView</interface-class>
+      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewImpl</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.projectView.impl.ProjectViewPane</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+    <component>
+      <implementation-class>com.intellij.ide.scopeView.ScopeViewPane</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.ide.favoritesTreeView.FavoritesManager</implementation-class>
+      <option name="workspace" value="true"/>
+      <skipForDummyProject/>
+    </component>
+
+    
+  </project-components>
+</components>
