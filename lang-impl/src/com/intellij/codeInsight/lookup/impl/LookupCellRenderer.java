@@ -145,7 +145,7 @@ class LookupCellRenderer implements ListCellRenderer {
     getLabel0(item, background, isSelected);
     getLabel1(item, background, foreground);
     getLabel2(item, background, foreground, isSelected);
-    getLabel3(item, background, foreground);
+    getLabel3(item, background, foreground, list);
 
     return myPanel;
   }
@@ -298,13 +298,28 @@ class LookupCellRenderer implements ListCellRenderer {
     return SHOW_SIGNATURES || item.getAttribute(LookupItem.FORCE_SHOW_SIGNATURE_ATTR) != null;
   }
 
-  private void getLabel3(LookupItem item, final Color background, Color foreground){
+  private void getLabel3(LookupItem item, final Color background, Color foreground, JList list){
     myLabel3.setHorizontalTextPosition(SwingConstants.RIGHT);
 
     String text = getText3(item);
 
+    final int maxWidth =
+      (list.getFixedCellWidth() - myLabel0.getPreferredSize().width - myLabel1.getPreferredSize().width - myLabel2.getPreferredSize().width) / FONT_WIDTH - 3;
+
     JLabel label = myLabel3;
-    label.setText(text != null ? text + " " : "");
+    if (text == null) text = "";
+    else text += " ";
+
+    while (text.length() > maxWidth) {
+      String repl = text.replaceFirst("<((<\\.\\.\\.>)|[^<>])*>", "<...>");
+      if (repl.equals(text)) {
+        text = "...";
+        break;
+      }
+      text = repl;
+    }
+
+    label.setText(text);
     label.setFont(NORMAL_FONT);
     Color sampleBackground = background;
 
