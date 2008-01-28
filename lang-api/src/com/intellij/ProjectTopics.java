@@ -28,4 +28,7 @@ public class ProjectTopics {
   public static final Topic<ModuleRootListener> PROJECT_ROOTS = new Topic<ModuleRootListener>("project root changes", ModuleRootListener.class);
   public static final Topic<ModuleListener> MODULES = new Topic<ModuleListener>("modules added or removed from project", ModuleListener.class);
   public static final Topic<LogicalRootsManager.LogicalRootListener> LOGICAL_ROOTS = new Topic<LogicalRootsManager.LogicalRootListener>("logical root changes", LogicalRootsManager.LogicalRootListener.class);
+
+  private ProjectTopics() {
+  }
 }
