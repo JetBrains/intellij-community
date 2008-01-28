@@ -1,6 +1,5 @@
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -33,8 +32,9 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   }
 
   protected void updateImpl(PresentationData data) {
-    data.setPresentableText(getValue().getName());
-    data.setIcons(IconUtilEx.getIcon(getValue(), Iconable.ICON_FLAG_READ_STATUS, getProject()));
+    final PsiFile value = getValue();
+    data.setPresentableText(value.getName());
+    data.setIcons(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
   }
 
   public VirtualFile getVirtualFile() {
