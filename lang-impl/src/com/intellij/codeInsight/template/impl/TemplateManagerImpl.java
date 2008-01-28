@@ -79,11 +79,16 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     return editor.getUserData(TEMPLATE_STATE_KEY);
   }
 
-  private TemplateState initTemplateState(final Editor editor) {
+  void clearTemplateState(final Editor editor) {
     TemplateState prevState = getTemplateState(editor);
     if (prevState != null) {
       disposeState(prevState);
     }
+    editor.putUserData(TEMPLATE_STATE_KEY, null);
+  }
+
+  private TemplateState initTemplateState(final Editor editor) {
+    clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
     myDisposables.add(state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);

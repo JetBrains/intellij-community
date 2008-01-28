@@ -761,10 +761,11 @@ public class TemplateState implements Disposable {
         mySegments.getSegmentStart(selEnd)
       );
     }
-
+    final Editor editor = myEditor;
+    setCurrentVariableNumber(-1);
+    ((TemplateManagerImpl)TemplateManager.getInstance(myProject)).clearTemplateState(editor);
     fireTemplateFinished();
     myListeners.clear();
-    setCurrentVariableNumber(-1);
     myProject = null;
   }
 
