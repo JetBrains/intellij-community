@@ -1,45 +1,30 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
 package com.intellij.refactoring.openapi.impl;
 
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
-import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
-import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
-import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
-import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
-import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
-import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
-import com.intellij.refactoring.inline.InlineHandler;
-import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
-import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
-import com.intellij.refactoring.makeStatic.MakeStaticHandler;
-import com.intellij.refactoring.memberPullUp.PullUpHandler;
-import com.intellij.refactoring.memberPushDown.PushDownHandler;
-import com.intellij.refactoring.move.MoveHandler;
-import com.intellij.refactoring.rename.PsiElementRenameHandler;
+import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
+import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.refactoring.extractInterface.ExtractInterfaceHandler;
+import com.intellij.refactoring.inheritanceToDelegation.InheritanceToDelegationHandler;
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
+import com.intellij.refactoring.inline.InlineHandler;
+import com.intellij.refactoring.typeCook.TypeCookHandler;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperclassHandler;
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
+import com.intellij.refactoring.encapsulateFields.EncapsulateFieldsHandler;
 import com.intellij.refactoring.replaceConstructorWithFactory.ReplaceConstructorWithFactoryHandler;
-import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodHandler;
+import com.intellij.refactoring.makeStatic.MakeStaticHandler;
+import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.tempWithQuery.TempWithQueryHandler;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperHandler;
-import com.intellij.refactoring.typeCook.TypeCookHandler;
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
+import com.intellij.refactoring.memberPushDown.PushDownHandler;
+import com.intellij.refactoring.memberPullUp.PullUpHandler;
+import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
 
-/**
- * @author dsl
- */
-public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandlerFactory {
-
-  public RefactoringActionHandler createSafeDeleteHandler() {
-    return new SafeDeleteHandler();
-  }
-
+public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
   public RefactoringActionHandler createAnonymousToInnerHandler() {
     return new AnonymousToInnerHandler();
   }
@@ -112,14 +97,6 @@ public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandle
     return new ExtractInterfaceHandler();
   }
 
-  public RefactoringActionHandler createMoveHandler() {
-    return new MoveHandler();
-  }
-
-  public RefactoringActionHandler createRenameHandler() {
-    return new PsiElementRenameHandler();
-  }
-
   public RefactoringActionHandler createIntroduceFieldHandler() {
     return new IntroduceFieldHandler();
   }
@@ -127,8 +104,6 @@ public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandle
   public RefactoringActionHandler createIntroduceVariableHandler() {
     return new IntroduceVariableHandler();
   }
-
-
 
   public RefactoringActionHandler createIntroduceConstantHandler() {
     return new IntroduceConstantHandler();
