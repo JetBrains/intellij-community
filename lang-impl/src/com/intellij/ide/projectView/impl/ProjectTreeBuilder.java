@@ -7,7 +7,6 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.properties.PropertiesFilesManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -16,9 +15,7 @@ import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -41,7 +38,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
   private final MyFileStatusListener myFileStatusListener;
 
   private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
-  private final PropertiesFileListener myPropertiesFileListener;
+  //private final PropertiesFileListener myPropertiesFileListener;
   private final WolfTheProblemSolver.ProblemListener myProblemListener;
 
   public ProjectTreeBuilder(final Project project, JTree tree, DefaultTreeModel treeModel, Comparator<NodeDescriptor> comparator, ProjectAbstractTreeStructureBase treeStructure) {
@@ -75,11 +72,11 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     myCopyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(myUpdater);
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
-    myPropertiesFileListener = new PropertiesFileListener();
+    /*myPropertiesFileListener = new PropertiesFileListener();
     final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
     if (propertiesFilesManager != null) {
       propertiesFilesManager.addPropertiesFileListener(myPropertiesFileListener);
-    }
+    }*/
     myProblemListener = new MyProblemListener();
     WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener);
     initRootNode();
@@ -90,10 +87,10 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
-    final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
+   /* final PropertiesFilesManager propertiesFilesManager = PropertiesFilesManager.getInstance();
     if (propertiesFilesManager != null) {
       propertiesFilesManager.removePropertiesFileListener(myPropertiesFileListener);
-    }
+    }*/
     WolfTheProblemSolver.getInstance(myProject).removeProblemListener(myProblemListener);
   }
 
@@ -124,7 +121,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     }
   }
 
-  private class PropertiesFileListener implements PropertiesFilesManager.PropertiesFileListener {
+ /* private class PropertiesFileListener implements PropertiesFilesManager.PropertiesFileListener {
     public void fileAdded(VirtualFile propertiesFile) {
       fileChanged(propertiesFile, null);
     }
@@ -142,7 +139,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         }
       }
     }
-  }
+  }*/
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     private final Alarm myUpdateProblemAlarm = new Alarm();
