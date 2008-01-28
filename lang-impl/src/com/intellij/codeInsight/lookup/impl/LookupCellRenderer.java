@@ -313,7 +313,7 @@ class LookupCellRenderer implements ListCellRenderer {
     while (text.length() > maxWidth) {
       String repl = text.replaceFirst("<((<\\.\\.\\.>)|[^<>])*>", "<...>");
       if (repl.equals(text)) {
-        text = "...";
+        //text = "...";
         break;
       }
       text = repl;
