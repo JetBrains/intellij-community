@@ -13,7 +13,6 @@ public class EclipseFileTypeFactory extends FileTypeFactory {
   private final static FileType fileType = new EclipseFileType();
 
   public void createFileTypes(final @NotNull PairConsumer<FileType, String> consumer) {
-    consumer.consume(fileType, EclipseXml.CLASSPATH_EXT);
-    //consumer.consume(fileType, EclipseXml.PROJECT_EXT);
+    consumer.consume(fileType, EclipseXml.CLASSPATH_EXT + ";" + EclipseXml.PROJECT_EXT);
   }
 }
