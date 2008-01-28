@@ -5,7 +5,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.StateRestoringCheckBox;
@@ -52,7 +51,7 @@ public class DeleteDialog extends DialogWrapper {
   }
 
   protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.SAFE_DELETE);
+    HelpManager.getInstance().invokeHelp("refactoring.safeDelete");
   }
 
   protected JComponent createNorthPanel() {

@@ -276,7 +276,6 @@
     </group>
 
     <group id="RefactoringMenu2">
-      <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
       <separator/>
       <action id="ExtractMethod" class="com.intellij.refactoring.actions.ExtractMethodAction"/>
       <action id="MethodDuplicates" class="com.intellij.refactoring.actions.MethodDuplicatesAction"/>
