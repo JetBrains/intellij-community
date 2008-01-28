@@ -4,6 +4,8 @@ import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lexer.OldXmlLexer;
+import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.

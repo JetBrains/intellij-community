@@ -90,7 +90,7 @@ public class MoveClassesOrPackagesUtil {
       TextOccurrencesUtil.UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
 
       if (searchInStringsAndComments) {
-        RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, results, factory);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, results, factory);
       }
 
       if (searchInNonJavaFiles) {

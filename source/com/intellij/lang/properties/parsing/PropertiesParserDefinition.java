@@ -44,6 +44,11 @@ public class PropertiesParserDefinition implements ParserDefinition {
   }
 
   @NotNull
+  public TokenSet getStringLiteralElements() {
+    return TokenSet.EMPTY;
+  }
+
+  @NotNull
   public PsiParser createParser(final Project project) {
     return new PropertiesParser();
   }

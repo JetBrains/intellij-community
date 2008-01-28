@@ -80,6 +80,15 @@ public interface ParserDefinition {
   TokenSet getCommentTokens();
 
   /**
+   * Returns the set of element types which are treated as string literals. "Search in strings"
+   * option in refactorings is applied to the contents of such tokens.
+   *
+   * @return the set of string literal element types.
+   */
+  @NotNull
+  TokenSet getStringLiteralElements();
+
+  /**
    * Creates a PSI element for the specified AST node. The AST tree is a simple, semantic-free
    * tree of AST nodes which is built during the PsiBuilder parsing pass. The PSI tree is built
    * over the AST tree and includes elements of different types for different language constructs.

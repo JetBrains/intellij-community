@@ -3,13 +3,16 @@ package com.intellij.refactoring.util;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.*;
 import com.intellij.util.Processor;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.LanguageParserDefinitions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class TextOccurrencesUtil {
   private TextOccurrencesUtil() {
@@ -41,6 +44,85 @@ public class TextOccurrencesUtil {
         return usageInfo == null || processor.process(usageInfo);
       }
     }, searchScope);
+  }
+
+  public static PsiElement[] findStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper) {
+    final ArrayList<PsiElement> results = new ArrayList<PsiElement>();
+    TextOccurenceProcessor processor = new TextOccurenceProcessor() {
+      public boolean execute(PsiElement element, int offsetInElement) {
+        final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
+        if (definition.getStringLiteralElements().contains(element.getNode().getElementType())) {
+          synchronized (results) {
+            results.add(element);
+          }
+        }
+        return true;
+      }
+    };
+
+    helper.processElementsWithWord(processor,
+                                   searchScope,
+                                   identifier,
+                                   UsageSearchContext.IN_STRINGS,
+                                   true);
+    return results.toArray(new PsiElement[results.size()]);
+  }
+
+  public static void addUsagesInStringsAndComments(final PsiElement element, final String stringToSearch, final List<UsageInfo> results,
+                                                   final UsageInfoFactory factory,
+                                                   final boolean ignoreReferences) {
+    PsiManager manager = element.getManager();
+    PsiSearchHelper helper = manager.getSearchHelper();
+    SearchScope scope = element.getUseScope();
+    scope = scope.intersectWith(GlobalSearchScope.projectScope(manager.getProject()));
+    PsiElement[] literals = findStringLiteralsContainingIdentifier(stringToSearch, scope, helper);
+    for (PsiElement literal : literals) {
+      processStringOrComment(literal, stringToSearch, results, factory, ignoreReferences);
+    }
+
+    PsiElement[] comments = helper.findCommentsContainingIdentifier(stringToSearch, scope);
+    for (PsiElement comment : comments) {
+      processStringOrComment(comment, stringToSearch, results, factory, ignoreReferences);
+    }
+  }
+
+  public static void addUsagesInStringsAndComments(PsiElement element,
+                                                   @NotNull String stringToSearch,
+                                                   List<UsageInfo> results,
+                                                   UsageInfoFactory factory) {
+    addUsagesInStringsAndComments(element, stringToSearch, results, factory, false);
+  }
+
+  private static void processStringOrComment(PsiElement element, String stringToSearch, List<UsageInfo> results, UsageInfoFactory factory,
+                                             final boolean ignoreReferences) {
+    String elementText = element.getText();
+    for (int index = 0; index < elementText.length(); index++) {
+      index = elementText.indexOf(stringToSearch, index);
+      if (index < 0) break;
+      final PsiReference referenceAt = element.findReferenceAt(index);
+      if (!ignoreReferences && referenceAt != null && referenceAt.resolve() != null) continue;
+
+      if (index > 0) {
+        char c = elementText.charAt(index - 1);
+        if (Character.isJavaIdentifierPart(c) && c != '$') {
+          if (index < 2 || elementText.charAt(index - 2) != '\\') continue;  //escape sequence
+        }
+      }
+
+      if (index + stringToSearch.length() < elementText.length()) {
+        char c = elementText.charAt(index + stringToSearch.length());
+        if (Character.isJavaIdentifierPart(c) && c != '$') {
+          continue;
+        }
+      }
+
+      UsageInfo usageInfo = factory.createUsageInfo(element, index, index + stringToSearch.length());
+      if (usageInfo != null) {
+        results.add(usageInfo);
+      }
+
+      index += stringToSearch.length();
+    }
   }
 
   public static interface UsageInfoFactory {

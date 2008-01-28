@@ -100,7 +100,7 @@ public class RenameUtil {
       if (stringToSearch != null) {
         final String stringToReplace = getStringToReplace(element, newName, false);
         TextOccurrencesUtil.UsageInfoFactory factory = new NonCodeUsageInfoFactory(element, stringToReplace);
-        RefactoringUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
+        TextOccurrencesUtil.addUsagesInStringsAndComments(element, stringToSearch, result, factory);
       }
     }
 

@@ -1,7 +1,7 @@
 package com.intellij.lang.xhtml;
 
-import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.xml.XMLParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlLexer;
 import com.intellij.openapi.project.Project;

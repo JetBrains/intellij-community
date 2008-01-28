@@ -15,7 +15,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -76,7 +75,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     if (qName != null) {
       List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
       if (mySearchInComments) {
-        RefactoringUtil.addUsagesInStringsAndComments(myClass, qName, nonCodeUsages,
+        TextOccurrencesUtil.addUsagesInStringsAndComments(myClass, qName, nonCodeUsages,
                                                       new NonCodeUsageInfoFactory(myClass, qName));
       }
 

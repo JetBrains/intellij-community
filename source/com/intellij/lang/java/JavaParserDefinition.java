@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * To change this template use File | Settings | File Templates.
  */
 public class JavaParserDefinition implements ParserDefinition {
+  private final TokenSet myStringLiteralElementSet = TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
 
   @NotNull
   public Lexer createLexer(Project project) {
@@ -50,6 +51,11 @@ public class JavaParserDefinition implements ParserDefinition {
   @NotNull
   public TokenSet getCommentTokens() {
     return JavaTokenType.COMMENT_BIT_SET;
+  }
+
+  @NotNull
+  public TokenSet getStringLiteralElements() {
+    return myStringLiteralElementSet;
   }
 
   @NotNull

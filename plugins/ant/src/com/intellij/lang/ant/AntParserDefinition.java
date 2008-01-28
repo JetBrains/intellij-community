@@ -44,6 +44,11 @@ public class AntParserDefinition implements ParserDefinition {
   }
 
   @NotNull
+  public TokenSet getStringLiteralElements() {
+    return TokenSet.EMPTY;
+  }
+
+  @NotNull
   public PsiElement createElement(ASTNode node) {
     return myXmlParserDef.createElement(node);
   }

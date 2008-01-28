@@ -48,6 +48,11 @@ public class PlainTextParserDefinition implements ParserDefinition {
   }
 
   @NotNull
+  public TokenSet getStringLiteralElements() {
+    return TokenSet.EMPTY;
+  }
+
+  @NotNull
   public PsiElement createElement(ASTNode node) {
     return PsiUtilBase.NULL_PSI_ELEMENT;
   }
