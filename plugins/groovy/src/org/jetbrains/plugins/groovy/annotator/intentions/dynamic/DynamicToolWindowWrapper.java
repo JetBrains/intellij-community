@@ -32,9 +32,10 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.elem
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPClassNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.tree.DPPropertyNode;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
-//import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.toolPanel.DynamicToolWindowUtil;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.table.TableCellEditor;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -53,8 +54,7 @@ import java.util.Set;
 public class DynamicToolWindowWrapper {
 
   public static final String DYNAMIC_TOOLWINDOW_ID = GroovyBundle.message("dynamic.tool.window.id");
-  //  private ToolWindow myDynamicToolWindow;
-  //  private static final Project myPro+ject;
+  public static final String IDENTIFIER_REGEXP = "[a-zA-Z(.)]+";
   private static JPanel myTreeTablePanel;
   private static JPanel myBigPanel;
 
@@ -68,10 +68,6 @@ public class DynamicToolWindowWrapper {
   private static TreeTable myTreeTable;
 
   private static final Key<DynamicTreeViewState> DYNAMIC_TOOLWINDOW_STATE_KEY = Key.create("DYNAMIC_TOOLWINDOW_STATE");
-
-//  public DynamicToolWindowWrapper(ToolWindow dynamicToolWindow) {
-//    myDynamicToolWindow = dynamicToolWindow;
-//  }
 
   private static boolean doesTreeTableInit() {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
@@ -190,7 +186,46 @@ public class DynamicToolWindowWrapper {
     ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[0]), new PropertyTypeColumnInfo(myColumnNames[1])};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
-    myTreeTable = new TreeTable(myTreeTableModel);
+
+    myTreeTable = new TreeTable(myTreeTableModel) {
+      public void editingStopped(ChangeEvent e) {
+        final TableCellEditor tableCellEditor = getCellEditor();
+        final Object value = tableCellEditor.getCellEditorValue();
+        final TreePath editingPath = getTree().getSelectionPath();
+        final TreePath parentPath = editingPath.getParentPath();
+
+        final Object editingCell = getValueAt(getTree().getRowForPath(editingPath), 1);
+        final Object parentCell = getValueAt(getTree().getRowForPath(parentPath), 0);
+
+        if (!(value instanceof String)) super.editingStopped(e);
+        if (!value.toString().matches(IDENTIFIER_REGEXP)) super.editingStopped(e);
+
+        if (editingCell instanceof DPClassNode) {
+          //TODO
+        } else if (editingCell instanceof DPPropertyElement) {
+          //TODO
+        } else if (editingCell instanceof DPPropertyTypeElement) {
+
+          final DPPropertyTypeElement typeCell = (DPPropertyTypeElement) editingCell;
+          final Object cell = getValueAt(getTree().getRowForPath(editingPath), 0);
+
+          if (!(cell instanceof DPPropertyElement) || !(parentCell instanceof DPContainingClassElement))
+            super.editingStopped(e);
+          DPPropertyElement propertyCell = ((DPPropertyElement) cell);
+
+          final String name = propertyCell.getPropertyName();
+          final String type = typeCell.getPropertyType();
+          final String className = ((DPContainingClassElement) parentCell).getContainingClassName();
+
+          DynamicPropertiesManager.getInstance(project).replaceDynamicPropertyType(
+              new DynamicPropertyVirtual(name, className, getModule(project).getName(), type),
+              new DynamicPropertyVirtual(name, className, getModule(project).getName(), value.toString()));
+        }
+
+        super.editingCanceled(e);
+      }
+    };
+
     myTreeTable.setRootVisible(false);
 
     myTreeTable.registerKeyboardAction(
@@ -210,47 +245,7 @@ public class DynamicToolWindowWrapper {
     myTreeTable.getTree().setShowsRootHandles(true);
     myTreeTable.getTableHeader().setReorderingAllowed(false);
 
-    myTreeTable.setTreeCellRenderer(new ColoredTreeCellRenderer() {
-      public void customizeCellRenderer(JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        value = ((DefaultMutableTreeNode) value).getUserObject();
-
-        setPaintFocusBorder(false);
-
-        if (value != null) {
-
-          if (value instanceof DPClassNode) {
-            append(((DPClassNode) value).getElement().getContainingClassName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-
-          } else if (value instanceof DPPropertyNode) {
-            final DPPropertyNode propertyElement = (DPPropertyNode) value;
-            final String substringToHighlight = propertyElement.getElement().getHightlightedText();
-            final String propertyName = propertyElement.getElement().getPropertyName();
-
-            if (substringToHighlight != null) {
-              final int begin = propertyName.indexOf(substringToHighlight);
-              final String first = propertyName.substring(0, begin);
-              append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-              final TextAttributes textAttributes = TextAttributes.ERASE_MARKER;
-//              textAttributes.setEffectColor(new Color(200, 200, 200));
-              textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground());
-              append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
-              append(propertyName.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-            } else {
-              append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-            }
-
-          }/* else if (value instanceof DPPropertyTypeElement) {
-            append(((DPPropertyTypeElement) value).getPropertyType(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-          }*/
-        }
-      }
-    });
+    myTreeTable.setTreeCellRenderer(new MyColoredTreeCellRenderer());
 
     myTreeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTreeTable.setPreferredScrollableViewportSize(new Dimension(300, myTreeTable.getRowHeight() * 10));
@@ -365,18 +360,20 @@ public class DynamicToolWindowWrapper {
       super(name);
     }
 
-    public boolean isCellEditable(DefaultMutableTreeNode defaultMutableTreeNode) {
-      return false;
+    public boolean isCellEditable(DefaultMutableTreeNode treeNode) {
+      final Object userObject = treeNode.getUserObject();
+
+      return userObject instanceof DPPropertyNode;
     }
 
     public Class getColumnClass() {
       return TreeTableModel.class;
     }
 
-
     public DPElement valueOf(DefaultMutableTreeNode treeNode) {
       Object userObject = treeNode.getUserObject();
-      if (userObject instanceof DPElement) return ((DPElement) userObject);
+      if (userObject instanceof DPClassNode) return ((DPClassNode) userObject).getElement();
+      if (userObject instanceof DPPropertyNode) return ((DPPropertyNode) userObject).getElement();
 
       return null;
     }
@@ -530,5 +527,81 @@ public class DynamicToolWindowWrapper {
 
   private static ListTreeTableModelOnColumns returnTreeTableModel() {
     return myTreeTableModel;
+  }
+
+  private static class MyColoredTreeCellRenderer extends ColoredTreeCellRenderer {
+    public void customizeCellRenderer(JTree tree,
+                                      Object value,
+                                      boolean selected,
+                                      boolean expanded,
+                                      boolean leaf,
+                                      int row,
+                                      boolean hasFocus) {
+      value = ((DefaultMutableTreeNode) value).getUserObject();
+
+      setPaintFocusBorder(false);
+
+      if (value != null) {
+
+        if (value instanceof DPClassNode) {
+          append(((DPClassNode) value).getElement().getContainingClassName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+
+        } else if (value instanceof DPPropertyNode) {
+          final DPPropertyNode propertyElement = (DPPropertyNode) value;
+          final String substringToHighlight = propertyElement.getElement().getHightlightedText();
+          final String propertyName = propertyElement.getElement().getPropertyName();
+
+          if (substringToHighlight != null) {
+            final int begin = propertyName.indexOf(substringToHighlight);
+            final String first = propertyName.substring(0, begin);
+            append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+            final TextAttributes textAttributes = TextAttributes.ERASE_MARKER;
+//              textAttributes.setEffectColor(new Color(200, 200, 200));
+            textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground());
+            append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
+            append(propertyName.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          } else {
+            append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          }
+
+        }/* else if (value instanceof DPPropertyTypeElement) {
+          append(((DPPropertyTypeElement) value).getPropertyType(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+        }*/
+      }
+    }
+
+//      private void customizeCellRenderer(ColoredTreeCellRenderer renderer, Object value) {
+//        value = ((DefaultMutableTreeNode) value).getUserObject();
+//
+//        setPaintFocusBorder(false);
+//
+//        if (value != null) {
+//
+//          if (value instanceof DPClassNode) {
+//            append(((DPClassNode) value).getElement().getContainingClassName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+//
+//          } else if (value instanceof DPPropertyNode) {
+//            final DPPropertyNode propertyElement = (DPPropertyNode) value;
+//            final String substringToHighlight = propertyElement.getElement().getHightlightedText();
+//            final String propertyName = propertyElement.getElement().getPropertyName();
+//
+//            if (substringToHighlight != null) {
+//              final int begin = propertyName.indexOf(substringToHighlight);
+//              final String first = propertyName.substring(0, begin);
+//              append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+//              final TextAttributes textAttributes = TextAttributes.ERASE_MARKER;
+////              textAttributes.setEffectColor(new Color(200, 200, 200));
+//              textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground());
+//              append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
+//              append(propertyName.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+//            } else {
+//              append(propertyName, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+//            }
+//
+//          }/* else if (value instanceof DPPropertyTypeElement) {
+//            append(((DPPropertyTypeElement) value).getPropertyType(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+//          }*/
+//        }
+//      }
   }
 }

@@ -339,19 +339,21 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     myListeners.remove(listener);
   }
 
+  public DynamicPropertyVirtual replaceDynamicPropertyType(DynamicPropertyVirtual oldProperty, DynamicPropertyVirtual newProperty) {
+    //TODO: simplify
+    removeDynamicProperty(oldProperty);
+    addDynamicProperty(newProperty);
+
+    fireChange();
+    return newProperty;
+  }
+
   public void fireChange() {
     for (DynamicPropertyChangeListener listener : myListeners) {
       listener.dynamicPropertyChange();
     }
 
-    //    final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-
-    //TODO
-//    ApplicationManager.getApplication().executeOnPooledThread(new Runnable(){
-//      public void run() {
-        DaemonCodeAnalyzer.getInstance(myProject).restart();
-//      }
-//    });
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   @Nullable
