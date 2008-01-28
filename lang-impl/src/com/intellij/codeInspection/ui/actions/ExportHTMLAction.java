@@ -15,7 +15,6 @@ import com.intellij.codeInspection.export.HTMLExportFrameMaker;
 import com.intellij.codeInspection.export.HTMLExporter;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
-import com.intellij.codeInspection.ui.InspectionGroupNode;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
@@ -95,10 +94,18 @@ public class ExportHTMLAction extends AnAction {
             if (!exportToHTML) {
               dupm2XML(outputDirectoryName);
             } else {
-              HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
+              final HTMLExportFrameMaker maker = new HTMLExportFrameMaker(outputDirectoryName, myView.getProject());
               maker.start();
               try {
-                exportHTML(maker);
+                final InspectionTreeNode root = myView.getTree().getRoot();
+                TreeUtil.traverse(root, new TreeUtil.Traverse() {
+                  public boolean accept(final Object node) {
+                    if (node instanceof InspectionNode) {
+                      exportHTML(maker, (InspectionNode)node);
+                    }
+                    return true;
+                  }
+                });
               }
               catch (ProcessCanceledException e) {
                 // Do nothing here.
@@ -187,24 +194,6 @@ public class ExportHTMLAction extends AnAction {
       }
     }
     return result;
-  }
-
-  private void exportHTML(HTMLExportFrameMaker frameMaker) {
-    final InspectionTreeNode root = myView.getTree().getRoot();
-    final Enumeration children = root.children();
-    while (children.hasMoreElements()) {
-      InspectionTreeNode node = (InspectionTreeNode)children.nextElement();
-      if (node instanceof InspectionNode) {
-        exportHTML(frameMaker, (InspectionNode)node);
-      }
-      else if (node instanceof InspectionGroupNode) {
-        final Enumeration groupChildren = node.children();
-        while (groupChildren.hasMoreElements()) {
-          InspectionNode toolNode = (InspectionNode)groupChildren.nextElement();
-          exportHTML(frameMaker, toolNode);
-        }
-      }
-    }
   }
 
   private void exportHTML(HTMLExportFrameMaker frameMaker, InspectionNode node) {
