@@ -14,15 +14,15 @@ import java.util.List;
  * @author peter
  */
 public class ElementPatternCondition<T> {
-  private final NullablePatternCondition myStartCondition;
+  private final InitialPatternCondition<T> myInitialCondition;
   private final List<PatternCondition<? super T>> myConditions = new SmartList<PatternCondition<? super T>>();
 
-  public ElementPatternCondition(final NullablePatternCondition startCondition) {
-    myStartCondition = startCondition;
+  public ElementPatternCondition(final InitialPatternCondition<T> startCondition) {
+    myInitialCondition = startCondition;
   }
 
   public boolean accepts(@Nullable Object o, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext) {
-    if (!myStartCondition.accepts(o, matchingContext, traverseContext)) return false;
+    if (!myInitialCondition.accepts(o, matchingContext, traverseContext)) return false;
     for (final PatternCondition<? super T> condition : myConditions) {
       if (!condition.accepts((T)o, matchingContext, traverseContext)) return false;
     }
@@ -31,7 +31,7 @@ public class ElementPatternCondition<T> {
 
   public String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append(myStartCondition);
+    builder.append(myInitialCondition);
     for (final PatternCondition<? super T> condition : myConditions) {
       builder.append(".\n  ").append(condition);
     }
@@ -42,8 +42,12 @@ public class ElementPatternCondition<T> {
     return myConditions;
   }
 
+  public InitialPatternCondition<T> getInitialCondition() {
+    return myInitialCondition;
+  }
+
   public ElementPatternCondition<T> append(PatternCondition<? super T> condition) {
-    final ElementPatternCondition<T> copy = new ElementPatternCondition<T>(myStartCondition);
+    final ElementPatternCondition<T> copy = new ElementPatternCondition<T>(myInitialCondition);
     copy.myConditions.addAll(myConditions);
     copy.myConditions.add(condition);
     return copy;

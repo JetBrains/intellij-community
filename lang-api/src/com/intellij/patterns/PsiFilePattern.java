@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Self>> extends PsiElementPattern<T, Self> {
 
-  protected PsiFilePattern(@NotNull final NullablePatternCondition condition) {
+  protected PsiFilePattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 

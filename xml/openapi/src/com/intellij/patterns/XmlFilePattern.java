@@ -13,7 +13,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
     super(XmlFile.class);
   }
 
-  protected XmlFilePattern(@NotNull final NullablePatternCondition condition) {
+  protected XmlFilePattern(@NotNull final InitialPatternCondition<XmlFile> condition) {
     super(condition);
   }
 

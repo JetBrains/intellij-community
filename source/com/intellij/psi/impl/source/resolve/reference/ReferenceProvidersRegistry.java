@@ -13,8 +13,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
+import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
@@ -47,7 +49,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
-  private final List<Class> myTempScopes = new ArrayList<Class>();
   private final ConcurrentMap<Class,ProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, ProviderBinding>();
   private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new CopyOnWriteArrayList<Pair<Class<?>, ElementManipulator<?>>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
@@ -58,9 +59,9 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   public final static Double LOWEST_PRIORITY = Double.NEGATIVE_INFINITY;
 
   private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
-  private static final Comparator<Trinity<PsiReferenceProvider,ElementFilter,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ElementFilter, Double>>() {
-    public int compare(final Trinity<PsiReferenceProvider, ElementFilter, Double> o1,
-                       final Trinity<PsiReferenceProvider, ElementFilter, Double> o2) {
+  private static final Comparator<Trinity<PsiReferenceProvider,ElementPattern,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ElementPattern, Double>>() {
+    public int compare(final Trinity<PsiReferenceProvider, ElementPattern, Double> o1,
+                       final Trinity<PsiReferenceProvider, ElementPattern, Double> o2) {
       return o2.getThird().compareTo(o1.getThird());
     }
   };
@@ -86,9 +87,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   }
 
   private ReferenceProvidersRegistry() {
-    // Temp scopes declarations
-    myTempScopes.add(PsiIdentifier.class);
-
     // Manipulators mapping
     registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
     registerManipulator(XmlAttribute.class, new XmlAttributeManipulator());
@@ -312,12 +310,12 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     while (true) {
       final ProviderBinding providerBinding = myBindingsMap.get(scope);
       if (providerBinding != null) {
-        ((SimpleProviderBinding)providerBinding).registerProvider(provider, elementFilter,priority);
+        ((SimpleProviderBinding)providerBinding).registerProvider(provider, new FilterPattern(elementFilter), priority);
         return;
       }
 
       final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
-      binding.registerProvider(provider, elementFilter,priority);
+      binding.registerProvider(provider, new FilterPattern(elementFilter), priority);
       if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
     }
   }
@@ -330,7 +328,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
     final ProviderBinding providerBinding = myBindingsMap.get(scope);
-    ((SimpleProviderBinding)providerBinding).unregisterProvider(provider, null);
+    ((SimpleProviderBinding)providerBinding).unregisterProvider(provider, new FilterPattern(null));
   }
 
   public void registerDocTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
@@ -367,7 +365,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
     providerBinding.registerProvider(
       names,
-      elementFilter,
+      new FilterPattern(elementFilter),
       caseSensitive,
       provider, priority == null ? DEFAULT_PRIORITY : priority);
   }
@@ -416,25 +414,22 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   @Deprecated
   public List<PsiReferenceProvider> getProvidersByElement(@NotNull PsiElement element, @NotNull Class clazz) {
-    final List<Trinity<PsiReferenceProvider, ElementFilter, Double>> list = getPairsByElement(element, clazz);
+    final List<Trinity<PsiReferenceProvider, ElementPattern, Double>> list = getPairsByElement(element, clazz);
     final ArrayList<PsiReferenceProvider> providers = new ArrayList<PsiReferenceProvider>(list.size());
-    for (Trinity<PsiReferenceProvider, ElementFilter, Double> trinity : list) {
+    for (Trinity<PsiReferenceProvider, ElementPattern, Double> trinity : list) {
       providers.add(trinity.getFirst());
     }
     return providers;
   }
 
   @NotNull
-  private List<Trinity<PsiReferenceProvider,ElementFilter,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
+  private List<Trinity<PsiReferenceProvider,ElementPattern,Double>> getPairsByElement(@NotNull PsiElement element, @NotNull Class clazz) {
     assert ReflectionCache.isInstance(element, clazz);
 
     final ProviderBinding providerBinding = myBindingsMap.get(clazz);
     if (providerBinding != null) {
-      List<Trinity<PsiReferenceProvider,ElementFilter,Double>> ret = new ArrayList<Trinity<PsiReferenceProvider,ElementFilter,Double>>(1);
-      for (PsiElement current = element; current != null; current = current.getContext()) {
-        providerBinding.addAcceptableReferenceProviders(current, ret);
-        if (isScopeFinal(current.getClass())) break;
-      }
+      List<Trinity<PsiReferenceProvider,ElementPattern,Double>> ret = new ArrayList<Trinity<PsiReferenceProvider,ElementPattern,Double>>(1);
+      providerBinding.addAcceptableReferenceProviders(element, ret);
       return ret;
     }
 
@@ -445,13 +440,13 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     assert context.isValid() : "Invalid context: " + context;
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
-    final List<Trinity<PsiReferenceProvider, ElementFilter, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
+    final List<Trinity<PsiReferenceProvider, ElementPattern, Double>> providers = getInstance(context.getProject()).getPairsByElement(context, clazz);
     if (providers.isEmpty()) {
       return result;
     }
     Collections.sort(providers, PRIORITY_COMPARATOR);
     final Double maxPriority = providers.get(0).getThird();
-    next: for (Trinity<PsiReferenceProvider, ElementFilter, Double> trinity : providers) {
+    next: for (Trinity<PsiReferenceProvider, ElementPattern, Double> trinity : providers) {
       final PsiReference[] refs = trinity.getFirst().getReferencesByElement(context);
       if (trinity.getThird().equals(maxPriority)) {
         result = ArrayUtil.mergeArrays(
@@ -501,15 +496,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   public <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
     myManipulators.add(new Pair<Class<?>, ElementManipulator<?>>(elementClass, manipulator));
-  }
-
-  private boolean isScopeFinal(Class scopeClass) {
-    for (final Class aClass : myTempScopes) {
-      if (ReflectionCache.isAssignable(aClass, scopeClass)) {
-        return false;
-      }
-    }
-    return true;
   }
 
 }

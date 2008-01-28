@@ -7,13 +7,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author spleaner
 */
 public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedElementPattern<XmlTag, Self> {
   protected XmlTagPattern() {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition<XmlTag>(XmlTag.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof XmlTag;
@@ -21,7 +22,7 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
     });
   }
 
-  protected XmlTagPattern(@NotNull final NullablePatternCondition condition) {
+  protected XmlTagPattern(@NotNull final InitialPatternCondition<XmlTag> condition) {
     super(condition);
   }
 
@@ -53,11 +54,11 @@ public class XmlTagPattern<Self extends XmlTagPattern<Self>> extends XmlNamedEle
     });
   }
 
-  public Self withFirstSubTag(@NotNull final ElementPattern pattern) {
+  public Self withFirstSubTag(@NotNull final ElementPattern<? extends XmlTag> pattern) {
     return withSubTags(StandardPatterns.<XmlTag>collection().first(pattern));
   }
 
-  public Self withSubTags(@NotNull final ElementPattern pattern) {
+  public Self withSubTags(@NotNull final ElementPattern<? extends Collection<XmlTag>> pattern) {
     return with(new PatternCondition<XmlTag>() {
       public boolean accepts(@NotNull final XmlTag xmlTag,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {

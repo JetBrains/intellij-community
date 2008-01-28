@@ -4,9 +4,6 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiField;
-import com.intellij.patterns.NullablePatternCondition;
-import com.intellij.patterns.MatchingContext;
-import com.intellij.patterns.TraverseContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PsiFieldPattern extends PsiMemberPattern<PsiField, PsiFieldPattern>{
   public PsiFieldPattern() {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition<PsiField>(PsiField.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof PsiField;

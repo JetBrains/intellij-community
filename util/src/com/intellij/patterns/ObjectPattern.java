@@ -20,12 +20,12 @@ import java.util.Collections;
 public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> implements Cloneable, ElementPattern<T> {
   private ElementPatternCondition<T> myCondition;
 
-  protected ObjectPattern(@NotNull final NullablePatternCondition condition) {
+  protected ObjectPattern(@NotNull final InitialPatternCondition<T> condition) {
     myCondition = new ElementPatternCondition<T>(condition);
   }
 
   protected ObjectPattern(final Class<T> aClass) {
-    myCondition = new ElementPatternCondition<T>(new NullablePatternCondition() {
+    myCondition = new ElementPatternCondition<T>(new InitialPatternCondition<T>(aClass) {
       public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return aClass.isInstance(o);
       }
@@ -92,7 +92,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self isNull() {
-    return adapt(new ElementPatternCondition<T>(new NullablePatternCondition() {
+    return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                              final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o == null;
@@ -101,7 +101,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self notNull() {
-    return adapt(new ElementPatternCondition<T>(new NullablePatternCondition() {
+    return adapt(new ElementPatternCondition<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o != null;
       }
@@ -168,7 +168,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       super(aClass);
     }
 
-    public Capture(@NotNull final NullablePatternCondition condition) {
+    public Capture(@NotNull final InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

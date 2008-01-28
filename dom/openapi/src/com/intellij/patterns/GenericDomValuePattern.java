@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue<T>, GenericDomValuePattern<T>>{
   protected GenericDomValuePattern() {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition(GenericDomValue.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof GenericDomValue;
@@ -27,7 +27,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
   }
 
   protected GenericDomValuePattern(final Class<T> aClass) {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition(aClass) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue)o).getDomElementType()));

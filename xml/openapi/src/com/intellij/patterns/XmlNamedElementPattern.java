@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElement,Self extends XmlNamedElementPattern<T,Self>> extends XmlElementPattern<T,Self>{
 
-  public XmlNamedElementPattern(@NotNull final NullablePatternCondition condition) {
+  public XmlNamedElementPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -34,16 +34,16 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
   }
 
   public Self withNamespace(final ElementPattern<String> namespace) {
-    return with(new PropertyPatternCondition<T, String>(namespace) {
-      protected String getPropertyValue(@NotNull final T t) {
-        return getNamespace(t);
+    return with(new PatternCondition<T>() {
+      public boolean accepts(@NotNull final T s, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        return namespace.accepts(getNamespace(s));
       }
     });
   }
 
   public static class XmlAttributePattern extends XmlNamedElementPattern<XmlAttribute, XmlAttributePattern> {
     protected XmlAttributePattern() {
-      super(new NullablePatternCondition() {
+      super(new InitialPatternCondition<XmlAttribute>(XmlAttribute.class) {
         public boolean accepts(@Nullable final Object o,
                                   final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
           return o instanceof XmlAttribute;

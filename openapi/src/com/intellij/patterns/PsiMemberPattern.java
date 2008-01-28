@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern<T,Self>> extends PsiElementPattern<T,Self> {
-  public PsiMemberPattern(@NotNull final NullablePatternCondition condition) {
+  public PsiMemberPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -71,7 +71,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   public static class Capture extends PsiMemberPattern<PsiMember, Capture> {
 
     protected Capture() {
-      super(new NullablePatternCondition() {
+      super(new InitialPatternCondition<PsiMember>(PsiMember.class) {
         public boolean accepts(@Nullable final Object o,
                                   final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
           return o instanceof PsiMember;

@@ -22,7 +22,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     super(aClass);
   }
 
-  protected PsiElementPattern(@NotNull final NullablePatternCondition condition) {
+  protected PsiElementPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -42,7 +42,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return withElementType(PlatformPatterns.elementType().tokenSet(type));
   }
 
-  public Self afterLeaf(@NotNull final ElementPattern pattern) {
+  public Self afterLeaf(@NotNull final String withText) {
+    return afterLeaf(psiElement().withText(withText));
+  }
+  
+  public Self afterLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
     return afterLeafSkipping(psiElement().whitespaceCommentOrError(), pattern);
   }
 
@@ -71,10 +75,10 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   public Self withElementType(final ElementPattern<IElementType> pattern) {
-    return with(new PropertyPatternCondition<T,IElementType>(pattern) {
-      protected IElementType getPropertyValue(@NotNull final T t) {
+    return with(new PatternCondition<T>() {
+      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final ASTNode node = t.getNode();
-        return node != null ? node.getElementType() : null;
+        return node != null && pattern.accepts(node.getElementType());
       }
 
       public String toString() {
@@ -96,15 +100,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   public Self withName(@NotNull final ElementPattern<String> name) {
-    return with(new PropertyPatternCondition<T, String>(name) {
-      protected String getPropertyValue(@NotNull final T t) {
-        return t instanceof PsiNamedElement ? ((PsiNamedElement) t).getName() : null;
-      }
-
-      public String toString() {
-        return "withName(" + name + ")";
-      }
-    });
+    return with(new PsiNamePatternCondition<T>(name));
   }
 
   public Self afterLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
@@ -155,10 +151,27 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       super(aClass);
     }
 
-    protected Capture(@NotNull final NullablePatternCondition condition) {
+    protected Capture(@NotNull final InitialPatternCondition<T> condition) {
       super(condition);
     }
 
 
+  }
+
+  private class PsiNamePatternCondition<T extends PsiElement> extends PropertyPatternCondition<T, String> {
+    private final ElementPattern<String> myName;
+
+    public PsiNamePatternCondition(final ElementPattern<String> name) {
+      super(name);
+      myName = name;
+    }
+
+    protected String getPropertyValue(@NotNull final T t) {
+      return t instanceof PsiNamedElement ? ((PsiNamedElement) t).getName() : null;
+    }
+
+    public String toString() {
+      return "withName(" + myName + ")";
+    }
   }
 }

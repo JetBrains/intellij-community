@@ -15,7 +15,7 @@ import java.util.Collection;
  */
 public class StringPattern extends ObjectPattern<String, StringPattern> {
   protected StringPattern() {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition<String>(String.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof String;

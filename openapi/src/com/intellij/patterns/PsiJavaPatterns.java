@@ -35,7 +35,7 @@ public class PsiJavaPatterns extends StandardPatterns{
   }
 
   public static PsiJavaElementPattern.Capture<PsiLiteralExpression> literalExpression() {
-    return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new NullablePatternCondition() {
+    return new PsiJavaElementPattern.Capture<PsiLiteralExpression>(new InitialPatternCondition<PsiLiteralExpression>(PsiLiteralExpression.class) {
       public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof PsiLiteralExpression;
       }

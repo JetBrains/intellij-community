@@ -3,9 +3,7 @@
  */
 package com.intellij.psi.filters.position;
 
-import com.intellij.patterns.MatchingContext;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.TraverseContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
 
@@ -13,9 +11,9 @@ import com.intellij.psi.filters.ElementFilter;
  * @author peter
  */
 public class PatternFilter implements ElementFilter {
-  private ElementPattern myPattern;
+  private ElementPattern<?> myPattern;
 
-  public PatternFilter(final ElementPattern pattern) {
+  public PatternFilter(final ElementPattern<?> pattern) {
     myPattern = pattern;
   }
 

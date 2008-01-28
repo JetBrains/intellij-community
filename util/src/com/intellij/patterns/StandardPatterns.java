@@ -22,12 +22,12 @@ public class StandardPatterns {
     return new CharPattern();
   }
 
-  public static <T> ObjectPattern.Capture<T> type(Class<T> aClass) {
+  public static <T> ObjectPattern.Capture<T> instanceOf(Class<T> aClass) {
     return new ObjectPattern.Capture<T>(aClass);
   }
 
   public static <T> ElementPattern save(final Key<T> key) {
-    return new ObjectPattern.Capture<T>(new NullablePatternCondition() {
+    return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         matchingContext.put(key, (T)o);
@@ -37,11 +37,11 @@ public class StandardPatterns {
   }
 
   public static ObjectPattern.Capture<Object> object() {
-    return type(Object.class);
+    return instanceOf(Object.class);
   }
 
   public static <T> ObjectPattern.Capture<T> object(@NotNull T value) {
-    return type((Class<T>)value.getClass()).equalTo(value);
+    return instanceOf((Class<T>)value.getClass()).equalTo(value);
   }
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -50,7 +50,7 @@ public class StandardPatterns {
   }
 
   public static ElementPattern get(@NotNull @NonNls final String key) {
-    return new ObjectPattern.Capture(new NullablePatternCondition() {
+    return new ObjectPattern.Capture(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return Comparing.equal(o, matchingContext.get(key));
@@ -62,8 +62,8 @@ public class StandardPatterns {
     return new CollectionPattern<T>();
   }
 
-  public static <E> ElementPattern or(final ElementPattern... patterns) {
-    return new ObjectPattern.Capture<E>(new NullablePatternCondition() {
+  public static <E> ElementPattern<E> or(final ElementPattern<? extends E>... patterns) {
+    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final ElementPattern pattern : patterns) {
@@ -75,7 +75,7 @@ public class StandardPatterns {
   }
 
   public static <E> ElementPattern and(final ElementPattern... patterns) {
-    return new ObjectPattern.Capture<E>(new NullablePatternCondition() {
+    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final ElementPattern pattern : patterns) {
@@ -87,7 +87,7 @@ public class StandardPatterns {
   }
 
   public static <E> ElementPattern not(final ElementPattern pattern) {
-    return new ObjectPattern.Capture<E>(new NullablePatternCondition() {
+    return new ObjectPattern.Capture<E>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return !pattern.getCondition().accepts(o, matchingContext, traverseContext);
@@ -96,7 +96,7 @@ public class StandardPatterns {
   }
 
   public static <T> ObjectPattern.Capture<T> optional(final ElementPattern pattern) {
-    return new ObjectPattern.Capture<T>(new NullablePatternCondition() {
+    return new ObjectPattern.Capture<T>(new InitialPatternCondition(Object.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         pattern.getCondition().accepts(o, matchingContext, traverseContext);

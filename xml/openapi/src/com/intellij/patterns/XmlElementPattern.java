@@ -16,13 +16,13 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
     super(aClass);
   }
 
-  public XmlElementPattern(@NotNull final NullablePatternCondition condition) {
+  public XmlElementPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 
   public static class Capture extends XmlElementPattern<XmlElement, Capture> {
     protected Capture() {
-      super(new NullablePatternCondition() {
+      super(new InitialPatternCondition<XmlElement>(XmlElement.class) {
         public boolean accepts(@Nullable final Object o,
                                   final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
           return o instanceof XmlElement;
@@ -33,7 +33,7 @@ public class XmlElementPattern<T extends XmlElement,Self extends XmlElementPatte
 
   public static class XmlTextPattern extends XmlElementPattern<XmlText, XmlTextPattern> {
     public XmlTextPattern() {
-      super(new NullablePatternCondition() {
+      super(new InitialPatternCondition<XmlText>(XmlText.class) {
         public boolean accepts(@Nullable final Object o,
                                   final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
           return o instanceof XmlText;

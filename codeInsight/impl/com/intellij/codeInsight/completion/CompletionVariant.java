@@ -43,6 +43,9 @@ public class CompletionVariant {
     myPeer = new CompletionVariantPeerImpl(this);
   }
 
+  public CompletionVariant(Class scopeClass, ElementPattern position){
+    this(scopeClass, new PatternFilter(position));
+  }
   public CompletionVariant(Class scopeClass, ElementFilter position){
     includeScopeClass(scopeClass);
     if (scopeClass == PsiClass.class) {

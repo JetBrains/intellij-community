@@ -12,10 +12,6 @@ import com.intellij.psi.PsiParameterList;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.Processor;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.MatchingContext;
-import com.intellij.patterns.TraverseContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,5 +92,12 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
   }
 
 
-
+  public PsiMethodPattern withThrowsList(final ElementPattern<?> pattern) {
+    return with(new PatternCondition<PsiMethod>() {
+      public boolean accepts(@NotNull final PsiMethod method,
+                             final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
+        return pattern.accepts(method.getThrowsList());
+      }
+    });
+  }
 }

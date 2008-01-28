@@ -9,7 +9,6 @@ import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +21,7 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
     super(aClass);
   }
 
-  protected DomElementPattern(@NotNull final NullablePatternCondition condition) {
+  protected DomElementPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -45,14 +44,6 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
       super(aClass);
     }
 
-    public Capture() {
-      super(new NullablePatternCondition() {
-        public boolean accepts(@Nullable final Object o,
-                                  final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-          return o instanceof DomElement;
-        }
-      });
-    }
   }
 
   public Self withChild(@NonNls @NotNull final String localName, final ElementPattern pattern) {

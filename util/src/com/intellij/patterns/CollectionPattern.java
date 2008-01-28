@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class CollectionPattern<T> extends ObjectPattern<Collection<T>, CollectionPattern<T>> {
   protected CollectionPattern() {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition(Collection.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof Collection;

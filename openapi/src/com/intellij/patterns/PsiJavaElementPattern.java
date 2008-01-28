@@ -16,7 +16,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
     super(aClass);
   }
 
-  public PsiJavaElementPattern(@NotNull final NullablePatternCondition condition) {
+  public PsiJavaElementPattern(@NotNull final InitialPatternCondition<T> condition) {
     super(condition);
   }
 
@@ -38,7 +38,11 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
 
-  public Self nameIdentifierOf(final ElementPattern pattern) {
+  public Self nameIdentifierOf(final Class<? extends PsiMember> aClass) {
+    return nameIdentifierOf(PsiJavaPatterns.instanceOf(aClass));
+  }
+  
+  public Self nameIdentifierOf(final ElementPattern<? extends PsiMember> pattern) {
     return with(new PatternCondition<T>() {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         if (!(t instanceof PsiIdentifier)) return false;
@@ -53,7 +57,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
     });
   }
 
-  public Self methodCallParameter(final int index, final ElementPattern methodPattern) {
+  public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
     return with(new PatternCondition<T>() {
       public boolean accepts(@NotNull final T literal, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final PsiElement parent = literal.getParent();
@@ -83,7 +87,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
       super(aClass);
     }
 
-    public Capture(@NotNull final NullablePatternCondition condition) {
+    public Capture(@NotNull final InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

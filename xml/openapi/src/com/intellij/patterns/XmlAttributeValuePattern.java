@@ -4,9 +4,6 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.patterns.NullablePatternCondition;
-import com.intellij.patterns.MatchingContext;
-import com.intellij.patterns.TraverseContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValue,XmlAttributeValuePattern>{
   protected XmlAttributeValuePattern() {
-    super(new NullablePatternCondition() {
+    super(new InitialPatternCondition<XmlAttributeValue>(XmlAttributeValue.class) {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof XmlAttributeValue;
