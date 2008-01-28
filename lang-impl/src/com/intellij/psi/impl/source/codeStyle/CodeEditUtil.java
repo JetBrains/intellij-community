@@ -14,10 +14,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.jsp.jspJava.OuterLanguageElement;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
@@ -323,18 +325,17 @@ public class CodeEditUtil {
     LOG.assertTrue(token1 != null);
     LOG.assertTrue(token2 != null);
 
-    return !(token1.getElementType()instanceof IJavaElementType && token2.getElementType()instanceof IJavaElementType) ||
-           canStickJavaTokens((PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token1),
-                              (PsiJavaToken)SourceTreeToPsiMap.treeElementToPsi(token2));
+    return !(token1.getElementType() instanceof IJavaElementType && token2.getElementType()instanceof IJavaElementType) ||
+           canStickJavaTokens(token1,token2);
 
   }
 
   private static Map<Pair<IElementType, IElementType>, Boolean> myCanStickJavaTokensMatrix =
     new ConcurrentHashMap<Pair<IElementType, IElementType>, Boolean>();
 
-  private static boolean canStickJavaTokens(PsiJavaToken token1, PsiJavaToken token2) {
-    IElementType type1 = token1.getTokenType();
-    IElementType type2 = token2.getTokenType();
+  private static boolean canStickJavaTokens(ASTNode token1, ASTNode token2) {
+    IElementType type1 = token1.getElementType();
+    IElementType type2 = token2.getElementType();
 
     Pair<IElementType, IElementType> pair = new Pair<IElementType, IElementType>(type1, type2);
     Boolean res = myCanStickJavaTokensMatrix.get(pair);
@@ -352,11 +353,11 @@ public class CodeEditUtil {
     return res.booleanValue();
   }
 
-  private static boolean checkToken(final PsiJavaToken token1) {
+  private static boolean checkToken(final ASTNode token1) {
     Lexer lexer = new JavaLexer(LanguageLevel.HIGHEST);
     final String text = token1.getText();
     lexer.start(text, 0, text.length(),0);
-    if (lexer.getTokenType() != token1.getTokenType()) return false;
+    if (lexer.getTokenType() != token1.getElementType()) return false;
     lexer.advance();
     return lexer.getTokenType() == null;
   }
