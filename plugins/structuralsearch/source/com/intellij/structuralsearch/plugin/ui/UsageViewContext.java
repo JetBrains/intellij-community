@@ -70,74 +70,7 @@ public class UsageViewContext {
   }
 
   public UsageTarget getTarget() {
-    return new UsageTarget() {
-      final ItemPresentation presentation = new ItemPresentation() {
-        public String getPresentableText() {
-          return _getPresentableText();
-        }
-
-        public String getLocationString() {
-          //noinspection HardCodedStringLiteral
-          return "Do Not Know Where";
-        }
-
-        public Icon getIcon(boolean open) {
-          return null;
-        }
-
-        public TextAttributesKey getTextAttributesKey() {
-          return null;
-        }
-      };
-
-      public void findUsages() {
-        throw new UnsupportedOperationException();
-      }
-
-      public void findUsagesInEditor(@NotNull FileEditor editor) {
-        throw new UnsupportedOperationException();
-      }
-
-      public boolean isValid() {
-        return true;
-      }
-
-      public boolean isReadOnly() {
-        return true;
-      }
-
-      public VirtualFile[] getFiles() {
-        return null;
-      }
-
-      public void update() {
-      }
-
-      public String getName() {
-        //noinspection HardCodedStringLiteral
-        return "my name";
-      }
-
-      public ItemPresentation getPresentation() {
-        return presentation;
-      }
-
-      public FileStatus getFileStatus() {
-        return null;
-      }
-
-      public void navigate(boolean requestFocus) {
-        throw new UnsupportedOperationException();
-      }
-
-      public boolean canNavigate() {
-        return false;
-      }
-
-      public boolean canNavigateToSource() {
-        return false;
-      }
-    };
+    return new MyUsageTarget(_getPresentableText());
   }
 
   public void configure(final UsageViewPresentation presentation) {
@@ -146,5 +79,80 @@ public class UsageViewContext {
     final String usagesString = SSRBundle.message("occurences.of", s);
     presentation.setUsagesString(usagesString);
     presentation.setTabText(StringUtil.capitalize(usagesString));
+  }
+
+  private static class MyUsageTarget implements UsageTarget {
+    private final String myPresentableText;
+
+    MyUsageTarget(String str) {
+      myPresentableText = str;
+    }
+
+    final ItemPresentation presentation = new ItemPresentation() {
+      public String getPresentableText() {
+        return myPresentableText;
+      }
+
+      public String getLocationString() {
+        //noinspection HardCodedStringLiteral
+        return "Do Not Know Where";
+      }
+
+      public Icon getIcon(boolean open) {
+        return null;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
+
+    public void findUsages() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void findUsagesInEditor(@NotNull FileEditor editor) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isValid() {
+      return true;
+    }
+
+    public boolean isReadOnly() {
+      return true;
+    }
+
+    public VirtualFile[] getFiles() {
+      return null;
+    }
+
+    public void update() {
+    }
+
+    public String getName() {
+      //noinspection HardCodedStringLiteral
+      return "my name";
+    }
+
+    public ItemPresentation getPresentation() {
+      return presentation;
+    }
+
+    public FileStatus getFileStatus() {
+      return null;
+    }
+
+    public void navigate(boolean requestFocus) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean canNavigate() {
+      return false;
+    }
+
+    public boolean canNavigateToSource() {
+      return false;
+    }
   }
 }
