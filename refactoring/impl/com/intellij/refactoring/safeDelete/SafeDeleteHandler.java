@@ -1,34 +1,27 @@
 package com.intellij.refactoring.safeDelete;
 
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -68,37 +61,21 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     if (checkSuperMethods) {
       for (PsiElement element : temptoDelete) {
-        if (element instanceof PsiMethod) {
-          final PsiMethod[] methods =
-            SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, RefactoringBundle.message("to.delete.with.usage.search"), elementsSet);
-          if (methods.length == 0) return;
-          fullElementsSet.addAll(Arrays.asList(methods));
-        } else
-        if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
-          final Set<PsiParameter> parametersToDelete = new HashSet<PsiParameter>();
-          parametersToDelete.add((PsiParameter) element);
-          final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
-          SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
-            public boolean process(MethodSignatureBackedByPsiMethod signature) {
-              parametersToDelete.add(signature.getMethod().getParameterList().getParameters()[parameterIndex]);
-              return true;
+        boolean found = false;
+        for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
+          if (delegate.handlesElement(element)) {
+            found = true;
+            Collection<? extends PsiElement> addElements = delegate.getElementsToSearch(element, elementsSet);
+            if (addElements != null) {
+              fullElementsSet.addAll(addElements);
             }
-          });
-
-          OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
-            public boolean process(PsiMethod overrider) {
-              parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
-              return true;
+            else {
+              return;
             }
-          });
-          if (parametersToDelete.size() > 1) {
-            String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
-            if (Messages.showYesNoDialog(project, message, REFACTORING_NAME,
-                Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return;
+            break;
           }
-          fullElementsSet.addAll(parametersToDelete);
-        } else {
+        }
+        if (!found) {
           fullElementsSet.add(element);
         }
       }

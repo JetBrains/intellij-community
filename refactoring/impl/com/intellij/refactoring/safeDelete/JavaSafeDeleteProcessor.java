@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
@@ -12,21 +13,26 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.HashSet;
 
 public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor");
@@ -56,6 +62,45 @@ public class JavaSafeDeleteProcessor implements SafeDeleteProcessorDelegate {
       findParameterUsages((PsiParameter)element, usages);
     }
     return new NonCodeUsageSearchInfo(insideDeletedCondition, element);
+  }
+
+  public Collection<? extends PsiElement> getElementsToSearch(final PsiElement element, final Collection<PsiElement> allElementsToDelete) {
+    Project project = element.getProject();
+    if (element instanceof PsiMethod) {
+      final PsiMethod[] methods =
+        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, RefactoringBundle.message("to.delete.with.usage.search"),
+                                                 allElementsToDelete);
+      if (methods.length == 0) return null;
+      return Arrays.asList(methods);
+    }
+    else if (element instanceof PsiParameter && ((PsiParameter) element).getDeclarationScope() instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod) ((PsiParameter) element).getDeclarationScope();
+      final Set<PsiParameter> parametersToDelete = new com.intellij.util.containers.HashSet<PsiParameter>();
+      parametersToDelete.add((PsiParameter) element);
+      final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter) element);
+      SuperMethodsSearch.search(method, null, true, false).forEach(new Processor<MethodSignatureBackedByPsiMethod>() {
+        public boolean process(MethodSignatureBackedByPsiMethod signature) {
+          parametersToDelete.add(signature.getMethod().getParameterList().getParameters()[parameterIndex]);
+          return true;
+        }
+      });
+
+      OverridingMethodsSearch.search(method).forEach(new Processor<PsiMethod>() {
+        public boolean process(PsiMethod overrider) {
+          parametersToDelete.add(overrider.getParameterList().getParameters()[parameterIndex]);
+          return true;
+        }
+      });
+      if (parametersToDelete.size() > 1) {
+        String message = RefactoringBundle.message("0.is.a.part.of.method.hierarchy.do.you.want.to.delete.multiple.parameters", UsageViewUtil.getLongName(method));
+        if (Messages.showYesNoDialog(project, message, SafeDeleteHandler.REFACTORING_NAME,
+            Messages.getQuestionIcon()) != DialogWrapper.OK_EXIT_CODE) return null;
+      }
+      return parametersToDelete;
+    }
+    else {
+      return Collections.singletonList(element);
+    }
   }
 
   public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,

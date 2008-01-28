@@ -1,14 +1,15 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -27,6 +28,10 @@ public class PropertiesSafeDeleteProcessor implements SafeDeleteProcessorDelegat
       SafeDeleteProcessor.findGenericElementUsages(psiElement, result, allElementsToDelete);
     }
     return new NonCodeUsageSearchInfo(SafeDeleteProcessor.getDefaultInsideDeletedCondition(allElementsToDelete), elements);
+  }
+
+  public Collection<PsiElement> getElementsToSearch(final PsiElement element, final Collection<PsiElement> allElementsToDelete) {
+    return Collections.singletonList(element);
   }
 
   public Collection<PsiElement> getAdditionalElementsToDelete(final PsiElement element, final Collection<PsiElement> allElementsToDelete,

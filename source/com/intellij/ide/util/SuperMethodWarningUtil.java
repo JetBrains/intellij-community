@@ -23,7 +23,7 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  public static PsiMethod[] checkSuperMethods(final PsiMethod method, String actionString, Set<PsiElement> ignore) {
+  public static PsiMethod[] checkSuperMethods(final PsiMethod method, String actionString, Collection<PsiElement> ignore) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
