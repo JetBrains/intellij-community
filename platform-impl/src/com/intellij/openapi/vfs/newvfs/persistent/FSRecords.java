@@ -339,6 +339,7 @@ public class FSRecords implements Disposable, Forceable {
             getAttributes().deleteRecord(attAddress);
           }
           attStream.close();
+          getAttributes().deleteRecord(att_page);
         }
 
         DbConnection.cleanRecord(id);
@@ -720,21 +721,29 @@ public class FSRecords implements Disposable, Forceable {
 
   private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
     int attrsRecord = getRecords().getInt(fileId * RECORD_SIZE + ATTREF_OFFSET);
+    boolean doSearch = true;
     if (attrsRecord == 0) {
+      if (!createIfNotFound) return 0;
+
       attrsRecord = getAttributes().createNewRecord();
       getRecords().putInt(fileId * RECORD_SIZE + ATTREF_OFFSET, attrsRecord);
+      doSearch = false;
     }
 
-    final DataInputStream attrRefs = getAttributes().readStream(attrsRecord);
+    if (doSearch) {
+      final DataInputStream attrRefs = getAttributes().readStream(attrsRecord);
+      try {
+        while (attrRefs.available() > 0) {
+          final int attIdOnPage = attrRefs.readInt();
+          final int attAddress = attrRefs.readInt();
 
-    while (attrRefs.available() > 0) {
-      final int attIdOnPage = attrRefs.readInt();
-      final int attAddress = attrRefs.readInt();
-
-      if (attIdOnPage == attributeId) return attAddress;
+          if (attIdOnPage == attributeId) return attAddress;
+        }
+      }
+      finally {
+        attrRefs.close();
+      }
     }
-
-    attrRefs.close();
 
     if (createIfNotFound) {
       Storage.AppenderStream appender = getAttributes().appendStream(attrsRecord);
