@@ -54,7 +54,9 @@ public class MoveModulesToGroupAction extends AnAction {
     }
 
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-    pane.updateFromRoot(true);
+    if (pane != null) {
+      pane.updateFromRoot(true);
+    }
 
     final ModuleStructureConfigurable rootConfigurable = ModuleStructureConfigurable.getInstance(project);
     if (rootConfigurable.updateProjectTree(modules, group)) { //inside project root editor
@@ -65,7 +67,7 @@ public class MoveModulesToGroupAction extends AnAction {
         rootConfigurable.selectNodeInTree(modules[0].getName());
       }
     }
-    else {
+    else if (pane != null) {
       if (group != null) {
         pane.selectModuleGroup(group, true);
       }
