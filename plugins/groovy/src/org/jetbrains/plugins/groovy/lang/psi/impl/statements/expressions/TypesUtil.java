@@ -217,4 +217,9 @@ public class TypesUtil {
     final String typeText = "java.lang.Object";
     return context.getManager().getElementFactory().createTypeByFQClassName(typeText, context.getResolveScope());
   }
+
+  public static PsiClassType createType(String fqName, PsiElement context) {
+    PsiManager manager = context.getManager();
+    return manager.getElementFactory().createTypeByFQClassName(fqName, context.getResolveScope());
+  }
 }
