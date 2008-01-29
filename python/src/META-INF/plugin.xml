@@ -19,5 +19,6 @@
     <lang.formatter language="Python" implementationClass="ru.yole.pythonid.PythonFormattingModelBuilder"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="ru.yole.pythonid.structureView.PyStructureViewFactory"/>
     <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
+    <configurationType implementation="ru.yole.pythonid.run.PythonConfigurationType"/>
   </extensions>
 </idea-plugin>
