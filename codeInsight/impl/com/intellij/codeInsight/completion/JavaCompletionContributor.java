@@ -77,7 +77,7 @@ public class JavaCompletionContributor extends CompletionContributor{
         result.addAllElements(lookupSet);
       }
     });
-    registrar.extendBasicCompletion(PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMember().withParent(PsiClass.class))).
+    registrar.extendBasicCompletion(PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class))).
       dependent(METHOD_NAME, LegacyCompletionContributor.LEGACY).
       withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {

@@ -9,13 +9,13 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -299,7 +299,15 @@ public class CompletionUtil {
           suggestedNameInfo.nameChoosen(item.getLookupString());
           return editor.getCaretModel().getOffset();
         }
-      };
+
+      public boolean equals(final Object obj) {
+        return obj.getClass() == getClass();
+      }
+
+      public int hashCode() {
+        return 42;
+      }
+    };
 
     for (int i = 0; i < list.size(); i++) {
       LookupItem item = list.get(i);
