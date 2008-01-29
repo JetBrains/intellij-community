@@ -22,7 +22,7 @@ import java.util.Set;
 */
 class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
-  private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.completion.ExtendedTagInsertHandler");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ExtendedTagInsertHandler");
 
   private final String myTagName;
   @Nullable private final String myNamespacePrefix;
