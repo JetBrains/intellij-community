@@ -132,4 +132,7 @@ public interface JBPopup extends Disposable {
     <T>
   T getUserData(Class<T> userDataClass);
 
+  boolean isFocused();
+
+  boolean isCancelKeyEnabled();
 }

@@ -602,4 +602,13 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   public <T> T getUserData(final Class<T> userDataClass) {
     return null;
   }
+
+  public boolean isFocused() {
+    return JBPopupImpl.isFocused(new Component[] {myContent});
+  }
+
+  public boolean isCancelKeyEnabled() {
+    return true;
+  }
+
 }

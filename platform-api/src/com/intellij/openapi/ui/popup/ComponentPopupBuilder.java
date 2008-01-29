@@ -92,4 +92,6 @@ public interface ComponentPopupBuilder {
 
   @NotNull ComponentPopupBuilder setModalContext(boolean modal);
 
+  @NotNull
+  ComponentPopupBuilder setFocusOwners(@NotNull Component[] focusOwners);
 }

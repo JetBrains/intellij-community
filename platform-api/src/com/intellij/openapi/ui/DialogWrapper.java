@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -829,7 +830,7 @@ public abstract class DialogWrapper {
         if (selectedPath.length > 0) { // hide popup menu if any
           menuSelectionManager.clearSelectedPath();
         }
-        else {
+        else if (!StackingPopupDispatcher.getInstance().isPopupFocused()) {
           doCancelAction();
         }
       }

@@ -51,6 +51,12 @@ public class PopupChooserBuilder {
   private String myDimensionServiceKey = null;
   private Computable<Boolean> myCancelCallback;
   private boolean myAutoselect = true;
+  private float myAlpha;
+  private Component[] myFocusOwners = new Component[0];
+  private boolean myCancelKeyEnabled = true;
+
+  ArrayList<JBPopupListener> myListeners = new ArrayList<JBPopupListener>();
+
 
   public PopupChooserBuilder(@NotNull JList list) {
     myChooserComponent = new MyListWrapper(list);
@@ -117,6 +123,11 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setAlpha(final float alpha) {
+    myAlpha = alpha;
+    return this;
+  }
+
   @NotNull
   public JBPopup createPopup() {
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -171,14 +182,21 @@ public class PopupChooserBuilder {
       contentPane.add(mySouthComponent, BorderLayout.SOUTH);
     }
 
-    myPopup = JBPopupFactory.getInstance()
-      .createComponentPopupBuilder(contentPane, myChooserComponent)
+    ComponentPopupBuilder builder = JBPopupFactory.getInstance()
+      .createComponentPopupBuilder(contentPane, myChooserComponent);
+    for (JBPopupListener each : myListeners) {
+      builder.addListener(each);
+    }
+    myPopup = builder
       .setDimensionServiceKey(null, myDimensionServiceKey, false)
       .setRequestFocus(myRequestFocus)
       .setResizable(myForceResizable)
       .setMovable(myForceMovable)
       .setTitle(myForceMovable ? myTitle : null)
       .setCancelCallback(myCancelCallback)
+      .setAlpha(myAlpha)
+      .setFocusOwners(myFocusOwners)
+      .setCancelKeyEnabled(myCancelKeyEnabled)
       .createPopup();
     return myPopup;
   }
@@ -279,6 +297,15 @@ public class PopupChooserBuilder {
     return this;
   }
 
+  public PopupChooserBuilder setCancelKeyEnabled(final boolean enabled) {
+    myCancelKeyEnabled = enabled;
+    return this;
+  }
+
+  public void addListener(final JBPopupListener listener) {
+    myListeners.add(listener);
+  }
+
   private class MyListWrapper extends JScrollPane implements DataProvider {
     @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
     private JList myList;
@@ -336,4 +363,11 @@ public class PopupChooserBuilder {
       myList.addMouseListener(l);
     }
   }
+
+  @NotNull
+  public PopupChooserBuilder setFocusOwners(@NotNull Component[] focusOwners) {
+    myFocusOwners = focusOwners;
+    return this;
+  }
+
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
@@ -22,7 +23,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SpeedSearchBase;
-import com.intellij.ui.popup.StackingPopupDispatcher;
+import com.intellij.ui.popup.StackingPopupDispatcherImpl;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -324,10 +325,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private void hidePopupsIfNeeded() {
     if (!SystemInfo.isMac) return;
 
-    StackingPopupDispatcher.hidePersistentPopups();
+    StackingPopupDispatcherImpl.getInstance().hidePersistentPopups();
     myDisposeActions.add(new Runnable() {
       public void run() {
-        StackingPopupDispatcher.restorePersistentPopups();
+        StackingPopupDispatcherImpl.getInstance().restorePersistentPopups();
       }
     });
   }
@@ -343,6 +344,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (focusOwner instanceof JComponent && SpeedSearchBase.hasActiveSpeedSearch((JComponent)focusOwner)) {
         return;
       }
+
+      if (StackingPopupDispatcher.getInstance().isPopupFocused()) return;
 
       if (focusOwner instanceof JTree) {
         JTree tree = (JTree)focusOwner;

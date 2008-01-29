@@ -50,6 +50,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   private boolean myInStack = true;
   private boolean myModalContext = true;
+  private Component[] myFocusOwners = new Component[0];
 
   public ComponentPopupBuilderImpl(final JComponent component,
                                    final JComponent prefferedFocusedComponent) {
@@ -143,7 +144,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
                                               myDimensionServiceKey, myResizable, myMovable ? (myTitle != null ? myTitle : "") : null,
                                               myCallback, myCancelOnClickOutside, myListeners, myUseDimSevriceForXYLocation, myCancelButton,
                                               myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
-                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext);
+                                              myPlacewithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners);
     if (myProject != null) {
       popup.setProject(myProject);
     }
@@ -219,6 +220,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @NotNull
   public ComponentPopupBuilder setModalContext(final boolean modal) {
     myModalContext = modal;
+    return this;
+  }
+
+  @NotNull
+  public ComponentPopupBuilder setFocusOwners(@NotNull final Component[] focusOwners) {
+    myFocusOwners = focusOwners;
     return this;
   }
 }

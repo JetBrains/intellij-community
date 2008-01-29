@@ -6,8 +6,8 @@ package com.intellij.ui.popup;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.ui.popup.IdePopup;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,52 +18,52 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Stack;
 
-public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher, IdePopup {
+public class StackingPopupDispatcherImpl extends StackingPopupDispatcher implements AWTEventListener, KeyEventDispatcher {
 
   private Stack<JBPopupImpl> myStack = new Stack<JBPopupImpl>();
   private WeakList<JBPopup> myPersistentPopups = new WeakList<JBPopup>();
 
+  private WeakList<JBPopup> myAllPopups = new WeakList<JBPopup>();
 
-  private static StackingPopupDispatcher ourInstance = new StackingPopupDispatcher();
 
-  private StackingPopupDispatcher() {
+  private StackingPopupDispatcherImpl() {
   }
 
-  public static StackingPopupDispatcher getInstance() {
-    return StackingPopupDispatcher.ourInstance;
-  }
-
-  public static void onPopupShown(JBPopup popup, boolean inStack) {
+  public void onPopupShown(JBPopup popup, boolean inStack) {
     if (inStack) {
-      ourInstance.myStack.push((JBPopupImpl)popup);
+      myStack.push((JBPopupImpl)popup);
       if (ApplicationManager.getApplication() != null) {
-        IdeEventQueue.getInstance().getPopupManager().setActivePopup(ourInstance);
+        IdeEventQueue.getInstance().getPopupManager().setActivePopup(getInstance());
       }
     } else if (popup.isPersistent()) {
-      ourInstance.myPersistentPopups.add(popup);
+      myPersistentPopups.add(popup);
     }
+
+    myAllPopups.add(popup);
   }
 
-  public static void onPopupHidden(JBPopup popup) {
-    boolean wasInStack = ourInstance.myStack.remove(popup);
-    ourInstance.myPersistentPopups.remove(popup);
+  public void onPopupHidden(JBPopup popup) {
+    boolean wasInStack = myStack.remove(popup);
+    myPersistentPopups.remove(popup);
 
-    if (wasInStack && ourInstance.myStack.isEmpty()) {
+    if (wasInStack && myStack.isEmpty()) {
       if (ApplicationManager.getApplication() != null) {
         IdeEventQueue.getInstance().getPopupManager().resetActivePopup();
       }
     }
+
+    myAllPopups.remove(popup);
   }
 
-  public static void hidePersistentPopups() {
-    final WeakList<JBPopup> list = ourInstance.myPersistentPopups;
+  public void hidePersistentPopups() {
+    final WeakList<JBPopup> list = myPersistentPopups;
     for (JBPopup each : list) {
       each.setUiVisible(false);
     }
   }
 
-  public static void restorePersistentPopups() {
-    final WeakList<JBPopup> list = ourInstance.myPersistentPopups;
+  public void restorePersistentPopups() {
+    final WeakList<JBPopup> list = myPersistentPopups;
     for (JBPopup each : list) {
       each.setUiVisible(true);
     }
@@ -73,12 +73,12 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
     dispatchMouseEvent(event);
   }
 
-  private static boolean dispatchMouseEvent(AWTEvent event) {
+  protected boolean dispatchMouseEvent(AWTEvent event) {
     if (event.getID() != MouseEvent.MOUSE_PRESSED) {
       return false;
     }
 
-    if (ourInstance.myStack.isEmpty()) {
+    if (myStack.isEmpty()) {
       return false;
     }
 
@@ -108,23 +108,23 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
         popup.cancel();
       }
 
-      if (ourInstance.myStack.isEmpty()) {
+      if (myStack.isEmpty()) {
         return false;
       }
 
-      popup = ourInstance.myStack.peek();
+      popup = myStack.peek();
       if (popup == null || popup.isDisposed()) {
-        ourInstance.myStack.pop();
+        myStack.pop();
       }
     }
   }
 
-  private static JBPopupImpl findPopup() {
+  protected JBPopupImpl findPopup() {
     while(true) {
-      if (ourInstance.myStack.isEmpty()) break;
-      final JBPopupImpl each = ourInstance.myStack.peek();
+      if (myStack.isEmpty()) break;
+      final JBPopupImpl each = myStack.peek();
       if (each == null || each.isDisposed()) {
-        ourInstance.myStack.pop();
+        myStack.pop();
       } else {
         return each;
       }
@@ -134,18 +134,15 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
   }
 
   public boolean dispatchKeyEvent(final KeyEvent e) {
-    /*
-    if (ourInstance.myStack.isEmpty()) {
-      return false;
-    }
+    if (!isPopupFocused()) return false;
 
-    JBPopupImpl popup = ourInstance.myStack.peek();
+    JBPopup popup = getFocusedPopup();
     if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0) {
-      popup.cancel();
-      return true;
+      if (popup.isCancelKeyEnabled()) {
+        popup.cancel();
+        return true;
+      }
     }
-    */
-
     return false;
   }
 
@@ -182,5 +179,16 @@ public class StackingPopupDispatcher implements AWTEventListener, KeyEventDispat
       return true;
     }
     return false;
+  }
+
+  public boolean isPopupFocused() {
+    return getFocusedPopup() != null;
+  }
+
+  private JBPopup getFocusedPopup() {
+    for (JBPopup each : myAllPopups) {
+      if (each.isFocused()) return each;
+    }
+    return null;
   }
 }

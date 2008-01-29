@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.popup.BasePopup;
 import com.intellij.ui.popup.PopupIcons;
+import com.intellij.ui.popup.JBPopupImpl;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
@@ -368,4 +369,5 @@ public class ListPopupImpl extends BasePopup implements ListPopup {
   public boolean isModalContext() {
     return true;
   }
+
 }
