@@ -53,8 +53,12 @@ public class BaseGenerateAction extends CodeInsightAction {
 
     PsiClass targetClass = getTargetClass(editor, file);
     if (targetClass == null) return false;
-    if (targetClass.isInterface()) return false; //?
+    if (!isValidForClass(targetClass)) return false; //?
 
     return true;
+  }
+
+  protected boolean isValidForClass(final PsiClass targetClass) {
+    return !targetClass.isInterface();
   }
 }
