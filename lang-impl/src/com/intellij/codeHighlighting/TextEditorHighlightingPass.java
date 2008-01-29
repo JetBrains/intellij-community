@@ -106,4 +106,5 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public String toString() {
     return getClass() + "; id=" + getId();
   }
+
 }

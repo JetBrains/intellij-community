@@ -37,10 +37,10 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
   private static final Icon IMPLEMENTING_METHOD_ICON = IconLoader.getIcon("/gutter/implementingMethod.png");
 
   private final DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
-  private PsiFile myFile;
-  private int myStartOffset;
-  private int myEndOffset;
-  private boolean myUpdateAll;
+  private final PsiFile myFile;
+  private final int myStartOffset;
+  private final int myEndOffset;
+  private final boolean myUpdateAll;
 
   public LineMarkersPass(@NotNull Project project,
                          @NotNull PsiFile file,

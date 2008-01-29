@@ -25,9 +25,8 @@ import java.util.List;
 public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
   private final PsiFile myPsiFile;
   private final Editor myEditor;
-
-  private List<TextRange> myFoldingData;
-
+  private final List<TextRange> myFoldingData = new ArrayList<TextRange>();
+  
   protected GeneratedCodeFoldingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     super(psiFile.getProject(), editor.getDocument());
     myPsiFile = psiFile;
@@ -35,7 +34,6 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
   }
 
   public void doCollectInformation(final ProgressIndicator progress) {
-    myFoldingData = new ArrayList<TextRange>();
     myPsiFile.accept(new MyFoldingVisitor(progress));
   }
 
@@ -43,26 +41,28 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
     myEditor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
       public void run() {
         FoldingModel foldingModel = myEditor.getFoldingModel();
-        for(TextRange foldingData: myFoldingData) {
-          final int startOffset = foldingData.getStartOffset();
-          final int endOffset = foldingData.getEndOffset();
+        synchronized (myFoldingData) {
+          for(TextRange foldingData: myFoldingData) {
+            final int startOffset = foldingData.getStartOffset();
+            final int endOffset = foldingData.getEndOffset();
 
-          boolean generatedCodeUnfolded = false;
-          FoldRegion[] regions = foldingModel.getAllFoldRegions();
-          for(FoldRegion region: regions) {
-            if (region.getPlaceholderText().equals(UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text")) &&
-              region.isExpanded()) {
-              generatedCodeUnfolded = true;
+            boolean generatedCodeUnfolded = false;
+            FoldRegion[] regions = foldingModel.getAllFoldRegions();
+            for(FoldRegion region: regions) {
+              if (region.getPlaceholderText().equals(UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text")) &&
+                region.isExpanded()) {
+                generatedCodeUnfolded = true;
+              }
+              if (region.getStartOffset() >= startOffset && region.getEndOffset() <= endOffset) {
+                foldingModel.removeFoldRegion(region);
+              }
             }
-            if (region.getStartOffset() >= startOffset && region.getEndOffset() <= endOffset) {
-              foldingModel.removeFoldRegion(region);
-            }
-          }
 
-          final FoldRegion region =
-            foldingModel.addFoldRegion(startOffset, endOffset, UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text"));
-          if (region != null && !generatedCodeUnfolded) {
-            region.setExpanded(false);
+            final FoldRegion region =
+              foldingModel.addFoldRegion(startOffset, endOffset, UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text"));
+            if (region != null && !generatedCodeUnfolded) {
+              region.setExpanded(false);
+            }
           }
         }
       }
@@ -111,12 +111,14 @@ public class GeneratedCodeFoldingPass extends TextEditorHighlightingPass {
 
     private void addFoldingData(final PsiElement element) {
       PsiElement prevSibling = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
-      if (myLastElement == null || prevSibling != myLastElement) {
-        myFoldingData.add(element.getTextRange());
-      }
-      else {
-        TextRange lastRange = myFoldingData.get(myFoldingData.size()-1);
-        myFoldingData.set(myFoldingData.size()-1, new TextRange(lastRange.getStartOffset(), element.getTextRange().getEndOffset()));
+      synchronized (myFoldingData) {
+        if (myLastElement == null || prevSibling != myLastElement) {
+          myFoldingData.add(element.getTextRange());
+        }
+        else {
+          TextRange lastRange = myFoldingData.get(myFoldingData.size()-1);
+          myFoldingData.set(myFoldingData.size()-1, new TextRange(lastRange.getStartOffset(), element.getTextRange().getEndOffset()));
+        }
       }
       myLastElement =  element;
     }
