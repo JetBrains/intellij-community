@@ -35,7 +35,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
   protected File dir;
 
   private VirtualFile projectRoot;
-  private VirtualFile projectPom;
+  protected VirtualFile projectPom;
 
   private List<VirtualFile> poms = new ArrayList<VirtualFile>();
   protected MavenImporterSettings myPrefs;
@@ -207,6 +207,10 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     return CompilerModuleExtension.getInstance(m.getModule());
   }
 
+  protected void assertModuleLibDep(String moduleName, String depName) {
+    assertModuleLibDep(moduleName, depName, null);
+  }
+
   protected void assertModuleLibDep(String moduleName, String depName, String path) {
     assertModuleLibDep(moduleName, depName, path, null, null);
   }
@@ -336,7 +340,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     return f;
   }
 
-  private String createValidPom(String xml) {
+  protected String createValidPom(String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +

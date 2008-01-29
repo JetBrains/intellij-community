@@ -499,14 +499,12 @@ public class BasicImportingTest extends ImportingTestCase {
     importProjectWithProfiles("one");
     assertModules("project");
 
-    assertModuleLibDep("project", "junit:junit:4.0",
-                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/");
+    assertModuleLibDep("project", "junit:junit:4.0");
 
     importProjectWithProfiles("two");
     assertModules("project");
 
-    assertModuleLibDep("project", "junit:junit:3.8.1",
-                       "jar://" + getRepositoryPath() + "/junit/junit/3.8.1/junit-3.8.1.jar!/");
+    assertModuleLibDep("project", "junit:junit:3.8.1");
   }
 
   public void testProjectWithDefaultProfileInProfilesXmlFile() throws Exception {
@@ -535,7 +533,6 @@ public class BasicImportingTest extends ImportingTestCase {
     importProject();
     assertModules("project");
 
-    assertModuleLibDep("project", "junit:junit:4.0",
-                       "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/");
+    assertModuleLibDep("project", "junit:junit:4.0");
   }
 }
