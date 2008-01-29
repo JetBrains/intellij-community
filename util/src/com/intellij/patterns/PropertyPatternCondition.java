@@ -18,7 +18,7 @@ public abstract class PropertyPatternCondition<T,P> extends PatternCondition<T>{
   }
 
   @Nullable
-  protected abstract P getPropertyValue(@NotNull T t);
+  public abstract P getPropertyValue(@NotNull Object o);
 
   public final boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
     final P value = getPropertyValue(t);

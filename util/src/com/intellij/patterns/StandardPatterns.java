@@ -33,6 +33,10 @@ public class StandardPatterns {
         matchingContext.put(key, (T)o);
         return true;
       }
+
+      public void append(@NonNls final StringBuilder builder, final String indent) {
+        builder.append("save(" + key + ")");
+      }
     });
   }
 
@@ -55,6 +59,10 @@ public class StandardPatterns {
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return Comparing.equal(o, matchingContext.get(key));
       }
+
+      public void append(@NonNls final StringBuilder builder, final String indent) {
+        builder.append("get(" + key + ")");
+      }
     });
   }
 
@@ -71,6 +79,18 @@ public class StandardPatterns {
         }
         return false;
       }
+
+      public void append(@NonNls final StringBuilder builder, final String indent) {
+        boolean first = true;
+        for (final ElementPattern pattern : patterns) {
+          if (!first) {
+            builder.append("\n").append(indent);
+          }
+          first = false;
+          pattern.getCondition().append(builder, indent + "  ");
+        }
+      }
+
     });
   }
 
@@ -83,6 +103,17 @@ public class StandardPatterns {
         }
         return true;
       }
+
+      public void append(@NonNls final StringBuilder builder, final String indent) {
+        boolean first = true;
+        for (final ElementPattern pattern : patterns) {
+          if (!first) {
+            builder.append("\n").append(indent);
+          }
+          first = false;
+          pattern.getCondition().append(builder, indent + "  ");
+        }
+      }
     });
   }
 
@@ -91,6 +122,11 @@ public class StandardPatterns {
       public boolean accepts(@Nullable final Object o,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return !pattern.getCondition().accepts(o, matchingContext, traverseContext);
+      }
+
+      public void append(@NonNls final StringBuilder builder, final String indent) {
+        pattern.getCondition().append(builder.append("not("), indent + "  ");
+        builder.append(")");
       }
     });
   }

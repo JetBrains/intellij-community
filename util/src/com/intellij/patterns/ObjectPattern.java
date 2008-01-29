@@ -6,7 +6,6 @@ package com.intellij.patterns;
 
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +27,6 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     myCondition = new ElementPatternCondition<T>(new InitialPatternCondition<T>(aClass) {
       public boolean accepts(@Nullable final Object o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return aClass.isInstance(o);
-      }
-
-      @NonNls
-      public String toString() {
-        return ObjectPattern.this.getClass().getSimpleName() + "(" + aClass.getName() + ")";
       }
     });
   }
@@ -70,10 +64,6 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return t.equals(o);
       }
-
-      public String toString() {
-        return "equalTo(" + o + ")";
-      }
     });
   }
 
@@ -84,11 +74,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self oneOf(final Collection<T> set) {
-    return with(new ValuePatternCondition<T>(set) {
-      public String toString() {
-        return "oneOf(" + set + ")";
-      }
-    });
+    return with(new ValuePatternCondition<T>(set));
   }
 
   public Self isNull() {

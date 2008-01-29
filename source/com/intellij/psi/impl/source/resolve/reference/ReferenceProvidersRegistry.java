@@ -13,7 +13,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.patterns.CaseInsensitiveValuePatternCondition;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PsiNamePatternCondition;
+import com.intellij.patterns.ValuePatternCondition;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
 import com.intellij.psi.filters.position.FilterPattern;
@@ -30,6 +33,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlReferenceProvider;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -53,10 +57,10 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new CopyOnWriteArrayList<Pair<Class<?>, ElementManipulator<?>>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
-  public final static Double DEFAULT_PRIORITY = 0.0;
-  public final static Double HIGHER_PRIORITY = 100.0;
-  public final static Double LOWER_PRIORITY = -100.0;
-  public final static Double LOWEST_PRIORITY = Double.NEGATIVE_INFINITY;
+  public final static double DEFAULT_PRIORITY = 0.0;
+  public final static double HIGHER_PRIORITY = 100.0;
+  public final static double LOWER_PRIORITY = -100.0;
+  public final static double LOWEST_PRIORITY = Double.NEGATIVE_INFINITY;
 
   private static final Logger LOG = Logger.getInstance("ReferenceProvidersRegistry");
   private static final Comparator<Trinity<PsiReferenceProvider,ElementPattern,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, ElementPattern, Double>>() {
@@ -297,7 +301,8 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
                                         @NotNull Class scope,
                                         @NotNull PsiReferenceProvider provider,
-                                        @Nullable Double priority) {
+                                        double priority) {
+    final FilterPattern pattern = new FilterPattern(elementFilter);
     if (scope == XmlAttributeValue.class) {
       registerXmlAttributeValueReferenceProvider(null, elementFilter, true, provider, priority);
       return;
@@ -310,12 +315,59 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     while (true) {
       final ProviderBinding providerBinding = myBindingsMap.get(scope);
       if (providerBinding != null) {
-        ((SimpleProviderBinding)providerBinding).registerProvider(provider, new FilterPattern(elementFilter), priority);
+        ((SimpleProviderBinding)providerBinding).registerProvider(provider, pattern, priority);
         return;
       }
 
       final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
-      binding.registerProvider(provider, new FilterPattern(elementFilter), priority);
+      binding.registerProvider(provider, pattern, priority);
+      if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
+    }
+  }
+
+
+  public void registerReferenceProvider(@NotNull ElementPattern<? extends PsiElement> pattern, @NotNull PsiReferenceProvider provider) {
+    registerReferenceProvider(pattern, provider, DEFAULT_PRIORITY);
+  }
+  public <T extends PsiElement> void registerReferenceProvider(@NotNull ElementPattern<T> pattern, @NotNull PsiReferenceProvider provider, double priority) {
+    final Class scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
+    final PsiNamePatternCondition<?> nameCondition = ContainerUtil.findInstance(pattern.getCondition().getConditions(), PsiNamePatternCondition.class);
+    if (nameCondition != null) {
+      final ValuePatternCondition<String> valueCondition =
+        ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), ValuePatternCondition.class);
+      if (valueCondition != null) {
+        final Collection<String> strings = valueCondition.getValues();
+        registerNamedReferenceProvider(strings.toArray(new String[strings.size()]), new NamedObjectProviderBinding(scope) {
+          protected String getName(final PsiElement position) {
+            return nameCondition.getPropertyValue(position);
+          }
+        }, scope, true, provider, priority, pattern);
+        return;
+      }
+
+      final CaseInsensitiveValuePatternCondition ciCondition =
+        ContainerUtil.findInstance(nameCondition.getNamePattern().getCondition().getConditions(), CaseInsensitiveValuePatternCondition.class);
+      if (ciCondition != null) {
+        registerNamedReferenceProvider(ciCondition.getValues(), new NamedObjectProviderBinding(scope) {
+          @Nullable
+          protected String getName(final PsiElement position) {
+            return nameCondition.getPropertyValue(position);
+          }
+        }, scope, false, provider, priority, pattern);
+        return;
+      }
+    }
+
+
+    while (true) {
+      final ProviderBinding providerBinding = myBindingsMap.get(scope);
+      if (providerBinding != null) {
+        ((SimpleProviderBinding)providerBinding).registerProvider(provider, pattern, priority);
+        return;
+      }
+
+      final SimpleProviderBinding binding = new SimpleProviderBinding(scope);
+      binding.registerProvider(provider, pattern, priority);
       if (myBindingsMap.putIfAbsent(scope, binding) == null) break;
     }
   }
@@ -323,7 +375,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
                                                      @NotNull Class scope,
                                                      @NotNull PsiReferenceProvider provider) {
-    registerReferenceProvider(elementFilter, scope, provider, null);
+    registerReferenceProvider(elementFilter, scope, provider, DEFAULT_PRIORITY);
   }
 
   public void unregisterReferenceProvider(@NotNull Class scope, @NotNull PsiReferenceProvider provider) {
@@ -333,41 +385,46 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
   public void registerDocTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
-    registerNamedReferenceProvider(names, elementFilter, PsiDocTagProviderBinding.class, PsiDocTag.class, caseSensitive, provider, null);
+    registerNamedReferenceProvider(names, elementFilter, PsiDocTagProviderBinding.class, PsiDocTag.class, caseSensitive, provider, DEFAULT_PRIORITY);
   }
 
   public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
-                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider, @Nullable Double priority) {
+                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider, double priority) {
     registerNamedReferenceProvider(names, elementFilter, XmlTagProviderBinding.class,XmlTag.class,caseSensitive, provider, priority);
   }
 
   public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
                                               boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
-    registerXmlTagReferenceProvider(names, elementFilter,caseSensitive, provider, null);
+    registerXmlTagReferenceProvider(names, elementFilter,caseSensitive, provider, DEFAULT_PRIORITY);
   }
 
   private void registerNamedReferenceProvider(@Nullable @NonNls String[] names, @Nullable ElementFilter elementFilter, @NotNull Class<? extends NamedObjectProviderBinding> bindingClass,
                                               @NotNull Class scopeClass,
                                               boolean caseSensitive,
                                               @NotNull PsiReferenceProvider provider,
-                                              @Nullable final Double priority) {
+                                              final double priority) {
+    try {
+      registerNamedReferenceProvider(names, bindingClass.newInstance(), scopeClass, caseSensitive, provider, priority, new FilterPattern(elementFilter));
+    }
+    catch (InstantiationException e) {
+      LOG.error(e);
+    }
+    catch (IllegalAccessException e) {
+      LOG.error(e);
+    }
+  }
+
+  private void registerNamedReferenceProvider(final String[] names, final NamedObjectProviderBinding binding,
+                                              final Class scopeClass,
+                                              final boolean caseSensitive,
+                                              final PsiReferenceProvider provider, final double priority, final ElementPattern pattern) {
     NamedObjectProviderBinding providerBinding = (NamedObjectProviderBinding)myBindingsMap.get(scopeClass);
 
     if (providerBinding == null) {
-      try {
-        providerBinding = (NamedObjectProviderBinding)ConcurrencyUtil.cacheOrGet(myBindingsMap, scopeClass, bindingClass.newInstance());
-      }
-      catch (Exception e) {
-        LOG.error(e);
-        return;
-      }
+      providerBinding = (NamedObjectProviderBinding)ConcurrencyUtil.cacheOrGet(myBindingsMap, scopeClass, binding);
     }
 
-    providerBinding.registerProvider(
-      names,
-      new FilterPattern(elementFilter),
-      caseSensitive,
-      provider, priority == null ? DEFAULT_PRIORITY : priority);
+    providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
   }
 
   public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
@@ -380,14 +437,14 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
       XmlAttributeValueProviderBinding.class,
       XmlAttributeValue.class,
       caseSensitive,
-      provider, null);
+      provider, DEFAULT_PRIORITY);
   }
 
   public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
                                                          @Nullable ElementFilter elementFilter,
                                                          boolean caseSensitive,
                                                          @NotNull PsiReferenceProvider provider,
-                                                         Double priority) {
+                                                         double priority) {
     registerNamedReferenceProvider(
       attributeNames,
       elementFilter,

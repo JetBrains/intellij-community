@@ -18,11 +18,6 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return o instanceof GenericDomValue;
       }
-
-      public String toString() {
-        return "genericDomValue()";
-      }
-
     });
   }
 
@@ -33,9 +28,6 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
         return o instanceof GenericDomValue && aClass.equals(DomUtil.getGenericValueParameter(((GenericDomValue)o).getDomElementType()));
       }
 
-      public String toString() {
-        return "genericDomValue(" + aClass.getName() + ")";
-      }
     });
   }
 
@@ -45,9 +37,6 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
         return pattern.getCondition().accepts(genericDomValue.getStringValue(), matchingContext, traverseContext);
       }
 
-      public String toString() {
-        return "withStringValue(" + pattern.toString() + ")";
-      }
     });
   }
 
@@ -59,10 +48,6 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
     return with(new PatternCondition<GenericDomValue<T>>() {
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(genericDomValue.getValue(), matchingContext, traverseContext);
-      }
-
-      public String toString() {
-        return "withValue(" + pattern.toString() + ")";
       }
     });
   }

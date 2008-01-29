@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -21,8 +20,9 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         return o instanceof String;
       }
 
-      public String toString() {
-        return "string()";
+
+      public void append(@NonNls final StringBuilder builder, final String indent) {
+        builder.append("string()");
       }
     });
   }
@@ -51,9 +51,6 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
         return str.contains(s);
       }
 
-      public String toString() {
-        return "contains(" + s + ")";
-      }
     });
   }
 
@@ -85,23 +82,12 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public StringPattern oneOfIgnoreCase(@NonNls final String... values) {
-    return with(new PatternCondition<String>() {
-      public boolean accepts(@NotNull final String str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        for (final String value : values) {
-          if (str.equalsIgnoreCase(value)) return true;
-        }
-        return false;
-      }
-
-      public String toString() {
-        return "oneOfIgnoreCase(" + Arrays.toString(values) + ")";
-      }
-    });
-
+    return with(new CaseInsensitiveValuePatternCondition(values));
   }
 
   @NotNull
   public StringPattern oneOf(@NonNls final Collection<String> set) {
     return super.oneOf(set);
   }
+
 }

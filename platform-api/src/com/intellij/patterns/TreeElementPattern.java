@@ -88,10 +88,6 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
         }
         return pattern.getCondition().accepts(parent, matchingContext, traverseContext);
       }
-
-      public String toString() {
-        return "withSuperParent(" + level + ", " + pattern + ")";
-      }
     });
   }
 

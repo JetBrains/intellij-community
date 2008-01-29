@@ -68,9 +68,6 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
         return t.getManager().areElementsEquivalent(t, o);
       }
 
-      public String toString() {
-        return "equalTo(" + o + ")";
-      }
     });
   }
 
@@ -81,9 +78,6 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
         return node != null && pattern.accepts(node.getElementType());
       }
 
-      public String toString() {
-        return "withElementType(" + pattern + ")";
-      }
     });
   }
 
@@ -119,9 +113,6 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
         }
       }
 
-      public String toString() {
-        return "afterLeafSkipping(" + pattern.toString() + ")";
-      }
     });
   }
 
@@ -135,9 +126,6 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
         return pattern.getCondition().accepts(t.getText(), matchingContext, traverseContext);
       }
 
-      public String toString() {
-        return "withText(" + pattern + ")";
-      }
     };
   }
 
@@ -158,20 +146,4 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   }
 
-  private class PsiNamePatternCondition<T extends PsiElement> extends PropertyPatternCondition<T, String> {
-    private final ElementPattern<String> myName;
-
-    public PsiNamePatternCondition(final ElementPattern<String> name) {
-      super(name);
-      myName = name;
-    }
-
-    protected String getPropertyValue(@NotNull final T t) {
-      return t instanceof PsiNamedElement ? ((PsiNamedElement) t).getName() : null;
-    }
-
-    public String toString() {
-      return "withName(" + myName + ")";
-    }
-  }
 }

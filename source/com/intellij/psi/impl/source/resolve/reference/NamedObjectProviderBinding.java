@@ -8,6 +8,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.patterns.ElementPattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
@@ -68,6 +69,7 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
     addMatchingProviders(position, myProvidersWithoutNames, list);
   }
 
+  @Nullable
   abstract protected String getName(final PsiElement position);
 
   private static void addMatchingProviders(final PsiElement position,

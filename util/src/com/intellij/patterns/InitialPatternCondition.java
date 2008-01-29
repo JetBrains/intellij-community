@@ -27,8 +27,13 @@ public abstract class InitialPatternCondition<T> {
   }
 
   @NonNls
-  public String toString() {
-    return super.toString();
+  public final String toString() {
+    StringBuilder builder = new StringBuilder();
+    append(builder, "");
+    return builder.toString();
   }
 
+  public void append(@NonNls final StringBuilder builder, final String indent) {
+    builder.append("instanceOf(").append(myAcceptedClass.getSimpleName()).append(")");
+  }
 }

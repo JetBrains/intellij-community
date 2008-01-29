@@ -29,13 +29,17 @@ public class ElementPatternCondition<T> {
     return true;
   }
 
-  public String toString() {
+  public final String toString() {
     StringBuilder builder = new StringBuilder();
-    builder.append(myInitialCondition);
-    for (final PatternCondition<? super T> condition : myConditions) {
-      builder.append(".\n  ").append(condition);
-    }
+    append(builder, "");
     return builder.toString();
+  }
+
+  public void append(StringBuilder builder, String indent) {
+    myInitialCondition.append(builder, indent);
+    for (final PatternCondition<? super T> condition : myConditions) {
+      condition.append(builder.append(".\n").append(indent), indent);
+    }
   }
 
   public List<PatternCondition<? super T>> getConditions() {
