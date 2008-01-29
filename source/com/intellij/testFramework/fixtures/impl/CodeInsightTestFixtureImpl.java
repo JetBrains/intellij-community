@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.ide.DataManager;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.mock.MockProgressIndicator;
@@ -84,7 +85,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.ide.DataManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import junit.framework.Assert;
@@ -301,7 +301,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       protected void run() throws Throwable {
         configureByFilesInner(fileBefore);
         LookupItem[] lookupItems = completeBasic();
-        UsefulTestCase.assertNotNull(lookupItems);
+        UsefulTestCase.assertNotNull("No lookup was shown, probably there was only one lookup element that was inserted automatically", lookupItems);
         UsefulTestCase.assertSameElements(ContainerUtil.map(lookupItems, new Function<LookupItem, String>() {
           public String fun(final LookupItem lookupItem) {
             return lookupItem.getLookupString();
