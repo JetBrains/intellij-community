@@ -195,7 +195,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          GrMethod newMethod = owner.addMember(method);
+          GrMethod newMethod = owner.addMemberDeclaration(method);
           ExtractMethodUtil.renameParameterOccurrences(newMethod, helper);
           PsiUtil.shortenReferences(newMethod);
           GrStatement realStatement;

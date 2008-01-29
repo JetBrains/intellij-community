@@ -18,18 +18,27 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 
 /**
  * @author ven
  */
 public class CreateFieldFromUsageFix implements IntentionAction {
   private final String myName;
+  private PsiType myType;
+  private GrTypeDefinition myTargetClass;
 
-  public CreateFieldFromUsageFix(String name) {
+  public CreateFieldFromUsageFix(String name, PsiType type, GrTypeDefinition targetClass) {
     myName = name;
+    myType = type;
+    myTargetClass = targetClass;
   }
 
   @NotNull
@@ -43,11 +52,12 @@ public class CreateFieldFromUsageFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
+    return myTargetClass.isValid();
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    //To change body of implemented methods use File | Settings | File Templates.
+    GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, myName, null, myType);
+    myTargetClass.addMemberDeclaration(fieldDecl);
   }
 
   public boolean startInWriteAction() {

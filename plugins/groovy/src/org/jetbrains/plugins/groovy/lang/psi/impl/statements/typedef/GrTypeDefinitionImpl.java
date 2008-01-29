@@ -31,32 +31,48 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.*;
+import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.AccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultGroovyMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.JavaIdentifier;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 import javax.swing.*;
 import java.util.*;
@@ -163,8 +179,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       if (name != null) implementsNames.add(name);
     }
 
-    String[] a2 = implementsNames.toArray(new String[implementsNames.size()]);
-    return a2;
+    return implementsNames.toArray(new String[implementsNames.size()]);
   }
 
   protected String[] getExtendsNames() {
@@ -175,8 +190,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       String name = ref.getReferenceName();
       if (name != null) extendsNames.add(name);
     }
-    String[] a1 = extendsNames.toArray(new String[extendsNames.size()]);
-    return a1;
+    return extendsNames.toArray(new String[extendsNames.size()]);
   }
 
   @NotNull
@@ -798,12 +812,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
   }
 
-  public <T extends GrMember> T addMember(@NotNull T member) throws IncorrectOperationException {
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl) throws IncorrectOperationException {
 
     GrTypeDefinitionBody body = getBody();
     if (body == null) return null;
-    ASTNode methodNode = member.getNode();
-    assert methodNode != null;
+    ASTNode methodNode = decl.getNode();
 
     ASTNode bodyNode = body.getNode();
     PsiElement brace = body.getRBrace();
@@ -822,6 +835,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n\n", methodNode);
     }
 
-    return member;
+    return decl;
   }
 }

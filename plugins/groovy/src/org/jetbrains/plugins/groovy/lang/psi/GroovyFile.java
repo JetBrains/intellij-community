@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 
@@ -34,5 +35,5 @@ public interface GroovyFile extends GroovyFileBase {
 
   void setPackageName(String packageName);
 
-  <T extends GrMember> T addMember(@NotNull T member) throws IncorrectOperationException;
+  <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl) throws IncorrectOperationException;
 }

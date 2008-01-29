@@ -20,10 +20,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 
 /**
  * @author ilyas
  */
 public interface GrMemberOwner extends PsiClass {
-  <T extends GrMember> T addMember(T member) throws IncorrectOperationException ;
+  <T extends GrMembersDeclaration> T addMemberDeclaration(T decl) throws IncorrectOperationException ;
 }
