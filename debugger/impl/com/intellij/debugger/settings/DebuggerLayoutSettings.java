@@ -57,7 +57,7 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
       myContentStates.put(state.getID(), state);
     }
 
-    XmlSerializer.deserializeInto(myGeneral, parentNode);
+    XmlSerializer.deserializeInto(myGeneral, parentNode.getChild(StringUtil.getShortName(myGeneral.getClass().getName(), '$')));
 
     return parentNode;
   }
