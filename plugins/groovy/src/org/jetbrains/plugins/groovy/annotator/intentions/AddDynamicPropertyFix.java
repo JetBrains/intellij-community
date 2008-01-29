@@ -15,11 +15,11 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPrope
  * User: Dmitry.Krasilschikov
  * Date: 22.11.2007
  */
-public class DynamicPropertyIntention implements IntentionAction {
+public class AddDynamicPropertyFix implements IntentionAction {
   private final DynamicProperty myDynProperty;
   private final GrReferenceExpression myReferenceExpression;
 
-  public DynamicPropertyIntention(DynamicProperty dynamicProperty, GrReferenceExpression referenceExpression) {
+  public AddDynamicPropertyFix(DynamicProperty dynamicProperty, GrReferenceExpression referenceExpression) {
     myDynProperty = dynamicProperty;
     myReferenceExpression = referenceExpression;
   }

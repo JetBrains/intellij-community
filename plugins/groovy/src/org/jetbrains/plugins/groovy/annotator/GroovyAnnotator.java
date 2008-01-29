@@ -752,7 +752,7 @@ public class GroovyAnnotator implements Annotator {
     if (module == null) return;
 
     DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
-    annotation.registerFix(new DynamicPropertyIntention(dynamicProperty, referenceExpression), referenceExpression.getTextRange());
+    annotation.registerFix(new AddDynamicPropertyFix(dynamicProperty, referenceExpression), referenceExpression.getTextRange());
   }
 
   private void highlightMemberResolved(AnnotationHolder holder, GrReferenceExpression refExpr, PsiMember member) {
