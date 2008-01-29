@@ -16,16 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef;
 
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 
 /**
  * @author ilyas
  */
-public interface GrMethodOwner {
-  
-  GrMethod addMethod(GrMethod method) throws IncorrectOperationException ;
-
-  PsiMethod[] getAllMethods();
-
+public interface GrMemberOwner extends PsiClass {
+  <T extends GrMember> T addMember(T member) throws IncorrectOperationException ;
 }

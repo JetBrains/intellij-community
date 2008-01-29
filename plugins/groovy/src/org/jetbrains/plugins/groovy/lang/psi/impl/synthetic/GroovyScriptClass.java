@@ -32,17 +32,22 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
  */
-public class GroovyScriptClass extends LightElement implements PsiClass {
+public class GroovyScriptClass extends LightElement implements GrMemberOwner {
   private String myQualifiedName;
   private String myName;
   private GroovyFile myFile;
@@ -61,7 +66,6 @@ public class GroovyScriptClass extends LightElement implements PsiClass {
 
   private void cachesNames() {
     String name = myFile.getName();
-    assert name != null;
     int i = name.indexOf('.');
     myName = i > 0 ? name.substring(0, i) : name;
     String packageName = myFile.getPackageName();
@@ -204,7 +208,7 @@ public class GroovyScriptClass extends LightElement implements PsiClass {
 
   @NotNull
   public PsiMethod[] getAllMethods() {
-    return PsiMethod.EMPTY_ARRAY;
+    return getMethods(); //todo
   }
 
   @NotNull
@@ -362,6 +366,10 @@ public class GroovyScriptClass extends LightElement implements PsiClass {
 
   public void delete() throws IncorrectOperationException {
     myFile.delete();
+  }
+
+  public <T extends GrMember> T addMember(T member) throws IncorrectOperationException {
+    return myFile.addMember(member);
   }
 }
 

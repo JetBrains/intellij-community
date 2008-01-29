@@ -38,7 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
@@ -114,9 +114,9 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
       }
     }
 
-    GrMethodOwner methodOwner = ExtractMethodUtil.getMethodOwner(statements[0]);
+    GrMemberOwner owner = ExtractMethodUtil.getMemberOwner(statements[0]);
     GrVariableDeclarationOwner declarationOwner = ExtractMethodUtil.getDecalarationOwner(statements[0]);
-    if (methodOwner == null ||
+    if (owner == null ||
         (declarationOwner == null && !ExtractMethodUtil.isSingleExpression(statements))) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));
       showErrorMessage(message, project);
@@ -169,7 +169,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     VariableInfo outputInfo = outputInfos.length == 0 ? null : outputInfos[0];
     boolean canBeStatic = ExtractMethodUtil.canBeStatic(statements[0]);
 
-    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfo, elements, statements, methodOwner, canBeStatic, isReturnStatement);
+    ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(inputInfos, outputInfo, elements, statements, owner, canBeStatic, isReturnStatement);
 
     ExtractMethodSettings settings = getSettings(helper);
     if (!settings.isOK()) {
@@ -180,14 +180,14 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     helper = settings.getHelper();
 
     assert methodName != null;
-    runRefactoring(methodName, helper, methodOwner, declarationOwner, editor);
+    runRefactoring(methodName, helper, owner, declarationOwner, editor);
 
     return true;
   }
 
   private void runRefactoring(final String methodName,
                               @NotNull final ExtractMethodInfoHelper helper,
-                              @NotNull final GrMethodOwner methodOwner,
+                              @NotNull final GrMemberOwner owner,
                               final GrVariableDeclarationOwner declarationOwner,
                               final Editor editor) {
 
@@ -195,7 +195,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     final Runnable runnable = new Runnable() {
       public void run() {
         try {
-          GrMethod newMethod = methodOwner.addMethod(method);
+          GrMethod newMethod = owner.addMember(method);
           ExtractMethodUtil.renameParameterOccurrences(newMethod, helper);
           PsiUtil.shortenReferences(newMethod);
           GrStatement realStatement;

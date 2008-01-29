@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
 
@@ -43,7 +43,7 @@ public class ExtractMethodInfoHelper {
   private final Map<String, ParameterInfo> myInputNamesMap = new HashMap<String, ParameterInfo>();
   private final String myOutputName;
   private final PsiType myOutputType;
-  private final GrMethodOwner myOwner;
+  private final GrMemberOwner myTargetClass;
   private final boolean myIsStatic;
   private final boolean myIsReturnStatement;
   private boolean mySpecifyType;
@@ -56,12 +56,12 @@ public class ExtractMethodInfoHelper {
                                  VariableInfo outputInfo,
                                  PsiElement[] innerElements,
                                  GrStatement[] statements,
-                                 GrMethodOwner owner,
+                                 GrMemberOwner targetClass,
                                  boolean isStatic,
                                  boolean isReturnStatement) {
     myInnerElements = innerElements;
     myStatements = statements;
-    myOwner = owner;
+    myTargetClass = targetClass;
     myIsStatic = isStatic;
     myIsReturnStatement = isReturnStatement;
     myVisibility = PsiModifier.PRIVATE;
@@ -202,8 +202,9 @@ public class ExtractMethodInfoHelper {
     mySpecifyType = specifyType;
   }
 
-  public GrMethodOwner getOwner() {
-    return myOwner;
+  @NotNull
+  public GrMemberOwner getOwner() {
+    return myTargetClass;
   }
 
   public boolean isReturnStatement() {

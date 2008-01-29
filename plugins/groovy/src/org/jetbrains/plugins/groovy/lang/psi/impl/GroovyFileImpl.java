@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
@@ -273,11 +274,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public GrMethod addMethod(@NotNull GrMethod method) throws IncorrectOperationException {
+  public <T extends GrMember> T addMember(@NotNull T member) throws IncorrectOperationException {
     PsiElement[] children = getChildren();
     PsiElement element;
     if (children.length == 0) {
-      element = add(method);
+      element = add(member);
     } else {
       PsiElement anchor = children[children.length - 1];
       if (!anchor.getText().matches("\n\n")) {
@@ -291,20 +292,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
         separator = factory.createLineTerminator(1);
         anchor = addAfter(separator, anchor);
       }
-      element = addAfter(method, anchor);
+      element = addAfter(member, anchor);
     }
-    assert element instanceof GrMethod;
-    return ((GrMethod) element);
-  }
 
-  public PsiMethod[] getAllMethods() {       // todo add inherited methods
-    ArrayList<PsiMethod> methods = new ArrayList<PsiMethod>();
-    for (GrTopStatement statement : getTopStatements()) {
-      if (statement instanceof PsiMethod) {
-        methods.add(((PsiMethod) statement));
-      }
-    }
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return (T) element;
   }
 
   public void clearCaches() {

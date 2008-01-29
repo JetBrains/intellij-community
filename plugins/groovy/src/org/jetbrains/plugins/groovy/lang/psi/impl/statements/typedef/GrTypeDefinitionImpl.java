@@ -47,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -797,11 +798,11 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
   }
 
-  public GrMethod addMethod(@NotNull GrMethod method) throws IncorrectOperationException {
+  public <T extends GrMember> T addMember(@NotNull T member) throws IncorrectOperationException {
 
     GrTypeDefinitionBody body = getBody();
     if (body == null) return null;
-    ASTNode methodNode = method.getNode();
+    ASTNode methodNode = member.getNode();
     assert methodNode != null;
 
     ASTNode bodyNode = body.getNode();
@@ -821,7 +822,6 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n\n", methodNode);
     }
 
-    return method;
-
+    return member;
   }
 }

@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
  * @autor: Dmitry.Krasilschikov
  * @date: 18.03.2007
  */
-public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion, GrMethodOwner {
+public interface GrTypeDefinition extends GrTopStatement, NavigationItem, PsiClass, GrTopLevelDefintion, GrMemberOwner {
   String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObjectSupport";
 
   public GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];

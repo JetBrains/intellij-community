@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMethodOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
@@ -85,8 +85,7 @@ public class ExtractMethodUtil {
 
   static boolean validateMethod(GrMethod method, ExtractMethodInfoHelper helper) {
     ArrayList<String> conflicts = new ArrayList<String>();
-    GrMethodOwner owner = helper.getOwner();
-    assert owner != null;
+    GrMemberOwner owner = helper.getOwner();
     PsiMethod[] methods = ArrayUtil.mergeArrays(owner.getAllMethods(), new PsiMethod[]{method}, PsiMethod.class);
     final Map<PsiMethod, List<PsiMethod>> map = DuplicatesUtil.factorDuplicates(methods, new TObjectHashingStrategy<PsiMethod>() {
       public int computeHashCode(PsiMethod method) {
@@ -105,9 +104,9 @@ public class ExtractMethodUtil {
         PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass == null) return true;
         String message = containingClass instanceof GroovyScriptClass ?
-            GroovyRefactoringBundle.message("method.is.alredy.defined.in.script", GroovyRefactoringUtil.getMethodSignature(method),
+            GroovyRefactoringBundle.message("method.is.already.defined.in.script", GroovyRefactoringUtil.getMethodSignature(method),
                 CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName())) :
-            GroovyRefactoringBundle.message("method.is.alredy.defined.in.class", GroovyRefactoringUtil.getMethodSignature(method),
+            GroovyRefactoringBundle.message("method.is.already.defined.in.class", GroovyRefactoringUtil.getMethodSignature(method),
                 CommonRefactoringUtil.htmlEmphasize(containingClass.getQualifiedName()));
         conflicts.add(message);
       }
@@ -317,12 +316,12 @@ public class ExtractMethodUtil {
   }
 
   @Nullable
-  static GrMethodOwner getMethodOwner(GrStatement statement) {
+  static GrMemberOwner getMemberOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
-    while (parent != null && !(parent instanceof GrMethodOwner) && !(parent instanceof PsiFile)) {
+    while (parent != null && !(parent instanceof GrMemberOwner) && !(parent instanceof PsiFile)) {
       parent = parent.getParent();
     }
-    return parent instanceof GrMethodOwner ? ((GrMethodOwner) parent) : null;
+    return parent instanceof GrMemberOwner ? ((GrMemberOwner) parent) : null;
   }
 
   @Nullable
