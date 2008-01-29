@@ -25,6 +25,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -40,11 +41,6 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
       }
 
     };
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public String getDisplayName() {
@@ -73,7 +69,8 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
     return testObject != null && testObject.isConfiguredByElement(unitConfiguration, location.getPsiElement());
   }
 
-  public String getComponentName() {
+  @NotNull
+  public String getId() {
     return "JUnit";
   }
 

@@ -12,6 +12,7 @@ import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.execution.*;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.process.ProcessAdapter;
@@ -43,6 +44,7 @@ import com.intellij.util.PathUtil;
 import com.theoryinpractice.testng.model.*;
 import com.theoryinpractice.testng.ui.TestNGConsoleView;
 import com.theoryinpractice.testng.util.TestNGUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.TestNG;
 import org.testng.TestNGCommandLineArgs;
@@ -100,7 +102,7 @@ public class TestNGRunnableState extends JavaCommandLineState
   }
 
   @Override
-  public ExecutionResult execute() throws ExecutionException {
+  public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
     final TestNGConsoleView console = new TestNGConsoleView(config, runnerSettings, myConfigurationPerRunnerSettings);
     ProcessHandler processHandler = startProcess();
     processHandler.addProcessListener(new ProcessAdapter()

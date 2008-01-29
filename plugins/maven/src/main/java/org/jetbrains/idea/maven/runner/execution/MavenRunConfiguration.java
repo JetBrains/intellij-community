@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.runner.execution;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
@@ -46,7 +46,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
     return null;
   }
 
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(JavaProgramRunner runner) {
+  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
     return null;
   }
 

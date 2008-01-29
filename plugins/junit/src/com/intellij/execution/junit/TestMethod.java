@@ -50,7 +50,7 @@ class TestMethod extends TestObject {
   }
 
   protected void addJUnit4Parameter(final JUnitConfiguration.Data data, Project project) {
-    Location<PsiClass> classLocation = PsiLocation.fromClassQualifiedName(project, data.getMainClassPsiName());
+    Location<PsiClass> classLocation = PsiClassLocationUtil.fromClassQualifiedName(project, data.getMainClassPsiName());
     PsiClass aClass = classLocation.getPsiElement();
     final String methodName = data.getMethodName();
     PsiMethod[] methods = aClass.findMethodsByName(methodName, true);
@@ -100,13 +100,13 @@ class TestMethod extends TestObject {
     if (method == null) return false;
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     return
-      Comparing.equal(ExecutionUtil.getRuntimeQualifiedName(aClass), data.getMainClassName()) &&
+      Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), data.getMainClassName()) &&
       Comparing.equal(method.getName(), data.getMethodName());
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
-    final RunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
+    final JavaRunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     final String testClass = data.getMainClassName();
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, ExecutionBundle.message("no.test.class.specified.error.text"));

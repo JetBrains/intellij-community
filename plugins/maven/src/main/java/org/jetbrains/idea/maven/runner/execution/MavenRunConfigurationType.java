@@ -21,8 +21,8 @@ import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
 import org.jetbrains.idea.maven.state.MavenProjectsState;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -61,14 +61,8 @@ public class MavenRunConfigurationType implements LocatableConfigurationType {
 
   @NonNls
   @NotNull
-  public String getComponentName() {
+  public String getId() {
     return "MavenRunConfiguration";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public static String generateName(Project project, MavenRunnerParameters runnerParameters) {

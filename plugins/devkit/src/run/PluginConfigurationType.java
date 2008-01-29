@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
@@ -78,14 +79,9 @@ public class PluginConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[] {myFactory};
   }
 
-  public String getComponentName() {
+  @NotNull
+  public String getId() {
     return "#org.jetbrains.idea.devkit.run.PluginConfigurationType";
-  }
-
-  public void initComponent() {
-  }
-
-  public void disposeComponent() {
   }
 
   public String getVmParameters() {

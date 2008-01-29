@@ -17,7 +17,7 @@
 package com.intellij.execution.junit2.info;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
+import com.intellij.execution.PsiClassLocationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 
@@ -39,7 +39,7 @@ public class PsiClassLocator implements PsiLocator {
   }
 
   public Location<PsiClass> getLocation(final Project project) {
-    return PsiLocation.fromClassQualifiedName(project, getQualifiedName());
+    return PsiClassLocationUtil.fromClassQualifiedName(project, getQualifiedName());
   }
 
   public String getPackage() {

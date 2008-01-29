@@ -17,11 +17,7 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
-import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiClass;
@@ -43,7 +39,7 @@ class TestClass extends TestObject {
     final JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     RunConfigurationModule module = myConfiguration.getConfigurationModule();
     configureModule(myJavaParameters, module, data.getMainClassName());
-    Location<PsiClass> classLocation = PsiLocation.fromClassQualifiedName(module.getProject(), data.getMainClassPsiName());
+    Location<PsiClass> classLocation = PsiClassLocationUtil.fromClassQualifiedName(module.getProject(), data.getMainClassPsiName());
     if (JUnitUtil.isJUnit4TestClass(classLocation.getPsiElement())) {
       myJavaParameters.getProgramParametersList().add(JUnitStarter.JUNIT4_PARAMETER);
     }
@@ -51,7 +47,7 @@ class TestClass extends TestObject {
   }
 
   public String suggestActionName() {
-    return ExecutionUtil.shortenName(ExecutionUtil.getShortClassName(myConfiguration.getPersistentData().MAIN_CLASS_NAME), 0);
+    return ExecutionUtil.shortenName(JavaExecutionUtil.getShortClassName(myConfiguration.getPersistentData().MAIN_CLASS_NAME), 0);
   }
 
   public RefactoringElementListener getListener(final PsiElement element, final JUnitConfiguration configuration) {
@@ -68,13 +64,13 @@ class TestClass extends TestObject {
       // 'test class' configuration is not equal to the 'test method' configuration!
       return false;
     }
-    return Comparing.equal(ExecutionUtil.getRuntimeQualifiedName(aClass), configuration.getPersistentData().getMainClassName());
+    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), configuration.getPersistentData().getMainClassName());
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
     final String testClassName = myConfiguration.getPersistentData().getMainClassName();
-    final RunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
+    final JavaRunConfigurationModule configurationModule = myConfiguration.getConfigurationModule();
     final PsiClass testClass = configurationModule.checkModuleAndClassName(testClassName, ExecutionBundle.message("no.test.class.specified.error.text"));
     if (!JUnitUtil.isTestClass(testClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", testClassName));

@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
@@ -29,7 +29,7 @@ public class TestClassConfigurationProducer extends JUnitConfigurationProducer {
   private PsiClass myTestClass;
 
   protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, final ConfigurationContext context) {
-    location = ExecutionUtil.stepIntoSingleClass(location);
+    location = JavaExecutionUtil.stepIntoSingleClass(location);
     final Project project = location.getProject();
 
     myTestClass = JUnitUtil.getTestClass(location);

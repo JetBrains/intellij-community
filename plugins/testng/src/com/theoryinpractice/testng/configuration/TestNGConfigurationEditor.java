@@ -6,7 +6,7 @@
  */
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit2.configuration.CommonJavaParameters;
 import com.intellij.execution.junit2.configuration.ConfigurationModuleSelector;
@@ -417,7 +417,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       if (psiclass == null) {
         return null;
       } else {
-        return ExecutionUtil.getRuntimeQualifiedName(psiclass);
+        return JavaExecutionUtil.getRuntimeQualifiedName(psiclass);
       }
     }
   }

@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration
+public class TestNGConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider
 {
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
@@ -91,7 +91,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   }
 
   private TestNGConfiguration(String s, Project project, TestData data, ConfigurationFactory factory) {
-    super(s, new RunConfigurationModule(project, false), factory);
+    super(s, new JavaRunConfigurationModule(project, false), factory);
     this.data = data;
     this.project = project;
   }
@@ -126,7 +126,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   @Override
   public Collection<Module> getValidModules() {
     //TODO add handling for package
-    return RunConfigurationModule.getModulesForClass(getProject(), data.getMainClassName());
+    return JavaRunConfigurationModule.getModulesForClass(getProject(), data.getMainClassName());
   }
 
   @Override
@@ -137,7 +137,7 @@ public class TestNGConfiguration extends CoverageEnabledConfiguration implements
   @Override
   public String suggestedName() {
     if (TestType.CLASS.getType().equals(data.TEST_OBJECT)) {
-      String shortName = ExecutionUtil.getShortClassName(data.MAIN_CLASS_NAME);
+      String shortName = JavaExecutionUtil.getShortClassName(data.MAIN_CLASS_NAME);
       return ExecutionUtil.shortenName(shortName, 0);
     }
     if (TestType.PACKAGE.getType().equals(data.TEST_OBJECT)) {

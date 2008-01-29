@@ -18,15 +18,16 @@ package com.intellij.execution.junit2.ui.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionRegistry;
+import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestMethods;
 import com.intellij.execution.junit2.TestProxy;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
-import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategyImpl;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
@@ -93,10 +94,8 @@ public class RerunFailedTestsAction extends AnAction {
     JUnitConfiguration configuration = myModel.getProperties().getConfiguration();
     final TestMethods testMethods = new TestMethods(project, configuration, myRunnerSettings, myConfigurationPerRunnerSettings, failed);
     boolean isDebug = myConsoleProperties.getDebugSession() != null;
-    final JavaProgramRunner defaultRunner = isDebug ? ExecutionRegistry.getInstance().getDebuggerRunner() : ExecutionRegistry.getInstance().getDefaultRunner();
-
     try {
-      final RunProfile profile = new RunProfile() {
+      final RunProfile profile = new ModuleRunProfile() {
         public RunProfileState getState(DataContext context,
                                         RunnerInfo runnerInfo,
                                         RunnerSettings runnerSettings,
@@ -117,8 +116,12 @@ public class RerunFailedTestsAction extends AnAction {
           return Module.EMPTY_ARRAY;
         }
       };
-
-      RunStrategyImpl.getInstance().execute(profile, dataContext, defaultRunner, myRunnerSettings, myConfigurationPerRunnerSettings);
+      
+      final ProgramRunner runner = isDebug ? RunnerRegistry.getInstance().getRunner(DefaultDebugExecutor.EXECUTOR_ID, profile) : RunnerRegistry
+        .getInstance().getRunner(
+        DefaultRunExecutor.EXECUTOR_ID, profile);
+      LOG.assertTrue(runner != null);
+      runner.execute(profile, dataContext, myRunnerSettings, myConfigurationPerRunnerSettings);
     }
     catch (ExecutionException e1) {
       LOG.error(e1);

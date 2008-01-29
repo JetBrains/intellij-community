@@ -21,6 +21,7 @@ import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.DefaultCoverageFileProvider;
 import com.intellij.execution.*;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit2.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.junit2.ui.JUnitTreeConsoleView;
@@ -46,6 +47,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -207,7 +209,7 @@ public abstract class TestObject implements JavaCommandLine {
     return myJavaParameters;
   }
 
-  public ExecutionResult execute() throws ExecutionException {
+  public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler handler = startProcess();
     final ConsoleView consoleView;
 
@@ -251,11 +253,11 @@ public abstract class TestObject implements JavaCommandLine {
         for (final PsiElement element : elements) {
           final String name;
           if (element instanceof PsiClass) {
-            name = ExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
+            name = JavaExecutionUtil.getRuntimeQualifiedName((PsiClass)element);
           }
           else if (element instanceof PsiMethod){
             PsiMethod method = (PsiMethod)element;
-            name = ExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
+            name = JavaExecutionUtil.getRuntimeQualifiedName(method.getContainingClass()) + "," + method.getName();
           }
           else {
             LOG.error("invalid element " + element);

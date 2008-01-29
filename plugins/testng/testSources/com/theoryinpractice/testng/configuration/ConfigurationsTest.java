@@ -8,16 +8,16 @@ import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -37,6 +37,7 @@ import java.io.File;
 public class ConfigurationsTest {
   private TempDirTestFixture myFixture;
   private IdeaProjectTestFixture myProjectFixture;
+  private RunConfigurationRefactoringElementListenerProvider myListenerProvider;
 
 
   @BeforeMethod
@@ -54,12 +55,14 @@ public class ConfigurationsTest {
     javaModuleFixtureBuilder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("src");
     javaModuleFixtureBuilder.addLibrary("testng", PathUtil.getJarPathForClass(AfterMethod.class));
     myProjectFixture.setUp();
-    ((RunManagerImpl)RunManagerEx.getInstanceEx(myProjectFixture.getProject())).installRefactoringListener();
+
+    myListenerProvider = new RunConfigurationRefactoringElementListenerProvider(myProjectFixture.getProject());
+    myListenerProvider.projectOpened();
   }
 
   @AfterMethod
   public void tearDown() throws Exception {
-    ((RunManagerImpl)RunManagerEx.getInstanceEx(myProjectFixture.getProject())).uninstallRefactoringListener();
+    myListenerProvider.projectClosed();
     myProjectFixture.tearDown();
     myProjectFixture = null;
     myFixture.tearDown();

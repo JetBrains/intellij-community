@@ -27,6 +27,7 @@
     <configurationProducer implementation="com.intellij.execution.junit.TestMethodConfigurationProducer"/>
     <deadCode implementation="com.intellij.execution.junit2.inspection.JUnitUnusedCodeExtension"/>
     <testFramework implementation="com.intellij.execution.junit.JUnitTestFramework"/>
+    <configurationType implementation="com.intellij.execution.junit.JUnitConfigurationType"/>
   </extensions>
   <application-components>
     <component>

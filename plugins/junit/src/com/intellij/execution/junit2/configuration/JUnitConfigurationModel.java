@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit2.configuration;
 
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.openapi.module.Module;
@@ -77,7 +77,7 @@ public class JUnitConfigurationModel {
   public void apply(final Module module, final JUnitConfiguration configuration) {
     final boolean shouldUpdateName = configuration.isGeneratedName();
     applyTo(configuration.getPersistentData(), module);
-    if (shouldUpdateName && !ExecutionUtil.isNewName(configuration.getName())) {
+    if (shouldUpdateName && !JavaExecutionUtil.isNewName(configuration.getName())) {
       configuration.setGeneratedName();
     }
   }

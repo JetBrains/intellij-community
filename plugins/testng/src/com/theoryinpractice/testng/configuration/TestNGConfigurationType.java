@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.theoryinpractice.testng.model.TestData;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -71,14 +72,9 @@ public class TestNGConfigurationType implements LocatableConfigurationType
         return new ConfigurationFactory[] {myFactory};
     }
 
-    public String getComponentName() {
+    @NotNull
+    public String getId() {
         return "TestNG";
-    }
-
-    public void initComponent() {
-    }
-
-    public void disposeComponent() {
     }
 
 }

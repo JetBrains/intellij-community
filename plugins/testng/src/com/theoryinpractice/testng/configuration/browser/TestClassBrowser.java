@@ -1,6 +1,6 @@
 package com.theoryinpractice.testng.configuration.browser;
 
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.junit2.configuration.BrowseModuleValueActionListener;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
@@ -29,12 +29,12 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
 
   @Override
   protected String showDialog() {
-    com.intellij.ide.util.TreeClassChooser.ClassFilterWithScope filter;
+    TreeClassChooser.ClassFilterWithScope filter;
     try {
       filter = getFilter();
     }
     catch (MessageInfoException e) {
-      com.intellij.openapi.ui.ex.MessagesEx.MessageInfo message = e.getMessageInfo();
+      MessagesEx.MessageInfo message = e.getMessageInfo();
       message.showNow();
       return null;
     }
@@ -46,7 +46,7 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
       return null;
     } else {
       onClassChoosen(psiclass);
-      return ExecutionUtil.getRuntimeQualifiedName(psiclass);
+      return JavaExecutionUtil.getRuntimeQualifiedName(psiclass);
     }
   }
 

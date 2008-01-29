@@ -49,7 +49,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration {
+public class JUnitConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit.JUnitConfiguration");
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
 
@@ -68,7 +68,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
   }
 
   private JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
-    super(name, new RunConfigurationModule(project, false), configurationFactory);
+    super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
     myData = data;
   }
 
@@ -140,7 +140,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
       //ignore
     }
 
-    return RunConfigurationModule.getModulesForClass(getProject(), myData.getMainClassName());
+    return JavaRunConfigurationModule.getModulesForClass(getProject(), myData.getMainClassName());
   }
 
   protected ModuleBasedConfiguration createInstance() {
@@ -379,18 +379,18 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
       }
     }
 
-    public boolean isGeneratedName(final String name, final RunConfigurationModule configurationModule) {
+    public boolean isGeneratedName(final String name, final JavaRunConfigurationModule configurationModule) {
       if (TEST_OBJECT == null) return true;
       if ((TEST_CLASS.equals(TEST_OBJECT) || TEST_METHOD.equals(TEST_OBJECT)) && getMainClassName().length() == 0) {
-        return ExecutionUtil.isNewName(name);
+        return JavaExecutionUtil.isNewName(name);
       }
       if (TEST_METHOD.equals(TEST_OBJECT) && getMethodName().length() == 0) {
-        return ExecutionUtil.isNewName(name);
+        return JavaExecutionUtil.isNewName(name);
       }
       return Comparing.equal(name, getGeneratedName(configurationModule));
     }
 
-    public String getGeneratedName(final RunConfigurationModule configurationModule) {
+    public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT)) {
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = getPackageName();
@@ -405,7 +405,7 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
         }
         return packageName;
       }
-      final String className = ExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
+      final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName(), configurationModule);
       if (TEST_METHOD.equals(TEST_OBJECT)) {
         return className + '.' + getMethodName();
       }
@@ -435,10 +435,10 @@ public class JUnitConfiguration extends CoverageEnabledConfiguration implements 
     }
 
     public Module setMainClass(final PsiClass testClass) {
-      MAIN_CLASS_NAME = ExecutionUtil.getRuntimeQualifiedName(testClass);
+      MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(testClass);
       PsiPackage containingPackage = JUnitUtil.getContainingPackage(testClass);
       PACKAGE_NAME = containingPackage != null ? containingPackage.getQualifiedName() : "";
-      return ExecutionUtil.findModule(testClass);
+      return JavaExecutionUtil.findModule(testClass);
     }
 
     public void setScope(final TestSearchScope scope) {

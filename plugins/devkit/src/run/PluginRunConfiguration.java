@@ -19,7 +19,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +64,7 @@ public class PluginRunConfiguration extends RunConfigurationBase {
     return null;
   }
 
-  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(JavaProgramRunner runner) {
+  public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
     return null;
   }
 
