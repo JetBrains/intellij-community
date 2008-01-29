@@ -61,7 +61,8 @@ public class CreateFieldFromUsageFix implements IntentionAction {
 
   @NotNull
   public String getText() {
-    return GroovyBundle.message("create.field.from.usage", myRefExpression.getReferenceName());
+    String key = myTargetClass instanceof GroovyScriptClass ? "create.variable.from.usage" : "create.field.from.usage";
+    return GroovyBundle.message(key, myRefExpression.getReferenceName());
   }
 
   @NotNull
@@ -96,7 +97,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
           TextRange range = top.getTextRange();
           if (range.getStartOffset() > offset) break;
 
-          if (top instanceof GrVariableDeclaration && range.contains(offset)) {
+          if (top instanceof GrVariableDeclaration && range.getStartOffset() <= offset && offset <= range.getEndOffset()) {
             anchor = (GrMembersDeclaration) top;
             break;
           }
