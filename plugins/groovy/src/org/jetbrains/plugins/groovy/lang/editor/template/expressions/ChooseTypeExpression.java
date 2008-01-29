@@ -46,6 +46,8 @@ public class ChooseTypeExpression implements Expression {
 
   private LookupItem[] createItems(TypeConstraint[] constraints) {
     Set<LookupItem> result = new LinkedHashSet<LookupItem>();
+    LookupItemUtil.addLookupItem(result, "def", "");
+
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof TypeEquals) {
         LookupItemUtil.addLookupItem(result, constraint.getType(), "");
