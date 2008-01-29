@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
@@ -60,6 +61,17 @@ public class GroovyExpectedTypesUtil {
         }
       }
       makeDefault(returnStatement);
+    }
+
+    public void visitVariable(GrVariable variable) {
+      if (myExpression.equals(variable.getInitializerGroovy())) {
+        PsiType type = variable.getTypeGroovy();
+        if (type != null) {
+          myResult = new TypeConstraint[] {new SubtypeConstraint(type, type)};
+          return;
+        }
+      }
+      makeDefault(variable);
     }
 
     public void visitAssignmentExpression(GrAssignmentExpression expression) {

@@ -18,11 +18,13 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -71,12 +73,14 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     TextRange range = element.getTextRange();
     int textOffset = range.getStartOffset();
 
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, targetFile.getVirtualFile(), textOffset);
+    VirtualFile vFile = targetFile.getVirtualFile();
+    assert vFile != null;
+    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, textOffset);
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(project));
+    PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
         myRefExpression.getReferenceName(), null, type);
     fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl);
@@ -86,7 +90,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
     TemplateBuilder builder = new TemplateBuilder(fieldDecl);
     builder.replaceElement(typeElement, expr);
-    //builder.setEndVariableAfter(fieldDecl.getVariables()[0].getNameIdentifierGroovy());
+    fieldDecl = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(fieldDecl);
     Template template = builder.buildTemplate();
 
     Editor newEditor = positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);
