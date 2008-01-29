@@ -177,7 +177,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Nullable
-  private static XmlAttribute insertTaglibDeclaration(final XmlFile file, final String namespace, final String prefix)
+  public static XmlAttribute insertTaglibDeclaration(final XmlFile file, final String namespace, final String prefix)
     throws IncorrectOperationException {
 
     final Project project = file.getProject();

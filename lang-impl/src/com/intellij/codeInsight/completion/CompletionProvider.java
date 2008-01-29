@@ -6,11 +6,15 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.util.QueryResultSet;
 import com.intellij.patterns.MatchingContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
 public abstract class CompletionProvider<T, V extends CompletionParameters> {
+
   public abstract void addCompletions(@NotNull V parameters, final MatchingContext context, @NotNull QueryResultSet<T> result);
+
+  public void updateActionPresentation(AnActionEvent event) {}  
 }

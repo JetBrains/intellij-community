@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
@@ -40,8 +39,7 @@ public abstract class JspManager {
    * @param context context JSP file.
    * @return map from tag name to the list of namespaces where it is defined.
    */
-  @Nullable
-  public abstract MultiMap<String,String> getPossibleTagNames(@NotNull JspFile context);
+  public abstract Set<String> getAvailableTagNames(@NotNull JspFile context);
 
   @Nullable
   public abstract String getPrefixForNamespace(@NotNull String namespaceUri, final @NotNull JspFile context);
