@@ -15,10 +15,16 @@
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
  * @author ven
@@ -41,6 +47,19 @@ public class GroovyExpectedTypesUtil {
 
     public void visitElement(GroovyPsiElement element) {
       makeDefault(element);
+    }
+
+    public void visitReturnStatement(GrReturnStatement returnStatement) {
+      GrParametersOwner parent = PsiTreeUtil.getParentOfType(returnStatement, GrMethod.class, GrClosableBlock.class);
+      if (parent instanceof GrMethod) {
+        GrTypeElement typeElement = ((GrMethod) parent).getReturnTypeElementGroovy();
+        if (typeElement != null) {
+          PsiType type = typeElement.getType();
+          myResult = new TypeConstraint[] {SubtypeConstraint.create(type)};
+          return;
+        }
+      }
+      makeDefault(returnStatement);
     }
 
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
