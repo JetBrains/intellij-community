@@ -606,14 +606,25 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     private void scheduleInvalidation(final VirtualFile file) {
-      invalidateIndex(file);
+      final List<Runnable> tasks = new ArrayList<Runnable>();
+      invalidateIndex(file, tasks);
+      if (tasks.size() > 0) {
+        adjustInvalidateTasksCount(tasks.size());
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          public void run() {
+            for (Runnable task : tasks) {
+              task.run();
+            }
+          }
+        });
+      }
     }
     
-    private void invalidateIndex(final VirtualFile file) {
+    private void invalidateIndex(final VirtualFile file, final List<Runnable> tasks) {
       if (file.isDirectory()) {
         if (ManagingFS.getInstance().areChildrenLoaded(file)) {
           for (VirtualFile child : file.getChildren()) {
-            invalidateIndex(child);
+            invalidateIndex(child, tasks);
           }
         }
       }
@@ -628,8 +639,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
         if (toUpdate.size() > 0) {
           includeToUpdateSet(file);
           final FileContent fc = new FileContent(file, loadContent(file));
-          adjustInvalidateTasksCount(1);
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          tasks.add(new Runnable() {
             public void run() {
               try {
                 for (String indexId : toUpdate) {
