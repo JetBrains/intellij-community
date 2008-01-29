@@ -41,11 +41,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicReferenceUtils;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyBase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
@@ -69,10 +70,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -696,9 +694,7 @@ public class GroovyAnnotator implements Annotator {
         registerAddImportFixes(refExpr, annotation);
       }
 
-      if (isNeedsDynamic(refExpr) && refExpr.resolve() == null) {
-        addDynamicAnnotation(annotation, refExpr);
-      }
+      registerReferenceFixes(refExpr, annotation);
 
       annotation.setTextAttributes(DefaultHighlighter.UNTYPED_ACCESS);
     } else if (refExprType instanceof PsiClassType && ((PsiClassType) refExprType).resolve() == null) {
@@ -706,8 +702,17 @@ public class GroovyAnnotator implements Annotator {
     }
   }
 
-  private boolean isNeedsDynamic(@NotNull GrReferenceExpression referenceExpression) {
-    PsiClass containingClass = DynamicReferenceUtils.findDynamicValueContainingClass(referenceExpression);
+  private void registerReferenceFixes(GrReferenceExpression refExpr, Annotation annotation) {
+    PsiClass targetClass = QuickfixUtil.findTargetClass(refExpr);
+    if (targetClass != null && isNeedsDynamic(refExpr, targetClass) && refExpr.resolve() == null) {
+      addDynamicAnnotation(annotation, refExpr);
+    }
+    if (targetClass != null && targetClass instanceof GrMemberOwner) {
+      annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+    }
+  }
+
+  private boolean isNeedsDynamic(@NotNull GrReferenceExpression referenceExpression, final @NotNull PsiClass targetClass) {
     final PsiFile containingFile = referenceExpression.getContainingFile();
 
     VirtualFile file;
@@ -719,15 +724,14 @@ public class GroovyAnnotator implements Annotator {
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
 
     if (module == null) return false;
-    if (containingClass == null) return false;
 
-    final String className = containingClass.getQualifiedName();
-    if (className == null) return false;
+    final String qualifiedName = targetClass.getQualifiedName();
+    if (qualifiedName == null) return false;
 
-    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), className, referenceExpression.getName());
+    final Element propertyElement = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), qualifiedName, referenceExpression.getName());
     if (propertyElement != null) return false;
 
-    final Set<PsiClass> supers = GroovyUtils.findAllSupers(containingClass);
+    final Set<PsiClass> supers = GroovyUtils.findAllSupers(targetClass);
     Element superDynamicProperty;
     for (PsiClass aSuper : supers) {
       superDynamicProperty = DynamicPropertiesManager.getInstance(referenceExpression.getProject()).findConcreteDynamicProperty(referenceExpression, module.getName(), aSuper.getQualifiedName(), referenceExpression.getName());
@@ -747,11 +751,11 @@ public class GroovyAnnotator implements Annotator {
     } else return;
 
     Module module = ProjectRootManager.getInstance(referenceExpression.getProject()).getFileIndex().getModuleForFile(file);
-    PsiClass dynamicValueTypeDefinition = DynamicReferenceUtils.findDynamicValueContainingClass(referenceExpression);
+    PsiClass targetClass = QuickfixUtil.findTargetClass(referenceExpression);
 
     if (module == null) return;
 
-    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), dynamicValueTypeDefinition, module.getName());
+    DynamicProperty dynamicProperty = new DynamicPropertyBase(referenceExpression.getName(), targetClass, module.getName());
     annotation.registerFix(new AddDynamicPropertyFix(dynamicProperty, referenceExpression), referenceExpression.getTextRange());
   }
 

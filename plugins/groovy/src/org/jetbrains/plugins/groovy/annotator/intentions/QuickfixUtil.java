@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
+package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -16,9 +16,9 @@ import com.intellij.psi.util.PsiTreeUtil;
  * User: Dmitry.Krasilschikov
  * Date: 20.12.2007
  */
-public class DynamicReferenceUtils {
+public class QuickfixUtil {
   @Nullable
-  public static PsiClass findDynamicValueContainingClass(GrReferenceExpression refExpr) {
+  public static PsiClass findTargetClass(GrReferenceExpression refExpr) {
     final PsiClass psiClass;
     if (refExpr.isQualified()) {
       GrExpression qualifier = refExpr.getQualifierExpression();
