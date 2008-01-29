@@ -5,13 +5,13 @@
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionRegistry;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.ide.IdeView;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -65,6 +66,7 @@ import java.util.TreeSet;
  * @author yole
  */
 public class CreateSnapShotAction extends AnAction {
+  private static final Logger LOG = Logger.getInstance("com.intellij.uiDesigner.snapShooter.CreateSnapShotAction");
   @NonNls private static final String FORM_EXTENSION = ".form";
 
   @Override
@@ -133,8 +135,6 @@ public class CreateSnapShotAction extends AnAction {
       int rc = Messages.showYesNoDialog(project, UIDesignerBundle.message("snapshot.run.prompt"),
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon());
       if (rc == 1) return;
-      final JavaProgramRunner runner = ExecutionRegistry.getInstance().getDefaultRunner();
-
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
       final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
       settings.setNotifyRunnable(new Runnable() {
@@ -156,9 +156,11 @@ public class CreateSnapShotAction extends AnAction {
           });
         }
       });
-
+               
       try {
-        RunStrategy.getInstance().execute(snapshotConfiguration, runner, e.getDataContext());
+        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, appConfig);
+        LOG.assertTrue(runner != null, "Runner MUST not be null!");
+        runner.execute(snapshotConfiguration, e.getDataContext());
       }
       catch (ExecutionException ex) {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.run.error", ex.getMessage()),

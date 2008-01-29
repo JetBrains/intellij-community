@@ -140,7 +140,6 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
       return cmdLine;
     }
 
-
     private void setupExeParams(final Sdk jdk, GeneralCommandLine cmdLine) throws ExecutionException {
       final String jdkPath = jdk != null && jdk.getSdkType() instanceof JavaSdkType ? ((JavaSdkType)jdk.getSdkType()).getBinPath(jdk) : null;
       if (jdkPath == null) {
@@ -269,7 +268,7 @@ public class JavadocConfiguration implements RunProfile, JDOMExternalizable{
     }
 
     protected OSProcessHandler startProcess() throws ExecutionException {
-      final OSProcessHandler handler = super.startProcess();
+      final OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
       ProcessTerminatedListener.attach(handler, myProject, JavadocBundle.message("javadoc.generate.exited"));
       handler.addProcessListener(new ProcessAdapter() {
         public void processTerminated(ProcessEvent event) {

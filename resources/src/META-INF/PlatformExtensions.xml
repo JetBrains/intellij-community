@@ -82,6 +82,9 @@
   <!-- Path Variables -->
   <applicationConfigurable implementation="com.intellij.application.options.pathMacros.PathMacroConfigurable"/>
 
+  <!-- execution -->
+  <executor implementation="com.intellij.execution.executors.DefaultRunExecutor"/>
+
   <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.PlatformFileTypeFactory"/>
   <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>

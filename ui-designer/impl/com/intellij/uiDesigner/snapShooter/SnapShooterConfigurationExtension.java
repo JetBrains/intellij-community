@@ -4,13 +4,13 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
-import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.JavaRunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.components.BaseComponent;
@@ -34,7 +34,7 @@ import java.util.TreeSet;
 /**
  * @author yole
  */
-public class SnapShooterConfigurationExtension implements RunConfigurationExtension {
+public class SnapShooterConfigurationExtension implements JavaRunConfigurationExtension {
   public void updateJavaParameters(final RunConfiguration configuration, final JavaParameters params) {
     if (!(configuration instanceof ApplicationConfiguration)) {
       return;

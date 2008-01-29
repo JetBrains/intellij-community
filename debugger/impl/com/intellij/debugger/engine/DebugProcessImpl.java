@@ -35,7 +35,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.runners.RunStrategyImpl;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.runners.ProgramRunnerUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1536,7 +1537,8 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return mySession.getSearchScope();
   }
 
-  public @Nullable ExecutionResult attachVirtualMachine(final DebuggerSession session,
+  public @Nullable ExecutionResult attachVirtualMachine(final ProgramRunner runner,
+                                                        final DebuggerSession session,
                                                         final RunProfileState state,
                                                         final RemoteConnection remoteConnection,
                                                         boolean pollConnection) throws ExecutionException {
@@ -1552,7 +1554,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
     try {
       synchronized (myProcessListeners) {
-        myExecutionResult = state.execute();
+        myExecutionResult = state.execute(runner);
         if (myExecutionResult == null) {
           fail();
           return null;
@@ -1653,7 +1655,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
                   // this problem to the user
                   SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
-                      RunStrategyImpl.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
+                      ProgramRunnerUtil.handleExecutionError(myProject, state.getRunnerSettings().getRunProfile(), e);
                     }
                   });
                 }

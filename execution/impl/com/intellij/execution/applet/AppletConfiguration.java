@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class AppletConfiguration extends ModuleBasedConfiguration implements SingleClassConfiguration {
+public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements SingleClassConfiguration, RefactoringListenerProvider {
 
   public String MAIN_CLASS_NAME;
   public String HTML_FILE_NAME;
@@ -54,12 +54,12 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
   protected static final String PARAMETER_ELEMENT_NAME = "parameter";
 
   public AppletConfiguration(final String name, final Project project, ConfigurationFactory factory) {
-    super(name, new RunConfigurationModule(project, false), factory);
+    super(name, new JavaRunConfigurationModule(project, false), factory);
   }
 
   public void setMainClass(final PsiClass psiClass) {
-    setMainClassName(ExecutionUtil.getRuntimeQualifiedName(psiClass));
-    setModule(ExecutionUtil.findModule(psiClass));
+    setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
+    setModule(JavaExecutionUtil.findModule(psiClass));
   }
 
   public RunProfileState getState(final DataContext context,
@@ -167,7 +167,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
   }
 
   public Collection<Module> getValidModules() {
-    return RunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
+    return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
   }
 
   public void readExternal(final Element parentNode) throws InvalidDataException {
@@ -203,11 +203,11 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
 
   public String getGeneratedName() {
     if (MAIN_CLASS_NAME == null) return null;
-    return ExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
+    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
   }
 
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    if (HTML_USED) return super.getRefactoringElementListener(element);
+    if (HTML_USED) return null;
     return RefactoringListeners.getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
   }
 
@@ -224,7 +224,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration implements Sin
   }
 
   public String suggestedName() {
-    return ExecutionUtil.shortenName(ExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
+    return ExecutionUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 0);
   }
 
   public void setMainClassName(final String qualifiedName) {

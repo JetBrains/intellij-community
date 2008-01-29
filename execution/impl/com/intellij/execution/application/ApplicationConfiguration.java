@@ -32,12 +32,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ApplicationConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, SingleClassConfiguration {
+public class ApplicationConfiguration extends CoverageEnabledConfiguration implements RunJavaConfiguration, SingleClassConfiguration, RefactoringListenerProvider {
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.application.ApplicationConfiguration");
 
   public String MAIN_CLASS_NAME;
@@ -53,12 +54,12 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   public boolean PASS_PARENT_ENVS = true;
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
-    super(name, new RunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
+    super(name, new JavaRunConfigurationModule(project, true), applicationConfigurationType.getConfigurationFactories()[0]);
   }
 
   public void setMainClass(final PsiClass psiClass) {
-    setMainClassName(ExecutionUtil.getRuntimeQualifiedName(psiClass));
-    setModule(ExecutionUtil.findModule(psiClass));
+    setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
+    setModule(JavaExecutionUtil.findModule(psiClass));
   }
 
   public RunProfileState getState(final DataContext context,
@@ -79,11 +80,12 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
     return group;
   }
 
+  @Nullable
   public String getGeneratedName() {
     if (MAIN_CLASS_NAME == null) {
       return null;
     }
-    return ExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
+    return JavaExecutionUtil.getPresentableClassName(MAIN_CLASS_NAME, getConfigurationModule());
   }
 
   public void setGeneratedName() {
@@ -95,19 +97,20 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
       getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
   }
 
+  @Nullable
   public PsiClass getMainClass() {
     return getConfigurationModule().findClass(MAIN_CLASS_NAME);
   }
 
   public boolean isGeneratedName() {
     if (MAIN_CLASS_NAME == null || MAIN_CLASS_NAME.length() == 0) {
-      return ExecutionUtil.isNewName(getName());
+      return JavaExecutionUtil.isNewName(getName());
     }
     return Comparing.equal(getName(), getGeneratedName());
   }
 
   public String suggestedName() {
-    return ExecutionUtil.shortenName(ExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
+    return ExecutionUtil.shortenName(JavaExecutionUtil.getShortClassName(MAIN_CLASS_NAME), 6) + ".main()";
   }
 
   public void setMainClassName(final String qualifiedName) {
@@ -124,7 +127,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
         throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.path.is.not.valid.jre.home.error.mesage", ALTERNATIVE_JRE_PATH));
       }
     }
-    final RunConfigurationModule configurationModule = getConfigurationModule();
+    final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(MAIN_CLASS_NAME, ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", MAIN_CLASS_NAME));
@@ -165,7 +168,7 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
   }
 
   public Collection<Module> getValidModules() {
-    return RunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
+    return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
   }
 
   protected ModuleBasedConfiguration createInstance() {
@@ -214,7 +217,9 @@ public class ApplicationConfiguration extends CoverageEnabledConfiguration imple
 
       params.setMainClass(MAIN_CLASS_NAME);
       for(RunConfigurationExtension ext: Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
-        ext.updateJavaParameters(ApplicationConfiguration.this, params);
+        if (ext instanceof JavaRunConfigurationExtension) {
+          ((JavaRunConfigurationExtension)ext).updateJavaParameters(ApplicationConfiguration.this, params);
+        }
       }
 
       if (!(getRunnerSettings().getData() instanceof DebuggingRunnerData) && isCoverageEnabled()) {

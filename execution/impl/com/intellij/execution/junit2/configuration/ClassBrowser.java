@@ -1,7 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserDialog;
@@ -9,12 +9,12 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ClassBrowser extends BrowseModuleValueActionListener {
   private final String myTitle;
@@ -24,6 +24,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     myTitle = title;
   }
 
+  @Nullable
   protected String showDialog() {
     final TreeClassChooser.ClassFilterWithScope classFilter;
     try {
@@ -40,7 +41,7 @@ public abstract class ClassBrowser extends BrowseModuleValueActionListener {
     final PsiClass psiClass = dialog.getSelectedClass();
     if (psiClass == null) return null;
     onClassChoosen(psiClass);
-    return ExecutionUtil.getRuntimeQualifiedName(psiClass);
+    return JavaExecutionUtil.getRuntimeQualifiedName(psiClass);
   }
 
   protected abstract TreeClassChooser.ClassFilterWithScope getFilter() throws NoFilterException;

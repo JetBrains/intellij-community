@@ -5,12 +5,12 @@ import com.intellij.compiler.PsiClassWriter;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionRegistry;
+import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.JavaProgramRunner;
-import com.intellij.execution.runners.RunStrategyImpl;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -277,18 +277,17 @@ public final class PreviewFormAction extends AnAction{
     }
 
     try {
-      JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
-      RunStrategyImpl.getInstance().execute(
-        new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl())),
-        new DataContext() {   // IDEADEV-3596
-          public Object getData(String dataId) {
-            if (dataId.equals(DataConstants.PROJECT)) {
-              return module.getProject();
-            }
-            return dataContext.getData(dataId);
+      final RunProfile profile = new MyRunProfile(module, parameters, UIDesignerBundle.message("progress.preview.started", formFile.getPresentableUrl()));
+      ProgramRunner defaultRunner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
+      LOG.assertTrue(defaultRunner != null);
+      defaultRunner.execute(profile, new DataContext() {   // IDEADEV-3596
+        public Object getData(String dataId) {
+          if (dataId.equals(DataConstants.PROJECT)) {
+            return module.getProject();
           }
-        },
-        defaultRunner, null, null);
+          return dataContext.getData(dataId);
+        }
+      }, null, null);
     }
     catch (ExecutionException e) {
       Messages.showErrorDialog(
@@ -299,7 +298,7 @@ public final class PreviewFormAction extends AnAction{
     }
   }
 
-  private static final class MyRunProfile implements RunProfile {
+  private static final class MyRunProfile implements ModuleRunProfile {
     private final Module myModule;
     private final JavaParameters myParams;
     private final String myStatusbarMessage;
@@ -319,9 +318,9 @@ public final class PreviewFormAction extends AnAction{
           return myParams;
         }
 
-        public ExecutionResult execute() throws ExecutionException {
+        public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
           try {
-            return super.execute();
+            return super.execute(runner);
           }
           finally {
             final Project project = myModule.getProject();

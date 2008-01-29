@@ -1,7 +1,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.RunJavaConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -66,7 +66,7 @@ public class JavaParametersUtil {
                                      final boolean classMustHaveSource) throws CantRunException {
     final Module module = configurationModule.getModule();
     if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
-    final PsiClass psiClass = ExecutionUtil.findMainClass(module, mainClassName);
+    final PsiClass psiClass = JavaExecutionUtil.findMainClass(module, mainClassName);
     if (psiClass == null)  {
       if ( ! classMustHaveSource ) return JavaParameters.JDK_AND_CLASSES_AND_TESTS;
       throw CantRunException.classNotFound(mainClassName, module);

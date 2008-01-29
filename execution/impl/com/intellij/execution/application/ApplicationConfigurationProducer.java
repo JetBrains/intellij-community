@@ -1,6 +1,6 @@
 package com.intellij.execution.application;
 
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
+import org.jetbrains.annotations.Nullable;
 
 public class ApplicationConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
   private PsiElement myPsiElement = null;
@@ -25,7 +26,7 @@ public class ApplicationConfigurationProducer extends RuntimeConfigurationProduc
   }
 
   protected RunnerAndConfigurationSettingsImpl createConfigurationByElement(Location location, final ConfigurationContext context) {
-    location = ExecutionUtil.stepIntoSingleClass(location);
+    location = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiElement element = location.getPsiElement();
 
     PsiElement currentElement = element;
@@ -48,13 +49,14 @@ public class ApplicationConfigurationProducer extends RuntimeConfigurationProduc
     final Project project = aClass.getProject();
     RunnerAndConfigurationSettingsImpl settings = cloneTemplateConfiguration(project, context);
     final ApplicationConfiguration configuration = (ApplicationConfiguration)settings.getConfiguration();
-    configuration.MAIN_CLASS_NAME = ExecutionUtil.getRuntimeQualifiedName(aClass);
+    configuration.MAIN_CLASS_NAME = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
     configuration.setName(configuration.getGeneratedName());
-    configuration.setModule(ExecutionUtil.findModule(aClass));
+    configuration.setModule(JavaExecutionUtil.findModule(aClass));
     copyStepsBeforeRun(project, configuration);
     return settings;
   }
 
+  @Nullable
   private static PsiMethod findMain(PsiElement element) {
     PsiMethod method;
     while ((method = getContainingMethod(element)) != null)

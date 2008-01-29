@@ -1,0 +1,35 @@
+package com.intellij.execution.runners;
+
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.ExecutionBundle;
+
+/**
+ * @author spleaner
+ */
+public class ProgramRunnerUtil {
+  private static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ProgramRunnerUtil");
+
+  private ProgramRunnerUtil() {
+  }
+
+  public static void handleExecutionError(final Project project, final RunProfile runProfile, final ExecutionException e) {
+    if (e instanceof RunCanceledByUserException) {
+      return;
+    }
+
+    String message = ExecutionBundle.message("error.running.configuration.with.error.error.message", runProfile.getName(), e.getMessage());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.assertTrue(false, message);
+    }
+    else {
+      Messages.showErrorDialog(project, message, ExecutionBundle.message("run.error.message.title"));
+    }
+  }
+
+}

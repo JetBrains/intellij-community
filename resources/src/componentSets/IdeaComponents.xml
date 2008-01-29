@@ -70,6 +70,12 @@
       <implementation-class>com.intellij.codeInsight.problems.DefaultWolfFilter</implementation-class>
       <skipForDummyProject/>
     </component>
+
+    <!-- execution -->
+    <component>
+      <implementation-class>com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>

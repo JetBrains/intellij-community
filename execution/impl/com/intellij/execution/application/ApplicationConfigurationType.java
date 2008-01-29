@@ -3,7 +3,7 @@ package com.intellij.execution.application;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
@@ -11,8 +11,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -28,11 +30,6 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
       }
 
     };
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public String getDisplayName() {
@@ -60,7 +57,7 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
     if (aClass == null) {
       return false;
     }
-    return Comparing.equal(ExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME);
+    return Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), ((ApplicationConfiguration)configuration).MAIN_CLASS_NAME);
   }
 
   public static PsiClass getMainClass(PsiElement element) {
@@ -85,13 +82,15 @@ public class ApplicationConfigurationType implements LocatableConfigurationType 
   }
 
 
-  @NotNull @NonNls
-  public String getComponentName() {
+  @NotNull
+  @NonNls
+  public String getId() {
     return "Application";
   }
 
+  @Nullable
   public static ApplicationConfigurationType getInstance() {
-    return ApplicationManager.getApplication().getComponent(ApplicationConfigurationType.class);
+    return ContainerUtil.findInstance(Extensions.getExtensions(CONFIGURATION_TYPE_EP), ApplicationConfigurationType.class);
   }
 
 }

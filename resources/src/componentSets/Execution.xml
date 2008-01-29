@@ -1,19 +1,12 @@
 <components>
   <application-components>
     <component>
-      <implementation-class>com.intellij.execution.application.ApplicationConfigurationType</implementation-class>
+      <interface-class>com.intellij.execution.ExecutorRegistry</interface-class>
+      <implementation-class>com.intellij.execution.ExecutorRegistryImpl</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.execution.applet.AppletConfigurationType</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.execution.remote.RemoteConfigurationType</implementation-class>
-    </component>
-
-    <!--execution-->
-    <component>
-      <interface-class>com.intellij.execution.ExecutionRegistry</interface-class>
-      <implementation-class>com.intellij.execution.impl.ExecutionRegistryImpl</implementation-class>
+      <interface-class>com.intellij.execution.RunnerRegistry</interface-class>
+      <implementation-class>com.intellij.execution.impl.RunnerRegistryImpl</implementation-class>
     </component>
   </application-components>
 

@@ -8,10 +8,12 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -27,11 +29,6 @@ public class RemoteConfigurationType implements ConfigurationType {
       }
 
     };
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() {
   }
 
   public String getDisplayName() {
@@ -51,12 +48,13 @@ public class RemoteConfigurationType implements ConfigurationType {
   }
 
   @NotNull
-  public String getComponentName() {
+  public String getId() {
     return "Remote";
   }
 
+  @Nullable
   public static RemoteConfigurationType getInstance() {
-    return ApplicationManager.getApplication().getComponent(RemoteConfigurationType.class);
+    return ContainerUtil.findInstance(Extensions.getExtensions(CONFIGURATION_TYPE_EP), RemoteConfigurationType.class);
   }
 
 }

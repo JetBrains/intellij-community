@@ -40,7 +40,7 @@ public class JUnitUtil {
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     return parameters.length == 0;
   }
-                                         
+
   public static boolean isTestMethod(final Location<? extends PsiMethod> location) {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = psiMethod.getContainingClass();
@@ -126,7 +126,7 @@ public class JUnitUtil {
   private static PsiClass getTestCaseClassOrNull(final Location<?> location) {
     final Location<PsiClass> ancestorOrSelf = location.getAncestorOrSelf(PsiClass.class);
     final PsiClass aClass = ancestorOrSelf.getPsiElement();
-    Module module = ExecutionUtil.findModule(aClass);
+    Module module = JavaExecutionUtil.findModule(aClass);
     if (module == null) return null;
     GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(module, true);
     return getTestCaseClassOrNull(scope, module.getProject());

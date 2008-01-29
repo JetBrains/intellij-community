@@ -28,7 +28,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.CommonActionsManager;
@@ -50,9 +50,9 @@ import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collection;
 
 public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
@@ -74,7 +74,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   private final MainWatchPanel myWatchPanel;
 
   private ExecutionConsole myConsole;
-  private JavaProgramRunner myRunner;
+  private ProgramRunner myRunner;
   private RunProfile myConfiguration;
   private volatile DebuggerSession myDebuggerSession;
 
@@ -111,7 +111,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
               if (debuggerSettings.HIDE_DEBUGGER_ON_PROCESS_TERMINATION) {
                 try {
-                  ExecutionManager.getInstance(getProject()).getContentManager().hideRunContent(myRunner, myRunContentDescriptor);
+                  ExecutionManager.getInstance(getProject()).getContentManager().hideRunContent(myRunner.getInfo(), myRunContentDescriptor);
                 }
                 catch (NullPointerException e) {
                   //if we can get closeProcess after the project have been closed
@@ -380,7 +380,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
 
     group.addSeparator();
 
-    group.add(new CloseAction(myRunner, contentDescriptor, getProject()));
+    group.add(new CloseAction(myRunner.getInfo(), contentDescriptor, getProject()));
     group.add(new ContextHelpAction(myRunner.getInfo().getHelpId()));
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, group, false);
@@ -483,7 +483,7 @@ public class DebuggerSessionTab implements LogConsoleManager, Disposable {
   }
 
   public RunContentDescriptor attachToSession(final DebuggerSession session,
-                                              final JavaProgramRunner runner,
+                                              final ProgramRunner runner,
                                               final RunProfile runProfile,
                                               final RunnerSettings runnerSettings,
                                               final ConfigurationPerRunnerSettings configurationPerRunnerSettings)

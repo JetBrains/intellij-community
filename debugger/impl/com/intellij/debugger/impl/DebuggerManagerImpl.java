@@ -11,9 +11,8 @@ import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.JavaParameters;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -155,7 +154,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   }
 
 
-  public DebuggerSession attachVirtualMachine(String sessionName,
+  public DebuggerSession attachVirtualMachine(ProgramRunner runner,
+                                              ModuleRunProfile profile,
                                               RunProfileState state,
                                               RemoteConnection remoteConnection,
                                               boolean pollConnection
@@ -179,9 +179,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         debugProcess.removeDebugProcessListener(this);
       }
     });
-    DebuggerSession session = new DebuggerSession(sessionName, debugProcess);
+    DebuggerSession session = new DebuggerSession(profile.getName(), debugProcess);
 
-    final ExecutionResult executionResult = session.attach(state, remoteConnection, pollConnection);
+    final ExecutionResult executionResult = session.attach(runner, profile, state, remoteConnection, pollConnection);
     if (executionResult == null) {
       return null;
     }

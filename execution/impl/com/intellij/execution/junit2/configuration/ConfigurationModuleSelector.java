@@ -1,7 +1,7 @@
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -77,8 +77,8 @@ public class ConfigurationModuleSelector {
     return myProject;
   }
 
-  public RunConfigurationModule getConfigurationModule() {
-    final RunConfigurationModule configurationModule = new RunConfigurationModule(getProject(), false);
+  public JavaRunConfigurationModule getConfigurationModule() {
+    final JavaRunConfigurationModule configurationModule = new JavaRunConfigurationModule(getProject(), false);
     configurationModule.setModule(myModules.getSelectedItem());
     return configurationModule;
   }

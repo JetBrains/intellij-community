@@ -17,10 +17,12 @@ import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -306,11 +308,11 @@ public class DebuggerSession {
     return getContextManager().getContext().getSuspendContext();
   }
 
-  protected @Nullable ExecutionResult attach(final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
-    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(this, state, remoteConnection, pollConnection);
+  protected @Nullable ExecutionResult attach(@NotNull final ProgramRunner runner, final ModuleRunProfile profile, final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
+    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(runner, this, state, remoteConnection, pollConnection);
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);
-    final Module[] modules = state.getModulesToCompile();
+    final Module[] modules = profile.getModules();
     if (modules == null || modules.length == 0) {
       mySearchScope = GlobalSearchScope.allScope(getProject());
     }

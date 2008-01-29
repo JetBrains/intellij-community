@@ -2,6 +2,7 @@ package com.intellij.execution.junit2.configuration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,6 +32,7 @@ public abstract class BrowseModuleValueActionListener implements ActionListener 
 
   public TextFieldWithBrowseButton getField() { return myField; }
 
+  @Nullable
   protected abstract String showDialog();
 
   public Project getProject() { return myProject; }

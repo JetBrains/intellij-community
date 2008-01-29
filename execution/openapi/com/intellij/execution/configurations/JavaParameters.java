@@ -17,6 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -33,6 +34,8 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 public class JavaParameters {
+  public static final DataKey<JavaParameters> JAVA_PARAMETERS = DataKey.create("javaParameters");
+
   private Sdk myJdk;
   private final PathsList myClassPath = new PathsList();
   private String myMainClass;

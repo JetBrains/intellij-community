@@ -12,10 +12,11 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.remote.RemoteConfiguration;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -48,7 +49,7 @@ public class RemoteStateState implements RemoteState {
     return myConfigurationSettings;
   }
 
-  public ExecutionResult execute() throws ExecutionException {
+  public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
     ConsoleViewImpl consoleView = new ConsoleViewImpl(myProject);
     RemoteDebugProcessHandler process = new RemoteDebugProcessHandler(myProject);
     consoleView.attachToProcess(process);

@@ -7,8 +7,10 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
@@ -33,7 +35,8 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
   public abstract void addDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
   public abstract void removeDebuggerManagerListener(DebuggerManagerListener debuggerManagerListener);
 
-  public abstract DebuggerSession attachVirtualMachine(String sessionName,
+  public abstract DebuggerSession attachVirtualMachine(ProgramRunner runner,
+                                                       ModuleRunProfile profile,
                                                        RunProfileState state,
                                                        RemoteConnection connection,
                                                        boolean pollConnection

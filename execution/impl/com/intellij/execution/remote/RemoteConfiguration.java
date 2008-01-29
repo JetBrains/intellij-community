@@ -22,7 +22,7 @@ import org.jdom.Element;
 
 import java.util.Collection;
 
-public class RemoteConfiguration extends ModuleBasedConfiguration {
+public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> {
 
   public void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
@@ -41,7 +41,7 @@ public class RemoteConfiguration extends ModuleBasedConfiguration {
   public String PORT;
 
   public RemoteConfiguration(final String name, final Project project, ConfigurationFactory configurationFactory) {
-    super(name, new RunConfigurationModule(project, true), configurationFactory);
+    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
   }
 
   public RemoteConnection createRemoteConnection() {

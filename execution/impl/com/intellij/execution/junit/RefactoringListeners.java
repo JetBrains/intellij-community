@@ -1,6 +1,6 @@
 package com.intellij.execution.junit;
 
-import com.intellij.execution.ExecutionUtil;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.SingleClassConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
@@ -126,7 +126,7 @@ public class RefactoringListeners {
 
     public PsiClass findNewElement(final PsiClass psiClass, final String qualifiedName) {
       return JavaPsiFacade.getInstance(psiClass.getProject())
-        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(ExecutionUtil.findModule(psiClass)));
+        .findClass(qualifiedName.replace('$', '.'), GlobalSearchScope.moduleScope(JavaExecutionUtil.findModule(psiClass)));
     }
 
     public String getQualifiedName(final PsiClass psiClass) {
@@ -145,7 +145,7 @@ public class RefactoringListeners {
       PsiClass aClass = myAccessor.getPsiElement();
       aClass = (PsiClass)aClass.getOriginalElement();
       myContainingPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
-      myModule = ExecutionUtil.findModule(aClass);
+      myModule = JavaExecutionUtil.findModule(aClass);
       final String classQName = aClass.getQualifiedName();
       final String classPackageQName = myContainingPackage.getQualifiedName();
       if (classQName.startsWith(classPackageQName)) {

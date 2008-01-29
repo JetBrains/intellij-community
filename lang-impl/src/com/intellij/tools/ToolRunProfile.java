@@ -10,7 +10,9 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -18,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -60,8 +63,12 @@ public class ToolRunProfile implements RunProfile{
         return myCommandLine;
       }
 
-      public ExecutionResult execute() throws ExecutionException {
-        final ExecutionResult result = super.execute();
+      protected OSProcessHandler startProcess() throws ExecutionException {
+        return JavaCommandLineStateUtil.startProcess(createCommandLine());
+      }
+
+      public ExecutionResult execute(@NotNull ProgramRunner runner) throws ExecutionException {
+        final ExecutionResult result = super.execute(runner);
         final ProcessHandler processHandler = result.getProcessHandler();
         if (processHandler != null) {
           processHandler.addProcessListener(new ToolProcessAdapter(project, myTool.synchronizeAfterExecution(), getName()));

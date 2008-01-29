@@ -1,9 +1,11 @@
 package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.runners.RunStrategy;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
@@ -219,7 +221,10 @@ public class Tool {
     FileDocumentManager.getInstance().saveAllDocuments();
     try {
       if (isUseConsole()) {
-        RunStrategy.getInstance().executeDefault(new ToolRunProfile(this, dataContext), dataContext);
+        final ToolRunProfile profile = new ToolRunProfile(this, dataContext);
+        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(DefaultRunExecutor.EXECUTOR_ID, profile);
+        assert runner != null;
+        runner.execute(profile, dataContext, null, null);
       }
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);

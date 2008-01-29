@@ -4,9 +4,9 @@
 package com.intellij.unscramble;
 
 import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.ExecutionRegistry;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.JavaProgramRunner;
+import com.intellij.execution.runners.GenericProgramRunner;
+import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
@@ -386,7 +386,6 @@ public class UnscrambleDialog extends DialogWrapper{
   }
   private static ConsoleView addConsole(final Project project){
     final ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    final JavaProgramRunner defaultRunner = ExecutionRegistry.getInstance().getDefaultRunner();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     final RunContentDescriptor descriptor =
       new RunContentDescriptor(consoleView, null, new MyConsolePanel(consoleView, toolbarActions),
@@ -395,11 +394,13 @@ public class UnscrambleDialog extends DialogWrapper{
         return true;
       }
     };
-    toolbarActions.add(new CloseAction(defaultRunner, descriptor, project));
+
+    final RunnerInfo runnerInfo = GenericProgramRunner.DEFAULT_RUNNER_INFO;
+    toolbarActions.add(new CloseAction(runnerInfo, descriptor, project));
     for (AnAction action: consoleView.createUpDownStacktraceActions()) {
       toolbarActions.add(action);
     }
-    ExecutionManager.getInstance(project).getContentManager().showRunContent(defaultRunner, descriptor);
+    ExecutionManager.getInstance(project).getContentManager().showRunContent(runnerInfo, descriptor);
     return consoleView;
   }
   private static final class MyConsolePanel extends JPanel {
