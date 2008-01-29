@@ -45,9 +45,5 @@
     <component>
       <implementation-class>com.intellij.ide.MacOSApplicationProvider</implementation-class>
     </component>
-    <component>
-      <interface-class>com.intellij.openapi.ui.popup.StackingPopupDispatcher</interface-class>
-      <implementation-class>com.intellij.ui.popup.StackingPopupDispatcherImpl</implementation-class>
-    </component>
   </application-components>
 </components>
