@@ -16,7 +16,7 @@ public class MavenWorkspaceSettingsComponent extends DummyProjectComponent imple
     super("MavenImportPreferences");
   }
 
-  public static MavenWorkspaceSettingsComponent getInstance(final Project project) {
+  public static MavenWorkspaceSettingsComponent getInstance(Project project) {
     return project.getComponent(MavenWorkspaceSettingsComponent.class);
   }
 

@@ -19,6 +19,7 @@ public class ImporterSettingsForm {
   private JCheckBox myModuleDirCheckBox;
   private TextFieldWithBrowseButton myModuleDirControl;
   private JCheckBox myLookForNestedCheckBox;
+  private JCheckBox myAutoSyncCheckBox;
   private JCheckBox myCreateGroupsCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
   private JTextArea myIgnoreDependenciesTextArea;
@@ -64,9 +65,10 @@ public class ImporterSettingsForm {
     return panel;
   }
 
-  public void getData(final MavenImporterSettings data) {
+  public void getData(MavenImporterSettings data) {
     data.setDedicatedModuleDir(myModuleDirCheckBox.isSelected() ? myModuleDirControl.getText() : "");
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
+    data.setAutoSync(myAutoSyncCheckBox.isSelected());
     data.setLookForNested(myLookForNestedCheckBox.isSelected());
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
     data.setIgnoredDependencies(Strings.tokenize(myIgnoreDependenciesTextArea.getText(), Strings.WHITESPACE + ",;"));
@@ -76,6 +78,7 @@ public class ImporterSettingsForm {
     myModuleDirCheckBox.setSelected(!StringUtil.isEmptyOrSpaces(data.getDedicatedModuleDir()));
     myModuleDirControl.setText(data.getDedicatedModuleDir());
 
+    myAutoSyncCheckBox.setSelected(data.isAutoSync());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
     myLookForNestedCheckBox.setSelected(data.isLookForNested());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());

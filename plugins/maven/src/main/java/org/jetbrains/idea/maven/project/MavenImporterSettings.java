@@ -11,6 +11,7 @@ import java.util.List;
 public class MavenImporterSettings implements Cloneable {
   @NotNull private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
+  private boolean autoSync = false;
   private boolean createModuleGroups = false;
   private boolean useMavenOutput = true;
   private List<String> myIgnoredDependencies = new ArrayList<String>();
@@ -20,7 +21,7 @@ public class MavenImporterSettings implements Cloneable {
     return dedicatedModuleDir;
   }
 
-  public void setDedicatedModuleDir(@NotNull final String dedicatedModuleDir) {
+  public void setDedicatedModuleDir(@NotNull String dedicatedModuleDir) {
     this.dedicatedModuleDir = dedicatedModuleDir;
   }
 
@@ -28,15 +29,23 @@ public class MavenImporterSettings implements Cloneable {
     return lookForNested;
   }
 
-  public void setLookForNested(final boolean lookForNested) {
+  public void setLookForNested(boolean lookForNested) {
     this.lookForNested = lookForNested;
+  }
+
+  public boolean isAutoSync() {
+    return autoSync;
+  }
+
+  public void setAutoSync(boolean autoSync) {
+    this.autoSync = autoSync;
   }
 
   public boolean isCreateModuleGroups() {
     return createModuleGroups;
   }
 
-  public void setCreateModuleGroups(final boolean createModuleGroups) {
+  public void setCreateModuleGroups(boolean createModuleGroups) {
     this.createModuleGroups = createModuleGroups;
   }
 
@@ -44,8 +53,16 @@ public class MavenImporterSettings implements Cloneable {
     return useMavenOutput;
   }
 
-  public void setUseMavenOutput(final boolean useMavenOutput) {
+  public void setUseMavenOutput(boolean useMavenOutput) {
     this.useMavenOutput = useMavenOutput;
+  }
+
+  public List<String> getIgnoredDependencies() {
+    return myIgnoredDependencies;
+  }
+
+  public void setIgnoredDependencies(List<String> ignoredDependencies) {
+    myIgnoredDependencies = ignoredDependencies;
   }
 
   public boolean equals(final Object o) {
@@ -56,6 +73,7 @@ public class MavenImporterSettings implements Cloneable {
 
     if (createModuleGroups != that.createModuleGroups) return false;
     if (lookForNested != that.lookForNested) return false;
+    if (autoSync != that.autoSync) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (myIgnoredDependencies != null ? !myIgnoredDependencies.equals(that.myIgnoredDependencies) : that.myIgnoredDependencies != null) {
@@ -69,6 +87,7 @@ public class MavenImporterSettings implements Cloneable {
     int result;
     result = dedicatedModuleDir.hashCode();
     result = 31 * result + (lookForNested ? 1 : 0);
+    result = 31 * result + (autoSync ? 1 : 0);
     result = 31 * result + (createModuleGroups ? 1 : 0);
     result = 31 * result + (useMavenOutput ? 1 : 0);
     result = 31 * result + (myIgnoredDependencies != null ? myIgnoredDependencies.hashCode() : 0);
@@ -83,13 +102,5 @@ public class MavenImporterSettings implements Cloneable {
     catch (CloneNotSupportedException e) {
       throw new Error(e);
     }
-  }
-
-  public List<String> getIgnoredDependencies() {
-    return myIgnoredDependencies;
-  }
-
-  public void setIgnoredDependencies(List<String> ignoredDependencies) {
-    myIgnoredDependencies = ignoredDependencies;
   }
 }

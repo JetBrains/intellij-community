@@ -30,9 +30,9 @@ public class ImporterSettingsConfigurable implements Configurable {
 
   private List<String> myOriginalProfiles;
 
-  public ImporterSettingsConfigurable(final MavenImporterSettings importerSettings,
-                                         final MavenImporterState importerState,
-                                         final MavenProjectsState projectsState) {
+  public ImporterSettingsConfigurable(MavenImporterSettings importerSettings,
+                                      MavenImporterState importerState,
+                                      MavenProjectsState projectsState) {
     myImporterSettings = importerSettings;
     myImporterState = importerState;
     myProjectsState = projectsState;
