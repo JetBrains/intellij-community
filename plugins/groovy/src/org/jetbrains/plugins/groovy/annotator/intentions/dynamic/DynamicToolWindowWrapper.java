@@ -36,16 +36,11 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virt
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -61,13 +56,18 @@ public class DynamicToolWindowWrapper {
   private static DynamicTreeViewState myState = new DynamicTreeViewState();
 
   private static ListTreeTableModelOnColumns myTreeTableModel;
+
+  private static int CLASS_OR_PROPERTY_NAME_COLUMN = 0;
+  private static int PROPERTY_TYPE_COLUMN = 1;
+
   private static String[] myColumnNames = {
       "Class and properties",
       "Type of property"
   };
-  private static TreeTable myTreeTable;
 
+  private static TreeTable myTreeTable;
   private static final Key<DynamicTreeViewState> DYNAMIC_TOOLWINDOW_STATE_KEY = Key.create("DYNAMIC_TOOLWINDOW_STATE");
+
 
   private static boolean doesTreeTableInit() {
     return myBigPanel != null && myTreeTableModel != null && myTreeTablePanel != null;
@@ -183,7 +183,7 @@ public class DynamicToolWindowWrapper {
   }
 
   private static JScrollPane createTable(final Project project, MutableTreeNode myTreeRoot) {
-    ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[0]), new PropertyTypeColumnInfo(myColumnNames[1])};
+    ColumnInfo[] columnInfos = {new ClassColumnInfo(myColumnNames[CLASS_OR_PROPERTY_NAME_COLUMN]), new PropertyTypeColumnInfo(myColumnNames[PROPERTY_TYPE_COLUMN])};
 
     myTreeTableModel = new ListTreeTableModelOnColumns(myTreeRoot, columnInfos);
 
@@ -227,6 +227,7 @@ public class DynamicToolWindowWrapper {
     };
 
     myTreeTable.setRootVisible(false);
+    myTreeTable.setSelectionMode(DefaultTreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
 
     myTreeTable.registerKeyboardAction(
         new ActionListener() {
@@ -240,6 +241,32 @@ public class DynamicToolWindowWrapper {
         JComponent.WHEN_FOCUSED
     );
 
+    myTreeTable.registerKeyboardAction(
+        new ActionListener() {
+          public void actionPerformed(ActionEvent event) {
+            storeState(project);
+            final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
+            myTreeTable.editCellAt(selectionRow, CLASS_OR_PROPERTY_NAME_COLUMN, event);
+            restoreState(project);
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0),
+        JComponent.WHEN_FOCUSED
+    );
+
+    myTreeTable.registerKeyboardAction(
+        new ActionListener() {
+          public void actionPerformed(ActionEvent event) {
+            storeState(project);
+            final int selectionRow = myTreeTable.getTree().getLeadSelectionRow();
+            myTreeTable.editCellAt(selectionRow, PROPERTY_TYPE_COLUMN, event);
+            restoreState(project);
+          }
+        },
+        KeyStroke.getKeyStroke(KeyEvent.VK_F2, KeyEvent.CTRL_MASK),
+        JComponent.WHEN_FOCUSED
+    );
+
     // todo use "myTreeTable.setAutoCreateRowSorter(true);" since 1.6
 
     myTreeTable.getTree().setShowsRootHandles(true);
@@ -247,16 +274,16 @@ public class DynamicToolWindowWrapper {
 
     myTreeTable.setTreeCellRenderer(new MyColoredTreeCellRenderer());
 
-    myTreeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+//    myTreeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTreeTable.setPreferredScrollableViewportSize(new Dimension(300, myTreeTable.getRowHeight() * 10));
-    myTreeTable.getColumn(myColumnNames[0]).setPreferredWidth(200);
-    myTreeTable.getColumn(myColumnNames[1]).setPreferredWidth(160);
+    myTreeTable.getColumn(myColumnNames[CLASS_OR_PROPERTY_NAME_COLUMN]).setPreferredWidth(200);
+    myTreeTable.getColumn(myColumnNames[PROPERTY_TYPE_COLUMN]).setPreferredWidth(160);
 
     myTreeTable.addMouseListener(
         new MouseAdapter() {
           public void mouseClicked(MouseEvent e) {
             final Point point = e.getPoint();
-            if (e.getClickCount() == 2 && myTreeTable.columnAtPoint(point) == 1) {
+            if (e.getClickCount() == 2) {
               myTreeTable.editCellAt(myTreeTable.rowAtPoint(point), myTreeTable.columnAtPoint(point), e);
             }
           }
@@ -269,48 +296,63 @@ public class DynamicToolWindowWrapper {
     return scrollpane;
   }
 
-  private static void deleteRow(Project project) {
+  private static void deleteRow(final Project project) {
     final int[] rows = myTreeTable.getSelectedRows();
-//            for (int row : rows) {
-    final TreePath selectionPath = myTreeTable.getTree().getAnchorSelectionPath();
+    List<Runnable> doRemoveList = new ArrayList<Runnable>();
 
-    //class
-    final TreePath parent = selectionPath.getParentPath();
+    for (int row : rows) {
+      final TreePath selectionPath = myTreeTable.getTree().getPathForRow(row);
 
-    final Module module = getModule(project);
-    if (parent.getParentPath() == null) {
-      //selectionPath is class
+      //class
+      final TreePath parent = selectionPath.getParentPath();
 
-      final Object containingClassRow = parent.getLastPathComponent();
+      final Module module = getModule(project);
+      if (parent.getParentPath() == null) {
+        //selectionPath is class
 
-      if (!(containingClassRow instanceof DefaultMutableTreeNode)) return;
-      final Object containingClass = ((DefaultMutableTreeNode) containingClassRow).getUserObject();
+        final Object containingClassRow = parent.getLastPathComponent();
 
-      if (module == null) return;
-      if (!(containingClass instanceof DPClassNode)) return;
+        if (!(containingClassRow instanceof DefaultMutableTreeNode)) return;
+        final Object containingClass = ((DefaultMutableTreeNode) containingClassRow).getUserObject();
 
-      DynamicPropertiesManager.getInstance(project).removeDynamicPropertiesOfClass(module.getName(), ((DPClassNode) containingClass).getElement().getContainingClassName());
-    } else {
-      //selectionPath is property
-      final Object containingClass = parent.getLastPathComponent();
-      final Object property = selectionPath.getLastPathComponent();
+        if (module == null) return;
+        if (!(containingClass instanceof DPClassNode)) return;
 
-      if (!(containingClass instanceof DefaultMutableTreeNode)) return;
-      if (!(property instanceof DefaultMutableTreeNode)) return;
+        doRemoveList.add(new Runnable() {
+          public void run() {
+            DynamicPropertiesManager.getInstance(project).removeDynamicPropertiesOfClass(module.getName(), ((DPClassNode) containingClass).getElement().getContainingClassName());
+          }
+        });
+      } else {
+        //selectionPath is property
+        final Object containingClass = parent.getLastPathComponent();
+        final Object property = selectionPath.getLastPathComponent();
 
-      final Object classElement = ((DefaultMutableTreeNode) containingClass).getUserObject();
-      final Object propertyElement = ((DefaultMutableTreeNode) property).getUserObject();
+        if (!(containingClass instanceof DefaultMutableTreeNode)) return;
+        if (!(property instanceof DefaultMutableTreeNode)) return;
 
-      if (!(classElement instanceof DPClassNode)) return;
-      if (!(propertyElement instanceof DPPropertyNode)) return;
+        final Object classElement = ((DefaultMutableTreeNode) containingClass).getUserObject();
+        final Object propertyElement = ((DefaultMutableTreeNode) property).getUserObject();
 
-      final String containingClassName = ((DPClassNode) classElement).getElement().getContainingClassName();
-      final String propertyName = ((DPPropertyNode) propertyElement).getElement().getPropertyName();
-      final String propertyType = ((DPPropertyNode) propertyElement).getElement().getPropertyType();
+        if (!(classElement instanceof DPClassNode)) return;
+        if (!(propertyElement instanceof DPPropertyNode)) return;
 
-      DynamicPropertyVirtual dynamicProperty = new DynamicPropertyVirtual(propertyName, containingClassName, module.getName(), propertyType);
+        final String containingClassName = ((DPClassNode) classElement).getElement().getContainingClassName();
+        final String propertyName = ((DPPropertyNode) propertyElement).getElement().getPropertyName();
+        final String propertyType = ((DPPropertyNode) propertyElement).getElement().getPropertyType();
 
-      DynamicPropertiesManager.getInstance(project).removeDynamicProperty(dynamicProperty);
+        final DynamicPropertyVirtual dynamicProperty = new DynamicPropertyVirtual(propertyName, containingClassName, module.getName(), propertyType);
+
+        doRemoveList.add(new Runnable() {
+          public void run() {
+            DynamicPropertiesManager.getInstance(project).removeDynamicProperty(dynamicProperty);
+          }
+        });
+      }
+    }
+
+    for (Runnable removeRowAction : doRemoveList) {
+      removeRowAction.run();
     }
   }
 

@@ -357,7 +357,6 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
 
     fireChangeCodeAnalize();
     fireChangeToolWindow();
-
   }
 
   private void fireChangeToolWindow() {
