@@ -35,6 +35,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.module.UnknownModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.LinkedHashMap;
@@ -69,7 +70,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   public ModuleType findByID(String moduleTypeID) {
     if (JAVA_MODULE_ID_OLD.equals(moduleTypeID)) {
-      return ModuleType.JAVA; // for compatibility with the previous ID that Java modules had
+      return StdModuleTypes.JAVA; // for compatibility with the previous ID that Java modules had
     }
     for (ModuleType type : myModuleTypes.keySet()) {
       if (type.getId().equals(moduleTypeID)) {
@@ -86,6 +87,6 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   private void registerDefaultTypes() {
-    registerModuleType(ModuleType.JAVA, true);
+    registerModuleType(StdModuleTypes.JAVA, true);
   }
 }

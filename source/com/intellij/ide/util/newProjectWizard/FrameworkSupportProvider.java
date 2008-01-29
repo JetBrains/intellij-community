@@ -7,6 +7,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public abstract class FrameworkSupportProvider {
   }
 
   public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
-    return moduleType == ModuleType.JAVA;
+    return moduleType == StdModuleTypes.JAVA;
   }
 
   public boolean isSupportAlreadyAdded(@NotNull Module module) {

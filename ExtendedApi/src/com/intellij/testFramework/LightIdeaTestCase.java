@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -243,7 +244,7 @@ import java.util.Map;
   protected static Module createMainModule() {
     return ApplicationManager.getApplication().runWriteAction(new Computable<Module>() {
       public Module compute() {
-        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml");
+        return ModuleManager.getInstance(ourProject).newModule("light_idea_test_case.iml", StdModuleTypes.JAVA);
       }
     });
   }

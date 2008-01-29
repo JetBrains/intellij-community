@@ -14,7 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.peer.PeerFactory;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DocumentAdapter;
@@ -121,7 +120,7 @@ public class BuildJarDialog extends DialogWrapper {
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     ArrayList<Module> result = new ArrayList<Module>();
     for (Module module : modules) {
-      if (module.getModuleType() == ModuleType.JAVA) {
+      if (module.getModuleType() == StdModuleTypes.JAVA) {
         result.add(module);
       }
     }

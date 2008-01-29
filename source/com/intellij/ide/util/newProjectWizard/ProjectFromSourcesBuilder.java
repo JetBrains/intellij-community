@@ -181,7 +181,7 @@ public class ProjectFromSourcesBuilder extends ProjectBuilder implements SourceP
       throw new InvalidDataException("Module " + name + " has no content roots and will not be created");
     }
     
-    final Module module = moduleModel.newModule(moduleFilePath, ModuleType.JAVA);
+    final Module module = moduleModel.newModule(moduleFilePath, StdModuleTypes.JAVA);
     final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
     setupRootModel(descriptor, modifiableModel, sourceRootToPrefixMap, projectLibs);
     for (ProjectConfigurationUpdater updater : myUpdaters) {

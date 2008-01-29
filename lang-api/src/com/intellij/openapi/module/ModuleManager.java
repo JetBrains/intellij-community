@@ -44,15 +44,6 @@ public abstract class ModuleManager {
   }
 
   /**
-   * Creates a Java module at the specified path and adds it to the project
-   * to which the module manager is related.
-   *
-   * @param filePath the path at which the module is created.
-   * @return the module instance.
-   */
-  @NotNull public abstract Module newModule(@NotNull String filePath);
-
-  /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related.
    *

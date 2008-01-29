@@ -38,16 +38,6 @@ public interface ModifiableModuleModel {
   @NotNull Module[] getModules();
 
   /**
-   * Creates a Java module at the specified path and adds it to the project
-   * to which the module manager is related. {@link #commit()} must be called to
-   * bring the changes in effect.
-   *
-   * @param filePath the path at which the module is created.
-   * @return the module instance.
-   */
-  @NotNull Module newModule(@NotNull String filePath);
-
-  /**
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related. {@link #commit()} must be called to
    * bring the changes in effect.

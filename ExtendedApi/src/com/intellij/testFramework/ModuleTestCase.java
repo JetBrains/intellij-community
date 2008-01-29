@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -47,7 +48,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module createModule(final File moduleFile) {
-    return createModule(moduleFile, ModuleType.JAVA);
+    return createModule(moduleFile, StdModuleTypes.JAVA);
   }
 
   protected Module createModule(final File moduleFile, final ModuleType moduleType) {
@@ -56,7 +57,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   protected Module createModule(final String path) {
-    return createModule(path, ModuleType.JAVA);
+    return createModule(path, StdModuleTypes.JAVA);
   }
 
   protected Module createModule(final String path, final ModuleType moduleType) {

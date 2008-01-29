@@ -6,6 +6,7 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
@@ -35,7 +36,7 @@ abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends Mod
   private MockJdkLevel myMockJdkLevel = MockJdkLevel.jdk14;
 
   public JavaModuleFixtureBuilderImpl(final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {
-    super(ModuleType.JAVA, fixtureBuilder);
+    super(StdModuleTypes.JAVA, fixtureBuilder);
   }
 
   public JavaModuleFixtureBuilderImpl(final ModuleType moduleType, final TestFixtureBuilder<? extends IdeaProjectTestFixture> fixtureBuilder) {

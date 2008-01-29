@@ -10,8 +10,8 @@ import com.intellij.openapi.compiler.make.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -389,7 +389,7 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                                    String explodedPath, final String linkContainerDescription, @Nullable Map<Module, PackagingFileFilter> fileFilters) {
     for (ModuleLink moduleLink : containingModules) {
       Module childModule = moduleLink.getModule();
-      if (childModule != null && ModuleType.JAVA.equals(childModule.getModuleType())) {
+      if (childModule != null && StdModuleTypes.JAVA.equals(childModule.getModuleType())) {
         final PackagingMethod packagingMethod = moduleLink.getPackagingMethod();
         if (PackagingMethod.DO_NOT_PACKAGE.equals(packagingMethod)) {
           continue;

@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -198,7 +199,7 @@ import java.util.HashSet;
     }
     myFilesToDelete.add(moduleFile);
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-    Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath());
+    Module module = ModuleManager.getInstance(myProject).newModule(virtualFile.getPath(), StdModuleTypes.JAVA);
     module.getModuleFile();
     return module;
   }

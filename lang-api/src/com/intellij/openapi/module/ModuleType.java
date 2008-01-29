@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 
 public abstract class ModuleType<T extends ModuleBuilder> {
-  // predefined module types
-  public static ModuleType JAVA;
   public static ModuleType EMPTY;
 
   private final String myId;
@@ -69,7 +67,6 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   }
 
   static {
-    JAVA = instantiate("com.intellij.openapi.module.JavaModuleType");
     EMPTY = instantiate("com.intellij.openapi.module.EmptyModuleType");
   }
 

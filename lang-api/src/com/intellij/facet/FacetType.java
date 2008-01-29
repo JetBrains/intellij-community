@@ -92,9 +92,7 @@ public abstract class FacetType<F extends Facet, C extends FacetConfiguration> {
     return true;
   }
 
-  public boolean isSuitableModuleType(ModuleType moduleType) {
-    return moduleType == ModuleType.JAVA;
-  }
+  public abstract boolean isSuitableModuleType(ModuleType moduleType);
 
   @Nullable
   public Icon getIcon() {

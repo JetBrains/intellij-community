@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -55,7 +56,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
     final ModuleStoreImpl.ModuleFileData storageData = getMainStorageData();
     final String moduleTypeId = storageData.myOptions.get(ModuleImpl.ELEMENT_TYPE);
-    final ModuleType moduleType = moduleTypeId == null ? ModuleType.JAVA : ModuleTypeManager.getInstance().findByID(moduleTypeId);
+    final ModuleType moduleType = moduleTypeId == null ? StdModuleTypes.JAVA : ModuleTypeManager.getInstance().findByID(moduleTypeId);
     myModule.setModuleType(moduleType);
   }
 

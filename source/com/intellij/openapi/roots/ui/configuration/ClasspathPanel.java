@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -538,7 +538,8 @@ public class ClasspathPanel extends JPanel {
         actions.add(new ChooseNamedLibraryAction(actionIndex++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
       }
 
-      actions.add(new ChooseAndAddAction<Module>(actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(ModuleType.JAVA, 0)) {
+      actions.add(new ChooseAndAddAction<Module>(actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(
+        StdModuleTypes.JAVA, 0)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }

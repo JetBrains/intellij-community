@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
@@ -42,7 +43,7 @@ public class ModuleTypeStep extends ModuleWizardStep {
   private JList myTypesList;
   private JEditorPane myModuleDescriptionPane;
 
-  private ModuleType myModuleType = ModuleType.JAVA;
+  private ModuleType myModuleType = StdModuleTypes.JAVA;
   private Runnable myDoubleClickAction = null;
 
   final EventDispatcher<UpdateListener> myEventDispatcher = EventDispatcher.create(UpdateListener.class);

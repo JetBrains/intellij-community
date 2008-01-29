@@ -419,15 +419,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
   }
 
   @NotNull
-  public Module newModule(@NotNull String filePath) {
-    myModificationCount++;
-    final ModifiableModuleModel modifiableModel = getModifiableModel();
-    final Module module = modifiableModel.newModule(filePath);
-    modifiableModel.commitAssertingNoCircularDependency();
-    return module;
-  }
-
-  @NotNull
   public Module newModule(@NotNull String filePath, @NotNull ModuleType moduleType) {
     myModificationCount++;
     final ModifiableModuleModel modifiableModel = getModifiableModel();
@@ -588,12 +579,6 @@ public class ModuleManagerImpl extends ModuleManager implements ProjectComponent
       Module[] allModules = getModules();
       Arrays.sort(allModules, moduleDependencyComparator());
       return allModules;
-    }
-
-    @NotNull
-    public Module newModule(@NotNull String filePath) {
-      assertWritable();
-      return newModule(filePath, ModuleType.JAVA);
     }
 
     public void renameModule(@NotNull Module module, @NotNull String newName) throws ModuleWithNameAlreadyExists {
