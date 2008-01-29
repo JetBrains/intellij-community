@@ -187,8 +187,22 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
 
   void testCompletion(@NonNls String[] filesBefore, @NonNls String fileAfter) throws Throwable;
 
+  /**
+   * Runs basic completion in caret position in fileBefore.
+   * Implies that there is only one completion variant and it was inserted automatically, and checks the result file text with fileAfter
+   * @param fileBefore
+   * @param fileAfter
+   * @throws Throwable
+   */
   void testCompletion(@NonNls String fileBefore, @NonNls String fileAfter) throws Throwable;
 
+  /**
+   * Runs basic completion in caret position in fileBefore.
+   * Checks that lookup is shown and it contains items with given lookup strings
+   * @param fileBefore
+   * @param items most probably will contain > 1 items
+   * @throws Throwable
+   */
   void testCompletionVariants(@NonNls String fileBefore, @NonNls String... items) throws Throwable;
 
   /**
