@@ -9,10 +9,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.remote.RemoteConfiguration;
-import com.intellij.execution.runners.GenericProgramRunner;
-import com.intellij.execution.runners.ProcessProxyFactory;
-import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.execution.runners.RunnerInfo;
+import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -70,7 +67,18 @@ class DefaultJavaProgramRunner extends GenericProgramRunner {
                                          ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final ExecutionResult executionResult = state.execute(this);
+    ExecutionResult executionResult;
+    if (state instanceof JavaCommandLine) {
+      patch(((JavaCommandLine)state).getJavaParameters(), state.getRunnerSettings(), true);
+      final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy((JavaCommandLine) state);
+      executionResult = state.execute(this);
+      if (proxy != null && executionResult != null) {
+        proxy.attach(executionResult.getProcessHandler());
+      }
+    } else {
+      executionResult = state.execute(this);
+    }
+    
     if (executionResult == null) {
       return null;
     }

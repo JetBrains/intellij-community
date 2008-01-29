@@ -16,12 +16,7 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.ProcessProxy;
-import com.intellij.execution.runners.ProcessProxyFactory;
 import com.intellij.execution.process.OSProcessHandler;
-import org.jetbrains.annotations.NotNull;
 
 
 public abstract class JavaCommandLineState extends CommandLineState implements JavaCommandLine{
@@ -29,18 +24,6 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   
   protected JavaCommandLineState(RunnerSettings runnerSettings, ConfigurationPerRunnerSettings configurationSettings) {
     super(runnerSettings, configurationSettings);
-  }
-
-  public ExecutionResult execute(@NotNull final ProgramRunner runner) throws ExecutionException {
-    runner.patch(getJavaParameters(), getRunnerSettings(), true);
-
-    final ExecutionResult result = super.execute(runner);
-    final ProcessProxy proxy = ProcessProxyFactory.getInstance().createCommandLineProxy(this);
-    if (proxy != null && result != null) {
-      proxy.attach(result.getProcessHandler());
-    }
-
-    return result;
   }
 
   public JavaParameters getJavaParameters() throws ExecutionException {
