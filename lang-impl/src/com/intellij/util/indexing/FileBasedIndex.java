@@ -1,6 +1,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.ide.startup.CacheUpdater;
+import com.intellij.ide.startup.FileSystemSynchronizer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -13,10 +14,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.Pair;
@@ -29,6 +33,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +67,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private FileBasedIndexState myPreviouslyRegistered;
 
   private TObjectLongHashMap<String> myIndexIdToCreationStamp = new TObjectLongHashMap<String>();
+  private TObjectIntHashMap<String> myIndexIdToVersionMap = new TObjectIntHashMap<String>();
 
   private Map<Document, Pair<CharSequence, Long>> myIndexingHistory = Collections.synchronizedMap(new HashMap<Document, Pair<CharSequence, Long>>());
   
@@ -73,6 +79,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   private ChangedFilesUpdater myChangedFilesUpdater;
 
   private List<IndexableFileSet> myIndexableSets = new CopyOnWriteArrayList<IndexableFileSet>();
+  private Set<String> myRequiresRebuild = Collections.synchronizedSet(new HashSet<String>());
 
   public static interface InputFilter {
     boolean acceptInput(VirtualFile file);
@@ -88,7 +95,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
   }
 
-  public FileBasedIndex(final VirtualFileManagerEx vfManager, final ProjectManager projectManager) throws IOException {
+  public FileBasedIndex(final VirtualFileManagerEx vfManager) throws IOException {
     final FileBasedIndexExtension[] extensions = Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME);
     for (FileBasedIndexExtension extension : extensions) {
       registerIndexer(
@@ -125,6 +132,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
                                       final DataExternalizer<V> valueExternalizer,
                                       final InputFilter filter,
                                       final int version) throws IOException {
+    myIndexIdToVersionMap.put(name, version);
     final File versionFile = getVersionFile(name);
     if (readVersion(versionFile) != version || ourUnitTestMode) { // in test mode drop caches each time application starts
       FileUtil.delete(getIndexRootDir(name));
@@ -184,7 +192,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
     myDisposables.clear();
   }
-
+                
   public FileBasedIndexState getState() {
     return new FileBasedIndexState(myIndices.keySet());
   }
@@ -205,6 +213,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
   
   @NotNull
   public <K, V> List<V> getData(final String indexId, K dataKey, Project project, @Nullable DataFilter<K, V> filter) {
+    checkRebuild(indexId);
     try {
       indexUnsavedDocuments();
       final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
@@ -244,6 +253,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   @NotNull
   public <K> Collection<VirtualFile> getContainingFiles(final String indexId, K dataKey, @NotNull Project project) {
+    checkRebuild(indexId);
     try {
       indexUnsavedDocuments();
       final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
@@ -287,6 +297,32 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       LOG.error(e);
     }
     return Collections.emptyList();
+  }
+
+  private void checkRebuild(final String indexId) {
+    final boolean reallyRemoved = myRequiresRebuild.remove(indexId);
+    if (!reallyRemoved) {
+      return;
+    }
+    dropIndex(indexId);
+    try {
+      rewriteVersion(getVersionFile(indexId), myIndexIdToVersionMap.get(indexId));
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+
+    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    final FileSystemSynchronizer synchronizer = new FileSystemSynchronizer();
+    synchronizer.setCancelable(false);
+    for (Project project : projects) {
+      synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
+    }
+    new Task.Modal(null, "Updating index", false) {
+      public void run(@NotNull final ProgressIndicator indicator) {
+        synchronizer.execute();
+      }
+    }.queue();
   }
 
   @Nullable
@@ -352,11 +388,19 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       indicesToDrop.remove(key);
     }
     for (String s : indicesToDrop) {
-      FileUtil.delete(getIndexRootDir(s));
-      myIndexIdToCreationStamp.remove(s);
+      dropIndex(s);
     }
   }
 
+  private void dropIndex(String indexId) {
+    FileUtil.delete(getIndexRootDir(indexId));
+    myIndexIdToCreationStamp.remove(indexId);
+  }
+  
+  public void requestRebuild(String indexId) {
+    myRequiresRebuild.add(indexId);
+  }
+  
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(String indexId) {
     final Pair<UpdatableIndex<?, ?, FileContent>, InputFilter> pair = myIndices.get(indexId);
     //noinspection unchecked
@@ -528,7 +572,8 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   private final class ChangedFilesUpdater extends VirtualFileAdapter implements CacheUpdater{
     private final Set<VirtualFile> myFileToUpdate = Collections.synchronizedSet(new HashSet<VirtualFile>());
-
+    private int myInvalidateTasksInProgress = 0;
+    private final Object myLock = new Object();
     // No need to react on movement events since files stay valid, their ids don't change and all associated attributes remain intact.
 
     public void fileCreated(final VirtualFileEvent event) {
@@ -544,19 +589,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void beforeFileDeletion(final VirtualFileEvent event) {
-      updateIndexSynchronouslyBeforeChange(event);
+      scheduleInvalidation(event.getFile());
     }
 
     public void beforeContentsChange(final VirtualFileEvent event) {
-      updateIndexSynchronouslyBeforeChange(event);
+      scheduleInvalidation(event.getFile());
     }
 
     public void contentsChanged(final VirtualFileEvent event) {
       markDirty(event);
-    }
-
-    private void updateIndexSynchronouslyBeforeChange(final VirtualFileEvent event) {
-      invalidateIndex(event.getFile());
     }
 
     private void markDirty(final VirtualFileEvent event) {
@@ -564,6 +605,10 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       includeToUpdateSet(file);
     }
 
+    private void scheduleInvalidation(final VirtualFile file) {
+      invalidateIndex(file);
+    }
+    
     private void invalidateIndex(final VirtualFile file) {
       if (file.isDirectory()) {
         if (ManagingFS.getInstance().areChildrenLoaded(file)) {
@@ -572,21 +617,55 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           }
         }
       }
-
-      FileContent fc = null;
-      for (String indexId : myIndices.keySet()) {
-        if (getInputFilter(indexId).acceptInput(file)) {
-          try {
-            if (IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
-              if (fc == null) {
-                fc = new FileContent(file, loadContent(file));
-              }
-              updateSingleIndex(indexId, file, null, fc);
-              includeToUpdateSet(file);
-            }
+      else {
+        final List<String> toUpdate = new ArrayList<String>(myIndices.size());
+        for (String indexId : myIndices.keySet()) {
+          if (getInputFilter(indexId).acceptInput(file) && IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
+            toUpdate.add(indexId);
           }
-          catch (StorageException e) {
-            LOG.error(e);
+        }
+        
+        if (toUpdate.size() > 0) {
+          includeToUpdateSet(file);
+          final FileContent fc = new FileContent(file, loadContent(file));
+          adjustInvalidateTasksCount(1);
+          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+            public void run() {
+              try {
+                for (String indexId : toUpdate) {
+                  try {
+                    updateSingleIndex(indexId, file, null, fc);
+                  }
+                  catch (StorageException e) {
+                    LOG.error(e);
+                  }
+                }
+              }
+              finally {
+                adjustInvalidateTasksCount(-1);
+              }
+            }
+          });
+        }
+      }
+    }
+
+    private void adjustInvalidateTasksCount(int delta) {
+      synchronized (myLock) {
+        myInvalidateTasksInProgress += delta;
+        if (myInvalidateTasksInProgress == 0) {
+          myLock.notifyAll();
+        }
+      }
+    }
+    
+    private void ensureAllInvalidateTasksCompleted() {
+      synchronized (myLock) {
+        while (myInvalidateTasksInProgress != 0) {
+          try {
+            myLock.wait();
+          }
+          catch (InterruptedException ignored) {
           }
         }
       }
@@ -624,10 +703,14 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     }
 
     public void processFile(final com.intellij.ide.startup.FileContent fileContent) {
-      final VirtualFile file = fileContent.getVirtualFile();
-      final boolean reallyRemoved = myFileToUpdate.remove(file);
-      if (reallyRemoved && file.isValid()) {
-        indexFileContent(fileContent);
+      ensureAllInvalidateTasksCompleted();
+      processFileImpl(fileContent);
+    }
+
+    public void forceUpdate() {
+      ensureAllInvalidateTasksCompleted();
+      for (VirtualFile file: queryNeededFiles()) {
+        processFileImpl(new com.intellij.ide.startup.FileContent(file));
       }
     }
 
@@ -637,9 +720,11 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     public void canceled() {
     }
     
-    public void forceUpdate() {
-      for (VirtualFile file: queryNeededFiles()) {
-        processFile(new com.intellij.ide.startup.FileContent(file));
+    private void processFileImpl(final com.intellij.ide.startup.FileContent fileContent) {
+      final VirtualFile file = fileContent.getVirtualFile();
+      final boolean reallyRemoved = myFileToUpdate.remove(file);
+      if (reallyRemoved && file.isValid()) {
+        indexFileContent(fileContent);
       }
     }
   }

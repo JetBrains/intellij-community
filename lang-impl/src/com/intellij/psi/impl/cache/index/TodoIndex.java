@@ -1,14 +1,17 @@
 package com.intellij.psi.impl.cache.index;
 
 import com.intellij.ide.highlighter.custom.impl.CustomFileType;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
+import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -18,6 +21,8 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -29,6 +34,16 @@ import java.io.IOException;
 public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Integer> {
 
   @NonNls public static final String NAME = "TodoIndex";
+
+  public TodoIndex(TodoConfiguration config) {
+    config.addPropertyChangeListener(new PropertyChangeListener() {
+      public void propertyChange(final PropertyChangeEvent evt) {
+        if (IndexPatternProvider.PROP_INDEX_PATTERNS.equals(evt.getPropertyName())) {
+          FileBasedIndex.getInstance().requestRebuild(NAME);
+        }
+      }
+    });
+  }
 
   private final PersistentEnumerator.DataDescriptor<TodoIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<TodoIndexEntry>() {
     public int getHashCode(final TodoIndexEntry value) {
@@ -63,10 +78,17 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
 
   private DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>() {
     public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<TodoIndexEntry, Integer> consumer) {
+      IndexDataConsumer<TodoIndexEntry, Integer> filteringConsumer = new IndexDataConsumer<TodoIndexEntry, Integer>() {
+        public void consume(final TodoIndexEntry key, final Integer value) {
+          if (value.intValue() != 0) {
+            consumer.consume(key, value);
+          }
+        }
+      };
       final VirtualFile file = inputData.file;
       final DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
       if (indexer != null) {
-        indexer.map(inputData, consumer);
+        indexer.map(inputData, filteringConsumer);
       }
     }
   };
@@ -74,6 +96,10 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
   private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     private FileTypeManager myFtManager = FileTypeManager.getInstance();
     public boolean acceptInput(final VirtualFile file) {
+      if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+        return false; // do not index TODOs in library sources
+      }
+      
       final FileType fileType = myFtManager.getFileTypeByFile(file);
       
       if (fileType instanceof LanguageFileType) {
@@ -87,9 +113,9 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
              fileType instanceof CustomFileType; 
     }
   };
-
+  
   public int getVersion() {
-    return 1;
+    return 3;
   }
 
   public String getName() {
