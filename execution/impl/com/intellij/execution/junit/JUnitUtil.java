@@ -73,7 +73,10 @@ public class JUnitUtil {
   }
 
   public static boolean isTestClass(final PsiClass psiClass) {
-    if (!PsiClassUtil.isRunnableClass(psiClass, true)) return false;
+    return isTestClass(psiClass, true);
+  }
+  private static boolean isTestClass(final PsiClass psiClass, boolean checkAbstract) {
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
     if (isTestCaseInheritor(psiClass)) return true;
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
@@ -86,13 +89,13 @@ public class JUnitUtil {
 
     PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) && !superClass.isInterface()) {
-      return isTestClass(superClass);
+      return isTestClass(superClass, false);
     }
     return false;
   }
 
-  public static boolean isJUnit4TestClass(final PsiClass psiClass) {
-    if (!PsiClassUtil.isRunnableClass(psiClass, true)) return false;
+  public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
@@ -102,7 +105,7 @@ public class JUnitUtil {
     }
     PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && !"java.lang.Object".equals(superClass.getQualifiedName()) && !superClass.isInterface()) {
-      return isJUnit4TestClass(superClass);
+      return isJUnit4TestClass(superClass, false);
     }
     return false;
   }
