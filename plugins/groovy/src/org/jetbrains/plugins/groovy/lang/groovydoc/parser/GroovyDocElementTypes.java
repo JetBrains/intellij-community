@@ -15,10 +15,11 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
-import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import com.intellij.psi.tree.IFileElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 
 /**
  * @author ilyas
@@ -32,5 +33,7 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes{
 
   // Filetype for Parser definition
   IFileElementType GROOVY_DOC_DUMMY_FILE = new IFileElementType(GroovyDocLanguage.LANGUAGE);
+
+  GroovyDocElementType GDOC_TAG = new GroovyDocElementType("GroovyDocTag");
 
 }

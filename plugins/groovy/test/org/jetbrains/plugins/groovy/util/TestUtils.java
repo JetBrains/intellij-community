@@ -14,6 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.junit.Assert;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +32,7 @@ public abstract class TestUtils {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.util.TestUtils");
   public static final String TEMP_FILE = "temp.groovy";
   public static final String GSP_TEMP_FILE = "temp.gsp";
+  public static final String GDOC_TEMP_FILE = "temp.groovydoc";
   public static final String CARET_MARKER = "<caret>";
   public static final String BEGIN_MARKER = "<begin>";
   public static final String END_MARKER = "<end>";
@@ -51,6 +53,15 @@ public abstract class TestUtils {
 
   public static PsiFile createPseudoPhysicalFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
+  }
+
+  public static PsiFile createPseudoPhysicalGDocFile(final Project project, final String text) throws IncorrectOperationException {
+    return PsiManager.getInstance(project).getElementFactory().createFileFromText(
+        GDOC_TEMP_FILE,
+        FileTypeManager.getInstance().getFileTypeByFileName(GDOC_TEMP_FILE),
+        text,
+        LocalTimeCounter.currentTime(),
+        true);
   }
 
   public static PsiFile createPseudoPhysicalGspFile(final Project project, final String text) throws IncorrectOperationException {

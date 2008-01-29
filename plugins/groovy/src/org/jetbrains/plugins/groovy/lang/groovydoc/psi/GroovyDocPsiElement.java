@@ -15,23 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocTagImpl;
 
 /**
  * @author ilyas
  */
-public class GroovyDocPsiCreator implements GroovyDocElementTypes{
-  
-  public static PsiElement createElement(ASTNode node) {
-    IElementType type = node.getElementType();
-
-    if (type == GDOC_TAG) return new GrDocTagImpl(node);
-
-    return new ASTWrapperPsiElement(node);
-  }
+public interface GroovyDocPsiElement extends PsiElement{
 }

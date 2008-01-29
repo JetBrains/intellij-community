@@ -21,6 +21,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.DocComentBody;
 
 /**
  * @author ilyas
@@ -29,11 +30,8 @@ public class GroovyDocParser implements PsiParser {
   @NotNull
   public ASTNode parse(IElementType root, PsiBuilder builder) {
     PsiBuilder.Marker rootMarker = builder.mark();
-    while (!builder.eof()) {
-      builder.advanceLexer();
-    }
+    DocComentBody.parse(builder);
     rootMarker.done(root);
     return builder.getTreeBuilt();
-
   }
 }

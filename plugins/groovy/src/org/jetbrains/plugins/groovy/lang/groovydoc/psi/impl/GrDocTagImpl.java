@@ -13,25 +13,23 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi;
+package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocTagImpl;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocTag;
 
 /**
  * @author ilyas
  */
-public class GroovyDocPsiCreator implements GroovyDocElementTypes{
-  
-  public static PsiElement createElement(ASTNode node) {
-    IElementType type = node.getElementType();
+public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GroovyDocTag {
 
-    if (type == GDOC_TAG) return new GrDocTagImpl(node);
+  public GrDocTagImpl(@NotNull ASTNode node) {
+    super(node);
+  }
 
-    return new ASTWrapperPsiElement(node);
+  public String toString() {
+    return "GroovyDocTag";
   }
 }

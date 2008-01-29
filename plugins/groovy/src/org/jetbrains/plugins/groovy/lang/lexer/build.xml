@@ -23,7 +23,7 @@
 
   <property name="groovydoc.lexer.file" value="${groovydoc.path}/_GroovyDocLexer.java"/>
   <property name="groovydoc.lexer.log" value="${groovydoc.path}/jflex.log"/>
-  <property name="groovydoc.lexer.source" value="${groovydoc.path}/groovydoc.flex"/>
+  <property name="groovydoc.lexer.source" value="${groovydoc.path}/gdoc.flex"/>
 
   <target name="jflex" description="Produces Jflex based lexer">
     <delete file="${lexer.file}"/>
