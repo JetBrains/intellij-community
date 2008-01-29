@@ -18,7 +18,7 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -60,7 +60,7 @@ public class PluginBuildUtil {
 
   public static void getDependencies(Module module, Set<Module> modules) {
     for (Module dependency : ModuleRootManager.getInstance(module).getDependencies()) {
-      if (dependency.getModuleType() == ModuleType.JAVA) {
+      if (dependency.getModuleType() == StdModuleTypes.JAVA) {
         if (modules.add(dependency)) {
           getDependencies(dependency, modules);
         }

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.ui.Messages;
@@ -91,7 +92,7 @@ public class MavenToIdeaConfigurator {
 
     Module module = myMapping.getModule(node);
     if (module == null) {
-      module = myModuleModel.newModule(myMapping.getModuleFilePath(node));
+      module = myModuleModel.newModule(myMapping.getModuleFilePath(node), StdModuleTypes.JAVA);
     }
 
     new MavenToIdeaModuleConfigurator(myModuleModel, myMapping, myProfiles, myPrefs, module, mavenProject).config();
