@@ -395,73 +395,13 @@ public class TemplateState implements Disposable {
     final LookupItem[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
-      lookupItems[0].setPriority(Integer.MAX_VALUE);
-
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myEditor == null) return;
-
-          final LookupManager lookupManager = LookupManager.getInstance(myProject);
-          if (lookupManager.isDisposed()) return;
-          final Lookup lookup = lookupManager.showLookup(myEditor,
-                                                         lookupItems,
-                                                         "",
-                                                         new CompletionPreferencePolicy(PsiManager.getInstance(myProject), lookupItems, ExpectedTypeInfo.EMPTY, "", psiFile),
-                                                         new DefaultCharFilter(myEditor, psiFile, end));
-          lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
-          toProcessTab = false;
-          lookup.addLookupListener(
-            new LookupAdapter() {
-              public void lookupCanceled(LookupEvent event) {
-                lookup.removeLookupListener(this);
-                toProcessTab = true;
-              }
-
-              public void itemSelected(LookupEvent event) {
-                lookup.removeLookupListener(this);
-                if (isFinished()) return;
-                toProcessTab = true;
-
-                final LookupItem item = event.getItem();
-
-                if (item != null) {
-                  PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-                  Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
-                  if (bracketCount != null) {
-                    StringBuilder tail = new StringBuilder();
-                    for (int i = 0; i < bracketCount.intValue(); i++) {
-                      tail.append("[]");
-                    }
-                    EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
-                    PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-                  }
-
-                  updateTypeBindings(item.getObject(), psiFile, currentSegmentNumber);
-
-                  char c = event.getCompletionChar();
-                  if (c == '.') {
-                    EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-                    AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                    return;
-                  }
-
-                  if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
-                    AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                    return;
-                  }
-
-                  if (!isFinished()) {
-                    calcResults(true);
-                  }
-                }
-
-                nextTab();
-              }
-            }
-          );
-        }
-      });
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final String s = lookupItems[0].getLookupString();
+        EditorModificationUtil.insertStringAtCaret(myEditor, s);
+      } else {
+        lookupItems[0].setPriority(Integer.MAX_VALUE);
+        runLookup(currentSegmentNumber, end, lookupItems, psiFile);
+      }
     }
     else {
       Result result = expressionNode.calculateResult(context);
@@ -476,6 +416,74 @@ public class TemplateState implements Disposable {
       }
     }
     focusCurrentHighlighter(true);
+  }
+
+  private void runLookup(final int currentSegmentNumber, final int end, final LookupItem[] lookupItems, final PsiFile psiFile) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        if (myEditor == null) return;
+
+        final LookupManager lookupManager = LookupManager.getInstance(myProject);
+        if (lookupManager.isDisposed()) return;
+        final Lookup lookup = lookupManager.showLookup(myEditor,
+                                                       lookupItems,
+                                                       "",
+                                                       new CompletionPreferencePolicy(PsiManager.getInstance(myProject), lookupItems, ExpectedTypeInfo.EMPTY, "", psiFile),
+                                                       new DefaultCharFilter(myEditor, psiFile, end));
+        lookup.setCurrentItem(lookupItems[0]); // [Valentin] not absolutely correct but all existing macros return the first item as the result
+        toProcessTab = false;
+        lookup.addLookupListener(
+          new LookupAdapter() {
+            public void lookupCanceled(LookupEvent event) {
+              lookup.removeLookupListener(this);
+              toProcessTab = true;
+            }
+
+            public void itemSelected(LookupEvent event) {
+              lookup.removeLookupListener(this);
+              if (isFinished()) return;
+              toProcessTab = true;
+
+              final LookupItem item = event.getItem();
+
+              if (item != null) {
+                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+                Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+                if (bracketCount != null) {
+                  StringBuilder tail = new StringBuilder();
+                  for (int i = 0; i < bracketCount.intValue(); i++) {
+                    tail.append("[]");
+                  }
+                  EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
+                  PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+                }
+
+                updateTypeBindings(item.getObject(), psiFile, currentSegmentNumber);
+
+                char c = event.getCompletionChar();
+                if (c == '.') {
+                  EditorModificationUtil.insertStringAtCaret(myEditor, ".");
+                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+                  return;
+                }
+
+                if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
+                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+                  return;
+                }
+
+                if (!isFinished()) {
+                  calcResults(true);
+                }
+              }
+
+              nextTab();
+            }
+          }
+        );
+      }
+    });
   }
 
 
