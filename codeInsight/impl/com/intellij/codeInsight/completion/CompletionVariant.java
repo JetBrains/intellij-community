@@ -36,7 +36,6 @@ public class CompletionVariant {
   private final Set<Class> myScopeClassExceptions = new HashSet<Class>();
   private InsertHandler myInsertHandler = null;
   private final Map<Object, Serializable> myItemProperties = new HashMap<Object, Serializable>();
-  private boolean caseInsensitive;
   private final CompletionVariantPeer myPeer;
 
   public CompletionVariant() {
@@ -270,11 +269,7 @@ public class CompletionVariant {
     return "completion variant at " + myPosition.toString() + " completions: " + myCompletionsList;
   }
 
-  public boolean isCaseInsensitive() {
-    return caseInsensitive;
-  }
-
   public void setCaseInsensitive(boolean caseInsensitive) {
-    this.caseInsensitive = caseInsensitive;
+    setItemProperty(LookupItem.CASE_INSENSITIVE, caseInsensitive);
   }
 }

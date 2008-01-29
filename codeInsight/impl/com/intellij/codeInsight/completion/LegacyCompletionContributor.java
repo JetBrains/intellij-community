@@ -15,6 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.QueryResultSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -24,11 +25,12 @@ import java.util.Set;
  * @author peter
  */
 public class LegacyCompletionContributor extends CompletionContributor{
+  @NonNls public static final String LEGACY = "Legacy";
   private static final CompletionData CLASS_NAME_DATA = new ClassNameCompletionData();
 
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
     final PsiElementPattern.Capture<PsiElement> everywhere = PlatformPatterns.psiElement();
-    registrar.extendBasicCompletion(everywhere).onPriority(Double.POSITIVE_INFINITY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+    registrar.extendBasicCompletion(everywhere).dependent(LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = context.file;
@@ -58,7 +60,7 @@ public class LegacyCompletionContributor extends CompletionContributor{
       }
     });
 
-    registrar.extendClassNameCompletion(everywhere).onPriority(Double.POSITIVE_INFINITY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+    registrar.extendClassNameCompletion(everywhere).dependent(LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = context.file;
