@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
 /**
  * @author ilyas
@@ -36,7 +37,7 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
   private static final Spacing NO_SPACING_WITH_NEWLINE = Spacing.createSpacing(0, 0, 0, true, 1);
   private static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
   private static final Spacing COMMON_SPACING = Spacing.createSpacing(1, 1, 0, true, 100);
-  private static final Spacing IMPORT_BETWEEN_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
+  private static final Spacing ONE_LINE_FEED_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
   private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
 
   public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2) {
@@ -108,9 +109,9 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     }
 
 /********** imports ************/
-    if (IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
-        IMPORT_STATEMENT.equals(rightNode.getElementType())) {
-      return IMPORT_BETWEEN_SPACING;
+    if (leftNode.getPsi() instanceof GrTopStatement &&
+        rightNode.getPsi() instanceof GrTopStatement) {
+      return ONE_LINE_FEED_SPACING;
     }
     if ((IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
         (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&

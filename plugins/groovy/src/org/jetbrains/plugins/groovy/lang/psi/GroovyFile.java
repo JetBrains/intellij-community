@@ -35,5 +35,5 @@ public interface GroovyFile extends GroovyFileBase {
 
   void setPackageName(String packageName);
 
-  <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl) throws IncorrectOperationException;
+  <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException;
 }

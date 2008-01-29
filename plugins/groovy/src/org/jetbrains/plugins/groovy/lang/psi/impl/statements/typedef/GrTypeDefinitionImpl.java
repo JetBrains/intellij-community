@@ -812,29 +812,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl) throws IncorrectOperationException {
-
-    GrTypeDefinitionBody body = getBody();
-    if (body == null) return null;
-    ASTNode methodNode = decl.getNode();
-
-    ASTNode bodyNode = body.getNode();
-    PsiElement brace = body.getRBrace();
-    if (brace != null) {
-      ASTNode anchor = brace.getNode();
-      bodyNode.addChild(methodNode, anchor);
-      bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
-    } else {
-      bodyNode.addChild(methodNode);
-    }
-    ASTNode treePrev = methodNode.getTreePrev();
-    if (treePrev != null) {
-      if (treePrev.getText().matches("(\\s*\n\\s*)+")) {
-        bodyNode.removeChild(treePrev);
-      }
-      bodyNode.addLeaf(GroovyTokenTypes.mNLS, "\n\n", methodNode);
-    }
-
-    return decl;
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
+    return (T) addBefore(decl, anchorBefore);
   }
 }

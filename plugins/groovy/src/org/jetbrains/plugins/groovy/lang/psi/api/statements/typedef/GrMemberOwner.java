@@ -26,5 +26,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
  * @author ilyas
  */
 public interface GrMemberOwner extends PsiClass {
-  <T extends GrMembersDeclaration> T addMemberDeclaration(T decl) throws IncorrectOperationException ;
+  <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException ;
 }

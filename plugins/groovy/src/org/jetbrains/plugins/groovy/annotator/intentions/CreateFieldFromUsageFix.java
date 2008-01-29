@@ -36,10 +36,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 
@@ -83,7 +87,23 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
         myRefExpression.getReferenceName(), null, type);
-    fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl);
+    GrMembersDeclaration anchor = null;
+    if (myTargetClass instanceof GroovyScriptClass) {
+      if (myTargetClass.getContainingFile() == file) {
+        int offset = editor.getCaretModel().getOffset();
+        GrTopStatement[] tops = ((GroovyFile) file).getTopStatements();
+        for (GrTopStatement top : tops) {
+          TextRange range = top.getTextRange();
+          if (range.getStartOffset() > offset) break;
+
+          if (top instanceof GrVariableDeclaration && range.contains(offset)) {
+            anchor = (GrMembersDeclaration) top;
+            break;
+          }
+        }
+      }
+    }
+    fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl, anchor);
     GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
     assert typeElement != null;
     TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);

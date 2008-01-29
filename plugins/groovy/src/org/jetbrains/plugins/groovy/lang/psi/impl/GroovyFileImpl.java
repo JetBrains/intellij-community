@@ -273,28 +273,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl) throws IncorrectOperationException {
-    PsiElement[] children = getChildren();
-    PsiElement element;
-    if (children.length == 0) {
-      element = add(decl);
-    } else {
-      PsiElement anchor = children[children.length - 1];
-      if (!anchor.getText().matches("\n\n")) {
-        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-        PsiElement separator = factory.createLineTerminator(1);
-        if (anchor.getText().matches("(\\s*\n\\s*)+")) {
-          anchor = anchor.replace(separator);
-        } else {
-          anchor = addAfter(separator, anchor);
-        }
-        separator = factory.createLineTerminator(1);
-        anchor = addAfter(separator, anchor);
-      }
-      element = addAfter(decl, anchor);
-    }
-
-    return (T) element;
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
+    return (T) addBefore(decl, anchorBefore);
   }
 
   public void clearCaches() {
