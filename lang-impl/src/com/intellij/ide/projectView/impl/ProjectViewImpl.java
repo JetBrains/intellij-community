@@ -202,9 +202,12 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
     }
   };
     toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter(){
+      private boolean toolWindowVisible;
+
       public void stateChanged() {
         ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
-        if (window != null && window.isVisible()) {
+        if (window == null) return;
+        if (window.isVisible() && !toolWindowVisible) {
           String id = getCurrentViewId();
           if (isAutoscrollToSource(id)) {
             myAutoScrollToSourceHandler.onMouseClicked(getCurrentProjectViewPane().getTree());
@@ -213,6 +216,7 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
             myAutoScrollFromSourceHandler.setAutoScrollMode(true);
           }
         }
+        toolWindowVisible = window.isVisible();
       }
     });
   }
