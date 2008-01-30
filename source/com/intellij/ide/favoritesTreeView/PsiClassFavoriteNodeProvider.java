@@ -6,7 +6,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.favoritesTreeView.smartPointerPsiNodes.ClassSmartPointerNode;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.GroupByTypeComparator;
+import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -68,7 +68,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
 
   public int getElementWeight(final Object value, final boolean isSortByType) {
      if (value instanceof PsiClass){
-      return isSortByType ? GroupByTypeComparator.getClassPosition((PsiClass)value) : 3;
+      return isSortByType ? ClassTreeNode.getClassPosition((PsiClass)value) : 3;
     }
 
     return -1;

@@ -164,4 +164,22 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> {
   public String getTitle() {
     return null;
   }
+
+  public boolean isSortByFirstChild() {
+    return false;
+  }
+
+  public int getTypeSortWeight(boolean sortByType) {
+    return 0;
+  }
+
+  @Nullable
+  public Comparable getTypeSortKey() {
+    return null;
+  }
+
+  @Nullable
+  public String getQualifiedNameSortKey() {
+    return null;
+  }
 }

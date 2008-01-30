@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
@@ -76,5 +77,13 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   public void navigate(final boolean requestFocus) {
     OpenFileDescriptor descriptor = new OpenFileDescriptor(getProject(), new ResourceBundleAsVirtualFile(getValue()));
     FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, requestFocus);
+  }
+
+  public boolean isSortByFirstChild() {
+    return true;
+  }
+
+  public Comparable getTypeSortKey() {
+    return new PsiFileNode.ExtensionSortKey(StdFileTypes.PROPERTIES.getDefaultExtension());
   }
 }

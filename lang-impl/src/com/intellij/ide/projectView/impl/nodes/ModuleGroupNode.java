@@ -62,4 +62,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> {
   public int getWeight() {
     return 0;
   }
+
+  public int getTypeSortWeight(final boolean sortByType) {
+    return 1;
+  }
 }

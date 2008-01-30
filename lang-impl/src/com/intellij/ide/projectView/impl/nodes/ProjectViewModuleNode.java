@@ -55,4 +55,8 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
   public int getWeight() {
     return 10;
   }
+
+  public int getTypeSortWeight(final boolean sortByType) {
+    return 2;
+  }
 }

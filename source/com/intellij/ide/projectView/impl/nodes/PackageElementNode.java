@@ -48,6 +48,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -210,5 +211,18 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     else {
       return super.getTitle();
     }
+  }
+
+  @Nullable
+  public String getQualifiedNameSortKey() {
+    final PackageElement packageElement = getValue();
+    if (packageElement != null) {
+      return packageElement.getPackage().getQualifiedName();
+    }
+    return null;
+  }
+
+  public int getTypeSortWeight(final boolean sortByType) {
+    return 4;
   }
 }

@@ -58,4 +58,27 @@ public class PsiFileNode extends BasePsiNode<PsiFile>{
   protected boolean isMarkReadOnly() {
     return true;
   }
+
+  public Comparable getTypeSortKey() {
+    String extension = extension(getValue());
+    return extension == null ? null : new ExtensionSortKey(extension);
+  }
+
+  public static String extension(final PsiFile file) {
+    return file == null || file.getVirtualFile() == null ? null : file.getVirtualFile().getFileType().getDefaultExtension();
+  }
+
+  public static class ExtensionSortKey implements Comparable {
+    private String myExtension;
+
+    public ExtensionSortKey(final String extension) {
+      myExtension = extension;
+    }
+
+    public int compareTo(final Object o) {
+      if (!(o instanceof ExtensionSortKey)) return 0;
+      ExtensionSortKey rhs = (ExtensionSortKey) o;
+      return myExtension.compareTo(rhs.myExtension);
+    }
+  }
 }

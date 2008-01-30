@@ -151,4 +151,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> {
       return LayeredIcon.create(originalIcon, Icons.LOCKED_ICON);
     }
   }
+
+  public String getQualifiedNameSortKey() {
+    final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(getProject());
+    return factory.getQualifiedName(getValue(), true);
+  }
+
+  public int getTypeSortWeight(final boolean sortByType) {
+    return 3;
+  }
 }

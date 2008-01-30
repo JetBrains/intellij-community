@@ -383,15 +383,7 @@ public abstract class AbstractProjectViewPane implements JDOMExternalizable, Dat
 
   public void installComparator() {
     final ProjectView projectView = ProjectView.getInstance(myProject);
-    myTreeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator() {
-      protected boolean isSortByType() {
-        return projectView.isSortByType(getId());
-      }
-
-      protected boolean isAbbreviatePackageNames() {
-        return projectView.isAbbreviatePackageNames(getId());
-      }
-    });
+    myTreeBuilder.setNodeDescriptorComparator(new GroupByTypeComparator(projectView, getId()));
   }
 
   protected void installTreePopupHandler(final String place, final String groupName) {

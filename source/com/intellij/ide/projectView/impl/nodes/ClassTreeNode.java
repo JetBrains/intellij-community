@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.ElementPresentationUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,5 +93,40 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass>{
   @Override
   protected boolean isMarkReadOnly() {
     return true;
+  }
+
+  public int getTypeSortWeight(final boolean sortByType) {
+    return sortByType ? 5 : 0;
+  }
+
+  public Comparable getTypeSortKey() {
+    return new ClassNameSortKey();
+  }
+
+  public static int getClassPosition(final PsiClass aClass) {
+    if (aClass == null || !aClass.isValid()) {
+      return 0;
+    }
+    int pos = ElementPresentationUtil.getClassKind(aClass);
+    //abstract class before concrete
+    if (pos == ElementPresentationUtil.CLASS_KIND_CLASS || pos == ElementPresentationUtil.CLASS_KIND_EXCEPTION) {
+      boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isInterface();
+      if (isAbstract) {
+        pos --;
+      }
+    }
+    return pos;
+  }
+
+  private class ClassNameSortKey implements Comparable {
+    public int compareTo(final Object o) {
+      if (!(o instanceof ClassNameSortKey)) return 0;
+      ClassNameSortKey rhs = (ClassNameSortKey) o;
+      return getPosition() - rhs.getPosition();
+    }
+
+    int getPosition() {
+      return getClassPosition(getValue());
+    }
   }
 }

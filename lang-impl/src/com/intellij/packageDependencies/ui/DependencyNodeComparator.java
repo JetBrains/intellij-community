@@ -1,6 +1,6 @@
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.ide.projectView.impl.GroupByTypeComparator;
+import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 
@@ -23,7 +23,7 @@ public class DependencyNodeComparator implements Comparator<PackageDependenciesN
       final PsiElement psiElement1 = p1.getPsiElement();
       final PsiElement psiElement2 = p2.getPsiElement();
       if (psiElement1 instanceof PsiClass && psiElement2 instanceof PsiClass) {
-        return GroupByTypeComparator.getClassPosition((PsiClass)psiElement1) - GroupByTypeComparator.getClassPosition((PsiClass)psiElement2);
+        return ClassTreeNode.getClassPosition((PsiClass)psiElement1) - ClassTreeNode.getClassPosition((PsiClass)psiElement2);
       }
     }
     return p1.toString().compareTo(p2.toString());
