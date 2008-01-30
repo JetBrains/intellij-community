@@ -14,7 +14,7 @@ public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 
   public DefaultRunExecutor() {
-    super(IconLoader.getIcon("/actions/execute.png"), EXECUTOR_ID, UIBundle.message("tool.window.name.run"));
+    super(IconLoader.getIcon("/actions/execute.png"), EXECUTOR_ID, UIBundle.message("tool.window.name.run"), "RunClass");
   }
 
   public String getStartActionText() {

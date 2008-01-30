@@ -8,13 +8,14 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -37,7 +38,7 @@ public class ConfigurationContext {
   public ConfigurationContext(final DataContext dataContext) {
     myRuntimeConfiguration = (RuntimeConfiguration)dataContext.getData(DataConstantsEx.RUNTIME_CONFIGURATION);
     myContextComponent = (Component)dataContext.getData(DataConstants.CONTEXT_COMPONENT);
-    myModule = DataKeys.MODULE.getData(dataContext);
+    myModule = LangDataKeys.MODULE.getData(dataContext);
     final Object location = dataContext.getData(Location.LOCATION);
     if (location != null) {
       myLocation = (Location<PsiElement>)location;
@@ -107,7 +108,7 @@ public class ConfigurationContext {
   @Nullable
   private static PsiElement getSelectedPsiElement(final DataContext dataContext, final Project project) {
     PsiElement element = null;
-    final Editor editor = DataKeys.EDITOR.getData(dataContext);
+    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -115,7 +116,7 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      element = DataKeys.PSI_ELEMENT.getData(dataContext);
+      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null) {
       final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
@@ -142,6 +143,6 @@ public class ConfigurationContext {
 
   @Nullable
   public RuntimeConfiguration getOriginalConfiguration(final ConfigurationType type) {
-    return myRuntimeConfiguration != null && type.equals(myRuntimeConfiguration.getType()) ? myRuntimeConfiguration : null;
+    return myRuntimeConfiguration != null && Comparing.strEqual(type.getId(), myRuntimeConfiguration.getType().getId()) ? myRuntimeConfiguration : null;
   }
 }

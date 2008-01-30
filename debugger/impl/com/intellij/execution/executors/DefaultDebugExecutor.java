@@ -14,7 +14,7 @@ public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
 
   public DefaultDebugExecutor() {
-    super(IconLoader.getIcon("/actions/startDebugger.png"), EXECUTOR_ID, UIBundle.message("tool.window.name.debug"));
+    super(IconLoader.getIcon("/actions/startDebugger.png"), EXECUTOR_ID, UIBundle.message("tool.window.name.debug"), "DebugClass");
   }
 
   public String getStartActionText() {

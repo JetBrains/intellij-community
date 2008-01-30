@@ -17,6 +17,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,7 +29,7 @@ public abstract class ConfigurationFactory {
 
   private final ConfigurationType myType;
 
-  protected ConfigurationFactory(final ConfigurationType type) {
+  protected ConfigurationFactory(@NotNull final ConfigurationType type) {
     myType = type;
   }
 
@@ -52,6 +53,7 @@ public abstract class ConfigurationFactory {
     return myType.getIcon();
   }
 
+  @NotNull
   public ConfigurationType getType() {
     return myType;
   }

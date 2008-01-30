@@ -15,11 +15,13 @@ public class Executor {
   private Icon myIcon;
   private String myActionName;
   private String myId;
+  private String myContextActionId;
 
-  public Executor(final Icon icon, @NonNls @NotNull final String id, @NotNull final String actionName) {
+  public Executor(final Icon icon, @NonNls @NotNull final String id, @NotNull final String actionName, @NotNull @NonNls final String contextActionId) {
     myIcon = icon;
     myId = id;
     myActionName = actionName;
+    myContextActionId = contextActionId;
   }
 
   public Icon getIcon() {
@@ -41,4 +43,7 @@ public class Executor {
     return myId;
   }
 
+  public String getContextActionId() {
+    return myContextActionId;
+  }
 }

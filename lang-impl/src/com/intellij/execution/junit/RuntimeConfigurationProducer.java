@@ -12,11 +12,7 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -73,13 +69,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
     manager.createStepsBeforeRun(template, runConfiguration);
   }
 
-  protected static PsiMethod getContainingMethod(PsiElement element) {
-    while (element != null)
-      if (element instanceof PsiMethod) break;
-      else element = element.getParent();
-    return (PsiMethod) element;
-  }
-
   protected ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
@@ -96,33 +85,6 @@ public abstract class RuntimeConfigurationProducer implements Comparable {
       }
     }
     return null;
-  }
-
-  @Nullable
-  protected static PsiPackage checkPackage(final PsiElement element) {
-    if (element == null || !element.isValid()) return null;
-    final Project project = element.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (element instanceof PsiPackage) {
-      final PsiPackage aPackage = (PsiPackage)element;
-      final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
-      for (final PsiDirectory directory : directories) {
-        if (isSource(directory, fileIndex)) return aPackage;
-      }
-      return null;
-    }
-    else if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
-      return isSource(directory, fileIndex) ? JavaDirectoryService.getInstance().getPackage(directory) : null;
-    }
-    else {
-      return null;
-    }
-  }
-
-  private static boolean isSource(final PsiDirectory directory, final ProjectFileIndex fileIndex) {
-    final VirtualFile virtualFile = directory.getVirtualFile();
-    return fileIndex.getSourceRootForFile(virtualFile) != null;
   }
 
   private static class ProducerComparator implements Comparator<RuntimeConfigurationProducer> {

@@ -687,7 +687,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     final ConfigurationType type = configuration.getType();
     for (final ExecutionEvent e : getEventsByClass(ExecuteBeforeRunEvent.class)) {
       final ExecuteBeforeRunEvent event = (ExecuteBeforeRunEvent)e;
-      if (type.equals(event.getConfigurationType())) {
+      if (Comparing.strEqual(type.getId(), event.getConfigurationType().getId())) {
         if (event.getRunConfigurationName() == null) {
           // run for any configuration of this type
           return event;

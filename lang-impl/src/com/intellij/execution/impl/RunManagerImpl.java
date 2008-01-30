@@ -31,7 +31,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   private Map<String, Function<RunConfiguration, String>> myRegisteredSteps = new LinkedHashMap<String, Function<RunConfiguration, String>>();
   private Map<String, Function<RunConfiguration, String>> myRegisteredDescriptions = new LinkedHashMap<String, Function<RunConfiguration, String>>();
 
-  private Map<ConfigurationFactory, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap = new HashMap<ConfigurationFactory, RunnerAndConfigurationSettingsImpl>();
+  private Map<String, RunnerAndConfigurationSettingsImpl> myTemplateConfigurationsMap = new HashMap<String, RunnerAndConfigurationSettingsImpl>();
   private RunnerAndConfigurationSettingsImpl mySelectedConfiguration = null;
   private String mySelectedConfig = null;
   private RunnerAndConfigurationSettingsImpl myTempConfiguration;
@@ -179,10 +179,10 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
   }
 
   public RunnerAndConfigurationSettingsImpl getConfigurationTemplate(final ConfigurationFactory factory) {
-    RunnerAndConfigurationSettingsImpl template = myTemplateConfigurationsMap.get(factory);
+    RunnerAndConfigurationSettingsImpl template = myTemplateConfigurationsMap.get(factory.getName());
     if (template == null) {
       template = new RunnerAndConfigurationSettingsImpl(this, factory.createTemplateConfiguration(myProject), true);
-      myTemplateConfigurationsMap.put(factory, template);
+      myTemplateConfigurationsMap.put(factory.getName(), template);
     }
     return template;
   }
@@ -357,7 +357,7 @@ public class RunManagerImpl extends RunManagerEx implements JDOMExternalizable, 
 
     final Element methodsElement = element.getChild(METHOD);
     if (configuration.isTemplate()) {
-      myTemplateConfigurationsMap.put(factory, configuration);
+      myTemplateConfigurationsMap.put(factory.getName(), configuration);
       final Map<String, Boolean> map = updateStepsBeforeRun(methodsElement);
       setCompileMethodBeforeRun(configuration.getConfiguration(), map);
     }

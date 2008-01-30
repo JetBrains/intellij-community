@@ -4,6 +4,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.actions.RunContextAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -28,17 +29,19 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ExecutorRegistryImpl");
 
   @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
+  @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
 
   private List<Executor> myExecutors = new ArrayList<Executor>();
   private ActionManager myActionManager;
   private Map<String, Executor> myId2Executor = new HashMap<String, Executor>();
   private Map<String, AnAction> myId2Action = new HashMap<String, AnAction>();
+  private Map<String, AnAction> myContextActionId2Action = new HashMap<String, AnAction>();
 
   public ExecutorRegistryImpl(ActionManager actionManager) {
     myActionManager = actionManager;
   }
 
-  private void initExecutor(@NotNull final Executor executor) {
+  synchronized void initExecutor(@NotNull final Executor executor) {
     if (myId2Executor.get(executor.getId()) != null) {
       LOG.error("Executor with id: \"" + executor.getId() + "\" was already registered!");
     }
@@ -46,31 +49,44 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);
 
-    final ExecutorAction action = new ExecutorAction(executor);
-    myId2Action.put(executor.getId(), action);
-    myActionManager.registerAction(executor.getId(), action);
+    registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
+    registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
+  }
 
-    final DefaultActionGroup group = (DefaultActionGroup)myActionManager.getAction(RUNNERS_GROUP);
+  private void registerAction(@NotNull final String actionId, @NotNull final AnAction anAction, @NotNull final String groupId, @NotNull final Map<String, AnAction> map) {
+    AnAction action = myActionManager.getAction(actionId);
+    if (action == null) {
+      myActionManager.registerAction(actionId, anAction);
+      map.put(actionId, anAction);
+      action = anAction;
+    }
+
+    final DefaultActionGroup group = (DefaultActionGroup) myActionManager.getAction(groupId);
     group.add(action);
   }
 
-  private void deinitExecutor(@NotNull final Executor executor) {
+  synchronized void deinitExecutor(@NotNull final Executor executor) {
     myExecutors.remove(executor);
     myId2Executor.remove(executor.getId());
 
-    final DefaultActionGroup group = (DefaultActionGroup)myActionManager.getAction(RUNNERS_GROUP);
+    unregisterAction(executor.getId(), RUNNERS_GROUP, myId2Action);
+    unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionId2Action);
+  }
+
+  private void unregisterAction(@NotNull final String actionId, @NotNull final String groupId, @NotNull final Map<String, AnAction> map) {
+    final DefaultActionGroup group = (DefaultActionGroup)myActionManager.getAction(groupId);
     if (group != null) {
-      final AnAction action = myId2Action.get(executor.getId());
+      final AnAction action = map.get(actionId);
       if (action != null) {
         group.remove(action);
-        myActionManager.unregisterAction(executor.getId());
-        myId2Action.remove(executor.getId());
+        myActionManager.unregisterAction(actionId);
+        map.remove(actionId);
       }
     }
   }
 
   @NotNull
-  public Executor[] getRegisteredExecutors() {
+  public synchronized Executor[] getRegisteredExecutors() {
     return myExecutors.toArray(new Executor[myExecutors.size()]);
   }
 
@@ -87,7 +103,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public void disposeComponent() {
+  public synchronized void disposeComponent() {
     if (myExecutors.size() > 0) {
       for (Executor executor : myExecutors) {
         deinitExecutor(executor);
@@ -165,7 +181,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       LOG.assertTrue(runner != null, "Runner MUST not be null!");
 
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
-      final Component component = DataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "component MUST not be null!");
       if (runManager.getConfig().isShowSettingsBeforeRun()) {
         final RunDialog dialog = new RunDialog(project, runner.getInfo());

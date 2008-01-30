@@ -1,19 +1,20 @@
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunManagerEx;
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.*;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RunContextAction extends BaseRunConfigurationAction {
-  private final ProgramRunner myRunner;
+  private Executor myExecutor;
 
-  public RunContextAction(final ProgramRunner runner) {
-    super(ExecutionBundle.message("perform.action.with.context.configuration.action.name", runner.getInfo().getStartActionText()), null, runner.getInfo().getIcon());
-    myRunner = runner;
+  public RunContextAction(@NotNull final Executor executor) {
+    super(ExecutionBundle.message("perform.action.with.context.configuration.action.name", executor.getStartActionText()), null,
+          executor.getIcon());
+    myExecutor = executor;
   }
 
   protected void perform(final ConfigurationContext context) {
@@ -25,16 +26,25 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setTemporaryConfiguration(configuration);
     }
     runManager.setActiveConfiguration(configuration);
-    try {
-      myRunner.execute(configuration.getConfiguration(), context.getDataContext(), configuration.getRunnerSettings(myRunner),
-                       configuration.getConfigurationSettings(myRunner));
-    }
-    catch (ExecutionException e) {
-      Messages.showErrorDialog(context.getProject(), e.getMessage(), ExecutionBundle.message("error.common.title"));
+
+    final ProgramRunner runner = getRunner(myExecutor.getId(), configuration);
+    if (runner != null) {
+      try {
+      runner.execute(configuration.getConfiguration(), context.getDataContext(), configuration.getRunnerSettings(runner),
+                       configuration.getConfigurationSettings(runner));
+      }
+      catch (ExecutionException e) {
+        Messages.showErrorDialog(context.getProject(), e.getMessage(), ExecutionBundle.message("error.common.title"));
+      }
     }
   }
 
+  @Nullable
+  private static ProgramRunner getRunner(final String executorId, final RunnerAndConfigurationSettingsImpl selectedConfiguration) {
+    return RunnerRegistry.getInstance().getRunner(executorId, selectedConfiguration.getConfiguration());
+  }
+
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
-    presentation.setText(myRunner.getInfo().getStartActionText() + actionText, true);
+    presentation.setText(myExecutor.getStartActionText() + actionText, true);
   }
 }

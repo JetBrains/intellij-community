@@ -167,7 +167,8 @@ class RunConfigurable extends BaseConfigurable {
             final Object userObject = node.getUserObject();
             if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
               final RunnerAndConfigurationSettingsImpl runnerAndConfigurationSettings = (RunnerAndConfigurationSettingsImpl)userObject;
-              if (runnerAndConfigurationSettings.getConfiguration().getType() == settings.getType() &&
+              final ConfigurationType configurationType = settings.getType();
+              if (configurationType != null && Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getType().getId(), configurationType.getId()) &&
                   Comparing.strEqual(runnerAndConfigurationSettings.getConfiguration().getName(), settings.getName())){
                 TreeUtil.selectInTree(node, true, myTree);
                 return;
@@ -466,8 +467,8 @@ class RunConfigurable extends BaseConfigurable {
       return settings != null;
     }
     if (settings == null ||
-        mySelectedConfigurable.getConfiguration().getType() != settings.getType() ||
-        (mySelectedConfigurable.getConfiguration().getType() == settings.getType() &&
+        !Comparing.strEqual(mySelectedConfigurable.getConfiguration().getType().getId(), settings.getType().getId()) ||
+        (Comparing.strEqual(mySelectedConfigurable.getConfiguration().getType().getId(), settings.getType().getId()) &&
          !Comparing.strEqual(mySelectedConfigurable.getNameText(), settings.getConfiguration().getName()))){
       return true;
     }

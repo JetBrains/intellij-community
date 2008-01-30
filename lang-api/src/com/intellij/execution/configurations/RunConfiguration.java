@@ -15,11 +15,12 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RunConfiguration extends RunProfile, JDOMExternalizable, Cloneable {
@@ -31,6 +32,7 @@ public interface RunConfiguration extends RunProfile, JDOMExternalizable, Clonea
 
   Project getProject();
 
+  @NotNull
   ConfigurationType getType();
 
   JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider);

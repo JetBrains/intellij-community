@@ -1,32 +1,22 @@
 package com.intellij.execution.impl;
 
 import com.intellij.execution.RunnerRegistry;
-import com.intellij.execution.actions.RunContextAction;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
+// TODO[spLeaner]: eliminate
 public class RunnerRegistryImpl extends RunnerRegistry {
   private final List<ProgramRunner> myRunnersOrder = new ArrayList<ProgramRunner>();
-  @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroup";
-  private ActionManager myManager;
-  private Map<ProgramRunner, AnAction> myRunnerToContextAction = new HashMap<ProgramRunner, AnAction>();
 
-  public RunnerRegistryImpl(@NotNull ActionManager manager) {
-    myManager = manager;
+  public RunnerRegistryImpl() {
   }
 
   @NotNull
@@ -70,37 +60,16 @@ public class RunnerRegistryImpl extends RunnerRegistry {
     }
   }
 
-  public void registerRunner(final ProgramRunner runner) {
+  public synchronized void registerRunner(final ProgramRunner runner) {
     if (myRunnersOrder.contains(runner)) return;
     myRunnersOrder.add(runner);
-
-    final String contextActionId = runner.getInfo().getRunContextActionId();
-    AnAction contextAction = myManager.getAction(contextActionId);
-
-    if (contextAction == null) {
-      contextAction = new RunContextAction(runner);
-      myManager.registerAction(contextActionId, contextAction);
-      myRunnerToContextAction.put(runner, contextAction);
-
-      final DefaultActionGroup group = (DefaultActionGroup) myManager.getAction(RUN_CONTEXT_GROUP);
-      group.add(contextAction);
-    }
   }
 
-  public void unregisterRunner(final ProgramRunner runner) {
+  public synchronized void unregisterRunner(final ProgramRunner runner) {
     myRunnersOrder.remove(runner);
-
-    final DefaultActionGroup group = (DefaultActionGroup) myManager.getAction(RUN_CONTEXT_GROUP);
-    group.remove(myManager.getAction(runner.getInfo().getRunContextActionId()));
-
-    final AnAction contextAction = myRunnerToContextAction.get(runner);
-    if (contextAction != null) {
-      myManager.unregisterAction(runner.getInfo().getRunContextActionId());
-      myRunnerToContextAction.remove(runner);
-    }
   }
 
-  public ProgramRunner[] getRegisteredRunners() {
+  public synchronized ProgramRunner[] getRegisteredRunners() {
     return myRunnersOrder.toArray(new ProgramRunner[myRunnersOrder.size()]);
   }
 

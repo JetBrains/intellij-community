@@ -5,6 +5,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.JavaRuntimeConfigurationProducerBase;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -13,7 +14,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplicationConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
+public class ApplicationConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
   private PsiElement myPsiElement = null;
   public static final RuntimeConfigurationProducer PROTOTYPE = new ApplicationConfigurationProducer();
 

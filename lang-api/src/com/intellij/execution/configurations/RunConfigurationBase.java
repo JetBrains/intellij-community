@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +73,7 @@ public abstract class RunConfigurationBase implements RunConfiguration {
     return myProject;
   }
 
+  @NotNull
   public ConfigurationType getType() {
     return myFactory.getType();
   }
