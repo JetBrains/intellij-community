@@ -16,7 +16,7 @@
 
 package com.intellij.execution.junit;
 
-public abstract class JUnitConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
+public abstract class JUnitConfigurationProducer extends JavaRuntimeConfigurationProducerBase implements Cloneable {
   public static final RuntimeConfigurationProducer[] PROTOTYPES = new RuntimeConfigurationProducer[]{
         new AllInPackageConfigurationProducer(),
         new TestMethodConfigurationProducer(),

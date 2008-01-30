@@ -22,10 +22,12 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -74,7 +76,8 @@ public class JUnitConfigurationType implements LocatableConfigurationType {
     return "JUnit";
   }
 
+  @Nullable
   public static JUnitConfigurationType getInstance() {
-    return ApplicationManager.getApplication().getComponent(JUnitConfigurationType.class);
+    return ContainerUtil.findInstance(Extensions.getExtensions(CONFIGURATION_TYPE_EP), JUnitConfigurationType.class);
   }
 }
