@@ -253,10 +253,15 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   @NotNull
   public <K> Collection<VirtualFile> getContainingFiles(final String indexId, K dataKey, @NotNull Project project) {
+    return getContainingFiles(indexId, dataKey, project, null);
+  }
+  
+  @NotNull
+  public <K, V> Collection<VirtualFile> getContainingFiles(final String indexId, K dataKey, @NotNull Project project, @Nullable DataFilter<K, V> filter) {
     checkRebuild(indexId);
     try {
       indexUnsavedDocuments();
-      final UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
+      final UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
       if (index == null) {
         return Collections.emptyList();
       }
@@ -270,9 +275,9 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       final Lock readLock = index.getReadLock();
       readLock.lock();
       try {
-        final ValueContainer container = index.getData(dataKey);
-        for (Iterator it = container.getValueIterator(); it.hasNext();) {
-          final Object value = it.next();
+        final ValueContainer<V> container = index.getData(dataKey);
+        final List<V> valueList = filter != null? filter.process(dataKey, container) : container.toValueList();
+        for (final V value : valueList) {
           //noinspection unchecked
           final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value);
           while (inputIdsIterator.hasNext()) {
@@ -327,21 +332,19 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   @Nullable
   private static VirtualFile findFileById(final DirectoryIndex dirIndex, final PersistentFS fs, final int id) {
+    if (ourUnitTestMode) {
+      final VirtualFile testFile = findTestFile(id);
+      if (testFile != null) {
+        return testFile;
+      }
+    }
+    
     final boolean isDirectory = fs.isDirectory(id);
     final DirectoryInfo directoryInfo = isDirectory ? dirIndex.getInfoForDirectoryId(id) : dirIndex.getInfoForDirectoryId(fs.getParent(id));
     if (directoryInfo != null && (directoryInfo.contentRoot != null || directoryInfo.sourceRoot != null)) {
-      if (isDirectory) {
-        return directoryInfo.directory;
-      }
-      else {
-        final VirtualFile child = directoryInfo.directory.findChild(fs.getName(id));
-        if (child != null) {
-          return child;
-        }
-      }
+      return isDirectory? directoryInfo.directory : directoryInfo.directory.findChild(fs.getName(id));
     }
-
-    return findTestFile(id);
+    return null;
   }
 
   @Nullable
