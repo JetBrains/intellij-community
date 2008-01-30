@@ -7,4 +7,19 @@ import org.jetbrains.annotations.NonNls;
  */
 public interface XDebuggerActions {
   @NonNls String VIEW_BREAKPOINTS = "ViewBreakpoints";
+
+  @NonNls String RESUME = "Resume";
+  @NonNls String PAUSE = "Pause";
+
+  @NonNls String STEP_OVER = "StepOver";
+  @NonNls String STEP_INTO = "StepInto";
+  @NonNls String FORCE_STEP_INTO = "ForceStepInto";
+  @NonNls String STEP_OUT = "StepOut";
+
+  @NonNls String RUN_TO_CURSOR = "RunToCursor";
+  @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
+
+  @NonNls String SHOW_EXECUTION_POINT = "ShowExecutionPoint";
+
+  @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
 }

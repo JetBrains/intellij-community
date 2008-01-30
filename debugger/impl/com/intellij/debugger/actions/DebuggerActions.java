@@ -5,19 +5,10 @@
 package com.intellij.debugger.actions;
 
 import org.jetbrains.annotations.NonNls;
+import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
-public interface DebuggerActions {
-  @NonNls String RESUME = "Resume";
-  @NonNls String PAUSE = "Pause";
-  @NonNls String SHOW_EXECUTION_POINT = "ShowExecutionPoint";
-  @NonNls String STEP_OVER = "StepOver";
-  @NonNls String STEP_INTO = "StepInto";
-  @NonNls String FORCE_STEP_INTO = "ForceStepInto";
-  @NonNls String STEP_OUT = "StepOut";
+public interface DebuggerActions extends XDebuggerActions {
   @NonNls String POP_FRAME = "Debugger.PopFrame";
-  @NonNls String RUN_TO_CURSOR = "RunToCursor";
-  @NonNls String FORCE_RUN_TO_CURSOR = "ForceRunToCursor";
-  @NonNls String EVALUATE_EXPRESSION = "EvaluateExpression";
   @NonNls String EVALUATION_DIALOG_POPUP = "Debugger.EvaluationDialogPopup";
   @NonNls String FRAME_PANEL_POPUP = "Debugger.FramePanelPopup";
   @NonNls String INSPECT_PANEL_POPUP = "Debugger.InspectPanelPopup";
