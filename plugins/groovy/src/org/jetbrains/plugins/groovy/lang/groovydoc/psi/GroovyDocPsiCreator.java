@@ -21,6 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocTagImpl;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrInlinedDocTagImpl;
 
 /**
  * @author ilyas
@@ -31,6 +32,7 @@ public class GroovyDocPsiCreator implements GroovyDocElementTypes{
     IElementType type = node.getElementType();
 
     if (type == GDOC_TAG) return new GrDocTagImpl(node);
+    if (type == GDOC_INLINED_TAG) return new GrInlinedDocTagImpl(node);
 
     return new ASTWrapperPsiElement(node);
   }

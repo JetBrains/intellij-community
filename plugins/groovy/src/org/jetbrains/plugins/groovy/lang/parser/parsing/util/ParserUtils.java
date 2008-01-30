@@ -66,7 +66,6 @@ public abstract class ParserUtils {
       builder.advanceLexer();
       return true;
     }
-
     return false;
   }
 

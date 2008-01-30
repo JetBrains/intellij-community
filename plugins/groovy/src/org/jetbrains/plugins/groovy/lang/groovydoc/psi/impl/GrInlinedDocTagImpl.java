@@ -13,24 +13,25 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
+package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.lang.PsiParser;
+import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.psi.tree.IElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocTag;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyInlinedDocTag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing;
 
 /**
  * @author ilyas
  */
-public class GroovyDocParser implements PsiParser {
-  @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
-    PsiBuilder.Marker rootMarker = builder.mark();
-    new GroovyDocParsing().parse(builder);
-    rootMarker.done(root);
-    return builder.getTreeBuilt();
+public class GrInlinedDocTagImpl extends GroovyDocPsiElementImpl implements GroovyInlinedDocTag {
+
+  public GrInlinedDocTagImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public String toString() {
+    return "GroovyInlinedDocTag";
   }
 }
+

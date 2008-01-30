@@ -35,5 +35,6 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes{
   IFileElementType GROOVY_DOC_DUMMY_FILE = new IFileElementType(GroovyDocLanguage.LANGUAGE);
 
   GroovyDocElementType GDOC_TAG = new GroovyDocElementType("GroovyDocTag");
+  GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementType("GroovyDocInlinedTag");
 
 }
