@@ -1,7 +1,6 @@
 package com.intellij.jar;
 
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.ElementsChooser;
@@ -384,7 +383,7 @@ public class BuildJarDialog extends DialogWrapper {
     }
 
     public Icon getIcon() {
-      return IconUtilEx.getIcon(myModule, 0);
+      return myModule.getModuleType().getNodeIcon(false);
     }
 
     public Color getColor() {

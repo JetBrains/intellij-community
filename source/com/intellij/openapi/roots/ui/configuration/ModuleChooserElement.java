@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleOrderEntry;
@@ -41,7 +40,7 @@ public class ModuleChooserElement implements ElementsChooser.ElementProperties{
 
   public Icon getIcon() {
     if (myModule != null) {
-      return IconUtilEx.getIcon(myModule, 0);
+      return myModule.getModuleType().getNodeIcon(false);
     }
     else {
       return CellAppearanceUtils.INVALID_ICON;

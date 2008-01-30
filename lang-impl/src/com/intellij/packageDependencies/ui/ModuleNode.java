@@ -1,10 +1,8 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
@@ -27,11 +25,11 @@ public class ModuleNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return myModule == null ? null : IconUtilEx.getIcon(myModule, Iconable.ICON_FLAG_OPEN);
+    return myModule == null ? null : myModule.getModuleType().getNodeIcon(true);
   }
 
   public Icon getClosedIcon() {
-    return myModule == null ? null : IconUtilEx.getIcon(myModule, 0);
+    return myModule == null ? null : myModule.getModuleType().getNodeIcon(false);
   }
 
   public String toString() {

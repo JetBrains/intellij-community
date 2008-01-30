@@ -10,7 +10,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -93,7 +92,7 @@ public class ChooseModulesDialog extends DialogWrapper {
   private static ElementsChooser.ElementProperties createElementProperties(final Module item) {
     return new ElementsChooser.ElementProperties() {
       public Icon getIcon() {
-        return IconUtilEx.getIcon(item, 0);
+        return item.getModuleType().getNodeIcon(false);
       }
 
       public Color getColor() {

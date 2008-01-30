@@ -16,7 +16,6 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -538,8 +537,8 @@ public class ClasspathPanel extends JPanel {
         actions.add(new ChooseNamedLibraryAction(actionIndex++, provider.getLibraryTablePresentation().getDisplayName(false) + "...", provider));
       }
 
-      actions.add(new ChooseAndAddAction<Module>(actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"), IconUtilEx.getModuleTypeIcon(
-        StdModuleTypes.JAVA, 0)) {
+      actions.add(new ChooseAndAddAction<Module>(actionIndex, ProjectBundle.message("classpath.add.module.dependency.action"),
+                                                 StdModuleTypes.JAVA.getNodeIcon(false)) {
           protected TableItem createTableItem(final Module item) {
             return new ModuleItem(myRootModel.addModuleOrderEntry(item));
           }

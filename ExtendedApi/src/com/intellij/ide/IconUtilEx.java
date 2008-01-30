@@ -1,7 +1,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,7 +17,7 @@ public class IconUtilEx {
       return ((PsiElement)object).getIcon(flags);
     }
     if (object instanceof Module) {
-      return getIcon((Module)object, flags);
+      return ((Module)object).getModuleType().getNodeIcon((flags & Iconable.ICON_FLAG_OPEN) != 0);
     }
     if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;
@@ -26,13 +25,4 @@ public class IconUtilEx {
     }
     return ElementPresentationManager.getIcon(object);
   }
-
-  public static Icon getIcon(Module module, int flags) {
-    return getModuleTypeIcon(module.getModuleType(), flags);
-  }
-
-  public static Icon getModuleTypeIcon(final ModuleType moduleType, int flags) {
-    return moduleType.getNodeIcon((flags & Iconable.ICON_FLAG_OPEN) != 0);
-  }
-
 }

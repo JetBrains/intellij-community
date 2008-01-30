@@ -1,6 +1,5 @@
 package com.intellij.openapi.roots.ui.util;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -109,7 +108,7 @@ public class CellAppearanceUtils {
       return new SimpleTextCellAppearance(presentableName, icon, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
     }
     else if (orderEntry instanceof ModuleOrderEntry) {
-      final Icon icon = IconUtilEx.getIcon(((ModuleOrderEntry)orderEntry).getModule(), 0);
+      final Icon icon = ((ModuleOrderEntry)orderEntry).getModule().getModuleType().getNodeIcon(false);
       return SimpleTextCellAppearance.normal(orderEntry.getPresentableName(), icon);
     }
     else return CompositeAppearance.single(orderEntry.getPresentableName());
@@ -160,7 +159,7 @@ public class CellAppearanceUtils {
   }
 
   public static CellAppearance forModule(Module module) {
-    return SimpleTextCellAppearance.normal(module.getName(), IconUtilEx.getIcon(module, 0));
+    return SimpleTextCellAppearance.normal(module.getName(), module.getModuleType().getNodeIcon(false));
   }
 
   public static CellAppearance forContentEntry(ContentEntry contentEntry) {

@@ -31,7 +31,6 @@
  */
 package com.intellij.ide.projectView.impl.nodes;
 
-import com.intellij.ide.IconUtilEx;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
@@ -39,7 +38,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,8 +52,8 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> {
       return;
     }
     presentation.setPresentableText(getValue().getName());
-    presentation.setOpenIcon(IconUtilEx.getIcon(getValue(), Iconable.ICON_FLAG_OPEN));
-    presentation.setClosedIcon(IconUtilEx.getIcon(getValue(), Iconable.ICON_FLAG_CLOSED));
+    presentation.setOpenIcon(getValue().getModuleType().getNodeIcon(true));
+    presentation.setClosedIcon(getValue().getModuleType().getNodeIcon(false));
   }
 
 
