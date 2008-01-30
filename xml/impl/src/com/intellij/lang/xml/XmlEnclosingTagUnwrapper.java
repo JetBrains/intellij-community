@@ -16,7 +16,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
   }
 
   public String getDescription(PsiElement e) {
-    return XmlBundle.message("remove.tag.name.action.name");
+    return XmlBundle.message("unwrap.enclosing.tag.name.action.name");
   }
 
   public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {

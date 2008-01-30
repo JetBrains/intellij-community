@@ -4,10 +4,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.CodeInsightBundle;
 
 public class JavaElseUnwrapper extends JavaUnwrapper {
   public JavaElseUnwrapper() {
-    super("'Else' block");
+    super(CodeInsightBundle.message("unwrap.else"));
   }
 
   protected boolean isAplicableToJava(PsiElement e) {

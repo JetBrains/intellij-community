@@ -5,10 +5,11 @@ import com.intellij.psi.PsiTryStatement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.CodeInsightBundle;
 
 public class JavaTryUnwrapper extends JavaUnwrapper {
   public JavaTryUnwrapper() {
-    super("'Try' statement");
+    super(CodeInsightBundle.message("unwrap.try"));
   }
 
   protected boolean isAplicableToJava(PsiElement e) {

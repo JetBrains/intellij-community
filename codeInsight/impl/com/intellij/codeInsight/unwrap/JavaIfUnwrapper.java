@@ -4,10 +4,11 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.CodeInsightBundle;
 
 public class JavaIfUnwrapper extends JavaUnwrapper {
   public JavaIfUnwrapper() {
-    super("'If' statement");
+    super(CodeInsightBundle.message("unwrap.if"));
   }
 
   protected boolean isAplicableToJava(PsiElement e) {

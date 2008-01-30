@@ -27,26 +27,18 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   }
 
   public void invoke(Project project, Editor editor, PsiFile file) {
-    PsiElement e = findTargetElement(editor, file);
-    if (e == null) return;
-
-    List<AnAction> options = collectOptions(e, editor, project);
+    List<AnAction> options = collectOptions(project, editor, file);
     showOptions(options, editor);
   }
 
-  private List<AnAction> collectOptions(PsiElement element, Editor editor, Project project) {
+  private List<AnAction> collectOptions(Project project, Editor editor, PsiFile file) {
     List<AnAction> result = new ArrayList<AnAction>();
-    for (UnwrapDescriptor d : LanguageUnwrappers.INSTANCE.allForLanguage(element.getLanguage())) {
-      for (Pair<PsiElement, Unwrapper> each : d.collectUnwrappers(element)) {
+    for (UnwrapDescriptor d : LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage())) {
+      for (Pair<PsiElement, Unwrapper> each : d.collectUnwrappers(project, editor, file)) {
         result.add(createUnwrapAction(each.getSecond(), each.getFirst(), editor, project));
       }
     }
     return result;
-  }
-
-  public PsiElement findTargetElement(Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    return file.findElementAt(offset);
   }
 
   private AnAction createUnwrapAction(final Unwrapper u, final PsiElement el, final Editor ed, final Project p) {

@@ -1,20 +1,25 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class JavaUnwrapDescriptor implements UnwrapDescriptor {
   private static final Unwrapper[] UNWRAPPERS = new Unwrapper[] {
-      new JavaElseUnwrapper(),
-      new JavaIfUnwrapper(),
-      new JavaCatchUnwrapper(),
-      new JavaTryUnwrapper()
+    new JavaElseUnwrapper(),
+    new JavaIfUnwrapper(),
+    new JavaTryUnwrapper(),
+    new JavaCatchUnwrapper(),
   };
 
-  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(PsiElement e) {
+  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(Project project, Editor editor, PsiFile file) {
+    PsiElement e = findTargetElement(editor, file);
+
     List<Pair<PsiElement, Unwrapper>> result = new ArrayList<Pair<PsiElement, Unwrapper>>();
     while (e != null) {
       for (Unwrapper u : UNWRAPPERS) {
@@ -22,6 +27,12 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
       }
       e = e.getParent();
     }
+
     return result;
+  }
+
+  public PsiElement findTargetElement(Editor editor, PsiFile file) {
+    int offset = editor.getCaretModel().getOffset();
+    return file.findElementAt(offset);
   }
 }
