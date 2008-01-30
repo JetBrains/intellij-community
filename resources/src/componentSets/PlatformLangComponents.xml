@@ -39,6 +39,7 @@
   <xi:include href="ProjectView.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Profiles.xml" xpointer="xpointer(/components/*)"/>
   <xi:include href="Execution.xml" xpointer="xpointer(/components/*)"/>
+  <xi:include href="LocalHistory.xml" xpointer="xpointer(/components/*)"/>
 
   <application-components>
     <component>
@@ -51,12 +52,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <interface-class>com.intellij.history.LocalHistory</interface-class>
-      <implementation-class>com.intellij.history.DeafLocalHistory</implementation-class>
-      <skipForDummyProject/>
-    </component>
-
     <component>
       <implementation-class>com.intellij.platform.PlatformVcsDetector</implementation-class>
       <skipForDummyProject/>

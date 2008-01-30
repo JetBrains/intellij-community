@@ -150,6 +150,8 @@
     <group id="RunMenu" popup="true">
       <group id="RunnerActions"/>
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
+      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
+
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
 

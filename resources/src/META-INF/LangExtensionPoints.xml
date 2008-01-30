@@ -181,4 +181,6 @@
                   interface="com.intellij.execution.StepsBeforeRunProvider"
                   area="IDEA_PROJECT"/>
 
+  <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
+
 </extensionPoints>

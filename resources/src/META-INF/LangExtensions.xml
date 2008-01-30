@@ -39,6 +39,9 @@
   <applicationService serviceInterface="com.intellij.refactoring.RefactoringActionHandlerFactory"
                       serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringActionHandlerFactoryImpl"/>
 
+  <applicationService serviceInterface="com.intellij.execution.filters.TextConsoleBuilderFactory"
+                      serviceImplementation="com.intellij.execution.filters.TextConsoleBuilderFactoryImpl"/>
+
   <projectService serviceInterface="com.intellij.find.findInProject.FindInProjectManager"
                   serviceImplementation="com.intellij.find.findInProject.FindInProjectManager"/>
   <projectService serviceInterface="com.intellij.find.replaceInProject.ReplaceInProjectManager"

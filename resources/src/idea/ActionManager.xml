@@ -315,7 +315,6 @@
 
 
     <group id="RunMenu2">
-      <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
       <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
       <separator/>
       <action id="StepOver" class="com.intellij.xdebugger.impl.actions.StepOverAction" icon="/actions/traceOver.png"/>
