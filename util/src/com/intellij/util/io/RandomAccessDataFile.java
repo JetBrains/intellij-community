@@ -50,67 +50,22 @@ public class RandomAccessDataFile implements Forceable {
     myIsDirty = true;
     mySize = Math.max(mySize, addr + len);
 
-    if (len > Page.PAGE_SIZE) {
-      try {
-        ourPool.flushPagesInRange(this, addr, len);
-        final RandomAccessFile file = getFile();
-        try {
-          synchronized (file) {
-            file.seek(addr);
-            file.write(bytes, off, len);
-          }
-        }
-        finally {
-          releaseFile();
-        }
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      while (len > 0) {
-        final Page page = ourPool.alloc(this, addr);
-        int written = page.put(addr, bytes, off, len);
-        len -= written;
-        addr += written;
-        off += written;
-        ourPool.reclaim(page);
-      }
+    while (len > 0) {
+      final Page page = ourPool.alloc(this, addr);
+      int written = page.put(addr, bytes, off, len);
+      len -= written;
+      addr += written;
+      off += written;
     }
   }
 
   public void get(long addr, byte[] bytes, int off, int len) {
-    if (len > Page.PAGE_SIZE) {
-      try {
-        ourPool.flushPagesInRange(this, addr, len);
-
-        final RandomAccessFile file = getFile();
-        try {
-          synchronized (file) {
-            file.seek(addr);
-            file.read(bytes, off, len);
-          }
-        }
-        finally {
-          releaseFile();
-        }
-
-        mySize = Math.max(mySize, addr + len);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    else {
-      while (len > 0) {
-        final Page page = ourPool.alloc(this, addr);
-        int read = page.get(addr, bytes, off, len);
-        len -= read;
-        addr += read;
-        off += read;
-        ourPool.reclaim(page);
-      }
+    while (len > 0) {
+      final Page page = ourPool.alloc(this, addr);
+      int read = page.get(addr, bytes, off, len);
+      len -= read;
+      addr += read;
+      off += read;
     }
   }
 

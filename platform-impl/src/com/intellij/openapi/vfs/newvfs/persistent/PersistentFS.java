@@ -200,10 +200,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public boolean isDirectory(final int id) {
+    assert id > 0;
     return (myRecords.getFlags(id) & IS_DIRECTORY_FLAG) != 0;
   }
 
   public int getParent(final int id) {
+    assert id > 0;
     return myRecords.getParent(id);
   }
 
@@ -715,6 +717,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   public String getName(final int id) {
+    assert id > 0;
     return myRecords.getName(id);
   }
 

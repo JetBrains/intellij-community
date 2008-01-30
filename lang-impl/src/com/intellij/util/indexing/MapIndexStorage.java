@@ -7,10 +7,7 @@ import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Iterator;
 
 /**
@@ -177,22 +174,19 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     }
 
     public ValueContainerImpl<T> read(final DataInput in) throws IOException {
+      DataInputStream stream = (DataInputStream)in;
       final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<T>();
-      while (true) {
-        try {
-          final T value = myExternalizer.read(in);
-          final int idCount = in.readInt();
-          if (idCount < 0) {
-            valueContainer.addValue(-idCount, value);
-          }
-          else if (idCount > 0){
-            for (int i = 0; i < idCount; i++) {
-              valueContainer.addValue(in.readInt(), value);
-            }
-          }
+      
+      while (stream.available() > 0) {
+        final T value = myExternalizer.read(in);
+        final int idCount = in.readInt();
+        if (idCount < 0) {
+          valueContainer.addValue(-idCount, value);
         }
-        catch (IOException e) {
-          break;
+        else if (idCount > 0){
+          for (int i = 0; i < idCount; i++) {
+            valueContainer.addValue(in.readInt(), value);
+          }
         }
       }
       

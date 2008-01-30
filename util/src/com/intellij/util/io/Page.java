@@ -19,96 +19,173 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.containers.LimitedPool;
+
 import java.nio.ByteBuffer;
+import java.util.BitSet;
 
 public class Page {
   public static final int PAGE_SIZE = 8 * 1024;
 
-  private final ByteBuffer buf;
+  private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
+    public ByteBuffer create() {
+      return ByteBuffer.allocate(PAGE_SIZE);
+    }
+
+    public void cleanup(final ByteBuffer byteBuffer) {
+    }
+  });
+
   private final long offset;
   private final RandomAccessDataFile owner;
-  private boolean dirty = false;
-  private static long totalAccessCount = 0;
-  private long pageAccessCount = 0;
-  private boolean myIsLocked = false;
+  private final PoolPageKey myKey;
 
-  public Page(final RandomAccessDataFile owner, final long offset) {
-    buf = ByteBuffer.allocate(PAGE_SIZE);
+  private ByteBuffer buf;
+  private boolean read = false;
+  private boolean dirty = false;
+  private long myFinalizationId;
+  private BitSet myWriteMask;
+
+  public Page(RandomAccessDataFile owner, long offset) {
     this.owner = owner;
     this.offset = offset;
+
+    myKey = new PoolPageKey(owner, offset);
+    read = false;
+    dirty = false;
+    myWriteMask = null;
+
     assert offset >= 0;
-
-    touch(false);
-    owner.loadPage(this);
   }
 
-  public boolean intersects(RandomAccessDataFile anotherOwner, long anotherOffset, int anotherLen) {
-    if (anotherOwner != owner) return false;
-    return Math.max(offset, anotherOffset) <= Math.min(offset + buf.limit(), anotherOffset + anotherLen);
+  private void ensureRead() {
+    if (!read) {
+      if (myWriteMask != null) {
+        byte[] content = new byte[PAGE_SIZE];
+        final ByteBuffer b = getBuf();
+        b.position(0);
+        b.get(content, 0, PAGE_SIZE);
+
+        owner.loadPage(this);
+        for(int i=myWriteMask.nextSetBit(0); i>=0; i=myWriteMask.nextSetBit(i+1)) {
+          b.put(i, content[i]);
+        }
+        myWriteMask = null;
+      }
+      else {
+        owner.loadPage(this);
+      }
+
+      read = true;
+    }
   }
 
-  public void flush() {
+  private void ensureReadOrWriteMaskExists() {
+    dirty = true;
+    if (read || myWriteMask != null) return;
+    myWriteMask = new BitSet(PAGE_SIZE);
+  }
+
+  public synchronized void flush() {
     if (dirty) {
+      if (myWriteMask != null) {
+        if (myWriteMask.cardinality() < PAGE_SIZE) {
+          ensureRead();
+        }
+        myWriteMask = null;
+      }
       owner.flushPage(this);
       dirty = false;
     }
   }
 
-  public long getPageAccessCount() {
-    return pageAccessCount;
+  public synchronized ByteBuffer getBuf() {
+    if (buf == null) {
+      synchronized (ourBufferPool) {
+        buf = ourBufferPool.alloc();
+      }
+    }
+    return buf;
   }
 
-  public ByteBuffer getBuf() {
-    return buf;
+  public synchronized void recycle() {
+    if (buf != null) {
+      synchronized (ourBufferPool) {
+        ourBufferPool.recycle(buf);
+      }
+    }
+
+    buf = null;
+    read = false;
+    dirty = false;
+    myWriteMask = null;
   }
 
   public long getOffset() {
     return offset;
   }
 
-  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
-  private void touch(final boolean write) {
-    pageAccessCount = ++totalAccessCount;
-    dirty |= write;
-  }
-
-  public int put(long index, byte[] bytes, int off, int length) {
-    touch(true);
+  public synchronized int put(long index, byte[] bytes, int off, int length) {
+    myFinalizationId = 0;
+    ensureReadOrWriteMaskExists();
 
     final int start = (int)(index - offset);
-    buf.position(start);
+    final ByteBuffer b = getBuf();
+    b.position(start);
 
     int count = Math.min(length, PAGE_SIZE - start);
-    buf.put(bytes, off, count);
+    b.put(bytes, off, count);
+
+    if (myWriteMask != null) {
+      myWriteMask.set(start, start + count);
+    }
+    return count;
+  }
+
+  public synchronized int get(long index, byte[] bytes, int off, int length) {
+    myFinalizationId = 0;
+    ensureRead();
+
+    final int start = (int)(index - offset);
+    final ByteBuffer b = getBuf();
+    b.position(start);
+
+    int count = Math.min(length, PAGE_SIZE - start);
+    b.get(bytes, off, count);
 
     return count;
   }
 
-  public int get(long index, byte[] bytes, int off, int length) {
-    touch(false);
-
-    final int start = (int)(index - offset);
-    buf.position(start);
-
-    int count = Math.min(length, PAGE_SIZE - start);
-    buf.get(bytes, off, count);
-
-    return count;
-  }
-
-  public boolean isLocked() {
-    return myIsLocked;
-  }
-
-  public void lock() {
-    myIsLocked = true;
-  }
-
-  public void unlock() {
-    myIsLocked = false;
+  public synchronized boolean isDirty() {
+    return dirty;
   }
 
   public RandomAccessDataFile getOwner() {
     return owner;
+  }
+
+  public synchronized void setFinalizationId(final long curFinalizationId) {
+    myFinalizationId = curFinalizationId;
+  }
+
+  public PoolPageKey getKey() {
+    return myKey;
+  }
+
+  public synchronized boolean flushIfFinalizationIdIsEqualTo(final long finalizationId) {
+    if (myFinalizationId == finalizationId) {
+      flush();
+      return true;
+    }
+
+    return false;
+  }
+
+  public synchronized boolean recycleIfFinalizationIdIsEqualTo(final long finalizationId) {
+    if (myFinalizationId == finalizationId) {
+      recycle();
+      return true;
+    }
+    return false;
   }
 }

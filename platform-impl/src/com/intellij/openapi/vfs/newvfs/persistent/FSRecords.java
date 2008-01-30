@@ -721,16 +721,14 @@ public class FSRecords implements Disposable, Forceable {
 
   private int findAttributePage(int fileId, int attributeId, boolean createIfNotFound) throws IOException {
     int attrsRecord = getRecords().getInt(fileId * RECORD_SIZE + ATTREF_OFFSET);
-    boolean doSearch = true;
+
     if (attrsRecord == 0) {
       if (!createIfNotFound) return 0;
 
       attrsRecord = getAttributes().createNewRecord();
       getRecords().putInt(fileId * RECORD_SIZE + ATTREF_OFFSET, attrsRecord);
-      doSearch = false;
     }
-
-    if (doSearch) {
+    else {
       final DataInputStream attrRefs = getAttributes().readStream(attrsRecord);
       try {
         while (attrRefs.available() > 0) {

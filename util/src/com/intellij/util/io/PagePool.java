@@ -19,164 +19,186 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
-@SuppressWarnings({"NestedSynchronizedStatement"})
 public class PagePool {
-  private final static int PAGES_COUNT = 50;
+  private final static int PROTECTED_PAGES = 50;
+  private final static int PROBATIONAL_PAGES = 150;
 
-  private static class PoolKey {
-    private RandomAccessDataFile owner;
-    private long offset;
-
-    private PoolKey(final RandomAccessDataFile owner, final long offset) {
-      this.owner = owner;
-      this.offset = offset;
+  private final Map<PoolPageKey, Page> myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>() {
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
+      if (size() > PROTECTED_PAGES) {
+        myProbationalQueue.put(eldest.getKey(), eldest.getValue());
+        return true;
+      }
+      return false;
     }
+  };
 
-    public int hashCode() {
-      return (int)(owner.hashCode() * 31 + offset);
+  private long finalizationId = 0;
+  private long lastFinalizationPerformed = 0;
+
+  private final Map<PoolPageKey, Page> myProbationalQueue = new LinkedHashMap<PoolPageKey, Page>() {
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<PoolPageKey, Page> eldest) {
+      if (size() > PROBATIONAL_PAGES) {
+        scheduleFinalization(eldest.getValue());
+        return true;
+      }
+      return false;
     }
+  };
+  private final Map<PoolPageKey, Page> myFinalizationQueue = new LinkedHashMap<PoolPageKey, Page>();
 
-    @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
-    public boolean equals(final Object obj) {
-      PoolKey k = (PoolKey)obj;
-      return k.owner == owner && k.offset == offset;
-    }
+  private final ThreadPoolExecutor myFinalizer = ConcurrencyUtil.newSingleThreadExecutor("Disk cache finalization queue");
 
-    public void setup(RandomAccessDataFile owner, long offset) {
-      this.owner = owner;
-      this.offset = offset;
-    }
-  }
+  private final Object lock = new Object();
+  private final Object finalizationLock = new Object();
 
-  private final Object nonIOlock = new Object(); // locks are ordered. iolock must never be taken with nonIOlock in hands
-  private final Object iolock = new Object();
+  private final PoolPageKey keyInstance = new PoolPageKey(null, -1);
 
-  private final PoolKey keyInstance = new PoolKey(null, -1);
-  private final Map<PoolKey, Page> myPages = new HashMap<PoolKey, Page>();
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int hits = 0;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int cache_misses = 0;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int protected_queue_hits = 0;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int probational_queue_hits = 0;
+  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
 
+  @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   @NotNull
   public Page alloc(RandomAccessDataFile owner, long offset) {
-    Page page = hitCache(owner, offset);
-    if (page != null) return page;
-
-    synchronized (iolock) {
-      page = hitCache(owner, offset);
-      if (page != null) return page; // Double checking locking (in regards to iolock)
-
-      dropLeastUsed();
-
+    synchronized (lock) {
+      hits++;
       offset -= offset % Page.PAGE_SIZE;
+      PoolPageKey key = setupKey(owner, offset);
+
+      Page page = myProtectedQueue.remove(key);
+      if (page != null) {
+        protected_queue_hits++;
+        toProtectedQueue(page);
+        return page;
+      }
+
+      page = myProbationalQueue.remove(key);
+      if (page != null) {
+        probational_queue_hits++;
+        toProtectedQueue(page);
+        return page;
+      }
+
+      page = myFinalizationQueue.remove(key);
+      if (page != null) {
+        finalization_queue_hits++;
+        page.setFinalizationId(0);
+        toProtectedQueue(page);
+        return page;
+      }
+
+      cache_misses++;
       page = new Page(owner, offset);
 
-      synchronized (nonIOlock) {
-        myPages.put(new PoolKey(owner, offset), page);
-        page.lock();
-      }
-
+      myProbationalQueue.put(keyForPage(page), page);
       return page;
     }
   }
 
-  @Nullable
-  private Page hitCache(RandomAccessDataFile owner, long offset) {
-    synchronized (nonIOlock) {
-      offset -= offset % Page.PAGE_SIZE;
-      keyInstance.setup(owner, offset);
-
-      final Page page = myPages.get(keyInstance);
-      if (page != null) {
-        if (page.isLocked()) return null;
-
-        page.lock();
-      }
-
-      return page;
-    }
+  private static double percent(int part, int whole) {
+    return ((double)part * 1000 / whole) / 10;
   }
 
-  private void dropLeastUsed() {
-    while (true) {
-      Page minPage = null;
-      synchronized (nonIOlock) {
-        if (myPages.size() < PAGES_COUNT) return;
-        long minUsageCount = Long.MAX_VALUE;
-
-        for (Page page : myPages.values()) {
-          if (!page.isLocked() && page.getPageAccessCount() < minUsageCount) {
-            minUsageCount = page.getPageAccessCount();
-            minPage = page;
-          }
-        }
-      }
-
-      if (minPage != null) {
-        dropPage(minPage);
-      }
-    }
+  @SuppressWarnings({"ALL"})
+  public static void printStatistics() {
+    System.out.println("Total requests: " + hits);
+    System.out.println("Protected queue hits: " + protected_queue_hits + " (" + percent(protected_queue_hits, hits) + "%)");
+    System.out.println("Probatinonal queue hits: " + probational_queue_hits + " (" + percent(probational_queue_hits, hits) + "%)");
+    System.out.println("Finalization queue hits: " + finalization_queue_hits + " (" + percent(finalization_queue_hits, hits) + "%)");
+    System.out.println("Cache misses: " + cache_misses + " (" + percent(cache_misses, hits) + "%)");
   }
 
-  private void dropPage(final Page page) {
-    synchronized (iolock) {
-      synchronized (nonIOlock) {
-        if (page.isLocked()) return;
-        page.lock();
-      }
-
-      page.flush();
-
-      synchronized (nonIOlock) {
-        keyInstance.setup(page.getOwner(), page.getOffset());
-        myPages.remove(keyInstance);
-        page.unlock();
-      }
-    }
+  private static PoolPageKey keyForPage(final Page page) {
+    return page.getKey();
   }
 
-  public void flushPagesInRange(RandomAccessDataFile owner, long start, int length) {
-    List<Page> pagesToDrop = new ArrayList<Page>();
-    synchronized (nonIOlock) {
-      for (Page page : myPages.values()) {
-          if (page.intersects(owner, start, length)) {
-            pagesToDrop.add(page);
-          }
-        }
-    }
+  private void toProtectedQueue(final Page page) {
+    myProtectedQueue.put(keyForPage(page), page);
+  }
 
-    synchronized (iolock) {
-      for (Page page : pagesToDrop) {
-        dropPage(page);
-      }
-    }
+  private PoolPageKey setupKey(RandomAccessDataFile owner, long offset) {
+    keyInstance.setup(owner, offset);
+    return keyInstance;
   }
 
   public void flushPages(final RandomAccessDataFile owner) {
-    List<Page> pagesToDrop = new ArrayList<Page>();
-    synchronized (nonIOlock) {
-      for (Page page : myPages.values()) {
-        if (page.getOwner() == owner) {
-            pagesToDrop.add(page);
-          }
-        }
+    long targetFinalizationId;
+    boolean hasFlushes;
+    synchronized (lock) {
+      hasFlushes = scanQueue(owner, myProtectedQueue);
+      hasFlushes |= scanQueue(owner, myProbationalQueue);
+
+      targetFinalizationId = finalizationId;
     }
 
-    synchronized (iolock) {
-      for (Page page : pagesToDrop) {
-        dropPage(page);
+    if (hasFlushes) {
+      synchronized (finalizationLock) {
+        while (lastFinalizationPerformed < targetFinalizationId) {
+          try {
+            finalizationLock.wait();
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
       }
     }
   }
 
-  public void reclaim(final Page page) {
-    synchronized (nonIOlock) {
-      page.unlock();
+  private boolean scanQueue(final RandomAccessDataFile owner, final Map<?, Page> queue) {
+    Iterator<Page> iterator = queue.values().iterator();
+    boolean hasFlushes = false;
+    while (iterator.hasNext()) {
+      Page page = iterator.next();
+
+      if (page.getOwner() == owner) {
+        scheduleFinalization(page);
+        iterator.remove();
+        hasFlushes = true;
+      }
+    }
+    return hasFlushes;
+  }
+
+  private void scheduleFinalization(final Page page) {
+    synchronized (lock) {
+      if (page.isDirty()) {
+        final long curFinalizationId = ++finalizationId;
+        page.setFinalizationId(curFinalizationId);
+
+        myFinalizationQueue.put(keyForPage(page), page);
+        myFinalizer.submit(new Runnable() {
+          public void run() {
+            if (page.flushIfFinalizationIdIsEqualTo(curFinalizationId)) {
+              synchronized (lock) {
+                myFinalizationQueue.remove(keyForPage(page));
+                page.recycleIfFinalizationIdIsEqualTo(curFinalizationId);
+              }
+            }
+
+            synchronized (finalizationLock) {
+              lastFinalizationPerformed = curFinalizationId;
+              finalizationLock.notifyAll();
+            }
+          }
+        });
+      }
+      else {
+        page.recycle();
+      }
     }
   }
 }
