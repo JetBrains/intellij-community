@@ -339,22 +339,25 @@ public class PsiUtil {
     PsiElement child = element.getFirstChild();
     while (child != null) {
       if (child instanceof GrCodeReferenceElement) {
-        final GrCodeReferenceElement ref = (GrCodeReferenceElement) child;
-        if (ref.getQualifier() != null) {
-          final PsiElement resolved = ref.resolve();
-          if (resolved instanceof PsiClass) {
-            ref.setQualifier(null);
-            try {
-              ref.bindToElement(resolved);
-            } catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        }
+        shortenReference((GrCodeReferenceElement) child);
       }
 
       doShorten(child);
       child = child.getNextSibling();
+    }
+  }
+
+  public static void shortenReference(GrCodeReferenceElement ref) {
+    if (ref.getQualifier() != null) {
+      final PsiElement resolved = ref.resolve();
+      if (resolved instanceof PsiClass) {
+        ref.setQualifier(null);
+        try {
+          ref.bindToElement(resolved);
+        } catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+      }
     }
   }
 

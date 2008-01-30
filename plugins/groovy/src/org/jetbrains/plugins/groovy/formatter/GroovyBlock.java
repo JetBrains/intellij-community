@@ -106,7 +106,7 @@ public class GroovyBlock implements Block, GroovyElementTypes {
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
     if ((child1 instanceof GroovyBlock) && (child2 instanceof GroovyBlock)) {
-      return GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2));
+      return GroovySpacingProcessor.getSpacing(((GroovyBlock) child1), ((GroovyBlock) child2), mySettings);
     }
     return null;
   }

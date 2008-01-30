@@ -813,6 +813,8 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
-    return (T) addBefore(decl, anchorBefore);
+    T result = (T) addBefore(decl, anchorBefore);
+    PsiImplUtil.reformatAfterInsertion(result, getManager());
+    return result;
   }
 }

@@ -115,7 +115,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
 
     GrMemberOwner owner = ExtractMethodUtil.getMemberOwner(statements[0]);
-    GrVariableDeclarationOwner declarationOwner = ExtractMethodUtil.getDecalarationOwner(statements[0]);
+    GrVariableDeclarationOwner declarationOwner = ExtractMethodUtil.getDeclarationOwner(statements[0]);
     if (owner == null ||
         (declarationOwner == null && !ExtractMethodUtil.isSingleExpression(statements))) {
       String message = RefactoringBundle.getCannotRefactorMessage(GroovyRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context"));

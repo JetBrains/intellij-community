@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.GrAdditiveExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.bitwise.GrAndExpressionImpl;
@@ -347,6 +349,21 @@ public class PsiImplUtil {
         String text = nameElement.getText();
         return text.endsWith("\"") ? text.substring(1, text.length() - 1) : text.substring(1);
       }
+    }
+  }
+
+  public static <T extends GrMembersDeclaration> void reformatAfterInsertion(T result, PsiManager manager) throws IncorrectOperationException {
+    CodeStyleManager styleManager = manager.getCodeStyleManager();
+    PsiElement prev = result.getPrevSibling();
+    if (prev != null) {
+      int startOffset = prev.getTextRange().getEndOffset();
+      styleManager.reformatRange(result.getParent(), startOffset, result.getTextRange().getStartOffset() + 1);
+    }
+
+    PsiElement next = result.getNextSibling();
+    if (next != null) {
+      int endOffset = next.getTextRange().getStartOffset();
+      styleManager.reformatRange(result.getParent(), result.getTextRange().getEndOffset() - 1, endOffset);
     }
   }
 }

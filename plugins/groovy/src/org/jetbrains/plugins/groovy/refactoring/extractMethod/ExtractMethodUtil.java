@@ -318,14 +318,15 @@ public class ExtractMethodUtil {
   @Nullable
   static GrMemberOwner getMemberOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
-    while (parent != null && !(parent instanceof GrMemberOwner) && !(parent instanceof PsiFile)) {
+    while (parent != null && !(parent instanceof GrMemberOwner)) {
+      if (parent instanceof GroovyFileBase) return (GrMemberOwner) ((GroovyFileBase) parent).getScriptClass();
       parent = parent.getParent();
     }
     return parent instanceof GrMemberOwner ? ((GrMemberOwner) parent) : null;
   }
 
   @Nullable
-  static GrVariableDeclarationOwner getDecalarationOwner(GrStatement statement) {
+  static GrVariableDeclarationOwner getDeclarationOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
     return parent instanceof GrVariableDeclarationOwner ? ((GrVariableDeclarationOwner) parent) : null;
   }

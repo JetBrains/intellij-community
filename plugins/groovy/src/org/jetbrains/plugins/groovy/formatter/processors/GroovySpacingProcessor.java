@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 
 /**
  * @author ilyas
@@ -37,10 +37,10 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
   private static final Spacing NO_SPACING_WITH_NEWLINE = Spacing.createSpacing(0, 0, 0, true, 1);
   private static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
   private static final Spacing COMMON_SPACING = Spacing.createSpacing(1, 1, 0, true, 100);
-  private static final Spacing ONE_LINE_FEED_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
+  private static final Spacing IMPORT_BETWEEN_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
   private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
 
-  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2) {
+  public static Spacing getSpacing(GroovyBlock child1, GroovyBlock child2, CodeStyleSettings settings) {
 
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();
@@ -108,10 +108,21 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
       return NO_SPACING_WITH_NEWLINE;
     }
 
+    if (METHOD_DEFS.contains(leftNode.getElementType()) ||
+        METHOD_DEFS.contains(rightNode.getElementType())) {
+      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+    }
+
+    if (VARIABLE_DEFINITION.equals(leftNode.getElementType()) ||
+        VARIABLE_DEFINITION.equals(rightNode.getElementType())) {
+      return Spacing.createSpacing(0, 0, 1, settings.KEEP_LINE_BREAKS, 100);
+    }
+
+
 /********** imports ************/
-    if (leftNode.getPsi() instanceof GrTopStatement &&
-        rightNode.getPsi() instanceof GrTopStatement) {
-      return ONE_LINE_FEED_SPACING;
+    if (IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
+        IMPORT_STATEMENT.equals(rightNode.getElementType())) {
+      return IMPORT_BETWEEN_SPACING;
     }
     if ((IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
         (!IMPORT_STATEMENT.equals(rightNode.getElementType()) &&
