@@ -20,7 +20,6 @@
 
   <actions>
 
-    <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
     <action id="TogglePopupHints" class="com.intellij.ide.actions.TogglePopupHintsAction"/>
     <action id="FindModal" class="com.intellij.openapi.editor.actions.FindAction" icon="/actions/menu-find.png"/>
@@ -28,12 +27,6 @@
     <action id="CodeInspection.OnEditor" class="com.intellij.codeInspection.actions.CodeInspectionOnEditorAction"/>
 
     <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
-    <group id="RunContextGroup" popup="false">
-      <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
-    </group>
-    <group id="RunContextPopupGroup" popup="false">
-      <reference ref="RunContextGroup"/>
-    </group>
 
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
@@ -317,13 +310,11 @@
       <separator/>
       <action id="BuildJar" class="com.intellij.jar.BuildJarAction"/>
 
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
+      <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
 
 
-    <group id="RunMenu" popup="true">
-      <group id="RunnerActions"/>
-      <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
+    <group id="RunMenu2">
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="/actions/suspend.png"/>
       <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction"/>
       <separator/>
@@ -352,7 +343,7 @@
       <separator/>
       <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="/actions/export.png"/>
 
-      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="BuildMenu"/>
+      <add-to-group group-id="RunMenu" anchor="last"/>
     </group>
 
     <!-- Tools -->
@@ -410,12 +401,9 @@
     <!-- Toolbar -->
 
     <group id="ToolbarMakeGroup">
-      <separator/>
       <reference ref="CompileDirty"/>
-      <reference ref="RunConfiguration"/>
-      <reference ref="RunnerActions"/>
 
-      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
+      <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
     </group>
 
     <group id="DebuggerActions">

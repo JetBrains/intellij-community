@@ -7,6 +7,14 @@
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
+    <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
+    <group id="RunContextGroup" popup="false">
+      <action id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
+    </group>
+    <group id="RunContextPopupGroup" popup="false">
+      <reference ref="RunContextGroup"/>
+    </group>
+
     <group id="LangCodeInsightActions">
       <action id="EditorSelectWord" class="com.intellij.openapi.editor.actions.SelectWordAtCaretAction"/>
       <action id="EditorUnSelectWord" class="com.intellij.openapi.editor.actions.UnselectWordAtCaretAction"/>
@@ -138,6 +146,13 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="AnalyzeMenu"/>
     </group>
 
+    <!-- Run -->
+    <group id="RunMenu" popup="true">
+      <group id="RunnerActions"/>
+      <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
+      <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
+    </group>
+
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
@@ -162,6 +177,14 @@
       <reference ref="Replace"/>
 
       <add-to-group group-id="MainToolBar" relative-to-action="$Paste" anchor="after"/>
+    </group>
+
+    <group id="ToolbarRunGroup">
+      <separator/>
+      <reference ref="RunConfiguration"/>
+      <reference ref="RunnerActions"/>
+
+      <add-to-group group-id="MainToolBar" relative-to-action="Forward" anchor="after"/>
     </group>
 
     <group id="Bookmarks">

@@ -165,4 +165,20 @@
 
   <extensionPoint name="indexPatternBuilder" interface="com.intellij.psi.impl.search.IndexPatternBuilder"/>
 
+  <extensionPoint name="configurationType"
+                  interface="com.intellij.execution.configurations.ConfigurationType"/>
+
+  <extensionPoint name="programRunner"
+                  interface="com.intellij.execution.runners.ProgramRunner"/>
+
+  <extensionPoint name="executor"
+                  interface="com.intellij.execution.Executor"/>
+
+  <extensionPoint name="runConfigurationExtension"
+                  interface="com.intellij.execution.RunConfigurationExtension"/>
+
+  <extensionPoint name="stepsBeforeRunProvider"
+                  interface="com.intellij.execution.StepsBeforeRunProvider"
+                  area="IDEA_PROJECT"/>
+
 </extensionPoints>

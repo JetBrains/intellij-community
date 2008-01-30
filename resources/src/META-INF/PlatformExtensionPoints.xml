@@ -58,15 +58,6 @@
   <extensionPoint name="projectOpenProcessor"
                   interface="com.intellij.projectImport.ProjectOpenProcessor"/>
 
-  <extensionPoint name="configurationType"
-                  interface="com.intellij.execution.configurations.ConfigurationType"/>
-
-  <extensionPoint name="programRunner"
-                  interface="com.intellij.execution.runners.ProgramRunner"/>
-
-  <extensionPoint name="executor"
-                  interface="com.intellij.execution.Executor"/>
-
   <extensionPoint name="codeInsight.linkHandler"
                   interface="com.intellij.codeInsight.hint.TooltipLinkHandlerEP"/>
   <extensionPoint name="colorSettingsPage"
