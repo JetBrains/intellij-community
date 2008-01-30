@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -352,18 +353,19 @@ public class PsiImplUtil {
     }
   }
 
-  public static <T extends GrMembersDeclaration> void reformatAfterInsertion(T inserted) throws IncorrectOperationException {
+  public static void reformatAfterInsertion(GroovyPsiElement inserted) throws IncorrectOperationException {
     CodeStyleManager styleManager = inserted.getManager().getCodeStyleManager();
     PsiElement prev = inserted.getPrevSibling();
+    PsiFile file = inserted.getContainingFile();
     if (prev != null) {
       int startOffset = prev.getTextRange().getEndOffset();
-      styleManager.reformatRange(inserted.getParent(), startOffset, inserted.getTextRange().getStartOffset() + 1);
+      styleManager.reformatText(file, startOffset - 1, inserted.getTextRange().getStartOffset() + 1);
     }
 
     PsiElement next = inserted.getNextSibling();
     if (next != null) {
       int endOffset = next.getTextRange().getStartOffset();
-      styleManager.reformatRange(inserted.getParent(), inserted.getTextRange().getEndOffset() - 1, endOffset);
+      styleManager.reformatText(file, inserted.getTextRange().getEndOffset() - 1, endOffset + 1);
     }
   }
 }

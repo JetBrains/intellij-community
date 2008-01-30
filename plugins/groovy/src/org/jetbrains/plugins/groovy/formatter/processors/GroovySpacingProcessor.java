@@ -80,6 +80,21 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
         ARRAY_DECLARATOR.equals(rightNode.getElementType())) {
       return NO_SPACING;
     }
+
+    if (METHOD_DEFS.contains(leftNode.getElementType())) {
+      if (RIGHT_BRACES.contains(rightNode.getElementType())) {
+        return Spacing.createSpacing(0, 0, 1, false, 100);
+      }
+      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+    }
+
+    if (METHOD_DEFS.contains(rightNode.getElementType())) {
+      if (LEFT_BRACES.contains(leftNode.getElementType())) {
+        return Spacing.createSpacing(0, 0, 1, false, 100);
+      }
+      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+    }
+
     // For parentheses in arguments and typecasts
     if (LEFT_BRACES.contains(leftNode.getElementType()) ||
         RIGHT_BRACES.contains(rightNode.getElementType())) {
@@ -106,11 +121,6 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
 
     if (GroovyTokenTypes.DOTS.contains(leftNode.getElementType())) {
       return NO_SPACING_WITH_NEWLINE;
-    }
-
-    if (METHOD_DEFS.contains(leftNode.getElementType()) ||
-        METHOD_DEFS.contains(rightNode.getElementType())) {
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
     if (VARIABLE_DEFINITION.equals(leftNode.getElementType()) ||
