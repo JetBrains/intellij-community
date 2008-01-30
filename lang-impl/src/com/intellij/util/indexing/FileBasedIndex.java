@@ -612,11 +612,16 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
       final List<Runnable> tasks = new ArrayList<Runnable>();
       invalidateIndex(file, tasks);
       if (tasks.size() > 0) {
-        adjustInvalidateTasksCount(tasks.size());
+        adjustInvalidateTasksCount(+1);
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
-            for (Runnable task : tasks) {
-              task.run();
+            try {
+              for (Runnable task : tasks) {
+                task.run();
+              }
+            }
+            finally {
+              adjustInvalidateTasksCount(-1);
             }
           }
         });
@@ -644,18 +649,13 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
           final FileContent fc = new FileContent(file, loadContent(file));
           tasks.add(new Runnable() {
             public void run() {
-              try {
-                for (String indexId : toUpdate) {
-                  try {
-                    updateSingleIndex(indexId, file, null, fc);
-                  }
-                  catch (StorageException e) {
-                    LOG.error(e);
-                  }
+              for (String indexId : toUpdate) {
+                try {
+                  updateSingleIndex(indexId, file, null, fc);
                 }
-              }
-              finally {
-                adjustInvalidateTasksCount(-1);
+                catch (StorageException e) {
+                  LOG.error(e);
+                }
               }
             }
           });
