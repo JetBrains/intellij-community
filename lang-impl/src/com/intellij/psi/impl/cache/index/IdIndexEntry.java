@@ -8,23 +8,17 @@ import com.intellij.openapi.util.text.StringUtil;
  */
 public final class IdIndexEntry {
   private final int myWordHashCode;
-  private final int myOccurrenceMask;
 
-  public IdIndexEntry(String word, int occurrenceMask, boolean caseSensitive) {
-    this(caseSensitive? StringUtil.stringHashCode(word) : StringUtil.stringHashCodeInsensitive(word), occurrenceMask);
+  public IdIndexEntry(String word, boolean caseSensitive) {
+    this(caseSensitive? StringUtil.stringHashCode(word) : StringUtil.stringHashCodeInsensitive(word));
   }
 
-  public IdIndexEntry(int wordHash, int occurrenceMask) {
+  public IdIndexEntry(int wordHash) {
     myWordHashCode = wordHash;
-    myOccurrenceMask = occurrenceMask;
   }
 
   public int getWordHashCode() {
     return myWordHashCode;
-  }
-
-  public int getOccurrenceMask() {
-    return myOccurrenceMask;
   }
 
   public boolean equals(final Object o) {
@@ -33,21 +27,17 @@ public final class IdIndexEntry {
 
     final IdIndexEntry that = (IdIndexEntry)o;
 
-    if (myOccurrenceMask != that.myOccurrenceMask) return false;
     if (myWordHashCode != that.myWordHashCode) return false;
 
     return true;
   }
 
   public int hashCode() {
-    int result;
-    result = myWordHashCode;
-    result = 31 * result + myOccurrenceMask;
-    return result;
+    return myWordHashCode;
   }
 
   @Override
   public String toString() {
-    return "IdIndexEntry[hash: " + myWordHashCode + ", mask: " + myOccurrenceMask + "]";
+    return "IdIndexEntry[hash: " + myWordHashCode +"]";
   }
 }

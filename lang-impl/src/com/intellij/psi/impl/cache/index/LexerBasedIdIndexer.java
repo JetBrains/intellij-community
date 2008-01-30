@@ -10,7 +10,7 @@ import com.intellij.util.indexing.IndexDataConsumer;
  */
 public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
   
-  public final void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
+  public final void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
     final Lexer lexer = createLexer(consumer);
     final CharSequence chars = inputData.content;
     lexer.start(chars, 0, chars.length(),0);
@@ -19,5 +19,5 @@ public abstract class LexerBasedIdIndexer extends FileTypeIdIndexer {
     }
   }
 
-  protected abstract Lexer createLexer(IndexDataConsumer<IdIndexEntry, Void> consumer);
+  protected abstract Lexer createLexer(IndexDataConsumer<IdIndexEntry, Integer> consumer);
 }

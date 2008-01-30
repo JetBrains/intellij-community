@@ -9,8 +9,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.IndexDataConsumer;
-import com.intellij.util.indexing.ScalarIndexExtension;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
 
@@ -22,7 +23,7 @@ import java.io.IOException;
  * @author Eugene Zhuravlev
  *         Date: Jan 16, 2008
  */
-public class IdIndex extends ScalarIndexExtension<IdIndexEntry>{
+public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final String NAME = "IdIndex";
   
   private FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
@@ -32,6 +33,16 @@ public class IdIndex extends ScalarIndexExtension<IdIndexEntry>{
     }
   };
 
+  private DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
+    public void save(final DataOutput out, final Integer value) throws IOException {
+      out.writeInt(value.intValue());
+    }
+
+    public Integer read(final DataInput in) throws IOException {
+      return in.readInt();
+    }
+  };
+  
   private PersistentEnumerator.DataDescriptor<IdIndexEntry> myKeyDescriptor = new PersistentEnumerator.DataDescriptor<IdIndexEntry>() {
     public int getHashCode(final IdIndexEntry value) {
       return value.hashCode();
@@ -43,16 +54,15 @@ public class IdIndex extends ScalarIndexExtension<IdIndexEntry>{
 
     public void save(final DataOutput out, final IdIndexEntry value) throws IOException {
       out.writeInt(value.getWordHashCode());
-      out.writeInt(value.getOccurrenceMask());
     }
 
     public IdIndexEntry read(final DataInput in) throws IOException {
-      return new IdIndexEntry(in.readInt(), in.readInt());
+      return new IdIndexEntry(in.readInt());
     }
   };
   
-  private DataIndexer<IdIndexEntry, Void, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Void, FileBasedIndex.FileContent>() {
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
+  private DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent>() {
+    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
       final VirtualFile file = inputData.file;
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
       if (indexer != null) {
@@ -62,15 +72,19 @@ public class IdIndex extends ScalarIndexExtension<IdIndexEntry>{
   };
   
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   public String getName() {
     return NAME;
   }
 
-  public DataIndexer<IdIndexEntry, Void, FileBasedIndex.FileContent> getIndexer() {
+  public DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> getIndexer() {
     return myIndexer;
+  }
+
+  public DataExternalizer<Integer> getValueExternalizer() {
+    return myValueExternalizer;
   }
 
   public PersistentEnumerator.DataDescriptor<IdIndexEntry> getKeyDescriptor() {

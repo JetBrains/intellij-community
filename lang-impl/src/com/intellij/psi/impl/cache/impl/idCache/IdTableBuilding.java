@@ -107,7 +107,7 @@ public class IdTableBuilding {
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
   
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
+    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
       final CharSequence chars = inputData.content;
       scanWords(new ScanWordProcessor(){
         public void run(final CharSequence chars11, final int start, final int end, char[] charsArray) {
@@ -118,24 +118,7 @@ public class IdTableBuilding {
           }
         }
       }, chars, 0, chars.length());
-
-      /*
-      if (todoCounts != null) {
-        for (int index = 0; index < todoPatterns.length; index++) {
-          Pattern pattern = todoPatterns[index].getPattern();
-          if (pattern != null) {
-            Matcher matcher = pattern.matcher(chars);
-            while (matcher.find()) {
-              if (matcher.start() != matcher.end()) {
-                todoCounts[index]++;
-              }
-            }
-          }
-        }
-      }
-      */
     }
-
   }
 
   public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> {
@@ -277,7 +260,7 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
     
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Void> consumer) {
+    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
       final CharSequence chars = inputData.content;
       final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
 

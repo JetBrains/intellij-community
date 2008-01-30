@@ -15,7 +15,6 @@ import com.intellij.psi.impl.cache.impl.idCache.IdCacheUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
-import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -73,17 +72,25 @@ public class IndexCacheManagerImpl implements CacheManager{
       }
     };
 
-    final FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    final Set<VirtualFile> vFiles = new HashSet<VirtualFile>();
-    final int stop = (((int)UsageSearchContext.ANY) & 0xFF) + 1;
-    for (int mask = 0x1; mask < stop; mask <<= 1) {
-      if ((mask & occurrenceMask) != 0) {
-        vFiles.addAll(
-          fileBasedIndex.getContainingFiles(IdIndex.NAME, new IdIndexEntry(word, mask, caseSensitively), myProject)
-        );
+    final Collection<VirtualFile> vFiles = FileBasedIndex.getInstance().getContainingFiles(
+      IdIndex.NAME, 
+      new IdIndexEntry(word, caseSensitively),
+      myProject,
+      new FileBasedIndex.DataFilter<IdIndexEntry, Integer>() {
+        public List<Integer> process(final IdIndexEntry key, final ValueContainer<Integer> valueContainer) {
+          final List<Integer> values = new ArrayList<Integer>();
+          for (final Iterator<Integer> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
+            final Integer value = valueIterator.next();
+            final int mask = value.intValue();
+            if ((mask & occurrenceMask) != 0) {
+              values.add(value);
+            }
+          }
+          return values;
+        }
       }
-    }
-    
+    );
+
     for (VirtualFile vFile : vFiles) {
       if (!virtualFileProcessor.process(vFile)) {
         return false;
