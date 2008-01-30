@@ -12,6 +12,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.ide.IdeEventQueue;
@@ -59,12 +60,15 @@ public class ToolRunProfile implements RunProfile{
     }
 
     final CommandLineState commandLineState = new CommandLineState(runnerSettings, configurationSettings) {
-      protected GeneralCommandLine createCommandLine() {
+      GeneralCommandLine createCommandLine() {
         return myCommandLine;
       }
 
       protected OSProcessHandler startProcess() throws ExecutionException {
-        return JavaCommandLineStateUtil.startProcess(createCommandLine());
+        final GeneralCommandLine commandLine = createCommandLine();
+        final OSProcessHandler processHandler = new OSProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString());
+        ProcessTerminatedListener.attach(processHandler);
+        return processHandler;
       }
 
       public ExecutionResult execute(@NotNull ProgramRunner runner) throws ExecutionException {
