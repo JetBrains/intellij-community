@@ -1,4 +1,3 @@
-
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
