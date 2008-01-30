@@ -47,7 +47,6 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
 
   @NonNls String ACTION_COMMENT_LINE = "CommentByLineComment";
-  @NonNls String ACTION_REMOVE_ENCLOSING_TAG = "RemoveEnclosingTag";
   @NonNls String ACTION_COMMENT_BLOCK = "CommentByBlockComment";
 
   @NonNls String ACTION_COPY = "$Copy";

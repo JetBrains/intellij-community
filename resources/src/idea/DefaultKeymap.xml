@@ -711,7 +711,7 @@
       <keyboard-shortcut first-keystroke="control alt T"/>
     </action>
     <action id="Unwrap">
-      <keyboard-shortcut first-keystroke="control alt shift T"/>
+      <keyboard-shortcut first-keystroke="control shift DELETE"/>
     </action>
     <action id="ActivateProjectToolWindow">
       <keyboard-shortcut first-keystroke="alt 1"/>
@@ -795,9 +795,6 @@
     </action>
     <action id="SafeDelete">
       <keyboard-shortcut first-keystroke="alt DELETE"/>
-    </action>
-    <action id="RemoveEnclosingTag">
-      <keyboard-shortcut first-keystroke="control shift DELETE"/>
     </action>
     <action id="EditorCopy">
       <keyboard-shortcut first-keystroke="control INSERT"/>
@@ -2155,7 +2152,7 @@
       <keyboard-shortcut first-keystroke="shift control F" />
     </action>
     <action id="Refresh" />
-    <action id="RemoveEnclosingTag">
+    <action id="Unwrap">
       <keyboard-shortcut first-keystroke="alt R" />
     </action>
     <action id="RenameElement">

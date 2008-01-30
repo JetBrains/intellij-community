@@ -242,8 +242,6 @@
       <separator/>
       <action id="MoveStatementDown" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementDownAction"/>
       <action id="MoveStatementUp" class="com.intellij.codeInsight.editorActions.moveUpDown.MoveStatementUpAction"/>
-      <action id="RemoveEnclosingTag" class="com.intellij.xml.util.actions.RemoveEnclosingTagAction"/>
-
       <add-to-group group-id="CodeMenu" anchor="last"/>
     </group>
 

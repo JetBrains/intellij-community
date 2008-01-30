@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,8 +18,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class UnwrapHandler implements CodeInsightActionHandler {
   public boolean startInWriteAction() {
@@ -51,6 +52,8 @@ public class UnwrapHandler implements CodeInsightActionHandler {
   private AnAction createUnwrapAction(final Unwrapper u, final PsiElement el, final Editor ed, final Project p) {
     return new AnAction(u.getDescription(el)) {
       public void actionPerformed(AnActionEvent e) {
+        if (!CodeInsightUtil.prepareFileForWrite(el.getContainingFile())) return;
+
         CommandProcessor.getInstance().executeCommand(p, new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
