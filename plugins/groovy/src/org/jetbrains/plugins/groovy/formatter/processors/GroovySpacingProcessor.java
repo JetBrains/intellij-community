@@ -123,11 +123,6 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
       return NO_SPACING_WITH_NEWLINE;
     }
 
-    if (VARIABLE_DEFINITION.equals(leftNode.getElementType()) ||
-        VARIABLE_DEFINITION.equals(rightNode.getElementType())) {
-      return Spacing.createSpacing(0, 0, 1, settings.KEEP_LINE_BREAKS, 100);
-    }
-
 
 /********** imports ************/
     if (IMPORT_STATEMENT.equals(leftNode.getElementType()) &&
@@ -141,6 +136,11 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
             !mSEMI.equals(leftNode.getElementType())) &&
             IMPORT_STATEMENT.equals(rightNode.getElementType()))) {
       return IMPORT_OTHER_SPACING;
+    }
+
+    if (VARIABLE_DEFINITION.equals(leftNode.getElementType()) ||
+        VARIABLE_DEFINITION.equals(rightNode.getElementType())) {
+      return Spacing.createSpacing(0, 0, 1, false, 100);
     }
 
 /********** exclusions ************/

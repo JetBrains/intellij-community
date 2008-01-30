@@ -134,7 +134,7 @@ public class OptimizeImportsTest extends IdeaTestCase {
     String text = file.getText();
     System.out.println("---------------------------- " + folder + " ----------------------------");
     System.out.println(text);
-    assertEquals("Results are not equal", text, resultText);
+    assertEquals("Results are not equal", resultText, text);
 
   }
 
