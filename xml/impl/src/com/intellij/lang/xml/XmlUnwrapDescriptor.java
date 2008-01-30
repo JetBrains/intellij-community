@@ -2,9 +2,9 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.unwrap.UnwrapDescriptor;
 import com.intellij.codeInsight.unwrap.Unwrapper;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;

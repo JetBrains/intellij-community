@@ -17,13 +17,7 @@ public class JavaIfUnwrapper extends JavaUnwrapper {
 
   public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
     PsiStatement then = ((PsiIfStatement)element).getThenBranch();
-
-    if (then instanceof PsiBlockStatement) {
-      extractFromCodeBlock(((PsiBlockStatement)then).getCodeBlock(), element);
-    }
-    else if (then != null && !(then instanceof PsiEmptyStatement)) {
-      extract(new PsiElement[]{then}, element);
-    }
+    extractFromBlockOrSingleStatement(then, element);
 
     element.delete();
   }

@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.unwrap;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 
 public abstract class JavaUnwrapper implements Unwrapper {
@@ -19,6 +18,15 @@ public abstract class JavaUnwrapper implements Unwrapper {
 
   public String getDescription(PsiElement e) {
     return myDescription;
+  }
+
+  protected void extractFromBlockOrSingleStatement(PsiStatement block, PsiElement from) throws IncorrectOperationException {
+    if (block instanceof PsiBlockStatement) {
+      extractFromCodeBlock(((PsiBlockStatement)block).getCodeBlock(), from);
+    }
+    else if (block != null && !(block instanceof PsiEmptyStatement)) {
+      extract(new PsiElement[]{block}, from);
+    }
   }
 
   protected void extractFromCodeBlock(PsiCodeBlock block, PsiElement from) throws IncorrectOperationException {

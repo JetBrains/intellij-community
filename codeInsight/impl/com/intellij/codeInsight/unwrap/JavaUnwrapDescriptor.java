@@ -13,6 +13,8 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
   private static final Unwrapper[] UNWRAPPERS = new Unwrapper[] {
     new JavaElseUnwrapper(),
     new JavaIfUnwrapper(),
+    new JavaWhileUnwrapper(),
+    new JavaBracesUnwrapper(),
     new JavaTryUnwrapper(),
     new JavaCatchUnwrapper(),
   };
