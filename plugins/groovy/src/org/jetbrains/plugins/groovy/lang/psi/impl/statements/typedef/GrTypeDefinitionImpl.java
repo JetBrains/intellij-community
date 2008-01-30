@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -813,8 +812,19 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
   }
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
-    T result = (T) addBefore(decl, anchorBefore);
-    PsiImplUtil.reformatAfterInsertion(result, getManager());
-    return result;
+
+    GrTypeDefinitionBody body = getBody();
+    if (body == null) throw new IncorrectOperationException("Type definition without a body");
+    ASTNode anchorNode;
+    if (anchorBefore != null) {
+      anchorNode = anchorBefore.getNode();
+    } else {
+      PsiElement child = body.getLastChild();
+      assert child != null;
+      anchorNode = child.getNode();
+    }
+    body.getNode().addChild(decl.getNode(), anchorNode);
+    PsiImplUtil.reformatAfterInsertion(decl);
+    return decl;
   }
 }

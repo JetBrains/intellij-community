@@ -40,7 +40,7 @@ import java.io.IOException;
 public class ExtractMethodTest extends ActionTestCase {
 
   @NonNls
-  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/extractMethod/data/";
+  private static final String DATA_PATH = "test/org/jetbrains/plugins/groovy/refactoring/extractMethod/data/actual";
 
   protected Editor myEditor;
   protected FileEditorManager fileEditorManager;

@@ -352,18 +352,18 @@ public class PsiImplUtil {
     }
   }
 
-  public static <T extends GrMembersDeclaration> void reformatAfterInsertion(T result, PsiManager manager) throws IncorrectOperationException {
-    CodeStyleManager styleManager = manager.getCodeStyleManager();
-    PsiElement prev = result.getPrevSibling();
+  public static <T extends GrMembersDeclaration> void reformatAfterInsertion(T inserted) throws IncorrectOperationException {
+    CodeStyleManager styleManager = inserted.getManager().getCodeStyleManager();
+    PsiElement prev = inserted.getPrevSibling();
     if (prev != null) {
       int startOffset = prev.getTextRange().getEndOffset();
-      styleManager.reformatRange(result.getParent(), startOffset, result.getTextRange().getStartOffset() + 1);
+      styleManager.reformatRange(inserted.getParent(), startOffset, inserted.getTextRange().getStartOffset() + 1);
     }
 
-    PsiElement next = result.getNextSibling();
+    PsiElement next = inserted.getNextSibling();
     if (next != null) {
       int endOffset = next.getTextRange().getStartOffset();
-      styleManager.reformatRange(result.getParent(), result.getTextRange().getEndOffset() - 1, endOffset);
+      styleManager.reformatRange(inserted.getParent(), inserted.getTextRange().getEndOffset() - 1, endOffset);
     }
   }
 }
