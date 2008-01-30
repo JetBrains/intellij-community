@@ -20,5 +20,6 @@
     <lang.psiStructureViewFactory language="Python" implementationClass="ru.yole.pythonid.structureView.PyStructureViewFactory"/>
     <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
     <configurationType implementation="ru.yole.pythonid.run.PythonConfigurationType"/>
+    <programRunner implementation="ru.yole.pythonid.run.PythonRunner"/>
   </extensions>
 </idea-plugin>
