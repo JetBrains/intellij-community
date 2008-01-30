@@ -11,6 +11,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class XDebuggerSuspendedActionHandler extends XDebuggerActionHandler {
 
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
-    return session.isPaused();
+    return session.isSuspended();
   }
 }

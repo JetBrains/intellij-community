@@ -19,6 +19,10 @@ import java.util.ArrayList;
  */
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
 
+  public int getPriority() {
+    return 0;
+  }
+
   @Nullable
   public XBreakpoint<?> findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();

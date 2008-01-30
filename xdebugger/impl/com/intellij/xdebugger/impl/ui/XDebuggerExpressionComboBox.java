@@ -6,8 +6,13 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author nik
@@ -15,18 +20,21 @@ import javax.swing.*;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final ComboBox myComboBox;
   private EditorComboBoxEditor myEditor;
-  private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   private String myExpression;
 
-  public XDebuggerExpressionComboBox(final Project project, final XDebuggerEditorsProvider debuggerEditorsProvider) {
-    super(project, debuggerEditorsProvider);
-    myProject = project;
+  public XDebuggerExpressionComboBox(final @NotNull Project project, final @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, 
+                                     final @Nullable @NonNls String historyId) {
+    super(project, debuggerEditorsProvider, historyId);
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myComboBox = new ComboBox();
     myComboBox.setEditable(true);
     myExpression = "";
+    Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
+    minimumSize.width = 100;
+    myComboBox.setMinimumSize(minimumSize);
     initEditor();
+    fillComboBox();
   }
 
   public JComponent getComponent() {
@@ -48,23 +56,46 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void initEditor() {
-    myEditor = new EditorComboBoxEditor(myProject, myDebuggerEditorsProvider.getFileType()) {
+    myEditor = new EditorComboBoxEditor(getProject(), myDebuggerEditorsProvider.getFileType()) {
       public void setItem(Object anObject) {
         if (anObject == null) {
-          anObject = createDocument("");
+          anObject = "";
         }
-        super.setItem(anObject);
+        super.setItem(createDocument((String)anObject));
+      }
+
+      public Object getItem() {
+        return ((Document)super.getItem()).getText();
       }
     };
     myComboBox.setEditor(myEditor);
-    myEditor.setItem(createDocument(myExpression));
+    myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
-    myComboBox.setMaximumRowCount(20);
+    myComboBox.setMaximumRowCount(XDebuggerHistoryManager.MAX_RECENT_EXPRESSIONS);
+  }
+
+  protected void onHistoryChanged() {
+    fillComboBox();
+  }
+
+  private void fillComboBox() {
+    myComboBox.removeAllItems();
+    for (String expression : getRecentExpressions()) {
+      myComboBox.addItem(expression);
+    }
+    if (myComboBox.getItemCount() > 0) {
+      myComboBox.setSelectedIndex(0);
+    }
   }
 
   public void setText(final String text) {
+    saveTextInHistory(text);
+    if (myComboBox.getItemCount() > 0) {
+      myComboBox.setSelectedIndex(0);
+    }
+
     if (myComboBox.isEditable()) {
-      myEditor.setItem(createDocument(text));
+      myEditor.setItem(text);
     }
     else {
       myExpression = text;
@@ -72,6 +103,14 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   public String getText() {
-    return ((Document)myEditor.getItem()).getText();
+    return (String)myEditor.getItem();
+  }
+
+  public JComponent getPreferredFocusedComponent() {
+    return (JComponent)myComboBox.getEditor().getEditorComponent();
+  }
+
+  public void selectAll() {
+    myComboBox.getEditor().selectAll();
   }
 }

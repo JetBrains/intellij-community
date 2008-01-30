@@ -1,14 +1,12 @@
 package com.intellij.xdebugger.impl;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler;
-import com.intellij.xdebugger.impl.actions.handlers.XDebuggerRunToCursorActionHandler;
-import com.intellij.xdebugger.impl.actions.handlers.XToggleLineBreakpointActionHandler;
-import com.intellij.xdebugger.impl.actions.handlers.XDebuggerPauseActionHandler;
+import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.XBreakpointPanelProvider;
-import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,9 +22,10 @@ public class XDebuggerSupport extends DebuggerSupport {
   private XDebuggerSuspendedActionHandler myForceStepIntoHandler;
   private XDebuggerRunToCursorActionHandler myRunToCursorHandler;
   private XDebuggerRunToCursorActionHandler myForceRunToCursor;
-  private XDebuggerSuspendedActionHandler myResumeHandler;
+  private XDebuggerActionHandler myResumeHandler;
   private XDebuggerPauseActionHandler myPauseHandler;
   private XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
+  private XDebuggerEvaluateActionHandler myEvaluateHandler;
 
   public XDebuggerSupport() {
     myBreakpointPanelProvider = new XBreakpointPanelProvider();
@@ -58,7 +57,11 @@ public class XDebuggerSupport extends DebuggerSupport {
     };
     myRunToCursorHandler = new XDebuggerRunToCursorActionHandler(false);
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
-    myResumeHandler = new XDebuggerSuspendedActionHandler() {
+    myResumeHandler = new XDebuggerActionHandler() {
+      protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
+        return session.isPaused();
+      }
+
       protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
         session.resume();
       }
@@ -69,6 +72,7 @@ public class XDebuggerSupport extends DebuggerSupport {
         session.showExecutionPoint();
       }
     };
+    myEvaluateHandler = new XDebuggerEvaluateActionHandler();
   }
 
   @NotNull
@@ -129,6 +133,11 @@ public class XDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getShowExecutionPointHandler() {
     return myShowExecutionPointHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getEvaluateHandler() {
+    return myEvaluateHandler;
   }
 
 }

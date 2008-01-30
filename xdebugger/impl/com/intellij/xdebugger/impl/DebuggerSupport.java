@@ -57,4 +57,7 @@ public abstract class DebuggerSupport {
 
   @NotNull
   public abstract DebuggerActionHandler getShowExecutionPointHandler();
+
+  @NotNull
+  public abstract DebuggerActionHandler getEvaluateHandler();
 }

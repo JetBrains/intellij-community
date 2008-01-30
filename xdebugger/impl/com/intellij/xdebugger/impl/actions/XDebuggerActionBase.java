@@ -27,6 +27,7 @@ public abstract class XDebuggerActionBase extends AnAction {
       presentation.setVisible(enabled);
     }
     else {
+      presentation.setVisible(true);
       presentation.setEnabled(enabled);
     }
   }
@@ -61,6 +62,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     for (DebuggerSupport support : debuggerSupports) {
       if (isEnabled(project, e, support)) {
         perform(project, e, support);
+        break;
       }
     }
   }

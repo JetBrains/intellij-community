@@ -3,7 +3,7 @@ package com.intellij.debugger.ui;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.HelpID;
-import com.intellij.debugger.actions.EvaluateAction;
+import com.intellij.debugger.actions.EvaluateActionHandler;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -208,7 +208,7 @@ public class StatementEvaluationDialog extends EvaluationDialog{
       doCancelAction();
       DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
         public void run() {
-          EvaluateAction.showEvaluationDialog(getProject(), text, DebuggerSettings.EVALUATE_EXPRESSION);
+          EvaluateActionHandler.showEvaluationDialog(getProject(), text, DebuggerSettings.EVALUATE_EXPRESSION);
         }
       });
     }

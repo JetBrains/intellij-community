@@ -32,6 +32,9 @@ public interface XDebugSession {
   @NotNull XDebugProcess getDebugProcess();
 
   boolean isPaused();
+  boolean isSuspended();
+
+  XSuspendContext getSuspendContext();
 
   void stepOver(boolean ignoreBreakpoints);
   void stepInto();

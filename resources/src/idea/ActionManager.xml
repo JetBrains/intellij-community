@@ -341,7 +341,7 @@
       <action id="Pause" class="com.intellij.xdebugger.impl.actions.PauseAction" icon="/actions/pause.png"/>
       <action id="Resume" class="com.intellij.xdebugger.impl.actions.ResumeAction" icon="/actions/resume.png"/>
       <separator/>
-      <action id="EvaluateExpression" class="com.intellij.debugger.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
+      <action id="EvaluateExpression" class="com.intellij.xdebugger.impl.actions.EvaluateAction" icon="/debugger/evaluateExpression.png"/>
       <action id="QuickEvaluateExpression" class="com.intellij.debugger.actions.QuickEvaluateAction"/>
       <action id="ShowExecutionPoint" class="com.intellij.xdebugger.impl.actions.ShowExecutionPointAction"
               icon="/debugger/showCurrentFrame.png"/>

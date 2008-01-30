@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,12 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
   }
 
   public void testSerialize() throws Exception {
-    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("abc"));
+    XLineBreakpoint<MyBreakpointProperties> breakpoint =
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("abc"));
+    breakpoint.setCondition("cond");
+    breakpoint.setLogExpression("log");
+    breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
+    breakpoint.setLogMessage(true);
     myBreakpointManager.addBreakpoint(MY_SIMPLE_BREAKPOINT_TYPE, new MyBreakpointProperties("123"));
 
     Element element = XmlSerializer.serialize(myBreakpointManager.getState());
@@ -64,8 +70,14 @@ public class XBreakpointManagerTest extends XDebuggerTestCase {
     assertEquals(239, lineBreakpoint.getLine());
     assertEquals("myurl", lineBreakpoint.getFileUrl());
     assertEquals("abc", assertInstanceOf(lineBreakpoint.getProperties(), MyBreakpointProperties.class).myOption);
+    assertEquals("cond", lineBreakpoint.getCondition());
+    assertEquals("log", lineBreakpoint.getLogExpression());
+    assertTrue(lineBreakpoint.isLogMessage());
+    assertEquals(SuspendPolicy.NONE, lineBreakpoint.getSuspendPolicy());
 
     assertEquals("123", assertInstanceOf(breakpoints[1].getProperties(), MyBreakpointProperties.class).myOption);
+    assertEquals(SuspendPolicy.ALL, breakpoints[1].getSuspendPolicy());
+    assertFalse(breakpoints[1].isLogMessage());
   }
 
   public void testListener() throws Exception {

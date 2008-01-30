@@ -20,9 +20,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * created Jun 18, 2001
@@ -46,6 +45,11 @@ public class BreakpointsConfigurationDialogFactory {
     for (DebuggerSupport debuggerSupport : debuggerSupports) {
       myBreakpointPanelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }
+    Collections.sort(myBreakpointPanelProviders, new Comparator<BreakpointPanelProvider>() {
+      public int compare(final BreakpointPanelProvider o1, final BreakpointPanelProvider o2) {
+        return o2.getPriority() - o1.getPriority();
+      }
+    });
   }
 
   public BreakpointsConfigurationDialog createDialog(@Nullable Object initialBreakpoint) {

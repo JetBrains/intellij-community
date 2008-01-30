@@ -17,7 +17,9 @@
 package com.intellij.xdebugger;
 
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -35,6 +37,11 @@ public abstract class XDebugProcess {
 
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
     return XBreakpointHandler.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  public XDebuggerEditorsProvider getEditorsProvider() {
+    return null;
   }
 
   public void sessionInitialized() {

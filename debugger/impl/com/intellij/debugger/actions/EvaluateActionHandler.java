@@ -25,50 +25,35 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import org.jetbrains.annotations.NotNull;
 
-public class EvaluateAction extends DebuggerAction {
-  public void update(AnActionEvent event){
-    Presentation presentation = event.getPresentation();
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      presentation.setEnabled(false);
-      return;
-    }
-
-    DebuggerContextImpl context = getDebuggerContext(event.getDataContext());
-
-    boolean toEnable = false;
+public class EvaluateActionHandler extends DebuggerActionHandler {
+  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+    DebuggerContextImpl context = DebuggerAction.getDebuggerContext(event.getDataContext());
 
     if(context != null) {
       DebuggerSession debuggerSession = context.getDebuggerSession();
-
-      toEnable = debuggerSession != null && debuggerSession.isPaused();
+      return debuggerSession != null && debuggerSession.isPaused();
     }
 
-    presentation.setEnabled(toEnable);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
-      presentation.setVisible(toEnable);
-    }
-    else {
-      presentation.setVisible(true);
-    }
+    return false;
   }
 
-  public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final DataContext dataContext = e.getDataContext();
+  public void perform(@NotNull final Project project, final AnActionEvent event) {
+    final DataContext dataContext = event.getDataContext();
     final DebuggerContextImpl context = DebuggerAction.getDebuggerContext(dataContext);
 
-    if(project == null || context == null) {
+    if(context == null) {
       return;
     }
 
-    final Editor editor = e.getData(DataKeys.EDITOR);
+    final Editor editor = event.getData(DataKeys.EDITOR);
 
     TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
     if (editorText == null) {
       final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
-      final String actionName = e.getPresentation().getText();
+      final String actionName = event.getPresentation().getText();
 
       if (selectedNode != null && selectedNode.getDescriptor() instanceof ValueDescriptorImpl) {
         context.getDebugProcess().getManagerThread().invokeLater(new DebuggerContextCommandImpl(context) {

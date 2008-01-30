@@ -6,9 +6,9 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPanel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.editor.Document;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
@@ -16,8 +16,8 @@ import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -35,6 +35,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   private PauseActionHandler myPauseActionHandler;
   private ToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;
   private ShowExecutionPointActionHandler myShowExecutionPointActionHandler;
+  private EvaluateActionHandler myEvaluateActionHandler;
 
   public JavaDebuggerSupport() {
     myBreakpointPanelProvider = new JavaBreakpointPanelProvider();
@@ -49,6 +50,7 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     myPauseActionHandler = new PauseActionHandler();
     myToggleLineBreakpointActionHandler = new ToggleLineBreakpointActionHandler();
     myShowExecutionPointActionHandler = new ShowExecutionPointActionHandler();
+    myEvaluateActionHandler = new EvaluateActionHandler();
   }
 
   @NotNull
@@ -69,6 +71,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
         }
       }
       return panels;
+    }
+
+    public int getPriority() {
+      return 1;
     }
 
     public Breakpoint findBreakpoint(@NotNull final Project project, @NotNull final Document document, final int offset) {
@@ -133,5 +139,10 @@ public class JavaDebuggerSupport extends DebuggerSupport {
   @NotNull
   public DebuggerActionHandler getShowExecutionPointHandler() {
     return myShowExecutionPointActionHandler;
+  }
+
+  @NotNull
+  public DebuggerActionHandler getEvaluateHandler() {
+    return myEvaluateActionHandler;
   }
 }

@@ -12,6 +12,7 @@ import java.util.Collection;
  * @author nik
  */
 public abstract class BreakpointPanelProvider<B> {
+  public abstract int getPriority();
 
   @Nullable
   public abstract B findBreakpoint(@NotNull Project project, @NotNull Document document, int offset);

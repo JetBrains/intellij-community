@@ -5,9 +5,9 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -25,6 +25,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private boolean myBreakpointsDisabled;
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
+  private XSuspendContext mySuspendContext;
   private boolean myPaused;
 
   public XDebugSessionImpl(XDebuggerManagerImpl debuggerManager) {
@@ -41,8 +42,16 @@ public class XDebugSessionImpl implements XDebugSession {
     return myDebugProcess;
   }
 
+  public boolean isSuspended() {
+    return myPaused && mySuspendContext != null;
+  }
+
   public boolean isPaused() {
     return myPaused;
+  }
+
+  public XSuspendContext getSuspendContext() {
+    return mySuspendContext;
   }
 
   public void init(final XDebugProcess process) {
@@ -150,6 +159,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   private void doResume() {
     myDebuggerManager.updateExecutionPosition(this, null);
+    mySuspendContext = null;
     myPaused = false;
   }
 
@@ -202,6 +212,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void positionReached(@NotNull final XSourcePosition position, @NotNull final XSuspendContext suspendContext) {
     enableBreakpoints();
+    mySuspendContext = suspendContext;
     myPaused = true;
     myDebuggerManager.updateExecutionPosition(this, position);
   }
