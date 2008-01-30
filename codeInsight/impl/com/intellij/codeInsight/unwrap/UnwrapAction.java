@@ -15,8 +15,7 @@ public class UnwrapAction extends BaseCodeInsightAction{
     return new UnwrapHandler();
   }
 
-
   protected boolean isValidForFile(Project project, Editor editor, PsiFile file) {
-    return file instanceof PsiJavaFile;
+    return !LanguageUnwrappers.INSTANCE.allForLanguage(file.getLanguage()).isEmpty();
   }
 }
