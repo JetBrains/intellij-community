@@ -81,10 +81,10 @@ public class RunnerRegistryImpl extends RunnerRegistry {
       contextAction = new RunContextAction(runner);
       myManager.registerAction(contextActionId, contextAction);
       myRunnerToContextAction.put(runner, contextAction);
-    }
 
-    final DefaultActionGroup group = (DefaultActionGroup) myManager.getAction(RUN_CONTEXT_GROUP);
-    group.add(contextAction);
+      final DefaultActionGroup group = (DefaultActionGroup) myManager.getAction(RUN_CONTEXT_GROUP);
+      group.add(contextAction);
+    }
   }
 
   public void unregisterRunner(final ProgramRunner runner) {
