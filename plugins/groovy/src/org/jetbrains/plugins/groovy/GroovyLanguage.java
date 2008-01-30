@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvid
 import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.folding.GroovyFoldingBuilder;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParserDefinition;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.surroundWith.descriptors.GroovyStmtsSurroundDescriptor;
 import org.jetbrains.plugins.groovy.lang.parameterInfo.GroovyParameterInfoHandler;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringSupportProvider;
@@ -90,6 +91,11 @@ public class GroovyLanguage extends Language {
   @NotNull
   public RefactoringSupportProvider getRefactoringSupportProvider() {
     return GroovyRefactoringSupportProvider.INSTANCE;
+  }
+
+  @Nullable
+  public PsiReferenceAdjuster getReferenceAdjuster() {
+    return GroovyReferenceAdjuster.INSTANCE;
   }
 
   @Nullable
