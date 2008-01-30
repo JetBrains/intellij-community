@@ -13,7 +13,7 @@ public class JavaCatchUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.catch"));
   }
 
-  protected boolean isAplicableToJava(PsiElement e) {
+  public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiCatchSection && tryHasSeveralCatches(e);
   }
 

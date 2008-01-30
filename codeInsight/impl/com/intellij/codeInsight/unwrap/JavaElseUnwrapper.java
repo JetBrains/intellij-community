@@ -11,7 +11,7 @@ public class JavaElseUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.else"));
   }
 
-  protected boolean isAplicableToJava(PsiElement e) {
+  public boolean isApplicableTo(PsiElement e) {
     return isElseBlock(e) || isElseKeyword(e);
   }
 

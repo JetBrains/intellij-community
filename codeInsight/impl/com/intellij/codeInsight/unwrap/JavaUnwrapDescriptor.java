@@ -14,6 +14,7 @@ public class JavaUnwrapDescriptor implements UnwrapDescriptor {
     new JavaElseUnwrapper(),
     new JavaIfUnwrapper(),
     new JavaWhileUnwrapper(),
+    new JavaForUnwrapper(),
     new JavaBracesUnwrapper(),
     new JavaTryUnwrapper(),
     new JavaCatchUnwrapper(),

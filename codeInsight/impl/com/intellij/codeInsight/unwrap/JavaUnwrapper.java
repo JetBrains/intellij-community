@@ -10,11 +10,7 @@ public abstract class JavaUnwrapper implements Unwrapper {
     myDescription = description;
   }
 
-  public boolean isApplicableTo(PsiElement e) {
-    return isAplicableToJava(e);
-  }
-
-  protected abstract boolean isAplicableToJava(PsiElement e);
+  public abstract boolean isApplicableTo(PsiElement e);
 
   public String getDescription(PsiElement e) {
     return myDescription;

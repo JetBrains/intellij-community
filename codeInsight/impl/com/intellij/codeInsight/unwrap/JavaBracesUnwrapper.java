@@ -11,7 +11,7 @@ public class JavaBracesUnwrapper extends JavaUnwrapper {
     super(CodeInsightBundle.message("unwrap.braces"));
   }
 
-  protected boolean isAplicableToJava(PsiElement e) {
+  public boolean isApplicableTo(PsiElement e) {
     return e instanceof PsiBlockStatement && !belongsToControlStructures(e);
   }
 
@@ -19,7 +19,7 @@ public class JavaBracesUnwrapper extends JavaUnwrapper {
     PsiElement p = e.getParent();
 
     return p instanceof PsiIfStatement
-           || p instanceof PsiWhileStatement
+           || p instanceof PsiLoopStatement
            || p instanceof PsiTryStatement
            || p instanceof PsiCatchSection;
   }

@@ -3,20 +3,25 @@ package com.intellij.codeInsight.unwrap;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiForStatement;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 
-public class JavaWhileUnwrapper extends JavaUnwrapper {
-  public JavaWhileUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.while"));
+public class JavaForUnwrapper extends JavaUnwrapper {
+  public JavaForUnwrapper() {
+    super(CodeInsightBundle.message("unwrap.for"));
   }
 
   public boolean isApplicableTo(PsiElement e) {
-    return e instanceof PsiWhileStatement || e instanceof PsiDoWhileStatement;
+    return e instanceof PsiForStatement;
   }
 
   public void unwrap(Project project, Editor editor, PsiElement element) throws IncorrectOperationException {
-    PsiStatement body = ((PsiLoopStatement)element).getBody();
+    PsiStatement init = ((PsiForStatement)element).getInitialization();
+    PsiStatement body = ((PsiForStatement)element).getBody();
+
+    extractFromBlockOrSingleStatement(init, element);
     extractFromBlockOrSingleStatement(body, element);
 
     element.delete();
