@@ -356,7 +356,7 @@ public class PsiImplUtil {
   public static void reformatAfterInsertion(GroovyPsiElement inserted) throws IncorrectOperationException {
     CodeStyleManager styleManager = inserted.getManager().getCodeStyleManager();
     PsiElement prev = inserted.getPrevSibling();
-    PsiElement parent = inserted.getParent();
+    PsiElement parent = inserted.getContainingFile();
     if (prev != null) {
       int startOffset = prev.getTextRange().getEndOffset();
       styleManager.reformatRange(parent, startOffset - 1, inserted.getTextRange().getStartOffset() + 1);
