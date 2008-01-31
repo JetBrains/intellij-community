@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.codeInsight.intention.impl.EditFoldingOptionsAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
@@ -39,7 +38,6 @@ public class IntentionManagerImpl extends IntentionManager {
   public IntentionManagerImpl(IntentionManagerSettings intentionManagerSettings) {
     mySettings = intentionManagerSettings;
 
-    addAction(new EditFoldingOptionsAction());
     addAction(new EditInspectionToolsSettingsInSuppressedPlaceIntention());
 
     final ExtensionPoint<IntentionActionBean> point = Extensions.getArea(null).getExtensionPoint(EP_INTENTION_ACTIONS);
@@ -59,11 +57,18 @@ public class IntentionManagerImpl extends IntentionManager {
     try {
       final Class<?> aClass = Class.forName(extension.className, true, classLoader);
       final String descriptionDirectoryName = extension.getDescriptionDirectoryName();
-      if (descriptionDirectoryName != null) {
-        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories(), descriptionDirectoryName);
+      final String[] categories = extension.getCategories();
+      final IntentionAction instance = (IntentionAction)aClass.newInstance();
+      if (categories == null) {
+        addAction(instance);
       }
       else {
-        registerIntentionAndMetaData((IntentionAction)aClass.newInstance(), extension.getCategories());
+        if (descriptionDirectoryName != null) {
+          registerIntentionAndMetaData(instance, categories, descriptionDirectoryName);
+        }
+        else {
+          registerIntentionAndMetaData(instance, categories);
+        }
       }
     }
     catch (ClassNotFoundException e) {

@@ -21,6 +21,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -40,12 +41,14 @@ public class IntentionActionBean implements PluginAware {
 
   private PluginDescriptor myPluginDescriptor;
 
+  @Nullable
   public String[] getCategories() {
     if (categoryKey != null) {
       final String baseName = bundleName != null ? bundleName : ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName();
       final ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), myPluginDescriptor.getPluginClassLoader());
       category = CommonBundle.message(bundle, categoryKey);
     }
+    if (category == null) return null;
     return category.split("/");
   }
 
