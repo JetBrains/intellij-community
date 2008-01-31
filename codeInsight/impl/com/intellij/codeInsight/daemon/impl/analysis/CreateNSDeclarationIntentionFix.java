@@ -26,15 +26,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.jsp.JspDirectiveKind;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -64,8 +63,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull private final XmlTag myTag;
   private final String myNamespacePrefix;
   @Nullable private final PsiElement myElement;
-
-  @NonNls private static final String URI_ATTR_NAME = "uri";
 
   public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag,
                                          @NotNull final String namespacePrefix) {
@@ -152,14 +149,16 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       namespaces,
       project,
       new StringToAttributeProcessor() {
-        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
+        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace) throws IncorrectOperationException {
 
           final int offset = editor.getCaretModel().getOffset();
           final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
           final XmlExtension extension = XmlExtension.getExtension((XmlFile)file);
-          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(attrName), myNamespacePrefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
+          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(namespace), myNamespacePrefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
             public void run(final String param) throws IncorrectOperationException {
-              editor.getCaretModel().moveToOffset(marker.getStartOffset());  
+              if (namespace.length() > 0) {
+                editor.getCaretModel().moveToOffset(marker.getStartOffset());
+              }
             }
           });
         }
@@ -167,41 +166,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       XmlErrorMessages.message(myInJsp ? "select.taglib.title":"select.namespace.title"),
       this,
       editor);
-  }
-
-  @Nullable
-  public static XmlAttribute insertTaglibDeclaration(final XmlFile file, final String namespace, final String prefix)
-    throws IncorrectOperationException {
-
-    final Project project = file.getProject();
-    final XmlDocument document = file.getDocument();
-    assert document != null;
-    final XmlTag rootTag = document.getRootTag();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-
-    assert rootTag != null;
-    final XmlTag childTag = rootTag.createChildTag("directive.taglib", XmlUtil.JSP_URI, null, false);
-    PsiElement element = childTag.add(elementFactory.createXmlAttribute("prefix", prefix));
-
-    childTag.addAfter(
-      elementFactory.createXmlAttribute(URI_ATTR_NAME,namespace),
-      element
-    );
-
-    final XmlTag[] directives = ((JspFile)file).getDirectiveTags(JspDirectiveKind.TAGLIB, false);
-
-    if (directives == null || directives.length == 0) {
-      element = rootTag.addBefore(
-        childTag, rootTag.getFirstChild()
-      );
-    } else {
-      element = rootTag.addAfter(
-        childTag, directives[directives.length - 1]
-      );
-    }
-
-    CodeStyleManager.getInstance(project).reformat(element);
-    return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
   }
 
   public boolean startInWriteAction() {

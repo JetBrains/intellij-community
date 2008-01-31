@@ -5,10 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -102,14 +99,23 @@ public class DefaultXmlExtension extends XmlExtension {
 
     final String prefix = nsPrefix == null ? "x" : nsPrefix;
     @NonNls final String name = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
-    final XmlAttribute element = elementFactory.createXmlAttribute(name, namespace);
+    final XmlAttribute attribute = elementFactory.createXmlAttribute(name, namespace);
     if (anchor == null) {
-      rootTag.add(element);
+      rootTag.add(attribute);
     } else {
-      rootTag.addAfter(element, anchor);
+      rootTag.addAfter(attribute, anchor);
     }
     CodeStyleManager.getInstance(project).reformat(rootTag);
-
+    
+    if (namespace.length() == 0) {
+      final XmlAttribute xmlAttribute = rootTag.getAttribute(name);
+      if (xmlAttribute != null) {
+        final XmlAttributeValue value = xmlAttribute.getValueElement();
+        assert value != null;
+        final int startOffset = value.getTextOffset();
+        editor.getCaretModel().moveToOffset(startOffset);        
+      }
+    }
     if (runAfter != null) {
       runAfter.run(prefix);
     }
