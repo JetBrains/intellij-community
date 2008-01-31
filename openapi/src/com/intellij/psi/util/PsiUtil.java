@@ -20,7 +20,6 @@ import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -35,10 +34,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -48,7 +44,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
@@ -944,30 +939,6 @@ public final class PsiUtil extends PsiUtilBase {
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(root.getProject()).getInjectionHost(element);
     if (host != null) return isUnderPsiRoot(root, host);
     return false;
-  }
-
-  @NotNull
-  public static Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
-    final PsiElement elt = file.findElementAt(offset);
-    if (elt == null) return file.getLanguage();
-    if (elt instanceof PsiWhiteSpace) {
-      final int decremented = elt.getTextRange().getStartOffset() - 1;
-      if (decremented >= 0) {
-        return getLanguageAtOffset(file, decremented);
-      }
-    }
-    return findLanguageFromElement(elt, file);
-  }
-
-  @NotNull
-  public static Language findLanguageFromElement(final PsiElement elt, final PsiFile file) {
-    final Language language = elt.getLanguage();
-    if (isInJspFile(file) && language == StdLanguages.XML) {
-      ASTNode root = getRoot(elt.getNode());
-      return root.getPsi().getLanguage();
-    }
-
-    return language;
   }
 
   @NotNull

@@ -38,6 +38,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
   @Nullable
   PsiFile getPsi(@NotNull Language target);
 
+  Language getRootLanguage(final PsiElement elt);
+
   @NotNull List<PsiFile> getAllFiles();
 
   boolean isEventSystemEnabled();

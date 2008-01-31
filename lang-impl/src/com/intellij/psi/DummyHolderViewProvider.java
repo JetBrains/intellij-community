@@ -72,6 +72,10 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return target == getBaseLanguage() ? myHolder : null;
   }
 
+  public Language getRootLanguage(final PsiElement elt) {
+    return elt.getLanguage();
+  }
+
   @NotNull
   public List<PsiFile> getAllFiles() {
     return Collections.singletonList(getPsi(getBaseLanguage()));
