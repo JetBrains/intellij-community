@@ -8,7 +8,7 @@ import java.util.Calendar;
 /**
  * @author Maxim.Mossienko
  */
-@Bombed(day = 31, description = "support it", month = Calendar.JANUARY, user = "maxim.mossienko", year = 2008)
+@Bombed(day = 28, description = "support it", month = Calendar.FEBRUARY, user = "maxim.mossienko")
 public class OptimizedSearchScanTest extends StructuralSearchTestCase {
   public void testClassByQName() throws Exception {
     String plan = findWordsToBeUsedWhenSearchingFor("A.f");

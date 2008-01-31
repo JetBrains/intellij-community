@@ -2526,7 +2526,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Type2", result.getMatchImage());
   }
 
-  @Bombed(day = 31, description = "support it", month = Calendar.JANUARY, user = "maxim.mossienko", year = 2008)
+  @Bombed(day = 28, description = "support it", month = Calendar.FEBRUARY, user = "maxim.mossienko")
   public void testContainsPredicate() {
     String s1 = "{{\n" +
                 "  int a;\n" +
