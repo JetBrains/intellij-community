@@ -7,6 +7,7 @@ import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
@@ -17,6 +18,7 @@ import com.intellij.psi.formatter.xml.XmlPolicy;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlFormattingModelBuilder implements FormattingModelBuilder {
@@ -31,5 +33,9 @@ public class XmlFormattingModelBuilder implements FormattingModelBuilder {
     return new PsiBasedFormattingModel(element.getContainingFile(),
                                        new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null),
                                        documentModel);
+  }
+
+  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    return null;
   }
 }

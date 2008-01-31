@@ -13,6 +13,8 @@ import com.intellij.psi.formatter.PsiBasedFormattingModel;
 import com.intellij.psi.formatter.xml.HtmlPolicy;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 public class XhtmlFormattingModelBuilder implements FormattingModelBuilder {
@@ -25,5 +27,9 @@ public class XhtmlFormattingModelBuilder implements FormattingModelBuilder {
                                                     null, null,
                                                     new HtmlPolicy(settings, documentModel), null, null),
                                        documentModel);
+  }
+
+  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    return null;
   }
 }

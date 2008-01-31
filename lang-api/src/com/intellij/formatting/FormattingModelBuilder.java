@@ -15,9 +15,13 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows a custom language plugin to build a formatting model for a file in the language, or
@@ -42,4 +46,16 @@ public interface FormattingModelBuilder {
    */
   @NotNull
   FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings);
+
+  /**
+   * Returns the TextRange which should be processed by the formatter in order to calculate the
+   * indent for a new line when a line break is inserted at the specified offset.
+   *
+   * @param file   the file in which the line break is inserted.
+   * @param offset the line break offset.
+   * @param elementAtOffset the parameter at {@code offset}
+   * @return the range to reformat, or null if the default range should be used
+   */
+  @Nullable
+  TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset);
 }

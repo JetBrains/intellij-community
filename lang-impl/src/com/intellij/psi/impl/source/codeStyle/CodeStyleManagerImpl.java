@@ -3,10 +3,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.CompositeLanguage;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -250,7 +247,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   @Nullable
-  private static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
+  public static PsiElement findElementInTreeWithFormatterEnabled(final PsiFile file, final int offset) {
     final PsiElement bottomost = file.findElementAt(offset);
     if (bottomost != null && LanguageFormatting.INSTANCE.forContext(bottomost) != null){
       return bottomost;
@@ -394,50 +391,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return new TextRange(significantRangeStart, offset);
     }
 
-    if (file instanceof PsiJavaFile) {
-      ASTNode current = elementAtOffset;
-      current = findNearestExpressionParent(current);
-      if (current == null) {
-        if (elementAtOffset.getElementType() == TokenType.WHITE_SPACE) {
-          ASTNode prevElement = elementAtOffset.getTreePrev();
-          if (prevElement == null) {
-            return elementAtOffset.getTextRange();
-          }
-          else {
-            ASTNode prevExpressionParent = findNearestExpressionParent(prevElement);
-            if (prevExpressionParent == null) {
-              return elementAtOffset.getTextRange();
-            }
-            else {
-              return new TextRange(prevExpressionParent.getTextRange().getStartOffset(), elementAtOffset.getTextRange().getEndOffset());
-            }
-          }
-        }
-        else {
-          return elementAtOffset.getTextRange();
-        }
+    final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
+    final TextRange textRange = builder.getRangeAffectingIndent(file, offset, elementAtOffset);
+    if (textRange != null) {
+      return textRange;
+    }
 
-      }
-      else {
-        return current.getTextRange();
-      }
-    }
-    else {
-      return elementAtOffset.getTextRange();
-    }
-  }
-
-  @Nullable
-  private static ASTNode findNearestExpressionParent(final ASTNode current) {
-    ASTNode result = current;
-    while (result != null) {
-      PsiElement psi = ((TreeElement)result).getTransformedFirstOrSelf().getPsi();
-      if (psi instanceof PsiExpression && !(psi.getParent() instanceof PsiExpression)) {
-        return result;
-      }
-      result = result.getTreeParent();
-    }
-    return result;
+    return elementAtOffset.getTextRange();
   }
 
   public boolean isLineToBeIndented(@NotNull PsiFile file, int offset) {
@@ -470,13 +430,23 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return false;
     }
     */
-    if (getSettings().KEEP_FIRST_COLUMN_COMMENT &&
-        (element.getElementType() == JavaTokenType.END_OF_LINE_COMMENT || element.getElementType() == JavaTokenType.C_STYLE_COMMENT)) {
+    if (getSettings().KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
       if (helper.getIndent(element, true) == 0) {
         return false;
       }
     }
     return true;
+  }
+
+  private static boolean isCommentToken(final ASTNode element) {
+    final Language language = element.getElementType().getLanguage();
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
+    if (commenter instanceof CodeDocumentationAwareCommenter) {
+      final CodeDocumentationAwareCommenter documentationAwareCommenter = (CodeDocumentationAwareCommenter)commenter;
+      return element.getElementType() == documentationAwareCommenter.getBlockCommentTokenType() ||
+             element.getElementType() == documentationAwareCommenter.getLineCommentTokenType();
+    }
+    return false;
   }
 
   @Nullable
