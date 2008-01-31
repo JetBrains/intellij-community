@@ -76,9 +76,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
   private void unregisterAction(@NotNull final String actionId, @NotNull final String groupId, @NotNull final Map<String, AnAction> map) {
     final DefaultActionGroup group = (DefaultActionGroup)myActionManager.getAction(groupId);
     if (group != null) {
+      group.remove(myActionManager.getAction(actionId));
       final AnAction action = map.get(actionId);
       if (action != null) {
-        group.remove(action);
         myActionManager.unregisterAction(actionId);
         map.remove(actionId);
       }
