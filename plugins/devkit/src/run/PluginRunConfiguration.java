@@ -43,7 +43,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PluginRunConfiguration extends RunConfigurationBase {
+public class PluginRunConfiguration extends RunConfigurationBase implements ModuleRunProfile {
   private Module myModule;
   private String myModuleName;
 
