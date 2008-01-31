@@ -23,7 +23,6 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.IChameleonElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
@@ -74,6 +73,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final Token myMutableToken = new Token();
   private int myLexemCount = 0;
 
+  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.create();
+
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     public StartMarker create() {
       return new StartMarker();
@@ -96,6 +97,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   @NonNls private static final String UNBALANCED_MESSAGE =
     "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
+
+  public static void registerWhitespaceToken(IElementType type) {
+    ourAnyLanguageWhitespaceTokens = TokenSet.andSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
+  }
 
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {
     myText = text;
@@ -877,7 +882,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     public boolean typesEqual(final ASTNode n1, final LighterASTNode n2) {
       if (n1 instanceof PsiWhiteSpaceImpl) {
-        return n2.getTokenType() == XmlTokenType.XML_REAL_WHITE_SPACE || myWhitespaces.contains(n2.getTokenType());
+        return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) || myWhitespaces.contains(n2.getTokenType());
       }
 
       return n1.getElementType() == n2.getTokenType();

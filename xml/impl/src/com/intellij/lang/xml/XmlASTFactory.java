@@ -4,6 +4,7 @@
 package com.intellij.lang.xml;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.impl.source.tree.*;
@@ -113,5 +114,9 @@ public class XmlASTFactory extends ASTFactory {
     }
 
     return null;
+  }
+
+  static {
+    PsiBuilderImpl.registerWhitespaceToken(XML_REAL_WHITE_SPACE);    
   }
 }
