@@ -15,8 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
+
 /**
  * @author ilyas
  */
-public interface GroovyInlinedDocTag extends GroovyDocTag{
+public interface GrDocReferenceElement extends GroovyDocPsiElement{
 }

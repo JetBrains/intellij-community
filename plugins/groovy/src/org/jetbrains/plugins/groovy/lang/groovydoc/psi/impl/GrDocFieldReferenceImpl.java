@@ -15,23 +15,21 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocTag;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyInlinedDocTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocFieldReference;
 
 /**
  * @author ilyas
  */
-public class GrInlinedDocTagImpl extends GroovyDocPsiElementImpl implements GroovyInlinedDocTag {
+public class GrDocFieldReferenceImpl extends GroovyDocPsiElementImpl implements GrDocFieldReference {
 
-  public GrInlinedDocTagImpl(@NotNull ASTNode node) {
+  public GrDocFieldReferenceImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public String toString() {
-    return "GroovyInlinedDocTag";
+    return "GrDocFieldReference";
   }
-}
 
+}

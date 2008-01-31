@@ -37,4 +37,10 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes{
   GroovyDocElementType GDOC_TAG = new GroovyDocElementType("GroovyDocTag");
   GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementType("GroovyDocInlinedTag");
 
+  GroovyDocElementType GDOC_REFERENCE_ELEMENT = new GroovyDocElementType("GroovyDocReferenceElement");
+  GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementType("GroovyDocMethodReference");
+  GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementType("GroovyDocFieldReference");
+  GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementType("GroovyDocMethodParameterList");
+
+
 }

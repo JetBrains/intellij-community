@@ -17,14 +17,15 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiElement;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public class GroovyDocPsiElementImpl extends ASTWrapperPsiElement implements GroovyDocPsiElement{
+public abstract class GroovyDocPsiElementImpl extends ASTWrapperPsiElement implements GroovyDocPsiElement {
 
-  public GroovyDocPsiElementImpl(@org.jetbrains.annotations.NotNull ASTNode node) {
+  public GroovyDocPsiElementImpl(@NotNull ASTNode node) {
     super(node);
   }
 }

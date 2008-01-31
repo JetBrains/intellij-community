@@ -17,14 +17,21 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
+import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing.RESULT.*;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author ilyas
  */
 public class GroovyDocParsing implements GroovyDocElementTypes {
+
+
+  static enum RESULT {
+    ERROR, METHOD, FIELD
+  }
 
   @NonNls
   private static final String SEE_TAG = "@see";
@@ -40,6 +47,9 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
   private static final String PARAM_TAG = "@param";
   @NonNls
   private static final String VALUE_TAG = "@value";
+
+  private final static TokenSet REFERENCE_BEGIN = TokenSet.create(mGDOC_TAG_VALUE_TOKEN,
+      mGDOC_TAG_VALUE_SHARP_TOKEN);
 
   private boolean isInInlinedTag = false;
   private int myBraceCounter = 0;
@@ -90,6 +100,15 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
 
     // todo parse specific tags content with refholders
 
+    if (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName)) {
+      parseReferenceOrType(builder);
+    } else if ((LINK_TAG.equals(tagName) ||
+        LINKPLAIN_TAG.equals(tagName)) && isInInlinedTag) {
+      parseSeeOrLinkTag(builder);
+    } else if (SEE_TAG.equals(tagName) && !isInInlinedTag) {
+      parseSeeOrLinkTag(builder);
+    }
+
     while (!timeToEnd(builder)) {
       if (isInInlinedTag) {
         if (builder.getTokenType() == mGDOC_INLINE_TAG_START) {
@@ -120,6 +139,55 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     }
     marker.done(isInInlinedTag ? GDOC_INLINED_TAG : GDOC_TAG);
     isInInlinedTag = false;
+    return true;
+  }
+
+  private boolean parseSeeOrLinkTag(PsiBuilder builder) {
+    IElementType type = builder.getTokenType();
+    if (!REFERENCE_BEGIN.contains(type)) return false;
+    PsiBuilder.Marker marker = builder.mark();
+    if (mGDOC_TAG_VALUE_TOKEN == type) {
+      ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
+    }
+    if (mGDOC_TAG_VALUE_SHARP_TOKEN == builder.getTokenType()) {
+      builder.advanceLexer();
+      RESULT result = parseFieldOrMethod(builder);
+      if (result == ERROR) {
+        marker.drop();
+      } else {
+        marker.done(result == METHOD ? GDOC_METHOD_REF : GDOC_FIELD_REF);
+      }
+      return true;
+    }
+    marker.drop();
+    return true;
+  }
+
+  private RESULT parseFieldOrMethod(PsiBuilder builder) {
+    if (builder.getTokenType() != mGDOC_TAG_VALUE_TOKEN) return ERROR;
+    builder.advanceLexer();
+    if (mGDOC_TAG_VALUE_LPAREN != builder.getTokenType()) {
+      return FIELD;
+    }
+    builder.advanceLexer();
+    PsiBuilder.Marker params = builder.mark();
+    while (mGDOC_TAG_VALUE_TOKEN == builder.getTokenType() && !timeToEnd(builder)) {
+      ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
+      while (mGDOC_TAG_VALUE_COMMA == builder.getTokenType()) {
+        builder.advanceLexer();
+      }
+    }
+    if (builder.getTokenType() == mGDOC_TAG_VALUE_RPAREN) {
+      builder.advanceLexer();
+    }
+    params.done(GDOC_METHOD_PARAMS);
+    return METHOD;
+  }
+
+  private boolean parseReferenceOrType(PsiBuilder builder) {
+    IElementType type = builder.getTokenType();
+    if (mGDOC_TAG_VALUE_TOKEN != type) return false;
+    ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
     return true;
   }
 

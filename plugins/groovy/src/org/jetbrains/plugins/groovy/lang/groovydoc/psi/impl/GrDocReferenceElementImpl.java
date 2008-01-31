@@ -13,12 +13,24 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
+package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public interface GroovyDocTag extends GroovyDocPsiElement {
+public class GrDocReferenceElementImpl extends GroovyDocPsiElementImpl implements GrDocReferenceElement {
+  
+  public GrDocReferenceElementImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public String toString() {
+    return "GrDocReferenceElement";
+  }
+
 }

@@ -13,12 +13,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi;
-
-import com.intellij.psi.PsiElement;
+package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
 /**
  * @author ilyas
  */
-public interface GroovyDocPsiElement extends PsiElement{
+public interface GrDocMethodReference extends GrDocMemberReference{
 }

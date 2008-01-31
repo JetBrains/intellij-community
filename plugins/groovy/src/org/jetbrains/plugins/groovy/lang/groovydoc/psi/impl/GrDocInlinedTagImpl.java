@@ -13,12 +13,23 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
+package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
+import com.intellij.lang.ASTNode;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocInlinedTag;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ilyas
  */
-public interface GroovyDocTag extends GroovyDocPsiElement {
+public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDocInlinedTag {
+
+  public GrDocInlinedTagImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  public String toString() {
+    return "GrDocInlinedTag";
+  }
 }
+

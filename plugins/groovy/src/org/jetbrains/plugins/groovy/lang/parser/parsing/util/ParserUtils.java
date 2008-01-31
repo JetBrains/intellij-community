@@ -160,7 +160,7 @@ public abstract class ParserUtils {
    * @param elem    Node element
    * @return elem type
    */
-  public static GroovyElementType eatElement(PsiBuilder builder, GroovyElementType elem) {
+  public static IElementType eatElement(PsiBuilder builder, IElementType elem) {
     Marker marker = builder.mark();
     builder.advanceLexer();
     marker.done(elem);
