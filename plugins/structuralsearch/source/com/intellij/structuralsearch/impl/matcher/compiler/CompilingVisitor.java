@@ -685,7 +685,8 @@ class CompilingVisitor {
 
       super.visitExpressionStatement(expr);
 
-      if (!(expr.getLastChild() instanceof PsiJavaToken)) {
+      final PsiElement child = expr.getLastChild();
+      if (!(child instanceof PsiJavaToken) && !(child instanceof PsiComment)) {
         // search for expression or symbol
         final PsiElement reference = expr.getFirstChild();
         MatchingHandler referenceHandler = context.pattern.getHandler(reference);
