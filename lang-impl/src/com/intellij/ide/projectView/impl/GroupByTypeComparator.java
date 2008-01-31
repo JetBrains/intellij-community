@@ -86,7 +86,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
   }
 
   private boolean isAbbreviateQualifiedNames() {
-    return myProjectView != null && myProjectView.isSortByType(myPaneId);
+    return myProjectView != null && myProjectView.isAbbreviatePackageNames(myPaneId);
   }
 
 }
