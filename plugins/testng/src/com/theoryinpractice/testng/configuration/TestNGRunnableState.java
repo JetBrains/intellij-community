@@ -29,7 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -169,7 +169,7 @@ public class TestNGRunnableState extends JavaCommandLineState
     for (Object patcher : patchers) {
       ((JUnitPatcher) patcher).patchJavaParameters(module, javaParameters);
     }
-    PathUtilEx.addRtJar(javaParameters.getClassPath());
+    JavaSdkUtil.addRtJar(javaParameters.getClassPath());
 
     // Append coverage parameters if appropriate
     if (config.isCoverageEnabled()) {

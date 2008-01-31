@@ -39,7 +39,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiClass;
@@ -184,8 +184,8 @@ public abstract class TestObject implements JavaCommandLine {
     for (Object patcher : patchers) {
       ((JUnitPatcher)patcher).patchJavaParameters(module, myJavaParameters);
     }
-    PathUtilEx.addRtJar(myJavaParameters.getClassPath());
-    PathUtilEx.addJunit4RtJar(myJavaParameters.getClassPath());
+    JavaSdkUtil.addRtJar(myJavaParameters.getClassPath());
+    JavaSdkUtil.addJunit4RtJar(myJavaParameters.getClassPath());
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     if (!(myRunnerSettings.getData() instanceof DebuggingRunnerData) && myConfiguration.isCoverageEnabled()) {
       final String coverageFileName = myConfiguration.getCoverageFilePath();
