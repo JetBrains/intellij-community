@@ -303,12 +303,12 @@ public class DocumentationManager implements ProjectComponent {
 
     // Allow context doc over xml tag content
     if (element != null || contextElement != null) {
-      final PsiElement adjusted =  TargetElementUtilBase.getInstance().adjustElement(editor, ourFlagsForTargetElements, element != null ? element : contextElement);
+      final PsiElement adjusted = TargetElementUtilBase.getInstance()
+        .adjustElement(editor, ourFlagsForTargetElements, element, contextElement);
       if (adjusted != null) {
         element = adjusted;
       }
     }
-
     if (element == null && editor != null) {
       final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 

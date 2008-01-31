@@ -118,11 +118,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
   @Nullable
   @Override
-  public PsiElement adjustElement(final Editor editor, final int flags, @NotNull final PsiElement element) {
-    if (element instanceof PsiAnonymousClass) {
-      return ((PsiAnonymousClass)element).getBaseClassType().resolve();
+  public PsiElement adjustElement(final Editor editor, final int flags, final PsiElement element, @NotNull final PsiElement contextElement) {
+    if (element != null) {
+      if (element instanceof PsiAnonymousClass) {
+        return ((PsiAnonymousClass)element).getBaseClassType().resolve();
+      }
+      return element;
     }
-    final PsiElement parent = element.getParent();
+    final PsiElement parent = contextElement.getParent();
     if (parent instanceof XmlText || parent instanceof XmlAttributeValue) {
       return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, parent.getParent().getTextRange().getStartOffset() + 1);
     }

@@ -123,8 +123,8 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  public PsiElement adjustElement(final Editor editor, final int flags, @NotNull final PsiElement element) {
-    return null;
+  public PsiElement adjustElement(final Editor editor, final int flags, final PsiElement element, final PsiElement contextElement) {
+    return element;
   }
 
   @Nullable
