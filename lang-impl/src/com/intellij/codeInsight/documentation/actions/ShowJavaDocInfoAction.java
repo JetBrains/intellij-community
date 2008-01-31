@@ -2,7 +2,7 @@ package com.intellij.codeInsight.documentation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.documentation.JavaDocManager;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -25,7 +25,7 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(Project project, Editor editor, PsiFile file) {
-        JavaDocManager.getInstance(project).showJavaDocInfo(editor, file, true);
+        DocumentationManager.getInstance(project).showJavaDocInfo(editor, file, true);
       }
 
       public boolean startInWriteAction() {
@@ -112,12 +112,12 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
       actionPerformedImpl(project, editor);
     }
     else if (project != null) {
-      if (JavaDocManager.getProviderFromElement(element) != null) {
+      if (DocumentationManager.getProviderFromElement(element) != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickjavadoc.ctrln");
         CommandProcessor.getInstance().executeCommand(project,
                                                       new Runnable() {
                                                         public void run() {
-                                                          JavaDocManager.getInstance(project).showJavaDocInfo(element);
+                                                          DocumentationManager.getInstance(project).showJavaDocInfo(element);
                                                         }
                                                       },
                                                       getCommandName(),

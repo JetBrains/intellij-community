@@ -5,7 +5,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.JavaDocManager;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -622,7 +622,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       }
     }
     else {
-      final JBPopup docInfoHint = JavaDocManager.getInstance(element.getProject()).getDocInfoHint();
+      final JBPopup docInfoHint = DocumentationManager.getInstance(element.getProject()).getDocInfoHint();
       if (docInfoHint != null && docInfoHint.isVisible()) {
         docInfoHint.cancel();
       }
@@ -675,9 +675,9 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       }
     }
     else {
-      DocumentationProvider provider = JavaDocManager.getProviderFromElement(element);
+      DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
       if (provider != null) {
-        final SmartPsiElementPointer originalElementPointer = element.getUserData(JavaDocManager.ORIGINAL_ELEMENT_KEY);
+        final SmartPsiElementPointer originalElementPointer = element.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY);
         final String url = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
         if (url != null) {
           urls = new ArrayList<String>();

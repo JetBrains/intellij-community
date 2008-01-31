@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.JavaDocInfoComponent;
-import com.intellij.codeInsight.documentation.JavaDocManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,10 +37,10 @@ public final class ShowJavadocAction extends AnAction {
     final PsiMethod setter = PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     LOG.assertTrue(setter != null);
 
-    final JavaDocManager javaDocManager = JavaDocManager.getInstance(aClass.getProject());
+    final DocumentationManager documentationManager = DocumentationManager.getInstance(aClass.getProject());
 
-    final JavaDocInfoComponent component1 = new JavaDocInfoComponent(javaDocManager);
-    final JavaDocInfoComponent component2 = new JavaDocInfoComponent(javaDocManager);
+    final JavaDocInfoComponent component1 = new JavaDocInfoComponent(documentationManager);
+    final JavaDocInfoComponent component2 = new JavaDocInfoComponent(documentationManager);
 
     final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
 
@@ -49,7 +49,7 @@ public final class ShowJavadocAction extends AnAction {
 
     final JBPopup hint =
       JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), inspector)
-        .setDimensionServiceKey(aClass.getProject(), JavaDocManager.JAVADOC_LOCATION_AND_SIZE, false)
+        .setDimensionServiceKey(aClass.getProject(), DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
         .setResizable(true)
         .setMovable(true)
         .setRequestFocus(true)
@@ -58,8 +58,8 @@ public final class ShowJavadocAction extends AnAction {
     component1.setHint(hint);
     component2.setHint(hint);
 
-    javaDocManager.fetchDocInfo(javaDocManager.getDefaultProvider(getter), component1);
-    javaDocManager.queueFetchDocInfo(javaDocManager.getDefaultProvider(setter), component2);
+    documentationManager.fetchDocInfo(documentationManager.getDefaultProvider(getter), component1);
+    documentationManager.queueFetchDocInfo(documentationManager.getDefaultProvider(setter), component2);
 
     hint.show(new RelativePoint(inspector, new Point(0,0)));
     SwingUtilities.invokeLater(

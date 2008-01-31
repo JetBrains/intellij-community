@@ -28,6 +28,10 @@ public class TargetElementUtilBase {
     return ServiceManager.getService(TargetElementUtilBase.class);
   }
 
+  public int getAllAcepted() {
+    return REFERENCED_ELEMENT_ACCEPTED | ELEMENT_NAME_ACCEPTED | LOOKUP_ITEM_ACCEPTED;
+  }
+
   @Nullable
   public static PsiReference findReference(Editor editor) {
     return findReference(editor, editor.getCaretModel().getOffset());
@@ -119,10 +123,16 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
-  protected PsiElement getNamedElement(final PsiElement element) {
-    PsiElement parent = element.getParent();
+  public PsiElement adjustElement(final Editor editor, final int flags, @NotNull final PsiElement element) {
+    return null;
+  }
+
+  @Nullable
+  protected PsiElement getNamedElement(@Nullable final PsiElement element) {
+    PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
       // A bit hacky depends on navigation offset correctly overridden
+      assert element != null : "notnull parent?";
       if (parent.getTextOffset() == element.getTextRange().getStartOffset()) {
         return parent;
       }

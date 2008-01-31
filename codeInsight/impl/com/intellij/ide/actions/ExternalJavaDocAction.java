@@ -1,6 +1,6 @@
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.documentation.JavaDocManager;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
@@ -38,7 +38,7 @@ public class ExternalJavaDocAction extends AnAction {
     PsiElement originalElement = (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
     try {
       element.putUserData(
-        JavaDocManager.ORIGINAL_ELEMENT_KEY,
+        DocumentationManager.ORIGINAL_ELEMENT_KEY,
         SmartPointerManager.getInstance(originalElement.getProject()).createSmartPsiElementPointer(originalElement)
       );
     } catch(RuntimeException ex) {
@@ -46,7 +46,7 @@ public class ExternalJavaDocAction extends AnAction {
       // tolerate it
     }
 
-    final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)JavaDocManager.getProviderFromElement(element);
+    final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)DocumentationManager.getProviderFromElement(element);
     provider.openExternalDocumentation(element);
   }
 
@@ -55,7 +55,7 @@ public class ExternalJavaDocAction extends AnAction {
     DataContext dataContext = event.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    final DocumentationProvider provider = JavaDocManager.getProviderFromElement(element);
+    final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled = provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element);
     if (editor != null) {
       presentation.setEnabled(enabled);

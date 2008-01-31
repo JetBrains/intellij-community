@@ -5,12 +5,21 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TargetElementUtil extends TargetElementUtilBase {
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
+
+  @Override
+  public int getAllAcepted() {
+    return super.getAllAcepted() | NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
+  }
 
   @Nullable
   @Override
@@ -105,5 +114,21 @@ public class TargetElementUtil extends TargetElementUtilBase {
   public static PsiReferenceExpression findReferenceExpression(Editor editor) {
     final PsiReference ref = findReference(editor);
     return ref instanceof PsiReferenceExpression ? (PsiReferenceExpression)ref : null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement adjustElement(final Editor editor, final int flags, @NotNull final PsiElement element) {
+    if (element instanceof PsiAnonymousClass) {
+      return ((PsiAnonymousClass)element).getBaseClassType().resolve();
+    }
+    final PsiElement parent = element.getParent();
+    if (parent instanceof XmlText || parent instanceof XmlAttributeValue) {
+      return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, parent.getParent().getTextRange().getStartOffset() + 1);
+    }
+    else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
+      return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, parent.getTextRange().getStartOffset() + 1);
+    }
+    return null;
   }
 }

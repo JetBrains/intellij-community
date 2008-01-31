@@ -34,7 +34,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
     private static final int MAX_HEIGHT = 300;
     private static final int MIN_HEIGHT = 45;
 
-    private JavaDocManager myManager;
+    private DocumentationManager myManager;
     private SmartPsiElementPointer myElement;
 
     private Stack<Context> myBackStack = new Stack<Context>();
@@ -76,7 +76,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
     myScrollPane.requestFocus();
   }
 
-  public JavaDocInfoComponent(final JavaDocManager manager) {
+  public JavaDocInfoComponent(final DocumentationManager manager) {
       myManager = manager;
       myIsEmpty = true;
       myIsShown = false;
@@ -359,7 +359,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
         public void actionPerformed(AnActionEvent e) {
             if (myElement != null) {
               final PsiElement element = myElement.getElement();
-              final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)JavaDocManager.getProviderFromElement(element);
+              final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)DocumentationManager.getProviderFromElement(element);
               assert provider != null;
               provider.openExternalDocumentation(element);
             }
@@ -370,7 +370,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
           presentation.setEnabled(false);
           if (myElement != null) {
             final PsiElement element = myElement.getElement();
-            final DocumentationProvider provider = JavaDocManager.getProviderFromElement(element);
+            final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
             if (provider instanceof ExtensibleDocumentationProvider) {
               presentation.setEnabled(((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element));
             }

@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
@@ -34,10 +33,6 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
 import com.intellij.ui.popup.JBPopupImpl;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -53,7 +48,7 @@ import java.lang.ref.WeakReference;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class JavaDocManager implements ProjectComponent {
+public class DocumentationManager implements ProjectComponent {
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   private final Project myProject;
   private Editor myEditor = null;
@@ -92,18 +87,13 @@ public class JavaDocManager implements ProjectComponent {
     }
   };
 
-  private static final int ourFlagsForTargetElements = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED
-                                                       | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
-                                                       | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED
-                                                       | TargetElementUtil.NEW_AS_CONSTRUCTOR
-                                                       | TargetElementUtil.THIS_ACCEPTED
-                                                       | TargetElementUtil.SUPER_ACCEPTED;
+  private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAcepted();
 
-  public static JavaDocManager getInstance(Project project) {
-    return project.getComponent(JavaDocManager.class);
+  public static DocumentationManager getInstance(Project project) {
+    return project.getComponent(DocumentationManager.class);
   }
 
-  public JavaDocManager(Project project, ActionManagerEx managerEx) {
+  public DocumentationManager(Project project, ActionManagerEx managerEx) {
     myProject = project;
     myActionManagerEx = managerEx;
   }
@@ -202,10 +192,6 @@ public class JavaDocManager implements ProjectComponent {
 
     PsiElement originalElement = file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
     PsiElement element = findTargetElement(editor, file, originalElement);
-
-    if (element instanceof PsiAnonymousClass) {
-      element = ((PsiAnonymousClass)element).getBaseClassType().resolve();
-    }
 
     if (element == null && myParameterInfoController != null) {
       final Object[] objects = myParameterInfoController.getSelectedElements();
@@ -316,19 +302,11 @@ public class JavaDocManager implements ProjectComponent {
     PsiElement element = editor != null ? TargetElementUtilBase.findTargetElement(editor, ourFlagsForTargetElements) : null;
 
     // Allow context doc over xml tag content
-    if (element == null && contextElement != null) {
-        final PsiElement parent = contextElement.getParent();
-        if (parent instanceof XmlText) {
-          element = TargetElementUtilBase.getInstance().findTargetElement(editor, ourFlagsForTargetElements,
-                                                             parent.getParent().getTextRange().getStartOffset() + 1);
-        } else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
-          element = TargetElementUtilBase.getInstance().findTargetElement(editor, ourFlagsForTargetElements,
-                                                             parent.getTextRange().getStartOffset() + 1);
-        } else if (parent instanceof XmlAttributeValue) {
-          final PsiElement grandParent = parent.getParent();
-          element = TargetElementUtilBase.getInstance().findTargetElement(editor, ourFlagsForTargetElements,
-                                                             grandParent.getTextRange().getStartOffset() + 1);
-        }
+    if (element != null || contextElement != null) {
+      final PsiElement adjusted =  TargetElementUtilBase.getInstance().adjustElement(editor, ourFlagsForTargetElements, element != null ? element : contextElement);
+      if (adjusted != null) {
+        element = adjusted;
+      }
     }
 
     if (element == null && editor != null) {

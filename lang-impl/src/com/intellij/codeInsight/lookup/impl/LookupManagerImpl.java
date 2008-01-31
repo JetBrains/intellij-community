@@ -5,7 +5,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.completion.CompletionPreferencePolicy;
 import com.intellij.codeInsight.completion.actions.SmartCodeCompletionAction;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.documentation.JavaDocManager;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
@@ -135,7 +135,7 @@ public class LookupManagerImpl extends LookupManager implements ProjectComponent
     final Alarm alarm = new Alarm();
     final Runnable request = new Runnable(){
       public void run() {
-        JavaDocManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+        DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
       }
     };
     if (settings.AUTO_POPUP_JAVADOC_INFO){
