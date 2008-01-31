@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathsList;
@@ -110,7 +111,7 @@ public class JavaParameters {
       return;
     }
 
-    ProjectRootsTraversing.collectRoots(module, (classPathType & TESTS_ONLY) != 0 ? ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE : ProjectRootsTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
+    ProjectRootsTraversing.collectRoots(module, (classPathType & TESTS_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
   }
 
   public void configureByModule(final Module module, final int classPathType) throws CantRunException {
@@ -141,7 +142,7 @@ public class JavaParameters {
       return;
     }
 
-    ProjectRootsTraversing.collectRoots(project, (classPathType & TESTS_ONLY) != 0 ? ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE : ProjectRootsTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
+    ProjectRootsTraversing.collectRoots(project, (classPathType & TESTS_ONLY) != 0 ? ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE : ProjectClasspathTraversing.FULL_CLASSPATH_WITHOUT_TESTS, myClassPath);
   }
 
   public ParametersList getVMParametersList() {

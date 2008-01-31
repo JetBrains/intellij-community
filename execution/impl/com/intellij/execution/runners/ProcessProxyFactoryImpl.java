@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.JavaCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.application.PathManager;
 
 public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
@@ -19,7 +19,7 @@ public class ProcessProxyFactoryImpl extends ProcessProxyFactory {
       try {
         proxy = new ProcessProxyImpl();
         final JavaParameters javaParameters = javaCmdLine.getJavaParameters();
-        PathUtilEx.addRtJar(javaParameters.getClassPath());
+        JavaSdkUtil.addRtJar(javaParameters.getClassPath());
         final ParametersList vmParametersList = javaParameters.getVMParametersList();
         vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_PORT_NUMBER, "" + proxy.getPortNumber());
         vmParametersList.defineProperty(ProcessProxyImpl.PROPERTY_BINPATH, PathManager.getBinPath());

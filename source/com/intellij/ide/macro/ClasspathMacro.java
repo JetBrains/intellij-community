@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.ProjectClasspathTraversing;
 
 public final class ClasspathMacro extends Macro {
   public String getName() {
@@ -19,6 +20,6 @@ public final class ClasspathMacro extends Macro {
   public String expand(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
-    return ProjectRootsTraversing.collectRoots(project, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+    return ProjectRootsTraversing.collectRoots(project, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
   }
 }

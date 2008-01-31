@@ -42,15 +42,6 @@ public class DataAccessors {
       return virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
     }
   };
-  public static final DataAccessor<PsiPackage> FILE_PACKAGE = new DataAccessor<PsiPackage>() {
-    public PsiPackage getImpl(DataContext dataContext) throws NoDataException {
-      PsiFile psiFile = PSI_FILE.getNotNull(dataContext);
-      PsiDirectory containingDirectory = psiFile.getContainingDirectory();
-      if (containingDirectory == null || !containingDirectory.isValid()) return null;
-      return JavaDirectoryService.getInstance().getPackage(containingDirectory);
-    }
-  };
-  public static final DataAccessor<PsiJavaFile> PSI_JAVA_FILE = DataAccessor.SubClassDataAccessor.create(PSI_FILE, PsiJavaFile.class);
   /**
    * @deprecated
    */

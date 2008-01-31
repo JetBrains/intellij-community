@@ -18,7 +18,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -26,13 +25,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 public class ProjectRootsTraversing {
-  public static final RootTraversePolicy FULL_CLASSPATH =
-    new RootTraversePolicy(RootTraversePolicy.ALL_OUTPUTS, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.ADD_CLASSES, null);
 
   public static final RootTraversePolicy LIBRARIES_AND_JDK =
     new RootTraversePolicy(null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.ADD_CLASSES, null);
@@ -40,20 +36,11 @@ public class ProjectRootsTraversing {
   public static final RootTraversePolicy PROJECT_SOURCES =
     new RootTraversePolicy(RootTraversePolicy.SOURCES, null, null, null);
 
-  public static final RootTraversePolicy FULL_CLASSPATH_RECURSIVE =
-    new RootTraversePolicy(RootTraversePolicy.ALL_OUTPUTS, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
-
-  public static final RootTraversePolicy FULL_CLASS_RECURSIVE_WO_JDK =
-    new RootTraversePolicy(RootTraversePolicy.ALL_OUTPUTS, null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
-
-  public static final RootTraversePolicy FULL_CLASSPATH_WITHOUT_TESTS =
-    new RootTraversePolicy(RootTraversePolicy.GENERAL_OUTPUT, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
-
-  public static final RootTraversePolicy FULL_CLASSPATH_WITHOUT_JDK_AND_TESTS =
-    new RootTraversePolicy(RootTraversePolicy.GENERAL_OUTPUT, null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
-
   public static final RootTraversePolicy PROJECT_LIBRARIES =
     new RootTraversePolicy(null, null, RootTraversePolicy.ADD_CLASSES, RootTraversePolicy.RECURSIVE);
+
+  private ProjectRootsTraversing() {
+  }
 
   public static PathsList collectRoots(Project project, RootTraversePolicy policy) {
     PathsList listBuilder = new PathsList();
@@ -89,7 +76,7 @@ public class ProjectRootsTraversing {
     state.getCurrentModuleManager().processOrder(policy, state);
   }
 
-  private static class TraverseState implements UserDataHolder {
+  static class TraverseState implements UserDataHolder {
     private final UserDataHolderBase myUserData = new UserDataHolderBase();
     private final PathsList myCollectedPath;
     private final HashSet<Module> myKnownModules = new HashSet<Module>();
@@ -195,12 +182,10 @@ public class ProjectRootsTraversing {
       return traverseState;
     }
 
-    private interface Visit<T extends OrderEntry> {
+    interface Visit<T extends OrderEntry> {
       void visit(T entry, TraverseState state, RootPolicy<TraverseState> policy);
     }
 
-    public static final AddModuleOutput ALL_OUTPUTS = new AddModuleOutput(true);
-    public static final AddModuleOutput GENERAL_OUTPUT = new AddModuleOutput(false);
     public static final AddModuleSource SOURCES = new AddModuleSource();
     public static final AddModuleSource PRODUCTION_SOURCES = new AddModuleSource(true);
 
@@ -219,30 +204,6 @@ public class ProjectRootsTraversing {
         state.restorCurrentModuleManager(moduleRootManager);
       }
     };
-
-    public static class AddModuleOutput implements Visit<ModuleSourceOrderEntry> {
-      private final boolean myIncludeTests;
-
-      public AddModuleOutput(boolean includeTests) {
-        myIncludeTests = includeTests;
-      }
-
-      public void visit(ModuleSourceOrderEntry sourceEntry, TraverseState traverseState, RootPolicy<TraverseState> policy) {
-        traverseState.addAllUrls(getOutputs(traverseState.getCurrentModuleManager().getModule()));
-      }
-
-      public List<String> getOutputs(Module module) {
-        ArrayList<String> outputs = new ArrayList<String>();
-        final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-        String testOutput = compilerModuleExtension.getCompilerOutputUrlForTests();
-        if (myIncludeTests && testOutput != null) outputs.add(testOutput);
-        String output = compilerModuleExtension.getCompilerOutputUrl();
-        if ((!Comparing.equal(output, testOutput) || !myIncludeTests) && output != null) {
-          outputs.add(output);
-        }
-        return outputs;
-      }
-    }
 
     public static class AddModuleSource implements Visit<ModuleSourceOrderEntry> {
       private boolean myExcludeTests;

@@ -18,7 +18,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.MockJdkWrapper;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -218,7 +218,7 @@ public class JavacCompiler extends ExternalCompiler {
       commandLine.add(sdkType.getToolsPath(jdk)); //  do not use JavacRunner for jdk 1.0
     }
     else {
-      commandLine.add(sdkType.getToolsPath(jdk) + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
+      commandLine.add(sdkType.getToolsPath(jdk) + File.pathSeparator + JavaSdkUtil.getIdeaRtJarPath());
       commandLine.add(JavacRunner.class.getName());
       commandLine.add("\"" + versionString + "\"");
     }

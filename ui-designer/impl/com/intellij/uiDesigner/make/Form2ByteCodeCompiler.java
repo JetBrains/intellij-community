@@ -13,11 +13,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.uiDesigner.GuiDesignerConfiguration;
@@ -251,7 +251,7 @@ public final class Form2ByteCodeCompiler implements ClassInstrumentingCompiler {
 
     for (final Module module : module2itemsList.keySet()) {
       final String classPath =
-        ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
+        ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString();
       final ClassLoader loader = createClassLoader(classPath);
 
       if (GuiDesignerConfiguration.getInstance(myProject).COPY_FORMS_RUNTIME_TO_OUTPUT) {

@@ -31,6 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -115,7 +116,7 @@ public final class PreviewFormAction extends AnAction{
 
     final PathsList sources = ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.PROJECT_SOURCES);
     final String classPath =
-      ProjectRootsTraversing.collectRoots(module, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString() + File.pathSeparator +
+      ProjectRootsTraversing.collectRoots(module, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getPathsString() + File.pathSeparator +
       sources.getPathsString() + File.pathSeparator + /* resources bundles */
       tempPath;
     final ClassLoader loader = Form2ByteCodeCompiler.createClassLoader(classPath);

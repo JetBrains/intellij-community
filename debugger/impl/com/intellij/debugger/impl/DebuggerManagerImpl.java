@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -385,7 +385,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
-        PathUtilEx.addRtJar(parameters.getClassPath());
+        JavaSdkUtil.addRtJar(parameters.getClassPath());
         boolean classicVM = shouldForceClassicVM(parameters.getJdk());
         parameters.getVMParametersList().replaceOrPrepend("-classic", classicVM ? "-classic" : "");
 

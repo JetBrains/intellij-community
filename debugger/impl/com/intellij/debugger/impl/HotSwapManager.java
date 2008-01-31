@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootsTraversing;
+import com.intellij.openapi.roots.ProjectClasspathTraversing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -79,7 +80,7 @@ public class HotSwapManager implements ProjectComponent{
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
-        final List<VirtualFile> allClasses = ProjectRootsTraversing.collectRoots(myProject, ProjectRootsTraversing.FULL_CLASSPATH_RECURSIVE).getRootDirs();
+        final List<VirtualFile> allClasses = ProjectRootsTraversing.collectRoots(myProject, ProjectClasspathTraversing.FULL_CLASSPATH_RECURSIVE).getRootDirs();
 
         final VirtualFile[] allDirs = allClasses.toArray(new VirtualFile[allClasses.size()]);
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance();

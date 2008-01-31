@@ -26,7 +26,7 @@ import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.compiler.JavacResourcesReader;
@@ -99,7 +99,7 @@ public class JavacOutputParserPool {
 
     //noinspection HardCodedStringLiteral
     commandLine.add("-classpath");
-    commandLine.add(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk) + File.pathSeparator + PathUtilEx.getIdeaRtJarPath());
+    commandLine.add(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk) + File.pathSeparator + JavaSdkUtil.getIdeaRtJarPath());
 
     commandLine.add(JavacResourcesReader.class.getName());
 

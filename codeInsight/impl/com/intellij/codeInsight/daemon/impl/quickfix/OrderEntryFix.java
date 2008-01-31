@@ -14,7 +14,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ex.PathUtilEx;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -103,7 +103,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
         }
 
         public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
-          String jarPath = isJunit4 ? PathUtilEx.getJunit4JarPath() : PathUtilEx.getJunit3JarPath();
+          String jarPath = isJunit4 ? JavaSdkUtil.getJunit4JarPath() : JavaSdkUtil.getJunit3JarPath();
           addBundledJarToRoots(project, editor, currentModule, reference, className, jarPath);
         }
       };
