@@ -31,7 +31,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author spleaner
  */
-class DefaultJavaProgramRunner extends GenericProgramRunner {
+public class DefaultJavaProgramRunner extends GenericProgramRunner {
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultRunExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile && !(profile instanceof RemoteConfiguration);
   }
