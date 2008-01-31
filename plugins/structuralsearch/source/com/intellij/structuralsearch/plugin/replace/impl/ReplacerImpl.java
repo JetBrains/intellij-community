@@ -337,7 +337,8 @@ public class ReplacerImpl {
         PsiElement replacement = getMatchExpr(statements[i], elementToReplace);
 
         if (replacement instanceof PsiStatement &&
-            !(replacement.getLastChild() instanceof PsiJavaToken)
+            !(replacement.getLastChild() instanceof PsiJavaToken) &&
+            !(replacement.getLastChild() instanceof PsiComment)
            ) {
           // assert w/o ;
           final PsiElement prevLastChildInParent = replacement.getLastChild().getPrevSibling();
@@ -778,7 +779,8 @@ public class ReplacerImpl {
 
   private static PsiElement getMatchExpr(PsiElement replacement, PsiElement elementToReplace) {
     if (replacement instanceof PsiExpressionStatement &&
-        !(replacement.getLastChild() instanceof PsiJavaToken)
+        !(replacement.getLastChild() instanceof PsiJavaToken) &&
+        !(replacement.getLastChild() instanceof PsiComment)
        ) {
       // replacement is expression (and pattern should be so)
       // assert ...
