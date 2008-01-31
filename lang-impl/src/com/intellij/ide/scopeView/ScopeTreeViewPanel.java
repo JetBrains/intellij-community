@@ -1,7 +1,6 @@
 package com.intellij.ide.scopeView;
 
 import com.intellij.ProjectTopics;
-import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.CopyPasteDelegator;
@@ -681,7 +680,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     private void queueUpdate(final VirtualFile fileToRefresh, final Function<PsiFile, DefaultMutableTreeNode> rootToReloadGetter) {
       AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
       if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
-          !PackagesScopesProvider.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
+          !DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName().equals(pane.getSubId())) {
         return;
       }
       myUpdateQueue.queue(new Update(fileToRefresh) {

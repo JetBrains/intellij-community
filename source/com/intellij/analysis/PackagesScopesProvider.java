@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ import java.util.List;
 public class PackagesScopesProvider implements CustomScopesProvider {
   private NamedScope myProjectTestScope;
   private NamedScope myProjectProductionScope;
-  private NamedScope myProblemsScope;
+ 
 
   private final Project myProject;
 
@@ -41,7 +40,6 @@ public class PackagesScopesProvider implements CustomScopesProvider {
     final List<NamedScope> list = new ArrayList<NamedScope>();
     list.add(getProjectProductionScope());
     list.add(getProjectTestScope());
-    list.add(getProblemsScope());
     return list;
   }
 
@@ -100,26 +98,5 @@ public class PackagesScopesProvider implements CustomScopesProvider {
     return myProjectProductionScope;
   }
 
-  public NamedScope getProblemsScope() {
-    if (myProblemsScope == null) {
-      myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new PackageSet() {
-        public boolean contains(PsiFile file, NamedScopesHolder holder) {
-          return file.getProject() == myProject && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file.getVirtualFile());
-        }
 
-        public PackageSet createCopy() {
-          return this;
-        }
-
-        public String getText() {
-          return PatternPackageSet.SCOPE_PROBLEM + ":*..*";
-        }
-
-        public int getNodePriority() {
-          return 1;
-        }
-      });
-    }
-    return myProblemsScope;
-  }
 }

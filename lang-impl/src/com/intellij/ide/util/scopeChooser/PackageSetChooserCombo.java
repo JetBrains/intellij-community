@@ -4,10 +4,10 @@
  */
 package com.intellij.ide.util.scopeChooser;
 
-import com.intellij.analysis.PackagesScopesProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.packageDependencies.DefaultScopesProvider;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -104,7 +104,7 @@ public class PackageSetChooserCombo extends ComboboxWithBrowseButton {
     for (PackageSet unnamedScope : unnamedScopes.values()) {
       model.addElement(new NamedScope.UnnamedScope(unnamedScope));
     }
-    model.removeElement(PackagesScopesProvider.getInstance(myProject).getProblemsScope());
+    model.removeElement(DefaultScopesProvider.getInstance(myProject).getProblemsScope());
     return model;
   }
 
