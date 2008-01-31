@@ -82,17 +82,17 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
     }
 
     if (METHOD_DEFS.contains(leftNode.getElementType())) {
-      if (RIGHT_BRACES.contains(rightNode.getElementType())) {
-        return Spacing.createSpacing(0, 0, 1, false, 100);
+      if (mRCURLY.equals(rightNode.getElementType())) {
+        return Spacing.createSpacing(0, 0, 1, false, 0);
       }
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 0);
     }
 
     if (METHOD_DEFS.contains(rightNode.getElementType())) {
-      if (LEFT_BRACES.contains(leftNode.getElementType())) {
-        return Spacing.createSpacing(0, 0, 1, false, 100);
+      if (mLCURLY.equals(leftNode.getElementType())) {
+        return Spacing.createSpacing(0, 0, 1, false, 0);
       }
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 0);
     }
 
     // For parentheses in arguments and typecasts
@@ -140,7 +140,7 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
 
     if (VARIABLE_DEFINITION.equals(leftNode.getElementType()) ||
         VARIABLE_DEFINITION.equals(rightNode.getElementType())) {
-      return Spacing.createSpacing(0, 0, 1, false, 100);
+      return Spacing.createSpacing(0, 0, 1, false, 0);
     }
 
 /********** exclusions ************/
