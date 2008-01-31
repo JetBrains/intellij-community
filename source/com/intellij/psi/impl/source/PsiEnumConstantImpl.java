@@ -13,7 +13,7 @@ import com.intellij.psi.impl.cache.FieldView;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ArrayUtil;
@@ -307,7 +307,7 @@ public class PsiEnumConstantImpl extends NonSlaveRepositoryPsiElement implements
   }
 
   public ItemPresentation getPresentation() {
-    return SymbolPresentationUtil.getFieldPresentation(this);
+    return JavaPresentationUtil.getFieldPresentation(this);
   }
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();

@@ -8,7 +8,7 @@ import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
@@ -213,7 +213,7 @@ public class PsiParameterImpl extends IndexedRepositoryPsiElement implements Psi
   }
 
   public ItemPresentation getPresentation() {
-    return SymbolPresentationUtil.getVariablePresentation(this);
+    return JavaPresentationUtil.getVariablePresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

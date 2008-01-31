@@ -7,6 +7,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -15,6 +16,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Icons;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.navigation.ItemPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -262,5 +264,25 @@ public class PropertyImpl extends PropertiesElementImpl implements Property {
   public SearchScope getUseScope() {
     // property ref can occur in any file
     return GlobalSearchScope.allScope(getProject());
+  }
+
+  public ItemPresentation getPresentation() {
+    return new ItemPresentation() {
+      public String getPresentableText() {
+        return getName();
+      }
+
+      public String getLocationString() {
+        return getContainingFile().getName();
+      }
+
+      public Icon getIcon(final boolean open) {
+        return null;
+      }
+
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+    };
   }
 }

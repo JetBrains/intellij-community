@@ -9,7 +9,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.MethodSignature;
@@ -384,7 +384,7 @@ public class PsiMethodImpl extends NonSlaveRepositoryPsiElement implements PsiMe
   }
 
   public ItemPresentation getPresentation() {
-    return SymbolPresentationUtil.getMethodPresentation(this);
+    return JavaPresentationUtil.getMethodPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

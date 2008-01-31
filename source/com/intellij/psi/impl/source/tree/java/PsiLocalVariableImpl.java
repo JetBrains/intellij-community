@@ -15,7 +15,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspSpiUtil;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -254,7 +254,7 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   }
 
   public ItemPresentation getPresentation() {
-    return SymbolPresentationUtil.getVariablePresentation(this);
+    return JavaPresentationUtil.getVariablePresentation(this);
   }
 
   public String toString() {

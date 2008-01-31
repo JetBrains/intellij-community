@@ -41,6 +41,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import javax.swing.*;
 
 public class ClassPresentationUtil {
+  private ClassPresentationUtil() {
+  }
+
   public static String getNameForClass(PsiClass aClass, boolean qualified) {
     if (aClass instanceof PsiAnonymousClass) {
       return PsiBundle.message("anonymous.class.context.display", getContextName(aClass, qualified));

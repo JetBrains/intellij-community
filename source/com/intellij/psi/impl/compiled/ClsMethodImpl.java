@@ -11,7 +11,7 @@ import com.intellij.psi.impl.cache.RepositoryManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.MethodSignature;
@@ -878,7 +878,7 @@ public class ClsMethodImpl extends ClsRepositoryPsiElement implements PsiAnnotat
   }
 
   public ItemPresentation getPresentation() {
-    return SymbolPresentationUtil.getMethodPresentation(this);
+    return JavaPresentationUtil.getMethodPresentation(this);
   }
 
   public Icon getElementIcon(final int flags) {

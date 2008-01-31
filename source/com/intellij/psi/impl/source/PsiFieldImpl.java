@@ -13,7 +13,7 @@ import com.intellij.psi.impl.source.parsing.ExpressionParsing;
 import com.intellij.psi.impl.source.resolve.JavaResolveCache;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
+import com.intellij.psi.presentation.java.JavaPresentationUtil;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -407,7 +407,7 @@ public class PsiFieldImpl extends NonSlaveRepositoryPsiElement implements PsiFie
   }
 
   public ItemPresentation getPresentation() {
-    return SymbolPresentationUtil.getFieldPresentation(this);
+    return JavaPresentationUtil.getFieldPresentation(this);
   }
 
   public void setInitializer(PsiExpression initializer) throws IncorrectOperationException {
