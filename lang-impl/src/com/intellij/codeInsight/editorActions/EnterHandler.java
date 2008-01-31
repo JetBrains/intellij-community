@@ -29,7 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -217,7 +217,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         if (offset < 0) offset = 0;
         int lineStart = CharArrayUtil.shiftForward(chars, offset, " \t");
 
-        final Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtil.getLanguageAtOffset(myFile, offset));
+        final Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilBase.getLanguageAtOffset(myFile, offset));
         final boolean isInsideJavalikeCode = langCommenter instanceof CodeDocumentationAwareCommenter;
         final CodeDocumentationAwareCommenter commenter = isInsideJavalikeCode ? (CodeDocumentationAwareCommenter)langCommenter:null;
 
