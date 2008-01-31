@@ -60,6 +60,8 @@ public class FSRecords implements Disposable, Forceable {
   private final static Object lock = new Object();
   private DbConnection myConnection;
 
+  private static int ourLocalModificationCount = 0;
+
   static {
     //noinspection ConstantConditions
     assert HEADER_SIZE <= RECORD_SIZE;
@@ -147,8 +149,12 @@ public class FSRecords implements Disposable, Forceable {
 
     private static void setupFlashing() {
       myFlashingFuture = JobScheduler.getScheduler().scheduleAtFixedRate(new Runnable() {
+        int lastModCount = 0;
         public void run() {
-          force();
+          if (lastModCount == ourLocalModificationCount) {
+            force();
+          }
+          lastModCount = ourLocalModificationCount;
         }
       }, 5000, 5000, TimeUnit.MILLISECONDS);
     }
@@ -523,6 +529,7 @@ public class FSRecords implements Disposable, Forceable {
   }
 
   private void incModCount(int id) throws IOException {
+    ourLocalModificationCount++;
     final int count = getModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MODCOUNT_OFFSET, count);
 

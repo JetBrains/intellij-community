@@ -22,9 +22,7 @@ package com.intellij.util.io;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class PagePool {
@@ -55,7 +53,7 @@ public class PagePool {
       return false;
     }
   };
-  private final Map<PoolPageKey, Page> myFinalizationQueue = new LinkedHashMap<PoolPageKey, Page>();
+  private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
 
   private final ThreadPoolExecutor myFinalizer = ConcurrencyUtil.newSingleThreadExecutor("Disk cache finalization queue");
 
@@ -92,8 +90,9 @@ public class PagePool {
         return page;
       }
 
-      page = myFinalizationQueue.remove(key);
-      if (page != null) {
+      final FinalizationRequest request = myFinalizationQueue.remove(key);
+      if (request != null) {
+        page = request.page;
         finalization_queue_hits++;
         page.setFinalizationId(0);
         toProtectedQueue(page);
@@ -138,18 +137,15 @@ public class PagePool {
   }
 
   public void flushPages(final RandomAccessDataFile owner) {
-    long targetFinalizationId;
     boolean hasFlushes;
     synchronized (lock) {
       hasFlushes = scanQueue(owner, myProtectedQueue);
       hasFlushes |= scanQueue(owner, myProbationalQueue);
-
-      targetFinalizationId = finalizationId;
     }
 
     if (hasFlushes) {
       synchronized (finalizationLock) {
-        while (lastFinalizationPerformed < targetFinalizationId) {
+        while (!myFinalizationQueue.isEmpty()) {
           try {
             finalizationLock.wait();
           }
@@ -176,31 +172,93 @@ public class PagePool {
     return hasFlushes;
   }
 
+  private PoolPageKey lastFinalizedKey = null;
+
   private void scheduleFinalization(final Page page) {
+    boolean wakeUpFinalizer = false;
     synchronized (lock) {
       if (page.isDirty()) {
+        if (myFinalizerThread == null) {
+          myFinalizerThread = new Thread(new FinalizationThreadWorker(), "Disk cache finalization queue");
+          myFinalizerThread.start();
+        }
+
         final long curFinalizationId = ++finalizationId;
         page.setFinalizationId(curFinalizationId);
 
-        myFinalizationQueue.put(keyForPage(page), page);
-        myFinalizer.submit(new Runnable() {
-          public void run() {
-            if (page.flushIfFinalizationIdIsEqualTo(curFinalizationId)) {
-              synchronized (lock) {
-                myFinalizationQueue.remove(keyForPage(page));
-                page.recycleIfFinalizationIdIsEqualTo(curFinalizationId);
-              }
-            }
-
-            synchronized (finalizationLock) {
-              lastFinalizationPerformed = curFinalizationId;
-              finalizationLock.notifyAll();
-            }
-          }
-        });
+        wakeUpFinalizer = true;
+        myFinalizationQueue.put(keyForPage(page), new FinalizationRequest(page, curFinalizationId));
       }
       else {
         page.recycle();
+      }
+    }
+
+    if (wakeUpFinalizer) {
+      synchronized (myFinalizationQueue) {
+        myFinalizationQueue.notifyAll();
+      }
+    }
+  }
+
+  private static class FinalizationRequest {
+    Page page;
+    long finalizationId;
+
+    private FinalizationRequest(final Page page, final long finalizationId) {
+      this.page = page;
+      this.finalizationId = finalizationId;
+    }
+  }
+
+  private Thread myFinalizerThread;
+
+  private class FinalizationThreadWorker implements Runnable {
+    public void run() {
+      //noinspection InfiniteLoopStatement
+      while (true) {
+        FinalizationRequest request = null;
+        synchronized (lock) {
+          if (!myFinalizationQueue.isEmpty()) {
+            final PoolPageKey key;
+            if (lastFinalizedKey == null) {
+              key = myFinalizationQueue.firstKey();
+            }
+            else {
+              final SortedMap<PoolPageKey,FinalizationRequest> tail = myFinalizationQueue.tailMap(lastFinalizedKey);
+              key = tail.isEmpty() ? myFinalizationQueue.firstKey() : tail.firstKey();
+            }
+            lastFinalizedKey = key;
+            request = myFinalizationQueue.get(key);
+          }
+          else {
+            lastFinalizedKey = null;
+          }
+        }
+
+        if (request != null) {
+          if (request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId)) {
+            synchronized (lock) {
+              myFinalizationQueue.remove(lastFinalizedKey);
+              request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
+            }
+          }
+
+          synchronized (finalizationLock) {
+            lastFinalizationPerformed = request.finalizationId;
+            finalizationLock.notifyAll();
+          }
+        }
+        else {
+          synchronized (myFinalizationQueue) {
+            try {
+              myFinalizationQueue.wait();
+            }
+            catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }
       }
     }
   }
