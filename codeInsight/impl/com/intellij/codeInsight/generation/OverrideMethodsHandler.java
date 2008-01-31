@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 
 public class OverrideMethodsHandler implements CodeInsightActionHandler{
   public final void invoke(final Project project, final Editor editor, PsiFile file) {
@@ -21,7 +21,7 @@ public class OverrideMethodsHandler implements CodeInsightActionHandler{
       }
     }
 
-    Language language = PsiUtil.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
+    Language language = PsiUtilBase.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final LanguageCodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.OVERRIDE_METHOD.forLanguage(language);
     if (codeInsightActionHandler != null) {
       codeInsightActionHandler.invoke(project, editor, file);

@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nullable;
 
 public class TextEditorPsiDataProvider implements EditorDataProvider {
@@ -64,7 +64,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
                                             ? selectionModel.getSelectionStart()
                                             : caretOffset;
 
-    return PsiUtil.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
+    return PsiUtilBase.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
   private PsiElement getPsiElementIn(final Editor editor, VirtualFile file) {

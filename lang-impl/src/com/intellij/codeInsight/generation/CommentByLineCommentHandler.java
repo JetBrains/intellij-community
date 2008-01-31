@@ -20,7 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +134,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
     boolean singleline = myLine1 == myLine2;
     int offset = myDocument.getLineStartOffset(myLine1);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    Language languageAtStart = PsiUtil.getLanguageAtOffset(myFile, offset);
+    Language languageAtStart = PsiUtilBase.getLanguageAtOffset(myFile, offset);
     final Language languageSuitableForCompleteFragment = CommentByBlockCommentHandler.evaluateLanguageInRange(offset, CharArrayUtil.shiftBackward(
       myDocument.getCharsSequence(), myDocument.getLineEndOffset(myLine2), " \t\n"), myFile, languageAtStart);
 
@@ -270,7 +270,7 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
 
     int offset = myDocument.getLineStartOffset(line);
     offset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), offset, " \t");
-    Language language = PsiUtil.getLanguageAtOffset(myFile, offset);
+    Language language = PsiUtilBase.getLanguageAtOffset(myFile, offset);
     return LanguageCommenters.INSTANCE.forLanguage(language);
   }
 

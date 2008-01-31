@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -315,7 +315,7 @@ public class ParameterInfoController {
   @Nullable
   public static <E extends PsiElement> E findArgumentList(PsiFile file, int offset, int lbraceOffset){
     if (file == null) return null;
-    final ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(PsiUtil.getLanguageAtOffset(file, offset));
+    final ParameterInfoHandler[] handlers = ShowParameterInfoHandler.getHandlers(PsiUtilBase.getLanguageAtOffset(file, offset));
     
     if (handlers != null) {
       for(ParameterInfoHandler handler:handlers) {

@@ -23,7 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +163,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
                                             ? selectionModel.getSelectionStart()
                                             : caretOffset;
     PsiElement elt = getElementAtOffset(file, mostProbablyCorrectLanguageOffset);
-    Language lang = elt != null ? PsiUtil.findLanguageFromElement(elt, file): null;
+    Language lang = elt != null ? PsiUtilBase.findLanguageFromElement(elt, file): null;
     if (lang == null) return null;
 
     if (selectionModel.hasSelection()) {
@@ -186,7 +186,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       elt = getElementAtOffset(file,curOffset);
       if (elt == null) break;
       if (!(elt instanceof PsiWhiteSpace)) {
-        if (!Comparing.equal(lang, PsiUtil.findLanguageFromElement(elt,file))) {
+        if (!Comparing.equal(lang, PsiUtilBase.findLanguageFromElement(elt,file))) {
           lang = file.getLanguage();
           break;
         }
