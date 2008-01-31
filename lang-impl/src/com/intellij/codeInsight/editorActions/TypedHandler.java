@@ -2,13 +2,12 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.highlighting.BraceMatcher;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageBraceMatching;
 import com.intellij.lang.PairedBraceMatcher;
-import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +25,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
@@ -54,18 +56,26 @@ public class TypedHandler implements TypedActionHandler {
   }
 
   private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();
+  private static final Map<Class<? extends Language>, QuoteHandler> ourBaseLanguageQuoteHandlers = new HashMap<Class<? extends Language>, QuoteHandler>();
 
   public static @Nullable QuoteHandler getQuoteHandler(@NotNull PsiFile file) {
     QuoteHandler quoteHandler = getQuoteHandlerForType(file.getFileType());
-    if (quoteHandler == null &&
-        file.getViewProvider().getBaseLanguage() instanceof XMLLanguage
-       ) {
-      quoteHandler = getQuoteHandlerForType(StdFileTypes.XML);
+    if (quoteHandler == null) {
+      final Language baseLanguage = file.getViewProvider().getBaseLanguage();
+      for (Map.Entry<Class<? extends Language>, QuoteHandler> entry : ourBaseLanguageQuoteHandlers.entrySet()) {
+        if (entry.getKey().isInstance(baseLanguage)) {
+          return entry.getValue();
+        }
+      }
     }
     return quoteHandler;
   }
 
-  private static QuoteHandler getQuoteHandlerForType(final FileType fileType) {
+  public static void registerBaseLanguageQuoteHandler(Class<? extends Language> languageClass, QuoteHandler quoteHandler) {
+    ourBaseLanguageQuoteHandlers.put(languageClass, quoteHandler);
+  }
+
+  public static QuoteHandler getQuoteHandlerForType(final FileType fileType) {
     if (!quoteHandlers.containsKey(fileType)) {
       QuoteHandler handler = null;
       final QuoteHandlerEP[] handlerEPs = Extensions.getExtensions(QuoteHandlerEP.EP_NAME);
