@@ -30,7 +30,7 @@ public abstract class JavaUnwrapper implements Unwrapper {
     extract(block.getStatements(), from);
   }
 
-  protected void extract(PsiElement[] elements, PsiElement from) throws IncorrectOperationException {
+  private void extract(PsiElement[] elements, PsiElement from) throws IncorrectOperationException {
     if (elements.length == 0) return;
 
     PsiElement first = elements[0];
