@@ -89,6 +89,7 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     builder.advanceLexer();
 
     // todo parse specific tags content with refholders
+
     while (!timeToEnd(builder)) {
       if (isInInlinedTag) {
         if (builder.getTokenType() == mGDOC_INLINE_TAG_START) {
