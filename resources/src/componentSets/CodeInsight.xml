@@ -44,9 +44,6 @@
       <implementation-class>com.intellij.codeInsight.daemon.impl.OverriddenMarkersPassFactory</implementation-class>
     </component>
 
-    <component>
-      <implementation-class>com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider</implementation-class>
-      <skipForDummyProject/>
-    </component>
+
   </project-components>
 </components>

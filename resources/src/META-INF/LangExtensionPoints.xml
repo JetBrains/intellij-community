@@ -186,4 +186,7 @@
   <extensionPoint name="configurationProducer"
                   interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
 
+  <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT"/>
+  <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
+
 </extensionPoints>

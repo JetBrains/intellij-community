@@ -4,11 +4,11 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -23,7 +23,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -41,12 +40,9 @@ public class HectorComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.editor.impl.HectorComponent");
 
   private WeakReference<JBPopup> myHectorRef;
-  private final JCheckBox myImportPopupCheckBox = new JCheckBox(EditorBundle.message("hector.import.popup.checkbox"));
   private final ArrayList<HectorComponentPanel> myAdditionalPanels;
   private final Map<Language, JSlider> mySliders;
   private final PsiFile myFile;
-
-  private boolean myImportPopupOn;
 
   private final String myTitle = EditorBundle.message("hector.highlighting.level.title");
 
@@ -92,20 +88,9 @@ public class HectorComponent extends JPanel {
     }
 
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
-    myImportPopupOn = analyzer.isImportHintsEnabled(myFile);
-    DialogUtil.registerMnemonic(myImportPopupCheckBox);
-    myImportPopupCheckBox.addChangeListener(new ChangeListener() {
-      public void stateChanged(ChangeEvent e) {
-        myImportPopupOn = myImportPopupCheckBox.isSelected();
-      }
-    });
-    myImportPopupCheckBox.setSelected(myImportPopupOn);
-    myImportPopupCheckBox.setEnabled(analyzer.isAutohintsAvailable(myFile));
-    myImportPopupCheckBox.setVisible(notInLibrary && languages.contains(StdLanguages.JAVA));
 
     GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0);
-    add(myImportPopupCheckBox, gc);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
@@ -124,7 +109,7 @@ public class HectorComponent extends JPanel {
 
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
-    final HectorComponentPanelsProvider[] componentPanelsProviders = project.getComponents(HectorComponentPanelsProvider.class);
+    final HectorComponentPanelsProvider[] componentPanelsProviders = Extensions.getExtensions(HectorComponentPanelsProvider.EP_NAME, project);
     myAdditionalPanels = new ArrayList<HectorComponentPanel>();
     for (HectorComponentPanelsProvider provider : componentPanelsProviders) {
       final HectorComponentPanel componentPanel = provider.createConfigurable(file);
@@ -233,14 +218,10 @@ public class HectorComponent extends JPanel {
       }
     }
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
-    analyzer.setImportHintsEnabled(myFile, myImportPopupOn);
     analyzer.restart();
   }
 
   private boolean isModified() {
-    if (myImportPopupOn != DaemonCodeAnalyzer.getInstance(myFile.getProject()).isImportHintsEnabled(myFile)) {
-      return true;
-    }
     final FileViewProvider viewProvider = myFile.getViewProvider();
     for (Language language : mySliders.keySet()) {
       JSlider slider = mySliders.get(language);

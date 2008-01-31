@@ -4,7 +4,6 @@ import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIncludeManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,19 +27,4 @@ public class FileIncludeContextHectorProvider implements HectorComponentPanelsPr
     return null;
   }
 
-  public void projectOpened() {
-  }
-
-  public void projectClosed() {
-  }
-
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "FileIncludeContextHectorProvider";
-  }
-
-  public void initComponent() { }
-
-  public void disposeComponent() { }
 }

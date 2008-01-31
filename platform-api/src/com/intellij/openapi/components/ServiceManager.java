@@ -19,8 +19,6 @@ package com.intellij.openapi.components;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
-import java.util.List;
-
 
 /**
  * For old-style components, the contract specifies a lifecycle: the component gets created and notified during the project opening process.
@@ -38,8 +36,5 @@ public class ServiceManager {
   public static <T> T getService(Project project, Class<T> serviceClass) {
     return (T)project.getPicoContainer().getComponentInstance(serviceClass.getName());
   }
-
-  public static <T> List<T> getServices(Project project, Class<T> interfaceClass) {
-    return (List<T>)project.getPicoContainer().getComponentInstancesOfType(interfaceClass);
-  }
+ 
 }

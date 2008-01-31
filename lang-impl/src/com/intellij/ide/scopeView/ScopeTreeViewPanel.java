@@ -19,12 +19,12 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -168,7 +168,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
       }
     };
     myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myTree, myProject);
-    for (ScopeTreeStructureExpander expander : ServiceManager.getServices(myProject, ScopeTreeStructureExpander.class)) {
+    for (ScopeTreeStructureExpander expander : Extensions.getExtensions(ScopeTreeStructureExpander.EP_NAME, myProject)) {
       myTree.addTreeWillExpandListener(expander);
     }
   }
