@@ -129,7 +129,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       actualNames.add(m.getName());
     }
 
-    assertElementsAreEqual(expectedNames, actualNames);
+    assertUnorderedElementsAreEqual(expectedNames, actualNames);
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
@@ -142,7 +142,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       expectedRoots[i] = VfsUtil.pathToUrl(expectedRoots[i]);
     }
 
-    assertElementsAreEqual(expectedRoots, actual);
+    assertUnorderedElementsAreEqual(expectedRoots, actual);
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {
@@ -181,7 +181,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       actual.add(folderUrl);
     }
 
-    assertElementsAreEqual(expected, actual);
+    assertUnorderedElementsAreEqual(expected, actual);
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {
@@ -252,7 +252,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       }
     }, null);
 
-    assertElementsAreEqual(expectedDeps, actual);
+    assertOrderedElementsAreEqual(expectedDeps, actual);
   }
 
   protected void assertModuleModuleDeps(String moduleName, String... expectedDeps) {
@@ -268,12 +268,13 @@ public abstract class ImportingTestCase extends IdeaTestCase {
       }
     }
 
-    assertElementsAreEqual(expectedDeps, actual);
+    assertOrderedElementsAreEqual(expectedDeps, actual);
   }
 
-  protected <T, U> void assertElementsAreEqual(T[] expected, Collection<U> actual) {
+  protected <T, U> void assertUnorderedElementsAreEqual(T[] expected, Collection<U> actual) {
     String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
     assertEquals(s, expected.length, actual.size());
+
     for (T eachExpected : expected) {
       boolean found = false;
       for (U eachActual : actual) {
@@ -283,6 +284,18 @@ public abstract class ImportingTestCase extends IdeaTestCase {
         }
       }
       assertTrue(s, found);
+    }
+  }
+
+  protected <T, U> void assertOrderedElementsAreEqual(T[] expected, Collection<U> actual) {
+    String s = "\nexpected: " + Arrays.asList(expected) + "\nactual: " + actual;
+    assertEquals(s, expected.length, actual.size());
+
+    List<U> actualList = new ArrayList<U>(actual);
+    for (int i = 0; i < expected.length; i++) {
+      T expectedElement = expected[i];
+      U actualElement = actualList.get(i);
+      assertEquals(s, expectedElement, actualElement);
     }
   }
 

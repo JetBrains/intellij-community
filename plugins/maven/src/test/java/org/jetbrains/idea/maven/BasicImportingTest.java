@@ -28,6 +28,28 @@ public class BasicImportingTest extends ImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
   }
 
+  public void testPreservingDependenciesOrder() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>B</groupId>" +
+                  "    <artifactId>B</artifactId>" +
+                  "    <version>2</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>A</groupId>" +
+                  "    <artifactId>A</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertModuleLibDeps("project", "B:B:2", "A:A:1");
+  }
+
   public void testOnlyCompileAndRuntimeDependenciesAreExported() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
