@@ -73,7 +73,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final Token myMutableToken = new Token();
   private int myLexemCount = 0;
 
-  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.create();
+  private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<StartMarker>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     public StartMarker create() {
@@ -99,7 +99,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     "Unbalanced tree. Most probably caused by unbalanced markers. Try calling setDebugMode(true) against PsiBuilder passed to identify exact location of the problem";
 
   public static void registerWhitespaceToken(IElementType type) {
-    ourAnyLanguageWhitespaceTokens = TokenSet.andSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
+    ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
   public PsiBuilderImpl(Language lang, Lexer lexer, final ASTNode chameleon, Project project, CharSequence text) {

@@ -91,10 +91,15 @@ public class TokenSet {
 
   public static TokenSet andSet(TokenSet a, TokenSet b) {
     TokenSet set = new TokenSet();
-    final int andSize = Math.max(set.mySet.length, Math.max(a.mySet.length, b.mySet.length));
+    final boolean[] aset = a.mySet;
+    final boolean[] bset = b.mySet;
+    final boolean[] newset = set.mySet;
+    final int alen = aset.length;
+    final int blen = bset.length;
+    final int andSize = Math.max(newset.length, Math.max(alen, blen));
 
     for (int i = 0; i < andSize; i++) {
-      set.mySet[i] = a.mySet[i] && b.mySet[i];
+      newset[i] = (i < alen && aset[i]) && (i < blen && bset[i]);
     }
     return set;
   }
