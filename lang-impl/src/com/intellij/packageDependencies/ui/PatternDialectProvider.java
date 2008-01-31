@@ -9,12 +9,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 public abstract class PatternDialectProvider {
   public static final ExtensionPointName<PatternDialectProvider> EP_NAME = ExtensionPointName.create("com.intellij.patternDialectProvider");
@@ -27,6 +29,9 @@ public abstract class PatternDialectProvider {
   }
 
   public abstract TreeModel createTreeModel(Project project, Marker marker);
+
+  public abstract TreeModel createTreeModel(Project project, Set<PsiFile> deps, Marker marker,
+                                            final DependenciesPanel.DependencyPanelSettings settings);
 
   public abstract String getDisplayName();
 

@@ -14,6 +14,7 @@ import com.intellij.util.Icons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 import java.util.Set;
 
 public class DirectoryNode extends PackageDependenciesNode {
@@ -178,5 +179,16 @@ public class DirectoryNode extends PackageDependenciesNode {
       return ProjectViewDirectoryHelper.getInstance(myDirectory.getProject()).getLocationString(myDirectory, forceLocation);
     }
     return super.getComment(forceLocation);
+  }
+
+  @Override
+  public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
+    Set<PsiFile> files = deps.keySet();
+    for (PsiFile file : files) {
+      if (file.getContainingDirectory() == myDirectory) {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.packageDependencies.*;
 import com.intellij.packageDependencies.actions.AnalyzeDependenciesHandler;
 import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.*;
@@ -351,7 +352,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private TreeModel buildTreeModel(Set<PsiFile> deps, Marker marker) {
-    return TreeModelBuilder.createTreeModel(myProject, false, deps, marker, mySettings);
+    return PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, deps, marker,
+                                                                                                             mySettings);
   }
 
   private void updateLeftTreeModel() {
@@ -792,27 +794,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     public void update(AnActionEvent e) {
-      boolean enabled = false;
       PackageDependenciesNode node = myRightTree.getSelectedNode();
-      if (node != null) {
-        PsiElement elt = node.getPsiElement();
-        if (elt != null) {
-          if (elt instanceof PsiFile) {
-            enabled = myDependencies.containsKey(elt);
-          }
-          else if (elt instanceof PsiPackage) {
-            Set<PsiFile> files = myDependencies.keySet();
-            String packageName = ((PsiPackage)elt).getQualifiedName();
-            for (PsiFile file : files) {
-              if (file instanceof PsiJavaFile && Comparing.equal(packageName, ((PsiJavaFile)file).getPackageName())) {
-                enabled = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-      e.getPresentation().setEnabled(enabled);
+      e.getPresentation().setEnabled(node != null && node.canSelectInLeftTree(myDependencies));
     }
 
     public void actionPerformed(AnActionEvent e) {

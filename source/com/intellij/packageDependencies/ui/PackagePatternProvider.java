@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 public class PackagePatternProvider extends PatternDialectProvider {
   @NonNls private static final String PACKAGES = "package";
@@ -100,6 +102,11 @@ public class PackagePatternProvider extends PatternDialectProvider {
 
   public TreeModel createTreeModel(final Project project, final Marker marker) {
     return TreeModelBuilder.createTreeModel(project, false, false, marker);
+  }
+
+  public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
+                                   final DependenciesPanel.DependencyPanelSettings settings) {
+    return TreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
 
   public String getDisplayName() {

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IconUtil;
 
 import javax.swing.*;
+import java.util.Map;
 import java.util.Set;
 
 public class FileNode extends PackageDependenciesNode {
@@ -92,5 +93,10 @@ public class FileNode extends PackageDependenciesNode {
 
   public boolean isValid() {
     return myFile != null && myFile.isValid();
+  }
+
+  @Override
+  public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
+    return deps.containsKey(myFile);
   }
 }

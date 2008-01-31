@@ -1,9 +1,5 @@
 package com.intellij.packageDependencies.ui;
 
-import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-
 import java.util.Comparator;
 
 public class DependencyNodeComparator implements Comparator<PackageDependenciesNode>{
@@ -20,10 +16,8 @@ public class DependencyNodeComparator implements Comparator<PackageDependenciesN
   public int compare(PackageDependenciesNode p1, PackageDependenciesNode p2) {
     if (p1.getWeight() != p2.getWeight()) return p1.getWeight() - p2.getWeight();
     if (mySortByType) {
-      final PsiElement psiElement1 = p1.getPsiElement();
-      final PsiElement psiElement2 = p2.getPsiElement();
-      if (psiElement1 instanceof PsiClass && psiElement2 instanceof PsiClass) {
-        return ClassTreeNode.getClassPosition((PsiClass)psiElement1) - ClassTreeNode.getClassPosition((PsiClass)psiElement2);
+      if (p1 instanceof Comparable) {
+        return ((Comparable)p1).compareTo(p2);
       }
     }
     return p1.toString().compareTo(p2.toString());

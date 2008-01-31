@@ -18,6 +18,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class PackageDependenciesNode extends DefaultMutableTreeNode implements Navigatable{
@@ -173,5 +174,9 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   @Nullable
   public String getComment(final boolean forceLocation){
     return null;
+  }
+
+  public boolean canSelectInLeftTree(Map<PsiFile, Set<PsiFile>> deps){
+    return false;
   }
 }

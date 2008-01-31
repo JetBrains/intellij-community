@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 public class ProjectPatternProvider extends PatternDialectProvider {
 
@@ -35,6 +36,11 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
   public TreeModel createTreeModel(final Project project, final Marker marker) {
     return FileTreeModelBuilder.createTreeModel(project, false, marker);
+  }
+
+  public TreeModel createTreeModel(final Project project, final Set<PsiFile> deps, final Marker marker,
+                                   final DependenciesPanel.DependencyPanelSettings settings) {
+    return FileTreeModelBuilder.createTreeModel(project, false, deps, marker, settings);
   }
 
   public String getDisplayName() {
