@@ -4,9 +4,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.StringEscapesTokenTypes;
-import com.intellij.psi.TokenTypeEx;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +68,11 @@ public class JavaQuoteHandler extends TypedHandler.SimpleTokenSetQuoteHandler im
 
   public boolean isAppropriateElementTypeForLiteral(final @NotNull IElementType tokenType) {
     return isAppropriateElementTypeForLiteralStatic(tokenType);
+  }
+
+  public boolean needParenthesesAroundConcatenation(final PsiElement element) {
+    // example code: "some string".length() must become ("some" + " string").length()
+    return element.getParent() instanceof PsiLiteralExpression && element.getParent().getParent() instanceof PsiReferenceExpression;
   }
 
   public static boolean isAppropriateElementTypeForLiteralStatic(final IElementType tokenType) {

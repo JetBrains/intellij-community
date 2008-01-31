@@ -53,6 +53,8 @@ public class TypedHandler implements TypedActionHandler {
 
     TokenSet getStringTokenTypes();
     boolean isAppropriateElementTypeForLiteral(final @NotNull IElementType tokenType);
+
+    boolean needParenthesesAroundConcatenation(final PsiElement element);
   }
 
   private static final Map<FileType,QuoteHandler> quoteHandlers = new HashMap<FileType, QuoteHandler>();

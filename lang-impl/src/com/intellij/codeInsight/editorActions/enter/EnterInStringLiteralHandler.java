@@ -45,7 +45,7 @@ public class EnterInStringLiteralHandler implements EnterHandlerDelegate {
           lexer.advance();
         }
 
-        if (psiAtOffset.getParent() instanceof PsiLiteralExpression && psiAtOffset.getParent().getParent() instanceof PsiReferenceExpression) {
+        if (quoteHandler.needParenthesesAroundConcatenation(psiAtOffset)) {
           document.insertString(psiAtOffset.getTextRange().getEndOffset(), ")");
           document.insertString(psiAtOffset.getTextRange().getStartOffset(), "(");
           caretOffset++;
