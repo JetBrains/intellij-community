@@ -10,7 +10,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +53,9 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
     try {
       extension.insertNamespaceDeclaration(file, editor, namespaces, myNamespacePrefix,
-        new Consumer<String>() {
+        new XmlExtension.Runner<String, IncorrectOperationException>() {
 
-          public void consume(final String namespacePrefix) {
+          public void run(final String namespacePrefix) {
 
             PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
             final PsiElement element = file.findElementAt(rangeMarker.getStartOffset());

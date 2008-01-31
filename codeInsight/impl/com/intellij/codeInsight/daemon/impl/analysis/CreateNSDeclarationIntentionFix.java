@@ -16,6 +16,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -24,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -41,6 +41,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.XmlExtension;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
@@ -64,7 +65,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private final String myNamespacePrefix;
   @Nullable private final PsiElement myElement;
 
-  @NonNls private static final String MY_DEFAULT_XML_NS = "someuri";
   @NonNls private static final String URI_ATTR_NAME = "uri";
 
   public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag,
@@ -117,7 +117,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return file.getFileType() == StdFileTypes.JSP;
   }
 
-  private String[] guessNamespace(final PsiFile file, String name) {
+  private static String[] guessNamespace(final PsiFile file, String name) {
     final Set<String> possibleUris = new LinkedHashSet<String>();
     final ExternalUriProcessor processor = new ExternalUriProcessor() {
       public void process(@NotNull String ns, final String url) {
@@ -152,28 +152,21 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       namespaces,
       project,
       new StringToAttributeProcessor() {
-        @NotNull
-        public TextRange doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
+        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
 
-          final XmlAttribute attribute = insertDeclaration(attrName, (XmlFile)file, myNamespacePrefix);
-          assert attribute != null;
-          final TextRange range = attribute.getValueTextRange();
-          return range.shiftRight(attribute.getValueElement().getTextRange().getStartOffset());
+          final int offset = editor.getCaretModel().getOffset();
+          final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
+          final XmlExtension extension = XmlExtension.getExtension((XmlFile)file);
+          extension.insertNamespaceDeclaration((XmlFile)file, editor, Collections.singleton(attrName), myNamespacePrefix, new XmlExtension.Runner<String, IncorrectOperationException>() {
+            public void run(final String param) throws IncorrectOperationException {
+              editor.getCaretModel().moveToOffset(marker.getStartOffset());  
+            }
+          });
         }
       },
       XmlErrorMessages.message(myInJsp ? "select.taglib.title":"select.namespace.title"),
       this,
-      editor,
-      myInJsp ? XmlUtil.JSTL_CORE_URIS[0] : MY_DEFAULT_XML_NS
-    );
-  }
-
-  @Nullable
-  public static XmlAttribute insertDeclaration(final String namespace, final XmlFile file, final String prefix)
-    throws IncorrectOperationException {
-    return isJspFile(file)
-           ? insertTaglibDeclaration(file, namespace, prefix)
-           : insertNsDeclaration(file, namespace, prefix);
+      editor);
   }
 
   @Nullable
@@ -209,24 +202,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
     CodeStyleManager.getInstance(project).reformat(element);
     return ((XmlTag)element).getAttribute(URI_ATTR_NAME,null);
-  }
-
-  @Nullable
-  private static XmlAttribute insertNsDeclaration(final XmlFile file, final String namespace, final String prefix)
-    throws IncorrectOperationException {
-
-    final Project project = file.getProject();
-    final XmlDocument document = file.getDocument();
-    assert document != null;
-    final XmlTag rootTag = document.getRootTag();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-
-    @NonNls final String name = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
-    assert rootTag != null;
-    rootTag.add(
-      elementFactory.createXmlAttribute(name,namespace)
-    );
-    return rootTag.getAttribute(name, null);
   }
 
   public boolean startInWriteAction() {
@@ -343,15 +318,16 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public interface StringToAttributeProcessor {
-    @NotNull
-    TextRange doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull String attrName) throws IncorrectOperationException;
+    void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NonNls @NotNull String attrName) throws IncorrectOperationException;
   }
 
 
   public static void runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(final @NotNull String[] namespacesToChooseFrom,
-                                                                                 final Project project,
-                                                                                 final StringToAttributeProcessor onSelection,
-                           String title, final IntentionAction requestor, final Editor editor, String defaultValueForTestingWhenNoVariants) throws IncorrectOperationException {
+                                                                                           final Project project, final StringToAttributeProcessor onSelection,
+                                                                                           String title,
+                                                                                           final IntentionAction requestor,
+                                                                                           final Editor editor) throws IncorrectOperationException {
+    
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final JList list = new JList(namespacesToChooseFrom);
       list.setCellRenderer(new FQNameCellRenderer());
@@ -390,25 +366,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
         createPopup().
         showInBestPositionFor(editor);
     } else {
-      String defaultNs =
-        ApplicationManager.getApplication().isUnitTestMode() ? defaultValueForTestingWhenNoVariants : "";
-      final TextRange textRange = onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom.length > 0 ? namespacesToChooseFrom[0] : defaultNs);
-
-      if (namespacesToChooseFrom.length == 0) {
-        CommandProcessor.getInstance().executeCommand(
-          project,
-          new Runnable() {
-            public void run() {
-              if (textRange.getLength() != 0) {
-                editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-              }
-              editor.getCaretModel().moveToOffset(textRange.getStartOffset());
-            }
-          },
-          requestor.getText(),
-          requestor.getFamilyName()
-        );
-      }
+      onSelection.doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespacesToChooseFrom.length == 0 ? "" : namespacesToChooseFrom[0]);
     }
   }
 
@@ -463,7 +421,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                               final ExternalUriProcessor processor) {
     final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
 
-    final JspManager jspManager = JspManager.getInstance(file.getProject());
     final String searchFor = metaHandler.searchFor();
 
     if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.schemas"));

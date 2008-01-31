@@ -25,7 +25,6 @@ import java.util.List;
 public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAction {
   @NonNls private static final String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
-  @NonNls private static final String SOMEWHERE_XSD = "somewhere.xsd";
 
   protected String getQuickFixKeyId() {
     return "add.xsi.schema.location.for.external.resource";
@@ -47,16 +46,14 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
       schemaLocations.toArray(new String[schemaLocations.size()]),
       file.getProject(),
       new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {
-        @NotNull
-        public TextRange doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName)
+        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName)
         throws IncorrectOperationException {
-          return doIt(file, uri, tag, attrName);
+          doIt(file, editor, uri, tag, attrName);
         }
-      }, XmlErrorMessages.message("select.namespace.location.title"), this, editor, SOMEWHERE_XSD
-    );
+      }, XmlErrorMessages.message("select.namespace.location.title"), this, editor);
   }
 
-  private static TextRange doIt(final PsiFile file, final String uri, final XmlTag tag, final String s) throws IncorrectOperationException {
+  private static void doIt(final PsiFile file, final Editor editor, final String uri, final XmlTag tag, final String s) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
 
     if (tag.getAttributeValue(XMLNS_XSI_ATTR_NAME) == null) {
@@ -77,6 +74,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
     CodeStyleManager.getInstance(file.getProject()).reformat(tag);
 
     final TextRange range = tag.getAttribute(XSI_SCHEMA_LOCATION_ATTR_NAME).getValueElement().getTextRange();
-    return new TextRange(range.getEndOffset() - offset - 1, range.getEndOffset() - 1);
+    final TextRange textRange = new TextRange(range.getEndOffset() - offset - 1, range.getEndOffset() - 1);
+    editor.getCaretModel().moveToOffset(textRange.getStartOffset());
   }
 }

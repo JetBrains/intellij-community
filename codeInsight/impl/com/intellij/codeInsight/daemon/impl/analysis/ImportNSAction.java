@@ -8,10 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlExtension;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -49,10 +52,18 @@ public class ImportNSAction implements QuestionAction {
 
               protected void run() throws Throwable {
                 final String prefix = myNamespaces.get(namespace);
-                CreateNSDeclarationIntentionFix.insertDeclaration(namespace, myFile, prefix);
-                if (prefix != null && myTag != null && myTag.isValid() && !myTag.getNamespacePrefix().equals(prefix)) {
-                  myTag.setName(prefix + ":" + myTag.getLocalName());
-                }
+                XmlExtension.getExtension(myFile).insertNamespaceDeclaration(myFile,
+                                                                             myEditor,
+                                                                             Collections.singleton(namespace),
+                                                                             prefix,
+                                                                             new XmlExtension.Runner<String, IncorrectOperationException>() {
+                    public void run(final String s) throws IncorrectOperationException {
+                      if (prefix != null && myTag != null && myTag.isValid() && !myTag.getNamespacePrefix().equals(prefix)) {
+                          myTag.setName(prefix + ":" + myTag.getLocalName());
+                      }
+                    }
+                  }
+                );
               }
             }.executeSilently();
         }

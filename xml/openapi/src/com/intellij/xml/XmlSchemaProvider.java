@@ -19,13 +19,16 @@ package com.intellij.xml;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -58,7 +61,37 @@ public abstract class XmlSchemaProvider {
   }
 
   @Nullable
+  public static Set<String> getAvailableNamespaces(final @NotNull XmlFile file) {
+    final Module module = ModuleUtil.findModuleForPsiElement(file);
+    if (module == null) {
+      return null;
+    }
+    for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
+      final Set<String> namespaces = provider.getAvailableNamespaces(file, module);
+      if (namespaces != null) {
+        return namespaces;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static XmlSchemaProvider getAvailableProvider(final @NotNull XmlFile file) {
+    for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
+      if (provider.isAvailable(file)) {
+        return provider;
+      }
+    }
+    return null;    
+  }
+
+  @Nullable
   public abstract XmlFile getSchema(@NotNull @NonNls String url, @Nullable Module module, @NotNull final PsiFile baseFile);
+
+
+  public boolean isAvailable(final @NotNull XmlFile file) {
+    return false;
+  }
 
   /**
    * Provides specific namespaces for given xml file.
@@ -67,7 +100,17 @@ public abstract class XmlSchemaProvider {
    * @return available namespace uris, or <code>null</code> if the provider did not recognize the file.
    */
   @Nullable
-  protected String[] getAvailableNamespaces(final @NotNull XmlFile file, final @NotNull Module module) {
+  public Set<String> getAvailableNamespaces(final @NotNull XmlFile file, final @NotNull Module module) {
+    return null;
+  }
+
+  @Nullable
+  public String getDefaultPrefix(@NotNull @NonNls String namespace, @NotNull final XmlFile context) {
+    return null;
+  }
+
+  @Nullable
+  public Set<String> getLocations(@NotNull @NonNls String namespace, @NotNull final XmlFile context) {
     return null;
   }
 }

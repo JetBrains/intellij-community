@@ -1,10 +1,9 @@
 package com.intellij.xml;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +33,13 @@ public abstract class XmlExtension {
   public abstract Set<String> getAvailableTagNames(@NotNull final XmlFile context);
   public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
 
+  public static interface Runner<P, T extends Throwable> {
+    void run(P param) throws T;
+  }
+
   public abstract void insertNamespaceDeclaration(@NotNull final XmlFile file,
                                                     @NotNull final Editor editor, 
                                                     @NotNull final Set<String> possibleNamespaces,
                                                     @Nullable final String nsPrefix,
-                                                    @Nullable Consumer<String> runAfter) throws IncorrectOperationException;
+                                                    @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
 }
