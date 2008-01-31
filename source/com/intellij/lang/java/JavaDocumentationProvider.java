@@ -5,6 +5,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -32,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -455,12 +455,12 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
         for (PsiParameter parameter : parameters) {
           String description = param2Description.get(parameter.getName());
           if (description != null) {
-            builder.append(createDocCommentLine("", project, commenter));
+            builder.append(CodeDocumentationUtil.createDocCommentLine("", project, commenter));
             if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
             builder.append(description);
           }
           else {
-            builder.append(createDocCommentLine(PARAM_TAG, project, commenter));
+            builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, project, commenter));
             builder.append(parameter.getName());
           }
           builder.append(LINE_SEPARATOR);
@@ -471,13 +471,13 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
           createTypeParamsListComment(builder, project, commenter, typeParameterList);
         }
         if (psiMethod.getReturnType() != null && psiMethod.getReturnType() != PsiType.VOID) {
-          builder.append(createDocCommentLine(RETURN_TAG, project, commenter));
+          builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, project, commenter));
           builder.append(LINE_SEPARATOR);
         }
 
         final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
         for (PsiJavaCodeReferenceElement reference : references) {
-          builder.append(createDocCommentLine(THROWS_TAG, project, commenter));
+          builder.append(CodeDocumentationUtil.createDocCommentLine(THROWS_TAG, project, commenter));
           builder.append(reference.getText());
           builder.append(LINE_SEPARATOR);
         }
@@ -503,24 +503,9 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
                                                   final PsiTypeParameterList typeParameterList) {
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
-      buffer.append(createDocCommentLine(PARAM_TAG, project, commenter));
+      buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, project, commenter));
       buffer.append("<").append(typeParameter.getName()).append(">");
       buffer.append(LINE_SEPARATOR);
-    }
-  }
-
-  public static String createDocCommentLine(String lineData, Project project, CodeDocumentationAwareCommenter commenter) {
-    if (!CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
-      return " " + lineData + " ";
-    }
-    else {
-      if (lineData.length() == 0) {
-        return commenter.getDocumentationCommentLinePrefix() + " ";
-      }
-      else {
-        return commenter.getDocumentationCommentLinePrefix() + " " + lineData + " ";
-      }
-
     }
   }
 

@@ -16,6 +16,7 @@
 
 package com.intellij.lang;
 
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
   IElementType getBlockCommentTokenType();
 
   /**
-   * Returns the type of the documentation comment in the language,
+   * Returns the type of the documentation comment token in the language,
    * or null if the language does not support documentation comments.
    * It is assumed that documentation comment prefix is not null when documentation comment type is not null.
    * @return the line block comment type.
@@ -72,4 +73,6 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
    * @return the documentation comment end text, or null.
    */
   @Nullable String getDocumentationCommentSuffix();
+
+  boolean isDocumentationComment(PsiComment element);
 }

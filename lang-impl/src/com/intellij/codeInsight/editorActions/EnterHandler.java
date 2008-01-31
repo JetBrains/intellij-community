@@ -11,7 +11,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -28,7 +27,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -136,7 +134,7 @@ public class EnterHandler extends EditorWriteActionHandler {
 
   private static boolean isCommentComplete(PsiComment comment, CodeDocumentationAwareCommenter commenter) {
     String commentText = comment.getText();
-    final String expectedCommentEnd = comment instanceof PsiDocComment ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
+    final String expectedCommentEnd = isDocComment(comment, commenter) ? commenter.getDocumentationCommentSuffix():commenter.getBlockCommentSuffix();
     if (!commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
@@ -178,6 +176,12 @@ public class EnterHandler extends EditorWriteActionHandler {
       }
       lexer.advance();
     }
+  }
+
+  private static boolean isDocComment(final PsiElement element, final CodeDocumentationAwareCommenter commenter) {
+    if (!(element instanceof PsiComment)) return false;
+    PsiComment comment = (PsiComment) element;
+    return commenter.isDocumentationComment(comment);
   }
 
   private static class DoEnterAction implements Runnable {
@@ -237,10 +241,10 @@ public class EnterHandler extends EditorWriteActionHandler {
           final String text = element.getText();
           final PsiElement parent = element.getParent();
 
-          if (text.equals(commenter.getDocumentationCommentPrefix()) && parent instanceof PsiDocComment ||
+          if (text.equals(commenter.getDocumentationCommentPrefix()) && isDocComment(parent, commenter) ||
               text.startsWith(commenter.getDocumentationCommentPrefix()) && element instanceof PsiComment
              ) {
-            PsiComment comment = parent instanceof PsiDocComment? (PsiDocComment)parent:(PsiComment)element;
+            PsiComment comment = isDocComment(parent, commenter) ? (PsiComment)parent:(PsiComment)element;
             int commentEnd = comment.getTextRange().getEndOffset();
 
             if (myOffset >= commentEnd) {
@@ -381,8 +385,7 @@ public class EnterHandler extends EditorWriteActionHandler {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       CodeStyleManager.getInstance(getProject()).adjustLineIndent(myFile, myOffset + buffer.length() - 2);
 
-      PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset),
-                                                          PsiDocComment.class, PsiComment.class);
+      PsiComment comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
 
       comment = createJavaDocStub(settings, comment, getProject());
 
@@ -394,7 +397,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         myDocument.insertString(lineBreakOffset, LINE_SEPARATOR);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
         codeStyleManager.adjustLineIndent(myFile, lineBreakOffset + 1);
-        comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiDocComment.class, PsiComment.class);
+        comment = PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
       }
       return comment;
     }
@@ -420,7 +423,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         }
 
         PsiDocumentManager.getInstance(project).commitAllDocuments();
-        return PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiDocComment.class, PsiComment.class);
+        return PsiTreeUtil.getNonStrictParentOfType(myFile.findElementAt(myOffset), PsiComment.class);
       }
       return comment;
     }
@@ -465,7 +468,7 @@ public class EnterHandler extends EditorWriteActionHandler {
         PsiElement element = myFile.findElementAt(myOffset);
         if (element == null) return false;
 
-        PsiComment comment = element instanceof PsiComment ? (PsiComment)element : PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false);
+        PsiComment comment = element instanceof PsiComment ? (PsiComment)element : PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
         if (comment != null) {
           int commentEnd = comment.getTextRange().getEndOffset();
           if (myOffset >= commentEnd) {
@@ -473,7 +476,7 @@ public class EnterHandler extends EditorWriteActionHandler {
           }
           else {
             removeTrailingSpaces(myDocument, myOffset);
-            myDocument.insertString(myOffset, JavaDocumentationProvider.createDocCommentLine("", getProject(),commenter));
+            myDocument.insertString(myOffset, CodeDocumentationUtil.createDocCommentLine("", getProject(),commenter));
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
           }
         }

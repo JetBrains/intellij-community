@@ -2,6 +2,8 @@ package com.intellij.lang.java;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,5 +53,9 @@ public class JavaCommenter implements CodeDocumentationAwareCommenter {
 
   public String getDocumentationCommentSuffix() {
     return "*/";
+  }
+
+  public boolean isDocumentationComment(final PsiComment element) {
+    return element instanceof PsiDocComment;
   }
 }
