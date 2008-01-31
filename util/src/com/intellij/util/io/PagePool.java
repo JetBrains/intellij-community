@@ -119,6 +119,9 @@ public class PagePool {
     System.out.println("Probatinonal queue hits: " + probational_queue_hits + " (" + percent(probational_queue_hits, hits) + "%)");
     System.out.println("Finalization queue hits: " + finalization_queue_hits + " (" + percent(finalization_queue_hits, hits) + "%)");
     System.out.println("Cache misses: " + cache_misses + " (" + percent(cache_misses, hits) + "%)");
+
+    System.out.println("Total reads: " + RandomAccessDataFile.totalReads + ". Bytes read: " + RandomAccessDataFile.totalReadBytes);
+    System.out.println("Total writes: " + RandomAccessDataFile.totalWrites + ". Bytes written: " + RandomAccessDataFile.totalWriteBytes);
   }
 
   private static PoolPageKey keyForPage(final Page page) {

@@ -20,6 +20,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.LimitedPool;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.util.BitSet;
@@ -86,15 +87,62 @@ public class Page {
     myWriteMask = new BitSet(PAGE_SIZE);
   }
 
+  private static class Range {
+    int start;
+    int end;
+  }
+  private final Range myContinuousRange = new Range();
+
+  @Nullable
+  private Range calcContinousRange(final BitSet mask) {
+    int lowestByte = mask.nextSetBit(0);
+    int highestByte;
+    if (lowestByte >= 0) {
+      highestByte = mask.nextClearBit(lowestByte);
+      if (highestByte > 0) {
+        int nextChunk = mask.nextSetBit(highestByte);
+        if (nextChunk < 0) {
+          myContinuousRange.start = lowestByte;
+          myContinuousRange.end = highestByte;
+          return myContinuousRange;
+        }
+        else {
+          return null;
+        }
+      }
+      else {
+        myContinuousRange.start = lowestByte;
+        myContinuousRange.end = PAGE_SIZE;
+        return myContinuousRange;
+      }
+    }
+    else {
+      return null;
+    }
+
+  }
+
   public synchronized void flush() {
     if (dirty) {
+      int start = 0;
+      int end = PAGE_SIZE;
       if (myWriteMask != null) {
-        if (myWriteMask.cardinality() < PAGE_SIZE) {
+        Range range = calcContinousRange(myWriteMask);
+        if (range == null) {
+//          System.out.println("Discountinous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
           ensureRead();
+        }
+        else {
+          start = range.start;
+          end = range.end;
         }
         myWriteMask = null;
       }
-      owner.flushPage(this);
+
+      if (end - start > 0) {
+        owner.flushPage(this, start, end);
+      }
+
       dirty = false;
     }
   }

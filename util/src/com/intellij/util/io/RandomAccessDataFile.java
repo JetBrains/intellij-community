@@ -182,6 +182,12 @@ public class RandomAccessDataFile implements Forceable {
     return myIsDirty;
   }
 
+  public static int totalReads = 0;
+  public static long totalReadBytes = 0;
+
+  public static int totalWrites = 0;
+  public static long totalWriteBytes = 0;
+
   public void loadPage(final Page page) {
     try {
       final RandomAccessFile file = getFile();
@@ -189,6 +195,11 @@ public class RandomAccessDataFile implements Forceable {
         synchronized (file) {
           file.seek(page.getOffset());
           final ByteBuffer buf = page.getBuf();
+
+          totalReads++;
+          totalReadBytes += Page.PAGE_SIZE;
+
+//          System.out.println("Read at: \t" + page.getOffset() + "\t len: " + Page.PAGE_SIZE);
           file.read(buf.array(), 0, Page.PAGE_SIZE);
         }
       }
@@ -201,25 +212,29 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public void flushPage(final Page page) {
+  public void flushPage(final Page page, int start, int end) {
     try {
-      flush(page.getBuf(), page.getOffset(), Page.PAGE_SIZE);
+      flush(page.getBuf(), page.getOffset() + start, start, end - start);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void flush(final ByteBuffer buf, final long offset, int length) throws IOException {
-    if (offset + length > mySize) {
-      length = (int)(mySize - offset);
+  private void flush(final ByteBuffer buf, final long fileOffset, final int bufOffset, int length) throws IOException {
+    if (fileOffset + length > mySize) {
+      length = (int)(mySize - fileOffset);
     }
 
     final RandomAccessFile file = getFile();
     try {
       synchronized (file) {
-        file.seek(offset);
-        file.write(buf.array(), 0, length);
+        file.seek(fileOffset);
+        totalWrites++;
+        totalWriteBytes += length;
+
+  //      System.out.println("Write at: \t" + fileOffset + "\t len: " + length);
+        file.write(buf.array(), bufOffset, length);
       }
     }
     finally {
