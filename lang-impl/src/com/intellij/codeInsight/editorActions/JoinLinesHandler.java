@@ -25,7 +25,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 
@@ -75,9 +74,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
         firstNonSpaceOffsetInNextLine++;
       }
       PsiElement elementAtNextLineStart = psiFile.findElementAt(firstNonSpaceOffsetInNextLine);
-      boolean isNextLineStartsWithComment = elementAtNextLineStart instanceof PsiComment ||
-                                            elementAtNextLineStart != null &&
-                                            PsiTreeUtil.getParentOfType(elementAtNextLineStart, PsiDocComment.class) != null;
+      boolean isNextLineStartsWithComment = isCommentElement(elementAtNextLineStart);
 
       int lastNonSpaceOffsetInStartLine = lineEndOffset;
       while (lastNonSpaceOffsetInStartLine > 0 &&
@@ -86,9 +83,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       }
       int elemOffset = lastNonSpaceOffsetInStartLine > doc.getLineStartOffset(startLine) ? lastNonSpaceOffsetInStartLine - 1 : -1;
       PsiElement elementAtStartLineEnd = elemOffset == -1 ? null : psiFile.findElementAt(elemOffset);
-      boolean isStartLineEndsWithComment = elementAtStartLineEnd instanceof PsiComment ||
-                                           elementAtStartLineEnd != null &&
-                                           PsiTreeUtil.getParentOfType(elementAtStartLineEnd, PsiDocComment.class) != null;
+      boolean isStartLineEndsWithComment = isCommentElement(elementAtStartLineEnd);
 
       if (lastNonSpaceOffsetInStartLine == doc.getLineStartOffset(startLine)) {
         doc.deleteString(doc.getLineStartOffset(startLine), firstNonSpaceOffsetInNextLine);
@@ -196,5 +191,9 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().removeSelection();
     }
+  }
+
+  private static boolean isCommentElement(final PsiElement element) {
+    return element != null && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }
 }
