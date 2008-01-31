@@ -6,6 +6,7 @@
     <group id="AddAllToFavorites" class="com.intellij.ide.favoritesTreeView.actions.AddAllToFavoritesActionGroup" popup="true"/>
     <action id="AddNewFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.AddNewFavoritesListAction"/>
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
+    <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationAction"/>
     <group id="RunContextGroup" popup="false">
@@ -165,6 +166,10 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
 
+    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
     <group id="NewGroup" popup="true">
       <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction"/>
       <action id="NewFromTemplate" class="com.intellij.ide.fileTemplates.actions.CreateFromTemplateGroup"/>
@@ -218,6 +223,21 @@
       <action id="GotoBookmark9" class="com.intellij.ide.bookmarks.actions.GotoBookmark9Action"/>
     </group>
 
+    <group id="ProjectViewPopupMenuRefactoringGroup">
+      <reference ref="RefactoringMenu"/>
+    </group>
+
+    <group id="ProjectViewPopupMenuModifyGroup">
+      <reference ref="$Delete"/>
+    </group>
+
+    <group id="ProjectViewPopupMenuRunGroup">
+      <reference ref="RunContextPopupGroup"/>
+    </group>
+
+    <group id="ProjectViewPopupMenuSettingsGroup">
+      <reference ref="MoveModuleToGroup"/>
+    </group>
 
     <group id="ProjectViewPopupMenu">
       <reference ref="NewGroup"/>
@@ -232,14 +252,83 @@
       <reference ref="ReplaceInPath"/>
       <reference ref="AnalyzeMenu"/>
       <separator/>
+      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
+      <separator/>
       <reference ref="AddToFavorites"/>
       <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuModifyGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRunGroup"/>
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction"/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
       <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
+    </group>
+
+    <group id="FavoritesViewPopupMenu">
+      <reference ref="NewGroup"/>
+      <reference ref="AssociateWithFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <reference ref="ChangesView.ApplyPatch"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <reference ref="AnalyzeMenu"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
+      <separator/>
+      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.RenameFavoritesListAction"/>
+      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction"/>
+      <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.DeleteFavoritesListAction"/>
+      <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.actions.DeleteAllFavoritesListsButThisAction"/>
+      <reference ref="SendToFavoritesGroup"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuModifyGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRunGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="SynchronizeCurrentFile"/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
+    </group>
+
+    <group id="ScopeViewPopupMenu">
+      <reference ref="ProjectViewPopupMenu"/>
+      <separator/>
+      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
+    </group>
+
+    <group id="StructureViewPopupMenu">
+      <reference ref="EditSource"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="RefactoringMenu"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <separator/>
+      <reference ref="RunContextPopupGroup"/>
+      <reference ref="VersionControlsGroup"/>
+      <separator/>
+      <reference ref="CompareTwoFiles"/>
     </group>
 
     <group id="UsageView.Popup">

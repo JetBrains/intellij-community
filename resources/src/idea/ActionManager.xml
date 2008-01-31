@@ -355,11 +355,7 @@
       <action id="GenerateDTD" class="com.intellij.codeInsight.actions.GenerateDTDAction"/>
       <separator/>
 
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </group>
-
-    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
     </group>
 
     <group text="Internal Actions" internal="true" popup="true">
@@ -527,146 +523,44 @@
     </group>
 
     <action id="ModuleSettings" class="com.intellij.ide.actions.ShowModulePropertiesAction"/>
-    <group id="MoveModuleToGroup" class="com.intellij.ide.projectView.impl.MoveModuleToGroupTopLevel" popup="true"/>
 
-    <group id="ProjectViewPopupMenu1">
-      <reference ref="RefactoringMenu"/>
+    <group id="ProjectViewValidateGroup">
       <reference ref="ValidateXml"/>
-      <separator/>
-
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="AddToFavorites"/>
+      <add-to-group group-id="ProjectViewPopupMenuRefactoringGroup" anchor="last"/>
     </group>
 
-    <group id="ProjectViewPopupMenu2">
+    <group id="ProjectViewAnalysisGroup">
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
+
+      <add-to-group group-id="ProjectViewPopupMenuModifyGroup" anchor="first"/>
+    </group>
+
+    <group id="ProjectViewCompileGroup">
       <reference ref="ToggleMethodBreakpoint"/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <reference ref="MakeModule"/>
       <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
 
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="VersionControlsGroup"/>
+      <add-to-group group-id="ProjectViewPopupMenuRunGroup" anchor="first"/>
     </group>
 
-    <group id="ProjectViewPopupMenu3">
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
+    <group id="ProjectViewModuleSettingsGroup">
       <reference ref="ModuleSettings"/>
-      <reference ref="MoveModuleToGroup"/>
 
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="first"/>
     </group>
 
-    <group id="FavoritesViewPopupMenu">
-      <reference ref="NewGroup"/>
-      <reference ref="EditSource"/>
-      <reference ref="AssociateWithFileType"/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="FindInPath"/>
-      <reference ref="ReplaceInPath"/>
-      <reference ref="AnalyzeMenu"/>
-      <reference ref="RefactoringMenu"/>
-      <reference ref="ValidateXml"/>
-      <separator/>
-      <action id="RenameFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.RenameFavoritesListAction"/>
-      <action id="RemoveFromFavorites" class="com.intellij.ide.favoritesTreeView.actions.DeleteFromFavoritesAction"/>
-      <action id="RemoveFavoritesList" class="com.intellij.ide.favoritesTreeView.actions.DeleteFavoritesListAction"/>
-      <action id="RemoveAllFavoritesListsButThis" class="com.intellij.ide.favoritesTreeView.actions.DeleteAllFavoritesListsButThisAction"/>
-      <reference ref="SendToFavoritesGroup"/>
-      <separator/>
-      <reference ref="TypeHierarchy"/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="MakeModule"/>
-      <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <reference ref="SynchronizeCurrentFile"/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="ModuleSettings"/>
-    </group>
-
-    <group id="ScopeViewPopupMenu">
-      <reference ref="NewGroup"/>
-      <reference ref="EditSource"/>
-      <reference ref="AssociateWithFileType"/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="FindInPath"/>
-      <reference ref="ReplaceInPath"/>
-      <reference ref="AnalyzeMenu"/>
-      <reference ref="RefactoringMenu"/>
-      <reference ref="ValidateXml"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
-      <reference ref="TypeHierarchy"/>
-      <reference ref="ReformatCode"/>
-      <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
-      <separator/>
-      <reference ref="ToggleMethodBreakpoint"/>
-      <reference ref="ToggleFieldBreakpoint"/>
-      <separator/>
-      <reference ref="MakeModule"/>
-      <reference ref="Compile"/>
-      <reference ref="RunContextPopupGroup"/>
-      <separator/>
-      <reference ref="VersionControlsGroup"/>
-      <reference ref="SynchronizeCurrentFile"/>
-      <reference ref="CompareTwoFiles"/>
-      <reference ref="CompareFileWithEditor"/>
-      <separator/>
-      <reference ref="ExternalToolsGroup"/>
-      <separator/>
-      <reference ref="ModuleSettings"/>
-      <separator/>
-      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
-    </group>
-
-    <group id="StructureViewPopupMenu">
-      <reference ref="EditSource"/>
-      <separator/>
-      <reference ref="FindUsages"/>
-      <reference ref="RefactoringMenu"/>
-      <separator/>
-      <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
-      <separator/>
-      <reference ref="CutCopyPasteGroup"/>
-      <separator/>
-      <reference ref="RunContextPopupGroup"/>
+    <group id="StructureViewCompileGroup">
       <separator/>
       <reference ref="ToggleMethodBreakpoint"/>
       <reference ref="ToggleFieldBreakpoint"/>
       <separator/>
       <reference ref="Compile"/>
-      <reference ref="VersionControlsGroup"/>
-      <separator/>
-      <reference ref="CompareTwoFiles"/>
+
+      <add-to-group group-id="StructureViewPopupMenu" anchor="after" relative-to-action="RunContextPopupGroup"/>
     </group>
 
     <group id="TypeHierarchyPopupMenu">

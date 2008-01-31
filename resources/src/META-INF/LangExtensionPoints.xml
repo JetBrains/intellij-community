@@ -183,4 +183,7 @@
 
   <extensionPoint name="consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider"/>
 
+  <extensionPoint name="configurationProducer"
+                  interface="com.intellij.execution.junit.RuntimeConfigurationProducer"/>
+
 </extensionPoints>
