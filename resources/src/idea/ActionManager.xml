@@ -141,7 +141,7 @@
 
     <group id="JavaCodeEditorGroup">
       <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
-      <action id="QuickJavaDoc" class="com.intellij.codeInsight.javadoc.actions.ShowJavaDocInfoAction"/>
+      <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
       <action id="ParameterInfo" class="com.intellij.codeInsight.hint.actions.ShowParameterInfoAction"/>
       <action id="EditorContextInfo" class="com.intellij.codeInsight.hint.actions.ShowContainerInfoAction"/>
       <action id="ShowErrorDescription" class="com.intellij.codeInsight.daemon.impl.actions.ShowErrorDescriptionAction"/>

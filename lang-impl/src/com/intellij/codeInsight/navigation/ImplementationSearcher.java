@@ -1,25 +1,26 @@
 package com.intellij.codeInsight.navigation;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.search.searches.DefinitionsSearch;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.search.searches.DefinitionsSearch;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ImplementationSearcher {
-  public static final int FLAGS = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                                  | TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                                  | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+  public static final int FLAGS = TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
+                                  | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED
+                                  | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED
                                   | TargetElementUtil.THIS_ACCEPTED
                                   | TargetElementUtil.SUPER_ACCEPTED;
 
   public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
-    boolean onRef = TargetElementUtil.findTargetElement(editor, FLAGS & ~TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
+    boolean onRef = TargetElementUtilBase.getInstance().findTargetElement(editor, FLAGS & ~TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED, offset) == null;
     final boolean isAbstract =
       element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.ABSTRACT);
     return searchImplementations(editor, element, offset, onRef && !isAbstract, onRef);

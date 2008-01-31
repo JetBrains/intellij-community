@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -45,12 +45,11 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
   }
 
   public static PsiElement findSymbolType(Editor editor, int offset) {
-    PsiElement targetElement = TargetElementUtil.findTargetElement(editor,
-      TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
-      TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-      TargetElementUtil.LOOKUP_ITEM_ACCEPTED,
-      offset
-    );
+    PsiElement targetElement = TargetElementUtilBase.getInstance().findTargetElement(editor,
+      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
+      TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
+      TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
+      offset);
     PsiType type;
     if (targetElement instanceof PsiVariable){
       type = ((PsiVariable)targetElement).getType();

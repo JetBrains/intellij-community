@@ -1,6 +1,6 @@
 package com.intellij.lang.ant;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -128,11 +128,10 @@ public class AntRenameTest extends LightCodeInsightTestCase {
     myFile = AntSupport.getAntFile(myFile);
     assertNotNull(myFile);
     assertTrue(myFile instanceof AntFile);
-    PsiElement element = TargetElementUtil.findTargetElement(
+    PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(
       getEditor(), 
-      TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED, 
-      off
-    );
+      TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED,
+      off);
     assertNotNull(element);
     assertTrue(element instanceof PsiNamedElement);
     final RenameRefactoring rename =

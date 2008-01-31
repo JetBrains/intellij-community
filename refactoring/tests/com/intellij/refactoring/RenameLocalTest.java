@@ -1,6 +1,6 @@
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -21,9 +21,8 @@ public class RenameLocalTest extends LightCodeInsightTestCase {
 
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                                             TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     new RenameProcessor(getProject(), element, newName, true, true).run();
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");

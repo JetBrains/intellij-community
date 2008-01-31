@@ -4,25 +4,47 @@
 
 package com.intellij.lang.java;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.documentation.JavaDocManager;
+import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,18 +60,24 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
   @NonNls private static final String PARAM_TAG = "@param";
   @NonNls private static final String RETURN_TAG = "@return";
   @NonNls private static final String THROWS_TAG = "@throws";
+  @NonNls public static final String HTML_EXTENSION = ".html";
+  @NonNls public static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
 
   public String getQuickNavigateInfo(PsiElement element) {
     if (element instanceof PsiClass) {
-      return generateClassInfo((PsiClass) element);
-    } else if (element instanceof PsiMethod) {
-      return generateMethodInfo((PsiMethod) element);
-    } else if (element instanceof PsiField) {
-      return generateFieldInfo((PsiField) element);
-    } else if (element instanceof PsiVariable) {
-      return generateVariableInfo((PsiVariable) element);
-    } else if (element instanceof PsiPackage) {
-      return generatePackageInfo((PsiPackage) element);
+      return generateClassInfo((PsiClass)element);
+    }
+    else if (element instanceof PsiMethod) {
+      return generateMethodInfo((PsiMethod)element);
+    }
+    else if (element instanceof PsiField) {
+      return generateFieldInfo((PsiField)element);
+    }
+    else if (element instanceof PsiVariable) {
+      return generateVariableInfo((PsiVariable)element);
+    }
+    else if (element instanceof PsiPackage) {
+      return generatePackageInfo((PsiPackage)element);
     }
     return super.getQuickNavigateInfo(element);
   }
@@ -67,7 +95,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
 
     if (type instanceof PsiWildcardType) {
-      PsiWildcardType wc = ((PsiWildcardType) type);
+      PsiWildcardType wc = ((PsiWildcardType)type);
       PsiType bound = wc.getBound();
 
       buffer.append("?");
@@ -79,14 +107,14 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
 
     if (type instanceof PsiArrayType) {
-      generateType(buffer, ((PsiArrayType) type).getComponentType(), context);
+      generateType(buffer, ((PsiArrayType)type).getComponentType(), context);
       buffer.append("[]");
 
       return;
     }
 
     if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType) type).resolveGenerics();
+      PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
       PsiClass psiClass = result.getElement();
       PsiSubstitutor psiSubst = result.getSubstitutor();
 
@@ -174,7 +202,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
 
     if (file instanceof PsiJavaFile) {
-      String packageName = ((PsiJavaFile) file).getPackageName();
+      String packageName = ((PsiJavaFile)file).getPackageName();
       if (packageName.length() > 0) {
         buffer.append(packageName);
         newLine(buffer);
@@ -183,10 +211,11 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
     generateModifiers(buffer, aClass);
 
-    final String classString =
-      aClass.isInterface() ? "java.terms.interface" :
-      aClass instanceof PsiTypeParameter ? "java.terms.type.parameter" :
-      aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
+    final String classString = aClass.isInterface()
+                               ? "java.terms.interface"
+                               : aClass instanceof PsiTypeParameter
+                                 ? "java.terms.type.parameter"
+                                 : aClass.isEnum() ? "java.terms.enum" : "java.terms.class";
     buffer.append(LangBundle.message(classString) + " ");
 
     buffer.append(JavaDocUtil.getShortestClassName(aClass, aClass));
@@ -231,7 +260,8 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
         buffer.append(" extends ");
         if (refs.length == 0) {
           buffer.append("Object");
-        } else {
+        }
+        else {
           for (int i = 0; i < refs.length; i++) {
             generateType(buffer, refs[i], aClass);
 
@@ -334,7 +364,8 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
         if (throwsClass != null) {
           buffer.append(JavaDocUtil.getShortestClassName(throwsClass, method));
-        } else {
+        }
+        else {
           buffer.append(refs[i].getPresentableText());
         }
 
@@ -427,7 +458,8 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
             builder.append(createDocCommentLine("", project, commenter));
             if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
             builder.append(description);
-          } else {
+          }
+          else {
             builder.append(createDocCommentLine(PARAM_TAG, project, commenter));
             builder.append(parameter.getName());
           }
@@ -445,15 +477,16 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
 
         final PsiJavaCodeReferenceElement[] references = psiMethod.getThrowsList().getReferenceElements();
         for (PsiJavaCodeReferenceElement reference : references) {
-          builder.append(createDocCommentLine(THROWS_TAG, project,commenter));
+          builder.append(createDocCommentLine(THROWS_TAG, project, commenter));
           builder.append(reference.getText());
           builder.append(LINE_SEPARATOR);
         }
-      } else if (parentElement instanceof PsiClass) {
+      }
+      else if (parentElement instanceof PsiClass) {
         final PsiTypeParameterList typeParameterList = ((PsiClass)parentElement).getTypeParameterList();
         if (typeParameterList != null) {
-           final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
-          .forLanguage(parentElement.getLanguage());
+          final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
+            .forLanguage(parentElement.getLanguage());
           createTypeParamsListComment(builder, project, commenter, typeParameterList);
         }
       }
@@ -464,8 +497,10 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
     }
   }
 
-  private static void createTypeParamsListComment(final StringBuilder buffer, final Project project, final CodeDocumentationAwareCommenter commenter,
-                                           final PsiTypeParameterList typeParameterList) {
+  private static void createTypeParamsListComment(final StringBuilder buffer,
+                                                  final Project project,
+                                                  final CodeDocumentationAwareCommenter commenter,
+                                                  final PsiTypeParameterList typeParameterList) {
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
       buffer.append(createDocCommentLine(PARAM_TAG, project, commenter));
@@ -477,13 +512,274 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
   public static String createDocCommentLine(String lineData, Project project, CodeDocumentationAwareCommenter commenter) {
     if (!CodeStyleSettingsManager.getSettings(project).JD_LEADING_ASTERISKS_ARE_ENABLED) {
       return " " + lineData + " ";
-    } else {
+    }
+    else {
       if (lineData.length() == 0) {
         return commenter.getDocumentationCommentLinePrefix() + " ";
-      } else {
+      }
+      else {
         return commenter.getDocumentationCommentLinePrefix() + " " + lineData + " ";
       }
 
     }
+  }
+
+  @Override
+  public String generateDoc(final PsiElement element, final PsiElement originalElement) {
+    if (element instanceof PsiMethodCallExpression) {
+      return getMethodCandidateInfo((PsiMethodCallExpression)element);
+    }
+
+    final String doc = new JavaDocInfoGenerator(element.getProject(), element).generateDocInfo();
+    if (doc != null) return doc;
+
+    final String inplaceDocumentation = super.generateDoc(element, originalElement);
+    if (inplaceDocumentation != null) return inplaceDocumentation;
+
+    //external documentation finder
+    final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
+    JavaDocExternalFilter docFilter = new JavaDocExternalFilter(element.getProject());
+    List<String> docURLs = getExternalJavaDocUrl(element);
+
+    if (docURLs != null) {
+      for (String docURL : docURLs) {
+        if (element instanceof PsiCompiledElement) {
+          try {
+            String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
+            if (externalDoc != null) {
+              return externalDoc;
+            }
+          }
+          catch (Exception e) {
+            //try to generate some javadoc
+          }
+        }
+      }
+    }
+
+    return docFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(), null);
+  }
+
+  private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
+    final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
+    final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
+    final String text = expr.getText();
+    if (candidates.length > 0) {
+      @NonNls final StringBuffer sb = new StringBuffer();
+
+      for (final CandidateInfo candidate : candidates) {
+        final PsiElement element = candidate.getElement();
+
+        if (!(element instanceof PsiMethod)) {
+          continue;
+        }
+
+        final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
+                                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
+                                                      PsiFormatUtil.SHOW_TYPE);
+        createElementLink(sb, element, str);
+      }
+
+      return CodeInsightBundle.message("javadoc.candiates", text, sb);
+    }
+
+    return CodeInsightBundle.message("javadoc.candidates.not.found", text);
+  }
+
+  private void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
+    sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
+    sb.append(JavaDocUtil.getReferenceText(element.getProject(), element));
+    sb.append("\">");
+    sb.append(str);
+    sb.append("</a>");
+    sb.append("<br>");
+  }
+
+  @Override
+  public boolean isExternalDocumentationEnabled(final PsiElement element) {
+    boolean actionEnabled = element != null && getExternalJavaDocUrl(element) != null;
+    if (element instanceof PsiVariable && !(element instanceof PsiField)) {
+      actionEnabled = false;
+    }
+    return actionEnabled;
+  }
+
+  @Override
+  public void openExternalDocumentation(final PsiElement element) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
+    List<String> urls = getExternalJavaDocUrl(element);
+    if (urls != null && !urls.isEmpty()) {
+      if (urls.size() > 1) {
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("", urls) {
+          public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
+            BrowserUtil.launchBrowser(selectedValue);
+            return PopupStep.FINAL_CHOICE;
+          }
+        });
+      }
+      else {
+        BrowserUtil.launchBrowser(urls.get(0));
+      }
+    }
+    else {
+      final JBPopup docInfoHint = JavaDocManager.getInstance(element.getProject()).getDocInfoHint();
+      if (docInfoHint != null && docInfoHint.isVisible()) {
+        docInfoHint.cancel();
+      }
+      Messages.showMessageDialog(element.getProject(), CodeInsightBundle.message("javadoc.documentation.not.found.message"),
+                                 CodeInsightBundle.message("javadoc.documentation.not.found.title"), Messages.getErrorIcon());
+    }
+  }
+
+  @Nullable
+  public static List<String> getExternalJavaDocUrl(final PsiElement element) {
+    List<String> urls = null;
+
+    if (element instanceof PsiClass) {
+      urls = findUrlForClass((PsiClass)element);
+    }
+    else if (element instanceof PsiField) {
+      PsiField field = (PsiField)element;
+      PsiClass aClass = field.getContainingClass();
+      if (aClass != null) {
+        urls = findUrlForClass(aClass);
+        if (urls != null) {
+          for (int i = 0; i < urls.size(); i++) {
+            urls.set(i, urls.get(i) + "#" + field.getName());
+          }
+        }
+      }
+    }
+    else if (element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      PsiClass aClass = method.getContainingClass();
+      if (aClass != null) {
+        urls = findUrlForClass(aClass);
+        if (urls != null) {
+          String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                                        PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
+                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES, 999);
+          for (int i = 0; i < urls.size(); i++) {
+            urls.set(i, urls.get(i) + "#" + signature);
+          }
+        }
+      }
+    }
+    else if (element instanceof PsiPackage) {
+      urls = findUrlForPackage((PsiPackage)element);
+    }
+    else if (element instanceof PsiDirectory) {
+      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+      if (aPackage != null) {
+        urls = findUrlForPackage(aPackage);
+      }
+    }
+    else {
+      DocumentationProvider provider = JavaDocManager.getProviderFromElement(element);
+      if (provider != null) {
+        final SmartPsiElementPointer originalElementPointer = element.getUserData(JavaDocManager.ORIGINAL_ELEMENT_KEY);
+        final String url = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
+        if (url != null) {
+          urls = new ArrayList<String>();
+          urls.add(url);
+        }
+      }
+    }
+
+    if (urls == null) {
+      return null;
+    }
+    else {
+      for (int i = 0; i < urls.size(); i++) {
+        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)).replaceAll("[\\<\\>\\?]", ""));
+      }
+      return urls;
+    }
+  }
+
+  @Nullable
+  public static List<String> findUrlForClass(PsiClass aClass) {
+    String qName = aClass.getQualifiedName();
+    if (qName == null) return null;
+    PsiFile file = aClass.getContainingFile();
+    if (!(file instanceof PsiJavaFile)) return null;
+    String packageName = ((PsiJavaFile)file).getPackageName();
+
+    String relPath;
+    if (packageName.length() > 0) {
+      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
+    }
+    else {
+      relPath = qName + HTML_EXTENSION;
+    }
+
+    final PsiFile containingFile = aClass.getContainingFile();
+    if (containingFile == null) return null;
+    final VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return null;
+
+    return findUrlForVirtualFile(containingFile.getProject(), virtualFile, relPath);
+  }
+
+  @Nullable
+  public static List<String> findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    Module module = fileIndex.getModuleForFile(virtualFile);
+    if (module == null) {
+      final VirtualFileSystem fs = virtualFile.getFileSystem();
+      if (fs instanceof JarFileSystem) {
+        final VirtualFile jar = ((JarFileSystem)fs).getVirtualFileForJar(virtualFile);
+        if (jar != null) {
+          module = fileIndex.getModuleForFile(jar);
+        }
+      }
+    }
+    if (module != null) {
+      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getRootPaths(JavadocOrderRootType.getInstance());
+      List<String> httpRoot = getHttpRoots(javadocPaths, relPath);
+      if (httpRoot != null) return httpRoot;
+    }
+
+    final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
+    for (OrderEntry orderEntry : orderEntries) {
+      final VirtualFile[] files = orderEntry.getFiles(JavadocOrderRootType.getInstance());
+      final List<String> httpRoot = getHttpRoots(files, relPath);
+      if (httpRoot != null) return httpRoot;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<String> getHttpRoots(final VirtualFile[] roots, String relPath) {
+    final ArrayList<String> result = new ArrayList<String>();
+    for (VirtualFile root : roots) {
+      if (root.getFileSystem() instanceof HttpFileSystem) {
+        result.add(root.getUrl() + relPath);
+      }
+      else {
+        VirtualFile file = root.findFileByRelativePath(relPath);
+        if (file != null) result.add(file.getUrl());
+      }
+    }
+
+    return result.isEmpty() ? null : result;
+  }
+
+  @Nullable
+  public static List<String> findUrlForPackage(PsiPackage aPackage) {
+    String qName = aPackage.getQualifiedName();
+    qName = qName.replace('.', '/') + '/' + PACKAGE_SUMMARY_FILE;
+    for (PsiDirectory directory : aPackage.getDirectories()) {
+      List<String> url = findUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
+      if (url != null) {
+        return url;
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public PsiElement getDocumentationElementForLink(final PsiManager psiManager, final String link, final PsiElement context) {
+    return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 }

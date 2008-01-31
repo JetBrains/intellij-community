@@ -1,6 +1,5 @@
 package com.intellij.codeInsight.javadoc;
 
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavadocOrderRootType;
@@ -104,10 +103,6 @@ public class JavaDocUtil {
       if (aClass != null) return aClass.getNavigationElement();
       PsiPackage aPackage = facade.findPackage(refText);
       if (aPackage!=null) return aPackage;
-      DocumentationProvider provider = JavaDocManager.getProviderFromElement(context);
-      if (provider!=null) {
-        return provider.getDocumentationElementForLink(manager, refText,context);
-      }
       return null;
     }
     else {

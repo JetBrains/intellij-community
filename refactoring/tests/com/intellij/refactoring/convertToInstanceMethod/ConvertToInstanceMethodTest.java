@@ -1,6 +1,6 @@
 package com.intellij.refactoring.convertToInstanceMethod;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -26,7 +26,7 @@ public class ConvertToInstanceMethodTest extends LightCodeInsightTestCase {
   private void doTest(final int targetParameter) throws Exception {
     final String filePath = "/refactoring/convertToInstanceMethod/" + getTestName(false) + ".java";
     configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod) targetElement;
     new ConvertToInstanceMethodProcessor(getProject(),

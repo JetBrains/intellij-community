@@ -33,6 +33,7 @@ package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.navigation.ImplementationSearcher;
@@ -73,13 +74,13 @@ public class ShowImplementationsAction extends AnAction {
 
     PsiElement element;
     if (editor != null) {
-      element = TargetElementUtil.findTargetElement(editor,
-                                                    TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                                                    | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                                                    | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
-                                                    | TargetElementUtil.NEW_AS_CONSTRUCTOR
-                                                    | TargetElementUtil.THIS_ACCEPTED
-                                                    | TargetElementUtil.SUPER_ACCEPTED);
+      element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
+        .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
+        .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase
+        .LOOKUP_ITEM_ACCEPTED | TargetElementUtil
+        .NEW_AS_CONSTRUCTOR | TargetElementUtil
+        .THIS_ACCEPTED | TargetElementUtil
+        .SUPER_ACCEPTED);
     }
     else {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -93,7 +94,7 @@ public class ShowImplementationsAction extends AnAction {
 
     final PsiReference ref;
     if (element == null && editor != null) {
-      ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+      ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
       if (ref != null) {
         final PsiElement parent = ref.getElement().getParent();

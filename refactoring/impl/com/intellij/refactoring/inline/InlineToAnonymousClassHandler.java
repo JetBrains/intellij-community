@@ -1,6 +1,6 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -36,7 +36,7 @@ public class InlineToAnonymousClassHandler {
 
   public static PsiCall findCallToInline(final Editor editor) {
     PsiCall callToInline = null;
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor) : null;
+    PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor) : null;
     if (reference != null) {
       callToInline = RefactoringUtil.getEnclosingConstructorCall((PsiJavaCodeReferenceElement)reference.getElement());
     }

@@ -1,7 +1,7 @@
 
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ class InlineMethodHandler {
       return;
     }
 
-    PsiReference reference = editor != null ? TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset()) : null;
+    PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
     boolean allowInlineThisOnly = false;
     if (InlineMethodProcessor.checkBadReturns(method) && !allUsagesAreTailCalls(method)) {
       if (reference != null && isTailCall(reference)) {

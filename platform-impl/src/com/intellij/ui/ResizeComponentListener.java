@@ -88,8 +88,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   }
 
   private boolean isToShowBorder() {
-    //return !SystemInfo.isMac;
-    return false;
+    return !SystemInfo.isMac;
   }
 
   private void doResize(final Point point) {

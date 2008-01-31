@@ -6,7 +6,7 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.completion.CodeCompletionHandler;
 import com.intellij.codeInsight.completion.LookupData;
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction;
@@ -323,7 +323,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public void testRename(final String fileAfter, final String newName) throws Throwable {
     new WriteCommandAction.Simple(myProjectFixture.getProject()) {
       protected void run() throws Throwable {
-        PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+        PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
         assert element != null: "element not found at caret position, offset " + myEditor.getCaretModel().getOffset();
         new RenameProcessor(myProjectFixture.getProject(), element, newName, false, false).run();
         checkResultByFile(fileAfter, myFile, false);
@@ -340,9 +340,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public PsiReference[] testFindUsages(@NonNls final String... fileNames) throws Throwable {
     configureByFiles(fileNames);
     FindUsagesProvider handler = LanguageFindUsages.INSTANCE.forLanguage(getFile().getLanguage());
-    PsiElement referenceTo = TargetElementUtil.findTargetElement(getEditor(),
-                                                                 TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                                                 TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement referenceTo = TargetElementUtilBase
+      .findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
     assert referenceTo != null && handler.canFindUsagesFor(referenceTo) : "Cannot find element in caret";
     final Project project = getProject();

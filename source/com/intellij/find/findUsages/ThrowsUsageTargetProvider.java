@@ -3,7 +3,7 @@
  */
 package com.intellij.find.findUsages;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +23,7 @@ public class ThrowsUsageTargetProvider implements UsageTargetProvider {
 
     if (editor == null || file == null) return null;
 
-    PsiElement element = file.findElementAt(TargetElementUtil.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset()));
+    PsiElement element = file.findElementAt(TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset()));
     if (element == null) return null;
 
     if (element instanceof PsiKeyword && PsiKeyword.THROWS.equals(element.getText())) {

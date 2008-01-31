@@ -9,7 +9,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -62,8 +62,8 @@ public class RenameFieldTest extends CodeInsightTestCase {
   }
 
   protected void perform(String newName) {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
+      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
 
     new RenameProcessor(myProject, element, newName, false, false).run();
   }

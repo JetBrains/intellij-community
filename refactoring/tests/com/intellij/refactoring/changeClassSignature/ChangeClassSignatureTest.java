@@ -1,6 +1,6 @@
 package com.intellij.refactoring.changeClassSignature;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -53,7 +53,7 @@ public class ChangeClassSignatureTest extends LightCodeInsightTestCase {
   private void doTest(GenParams gen) throws Exception {
     final String filePath = "/refactoring/changeClassSignature/" + getTestName(false) + ".java";
     configureByFile(filePath);
-    final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    final PsiElement targetElement = TargetElementUtilBase.findTargetElement(getEditor(), TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue("<caret> is not on class name", targetElement instanceof PsiClass);
     PsiClass aClass = (PsiClass)targetElement;
     new ChangeClassSignatureProcessor(getProject(), aClass, gen.gen(aClass)).run();

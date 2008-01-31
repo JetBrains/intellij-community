@@ -1,16 +1,16 @@
 package com.intellij.vcsUtil;
 
-import com.intellij.openapi.vcs.actions.VcsContext;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.actions.VcsContext;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
-import com.intellij.codeInsight.TargetElementUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -21,7 +21,7 @@ public class PsiVcsSelectionProvider implements VcsSelectionProvider {
   public VcsSelection getSelection(final VcsContext context) {
     final Editor editor = context.getEditor();
     if (editor == null) return null;
-    PsiElement psiElement = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement psiElement = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     if (psiElement == null) {
       return null;
     }

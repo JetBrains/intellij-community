@@ -1,24 +1,24 @@
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.IntArrayList;
-import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegate {
   public boolean highlightUsages(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtil.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement target = file.findElementAt(offset);
     if (target instanceof PsiKeyword) {
       if (PsiKeyword.RETURN.equals(target.getText()) || PsiKeyword.THROW.equals(target.getText())) {

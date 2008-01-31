@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.actions;
 
-import com.intellij.codeInsight.javadoc.JavaDocInfoComponent;
-import com.intellij.codeInsight.javadoc.JavaDocManager;
+import com.intellij.codeInsight.documentation.JavaDocInfoComponent;
+import com.intellij.codeInsight.documentation.JavaDocManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyInspectorTable;
 
 import javax.swing.*;
-import java.awt.Point;
+import java.awt.*;
 
 /**
  * @author Anton Katilin

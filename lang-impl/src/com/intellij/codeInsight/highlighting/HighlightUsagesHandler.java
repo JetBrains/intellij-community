@@ -2,6 +2,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.find.EditorSearchComponent;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
@@ -66,7 +67,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     PsiElement[] targets = null;
 
     if (target == null) {
-      PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
       if (ref instanceof PsiPolyVariantReference) {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
@@ -105,14 +106,15 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
   @Nullable
   private static PsiElement getTargetElement(Editor editor, PsiFile file) {
-    PsiElement target = TargetElementUtil.findTargetElement(editor,
-                                                            TargetElementUtil.ELEMENT_NAME_ACCEPTED |
-                                                            TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED |
-                                                            TargetElementUtil.NEW_AS_CONSTRUCTOR |
-                                                            TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+    PsiElement target = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
+      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
+      .REFERENCED_ELEMENT_ACCEPTED |
+                                                            TargetElementUtil
+                                                              .NEW_AS_CONSTRUCTOR | TargetElementUtilBase
+      .LOOKUP_ITEM_ACCEPTED);
 
     if (target == null) {
-      int offset = TargetElementUtil.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+      int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
       PsiElement element = file.findElementAt(offset);
       if (element == null) return null;
     }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -95,7 +96,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   // returns true if processor is run or is going to be run after showing popup
   public static boolean chooseAmbiguousTarget(final Project project, final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
                                               String titlePattern) {
-    final PsiReference reference = TargetElementUtil.findReference(editor, offset);
+    final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
     final Collection<PsiElement> candidates = suggestCandidates(project, reference);
     if (candidates.size() == 1) {
       PsiElement element = candidates.iterator().next();
@@ -174,12 +175,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
-    int flags = TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
+    int flags = TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
                 | TargetElementUtil.NEW_AS_CONSTRUCTOR
-                | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+                | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED
                 | TargetElementUtil.THIS_ACCEPTED
                 | TargetElementUtil.SUPER_ACCEPTED;
-    PsiElement element = TargetElementUtil.findTargetElement(editor, flags, offset);
+    PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, flags, offset);
 
     if (element != null) return element;
 

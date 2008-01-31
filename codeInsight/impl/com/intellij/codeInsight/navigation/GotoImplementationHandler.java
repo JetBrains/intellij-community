@@ -2,7 +2,7 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.MethodCellRenderer;
@@ -22,7 +22,7 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
 
   public void invoke(Project project, Editor editor, PsiFile file) {
     final int offset = editor.getCaretModel().getOffset();
-    final PsiElement element = TargetElementUtil.findTargetElement(editor, ImplementationSearcher.FLAGS, offset);
+    final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.FLAGS, offset);
 
     PsiElement[] result = new ImplementationSearcher().searchImplementations(editor, element, offset);
     if (result.length > 0) {

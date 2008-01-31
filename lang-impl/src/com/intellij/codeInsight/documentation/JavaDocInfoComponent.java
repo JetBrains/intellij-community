@@ -1,16 +1,20 @@
-package com.intellij.codeInsight.javadoc;
+package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.codeInsight.hint.ElementLocationUtil;
+import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.EdgeBorder;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
@@ -354,14 +358,23 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
 
         public void actionPerformed(AnActionEvent e) {
             if (myElement != null) {
-                myManager.openJavaDoc(myElement.getElement());
+              final PsiElement element = myElement.getElement();
+              final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)JavaDocManager.getProviderFromElement(element);
+              assert provider != null;
+              provider.openExternalDocumentation(element);
             }
         }
 
         public void update(AnActionEvent e) {
-            final Presentation presentation = e.getPresentation();
-            boolean actionEnabled = isExternalDocActionEnabled(myElement != null ? myElement.getElement():null);
-            presentation.setEnabled(actionEnabled);
+          final Presentation presentation = e.getPresentation();
+          presentation.setEnabled(false);
+          if (myElement != null) {
+            final PsiElement element = myElement.getElement();
+            final DocumentationProvider provider = JavaDocManager.getProviderFromElement(element);
+            if (provider instanceof ExtensibleDocumentationProvider) {
+              presentation.setEnabled(((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element));
+            }
+          }
         }
     }
 
@@ -475,12 +488,4 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
       myHint = null;
     }
 
-    private static boolean isExternalDocActionEnabled(PsiElement element) {
-        boolean actionEnabled = element != null && JavaDocManager.getExternalJavaDocUrl(element) != null;
-
-        if (element instanceof PsiVariable && !(element instanceof PsiField)) {
-          actionEnabled = false;
-        }
-        return actionEnabled;
-    }
 }

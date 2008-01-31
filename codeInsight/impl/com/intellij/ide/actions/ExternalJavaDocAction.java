@@ -1,15 +1,19 @@
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.javadoc.JavaDocManager;
+import com.intellij.codeInsight.documentation.JavaDocManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
 
 public class ExternalJavaDocAction extends AnAction {
+
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -42,7 +46,8 @@ public class ExternalJavaDocAction extends AnAction {
       // tolerate it
     }
 
-    JavaDocManager.getInstance(project).openJavaDoc(element);
+    final ExtensibleDocumentationProvider provider = (ExtensibleDocumentationProvider)JavaDocManager.getProviderFromElement(element);
+    provider.openExternalDocumentation(element);
   }
 
   public void update(AnActionEvent event){
@@ -50,25 +55,14 @@ public class ExternalJavaDocAction extends AnAction {
     DataContext dataContext = event.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-
+    final DocumentationProvider provider = JavaDocManager.getProviderFromElement(element);
+    boolean enabled = provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element);
     if (editor != null) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      boolean enabled = (file instanceof PsiJavaFile || PsiUtil.isInJspFile(file) ||
-                        (file!=null && JavaDocManager.getProviderFromElement(file)!=null
-                        )) &&
-                        element != null &&
-                        JavaDocManager.getExternalJavaDocUrl(element) != null;
       presentation.setEnabled(enabled);
       presentation.setVisible(enabled);
     }
     else{
-      presentation.setEnabled(
-        element != null &&
-        JavaDocManager.getExternalJavaDocUrl(
-          element
-        ) != null
-      );
+      presentation.setEnabled(enabled);
       presentation.setVisible(true);
     }
   }

@@ -1,22 +1,22 @@
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class HighlightOverridingMethodsHandler implements HighlightUsagesHandlerDelegate {
   public boolean highlightUsages(final Editor editor, final PsiFile file) {
-    int offset = TargetElementUtil.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement target = file.findElementAt(offset);
     if (target instanceof PsiKeyword && (PsiKeyword.EXTENDS.equals(target.getText()) || PsiKeyword.IMPLEMENTS.equals(target.getText()))) {
       PsiElement parent = target.getParent();

@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class CompositeDocumentationProvider implements DocumentationProvider {
+public class CompositeDocumentationProvider extends ExtensibleDocumentationProvider{
 
   private final Set<DocumentationProvider> myProviders;
 
@@ -82,5 +82,22 @@ public class CompositeDocumentationProvider implements DocumentationProvider {
       if ( result != null ) return result;
     }
     return null;
+  }
+
+  @Override
+  public boolean isExternalDocumentationEnabled(final PsiElement element) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public void openExternalDocumentation(final PsiElement element) {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExtensibleDocumentationProvider && ((ExtensibleDocumentationProvider)provider).isExternalDocumentationEnabled(element)) {
+        ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(element);
+      }
+    }
   }
 }

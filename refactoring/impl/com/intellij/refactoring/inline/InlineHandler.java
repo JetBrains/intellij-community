@@ -4,7 +4,7 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -63,7 +63,7 @@ public class InlineHandler implements RefactoringActionHandler {
     JspFile jspFile;
 
     if (element instanceof PsiLocalVariable) {
-      final PsiReference psiReference = TargetElementUtil.findReference(editor);
+      final PsiReference psiReference = TargetElementUtilBase.findReference(editor);
       final PsiReferenceExpression refExpr = psiReference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)psiReference) : null;
       InlineLocalHandler.invoke(project, editor, (PsiLocalVariable) element, refExpr);
     } else if (element instanceof PsiMethod) {

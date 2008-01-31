@@ -3,7 +3,7 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.IdeBundle;
@@ -69,7 +69,7 @@ public class CopyReferenceAction extends AnAction {
   private static PsiElement getElementToCopy(final Editor editor, final DataContext dataContext) {
     PsiElement element = null;
     if (editor != null) {
-      PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+      PsiReference reference = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
       if (reference != null) {
         element = reference.getElement();
       }

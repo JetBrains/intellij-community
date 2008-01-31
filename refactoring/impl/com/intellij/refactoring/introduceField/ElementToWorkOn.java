@@ -1,7 +1,7 @@
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,11 +38,10 @@ public class ElementToWorkOn {
     PsiExpression expr = null;
 
     if (!editor.getSelectionModel().hasSelection()) {
-      PsiElement element =
-              TargetElementUtil.findTargetElement(editor,
-                                                  TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                                                  | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                                                  | TargetElementUtil.LOOKUP_ITEM_ACCEPTED);
+      PsiElement element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
+        .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
+        .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase
+        .LOOKUP_ITEM_ACCEPTED);
       if (element instanceof PsiLocalVariable) {
         localVar = (PsiLocalVariable) element;
         final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());

@@ -1,6 +1,6 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -344,8 +344,8 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-            TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertInstanceOf(element, PsiClass.class);
 
     String message = InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element);
@@ -370,8 +370,8 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
     String name = getTestName(false);
     @NonNls String fileName = "/refactoring/inlineToAnonymousClass/" + name + ".java";
     configureByFile(fileName);
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-                                                             TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
+      .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertInstanceOf(element, PsiClass.class);
 
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage((PsiClass) element));
@@ -379,8 +379,8 @@ public class InlineToAnonymousClassTest extends LightCodeInsightTestCase {
   }
 
   private void performAction(final boolean inlineThisOnly, final boolean searchInNonJavaFiles) {
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-            TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     PsiCall callToInline = InlineToAnonymousClassHandler.findCallToInline(myEditor);
     PsiClass classToInline = (PsiClass) element;
     assertEquals(null, InlineToAnonymousClassHandler.getCannotInlineMessage(classToInline));

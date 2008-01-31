@@ -1,6 +1,6 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -89,8 +89,8 @@ public class InlineParameterTest extends LightCodeInsightTestCase {
   }
 
   private void performAction() {
-    final PsiElement element = TargetElementUtil.findTargetElement(myEditor,
-                                                                   TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED | TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase
+      .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     InlineParameterHandler.invoke(getProject(), myEditor, (PsiParameter) element);
   }
 }

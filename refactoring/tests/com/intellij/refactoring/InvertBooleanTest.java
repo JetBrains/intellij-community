@@ -1,7 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
@@ -22,7 +22,7 @@ public class InvertBooleanTest extends CodeInsightTestCase {
 
   private void doTest() throws Exception {
     configureByFile(TEST_ROOT + getTestName(true) + ".java");
-    PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+    PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
     assertTrue(element instanceof PsiNamedElement);
 
     final PsiNamedElement namedElement = (PsiNamedElement)element;

@@ -1,20 +1,21 @@
-package com.intellij.codeInsight.javadoc;
+package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.lang.documentation.ExtensibleDocumentationProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -23,26 +24,15 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -59,12 +49,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 public class JavaDocManager implements ProjectComponent {
@@ -76,8 +62,6 @@ public class JavaDocManager implements ProjectComponent {
   private WeakReference<JBPopup> myDocInfoHintRef;
   private Component myPreviouslyFocused = null;
   public static final Key<SmartPsiElementPointer> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
-  @NonNls private static final String HTML_EXTENSION = ".html";
-  @NonNls private static final String PACKAGE_SUMMARY_FILE = "package-summary.html";
   @NonNls public static final String PSI_ELEMENT_PROTOCOL = "psi_element://";
   @NonNls private static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
@@ -108,9 +92,9 @@ public class JavaDocManager implements ProjectComponent {
     }
   };
 
-  private static final int ourFlagsForTargetElements = TargetElementUtil.ELEMENT_NAME_ACCEPTED
-                                                       | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
-                                                       | TargetElementUtil.LOOKUP_ITEM_ACCEPTED
+  private static final int ourFlagsForTargetElements = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED
+                                                       | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
+                                                       | TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED
                                                        | TargetElementUtil.NEW_AS_CONSTRUCTOR
                                                        | TargetElementUtil.THIS_ACCEPTED
                                                        | TargetElementUtil.SUPER_ACCEPTED;
@@ -329,29 +313,26 @@ public class JavaDocManager implements ProjectComponent {
 
   @Nullable
   public PsiElement findTargetElement(final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
-    PsiElement element = editor != null ? TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements) : null;
+    PsiElement element = editor != null ? TargetElementUtilBase.findTargetElement(editor, ourFlagsForTargetElements) : null;
 
     // Allow context doc over xml tag content
     if (element == null && contextElement != null) {
         final PsiElement parent = contextElement.getParent();
         if (parent instanceof XmlText) {
-          element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
-                                                             parent.getParent().getTextRange().getStartOffset() + 1
-                                                           );
+          element = TargetElementUtilBase.getInstance().findTargetElement(editor, ourFlagsForTargetElements,
+                                                             parent.getParent().getTextRange().getStartOffset() + 1);
         } else if (parent instanceof XmlTag || parent instanceof XmlAttribute) {
-          element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
-                                                             parent.getTextRange().getStartOffset() + 1
-                                                           );
+          element = TargetElementUtilBase.getInstance().findTargetElement(editor, ourFlagsForTargetElements,
+                                                             parent.getTextRange().getStartOffset() + 1);
         } else if (parent instanceof XmlAttributeValue) {
           final PsiElement grandParent = parent.getParent();
-          element = TargetElementUtil.findTargetElement(editor, ourFlagsForTargetElements,
-                                                             grandParent.getTextRange().getStartOffset() + 1
-                                                           );
+          element = TargetElementUtilBase.getInstance().findTargetElement(editor, ourFlagsForTargetElements,
+                                                             grandParent.getTextRange().getStartOffset() + 1);
         }
     }
 
     if (element == null && editor != null) {
-      final PsiReference ref = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
+      final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
       if (ref != null) {
         final PsiElement parent = ref.getElement().getParent();
@@ -404,8 +385,38 @@ public class JavaDocManager implements ProjectComponent {
     return new JavaDocProvider() {
       private final SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
 
+      @Nullable
       public String getJavaDoc() throws Exception {
-        return getDocInfo(element.getElement());
+        PsiElement element1 = element.getElement();
+        final DocumentationProvider provider = getProviderFromElement(element1);
+        if (provider != null && myParameterInfoController != null) {
+          final Object[] objects = myParameterInfoController.getSelectedElements();
+
+          if (objects.length > 0) {
+            @NonNls StringBuffer sb = null;
+
+            for(Object o:objects) {
+              PsiElement parameter = getPsiElementFromParameterInfoObject(o, null);
+
+              if (parameter != null) {
+                final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
+                final String str2 = provider.generateDoc(parameter, originalElement != null ? originalElement.getElement() : null);
+                if (str2 == null) continue;
+                if (sb == null) sb = new StringBuffer();
+                sb.append(str2);
+                sb.append("<br>");
+              } else {
+                sb = null;
+                break;
+              }
+            }
+
+            if (sb != null) return sb.toString();
+          }
+        }
+
+        final SmartPsiElementPointer originalElement = element1 != null ? element1.getUserData(ORIGINAL_ELEMENT_KEY) : null;
+        return provider != null ? provider.generateDoc(element1, originalElement != null ? originalElement.getElement() : null) : null;
       }
 
       @Nullable
@@ -416,100 +427,7 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   @Nullable
-  public static List<String> getExternalJavaDocUrl(final PsiElement element) {
-    List<String> urls = null;
-
-    if (element instanceof PsiClass) {
-      urls = findUrlForClass((PsiClass)element);
-    }
-    else if (element instanceof PsiField) {
-      PsiField field = (PsiField)element;
-      PsiClass aClass = field.getContainingClass();
-      if (aClass != null) {
-        urls = findUrlForClass(aClass);
-        if (urls != null) {
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) +"#" + field.getName());
-          }
-        }
-      }
-    }
-    else if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      PsiClass aClass = method.getContainingClass();
-      if (aClass != null) {
-        urls = findUrlForClass(aClass);
-        if (urls != null) {
-          String signature = PsiFormatUtil.formatMethod(method,
-                                                        PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
-                                                                              PsiFormatUtil.SHOW_PARAMETERS,
-                                                        PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_FQ_CLASS_NAMES , 999);
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) + "#" + signature);
-          }
-        }
-      }
-    }
-    else if (element instanceof PsiPackage) {
-      urls = findUrlForPackage((PsiPackage)element);
-    }
-    else if (element instanceof PsiDirectory) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
-      if (aPackage != null) {
-        urls = findUrlForPackage(aPackage);
-      }
-    } else {
-      DocumentationProvider provider = getProviderFromElement(element);
-      if (provider!=null) {
-        final SmartPsiElementPointer originalElementPointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
-        final String url = provider.getUrlFor(element, originalElementPointer != null ? originalElementPointer.getElement() : null);
-        if (url != null) {
-          urls = new ArrayList<String>();
-          urls.add(url);
-        }
-      }
-    }
-
-    if (urls == null) {
-      return null;
-    }
-    else {
-      for (int i = 0; i < urls.size(); i++) {
-        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)).replaceAll("[\\<\\>\\?]", ""));
-      }
-      return urls;
-    }
-  }
-
-  public void openJavaDoc(final PsiElement element) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.javadoc.external");
-    List<String> urls = getExternalJavaDocUrl(element);
-    if (urls != null && !urls.isEmpty()) {
-      if (urls.size() > 1) {
-        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("", urls){
-          public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
-            BrowserUtil.launchBrowser(selectedValue);
-            return PopupStep.FINAL_CHOICE;
-          }
-        });
-      } else {
-        BrowserUtil.launchBrowser(urls.get(0));
-      }
-    }
-    else {
-      final JBPopup docInfoHint = getDocInfoHint();
-      if (docInfoHint != null && docInfoHint.isVisible()){
-        docInfoHint.cancel();
-      }
-      Messages.showMessageDialog(getProject(element),
-                                 CodeInsightBundle.message("javadoc.documentation.not.found.message"),
-                                 CodeInsightBundle.message("javadoc.documentation.not.found.title"),
-                                 Messages.getErrorIcon());
-    }
-  }
-
-  @Nullable
-  private JBPopup getDocInfoHint() {
+  public JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible()) {
@@ -517,107 +435,6 @@ public class JavaDocManager implements ProjectComponent {
       return null;
     }
     return hint;
-  }
-
-  @Nullable
-  private static List<String> findUrlForClass(PsiClass aClass) {
-    String qName = aClass.getQualifiedName();
-    if (qName == null) return null;
-    PsiFile file = aClass.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) return null;
-    String packageName = ((PsiJavaFile)file).getPackageName();
-
-    String relPath;
-    if (packageName.length() > 0) {
-      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
-    }
-    else {
-      relPath = qName + HTML_EXTENSION;
-    }
-
-    final PsiFile containingFile = aClass.getContainingFile();
-    if (containingFile == null) return null;
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) return null;
-
-    return findUrlForVirtualFile(containingFile.getProject(), virtualFile, relPath);
-  }
-
-  @Nullable
-  private static List<String> findUrlForVirtualFile(final Project project, final VirtualFile virtualFile, final String relPath) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    Module module = fileIndex.getModuleForFile(virtualFile);
-    if (module == null) {
-      final VirtualFileSystem fs = virtualFile.getFileSystem();
-      if (fs instanceof JarFileSystem) {
-        final VirtualFile jar = ((JarFileSystem)fs).getVirtualFileForJar(virtualFile);
-        if (jar != null) {
-          module = fileIndex.getModuleForFile(jar);
-        }
-      }
-    }
-    if (module != null) {
-      VirtualFile[] javadocPaths = ModuleRootManager.getInstance(module).getRootPaths(JavadocOrderRootType.getInstance());
-      List<String> httpRoot = getHttpRoots(javadocPaths, relPath);
-      if (httpRoot != null) return httpRoot;
-    }
-
-    final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (OrderEntry orderEntry : orderEntries) {
-      final VirtualFile[] files = orderEntry.getFiles(JavadocOrderRootType.getInstance());
-      final List<String> httpRoot = getHttpRoots(files, relPath);
-      if (httpRoot != null) return httpRoot;
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<String> getHttpRoots(final VirtualFile[] roots, String relPath) {
-    final ArrayList<String> result = new ArrayList<String>();
-    for (VirtualFile root : roots) {
-      if (root.getFileSystem() instanceof HttpFileSystem) {
-        result.add(root.getUrl() + relPath);
-      }
-      else {
-        VirtualFile file = root.findFileByRelativePath(relPath);
-        if (file != null) result.add(file.getUrl());
-      }
-    }
-
-    return result.isEmpty() ? null : result;
-  }
-
-  @Nullable
-  private static List<String> findUrlForPackage(PsiPackage aPackage) {
-    String qName = aPackage.getQualifiedName();
-    qName = qName.replace('.', '/') +  '/' + PACKAGE_SUMMARY_FILE;
-    for(PsiDirectory directory: aPackage.getDirectories()) {
-      List<String> url = findUrlForVirtualFile(aPackage.getProject(),directory.getVirtualFile(), qName);
-      if (url != null) {
-        return url;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private String findUrlForLink(PsiPackage basePackage, String link) {
-    int index = link.indexOf('#');
-    String tail = "";
-    if (index >= 0) {
-      tail = link.substring(index);
-      link = link.substring(0, index);
-    }
-
-    String qName = basePackage.getQualifiedName();
-    qName = qName.replace('.', File.separatorChar);
-    String[] docPaths = JavaDocUtil.getDocPaths(getProject(basePackage));
-    for (String docPath : docPaths) {
-      String url = docPath + File.separator + qName + File.separatorChar + link;
-      File file = new File(url);
-      if (file.exists()) return url + tail;
-    }
-    return null;
   }
 
   public void fetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
@@ -707,63 +524,6 @@ public class JavaDocManager implements ProjectComponent {
   }
 
   @Nullable
-  private String getDocInfo(PsiElement element) throws Exception {
-    if (element instanceof PsiMethodCallExpression) {
-      return getMethodCandidateInfo((PsiMethodCallExpression)element);
-    }
-    else {
-      final DocumentationProvider provider = getProviderFromElement(element);
-      final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(getProject(element), element, provider);
-
-      if (myParameterInfoController != null) {
-        final Object[] objects = myParameterInfoController.getSelectedElements();
-
-        if (objects.length > 0) {
-          @NonNls StringBuffer sb = null;
-
-          for(Object o:objects) {
-            PsiElement parameter = getPsiElementFromParameterInfoObject(o, null);
-
-            if (parameter != null) {
-              final String str2 = new JavaDocInfoGenerator(getProject(element), parameter, provider).generateDocInfo();
-              if (str2 == null) continue;
-              if (sb == null) sb = new StringBuffer();
-              sb.append(str2);
-              sb.append("<br>");
-            } else {
-              sb = null;
-              break;
-            }
-          }
-
-          if (sb != null) return sb.toString();
-        }
-      }
-
-      JavaDocExternalFilter docFilter = new JavaDocExternalFilter(getProject(element));
-      List<String> docURLs = getExternalJavaDocUrl(element);
-
-      if (docURLs != null) {
-        for (String docURL : docURLs) {
-          if (element instanceof PsiCompiledElement) {
-            try {
-              String externalDoc = docFilter.getExternalDocInfoForElement(docURL, element);
-              if (externalDoc != null) {
-                return externalDoc;
-              }
-            }
-            catch (FileNotFoundException e) {
-              //try to generate some javadoc
-            }
-          }
-        }
-      }
-
-      return docFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(), null);
-    }
-  }
-
-  @Nullable
   public static DocumentationProvider getProviderFromElement(final PsiElement element) {
     SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
     PsiElement originalElement = originalElementPointer != null ? originalElementPointer.getElement() : null;
@@ -786,50 +546,18 @@ public class JavaDocManager implements ProjectComponent {
     return new CompositeDocumentationProvider(result);
   }
 
-  private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
-    final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
-    final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
-
-    final String text = expr.getText();
-    if (candidates.length > 0) {
-      @NonNls final StringBuffer sb = new StringBuffer();
-
-      for (final CandidateInfo candidate : candidates) {
-        final PsiElement element = candidate.getElement();
-
-        if (!(element instanceof PsiMethod)) {
-          continue;
-        }
-
-        final String str = PsiFormatUtil.formatMethod((PsiMethod)element, candidate.getSubstitutor(),
-                                                      PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.SHOW_PARAMETERS,
-                                                      PsiFormatUtil.SHOW_TYPE);
-        createElementLink(sb, element, str);
-      }
-
-      return CodeInsightBundle.message("javadoc.candiates", text, sb);
-    }
-
-    return CodeInsightBundle.message("javadoc.candidates.not.found", text);
-  }
-
-  private void createElementLink(@NonNls final StringBuffer sb, final PsiElement element, final String str) {
-    sb.append("&nbsp;&nbsp;<a href=\"psi_element://");
-    sb.append(JavaDocUtil.getReferenceText(getProject(element), element));
-    sb.append("\">");
-    sb.append(str);
-    sb.append("</a>");
-    sb.append("<br>");
-  }
-
   void navigateByLink(final JavaDocInfoComponent component, String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    final PsiManager manager = PsiManager.getInstance(getProject(component.getElement()));
+    final PsiElement psiElement = component.getElement();
+    final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());
-      final PsiElement targetElement = JavaDocUtil.findReferenceTarget(manager, refText, component.getElement());
-      if (targetElement != null) {
-        fetchDocInfo(getDefaultProvider(targetElement), component);
+      DocumentationProvider provider = getProviderFromElement(psiElement);
+      if (provider!=null) {
+        final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
+        if (targetElement != null) {
+          fetchDocInfo(getDefaultProvider(targetElement), component);
+        }
       }
     }
     else {
@@ -847,36 +575,17 @@ public class JavaDocManager implements ProjectComponent {
           public String getJavaDoc() throws Exception {
             String url = getElementLocator(docUrl);
             if (url != null && JavaDocExternalFilter.isJavaDocURL(url)) {
-              String text = new JavaDocExternalFilter(getProject(component.getElement())).getExternalDocInfo(url);
+              String text = new JavaDocExternalFilter(getProject(psiElement)).getExternalDocInfo(url);
 
               if (text != null) {
                 return text;
               }
             }
 
-            if (url == null) {
-              url = docUrl;
+            final DocumentationProvider provider = getProviderFromElement(psiElement);
+            if (provider instanceof ExtensibleDocumentationProvider) {
+              ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(psiElement);
             }
-
-            PsiElement element = component.getElement();
-            if (element != null) {
-              PsiElement parent = element;
-              while (true) {
-                if (parent == null || parent instanceof PsiDirectory) break;
-                parent = parent.getParent();
-              }
-              if (parent != null) {
-                PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)parent));
-                if (aPackage != null) {
-                  String url1 = findUrlForLink(aPackage, url);
-                  if (url1 != null) {
-                    url = url1;
-                  }
-                }
-              }
-            }
-
-            BrowserUtil.launchBrowser(url);
 
             return "";
           }
@@ -889,7 +598,7 @@ public class JavaDocManager implements ProjectComponent {
             //  return JavaDocUtil.findReferenceTarget(context.getManager(), loc, context);
             //}
 
-            return component.getElement();
+            return psiElement;
           }
         }, component);
     }

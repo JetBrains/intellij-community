@@ -1,4 +1,3 @@
-
 package com.intellij.codeInsight.hint;
 
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;

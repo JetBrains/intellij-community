@@ -4,7 +4,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +32,7 @@ import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class JavaDocInfoGenerator {
+public class JavaDocInfoGenerator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocInfoGenerator");
 
   private static final @NonNls Pattern ourNotDot = Pattern.compile("[^.]");
@@ -43,7 +42,6 @@ class JavaDocInfoGenerator {
 
   private Project myProject;
   private PsiElement myElement;
-  private DocumentationProvider myProvider;
   private static final @NonNls String THROWS_KEYWORD = "throws";
   private static final @NonNls String BR_TAG = "<br>";
   private static final @NonNls String LINK_TAG = "link";
@@ -159,13 +157,12 @@ class JavaDocInfoGenerator {
     };
   }
 
-  public JavaDocInfoGenerator(Project project, PsiElement element,
-                              DocumentationProvider _provider) {
+  public JavaDocInfoGenerator(Project project, PsiElement element) {
     myProject = project;
     myElement = element;
-    myProvider = _provider;
   }
 
+  @Nullable
   public String generateDocInfo() {
     StringBuilder buffer = new StringBuilder();
     if (myElement instanceof PsiClass) {
@@ -187,16 +184,6 @@ class JavaDocInfoGenerator {
     }
     else if (myElement instanceof PsiPackage) {
       generatePackageJavaDoc(buffer, (PsiPackage) myElement);
-    }
-    else {
-      if (myProvider!=null) {
-        final SmartPsiElementPointer elementPointer = myElement.getUserData(JavaDocManager.ORIGINAL_ELEMENT_KEY);
-        return myProvider.generateDoc(
-          myElement,
-          elementPointer != null ? elementPointer.getElement() : null
-        );
-      }
-      return null;
     }
     String text = buffer.toString();
     if (text.length() == 0) {

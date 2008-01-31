@@ -1,6 +1,6 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -91,15 +91,15 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public static void performInline(Project project, Editor editor) {
-    PsiElement element = TargetElementUtil.findTargetElement(editor,
-            TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(editor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertTrue(element instanceof PsiLocalVariable);
 
     InlineLocalHandler.invoke(project, editor, (PsiLocalVariable)element, null);
   }
 
   public static void performDefInline(Project project, Editor editor) {
-    PsiReference reference = TargetElementUtil.findReference(editor);
+    PsiReference reference = TargetElementUtilBase.findReference(editor);
     assertTrue(reference instanceof PsiReferenceExpression);
     final PsiElement local = reference.resolve();
     assertTrue(local instanceof PsiLocalVariable);

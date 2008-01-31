@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
@@ -316,7 +316,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       targetElement = GotoTypeDeclarationAction.findSymbolType(editor, offset);
     }
     else if (browseMode == BrowseMode.Declaration) {
-      PsiReference ref = TargetElementUtil.findReference(editor, offset);
+      PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
       if (ref != null) {
         PsiElement resolvedElement = resolve(ref);
         if (resolvedElement != null) {
@@ -325,7 +325,7 @@ public class CtrlMouseHandler implements ProjectComponent {
       }
       targetElement = GotoDeclarationAction.findTargetElement(myProject, editor, offset);
     } else if ( browseMode == BrowseMode.Implementation ) {
-      final PsiElement element = TargetElementUtil.findTargetElement(editor, ImplementationSearcher.FLAGS, offset);
+      final PsiElement element = TargetElementUtilBase.getInstance().findTargetElement(editor, ImplementationSearcher.FLAGS, offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @NotNull
         protected PsiElement[] searchDefinitions(final PsiElement element) {

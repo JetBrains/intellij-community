@@ -1,6 +1,6 @@
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.InlineHandler;
@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public class GenericInlineHandler {
   public static void invoke(final PsiElement element, final Editor editor, final InlineHandler languageSpecific) {
-    final PsiReference invocationReference = TargetElementUtil.findReference(editor);
+    final PsiReference invocationReference = TargetElementUtilBase.findReference(editor);
     final InlineHandler.Settings settings = languageSpecific.prepareInlineElement(element, editor, invocationReference != null);
     if (settings == null) return;
 

@@ -24,8 +24,8 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.javadoc.JavaDocManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.javadoc.JavaDocManager</implementation-class>
+      <interface-class>com.intellij.codeInsight.documentation.JavaDocManager</interface-class>
+      <implementation-class>com.intellij.codeInsight.documentation.JavaDocManager</implementation-class>
       <skipForDummyProject/>
     </component>
     <component>
