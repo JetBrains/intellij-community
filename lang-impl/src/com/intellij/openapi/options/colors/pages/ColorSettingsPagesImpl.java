@@ -43,14 +43,6 @@ public class ColorSettingsPagesImpl extends ColorSettingsPages {
   private List<ColorSettingsPage> myPages = new ArrayList<ColorSettingsPage>();
   private boolean myExtensionsLoaded = false;
 
-  public ColorSettingsPagesImpl() {
-    registerStandardPages();
-  }
-
-  private void registerStandardPages() {
-    registerPage(new GeneralColorsPage());
-  }
-
   public void registerPage(ColorSettingsPage page) {
     myPages.add(page);
   }
