@@ -13,6 +13,9 @@
     <xi:include href="VcsExtensions.xml" xpointer="xpointer(/extensions/*)"/>
     <xi:include href="LangExtensions.xml" xpointer="xpointer(/extensions/*)"/>
 
+    <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtilBase"
+                        serviceImplementation="com.intellij.codeInsight.TargetElementUtilBase"/>
+                                                                                            
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ExcludedFileIndex"
                     serviceImplementation="com.intellij.openapi.vcs.impl.DefaultExcludedFileIndex"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
