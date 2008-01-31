@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   private int myBaseLanguageViewDescriptorIndex;
 
   protected TemplateLanguageStructureViewBuilder(PsiElement psiElement) {
-    myMainFile = PsiUtil.getTemplateLanguageFile(psiElement);
+    myMainFile = PsiUtilBase.getTemplateLanguageFile(psiElement);
     installBaseLanguageListener();
   }
 

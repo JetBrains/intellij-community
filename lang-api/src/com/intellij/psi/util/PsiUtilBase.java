@@ -312,4 +312,12 @@ public class PsiUtilBase {
   public static Language findLanguageFromElement(final PsiElement elt, final PsiFile file) {
     return file.getViewProvider().getRootLanguage(elt);
   }
+
+  public static PsiFile getTemplateLanguageFile(final PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    if (containingFile == null) return null;
+
+    final FileViewProvider viewProvider = containingFile.getViewProvider();
+    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+  }
 }

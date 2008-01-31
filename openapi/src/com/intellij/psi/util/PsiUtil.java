@@ -743,15 +743,6 @@ public final class PsiUtil extends PsiUtilBase {
     return baseLanguage == StdLanguages.JSP || baseLanguage == StdLanguages.JSPX;
   }
 
-  public static PsiFile getTemplateLanguageFile(final PsiElement element) {
-    final PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) return null;
-
-    final FileViewProvider viewProvider = containingFile.getViewProvider();
-    return viewProvider.getPsi(viewProvider.getBaseLanguage());
-  }
-
-
   public static JspFile getJspFile(final PsiElement element) {
     final PsiFile psiFile = getTemplateLanguageFile(element);
     return psiFile instanceof JspFile ? (JspFile)psiFile : null;

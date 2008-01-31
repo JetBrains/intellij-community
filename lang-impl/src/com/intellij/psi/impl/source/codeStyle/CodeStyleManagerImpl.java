@@ -29,8 +29,7 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.ChameleonTransforming;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.jsp.JspFile;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
@@ -213,7 +212,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   public int adjustLineIndentInner(PsiFile file, int offset) throws IncorrectOperationException {
-    final JspFile jspFile = PsiUtil.getJspFile(file);
+    final PsiFile jspFile = PsiUtilBase.getTemplateLanguageFile(file);
 
     if (jspFile != null) {
       file = jspFile;
@@ -282,7 +281,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     if (file == null) return offset;
 
-    final JspFile jspFile = PsiUtil.getJspFile(file);
+    final PsiFile jspFile = PsiUtilBase.getTemplateLanguageFile(file);
 
     if (jspFile != null) {
       file = jspFile;
