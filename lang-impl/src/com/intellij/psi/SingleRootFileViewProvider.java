@@ -185,6 +185,10 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return getContent().getModificationStamp();
   }
 
+  public boolean supportsIncrementalReparse(final Language rootLanguage) {
+    return true;
+  }
+
 
   public PsiFile getCachedPsi(Language target) {
     return myPsiFile.get();

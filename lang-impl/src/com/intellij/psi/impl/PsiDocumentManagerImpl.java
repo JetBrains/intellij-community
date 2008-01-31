@@ -2,7 +2,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
@@ -369,14 +368,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
           file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, data);
         }
 
-        if (file.getViewProvider().getBaseLanguage() == StdLanguages.JSPX && file.getLanguage() == StdLanguages.JAVA) {
-          myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars); // hack
-        }
-        else {
+        if (file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
           int startOffset = textBlock.getStartOffset();
           int endOffset = textBlock.getTextEndOffset();
           int psiEndOffset = textBlock.getPsiEndOffset();
           myBlockSupport.reparseRange(file, startOffset, psiEndOffset, endOffset - psiEndOffset, chars);
+        }
+        else {
+          myBlockSupport.reparseRange(file, 0, document.getTextLength(), document.getTextLength() - file.getTextLength(), chars);
         }
 
         //file.setModificationStamp(document.getModificationStamp());

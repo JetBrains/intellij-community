@@ -93,6 +93,10 @@ public class DummyHolderViewProvider extends UserDataHolderBase implements FileV
     return myModificationStamp;
   }
 
+  public boolean supportsIncrementalReparse(final Language rootLanguage) {
+    return true;
+  }
+
   public void rootChanged(PsiFile psiFile) {
   }
 

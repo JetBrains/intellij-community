@@ -45,6 +45,8 @@ public interface FileViewProvider extends Cloneable, UserDataHolder {
 
   long getModificationStamp();
 
+  boolean supportsIncrementalReparse(Language rootLanguage);
+
   void rootChanged(PsiFile psiFile);
   void beforeContentsSynchronized();
   void contentsSynchronized();
