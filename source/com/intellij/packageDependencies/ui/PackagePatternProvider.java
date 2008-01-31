@@ -24,7 +24,7 @@ import javax.swing.*;
 import java.util.Set;
 
 public class PackagePatternProvider extends PatternDialectProvider {
-  @NonNls private static final String PACKAGES = "package";
+  @NonNls public static final String PACKAGES = "package";
   private static final Logger LOG = Logger.getInstance("#" + PackagePatternProvider.class.getName());
    public static final Icon ICON = IconLoader.getIcon("/general/packagesTab.png");
 

@@ -35,8 +35,10 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.idea.IdeaTestUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyUISettings;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
+import com.intellij.packageDependencies.ui.PackagePatternProvider;
 import com.intellij.psi.*;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import junit.framework.Assert;
@@ -56,6 +58,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase{
       final AnalysisScope scope = new AnalysisScope(file);
       final DependenciesBuilder builder = new ForwardDependenciesBuilder(myProject, scope);
       builder.analyze();
+      DependencyUISettings.getInstance().SCOPE_TYPE = PackagePatternProvider.PACKAGES;
       dependenciesPanel = new DependenciesPanel(myProject, builder);
       JTree leftTree = dependenciesPanel.getLeftTree();
       IdeaTestUtil.assertTreeEqual(leftTree, "-Root\n" +
