@@ -30,9 +30,8 @@ public class PostHighlightingPassFactory extends AbstractProjectComponent implem
 
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange textRange = GeneralHighlightingPassFactory.calculateRangeToProcessForSyntaxPass(editor);
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
     if (textRange == null) return null;
-
     int startOffset = 0;
     int endOffset = editor.getDocument().getTextLength();
 
