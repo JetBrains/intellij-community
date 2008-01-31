@@ -20,10 +20,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,10 +79,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       myIntentionActions = IntentionManager.getInstance().getIntentionActions();
     }
     getActionsToShow(myEditor, myFile, intentionsToShow, errorFixesToShow, inspectionFixesToShow, myIntentionActions, myPassIdToShowIntentionsFor);
-    if (myFile instanceof PsiCodeFragment) {
-      final PsiCodeFragment.IntentionActionsFilter actionsFilter = ((PsiCodeFragment)myFile).getIntentionActionsFilter();
+    if (myFile instanceof IntentionFilterOwner) {
+      final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();
       if (actionsFilter == null) return;
-      if (actionsFilter != PsiCodeFragment.IntentionActionsFilter.EVERYTHING_AVAILABLE) {
+      if (actionsFilter != IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE) {
         filterIntentionActions(actionsFilter, intentionsToShow);
         filterIntentionActions(actionsFilter, errorFixesToShow);
         filterIntentionActions(actionsFilter, inspectionFixesToShow);
@@ -127,7 +124,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
   }
 
-  private static void filterIntentionActions(final PsiCodeFragment.IntentionActionsFilter actionsFilter, final List<HighlightInfo.IntentionActionDescriptor> intentionActionDescriptors) {
+  private static void filterIntentionActions(final IntentionFilterOwner.IntentionActionsFilter actionsFilter, final List<HighlightInfo.IntentionActionDescriptor> intentionActionDescriptors) {
     for (Iterator<HighlightInfo.IntentionActionDescriptor> it = intentionActionDescriptors.iterator(); it.hasNext();) {
         HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
         if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();

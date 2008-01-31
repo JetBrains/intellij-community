@@ -15,14 +15,13 @@
  */
 package com.intellij.psi;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.search.GlobalSearchScope;
 
 /**
  * Represents a fragment of Java code which exists outside of a project structure (for example,
  * in a foreign language code or in a user interface element other than the main source code editor).
  */
-public interface PsiCodeFragment extends PsiImportHolder {
+public interface PsiCodeFragment extends PsiImportHolder, IntentionFilterOwner {
 
 
   /**
@@ -102,20 +101,6 @@ public interface PsiCodeFragment extends PsiImportHolder {
   ExceptionHandler getExceptionHandler();
 
   /**
-   * Sets the intention actions filter which is used to determine which intention actions should be available in an editor.
-   *
-   * @param filter the intention actions filter instance.
-   */
-  void setIntentionActionsFilter(IntentionActionsFilter filter);
-
-  /**
-   * Sets the intention actions filter which is used to determine which intention actions should be available in an editor.
-   *
-   * @return the intention actions filter instance.
-   */
-  IntentionActionsFilter getIntentionActionsFilter();
-
-  /**
    * Force search scope for this fragment
    * @param scope Scope to use when resolving references in this context
    */
@@ -180,25 +165,4 @@ public interface PsiCodeFragment extends PsiImportHolder {
     boolean isHandledException(PsiClassType exceptionType);
   }
 
-  /**
-   * Interface to control the available intention actions.
-   */
-  interface IntentionActionsFilter {
-
-    /**
-     * Checks if the intention action should be available in an editor.
-     * @param intentionAction the intention action to analyze
-     * @return Returns true if the intention action should be available, false otherwise
-     */
-    boolean isAvailable(final IntentionAction intentionAction);
-
-    /**
-     * This filter reports all intentions are available.
-     */
-    IntentionActionsFilter EVERYTHING_AVAILABLE = new IntentionActionsFilter() {
-      public boolean isAvailable(final IntentionAction intentionAction) {
-        return true;
-      }
-    };
-  }
 }
