@@ -1,6 +1,5 @@
 package com.intellij.xdebugger.impl.ui.tree;
 
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.ui.ScrollPaneFactory;
 
 import javax.swing.*;
@@ -13,8 +12,8 @@ public class XDebuggerTreePanel {
   private XDebuggerTree myTree;
   private JPanel myMainPanel;
 
-  public XDebuggerTreePanel(XStackFrame stackFrame) {
-    myTree = new XDebuggerTree(stackFrame);
+  public XDebuggerTreePanel() {
+    myTree = new XDebuggerTree();
     myMainPanel = new JPanel(new BorderLayout());
     myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
   }

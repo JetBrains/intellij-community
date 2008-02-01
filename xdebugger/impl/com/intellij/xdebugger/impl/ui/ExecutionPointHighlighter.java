@@ -30,24 +30,15 @@ public class ExecutionPointHighlighter {
   }
 
   public void show(final XSourcePosition position) {
-    invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         doShow(position);
       }
     });
   }
 
-  private static void invokeLater(final Runnable runnable) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable);
-    }
-  }
-
   public void hide() {
-    invokeLater(new Runnable() {
+    DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         doHide();
       }

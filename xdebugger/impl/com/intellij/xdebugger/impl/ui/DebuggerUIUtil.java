@@ -1,5 +1,7 @@
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,4 +40,12 @@ public class DebuggerUIUtil {
     });
   }
 
+  public static void invokeLater(final Runnable runnable) {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      runnable.run();
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable);
+    }
+  }
 }
