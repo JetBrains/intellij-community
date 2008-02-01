@@ -2,6 +2,7 @@ package com.intellij.xml;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -95,6 +96,7 @@ public class DefaultXmlExtension extends XmlExtension {
         break;
       }
     }
+    
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
     final String prefix = nsPrefix == null ? "x" : nsPrefix;
@@ -104,6 +106,35 @@ public class DefaultXmlExtension extends XmlExtension {
       rootTag.add(attribute);
     } else {
       rootTag.addAfter(attribute, anchor);
+    }
+
+    String location = null;
+    if (namespace.length() > 0) {
+      final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
+      if (provider != null) {
+        final Set<String> strings = provider.getLocations(namespace, file);
+        if (strings != null && strings.size() > 0) {
+          location = strings.iterator().next();
+        }
+      }
+    }
+
+    if (location != null) {
+      XmlAttribute xmlAttribute = rootTag.getAttribute("xsi:schemaLocation");
+      final String pair = namespace + " " + location;
+      if (xmlAttribute == null) {
+        xmlAttribute = elementFactory.createXmlAttribute("xsi:schemaLocation", pair);
+        rootTag.add(xmlAttribute);
+      } else {
+        final String value = xmlAttribute.getValue();
+        if (!value.contains(namespace)) {
+          if (StringUtil.isEmptyOrSpaces(value)) {
+            xmlAttribute.setValue(pair);
+          } else {
+            xmlAttribute.setValue(value.trim() + " " + pair);
+          }
+        }
+      }
     }
     CodeStyleManager.getInstance(project).reformat(rootTag);
     
