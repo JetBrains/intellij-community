@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
-  private final DataIndexer<Key, Value, Input> myMap;
+  private final DataIndexer<Key, Value, Input> myIndexer;
   private final IndexStorage<Key, Value> myStorage;
   
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -38,9 +38,41 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   };
 
-  public MapReduceIndex(DataIndexer<Key, Value, Input> map, final IndexStorage<Key, Value> storage) {
-    myMap = map;
+  public MapReduceIndex(DataIndexer<Key, Value, Input> indexer, final IndexStorage<Key, Value> storage) {
+    myIndexer = indexer;
     myStorage = storage;
+  }
+
+  public IndexStorage<Key, Value> getStorage() {
+    return myStorage;
+  }
+
+  public void clear() throws StorageException {
+    final Lock lock = getWriteLock();
+    lock.lock();
+    try {
+      myStorage.clear();
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+    }
+    finally {
+      lock.unlock();
+    }
+  }
+
+  public void dispose() {
+    final Lock lock = getWriteLock();
+    lock.lock();
+    try {
+      myStorage.close();
+    }
+    catch (StorageException e) {
+      LOG.error(e);
+    }
+    finally {
+      lock.unlock();
+    }
   }
 
   public Lock getReadLock() {
@@ -120,7 +152,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   
   private Map<Key, Set<Value>> processInput(@NotNull Input content) {
     final MyDataConsumer<Key, Value> consumer = new MyDataConsumer<Key, Value>();
-    myMap.map(content, consumer);
+    myIndexer.map(content, consumer);
     return consumer.getResult();
   }
   

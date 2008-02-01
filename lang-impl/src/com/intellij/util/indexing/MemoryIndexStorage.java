@@ -30,6 +30,16 @@ public class MemoryIndexStorage<Key, Value> implements IndexStorage<Key, Value> 
     }
   }
 
+  public void close() throws StorageException {
+    myBackendStorage.close();
+  }
+
+  public void clear() throws StorageException {
+    myMap.clear();
+    myRemovedKeys.clear();
+    myBackendStorage.clear();
+  }
+
   public void flush() throws IOException {
     myBackendStorage.flush();
   }

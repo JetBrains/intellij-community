@@ -1,5 +1,6 @@
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.storage.Storage;
 import org.jetbrains.annotations.NonNls;
 
@@ -10,23 +11,39 @@ import java.io.*;
  *         Date: Dec 18, 2007
  */
 public class PersistentHashMap<Key, Value> extends PersistentEnumerator<Key>{
-  private final Storage myValueStorage;
+  private Storage myValueStorage;
   private final DataExternalizer<Value> myValueExternalizer;
   @NonNls public static final String DATA_FILE_EXTENSION = ".values";
-
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer) throws IOException {
     this(file, keyDescriptor, valueExternalizer, 1024 * 4);
   }
   
   public PersistentHashMap(final File file, PersistentEnumerator.DataDescriptor<Key> keyDescriptor, DataExternalizer<Value> valueExternalizer, final int initialSize) throws IOException {
-    super(file, new DescriptorWrapper<Key>(keyDescriptor), initialSize);
+    super(checkDataFile(file), new DescriptorWrapper<Key>(keyDescriptor), initialSize);
     myValueExternalizer = valueExternalizer;
-    
-    final File dataFile = new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
-    myValueStorage = Storage.create(dataFile.getPath());
+    myValueStorage = Storage.create(getDataFile(file).getPath());
   }
-  
-  
+
+  private static File checkDataFile(final File file) throws IOException{
+    final File dataFile = getDataFile(file);
+    if (!file.exists()) {
+      final File[] files = dataFile.getParentFile().listFiles(new FileFilter() {
+        public boolean accept(final File pathname) {
+          return pathname.getName().startsWith(dataFile.getName());
+        }
+      });
+      for (File f : files) {
+        FileUtil.delete(f);
+      }
+      
+    }
+    return file;
+  }
+
+  private static File getDataFile(final File file) {
+    return new File(file.getParentFile(), file.getName() + DATA_FILE_EXTENSION);
+  }
+
   public synchronized void put(Key key, Value value) throws IOException {
     final int id = enumerate(key);
     int valueId = readValueId(id);

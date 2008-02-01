@@ -258,6 +258,7 @@ import java.util.HashSet;
         for (final File fileToDelete : myFilesToDelete) {
           delete(fileToDelete);
         }
+        LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
         FileUtil.asyncDelete(new File(ourOriginalTempDir + "/tsttmp" + ourTestCount));
         ourTestCount++;

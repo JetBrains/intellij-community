@@ -11,10 +11,14 @@ import java.util.concurrent.locks.Lock;
 public interface UpdatableIndex<Key, Value, Input> extends AbstractIndex<Key,Value> {
 
   void removeData(Key key) throws StorageException;
+  
+  void clear() throws StorageException;
 
   void update(int inputId, @Nullable Input content, @Nullable Input oldContent) throws StorageException;
   
   Lock getReadLock();
   
   Lock getWriteLock();
+  
+  void dispose();
 }

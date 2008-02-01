@@ -1,6 +1,7 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -16,18 +17,24 @@ import java.util.Iterator;
 */
 final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapIndexStorage");
-  private final PersistentHashMap<Key, ValueContainerImpl<Value>> myMap;
+  private PersistentHashMap<Key, ValueContainerImpl<Value>> myMap;
   private final DataExternalizer<Value> myValueExternalizer;
   private final ObjectCache<Key, ValueContainerImpl<Value>> myCache;
   private Key myKeyBeingRemoved = null;
-  
+  private final File myStorageFile;
+  private final PersistentEnumerator.DataDescriptor<Key> myKeyDescriptor;
+  private final ValueContainerExternalizer<Value> myValueContainerExternalizer;
+
   public MapIndexStorage(
     File storageFile, 
     final PersistentEnumerator.DataDescriptor<Key> keyDescriptor, 
     final DataExternalizer<Value> valueExternalizer) throws IOException {
     myValueExternalizer = valueExternalizer;
 
-    myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(storageFile, keyDescriptor, new ValueContainerExternalizer<Value>(valueExternalizer));
+    myStorageFile = storageFile;
+    myKeyDescriptor = keyDescriptor;
+    myValueContainerExternalizer = new ValueContainerExternalizer<Value>(valueExternalizer);
+    myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
     myCache = new ObjectCache<Key, ValueContainerImpl<Value>>(1024);
     myCache.addDeletedPairsListener(new ObjectCache.DeletedPairsListener() {
       public void objectRemoved(final Object key, final Object value) {
@@ -37,7 +44,9 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
         }
         try {
           //noinspection unchecked
-          myMap.put(_key, (ValueContainerImpl<Value>)value);
+          if (myMap != null) {
+            myMap.put(_key, (ValueContainerImpl<Value>)value);
+          }
         }
         catch (IOException e) {
           LOG.error(e);
@@ -61,6 +70,24 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
     try {
       flush();
       myMap.close();
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
+  }
+
+  public void clear() throws StorageException{
+    try {
+      myMap.close();
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    myMap = null;
+    myCache.removeAll();
+    FileUtil.delete(myStorageFile);
+    try {
+      myMap = new PersistentHashMap<Key,ValueContainerImpl<Value>>(myStorageFile, myKeyDescriptor, myValueContainerExternalizer);
     }
     catch (IOException e) {
       throw new StorageException(e);
