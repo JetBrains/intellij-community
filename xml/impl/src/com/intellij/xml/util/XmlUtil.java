@@ -413,7 +413,7 @@ public class XmlUtil {
   }
 
   public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
-                                                                          final HashMap<String, T> presentNames,
+                                                                          final Map<String, T> presentNames,
                                                                           DuplicationInfoProvider<T> provider,
                                                                           final Validator.ValidationHost host) {
     for (T t : elements) {
@@ -1484,12 +1484,12 @@ public class XmlUtil {
 
   public interface DuplicationInfoProvider<T extends PsiElement> {
     @Nullable
-    String getName(T t);
+    String getName(@NotNull T t);
 
     @NotNull
-    String getNameKey(T t, String name);
+    String getNameKey(@NotNull T t, @NotNull String name);
 
     @NotNull
-    PsiElement getNodeForMessage(T t);
+    PsiElement getNodeForMessage(@NotNull T t);
   }
 }
