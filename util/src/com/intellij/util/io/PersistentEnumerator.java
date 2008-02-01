@@ -93,7 +93,7 @@ public class PersistentEnumerator<Data> implements Forceable {
     return ourFlyweight;
   }
 
-  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(2048, 8192);
+  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(8192, 8192);
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})

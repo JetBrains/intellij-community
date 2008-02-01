@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SLRUCache;
+import com.intellij.util.io.Page;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,10 +39,19 @@ public class Storage implements Disposable, Forceable {
   private DataTable myDataTable;
 
   private final Object myAppendersLock = new Object();
-  private final SLRUCache<Integer, AppenderStream> myAppendersCache = new SLRUCache<Integer, AppenderStream>(2048, 8192) {
+  private final SLRUCache<Integer, AppenderStream> myAppendersCache = new SLRUCache<Integer, AppenderStream>(4 * 1024, 8192) {
     @NotNull
     public AppenderStream createValue(final Integer key) {
       return new AppenderStream(key.intValue());
+    }
+
+    @NotNull
+    public AppenderStream get(final Integer key) {
+      final AppenderStream stream = super.get(key);
+      if (stream.size() > Page.PAGE_SIZE) {
+        stream.reset();
+      }
+      return stream;
     }
 
     protected void onDropFromCache(final Integer key, final AppenderStream value) {
@@ -367,6 +377,17 @@ public class Storage implements Disposable, Forceable {
     public void realClose() throws IOException {
       super.close();
       appendBytes(myRecordId, ((ByteArrayOutputStream)out).toByteArray());
+    }
+
+    public void reset() {
+      try {
+        realClose();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+
+      ((ByteArrayOutputStream)out).reset();
     }
   }
 }
