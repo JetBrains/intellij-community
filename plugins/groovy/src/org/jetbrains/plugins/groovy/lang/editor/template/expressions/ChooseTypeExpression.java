@@ -57,7 +57,9 @@ public class ChooseTypeExpression implements Expression {
       }
     }
 
-    LookupItemUtil.addLookupItem(result, "def", "");
+    LookupItem item = LookupItemUtil.objectToLookupItem("def");
+    item.setBold();
+    result.add(item);
 
     return result.toArray(new LookupItem[result.size()]);
   }
