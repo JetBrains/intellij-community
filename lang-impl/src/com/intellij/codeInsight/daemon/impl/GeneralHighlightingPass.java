@@ -1,7 +1,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
@@ -342,7 +341,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       if (visitor.suitableForFile(myFile)) visitors.add(visitor);
     }
 
-    final boolean isAntFile = CodeInsightUtil.isAntFile(myFile);
+    boolean forceHighlightParents = false;
+    for(HighlightRangeExtension extension: Extensions.getExtensions(HighlightRangeExtension.EP_NAME)) {
+      if (extension.isForceHighlightParents(myFile)) {
+        forceHighlightParents = true;
+        break;
+      }
+    }
 
     final HighlightInfoHolder holder = createInfoHolder();
     holder.setWritable(true);
@@ -382,7 +387,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (!gotHighlights.add(info)) continue;
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
-          if (!isAntFile) {
+          if (!forceHighlightParents) {
             skipParentsSet.add(element.getParent());
           }
           myErrorFound = true;
