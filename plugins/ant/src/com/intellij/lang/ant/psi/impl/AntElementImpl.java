@@ -12,14 +12,12 @@ import com.intellij.lang.ant.psi.AntFile;
 import com.intellij.lang.ant.psi.AntProject;
 import com.intellij.lang.ant.psi.impl.reference.AntReferenceProvidersRegistry;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLock;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.*;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,7 +217,7 @@ public class AntElementImpl extends MetadataPsiElementBase implements AntElement
     final List<PsiReference> result = PsiReferenceListSpinAllocator.alloc();
     try {
       for (final PsiReferenceProvider provider : providers) {
-        result.addAll(Arrays.asList(provider.getReferencesByElement(this)));
+        result.addAll(Arrays.asList(provider.getReferencesByElement(this, new MatchingContext())));
       }
       return myReferences = result.toArray(new PsiReference[result.size()]);
     }

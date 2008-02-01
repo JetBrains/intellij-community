@@ -16,7 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,6 +36,7 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ import java.util.regex.Pattern;
 /**
  * @by Maxim.Mossienko
  */
-public class SchemaReferencesProvider implements PsiReferenceProvider {
+public class SchemaReferencesProvider extends PsiReferenceProvider {
   @NonNls private static final String VALUE_ATTR_NAME = "value";
   @NonNls private static final String PATTERN_TAG_NAME = "pattern";
   @NonNls private static final String NAME_ATTR_NAME = "name";
@@ -606,7 +607,7 @@ public class SchemaReferencesProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof XmlAttribute)) return PsiReference.EMPTY_ARRAY;
     final String attrName = ((XmlAttribute)parent).getName();

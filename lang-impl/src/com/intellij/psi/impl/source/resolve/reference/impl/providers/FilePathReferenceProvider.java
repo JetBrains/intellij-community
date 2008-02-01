@@ -9,7 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,7 +18,7 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class FilePathReferenceProvider implements PsiReferenceProvider {
+public class FilePathReferenceProvider extends PsiReferenceProvider {
   @NotNull
   public PsiReference[] getReferencesByElement(PsiElement element, String text, int offset, final boolean soft) {
     return new FileReferenceSet(text, element, offset, this, true) {
@@ -59,7 +60,7 @@ public class FilePathReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     String text = null;
     if (element instanceof PsiLiteralExpression) {
       Object value = ((PsiLiteralExpression)element).getValue();

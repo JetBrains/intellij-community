@@ -1,7 +1,9 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.patterns.MatchingContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,30 +17,30 @@ import java.util.Map;
  * Time: 8:10:06 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CustomizingReferenceProvider implements CustomizableReferenceProvider {
+public class CustomizingReferenceProvider extends PsiReferenceProvider implements CustomizableReferenceProvider {
   private CustomizableReferenceProvider myProvider;
-  private @Nullable Map<CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> myOptions;
 
   public CustomizingReferenceProvider(@NotNull CustomizableReferenceProvider provider) {
     myProvider = provider;
   }
   
-  public <Option> void addCustomization(CustomizationKey<Option> key, Option value) {
+  public <Option> void addCustomization(CustomizableReferenceProvider.CustomizationKey<Option> key, Option value) {
     if (myOptions == null) {
-      myOptions = new HashMap<CustomizationKey, Object>(5);
+      myOptions = new HashMap<CustomizableReferenceProvider.CustomizationKey, Object>(5);
     }
     myOptions.put(key,value);
   }
   
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     myProvider.setOptions(myOptions);
-    final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element);
+    final PsiReference[] referencesByElement = myProvider.getReferencesByElement(element, matchingContext);
     myProvider.setOptions(null);
     return referencesByElement;
   }
 
-  public void setOptions(@Nullable Map<CustomizationKey, Object> options) {
+  public void setOptions(@Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> options) {
     myOptions = options;  // merge ?
   }
 

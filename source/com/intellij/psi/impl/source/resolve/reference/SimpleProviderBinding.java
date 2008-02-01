@@ -2,8 +2,9 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ReflectionCache;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,24 +27,15 @@ public class SimpleProviderBinding implements ProviderBinding {
     myScope = scope;
   }
 
-  private boolean isAcceptable(PsiElement position, ElementPattern filter){
-    if(position == null) return false;
-
-    if (ReflectionCache.isAssignable(myScope, position.getClass())) {
-      return filter == null || filter.accepts(position);
-    }
-
-    return false;
-  }
-
   public void registerProvider(PsiReferenceProvider provider,ElementPattern pattern,@Nullable Double priority){
     myProviderPairs.add(Trinity.create(provider, pattern, priority == null ? ReferenceProvidersRegistry.DEFAULT_PRIORITY : priority));
   }
 
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ElementPattern, Double>> list) {
-    for(Trinity<PsiReferenceProvider,ElementPattern,Double> pair:myProviderPairs) {
-      if (isAcceptable(position,pair.second)) {
-        list.add(pair);
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, MatchingContext, Double>> list) {
+    for(Trinity<PsiReferenceProvider,ElementPattern,Double> trinity:myProviderPairs) {
+      final MatchingContext context = new MatchingContext();
+      if (trinity.second.accepts(position, context)) {
+        list.add(Trinity.create(trinity.first, context, trinity.third));
       }
     }
   }

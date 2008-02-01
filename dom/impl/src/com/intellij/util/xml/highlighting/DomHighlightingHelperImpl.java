@@ -15,7 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -36,6 +36,7 @@ import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import com.intellij.xml.XmlBundle;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +116,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         return checkExtendClass(element, (PsiClass)valueObject, extend.value(), extend.instantiatable(), extend.canBeDecorator(), holder);
       }
       else {
-        final PsiReference[] references = myProvider.getReferencesByElement(DomUtil.getValueElement(element));
+        final PsiReference[] references = myProvider.getReferencesByElement(DomUtil.getValueElement(element), new MatchingContext());
         for (PsiReference reference : references) {
           if (reference instanceof JavaClassReference) {
             final PsiReferenceProvider psiReferenceProvider = ((JavaClassReference)reference).getProvider();
@@ -196,7 +197,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement != null && !isSoftReference(element)) {
       final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
-      final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement);
+      final PsiReference[] psiReferences = myProvider.getReferencesByElement(valueElement, new MatchingContext());
       GenericDomValueReference domReference = null;
       for (final PsiReference reference : psiReferences) {
         if (reference instanceof GenericDomValueReference) {

@@ -3,7 +3,7 @@ package com.intellij.lang.ant.psi.impl.reference;
 import com.intellij.lang.ant.psi.AntElement;
 import com.intellij.lang.ant.psi.impl.*;
 import com.intellij.lang.ant.psi.impl.reference.providers.*;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.containers.HashMap;
 
 import java.util.Map;

@@ -1,7 +1,7 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 
@@ -12,7 +12,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
  * Time: 17:23:43
  * To change this template use Options | File Templates.
  */
-public abstract class GenericReferenceProvider implements PsiReferenceProvider {
+public abstract class GenericReferenceProvider extends PsiReferenceProvider {
   private boolean mySoft = false;
 
   public void handleEmptyContext(PsiScopeProcessor processor, PsiElement position) {

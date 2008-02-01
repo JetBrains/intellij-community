@@ -1,7 +1,10 @@
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.patterns.MatchingContext;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -10,7 +13,7 @@ import java.util.Map;
 /**
  * @author Maxim.Mossienko
  */
-public interface CustomizableReferenceProvider extends PsiReferenceProvider {
+public interface CustomizableReferenceProvider {
   final class CustomizationKey<T> {
     private String myOptionDescription;
 
@@ -39,4 +42,7 @@ public interface CustomizableReferenceProvider extends PsiReferenceProvider {
 
   void setOptions(@Nullable Map<CustomizationKey,Object> options);
   @Nullable Map<CustomizationKey,Object> getOptions();
+
+  @NotNull
+  public abstract PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext);
 }

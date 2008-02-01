@@ -2,7 +2,9 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.MatchingContext;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.List;
  * To change this template use Options | File Templates.
  */
 public interface ProviderBinding {
-  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ElementPattern, Double>> list);
+  void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, MatchingContext, Double>> list);
 
   void unregisterProvider(final PsiReferenceProvider provider);
 }

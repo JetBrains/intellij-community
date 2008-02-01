@@ -7,7 +7,7 @@ import com.intellij.javaee.web.PsiReferenceConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlAttribute;
@@ -17,6 +17,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.xml.*;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public class GenericValueReferenceProvider implements PsiReferenceProvider {
+public class GenericValueReferenceProvider extends PsiReferenceProvider {
 
   private final Map<Class, PsiReferenceFactory> myProviders = new HashMap<Class, PsiReferenceFactory>();
 
@@ -35,7 +36,7 @@ public class GenericValueReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public final PsiReference[] getReferencesByElement(PsiElement psiElement) {
+  public final PsiReference[] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final MatchingContext matchingContext) {
 
     if (psiElement == null) {
       return PsiReference.EMPTY_ARRAY;

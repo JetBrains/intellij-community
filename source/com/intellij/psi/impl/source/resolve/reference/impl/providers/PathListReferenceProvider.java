@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +31,10 @@ import org.jetbrains.annotations.NotNull;
 public class PathListReferenceProvider extends PsiReferenceProviderBase {
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+    return getReferencesByElement(element);
+  }
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
 
     PsiReference[] result = PsiReference.EMPTY_ARRAY;
     XmlValueProvider<PsiElement> provider = XmlValueProvider.getProvider(element);

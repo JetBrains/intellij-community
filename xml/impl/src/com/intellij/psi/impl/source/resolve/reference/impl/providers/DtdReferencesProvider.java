@@ -7,7 +7,7 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
@@ -23,6 +23,7 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ import java.util.List;
  * Time: 3:58:53 PM
  * To change this template use File | Settings | File Templates.
  */
-public class DtdReferencesProvider implements PsiReferenceProvider {
+public class DtdReferencesProvider extends PsiReferenceProvider {
   static class ElementReference implements PsiReference, LocalQuickFixProvider, EmptyResolveMessageProvider {
     private XmlElement myElement;
     private XmlElement myNameElement;
@@ -258,7 +259,7 @@ public class DtdReferencesProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     XmlElement nameElement = null;
 
     if (element instanceof XmlDoctype) {

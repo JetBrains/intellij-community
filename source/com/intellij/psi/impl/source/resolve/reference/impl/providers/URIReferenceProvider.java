@@ -12,11 +12,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ import java.util.StringTokenizer;
 /**
  * @by Maxim.Mossienko
  */
-public class URIReferenceProvider implements PsiReferenceProvider {
+public class URIReferenceProvider extends PsiReferenceProvider {
 
   public static final ElementFilter ELEMENT_FILTER = new ElementFilter() {
     public boolean isAcceptable(Object element, PsiElement context) {
@@ -86,7 +87,7 @@ public class URIReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     final String text = element.getText();
     String s = StringUtil.stripQuotesAroundValue(text);
     final PsiElement parent = element.getParent();

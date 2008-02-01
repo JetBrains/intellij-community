@@ -7,18 +7,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class AntAttributeReferenceProvider implements PsiReferenceProvider {
+public class AntAttributeReferenceProvider extends PsiReferenceProvider {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     if (!(element instanceof AntStructuredElement)) {
       return PsiReference.EMPTY_ARRAY;
     }

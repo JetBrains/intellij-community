@@ -4,19 +4,20 @@ import com.intellij.lang.ant.psi.AntStructuredElement;
 import com.intellij.lang.ant.psi.impl.reference.AntFileReferenceSet;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AntFileReferenceProvider implements PsiReferenceProvider {
+public class AntFileReferenceProvider extends PsiReferenceProvider {
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     AntStructuredElement antElement = (AntStructuredElement)element;
     final List<String> referenceAttributes = antElement.getFileReferenceAttributes();
     if (referenceAttributes.isEmpty()) {

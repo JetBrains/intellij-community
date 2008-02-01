@@ -4,9 +4,11 @@
 
 package com.intellij.psi.impl.source.resolve.reference;
 
+import com.intellij.psi.PsiReferenceProvider;
+
 /**
  * @author Dmitry Avdeev
  */
-public abstract class PsiReferenceProviderBase implements PsiReferenceProvider {
+public abstract class PsiReferenceProviderBase extends PsiReferenceProvider {
 
 }

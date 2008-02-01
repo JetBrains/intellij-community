@@ -5,21 +5,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
-public class XmlEncodingReferenceProvider implements PsiReferenceProvider {
+public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferenceProvider");
   @NonNls private static final String CHARSET_PREFIX = "charset=";
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
 

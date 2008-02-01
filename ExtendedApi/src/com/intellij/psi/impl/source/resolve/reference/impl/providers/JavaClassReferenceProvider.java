@@ -10,6 +10,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
+import com.intellij.patterns.MatchingContext;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +64,11 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+    return getReferencesByElement(element);
+  }
+
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
     final String text = element.getText();
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(element);
     if (manipulator != null) {

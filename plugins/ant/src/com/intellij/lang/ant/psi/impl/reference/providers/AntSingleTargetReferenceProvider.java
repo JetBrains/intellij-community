@@ -8,17 +8,18 @@ import com.intellij.lang.ant.psi.impl.reference.AntTargetReference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class AntSingleTargetReferenceProvider implements PsiReferenceProvider {
+public class AntSingleTargetReferenceProvider extends PsiReferenceProvider {
 
   @NonNls private static final Map<Class,String> ourTypesToAttributeNames;
 
@@ -30,7 +31,7 @@ public class AntSingleTargetReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     String attributeName = ourTypesToAttributeNames.get(element.getClass());
     if( attributeName == null) {
       return PsiReference.EMPTY_ARRAY;

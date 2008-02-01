@@ -2,7 +2,9 @@ package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.MatchingContext;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.containers.ConcurrentHashMap;
@@ -43,7 +45,7 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
     }
   }
 
-  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ElementPattern, Double>> list) {
+  public void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, MatchingContext, Double>> list) {
     if (!ReflectionCache.isInstance(position, myClass)) return;
 
     String name = getName(position);
@@ -84,11 +86,11 @@ abstract class NamedObjectProviderBinding implements ProviderBinding {
 
   private static void addMatchingProviders(final PsiElement position,
                                            final List<Trinity<PsiReferenceProvider,ElementPattern,Double>> providerList,
-                                           final List<Trinity<PsiReferenceProvider,ElementPattern,Double>> ret) {
-    for(final Trinity<PsiReferenceProvider,ElementPattern,Double> pair:providerList) {
-      final ElementPattern pattern = pair.getSecond();
-      if (pattern == null || pattern.accepts(position)) {
-        ret.add(pair);
+                                           final List<Trinity<PsiReferenceProvider,MatchingContext,Double>> ret) {
+    for(Trinity<PsiReferenceProvider,ElementPattern,Double> trinity:providerList) {
+      final MatchingContext context = new MatchingContext();
+      if (trinity.second.accepts(position, context)) {
+        ret.add(Trinity.create(trinity.first, context, trinity.third));
       }
     }
   }

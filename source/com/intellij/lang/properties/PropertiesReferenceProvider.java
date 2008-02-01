@@ -4,13 +4,14 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.i18n.I18nUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspXmlTagBase;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.jsp.el.ELExpressionHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -20,7 +21,7 @@ import java.util.Map;
 /**
  * @author cdr
  */
-public class PropertiesReferenceProvider implements PsiReferenceProvider {
+public class PropertiesReferenceProvider extends PsiReferenceProvider {
 
   private final boolean myDefaultSoft;
 
@@ -30,7 +31,7 @@ public class PropertiesReferenceProvider implements PsiReferenceProvider {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     Object value = null;
     String bundleName = null;
     boolean propertyRefWithPrefix = false;

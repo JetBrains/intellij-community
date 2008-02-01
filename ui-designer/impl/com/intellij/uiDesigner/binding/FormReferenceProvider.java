@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProvider;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.ProjectScope;
@@ -20,6 +20,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.intellij.patterns.MatchingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ import java.util.Map;
 /**
  * @author yole
  */
-public class FormReferenceProvider implements PsiReferenceProvider, ProjectComponent {
+public class FormReferenceProvider extends PsiReferenceProvider implements ProjectComponent {
   private static class CachedFormData {
     PsiReference[] myReferences;
     Map<String, Pair<PsiType, TextRange>> myFieldNameToTypeMap;
@@ -48,7 +49,7 @@ public class FormReferenceProvider implements PsiReferenceProvider, ProjectCompo
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(final PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final MatchingContext matchingContext) {
     if (element instanceof PsiPlainTextFile) {
       final PsiPlainTextFile plainTextFile = (PsiPlainTextFile) element;
       if (plainTextFile.getFileType().equals(StdFileTypes.GUI_DESIGNER_FORM)) {

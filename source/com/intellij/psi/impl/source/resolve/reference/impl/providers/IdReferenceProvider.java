@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
+import com.intellij.patterns.MatchingContext;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class IdReferenceProvider extends PsiReferenceProviderBase {
   }
 
   @NotNull
-  public PsiReference[] getReferencesByElement(PsiElement element) {
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
     if (element instanceof XmlAttributeValue) {
       if (PsiTreeUtil.getChildOfAnyType(element, JspXmlTagBase.class, ELExpressionHolder.class) != null) {
         return PsiReference.EMPTY_ARRAY;
