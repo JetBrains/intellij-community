@@ -1,10 +1,11 @@
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.CompositeLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,9 +138,25 @@ public class SelectWordHandler extends EditorActionHandler {
 
   @Nullable
   private static PsiElement findElementAt(final PsiFile file, final int caretOffset) {
-    return CodeInsightUtil.isAntFile(file)
-           ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
-           : file.findElementAt(caretOffset);
+    PsiElement elementAt = file.findElementAt(caretOffset);
+    if (isLanguageExtension(file, elementAt)) {
+      return file.getViewProvider().findElementAt(caretOffset, file.getLanguage());
+    }
+    return elementAt;
+  }
+
+  private static boolean isLanguageExtension(final PsiFile file, final PsiElement elementAt) {
+    final Language elementLanguage = elementAt.getLanguage();
+    if (file.getLanguage() instanceof CompositeLanguage) {
+      CompositeLanguage compositeLanguage = (CompositeLanguage) file.getLanguage();
+      final Language[] extensions = compositeLanguage.getLanguageExtensionsForFile(file);
+      for(Language extension: extensions) {
+        if (extension == elementLanguage) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @NotNull
