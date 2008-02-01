@@ -16,10 +16,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class DeamonEditorPopup extends PopupHandler {
+public class DaemonEditorPopup extends PopupHandler {
   private final PsiFile myPsiFile;
 
-  public DeamonEditorPopup(final PsiFile psiFile) {
+  public DaemonEditorPopup(final PsiFile psiFile) {
     myPsiFile = psiFile;
   }
 
