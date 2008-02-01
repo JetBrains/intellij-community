@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
@@ -418,7 +418,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (HighlightLevelUtil.shouldInspect(psiRoot)) {
         ApplicationManager.getApplication().runReadAction(new Runnable(){
           public void run() {
-            result.addAll(CodeInsightUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
+            result.addAll(CollectHighlightsUtil.getElementsInRange(psiRoot, startOffset, endOffset, true));
           }
         });
       }

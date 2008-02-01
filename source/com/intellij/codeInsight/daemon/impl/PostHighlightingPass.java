@@ -2,7 +2,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -109,7 +109,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         for (Language language : relevantLanguages) {
           PsiElement psiRoot = viewProvider.getPsi(language);
           if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
-          List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+          List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
           elementSet.addAll(elements);
         }
 

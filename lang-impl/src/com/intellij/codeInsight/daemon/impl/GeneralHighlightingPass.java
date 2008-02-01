@@ -4,8 +4,8 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.problems.ProblemImpl;
 import com.intellij.concurrency.JobUtil;
@@ -139,7 +139,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         PsiElement psiRoot = viewProvider.getPsi(language);
         if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
         //long time = System.currentTimeMillis();
-        List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+        List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
         if (elements.isEmpty()) {
           elements = Collections.singletonList(psiRoot);
         }

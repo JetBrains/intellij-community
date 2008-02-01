@@ -4,7 +4,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
@@ -67,7 +67,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
       PsiElement psiRoot = viewProvider.getPsi(language);
       if (!HighlightLevelUtil.shouldHighlight(psiRoot)) continue;
       //long time = System.currentTimeMillis();
-      List<PsiElement> elements = CodeInsightUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
+      List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, myStartOffset, myEndOffset);
       if (elements.isEmpty()) {
         elements = Collections.singletonList(psiRoot);
       }
@@ -166,7 +166,7 @@ public class LineMarkersPass extends ProgressableTextEditorHighlightingPass {
         return Collections.emptyList();
       }
       ArrayList<LineMarkerInfo> result = new ArrayList<LineMarkerInfo>();
-      addLineMarkers(CodeInsightUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), result);
+      addLineMarkers(CollectHighlightsUtil.getElementsInRange(myFile, myStartOffset, myEndOffset), result);
       return result;
     }
     catch (ProcessCanceledException e) {

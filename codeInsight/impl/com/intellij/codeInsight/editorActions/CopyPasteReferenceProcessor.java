@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -33,7 +33,7 @@ public class CopyPasteReferenceProcessor implements CopyPastePostProcessor {
     for (int j = 0; j < startOffsets.length; j++) {
       final int startOffset = startOffsets[j];
       final int endOffset = endOffsets[j];
-      final List<PsiElement> elements = CodeInsightUtil.getElementsInRange(file, startOffset, endOffset);
+      final List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
       for (final PsiElement element : elements) {
         if (element instanceof PsiJavaCodeReferenceElement) {
           if (!((PsiJavaCodeReferenceElement)element).isQualified()) {

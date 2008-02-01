@@ -1,7 +1,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -129,7 +129,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     int startOffset = document.getLineStartOffset(lineNumber);
     int endOffset = document.getLineEndOffset(lineNumber);
 
-    List<PsiElement> elements = CodeInsightUtil.getElementsInRange(file, startOffset, endOffset);
+    List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(file, startOffset, endOffset);
     for (PsiElement element : elements) {
       if (element instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element;

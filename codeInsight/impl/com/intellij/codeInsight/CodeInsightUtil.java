@@ -6,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -20,9 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
-import com.intellij.psi.impl.source.jsp.jspJava.JspxImportList;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiProximityComparator;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,7 +34,6 @@ import com.intellij.util.Query;
 import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -46,8 +41,6 @@ import java.util.*;
  *
  */
 public class CodeInsightUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.CodeInsightUtil");
-
   public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if (!file.getViewProvider().getRelevantLanguages().contains(StdLanguages.JAVA)) return null;
     final PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
@@ -161,108 +154,6 @@ public class CodeInsightUtil {
     }
 
     return array.toArray(new PsiElement[array.size()]);
-  }
-
-  @NotNull
-  public static List<PsiElement> getElementsInRange(PsiElement root, final int startOffset, final int endOffset) {
-    return getElementsInRange(root, startOffset, endOffset, false);
-  }
-
-  @NotNull
-  public static List<PsiElement> getElementsInRange(final PsiElement root,
-                                                    final int startOffset,
-                                                    final int endOffset,
-                                                    boolean includeAllParents) {
-    PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
-    if (commonParent == null) return Collections.emptyList();
-    final List<PsiElement> list = new ArrayList<PsiElement>();
-
-    final int currentOffset = commonParent.getTextRange().getStartOffset();
-    final PsiElementVisitor visitor = new JavaRecursiveElementVisitor() {
-      int offset = currentOffset;
-
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        visitElement(expression);
-      }
-
-      @Override public void visitElement(PsiElement element) {
-        PsiElement child = element.getFirstChild();
-        if (child != null) {
-          // composite element
-          while (child != null) {
-            if (offset > endOffset) break;
-            int start = offset;
-            child.accept(this);
-            if (startOffset <= start && offset <= endOffset) list.add(child);
-            child = child.getNextSibling();
-          }
-        }
-        else {
-          // leaf element
-          offset += element.getTextLength();
-        }
-      }
-
-
-      @Override public void visitMethod(PsiMethod method) {
-        if (method instanceof JspHolderMethod && root != method) {
-          list.addAll(getElementsInRange(method, startOffset, endOffset, false));
-        }
-        else {
-          visitElement(method);
-        }
-      }
-
-
-      @Override public void visitImportList(PsiImportList list) {
-        if (!(list instanceof JspxImportList)) super.visitImportList(list);
-      }
-
-      @Override public void visitJspFile(final JspFile file) {
-        visitFile(file);
-      }
-    };
-    commonParent.accept(visitor);
-    PsiElement parent = commonParent;
-    while (parent != null && parent != root) {
-      list.add(parent);
-      parent = includeAllParents ? parent.getParent() : null;
-    }
-
-    list.add(root);
-
-    return Collections.unmodifiableList(list);
-  }
-
-  @Nullable
-  private static PsiElement findCommonParent(final PsiElement root, final int startOffset, final int endOffset) {
-    if (startOffset == endOffset) return null;
-    final PsiElement left = findElementAtInRoot(root, startOffset);
-    PsiElement right = findElementAtInRoot(root, endOffset - 1);
-    if (left == null || right == null) return null;
-
-    PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
-    LOG.assertTrue(commonParent != null);
-    LOG.assertTrue(commonParent.getTextRange() != null);
-
-    while (commonParent.getParent() != null && commonParent.getTextRange().equals(commonParent.getParent().getTextRange())) {
-      commonParent = commonParent.getParent();
-    }
-    return commonParent;
-  }
-
-  @Nullable
-  private static PsiElement findElementAtInRoot(final PsiElement root, final int offset) {
-    if (root instanceof PsiFile) {
-      final PsiFile file = (PsiFile)root;
-      final LanguageDialect dialect = file.getLanguageDialect();
-      if (dialect != null) {
-        final PsiElement element = file.getViewProvider().findElementAt(offset, dialect);
-        if (element != null) return element;
-      }
-      return file.getViewProvider().findElementAt(offset, root.getLanguage());
-    }
-    return root.findElementAt(offset);
   }
 
   public static void sortIdenticalShortNameClasses(PsiClass[] classes, @NotNull PsiElement context) {
