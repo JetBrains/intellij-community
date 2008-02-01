@@ -19,15 +19,14 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class PagePool {
-  private final static int PROTECTED_PAGES = 50;
-  private final static int PROBATIONAL_PAGES = 150;
+  private final static int PROTECTED_PAGES = 150;
+  private final static int PROBATIONAL_PAGES = 500;
 
   private final Map<PoolPageKey, Page> myProtectedQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
@@ -41,7 +40,6 @@ public class PagePool {
   };
 
   private long finalizationId = 0;
-  private long lastFinalizationPerformed = 0;
 
   private final Map<PoolPageKey, Page> myProbationalQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
@@ -55,8 +53,6 @@ public class PagePool {
   };
   private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
 
-  private final ThreadPoolExecutor myFinalizer = ConcurrencyUtil.newSingleThreadExecutor("Disk cache finalization queue");
-
   private final Object lock = new Object();
   private final Object finalizationLock = new Object();
 
@@ -67,6 +63,8 @@ public class PagePool {
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int protected_queue_hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int probational_queue_hits = 0;
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private static int finalization_queue_hits = 0;
+
+  @NonNls private static final String FINALIZER_THREAD_NAME = "Disk cache finalization queue";
 
   @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
   @NotNull
@@ -179,7 +177,7 @@ public class PagePool {
     synchronized (lock) {
       if (page.isDirty()) {
         if (myFinalizerThread == null) {
-          myFinalizerThread = new Thread(new FinalizationThreadWorker(), "Disk cache finalization queue");
+          myFinalizerThread = new Thread(new FinalizationThreadWorker(), FINALIZER_THREAD_NAME);
           myFinalizerThread.start();
         }
 
@@ -245,7 +243,6 @@ public class PagePool {
           }
 
           synchronized (finalizationLock) {
-            lastFinalizationPerformed = request.finalizationId;
             finalizationLock.notifyAll();
           }
         }

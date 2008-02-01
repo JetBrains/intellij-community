@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.BitSet;
 
 public class Page {
-  public static final int PAGE_SIZE = 8 * 1024;
+  public static final int PAGE_SIZE = 4 * 1024;
 
   private static final LimitedPool<ByteBuffer> ourBufferPool = new LimitedPool<ByteBuffer>(10, new LimitedPool.ObjectFactory<ByteBuffer>() {
     public ByteBuffer create() {
