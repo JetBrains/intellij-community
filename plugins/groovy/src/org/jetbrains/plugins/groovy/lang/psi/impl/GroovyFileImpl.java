@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -275,7 +277,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException {
     T result = (T) addBefore(decl, anchorBefore);
-    PsiImplUtil.reformatAfterInsertion(result);
+    CodeStyleManager styleManager = result.getManager().getCodeStyleManager();
+    PsiElement parent = result.getContainingFile();
+    TextRange range = result.getTextRange();
+    styleManager.reformatRange(parent, range.getEndOffset() - 1, range.getEndOffset() + 1);
+    styleManager.reformatRange(parent, range.getStartOffset() - 1, range.getStartOffset() + 1);
+
     return result;
   }
 

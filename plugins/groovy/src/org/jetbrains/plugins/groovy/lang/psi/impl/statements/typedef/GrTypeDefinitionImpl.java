@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.GroovyIcons;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -823,8 +824,10 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
       assert child != null;
       anchorNode = child.getNode();
     }
-    body.getNode().addChild(decl.getNode(), anchorNode);
-    PsiImplUtil.reformatAfterInsertion(decl);
+    ASTNode bodyNode = body.getNode();
+    bodyNode.addChild(decl.getNode(), anchorNode);
+    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", decl.getNode()); //add whitespaces before and after to hack over incorrect auto reformat
+    bodyNode.addLeaf(GroovyTokenTypes.mWS, " ", anchorNode);
     return decl;
   }
 }
