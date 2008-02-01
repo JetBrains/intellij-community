@@ -18,6 +18,7 @@
     <lang.findUsagesProvider language="Python" implementationClass="ru.yole.pythonid.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="ru.yole.pythonid.PythonFormattingModelBuilder"/>
     <lang.psiStructureViewFactory language="Python" implementationClass="ru.yole.pythonid.structureView.PyStructureViewFactory"/>
+    <lang.documentationProvider language="Python" implementationClass="ru.yole.pythonid.PythonDocumentationProvider"/>
     <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
     <configurationType implementation="ru.yole.pythonid.run.PythonConfigurationType"/>
     <programRunner implementation="ru.yole.pythonid.run.PythonRunner"/>
