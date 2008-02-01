@@ -1,22 +1,19 @@
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -29,7 +26,9 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileTextField {
 
@@ -52,12 +51,32 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   private boolean myAutopopup = true;
   private FileTextFieldImpl.CancelAction myCancelAction;
+  private Set<Action> myDisabledTextActions;
 
   public FileTextFieldImpl(Finder finder, LookupFilter filter) {
     this(new JTextField(), finder, filter, null);
   }
+
   public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, MergingUpdateQueue uiUpdater) {
     myPathTextField = field;
+
+
+    final InputMap listMap = (InputMap)UIManager.getDefaults().get("List.focusInputMap");
+    final KeyStroke[] listKeys = listMap.keys();
+    myDisabledTextActions = new HashSet<Action>();
+    for (KeyStroke eachListStroke : listKeys) {
+      final String listActionID = (String)listMap.get(eachListStroke);
+      if ("selectNextRow".equals(listActionID) || "selectPreviousRow".equals(listActionID)) {
+        final String textActionID = (String)field.getInputMap().get(eachListStroke);
+        if (textActionID != null) {
+          final Action textAction = field.getActionMap().get(textActionID);
+          if (textAction != null) {
+            myDisabledTextActions.add(textAction);
+          }
+        }
+      }
+    }
+
 
     FileTextFieldImpl assigned = (FileTextFieldImpl)myPathTextField.getClientProperty(KEY);
     if (assigned != null) {
@@ -75,7 +94,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         new UiNotifyConnector(myPathTextField, myUiUpdater);
         Disposer.register(this, myUiUpdater);
       }
-    } else {
+    }
+    else {
       myUiUpdater = uiUpdater;
     }
 
@@ -117,9 +137,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   private void processTextChanged() {
-    if (!myAutopopup) return;
+    if (myAutopopup) {
+      suggestCompletion(false, false);
+    }
 
-    suggestCompletion(false, false);
     onTextChanged(getTextFieldText());
   }
 
@@ -188,18 +209,38 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if (myList == null) {
       myList = new JList();
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setCellRenderer(new ColoredListCellRenderer() {
-        protected void customizeCellRenderer(final JList list,
-                                             final Object value,
-                                             final int index,
-                                             final boolean selected,
-                                             final boolean hasFocus) {
-          clear();
+
+      myList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptor() {
+        public String getTextFor(final Object value) {
           final LookupFile file = (LookupFile)value;
-          final String text = (myCurrentCompletion != null && myCurrentCompletion.myKidsAfterSeparator.contains(file) ? myFinder.getSeparator(): "") +file.getName();
-          append(text, new SimpleTextAttributes(list.getFont().getStyle(), list.getForeground()));
+          return (myCurrentCompletion != null && myCurrentCompletion.myKidsAfterSeparator.contains(file) ? myFinder.getSeparator() : "") +
+                 file.getName();
         }
-      });
+
+        public String getTooltipFor(final Object value) {
+          return null;
+        }
+
+        public Icon getIconFor(final Object value) {
+          return null;
+        }
+
+        public boolean hasSeparatorAboveOf(final Object value) {
+          return getCaptionAboveOf(value) != null;
+        }
+
+        public String getCaptionAboveOf(final Object value) {
+          if (myCurrentCompletion == null) return null;
+          final LookupFile file = (LookupFile)value;
+          if (myCurrentCompletion.myKidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.mySiblings.size() > 0) {
+            final LookupFile parent = file.getParent();
+            return parent == null ? "" : parent.getName();
+          }
+          else {
+            return null;
+          }
+        }
+      }));
     }
 
 
@@ -211,7 +252,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     myCurrentCompletionsPos = position;
 
     if (myCurrentCompletion.myToComplete.size() == 0) return;
-    
+
     myList.setModel(new AbstractListModel() {
       public int getSize() {
         return myCurrentCompletion.myToComplete.size();
@@ -225,32 +266,40 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(myList);
     builder.addListener(new JBPopupListener() {
       public void beforeShown(final Project project, final JBPopup popup) {
-        myPathTextField.registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        myPathTextField
+          .registerKeyboardAction(myCancelAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        for (Action each : myDisabledTextActions) {
+          each.setEnabled(false);
+        }
       }
 
       public void onClosed(final JBPopup popup) {
         myPathTextField.unregisterKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+        for (Action each : myDisabledTextActions) {
+          each.setEnabled(true);
+        }
       }
     });
 
-    myCurrentPopup = builder.setRequestFocus(false).setAutoSelectIfEmpty(false).setResizable(false).setCancelCalllback(new Computable<Boolean>() {
-      public Boolean compute() {
-        final int caret = myPathTextField.getCaretPosition();
-        myPathTextField.setSelectionStart(caret);
-        myPathTextField.setSelectionEnd(caret);
-        myPathTextField.setFocusTraversalKeysEnabled(true);
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            getField().requestFocus();
-          }
-        });
-        return Boolean.TRUE;
-      }
-    }).setItemChoosenCallback(new Runnable() {
-      public void run() {
-        processChosenFromCompletion(true);
-      }
-    }).setCancelKeyEnabled(false).setAlpha(0.75f).setFocusOwners(new Component[] {myPathTextField}).createPopup();
+    myCurrentPopup =
+      builder.setRequestFocus(false).setAutoSelectIfEmpty(false).setResizable(false).setCancelCalllback(new Computable<Boolean>() {
+        public Boolean compute() {
+          final int caret = myPathTextField.getCaretPosition();
+          myPathTextField.setSelectionStart(caret);
+          myPathTextField.setSelectionEnd(caret);
+          myPathTextField.setFocusTraversalKeysEnabled(true);
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              getField().requestFocus();
+            }
+          });
+          return Boolean.TRUE;
+        }
+      }).setItemChoosenCallback(new Runnable() {
+        public void run() {
+          processChosenFromCompletion(true);
+        }
+      }).setCancelKeyEnabled(false).setAlpha(0.75f).setFocusOwners(new Component[]{myPathTextField}).createPopup();
 
 
     if (result.myPreselected != null) {
@@ -291,7 +340,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if (typed == null || typed.length() == 0) return;
 
     final String typedText = myFinder.normalize(typed);
-    final boolean currentParentMatch = typedText.equals(current.getAbsolutePath());
+    final boolean currentParentMatch = SystemInfo.isFileSystemCaseSensitive
+                                       ? typedText.equals(current.getAbsolutePath())
+                                       : typedText.equalsIgnoreCase(current.getAbsolutePath());
 
     final boolean closedPath = typed.endsWith(myFinder.getSeparator()) && typedText.length() > myFinder.getSeparator().length();
     final String currentParentText = current.getAbsolutePath();
@@ -313,7 +364,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     if (currentGrandparent != null && currentParentMatch && !closedPath) {
       final String currentGrandparentText = currentGrandparent.getAbsolutePath();
       if (typedText.startsWith(currentGrandparentText + myFinder.getSeparator())) {
-        grandparentPrefix[0] = currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()).toUpperCase();
+        grandparentPrefix[0] =
+          currentParentText.substring(currentGrandparentText.length() + myFinder.getSeparator().length()).toUpperCase();
       }
     }
 
@@ -335,7 +387,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
               return !file.equals(current) && myFilter.isAccepted(file) && file.getName().toUpperCase().startsWith(grandparentPrefix[0]);
             }
           });
-          result.myToComplete.addAll(siblings);
+          result.myToComplete.addAll(0, siblings);
           result.mySiblings.addAll(siblings);
         }
 
@@ -353,14 +405,16 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
                 toPreselect = each;
               }
             }
-          } else {
+          }
+          else {
             toPreselect = null;
           }
 
           if (toPreselect == null) {
             if (result.myToComplete.size() == 1) {
               toPreselect = result.myToComplete.get(0);
-            } else if (effectivePrefix.length() == 0) {
+            }
+            else if (effectivePrefix.length() == 0) {
               if (result.mySiblings.size() > 0) {
                 toPreselect = result.mySiblings.get(0);
               }
@@ -369,6 +423,10 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
               }
             }
           }
+        }
+
+        if (currentParentMatch && result.mySiblings.size() > 0) {
+          toPreselect = null;
         }
 
         result.myPreselected = toPreselect;
@@ -430,8 +488,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     final Object action = getAction(e, myList);
 
     if ("selectNextRow".equals(action)) {
-      ensureSelectionExists();
-      ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+      if (ensureSelectionExists()) {
+        ListScrollingUtil.moveDown(myList, e.getModifiersEx());
+      }
     }
     else if ("selectPreviousRow".equals(action)) {
       ListScrollingUtil.moveUp(myList, e.getModifiersEx());
@@ -442,24 +501,29 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     else if ("scrollUp".equals(action)) {
       ListScrollingUtil.movePageUp(myList);
     }
-    else if (getSelectedFileFromCompletionPopup() != null && e.getKeyCode() == KeyEvent.VK_ENTER  || e.getKeyCode() == KeyEvent.VK_TAB) {
+    else if (getSelectedFileFromCompletionPopup() != null && e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_TAB) {
       myCurrentPopup.cancel();
       e.consume();
       processChosenFromCompletion(true);
     }
   }
 
-  private @Nullable LookupFile getSelectedFileFromCompletionPopup() {
+  private
+  @Nullable
+  LookupFile getSelectedFileFromCompletionPopup() {
     if (myList == null) return null;
     return (LookupFile)myList.getSelectedValue();
   }
 
-  private void ensureSelectionExists() {
+  private boolean ensureSelectionExists() {
     if (myList.getSelectedIndex() < 0 || myList.getSelectedIndex() >= myList.getModel().getSize()) {
       if (myList.getModel().getSize() >= 0) {
         myList.setSelectedIndex(0);
+        return false;
       }
     }
+
+    return true;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -470,7 +534,8 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       if (!isPopupShowing()) {
         suggestCompletion(true, true);
         return true;
-      } else {
+      }
+      else {
         return false;
       }
     }
@@ -520,7 +585,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   public String getTextFieldText() {
     final String text = myPathTextField.getText();
     if (text == null) return null;
-    return text.trim();
+    return text;
   }
 
   public final void setText(final String text, boolean now, @Nullable final Runnable onDone) {
@@ -546,7 +611,9 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     return myPathIsUpdating;
   }
 
-  public @Nullable String getCompletionBase() {
+  public
+  @Nullable
+  String getCompletionBase() {
     String text = getTextFieldText();
     if (text == null) return null;
     int pos = myPathTextField.getCaretPosition();

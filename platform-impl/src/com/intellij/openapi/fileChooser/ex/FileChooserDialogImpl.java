@@ -52,7 +52,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private final List<Disposable> myDisposables = new ArrayList<Disposable>();
   private JPanel myNorthPanel;
 
-  private static boolean ourTextFieldShown = false;
+  private static boolean ourTextFieldShown = true;
   private FileChooserDialogImpl.TextFieldAction myTextFieldAction;
 
   private FileTextFieldImpl myPathTextField;
@@ -185,7 +185,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     registerMouseListener(group);
 
     JScrollPane scrollPane = new JScrollPane(myFileSystemTree.getTree());
-    scrollPane.setBorder(BorderFactory.createLineBorder(new Color(148, 154, 156)));
+    //scrollPane.setBorder(BorderFactory.createLineBorder(new Color(148, 154, 156)));
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.setPreferredSize(new Dimension(400, 400));
 

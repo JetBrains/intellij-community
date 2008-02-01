@@ -29,7 +29,10 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
   }
 
   public String normalize(@NotNull final String path) {
-    return new File(path.trim()).getAbsolutePath();
+    final File file = new File(path);
+    if (file.isAbsolute()) return file.getAbsolutePath();
+
+    return new File(System.getProperty("user.home"), path).getAbsolutePath();
   }
 
   public String getSeparator() {
