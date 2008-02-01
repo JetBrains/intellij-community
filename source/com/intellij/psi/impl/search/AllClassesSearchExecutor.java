@@ -59,6 +59,10 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
                 else {
                   if (!processScopeRootForAllClasses(psiFile, processor)) return false;
                 }
+              } else if (psiFile instanceof PsiClassOwner) {
+                for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
+                  if (!processor.process(aClass)) return false;
+                }
               }
             }
             return true;
