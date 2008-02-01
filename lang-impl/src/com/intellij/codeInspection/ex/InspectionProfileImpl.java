@@ -549,15 +549,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       final InspectionProfileEntry[] inspectionTools = DEFAULT_PROFILE.getInspectionTools();
       for (InspectionProfileEntry tool : inspectionTools) {
         final String shortName = tool.getShortName();
-        HighlightDisplayKey key;
         if (tool instanceof LocalInspectionToolWrapper) {
-          key = HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
+          HighlightDisplayKey.register(shortName, tool.getDisplayName(), ((LocalInspectionToolWrapper)tool).getTool().getID());
         } else {
-          key = HighlightDisplayKey.register(shortName);
+          HighlightDisplayKey.register(shortName);
         }
-        if (key != null) { //in case when short name isn't unique
-          DEFAULT_PROFILE.myDisplayLevelMap.put(key, new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
-        }
+        DEFAULT_PROFILE.myDisplayLevelMap.put(HighlightDisplayKey.find(shortName), new ToolState(tool.getDefaultLevel(), tool.isEnabledByDefault()));
       }
     }
     return DEFAULT_PROFILE;

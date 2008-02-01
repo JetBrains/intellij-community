@@ -8,6 +8,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -42,9 +43,9 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
 
   public static List<String> ANNOTATIONS = null;
 
-  @NonNls public static final String SHORT_NAME = "UNUSED_SYMBOL";
-  @NonNls public static final String DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
-  @NonNls public static final String ID = "UnusedDeclaration";
+  @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
+  @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
+  @NonNls public static final String ID = HighlightInfoType.UNUSED_SYMBOL_ID;
 
   public boolean LOCAL_VARIABLE = true;
   public boolean FIELD = true;

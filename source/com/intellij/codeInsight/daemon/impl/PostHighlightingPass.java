@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -517,7 +516,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
 
   private HighlightInfo registerRedundantImport(PsiImportStatementBase importStatement) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME);
-    HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.UNUSED_IMPORT, importStatement, InspectionsBundle.message("unused.import.statement"));
+    HighlightInfo info = HighlightInfo.createHighlightInfo(JavaHightlightInfoTypes.UNUSED_IMPORT, importStatement, InspectionsBundle.message("unused.import.statement"));
 
     QuickFixAction.registerQuickFixAction(info, new OptimizeImportsFix(), key);
     QuickFixAction.registerQuickFixAction(info, new EnableOptimizeImportsOnTheFlyFix(), key);

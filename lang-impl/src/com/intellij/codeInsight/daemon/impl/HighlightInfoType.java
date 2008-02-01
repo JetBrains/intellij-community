@@ -3,10 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.deprecation.DeprecationInspection;
-import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -19,26 +16,35 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 
 public interface HighlightInfoType {
+  @NonNls String UNUSED_SYMBOL_SHORT_NAME = "UNUSED_SYMBOL";
+  @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("unused.symbol");
+  @NonNls String UNUSED_SYMBOL_ID = "UnusedDeclaration";
+
+  @NonNls String DEPRECATION_SHORT_NAME = "Deprecation";
+  @NonNls String DEPRECATION_ID = "deprecation";
+  @NonNls String DEPRECATION_DISPLAY_NAME = InspectionsBundle.message("inspection.deprecated.display.name");
+
   HighlightInfoType WRONG_REF = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
   HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
-
-  HighlightInfoType UNCHECKED_WARNING = new HighlightInfoTypeSeverityByKeyAttrBySeverity(HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME) == null ?
-                                                                                         HighlightDisplayKey.register(UncheckedWarningLocalInspection.SHORT_NAME, UncheckedWarningLocalInspection.DISPLAY_NAME, UncheckedWarningLocalInspection.ID) : HighlightDisplayKey.find(UncheckedWarningLocalInspection.SHORT_NAME));
 
   HighlightInfoType GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING, CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
 
   HighlightInfoType DUPLICATE_FROM_SERVER = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.DUPLICATE_FROM_SERVER);
 
-
-  HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME) == null ?
-                                                                       HighlightDisplayKey.register(UnusedSymbolLocalInspection.SHORT_NAME, UnusedSymbolLocalInspection.DISPLAY_NAME, UnusedSymbolLocalInspection.ID) : HighlightDisplayKey.find(UnusedSymbolLocalInspection.SHORT_NAME),
+  HighlightInfoType UNUSED_SYMBOL = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UNUSED_SYMBOL_SHORT_NAME) == null ?
+                                                                       HighlightDisplayKey.register(UNUSED_SYMBOL_SHORT_NAME,
+                                                                                                    UNUSED_SYMBOL_DISPLAY_NAME,
+                                                                                                    UNUSED_SYMBOL_ID) : HighlightDisplayKey.find(UNUSED_SYMBOL_SHORT_NAME),
                                                                        CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-  HighlightInfoType UNUSED_IMPORT = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME) == null ?
-                                                                       HighlightDisplayKey.register(UnusedImportLocalInspection.SHORT_NAME, UnusedImportLocalInspection.DISPLAY_NAME) : HighlightDisplayKey.find(UnusedImportLocalInspection.SHORT_NAME), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-  HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(HighlightDisplayKey.find(DeprecationInspection.SHORT_NAME) == null ?
-                                                                    HighlightDisplayKey.register(DeprecationInspection.SHORT_NAME, DeprecationInspection.DISPLAY_NAME, DeprecationInspection.ID) : HighlightDisplayKey.find(DeprecationInspection.SHORT_NAME), CodeInsightColors.DEPRECATED_ATTRIBUTES);
+
+
+  HighlightInfoType DEPRECATED = new HighlightInfoTypeSeverityByKey(
+    HighlightDisplayKey.find(DEPRECATION_SHORT_NAME) == null ? HighlightDisplayKey
+      .register(DEPRECATION_SHORT_NAME, DEPRECATION_DISPLAY_NAME, DEPRECATION_ID) : HighlightDisplayKey.find(DEPRECATION_SHORT_NAME),
+    CodeInsightColors.DEPRECATED_ATTRIBUTES);
 
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
   HighlightInfoType INSTANCE_FIELD = new HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.JavaHightlightInfoTypes;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -644,7 +645,7 @@ public class GenericsHighlightUtil {
     final LocalInspectionTool tool =
       ((LocalInspectionToolWrapper)inspectionProfile.getInspectionTool(UncheckedWarningLocalInspection.SHORT_NAME)).getTool();
     if (InspectionManagerEx.inspectionResultSuppressed(context, tool)) return null;
-    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, elementToHighlight, description);
+    HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(JavaHightlightInfoTypes.UNCHECKED_WARNING, elementToHighlight, description);
     QuickFixAction.registerQuickFixAction(highlightInfo, new GenerifyFileFix(elementToHighlight.getContainingFile()), key);
     return highlightInfo;
   }
@@ -1059,7 +1060,7 @@ public class GenericsHighlightUtil {
 
         final PsiTypeElement returnTypeElement = overrider.getReturnTypeElement();
         LOG.assertTrue(returnTypeElement != null);
-        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.UNCHECKED_WARNING, returnTypeElement, message);
+        final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(JavaHightlightInfoTypes.UNCHECKED_WARNING, returnTypeElement, message);
         QuickFixAction.registerQuickFixAction(highlightInfo,
                                               new EmptyIntentionAction(JavaErrorMessages.message("unchecked.overriding")),
                                               key);
