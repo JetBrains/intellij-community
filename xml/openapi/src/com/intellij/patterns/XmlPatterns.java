@@ -4,6 +4,7 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -14,7 +15,7 @@ public class XmlPatterns extends PlatformPatterns {
     return new XmlFilePattern.Capture();
   }
 
-  public static XmlAttributeValuePattern xmlAttributeValue(ElementPattern attributePattern) {
+  public static XmlAttributeValuePattern xmlAttributeValue(ElementPattern<? extends XmlAttribute> attributePattern) {
     return xmlAttributeValue().withParent(attributePattern);
   }
 

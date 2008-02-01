@@ -5,12 +5,13 @@
 package com.intellij.patterns;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -43,20 +44,26 @@ public abstract class PatternCondition<T> {
     if (obj instanceof ElementPattern) {
       ((ElementPattern)obj).getCondition().append(builder, indent + "  ");
     } else if (obj instanceof Object[]) {
-      builder.append("[");
-      boolean first = true;
-      for (final Object o : (Object[]) obj) {
-        if (!first) {
-          builder.append(", ");
-        }
-        first = false;
-        appendValue(builder, indent, o);
-      }
-      builder.append("]");
+      appendArray(builder, indent, (Object[])obj);
+    } else if (obj instanceof Collection) {
+      appendArray(builder, indent, ((Collection) obj).toArray());
     }
     else {
       builder.append(obj);
     }
+  }
+
+  protected static void appendArray(final StringBuilder builder, final String indent, final Object[] objects) {
+    builder.append("[");
+    boolean first = true;
+    for (final Object o : objects) {
+      if (!first) {
+        builder.append(", ");
+      }
+      first = false;
+      appendValue(builder, indent, o);
+    }
+    builder.append("]");
   }
 
   public abstract boolean accepts(@NotNull T t, final MatchingContext matchingContext, @NotNull TraverseContext traverseContext);
@@ -70,13 +77,22 @@ public abstract class PatternCondition<T> {
 
   public void append(StringBuilder builder, String indent) {
     builder.append(myMethodName);
-    List<Field> params = ContainerUtil.findAll(getClass().getDeclaredFields(), new Condition<Field>() {
-      public boolean value(final Field field) {
-        return field.getName().startsWith(PARAMETER_FIELD_PREFIX);
-      }
-    });
-
     builder.append("(");
+    appendParams(builder, indent);
+    builder.append(")");
+  }
+
+  private void appendParams(final StringBuilder builder, final String indent) {
+    List<Field> params = new SmartList<Field>();
+    for (Class aClass = getClass(); aClass != null; aClass = aClass.getSuperclass()) {
+      for (final Field field : aClass.getDeclaredFields()) {
+        if (!Modifier.isStatic(field.getModifiers()) &&
+            (((field.getModifiers() & 0x1000) == 0 && !aClass.equals(PatternCondition.class)) || field.getName().startsWith(PARAMETER_FIELD_PREFIX))) {
+          params.add(field);
+        }
+      }
+    }
+
     if (params.size() == 1) {
       appendFieldValue(builder, params.get(0), indent);
     } else if (!params.isEmpty()) {
@@ -86,11 +102,12 @@ public abstract class PatternCondition<T> {
           builder.append(", ");
         }
         first = false;
-        builder.append(field.getName().substring(PARAMETER_FIELD_PREFIX.length())).append("=");
+        String name = field.getName();
+        if (name.startsWith(PARAMETER_FIELD_PREFIX)) name = name.substring(PARAMETER_FIELD_PREFIX.length());
+        builder.append(name).append("=");
         appendFieldValue(builder, field, indent);
       }
     }
-    builder.append(")");
   }
 
 }

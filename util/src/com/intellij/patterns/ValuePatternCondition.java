@@ -25,4 +25,5 @@ public class ValuePatternCondition<T> extends PatternCondition<T>{
   public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
     return myValues.contains(t);
   }
+
 }

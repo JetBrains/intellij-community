@@ -16,4 +16,6 @@ import java.util.List;
  */
 public interface ProviderBinding {
   void addAcceptableReferenceProviders(@NotNull PsiElement position, @NotNull List<Trinity<PsiReferenceProvider, ElementPattern, Double>> list);
+
+  void unregisterProvider(final PsiReferenceProvider provider);
 }

@@ -136,14 +136,6 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
     });
   }
 
-  public Self instanceOf(final Class<?> aClass) {
-    return with(new PatternCondition<T>() {
-      public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
-        return aClass.isInstance(t);
-      }
-    });
-  }
-
   public String toString() {
     return myCondition.toString();
   }

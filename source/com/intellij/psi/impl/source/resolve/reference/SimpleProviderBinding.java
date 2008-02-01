@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -47,7 +48,12 @@ public class SimpleProviderBinding implements ProviderBinding {
     }
   }
 
-  public void unregisterProvider(PsiReferenceProvider provider, @NotNull ElementPattern pattern) {
-    myProviderPairs.remove(Trinity.create(provider, pattern, ReferenceProvidersRegistry.DEFAULT_PRIORITY));
+  public void unregisterProvider(final PsiReferenceProvider provider) {
+    for (final Trinity<PsiReferenceProvider, ElementPattern, Double> trinity : new ArrayList<Trinity<PsiReferenceProvider, ElementPattern, Double>>(myProviderPairs)) {
+      if (trinity.first.equals(provider)) {
+        myProviderPairs.remove(trinity);
+      }
+    }
   }
+
 }
