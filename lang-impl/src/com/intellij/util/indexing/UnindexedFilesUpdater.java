@@ -7,8 +7,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.HashSet;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
@@ -16,8 +18,8 @@ import java.util.List;
 */
 public class UnindexedFilesUpdater implements CacheUpdater {
   private final FileBasedIndex myIndex;
-  private Project myProject;
-  private ProjectRootManager myRootManager;
+  private final Project myProject;
+  private final ProjectRootManager myRootManager;
 
   public UnindexedFilesUpdater(final Project project, final ProjectRootManager rootManager, FileBasedIndex index) {
     myIndex = index;
@@ -40,22 +42,28 @@ public class UnindexedFilesUpdater implements CacheUpdater {
     final ProjectFileIndex projectFileIndex = myRootManager.getFileIndex();
     // iterate associated libraries
     final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    // iterate project content
+    projectFileIndex.iterateContent(processor);
+
+    Set<VirtualFile> visitedRoots = new HashSet<VirtualFile>();
+
     for (Module module : modules) {
       OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry instanceof LibraryOrderEntry || orderEntry instanceof JdkOrderEntry) {
           VirtualFile[] roots = orderEntry.getFiles(OrderRootType.SOURCES);
           for (VirtualFile root : roots) {
-            iterateRecursively(root, processor);
+            if (!visitedRoots.contains(root)) {
+              visitedRoots.add(root);
+              iterateRecursively(root, processor);
+            }
           }
         }
       }
     }
-    // iterate project content 
-    projectFileIndex.iterateContent(processor);
   }
 
-  private void iterateRecursively(final VirtualFile root, final ContentIterator processor) {
+  private static void iterateRecursively(final VirtualFile root, final ContentIterator processor) {
     for (VirtualFile file : root.getChildren()) {
       if (file.isDirectory()) {
         iterateRecursively(file, processor);
