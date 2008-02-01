@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -130,24 +129,21 @@ public class RedundantImportInspection extends BaseInspection {
                     if (!(element instanceof PsiClass)) {
                         continue;
                     }
-                    final PsiClass targetClass = (PsiClass)element;
-                    final PsiNamedElement namedElement =
-                            PsiTreeUtil.getParentOfType(targetClass,
-                                    PsiPackage.class, PsiClass.class);
-                    if (namedElement == null) {
+	                final PsiElement context = element.getContext();
+                    if (context == null) {
                         continue;
                     }
-                    final String parentName;
-                    if (namedElement instanceof PsiPackage) {
-                        final PsiPackage aPackage = (PsiPackage)namedElement;
-                        parentName = aPackage.getQualifiedName();
-                    } else if (namedElement instanceof PsiClass) {
-                        final PsiClass aClass = (PsiClass)namedElement;
-                        parentName = aClass.getQualifiedName();
+                    final String contextName;
+                    if (context instanceof PsiJavaFile) {
+	                    final PsiJavaFile file = (PsiJavaFile)context;
+	                    contextName = file.getPackageName();
+                    } else if (context instanceof PsiClass) {
+                        final PsiClass aClass = (PsiClass)context;
+                        contextName = aClass.getQualifiedName();
                     } else {
                         continue;
                     }
-                    if (imports.contains(parentName) &&
+                    if (imports.contains(contextName) &&
                             !ImportUtils.hasOnDemandImportConflict(text,
                                     javaFile)) {
                         registerError(importStatement);
