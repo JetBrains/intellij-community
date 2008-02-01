@@ -64,6 +64,8 @@
       <separator/>
       <group id="CodeEditorViewGroup" class="com.intellij.ide.actions.CodeEditorActionGroup">
         <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
+        <action id="QuickJavaDoc" class="com.intellij.codeInsight.documentation.actions.ShowJavaDocInfoAction"/>
+        <action id="ExternalJavaDoc" class="com.intellij.ide.actions.ExternalJavaDocAction"/>
       </group>
       <separator/>
 

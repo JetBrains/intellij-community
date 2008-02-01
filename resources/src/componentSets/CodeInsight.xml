@@ -24,11 +24,6 @@
       <skipForDummyProject/>
     </component>
     <component>
-      <interface-class>com.intellij.codeInsight.documentation.DocumentationManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.documentation.DocumentationManager</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
     </component>
     <component>
