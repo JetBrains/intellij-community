@@ -3,24 +3,27 @@
  */
 package com.intellij.util.xml.impl;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.SubTag;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author peter
  */
 public class GetInvocation implements Invocation {
-  private static final Key<CachedValue<ConcurrentFactoryMap<Converter,Object>>> DOM_VALUE_KEY = Key.create("Dom element value key");
+  private static final Key<CachedValue<CopyOnWriteArrayList<Pair<Converter,Object>>>> DOM_VALUE_KEY = Key.create("Dom element value key");
   private final Converter myConverter;
 
   protected GetInvocation(final Converter converter) {
@@ -34,26 +37,35 @@ public class GetInvocation implements Invocation {
       return getValueInner(handler, myConverter);
     }
 
-    CachedValue<ConcurrentFactoryMap<Converter, Object>> value;
-    synchronized (handler) {
-      value = handler.getUserData(DOM_VALUE_KEY);
-      if (value == null) {
-        final DomManagerImpl domManager = handler.getManager();
-        final CachedValuesManager cachedValuesManager = PsiManager.getInstance(domManager.getProject()).getCachedValuesManager();
-        handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<ConcurrentFactoryMap<Converter, Object>>() {
-          public Result<ConcurrentFactoryMap<Converter, Object>> compute() {
-            final ConcurrentFactoryMap<Converter, Object> map = new ConcurrentFactoryMap<Converter, Object>() {
-              protected Object create(final Converter key) {
-                return getValueInner(handler, key);
-              }
-            };
-            return Result.create(map, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(domManager.getProject()));
-          }
-        }, false));
-      }
+    CachedValue<CopyOnWriteArrayList<Pair<Converter,Object>>> value = handler.getUserData(DOM_VALUE_KEY);
+    if (value == null) {
+      final DomManagerImpl domManager = handler.getManager();
+      final Project project = domManager.getProject();
+      final CachedValuesManager cachedValuesManager = PsiManager.getInstance(project).getCachedValuesManager();
+      handler.putUserData(DOM_VALUE_KEY, value = cachedValuesManager.createCachedValue(new CachedValueProvider<CopyOnWriteArrayList<Pair<Converter,Object>>>() {
+        public Result<CopyOnWriteArrayList<Pair<Converter,Object>>> compute() {
+          return Result.create(new CopyOnWriteArrayList<Pair<Converter, Object>>(),
+                               PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, domManager, ProjectRootManager.getInstance(
+            project));
+        }
+      }, false));
     }
 
-    return value.getValue().get(myConverter);
+    return getOrCalcValue(handler, value.getValue());
+  }
+
+  @Nullable
+  private Object getOrCalcValue(final DomInvocationHandler<?> handler, final CopyOnWriteArrayList<Pair<Converter, Object>> list) {
+    if (!list.isEmpty()) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0; i < list.size(); i++) {
+        Pair<Converter, Object> pair = list.get(i);
+        if (pair.first == myConverter) return pair.second;
+      }
+    }
+    final Object returnValue = getValueInner(handler, myConverter);
+    list.add(Pair.create(myConverter, returnValue));
+    return returnValue;
   }
 
   @Nullable

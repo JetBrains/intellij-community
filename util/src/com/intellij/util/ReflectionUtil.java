@@ -53,7 +53,7 @@ public class ReflectionUtil {
         anInterface = classes[i];
       }
       else {
-        anInterface = aClass.getSuperclass();
+        anInterface = ReflectionCache.getSuperClass(aClass);
         if (resolveInInterfacesOnly || anInterface == null) {
           continue;
         }

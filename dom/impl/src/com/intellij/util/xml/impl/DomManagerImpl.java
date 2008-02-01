@@ -23,12 +23,14 @@ import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
@@ -115,6 +117,7 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   private final DomElementAnnotationsManagerImpl myAnnotationsManager;
   private final ReferenceProvidersRegistry myReferenceProvidersRegistry;
   private final PsiFileFactory myFileFactory;
+  private final Map<XmlAttribute,AttributeChildInvocationHandler> myAttributeCache = new ConcurrentHashMap<XmlAttribute, AttributeChildInvocationHandler>();
 
   private long myModificationCount;
   private boolean myChanging;
@@ -224,12 +227,34 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
     for (final DomFileDescription description : Extensions.getExtensions(DomFileDescription.EP_NAME)) {
       registerFileDescription(description);
     }
+
+    registerRunnable();
   }
 
   private void processVfsChange(final VirtualFile file) {
     if (myFileIndex.isInContent(file)) {
       processFileOrDirectoryChange(file);
     }
+  }
+
+  public AttributeChildInvocationHandler getCachedAttribute(XmlAttribute attribute) {
+    return myAttributeCache.get(attribute);
+  }
+
+  public void cacheAttribute(XmlAttribute attribute, AttributeChildInvocationHandler handler) {
+    if (myAttributeCache.isEmpty()) {
+      registerRunnable();
+    }
+
+    myAttributeCache.put(attribute, handler);
+  }
+
+  private void registerRunnable() {
+    ((PsiManagerEx)PsiManager.getInstance(myProject)).registerRunnableToRunOnAnyChange(new Runnable() {
+      public void run() {
+        myAttributeCache.clear();
+      }
+    });
   }
 
   private void processFileChange(final VirtualFile file) {
@@ -311,7 +336,9 @@ public final class DomManagerImpl extends DomManager implements ProjectComponent
   }
 
   final InvocationCache getInvocationCache(final Pair<Type, Type> type) {
-    return myInvocationCaches.get(type);
+    synchronized (myInvocationCaches) {
+      return myInvocationCaches.get(type);
+    }
   }
 
   @Nullable

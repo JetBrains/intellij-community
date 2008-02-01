@@ -8,15 +8,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.events.ElementChangedEvent;
 import com.intellij.util.xml.events.ElementDefinedEvent;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -26,16 +25,17 @@ import java.lang.reflect.Type;
  */
 public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
-  private boolean myWasDefined;
+  private XmlAttribute myAttribute;
 
   protected AttributeChildInvocationHandler(final Type type,
                                             final XmlTag tag,
                                             final DomInvocationHandler parent,
                                             final EvaluatedXmlName attributeName,
                                             final AttributeChildDescriptionImpl description,
-                                            final DomManagerImpl manager) {
+                                            final DomManagerImpl manager,
+                                            final XmlAttribute attribute) {
     super(type, tag, parent, attributeName, description, manager);
-    myWasDefined = getXmlElement() != null;
+    myAttribute = attribute;
   }
 
   public void acceptChildren(DomElementVisitor visitor) {
@@ -46,7 +46,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   public boolean isValid() {
-    return getParentHandler().isValid();
+    return myAttribute == null ? getParentHandler().isValid() :  myAttribute.isValid();
   }
 
   protected boolean isAttribute() {
@@ -54,20 +54,30 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   }
 
   public final XmlAttribute getXmlElement() {
-    final XmlTag tag = getXmlTag();
-    return tag == null ? null : tag.getAttribute(getXmlElementName(), getXmlElementNamespace());
+    return myAttribute;
+  }
+
+  public boolean equals(final Object obj) {
+    if (!(obj instanceof AttributeChildInvocationHandler)) return false;
+
+    final DomInvocationHandler handler = (DomInvocationHandler)obj;
+    return getParentHandler().equals(handler.getParentHandler()) && getChildDescription().equals(handler.getChildDescription());
+  }
+
+  public int hashCode() {
+    return getParentHandler().hashCode() * 239 + getChildDescription().hashCode() * 42;
   }
 
   public final XmlAttribute ensureXmlElementExists() {
-    XmlAttribute xmlAttribute = getXmlElement();
-    if (xmlAttribute != null) return xmlAttribute;
+    if (myAttribute != null) return myAttribute;
 
     final DomManagerImpl manager = getManager();
     final boolean b = manager.setChanging(true);
     try {
-      xmlAttribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlElementNamespace(), "");
+      myAttribute = ensureTagExists().setAttribute(getXmlElementName(), getXmlElementNamespace(), "");
+      getManager().cacheAttribute(myAttribute, this);
       manager.fireEvent(new ElementDefinedEvent(getProxy()));
-      return xmlAttribute;
+      return myAttribute;
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -90,14 +100,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
   protected final void cacheInTag(final XmlTag tag) {
   }
 
-  public final boolean wasDefined() {
-    return myWasDefined;
-  }
-
-  public final void setDefined(final boolean wasDefined) {
-    myWasDefined = wasDefined;
-  }
-
   protected final void removeFromCache() {
   }
 
@@ -105,7 +107,6 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     final XmlTag tag = getXmlTag();
     w.lock();
     try {
-      setDefined(false);
       setXmlTag(null);
     }
     finally {
@@ -115,7 +116,7 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
       getManager().runChange(new Runnable() {
         public void run() {
           try {
-            tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
+            myAttribute = tag.setAttribute(getXmlElementName(), getXmlElementNamespace(), null);
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -137,20 +138,16 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   @Nullable
   protected String getValue() {
-    final XmlTag tag = getXmlTag();
-    if (tag != null) {
-      final XmlAttribute attribute = tag.getAttribute(getXmlElementName(), getXmlElementNamespace());
-      if (attribute != null) {
-        final XmlAttributeValue value = attribute.getValueElement();
-        if (value != null && value.getTextLength() >= 2) {          
-          return attribute.getDisplayValue();
-        }
+    if (myAttribute != null) {
+      final XmlAttributeValue value = myAttribute.getValueElement();
+      if (value != null && value.getTextLength() >= 2) {
+        return myAttribute.getDisplayValue();
       }
     }
     return null;
   }
 
-  protected void setValue(@NotNull final String value) {
+  protected void setValue(@Nullable final String value) {
     final XmlTag tag = ensureTagExists();
     final String attributeName = getXmlElementName();
     final String namespace = getXmlElementNamespace();
@@ -161,14 +158,13 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
     getManager().runChange(new Runnable() {
       public void run() {
         try {
-          tag.setAttribute(attributeName, namespace, newValue);
+          myAttribute = tag.setAttribute(attributeName, namespace, newValue);
         }
         catch (IncorrectOperationException e) {
           LOG.error(e);
         }
       }
     });
-    setDefined(true);
     final DomElement proxy = getProxy();
     getManager().fireEvent(oldValue != null ? new ElementChangedEvent(proxy) : new ElementDefinedEvent(proxy));
   }

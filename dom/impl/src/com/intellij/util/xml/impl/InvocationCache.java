@@ -79,6 +79,12 @@ public class InvocationCache {
               final StableInvocationHandler handler = DomManagerImpl.getStableInvocationHandler(o);
               return _equals(proxy, handler.getWrappedElement()) || _equals(proxy, handler.getOldValue());
             }
+
+            if (o instanceof DomElement) {
+              final DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(proxy);
+              return handler != null && handler.equals(DomManagerImpl.getDomInvocationHandler((DomElement)o));
+            }
+
             return false;
           }
 
