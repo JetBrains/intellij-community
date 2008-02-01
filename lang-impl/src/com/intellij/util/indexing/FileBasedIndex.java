@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -595,7 +596,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     
     private void invalidateIndex(final VirtualFile file, final List<Runnable> tasks) {
       if (file.isDirectory()) {
-        if (ManagingFS.getInstance().areChildrenLoaded(file)) {
+        if (!(file instanceof NewVirtualFile) || ManagingFS.getInstance().areChildrenLoaded(file)) {
           for (VirtualFile child : file.getChildren()) {
             invalidateIndex(child, tasks);
           }
