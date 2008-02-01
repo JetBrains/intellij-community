@@ -6,7 +6,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
-import com.intellij.psi.formatter.xml.SyntheticBlock;
 import com.intellij.psi.impl.DebugUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -146,7 +145,7 @@ class InitialInfoBuilder {
     Block previous = null;
     final int subBlocksCount = subBlocks.size();
     List<AbstractBlockWrapper> list = new ArrayList<AbstractBlockWrapper>(subBlocksCount);
-    final boolean blocksAreReadOnly = rootBlock instanceof SyntheticBlock || blocksMayBeOfInterest;
+    final boolean blocksAreReadOnly = rootBlock instanceof ReadOnlyBlockContainer || blocksMayBeOfInterest;
 
     for (int i = 0; i < subBlocksCount; i++) {
       final Block block = subBlocks.get(i);
