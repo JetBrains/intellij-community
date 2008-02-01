@@ -21,6 +21,7 @@ package com.intellij.util.io;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -151,7 +152,7 @@ public class PagePool {
 
         synchronized (finalizationLock) {
           try {
-            finalizationLock.wait();
+            finalizationLock.wait(10);
           }
           catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -248,6 +249,7 @@ public class PagePool {
       }
     }
 
+    @Nullable
     private FinalizationRequest getNextFinalizationRequest() {
       FinalizationRequest request = null;
       synchronized (lock) {
