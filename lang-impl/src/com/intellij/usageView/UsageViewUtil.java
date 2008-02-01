@@ -8,6 +8,7 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
@@ -84,13 +85,7 @@ public class UsageViewUtil {
     LOG.assertTrue(psiElement.isValid());
     String ret;
     if (psiElement instanceof PsiDirectory) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)psiElement));
-      if (aPackage != null) {
-        ret = aPackage.getQualifiedName();
-      }
-      else {
-        ret = ((PsiDirectory)psiElement).getVirtualFile().getPresentableUrl();
-      }
+      ret = PsiDirectoryFactory.getInstance(psiElement.getProject()).getQualifiedName((PsiDirectory)psiElement, true);
     }
     else if (psiElement instanceof PsiPackage) {
       ret = ((PsiPackage)psiElement).getQualifiedName();
