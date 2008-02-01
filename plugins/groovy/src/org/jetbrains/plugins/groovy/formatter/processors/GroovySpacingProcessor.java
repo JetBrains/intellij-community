@@ -81,7 +81,7 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
       return NO_SPACING;
     }
 
-    if (CLASS_LEVEL_DEFS.contains(leftNode.getElementType()) && CLASS_BODY_SET.contains(leftNode.getTreeParent().getElementType())) {
+    if (CLASS_MEMBER_DEFS.contains(leftNode.getElementType()) && CLASS_BODY_SET.contains(leftNode.getTreeParent().getElementType())) {
       if (mRCURLY.equals(rightNode.getElementType())) {
         return Spacing.createSpacing(0, 0, 1, false, 100);
       }
@@ -91,7 +91,7 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
       return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
-    if (CLASS_LEVEL_DEFS.contains(rightNode.getElementType()) && CLASS_BODY_SET.contains(rightNode.getTreeParent().getElementType())) {
+    if (CLASS_MEMBER_DEFS.contains(rightNode.getElementType()) && CLASS_BODY_SET.contains(rightNode.getTreeParent().getElementType())) {
       if (mLCURLY.equals(leftNode.getElementType())) {
         return Spacing.createSpacing(0, 0, 1, false, 100);
       }
