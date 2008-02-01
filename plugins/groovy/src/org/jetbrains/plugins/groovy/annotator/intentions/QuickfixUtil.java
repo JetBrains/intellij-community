@@ -6,11 +6,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -36,4 +36,12 @@ public class QuickfixUtil {
   }
 
 
+  public static boolean ensureFileWritable(Project project, PsiFile file) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    final ReadonlyStatusHandler readonlyStatusHandler =
+        ReadonlyStatusHandler.getInstance(project);
+    final ReadonlyStatusHandler.OperationStatus operationStatus =
+        readonlyStatusHandler.ensureFilesWritable(virtualFile);
+    return !operationStatus.hasReadonlyFiles();
+  }
 }

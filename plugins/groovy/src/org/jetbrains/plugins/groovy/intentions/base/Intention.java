@@ -4,8 +4,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +12,7 @@ import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 
 
 public abstract class Intention implements IntentionAction {
@@ -29,7 +28,7 @@ public abstract class Intention implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file)
       throws IncorrectOperationException {
-    if (isFileReadOnly(project, file)) {
+    if (!QuickfixUtil.ensureFileWritable(project, file)) {
       return;
     }
     final PsiElement element = findMatchingElement(file, editor);
@@ -95,15 +94,6 @@ public abstract class Intention implements IntentionAction {
 
   public boolean startInWriteAction() {
     return true;
-  }
-
-  private static boolean isFileReadOnly(Project project, PsiFile file) {
-    final VirtualFile virtualFile = file.getVirtualFile();
-    final ReadonlyStatusHandler readonlyStatusHandler =
-        ReadonlyStatusHandler.getInstance(project);
-    final ReadonlyStatusHandler.OperationStatus operationStatus =
-        readonlyStatusHandler.ensureFilesWritable(virtualFile);
-    return operationStatus.hasReadonlyFiles();
   }
 
   private String getPrefix() {
