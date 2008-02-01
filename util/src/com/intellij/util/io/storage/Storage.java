@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.SLRUCache;
-import com.intellij.util.io.Page;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +38,7 @@ public class Storage implements Disposable, Forceable {
   private DataTable myDataTable;
 
   private final Object myAppendersLock = new Object();
-  private final SLRUCache<Integer, AppenderStream> myAppendersCache = new SLRUCache<Integer, AppenderStream>(4 * 1024, 8192) {
+  private final SLRUCache<Integer, AppenderStream> myAppendersCache = new SLRUCache<Integer, AppenderStream>(8192, 8192) {
     @NotNull
     public AppenderStream createValue(final Integer key) {
       return new AppenderStream(key.intValue());
@@ -48,7 +47,7 @@ public class Storage implements Disposable, Forceable {
     @NotNull
     public AppenderStream get(final Integer key) {
       final AppenderStream stream = super.get(key);
-      if (stream.size() > Page.PAGE_SIZE) {
+      if (stream.size() > 10 * 1024) {
         stream.reset();
       }
       return stream;
@@ -286,23 +285,6 @@ public class Storage implements Disposable, Forceable {
   public AppenderStream appendStream(int record) {
     synchronized (myAppendersLock) {
       return myAppendersCache.get(record);
-
-      /*
-      AppenderStream appenderStream = myAppendersCache.get(record);
-      if (appenderStream != null) {
-        if (appenderStream.size() > 4048) {
-          closeStream(appenderStream);
-        }
-        else {
-          return appenderStream;
-        }
-      }
-
-      appenderStream = new AppenderStream(record);
-
-      myAppendersCache.put(record, appenderStream);
-      return appenderStream;
-      */
     }
   }
 
