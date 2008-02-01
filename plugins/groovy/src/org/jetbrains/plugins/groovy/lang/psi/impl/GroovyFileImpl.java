@@ -273,7 +273,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException {
     T result = (T) addBefore(decl, anchorBefore);
     PsiImplUtil.reformatAfterInsertion(result);
     return result;

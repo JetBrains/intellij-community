@@ -811,7 +811,7 @@ public abstract class GrTypeDefinitionImpl extends GroovyPsiElementImpl implemen
     return PsiImplUtil.getOriginalElement(this, getContainingFile());
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(@NotNull T decl, PsiElement anchorBefore) throws IncorrectOperationException {
 
     GrTypeDefinitionBody body = getBody();
     if (body == null) throw new IncorrectOperationException("Type definition without a body");

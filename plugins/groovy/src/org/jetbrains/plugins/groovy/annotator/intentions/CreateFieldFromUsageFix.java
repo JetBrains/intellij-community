@@ -14,11 +14,11 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
+import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -36,16 +36,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 /**
  * @author ven
@@ -88,20 +85,11 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
         myRefExpression.getReferenceName(), null, type);
-    GrMembersDeclaration anchor = null;
+    PsiElement anchor = null;
     if (myTargetClass instanceof GroovyScriptClass) {
       if (myTargetClass.getContainingFile() == file) {
         int offset = editor.getCaretModel().getOffset();
-        GrTopStatement[] tops = ((GroovyFile) file).getTopStatements();
-        for (GrTopStatement top : tops) {
-          TextRange range = top.getTextRange();
-          if (range.getStartOffset() > offset) break;
-
-          if (top instanceof GrVariableDeclaration && range.getStartOffset() <= offset && offset <= range.getEndOffset()) {
-            anchor = (GrMembersDeclaration) top;
-            break;
-          }
-        }
+        anchor = findAnchor(file, offset);
       }
     }
     fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl, anchor);
@@ -121,6 +109,16 @@ public class CreateFieldFromUsageFix implements IntentionAction {
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
   }
+
+  private PsiElement findAnchor(PsiFile file, int offset) {
+    PsiElement element = file.findElementAt(offset);
+    while (element != null) {
+      element = element.getParent();
+      if (element.getParent().equals(file)) return element;
+    }
+    return null;
+  }
+
 
   public boolean startInWriteAction() {
     return true;

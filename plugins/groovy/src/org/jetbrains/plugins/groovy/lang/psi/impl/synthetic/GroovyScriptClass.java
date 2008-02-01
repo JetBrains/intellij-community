@@ -368,7 +368,7 @@ public class GroovyScriptClass extends LightElement implements GrMemberOwner {
     myFile.delete();
   }
 
-  public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, GrMembersDeclaration anchorBefore) throws IncorrectOperationException {
+  public <T extends GrMembersDeclaration> T addMemberDeclaration(T decl, PsiElement anchorBefore) throws IncorrectOperationException {
     return myFile.addMemberDeclaration(decl, anchorBefore);
   }
 }
