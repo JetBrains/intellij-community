@@ -1,7 +1,7 @@
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.codeInsight.documentation.JavaDocInfoComponent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,8 +39,8 @@ public final class ShowJavadocAction extends AnAction {
 
     final DocumentationManager documentationManager = DocumentationManager.getInstance(aClass.getProject());
 
-    final JavaDocInfoComponent component1 = new JavaDocInfoComponent(documentationManager);
-    final JavaDocInfoComponent component2 = new JavaDocInfoComponent(documentationManager);
+    final DocumentationComponent component1 = new DocumentationComponent(documentationManager);
+    final DocumentationComponent component2 = new DocumentationComponent(documentationManager);
 
     final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper();
 
@@ -58,8 +58,8 @@ public final class ShowJavadocAction extends AnAction {
     component1.setHint(hint);
     component2.setHint(hint);
 
-    documentationManager.fetchDocInfo(documentationManager.getDefaultProvider(getter), component1);
-    documentationManager.queueFetchDocInfo(documentationManager.getDefaultProvider(setter), component2);
+    documentationManager.fetchDocInfo(getter, component1);
+    documentationManager.queueFetchDocInfo(setter, component2);
 
     hint.show(new RelativePoint(inspector, new Point(0,0)));
     SwingUtilities.invokeLater(

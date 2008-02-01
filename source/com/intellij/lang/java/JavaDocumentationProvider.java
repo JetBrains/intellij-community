@@ -5,8 +5,8 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -515,11 +516,6 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
     }
 
-    final String doc = new JavaDocInfoGenerator(element.getProject(), element).generateDocInfo();
-    if (doc != null) return doc;
-
-    final String inplaceDocumentation = super.generateDoc(element, originalElement);
-    if (inplaceDocumentation != null) return inplaceDocumentation;
 
     //external documentation finder
     final JavaDocInfoGenerator javaDocInfoGenerator = new JavaDocInfoGenerator(element.getProject(), element);
@@ -542,7 +538,7 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       }
     }
 
-    return docFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo(), null);
+    return JavaDocExternalFilter.filterInternalDocInfo(javaDocInfoGenerator.generateDocInfo());
   }
 
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
@@ -587,6 +583,17 @@ public class JavaDocumentationProvider extends ExtensibleDocumentationProvider i
       actionEnabled = false;
     }
     return actionEnabled;
+  }
+
+  @Override
+  public String getExternalDocumentation(@NotNull final String url, final Project project) throws Exception {
+    if (JavaDocExternalFilter.isJavaDocURL(url)) {
+      String text = new JavaDocExternalFilter(project).getExternalDocInfo(url);
+      if (text != null) {
+        return text;
+      }
+    }
+    return null;
   }
 
   @Override

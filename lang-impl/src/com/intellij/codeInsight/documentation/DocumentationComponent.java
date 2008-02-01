@@ -28,7 +28,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Stack;
 
-public class JavaDocInfoComponent extends JPanel implements Disposable{
+public class DocumentationComponent extends JPanel implements Disposable{
 
   private static final int MAX_WIDTH = 500;
     private static final int MAX_HEIGHT = 300;
@@ -76,7 +76,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
     myScrollPane.requestFocus();
   }
 
-  public JavaDocInfoComponent(final DocumentationManager manager) {
+  public DocumentationComponent(final DocumentationManager manager) {
       myManager = manager;
       myIsEmpty = true;
       myIsShown = false;
@@ -102,7 +102,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
               KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
               ActionListener listener = myKeyboardActions.get(keyStroke);
               if (listener != null) {
-                  listener.actionPerformed(new ActionEvent(JavaDocInfoComponent.this, 0, ""));
+                  listener.actionPerformed(new ActionEvent(DocumentationComponent.this, 0, ""));
                   e.consume();
                   return;
               }
@@ -175,7 +175,7 @@ public class JavaDocInfoComponent extends JPanel implements Disposable{
         public void hyperlinkUpdate(HyperlinkEvent e) {
           HyperlinkEvent.EventType type = e.getEventType();
           if (type == HyperlinkEvent.EventType.ACTIVATED) {
-            manager.navigateByLink(JavaDocInfoComponent.this, e.getDescription());
+            manager.navigateByLink(DocumentationComponent.this, e.getDescription());
           }
           else if (type == HyperlinkEvent.EventType.ENTERED) {
             myEditorPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

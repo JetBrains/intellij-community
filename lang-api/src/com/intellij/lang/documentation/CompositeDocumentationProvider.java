@@ -16,8 +16,10 @@
 
 package com.intellij.lang.documentation;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -99,5 +101,16 @@ public class CompositeDocumentationProvider extends ExtensibleDocumentationProvi
         ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(element);
       }
     }
+  }
+
+  @Override
+  public String getExternalDocumentation(@NotNull final String url, final Project project) throws Exception {
+    for (DocumentationProvider provider : myProviders) {
+      if (provider instanceof ExtensibleDocumentationProvider) {
+        final String externalDocumentation = ((ExtensibleDocumentationProvider)provider).getExternalDocumentation(url, project);
+        if (externalDocumentation != null) return externalDocumentation;
+      }
+    }
+    return null;
   }
 }

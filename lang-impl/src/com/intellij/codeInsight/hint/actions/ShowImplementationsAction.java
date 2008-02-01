@@ -32,7 +32,6 @@
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -74,13 +73,7 @@ public class ShowImplementationsAction extends AnAction {
 
     PsiElement element;
     if (editor != null) {
-      element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase
-        .ELEMENT_NAME_ACCEPTED | TargetElementUtilBase
-        .REFERENCED_ELEMENT_ACCEPTED | TargetElementUtilBase
-        .LOOKUP_ITEM_ACCEPTED | TargetElementUtil
-        .NEW_AS_CONSTRUCTOR | TargetElementUtil
-        .THIS_ACCEPTED | TargetElementUtil
-        .SUPER_ACCEPTED);
+      element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAcepted());
     }
     else {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -91,31 +84,27 @@ public class ShowImplementationsAction extends AnAction {
         }
       }
     }
-
+    final PsiElement adjustedElement =
+      TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAcepted(), element, null);
+    if (adjustedElement != null) {
+      element = adjustedElement;
+    }
     final PsiReference ref;
     if (element == null && editor != null) {
       ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
       if (ref != null) {
-        final PsiElement parent = ref.getElement().getParent();
-
-        if (parent instanceof PsiMethodCallExpression) {
-          element = parent;
-        }
+        element = TargetElementUtilBase.getInstance().adjustReference(ref);
       }
     }
     else {
       ref = null;
     }
 
-    if (element instanceof PsiAnonymousClass) {
-      element = ((PsiAnonymousClass)element).getBaseClassType().resolve();
-    }
-
     String text = "";
     PsiElement[] impls = null;
     if (element != null) {
-      if (element instanceof PsiPackage) return;
+      //if (element instanceof PsiPackage) return;
 
       impls = getSelfAndImplementations(editor, element);
       text = SymbolPresentationUtil.getSymbolPresentableText(element);
@@ -146,7 +135,7 @@ public class ShowImplementationsAction extends AnAction {
     PsiElement[] impls = null;
     String text = "";
     if (element != null) {
-      if (element instanceof PsiPackage) return;
+     // if (element instanceof PsiPackage) return;
 
       impls = getSelfAndImplementations(editor, element);
       text = SymbolPresentationUtil.getSymbolPresentableText(element);

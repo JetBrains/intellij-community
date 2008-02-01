@@ -128,6 +128,11 @@ public class TargetElementUtilBase {
   }
 
   @Nullable
+  public PsiElement adjustReference(@NotNull PsiReference ref){
+    return null;
+  }
+
+  @Nullable
   protected PsiElement getNamedElement(@Nullable final PsiElement element) {
     PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {

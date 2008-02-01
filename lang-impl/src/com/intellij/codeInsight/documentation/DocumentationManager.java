@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
-import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -29,8 +28,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.popup.JBPopupImpl;
@@ -118,7 +115,7 @@ public class DocumentationManager implements ProjectComponent {
   }
 
   public JBPopup showJavaDocInfo(@NotNull PsiElement element) {
-    final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
+    final DocumentationComponent component = new DocumentationComponent(this);
 
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
       public boolean value(final PsiElement element) {
@@ -155,7 +152,7 @@ public class DocumentationManager implements ProjectComponent {
     JBPopupImpl oldHint = (JBPopupImpl)getDocInfoHint();
 
     if (oldHint != null) {
-      JavaDocInfoComponent oldComponent = (JavaDocInfoComponent)oldHint.getComponent();
+      DocumentationComponent oldComponent = (DocumentationComponent)oldHint.getComponent();
       PsiElement element1 = oldComponent.getElement();
       if (Comparing.equal(element, element1)) {
         return oldHint;
@@ -165,7 +162,7 @@ public class DocumentationManager implements ProjectComponent {
 
     component.setHint(hint);
 
-    fetchDocInfo(getDefaultProvider(element), component);
+    fetchDocInfo(getDefaultCollector(element), component);
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
 
@@ -197,7 +194,9 @@ public class DocumentationManager implements ProjectComponent {
       final Object[] objects = myParameterInfoController.getSelectedElements();
 
       if (objects != null && objects.length > 0) {
-        element = getPsiElementFromParameterInfoObject(objects[0], element);
+        if (objects[0] instanceof PsiElement) {
+          element = (PsiElement)objects[0];
+        }
       }
     }
 
@@ -206,15 +205,15 @@ public class DocumentationManager implements ProjectComponent {
     if (element == null) { // look if we are within a javadoc comment
       element = originalElement;
       if (element == null) return null;
-      PsiDocComment comment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
+      PsiComment comment = PsiTreeUtil.getParentOfType(element, PsiComment.class);
       if (comment == null) return null;
       element = comment.getParent();
-      if (!(element instanceof PsiDocCommentOwner)) return null;
+      //if (!(element instanceof PsiDocCommentOwner)) return null;
     }
 
     JBPopupImpl oldHint = (JBPopupImpl)getDocInfoHint();
     if (oldHint != null) {
-      JavaDocInfoComponent component = (JavaDocInfoComponent)oldHint.getComponent();
+      DocumentationComponent component = (DocumentationComponent)oldHint.getComponent();
       PsiElement element1 = component.getElement();
       if (Comparing.equal(element, element1)) {
         if (requestFocus) {
@@ -225,7 +224,7 @@ public class DocumentationManager implements ProjectComponent {
       oldHint.cancel();
     }
 
-    final JavaDocInfoComponent component = new JavaDocInfoComponent(this);
+    final DocumentationComponent component = new DocumentationComponent(this);
     storeOriginalElement(project, originalElement, element);
 
     final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(new Condition<PsiElement>() {
@@ -272,7 +271,7 @@ public class DocumentationManager implements ProjectComponent {
 
     component.setHint(hint);
 
-    fetchDocInfo(getDefaultProvider(element), component);
+    fetchDocInfo(getDefaultCollector(element), component);
 
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
@@ -313,11 +312,8 @@ public class DocumentationManager implements ProjectComponent {
       final PsiReference ref = TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset());
 
       if (ref != null) {
-        final PsiElement parent = ref.getElement().getParent();
-
-        if (parent instanceof PsiMethodCallExpression) {
-          element = parent;
-        } else if (ref instanceof PsiPolyVariantReference) {
+        element = TargetElementUtilBase.getInstance().adjustReference(ref);
+        if (element == null && ref instanceof PsiPolyVariantReference) {
           element = ref.getElement();
         }
       }
@@ -349,22 +345,12 @@ public class DocumentationManager implements ProjectComponent {
     return myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider;
   }
 
-  @Nullable
-  private static PsiElement getPsiElementFromParameterInfoObject(final Object o, PsiElement element) {
-    if (o instanceof CandidateInfo) {
-      element = ((CandidateInfo)o).getElement();
-    } else if (o instanceof PsiElement) {
-      element = (PsiElement)o;
-    }
-    return element;
-  }
-
-  public JavaDocProvider getDefaultProvider(final PsiElement _element) {
-    return new JavaDocProvider() {
+  private DocumentationCollector getDefaultCollector(final PsiElement _element) {
+    return new DocumentationCollector() {
       private final SmartPsiElementPointer element = SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element);
 
       @Nullable
-      public String getJavaDoc() throws Exception {
+      public String getDocumentation() throws Exception {
         PsiElement element1 = element.getElement();
         final DocumentationProvider provider = getProviderFromElement(element1);
         if (provider != null && myParameterInfoController != null) {
@@ -374,7 +360,10 @@ public class DocumentationManager implements ProjectComponent {
             @NonNls StringBuffer sb = null;
 
             for(Object o:objects) {
-              PsiElement parameter = getPsiElementFromParameterInfoObject(o, null);
+              PsiElement parameter = null;
+              if (o instanceof PsiElement) {
+                parameter = (PsiElement)o;
+              }
 
               if (parameter != null) {
                 final SmartPsiElementPointer originalElement = parameter.getUserData(ORIGINAL_ELEMENT_KEY);
@@ -415,15 +404,23 @@ public class DocumentationManager implements ProjectComponent {
     return hint;
   }
 
-  public void fetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
+  public void fetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
     doFetchDocInfo(component, provider, true);
   }
 
-  public void queueFetchDocInfo(final JavaDocProvider provider, final JavaDocInfoComponent component) {
+  public void fetchDocInfo(final PsiElement element, final DocumentationComponent component) {
+    doFetchDocInfo(component, getDefaultCollector(element), true);
+  }
+
+  public void queueFetchDocInfo(final DocumentationCollector provider, final DocumentationComponent component) {
     doFetchDocInfo(component, provider, false);
   }
 
-  private void doFetchDocInfo(final JavaDocInfoComponent component, final JavaDocProvider provider, final boolean cancelRequests) {
+  public void queueFetchDocInfo(final PsiMethod setter, final DocumentationComponent component) {
+    queueFetchDocInfo(getDefaultCollector(setter), component);
+  }
+
+  private void doFetchDocInfo(final DocumentationComponent component, final DocumentationCollector provider, final boolean cancelRequests) {
     component.startWait();
     if (cancelRequests) {
       myUpdateDocAlarm.cancelAllRequests();
@@ -442,7 +439,7 @@ public class DocumentationManager implements ProjectComponent {
           @Nullable
           public String compute() {
             try {
-              return provider.getJavaDoc();
+              return provider.getDocumentation();
             }
             catch (Exception e) {
               ex[0] = e;
@@ -524,7 +521,7 @@ public class DocumentationManager implements ProjectComponent {
     return new CompositeDocumentationProvider(result);
   }
 
-  void navigateByLink(final JavaDocInfoComponent component, String url) {
+  void navigateByLink(final DocumentationComponent component, String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     final PsiElement psiElement = component.getElement();
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
@@ -534,7 +531,7 @@ public class DocumentationManager implements ProjectComponent {
       if (provider!=null) {
         final PsiElement targetElement = provider.getDocumentationElementForLink(manager, refText, psiElement);
         if (targetElement != null) {
-          fetchDocInfo(getDefaultProvider(targetElement), component);
+          fetchDocInfo(getDefaultCollector(targetElement), component);
         }
       }
     }
@@ -542,29 +539,20 @@ public class DocumentationManager implements ProjectComponent {
       final String docUrl = url;
 
       fetchDocInfo
-        (new JavaDocProvider() {
-          String getElementLocator(String url) {
-            if (url.startsWith(DOC_ELEMENT_PROTOCOL)) {
-              return url.substring(DOC_ELEMENT_PROTOCOL.length());
-            }
-            return null;
-          }
-
-          public String getJavaDoc() throws Exception {
-            String url = getElementLocator(docUrl);
-            if (url != null && JavaDocExternalFilter.isJavaDocURL(url)) {
-              String text = new JavaDocExternalFilter(getProject(psiElement)).getExternalDocInfo(url);
-
-              if (text != null) {
-                return text;
+        (new DocumentationCollector() {
+          public String getDocumentation() throws Exception {
+            if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
+              final DocumentationProvider provider = getProviderFromElement(psiElement);
+              if (provider instanceof ExtensibleDocumentationProvider) {
+                final ExtensibleDocumentationProvider documentationProvider = (ExtensibleDocumentationProvider)provider;
+                final String text = documentationProvider
+                  .getExternalDocumentation(docUrl.substring(DOC_ELEMENT_PROTOCOL.length()), getProject(psiElement));
+                if (text != null) {
+                  return text;
+                }
+                documentationProvider.openExternalDocumentation(psiElement);
               }
             }
-
-            final DocumentationProvider provider = getProviderFromElement(psiElement);
-            if (provider instanceof ExtensibleDocumentationProvider) {
-              ((ExtensibleDocumentationProvider)provider).openExternalDocumentation(psiElement);
-            }
-
             return "";
           }
 
@@ -602,5 +590,12 @@ public class DocumentationManager implements ProjectComponent {
   public Project getProject(@Nullable final PsiElement element) {
     assert element == null || myProject == element.getProject();
     return myProject;
+  }
+
+  private static interface DocumentationCollector {
+    @Nullable
+    String getDocumentation() throws Exception;
+    @Nullable
+    PsiElement getElement();
   }
 }

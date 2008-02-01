@@ -4,7 +4,6 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.xml.XMLLanguage;
@@ -34,11 +33,6 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
     };
   }
 
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    if(file instanceof PsiJavaFile) return true;
-    final PsiElement element = ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
-    return element != null && ParameterInfoController.findControllerAtOffset(editor, element.getTextOffset()) != null;
-  }
 
   protected boolean isValidForLookup() {
     return true;
@@ -72,17 +66,15 @@ public class ShowJavaDocInfoAction extends BaseCodeInsightAction implements Hint
     else {
       if (editor != null) {
         PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-        if (file == null || !isValidForFile(project, editor, file)) {
+        if (file == null) {
           presentation.setEnabled(false);
-        }
-        else {
-          presentation.setEnabled(isEnabledForFile(project, editor, file));
         }
 
         if (element == null && file != null) {
           if (file.getLanguage() instanceof XMLLanguage) {
             // we allow request quick doc over content of the tag
-            element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), XmlTag.class);
+            final PsiElement contextElement = file.findElementAt(editor.getCaretModel().getOffset());
+            element = PsiTreeUtil.getParentOfType(contextElement, XmlTag.class);
           } else {
             final PsiReference ref = file.findReferenceAt(editor.getCaretModel().getOffset());
             if (ref instanceof PsiPolyVariantReference) {

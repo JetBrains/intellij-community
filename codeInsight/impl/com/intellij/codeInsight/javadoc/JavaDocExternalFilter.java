@@ -251,20 +251,15 @@ public class JavaDocExternalFilter {
   }
 
   @Nullable
-  public String filterInternalDocInfo(String text, String surl) {
+  public static String filterInternalDocInfo(String text) {
     if (text == null) {
       return null;
     }
 
     text = JavaDocUtil.fixupText(text);
 
-    if (surl == null) {
-      return text;
-    }
+    return text;
 
-    String root = ourAnchorsuffix.matcher(surl).replaceAll("");
-
-    return correctRefs(root, text);
   }
 
 
