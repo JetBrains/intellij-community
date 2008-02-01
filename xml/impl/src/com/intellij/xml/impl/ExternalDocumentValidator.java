@@ -308,8 +308,8 @@ public class ExternalDocumentValidator {
     }
   }
 
-  public static synchronized void doValidation(final PsiElement context, final Validator.ValidationHost host) {
-    final PsiFile containingFile = context.getContainingFile();
+  public static synchronized void doValidation(final XmlDocument document, final Validator.ValidationHost host) {
+    final PsiFile containingFile = document.getContainingFile();
     if (containingFile == null ||
         ( containingFile.getFileType() != StdFileTypes.XML &&
           containingFile.getFileType() != StdFileTypes.XHTML
@@ -322,13 +322,12 @@ public class ExternalDocumentValidator {
       if ("ANT".equals(lang.getID())) return;
     }
 
-    final XmlDocument document = ((XmlFile)containingFile).getDocument();
     final XmlTag rootTag = document != null ? document.getRootTag() : null;
     if (rootTag == null) return;
 
     if (XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
 
-    final Project project = context.getProject();
+    final Project project = document.getProject();
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile(containingFile);
     final LocalInspectionToolWrapper toolWrapper =
@@ -345,6 +344,6 @@ public class ExternalDocumentValidator {
       project.putUserData(validatorInstanceKey,new SoftReference<ExternalDocumentValidator>(validator));
     }
 
-    validator.runJaxpValidation((XmlElement)context,host);
+    validator.runJaxpValidation(document,host);
   }
 }

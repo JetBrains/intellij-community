@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mike
  */
-public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator {
+public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritableMetaData, Validator<XmlTag> {
   protected XmlTag myDescriptorTag;
   protected volatile XmlNSDescriptor NSDescriptor;
-  private volatile @Nullable Validator myValidator;
+  private volatile @Nullable Validator<XmlTag> myValidator;
 
   @NonNls
   public static final String QUALIFIED_ATTR_VALUE = "qualified";
@@ -449,12 +449,12 @@ public class XmlElementDescriptorImpl implements XmlElementDescriptor, PsiWritab
     NamedObjectDescriptor.setName(myDescriptorTag, name);
   }
 
-  public void setValidator(final Validator validator) {
+  public void setValidator(final Validator<XmlTag> validator) {
     myValidator = validator;
   }
 
-  public void validate(PsiElement context, ValidationHost host) {
-    Validator validator = myValidator;
+  public void validate(XmlTag context, ValidationHost host) {
+    Validator<XmlTag> validator = myValidator;
     if (validator != null) {
       validator.validate(context, host);
     }

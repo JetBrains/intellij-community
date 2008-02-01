@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * @author Mike
  */
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument> {
   private XmlElement myElement;
   private XmlFile myDescriptorFile;
 
@@ -159,11 +159,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     return new Object[]{myElement, ExternalResourceManager.getInstance()};
   }
 
-  public void validate(PsiElement context, ValidationHost host) {
-    if (context instanceof XmlDocument && context.getLanguage() == StdLanguages.DTD) {
+  public void validate(XmlDocument document, ValidationHost host) {
+    if (document.getLanguage() == StdLanguages.DTD) {
       final List<XmlElementDecl> decls = new ArrayList<XmlElementDecl>(3);
 
-      XmlUtil.processXmlElements((XmlDocument)context, new PsiElementProcessor() {
+      XmlUtil.processXmlElements(document, new PsiElementProcessor() {
         public boolean execute(final PsiElement element) {
           if (element instanceof XmlElementDecl) decls.add((XmlElementDecl)element);
           return true;
@@ -177,6 +177,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
       );
       return;
     }
-    ExternalDocumentValidator.doValidation(context,host);
+    ExternalDocumentValidator.doValidation(document,host);
   }
 }

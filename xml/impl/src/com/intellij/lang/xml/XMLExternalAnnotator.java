@@ -3,7 +3,6 @@ package com.intellij.lang.xml;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
@@ -26,10 +25,8 @@ public class XMLExternalAnnotator implements ExternalAnnotator, Validator.Valida
     XmlTag rootTag = document.getRootTag();
     XmlNSDescriptor nsDescriptor = rootTag == null ? null : rootTag.getNSDescriptor(rootTag.getNamespace(), false);
 
-    final Project project = file.getProject();
-
     if (nsDescriptor instanceof Validator) {
-      ((Validator)nsDescriptor).validate(document, this);
+      ((Validator<XmlDocument>)nsDescriptor).validate(document, this);
     }
   }
 

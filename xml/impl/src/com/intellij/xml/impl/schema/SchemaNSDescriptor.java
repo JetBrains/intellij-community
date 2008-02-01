@@ -30,9 +30,8 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
 
   @NonNls private static final String NAME_ATTR_NAME = "name";
 
-  private static final Validator ELEMENT_VALIDATOR = new Validator() {
-    public void validate(PsiElement context, ValidationHost host) {
-      final XmlTag tag = ((XmlTag)context);
+  private static final Validator<XmlTag> ELEMENT_VALIDATOR = new Validator<XmlTag>() {
+    public void validate(final XmlTag tag, ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final boolean hasRefAttribute = tag.getAttributeValue(REF_ATTR_NAME) != null;
 
@@ -84,9 +83,8 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
-  private static final Validator ATTRIBUTE_VALIDATOR = new Validator() {
-    public void validate(PsiElement context, ValidationHost host) {
-      final XmlTag tag = ((XmlTag)context);
+  private static final Validator<XmlTag> ATTRIBUTE_VALIDATOR = new Validator<XmlTag>() {
+    public void validate(final XmlTag tag, ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
 
       if (tag.getAttributeValue(REF_ATTR_NAME) == null && tag.getAttributeValue(NAME_ATTR_NAME) == null) {
@@ -128,9 +126,8 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     }
   };
 
-  private static final Validator ELEMENT_AND_ATTR_VALIDATOR = new Validator() {
-    public void validate(PsiElement context, ValidationHost host) {
-      final XmlTag tag = ((XmlTag)context);
+  private static final Validator<XmlTag> ELEMENT_AND_ATTR_VALIDATOR = new Validator<XmlTag>() {
+    public void validate(final XmlTag tag, ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final String nsPrefix = tag.getNamespacePrefix();
       final XmlTag[] attrDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "attribute");

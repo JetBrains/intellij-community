@@ -31,7 +31,7 @@ import java.util.*;
  * @author Mike
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
+public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator<XmlDocument> {
   @NonNls private static final Set<String> STD_TYPES = new HashSet<String>();
   private static final Set<String> UNDECLARED_STD_TYPES = new HashSet<String>();
   private XmlFile myFile;
@@ -915,7 +915,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptor,Validator {
     UNDECLARED_STD_TYPES.add("anySimpleType");
   }
 
-  public void validate(PsiElement context, Validator.ValidationHost host) {
+  public void validate(XmlDocument context, Validator.ValidationHost host) {
     ExternalDocumentValidator.doValidation(context,host);
   }
 

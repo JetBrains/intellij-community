@@ -356,7 +356,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     }
 
     if (elementDescriptor instanceof Validator) {
-      ((Validator)elementDescriptor).validate(tag,this);
+      ((Validator<XmlTag>)elementDescriptor).validate(tag,this);
     }
   }
 
@@ -576,7 +576,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements Validator.
     if (document.getLanguage() == StdLanguages.DTD) {
       final PsiMetaData psiMetaData = document.getMetaData();
       if (psiMetaData instanceof Validator) {
-        ((Validator)psiMetaData).validate(document, this);
+        ((Validator<XmlDocument>)psiMetaData).validate(document, this);
       }
     }
   }
