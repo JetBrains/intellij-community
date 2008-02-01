@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.TIntHashSet;
@@ -303,11 +304,29 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     for (Project project : projects) {
       synchronizer.registerCacheUpdater(new UnindexedFilesUpdater(project, ProjectRootManager.getInstance(project), this));
     }
-    new Task.Modal(null, "Updating index", false) {
-      public void run(@NotNull final ProgressIndicator indicator) {
-        synchronizer.execute();
-      }
-    }.queue();
+    
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      new Task.Modal(null, "Updating index", false) {
+        public void run(@NotNull final ProgressIndicator indicator) {
+          synchronizer.execute();
+        }
+      }.queue();
+    }
+    else {
+      final Semaphore semaphore = new Semaphore();
+      semaphore.down();
+      new Task.Backgroundable(null, "Updating index", false) {
+        public void run(@NotNull final ProgressIndicator indicator) {
+          try {
+            synchronizer.execute();
+          }
+          finally {
+            semaphore.up();
+          }
+        }
+      }.queue();
+      semaphore.waitFor();
+    }
   }
 
   @Nullable
