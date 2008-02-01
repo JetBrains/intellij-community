@@ -454,12 +454,20 @@ public class ContainerUtil {
     return element == null ? Collections.<T>emptyList() : Arrays.asList(element);
   }
 
-  public static <T,V> V getOrCreate(final Map<T, V> result, final T key, final Factory<V> factory) {
-    V list = result.get(key);
-    if (list == null) {
-      result.put(key, list = factory.create());
+  public static <T,V> V getOrCreate(final Map<T, V> result, final T key, final V defaultValue) {
+    V value = result.get(key);
+    if (value == null) {
+      result.put(key, value = defaultValue);
     }
-    return list;
+    return value;
+  }
+
+  public static <T,V> V getOrCreate(final Map<T, V> result, final T key, final Factory<V> factory) {
+    V value = result.get(key);
+    if (value == null) {
+      result.put(key, value = factory.create());
+    }
+    return value;
   }
 
   public static <T> boolean and(T[] iterable, Condition<T> condition) {

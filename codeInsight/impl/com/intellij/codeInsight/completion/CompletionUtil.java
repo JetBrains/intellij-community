@@ -410,7 +410,7 @@ public class CompletionUtil {
               reference == ((PsiMethodCallExpression)parent).getMethodExpression()) {
             if (reference.resolve() == null && reference.getReferenceName() != null) unresolvedRefs.add(reference.getReferenceName());
           }
-          else if (!referenceOnMethod && reference.resolve() == null && reference.getReferenceName() != null) {
+          else if (!referenceOnMethod && !(parent instanceof PsiMethodCallExpression) &&reference.resolve() == null && reference.getReferenceName() != null) {
             unresolvedRefs.add(reference.getReferenceName());
           }
         }

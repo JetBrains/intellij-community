@@ -22,8 +22,9 @@ import java.util.Set;
  */
 public class XmlCompletionContributor extends CompletionContributor{
   public void registerCompletionProviders(final CompletionRegistrar registrar) {
-    registrar.extendClassNameCompletion(PlatformPatterns.psiElement(XmlTokenType.XML_NAME)).dependent("TagNameCompletion",
-                                                                                                      LegacyCompletionContributor.LEGACY).withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
+    registrar.extendClassNameCompletion(PlatformPatterns.psiElement(XmlTokenType.XML_NAME)).
+      dependingOn(JavaCompletionContributor.JAVA_LEGACY).
+      withProvider(new CompletionProvider<LookupElement, CompletionParameters>() {
       public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final QueryResultSet<LookupElement> result) {
         result.clear();
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
