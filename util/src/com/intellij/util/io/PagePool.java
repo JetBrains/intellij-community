@@ -142,8 +142,14 @@ public class PagePool {
     }
 
     if (hasFlushes) {
-      synchronized (finalizationLock) {
-        while (!myFinalizationQueue.isEmpty()) {
+      while (true) {
+        synchronized (lock) {
+          if (myFinalizationQueue.isEmpty()) {
+            break;
+          }
+        }
+
+        synchronized (finalizationLock) {
           try {
             finalizationLock.wait();
           }
@@ -193,15 +199,15 @@ public class PagePool {
     }
 
     if (wakeUpFinalizer) {
-      synchronized (myFinalizationQueue) {
-        myFinalizationQueue.notifyAll();
+      synchronized (finalizationLock) {
+        finalizationLock.notifyAll();
       }
     }
   }
 
   private static class FinalizationRequest {
-    Page page;
-    long finalizationId;
+    public final Page page;
+    public final long finalizationId;
 
     private FinalizationRequest(final Page page, final long finalizationId) {
       this.page = page;
@@ -215,24 +221,7 @@ public class PagePool {
     public void run() {
       //noinspection InfiniteLoopStatement
       while (true) {
-        FinalizationRequest request = null;
-        synchronized (lock) {
-          if (!myFinalizationQueue.isEmpty()) {
-            final PoolPageKey key;
-            if (lastFinalizedKey == null) {
-              key = myFinalizationQueue.firstKey();
-            }
-            else {
-              final SortedMap<PoolPageKey,FinalizationRequest> tail = myFinalizationQueue.tailMap(lastFinalizedKey);
-              key = tail.isEmpty() ? myFinalizationQueue.firstKey() : tail.firstKey();
-            }
-            lastFinalizedKey = key;
-            request = myFinalizationQueue.get(key);
-          }
-          else {
-            lastFinalizedKey = null;
-          }
-        }
+        FinalizationRequest request = getNextFinalizationRequest();
 
         if (request != null) {
           if (request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId)) {
@@ -247,9 +236,9 @@ public class PagePool {
           }
         }
         else {
-          synchronized (myFinalizationQueue) {
+          synchronized (finalizationLock) {
             try {
-              myFinalizationQueue.wait();
+              finalizationLock.wait();
             }
             catch (InterruptedException e) {
               throw new RuntimeException(e);
@@ -257,6 +246,28 @@ public class PagePool {
           }
         }
       }
+    }
+
+    private FinalizationRequest getNextFinalizationRequest() {
+      FinalizationRequest request = null;
+      synchronized (lock) {
+        if (!myFinalizationQueue.isEmpty()) {
+          final PoolPageKey key;
+          if (lastFinalizedKey == null) {
+            key = myFinalizationQueue.firstKey();
+          }
+          else {
+            final SortedMap<PoolPageKey, FinalizationRequest> tail = myFinalizationQueue.tailMap(lastFinalizedKey);
+            key = tail.isEmpty() ? myFinalizationQueue.firstKey() : tail.firstKey();
+          }
+          lastFinalizedKey = key;
+          request = myFinalizationQueue.get(key);
+        }
+        else {
+          lastFinalizedKey = null;
+        }
+      }
+      return request;
     }
   }
 }
