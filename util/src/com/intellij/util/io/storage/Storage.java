@@ -24,12 +24,11 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.RecordDataOutput;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class Storage implements Disposable, Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.storage.Storage");
@@ -38,15 +37,20 @@ public class Storage implements Disposable, Forceable {
   private final RecordsTable myRecordsTable;
   private DataTable myDataTable;
 
-  private static final int CACHE_SIZE = 8192;
   private final Object myAppendersLock = new Object();
-  private final Map<Integer, AppenderStream> myAppendersCache = new LinkedHashMap<Integer, AppenderStream>(16, 0.75f, true) {
-    @Override
-    protected boolean removeEldestEntry(final Map.Entry<Integer, AppenderStream> eldest) {
-      if (size() < CACHE_SIZE) return false;
+  private final SLRUCache<Integer, AppenderStream> myAppendersCache = new SLRUCache<Integer, AppenderStream>(2048, 8192) {
+    @NotNull
+    public AppenderStream createValue(final Integer key) {
+      return new AppenderStream(key.intValue());
+    }
 
-      closeStream(eldest.getValue());
-      return true;
+    protected void onDropFromCache(final Integer key, final AppenderStream value) {
+      try {
+        value.realClose();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   };
 
@@ -166,9 +170,6 @@ public class Storage implements Disposable, Forceable {
 
   public void force() {
     synchronized (myAppendersLock) {
-      for (AppenderStream stream : myAppendersCache.values()) {
-        closeStream(stream);
-      }
       myAppendersCache.clear();
     }
 
@@ -250,11 +251,7 @@ public class Storage implements Disposable, Forceable {
 
   private void dropRecordCache(final int record) {
     synchronized (myAppendersLock) {
-      final AppenderStream stream = myAppendersCache.get(record);
-      if (stream != null) {
-        closeStream(stream);
-        myAppendersCache.remove(record);
-      }
+      myAppendersCache.remove(record);
     }
   }
 
@@ -278,6 +275,9 @@ public class Storage implements Disposable, Forceable {
 
   public AppenderStream appendStream(int record) {
     synchronized (myAppendersLock) {
+      return myAppendersCache.get(record);
+
+      /*
       AppenderStream appenderStream = myAppendersCache.get(record);
       if (appenderStream != null) {
         if (appenderStream.size() > 4048) {
@@ -292,15 +292,7 @@ public class Storage implements Disposable, Forceable {
 
       myAppendersCache.put(record, appenderStream);
       return appenderStream;
-    }
-  }
-
-  private static void closeStream(final AppenderStream appenderStream) {
-    try {
-      appenderStream.realClose();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+      */
     }
   }
 

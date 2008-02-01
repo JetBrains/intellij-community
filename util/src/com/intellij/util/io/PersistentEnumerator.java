@@ -16,14 +16,13 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.containers.ShareableKey;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author max
@@ -56,15 +55,9 @@ public class PersistentEnumerator<Data> implements Forceable {
   private final DataDescriptor<Data> myDataDescriptor;
   private final byte[] myBuffer = new byte[8];
 
-  private static final int CACHE_SIZE = 8192;
-  
-  private static ThreadLocal<CacheKey> ourFlyWeights = new ThreadLocal<CacheKey>() {
-    protected CacheKey initialValue() {
-      return new CacheKey(null, null);
-    }
-  };
-  
-  private static class CacheKey {
+  private static final CacheKey ourFlyweight = new CacheKey(null, null);
+
+  private static class CacheKey implements ShareableKey {
     public PersistentEnumerator owner;
     public Object key;
 
@@ -73,6 +66,9 @@ public class PersistentEnumerator<Data> implements Forceable {
       this.owner = owner;
     }
 
+    public ShareableKey getStableCopy() {
+      return new CacheKey(key, owner);
+    }
 
     public boolean equals(final Object o) {
       if (this == o) return true;
@@ -92,18 +88,12 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
 
   public static CacheKey sharedKey(Object key, PersistentEnumerator owner) {
-    final CacheKey cacheKey = ourFlyWeights.get();
-    cacheKey.key = key;
-    cacheKey.owner = owner;
-    return cacheKey;
+    ourFlyweight.key = key;
+    ourFlyweight.owner = owner;
+    return ourFlyweight;
   }
 
-  private static final Map<Object, Integer> ourEnumerationCache = Collections.synchronizedMap(new LinkedHashMap<Object, Integer>(16, 0.75f, true) {
-    @Override
-    protected boolean removeEldestEntry(final Map.Entry<Object, Integer> eldest) {
-      return size() > CACHE_SIZE;
-    }
-  });
+  private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<Object, Integer>(2048, 8192);
 
   public static class CorruptedException extends IOException {
     @SuppressWarnings({"HardCodedStringLiteral"})
@@ -141,16 +131,24 @@ public class PersistentEnumerator<Data> implements Forceable {
   }
   
   protected synchronized int tryEnumerate(Data value) throws IOException {
-    final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-    if (cachedId != null) return cachedId.intValue();
+    synchronized (ourEnumerationCache) {
+      final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
+      if (cachedId != null) return cachedId.intValue();
+    }
     return enumerateImpl(value, false);
   }
   
   public synchronized int enumerate(Data value) throws IOException {
-    final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
-    if (cachedId != null) return cachedId.intValue();
+    synchronized (ourEnumerationCache) {
+      final Integer cachedId = ourEnumerationCache.get(sharedKey(value, this));
+      if (cachedId != null) return cachedId.intValue();
+    }
+
     final int id = enumerateImpl(value, true);
-    ourEnumerationCache.put(new CacheKey(value, this), id);
+    synchronized (ourEnumerationCache) {
+      ourEnumerationCache.put(new CacheKey(value, this), id);
+    }
+
     return id;
   }
 
