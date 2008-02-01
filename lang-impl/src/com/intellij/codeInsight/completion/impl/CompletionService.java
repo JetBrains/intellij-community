@@ -50,7 +50,6 @@ public class CompletionService {
   }
 
   public PrioritizedQueryFactory<LookupElement, CompletionParameters> getBasicCompletionQueryFactory(final CompletionParameters queryParameters) {
-    System.out.println("myBasicCompletionProviders.getValues() = " + myBasicCompletionProviders.getValues());
     return createFactory(myBasicCompletionProviders, queryParameters);
   }
 
@@ -122,7 +121,7 @@ public class CompletionService {
       return this;
     }
 
-    public CompletionPlace<Result, Params> dependingOn(@NonNls final String id, @NonNls final String... dependentIds) {
+    public CompletionPlace<Result, Params> dependingOn(@NonNls final String... dependentIds) {
       myProviders.addValue(myId, this);
       for (final String dependentId : dependentIds) {
         myProviders.addRelation(this, dependentId);
