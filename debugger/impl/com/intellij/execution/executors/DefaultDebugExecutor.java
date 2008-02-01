@@ -18,6 +18,6 @@ public class DefaultDebugExecutor extends Executor {
   }
 
   public String getStartActionText() {
-    return GenericDebuggerRunner.getRunnerInfo().getStartActionText();
+    return GenericDebuggerRunner.DEBUGGER_INFO.getStartActionText();
   }
 }

@@ -1,24 +1,20 @@
 package com.intellij.execution.runners;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.options.SettingsEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
@@ -61,11 +57,31 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable, 
     }
   };
 
+  public Settings createConfigurationData(final ConfigurationInfoProvider settingsProvider) {
+    return null;
+  }
 
+  public void patch(final Parameters javaParameters, final RunnerSettings settings, final boolean beforeExecution) throws ExecutionException {
+  }
+
+  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
+    throws RuntimeConfigurationException {
+  }
+
+  public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
+  }
+
+  public AnAction[] createActions(final ExecutionResult executionResult) {
+    return AnAction.EMPTY_ARRAY;
+  }
+
+  public SettingsEditor<Settings> getSettingsEditor(final RunConfiguration configuration) {
+    return null;
+  }
 
   public void execute(@NotNull final RunProfile profile, @NotNull final DataContext dataContext,
-                      @NotNull final RunnerSettings settings,
-                      @NotNull final ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
+                      @Nullable final RunnerSettings settings,
+                      @Nullable final ConfigurationPerRunnerSettings configurationSettings) throws ExecutionException {
     execute(profile, dataContext, settings, configurationSettings, null);
   }
 
@@ -75,8 +91,8 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable, 
   }
 
   public void execute(@NotNull final RunProfile profile, @NotNull final DataContext dataContext,
-                      @NotNull final RunnerSettings settings,
-                      @NotNull final ConfigurationPerRunnerSettings configurationSettings,
+                      @Nullable final RunnerSettings settings,
+                      @Nullable final ConfigurationPerRunnerSettings configurationSettings,
                       @Nullable final Callback callback) throws ExecutionException {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

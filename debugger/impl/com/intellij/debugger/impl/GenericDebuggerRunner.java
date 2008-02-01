@@ -4,7 +4,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.GenericProgramRunner;
@@ -12,7 +11,6 @@ import com.intellij.execution.runners.RunnerInfo;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryConfiguration;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -31,7 +29,7 @@ public class GenericDebuggerRunner extends GenericProgramRunner<GenericDebuggerR
 
   public static final Icon ICON = IconLoader.getIcon("/actions/startDebugger.png");
   private static final @NonNls String HELP_ID = "debugging.debugWindow";
-  private static final RunnerInfo DEBUGGER_INFO = new RunnerInfo(ToolWindowId.DEBUG,
+  public static final RunnerInfo DEBUGGER_INFO = new RunnerInfo(ToolWindowId.DEBUG,
                                                                  DebuggerBundle.message("string.debugger.runner.description"), ICON,
                                                                  TOOLWINDOW_ICON, ToolWindowId.DEBUG, HELP_ID) {
 
@@ -57,10 +55,6 @@ public class GenericDebuggerRunner extends GenericProgramRunner<GenericDebuggerR
 
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile;
-  }
-
-  public static RunnerInfo getRunnerInfo() {
-    return DEBUGGER_INFO;
   }
 
   @Nullable
@@ -128,20 +122,9 @@ public class GenericDebuggerRunner extends GenericProgramRunner<GenericDebuggerR
     doPatch(javaParameters, settings);
   }
 
-  public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
-    throws RuntimeConfigurationException {
-  }
-
-  public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
-  }
-
   private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
     final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings.getData());
     return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
-  }
-
-  public AnAction[] createActions(ExecutionResult executionResult) {
-    return new AnAction[0];
   }
 
   public SettingsEditor<GenericDebuggerRunnerSettings> getSettingsEditor(RunConfiguration configuration) {

@@ -138,7 +138,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
   public void projectOpened() {
     RunContentManager contentManager = ExecutionManager.getInstance(myProject).getContentManager();
     LOG.assertTrue(contentManager != null, "Content manager is null");
-    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.getRunnerInfo());
+    contentManager.addRunContentListener(myContentListener, GenericDebuggerRunner.DEBUGGER_INFO);
   }
 
   public void projectClosed() {
