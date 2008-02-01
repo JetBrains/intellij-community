@@ -68,6 +68,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   private final ResolveCache myResolveCache;
   private final CachedValuesManager myCachedValuesManager;
 
+  private final List<PsiTreeChangePreprocessor> myTreeChangePreprocessors = new CopyOnWriteArrayList<PsiTreeChangePreprocessor>();
   private final List<PsiTreeChangeListener> myTreeChangeListeners = new CopyOnWriteArrayList<PsiTreeChangeListener>();
   private boolean myTreeChangeEventIsFiring = false;
 
@@ -135,6 +136,7 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     myCacheManager = cacheManager;
 
     myModificationTracker = new PsiModificationTrackerImpl(this);
+    myTreeChangePreprocessors.add(myModificationTracker);
     myResolveCache = new ResolveCache(this);
     myCachedValuesManager = new CachedValuesManagerImpl(this);
 
@@ -590,6 +592,10 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
     afterAnyChange();
   }
 
+  public void addTreeChangePreprocessor(PsiTreeChangePreprocessor preprocessor) {
+    myTreeChangePreprocessors.add(preprocessor);
+  }
+
   private void fireEvent(PsiTreeChangeEventImpl event) {
     boolean isRealTreeChange = event.getCode() != PROPERTY_CHANGED && event.getCode() != BEFORE_PROPERTY_CHANGE;
 
@@ -602,7 +608,9 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
       myTreeChangeEventIsFiring = true;
     }
     try {
-      myModificationTracker.treeChanged(event);
+      for(PsiTreeChangePreprocessor preprocessor: myTreeChangePreprocessors) {
+        preprocessor.treeChanged(event);
+      }
 
       for (PsiTreeChangeListener listener : myTreeChangeListeners) {
         try {
