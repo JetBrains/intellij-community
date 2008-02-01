@@ -216,6 +216,9 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType BALANCED_TOKENS = new GroovyElementType("balanced tokens in the brackts"); //not a node
 
   GroovyElementType UPPER_CASE_IDENT = new GroovyElementType("Upper case identifier");
+
+  TokenSet CLASS_BODY_SET = TokenSet.create(CLASS_BODY, ENUM_BODY);
+
   TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
       BLOCK_STATEMENT,
       OPEN_BLOCK,
