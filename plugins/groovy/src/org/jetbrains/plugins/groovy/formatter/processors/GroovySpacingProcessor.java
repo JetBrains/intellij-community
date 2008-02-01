@@ -81,18 +81,22 @@ public abstract class GroovySpacingProcessor extends SpacingTokens implements Gr
       return NO_SPACING;
     }
 
-    if (METHOD_DEFS.contains(leftNode.getElementType())) {
-      if (RIGHT_BRACES.contains(rightNode.getElementType())) {
+    if (CLASS_LEVEL_DEFS.contains(leftNode.getElementType())) {
+      if (mRCURLY.equals(rightNode.getElementType())) {
         return Spacing.createSpacing(0, 0, 1, false, 100);
       }
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+      int nBlanks = METHOD_DEFS.contains(leftNode.getElementType()) ? settings.BLANK_LINES_AROUND_METHOD :
+          FIELD.equals(leftNode.getElementType()) ? settings.BLANK_LINES_AROUND_FIELD : 1;
+      return Spacing.createSpacing(0, 0, nBlanks + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
-    if (METHOD_DEFS.contains(rightNode.getElementType())) {
-      if (LEFT_BRACES.contains(leftNode.getElementType())) {
+    if (CLASS_LEVEL_DEFS.contains(rightNode.getElementType())) {
+      if (mLCURLY.equals(leftNode.getElementType())) {
         return Spacing.createSpacing(0, 0, 1, false, 100);
       }
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
+      int nBlanks = METHOD_DEFS.contains(rightNode.getElementType()) ? settings.BLANK_LINES_AROUND_METHOD :
+          FIELD.equals(rightNode.getElementType()) ? settings.BLANK_LINES_AROUND_FIELD : 1;
+      return Spacing.createSpacing(0, 0, nBlanks + 1, settings.KEEP_LINE_BREAKS, 100);
     }
 
     // For parentheses in arguments and typecasts
