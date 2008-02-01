@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 
 public class MessageDescriptor extends NodeDescriptorImpl {
   public static final int ERROR = 0;
@@ -25,7 +26,7 @@ public class MessageDescriptor extends NodeDescriptorImpl {
   public static MessageDescriptor ARRAY_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.empty.array"));
   public static MessageDescriptor CLASS_HAS_NO_FIELDS = new MessageDescriptor(DebuggerBundle.message("message.node.class.has.no.fields"));
   public static MessageDescriptor OBJECT_COLLECTED = new MessageDescriptor(DebuggerBundle.message("message.node.object.collected"));
-  public static MessageDescriptor EVALUATING = new MessageDescriptor(NodeDescriptorImpl.EVALUATING_MESSAGE);
+  public static MessageDescriptor EVALUATING = new MessageDescriptor(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE);
   public static MessageDescriptor THREAD_IS_RUNNING = new MessageDescriptor(DebuggerBundle.message("message.node.thread.running"));
   public static MessageDescriptor THREAD_IS_EMPTY = new MessageDescriptor(DebuggerBundle.message("message.node.thread.has.no.frames"));
   public static MessageDescriptor EVALUATION_NOT_POSSIBLE = new MessageDescriptor(DebuggerBundle.message("message.node.evaluation.not.possible", WARNING));

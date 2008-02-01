@@ -19,5 +19,6 @@ package com.intellij.xdebugger.frame;
 /**
  * @author nik
  */
-public interface XStackFrame {
+public abstract class XStackFrame extends XValueContainer {
+
 }

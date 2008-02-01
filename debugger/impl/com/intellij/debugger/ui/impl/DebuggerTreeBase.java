@@ -16,9 +16,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -37,7 +39,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
   public DebuggerTreeBase(TreeModel model, Project project) {
     super(model);
     myProject = project;
-    com.intellij.util.ui.UIUtil.setLineStyleAngled(this);
+    UIUtil.setLineStyleAngled(this);
     setRootVisible(false);
     setShowsRootHandles(true);
     setCellRenderer(new DebuggerTreeRenderer());
@@ -50,7 +52,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     TreeUtil.installActions(this);
   }
 
-  private int getMaximumChars(final String s, final FontMetrics metrics, final int maxWidth) {
+  private static int getMaximumChars(final String s, final FontMetrics metrics, final int maxWidth) {
     int minChar = 0;
     int maxChar = s.length();
     int chars;
@@ -122,6 +124,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     return tooltip;
   }
 
+  @Nullable
   public JComponent createToolTip(MouseEvent e) {
     final DebuggerTreeNodeImpl node = getNodeToShowTip(e);
     if (node == null) {
@@ -177,6 +180,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     return toolTip;
   }
 
+  @Nullable
   private String getTipText(DebuggerTreeNodeImpl node) {
     NodeDescriptorImpl descriptor = node.getDescriptor();
     if (descriptor instanceof ValueDescriptorImpl) {
@@ -202,6 +206,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
     return null;
   }
 
+  @Nullable
   private DebuggerTreeNodeImpl getNodeToShowTip(MouseEvent event) {
     TreePath path = getPathForLocation(event.getX(), event.getY());
     if (path != null) {
@@ -222,11 +227,11 @@ public class DebuggerTreeBase extends DnDAwareTree {
     }
 
     Rectangle contentRect = getVisibleRect();
-    int x, y;
 
     int vgap = nodeBounds.height;
-    int height;
     int width = Math.min(tipContentSize.width, contentRect.width);
+    int height;
+    int y;
     if(point.y > contentRect.y + contentRect.height / 2) {
       y = Math.max(contentRect.y, nodeBounds.y - tipContentSize.height - vgap);
       height = Math.min(tipContentSize.height, nodeBounds.y - contentRect.y - vgap);
@@ -238,7 +243,7 @@ public class DebuggerTreeBase extends DnDAwareTree {
 
     final Dimension tipSize = new Dimension(width, height);
 
-    x = point.x - width / 2;
+    int x = point.x - width / 2;
     if(x < contentRect.x) {
       x = contentRect.x;
     }

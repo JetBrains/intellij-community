@@ -6,45 +6,32 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.ValueMarkup;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Icons;
+import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.DebuggerTreeRenderer");
-
-  private static final Color myHighlightColor = new Color(128, 0, 0);
-  private static final Color myChangedValueHighlightColor = Color.blue;
-  private static final Color myEvaluatingHighlightColor = Color.lightGray;
-  private static final Color myExceptionHighlightColor = Color.red;
-
   private static final Icon myThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroup.png");
   private static final Icon myCurrentThreadGroupIcon = IconLoader.getIcon("/debugger/threadGroupCurrent.png");
-  private static final Icon myValueIcon = IconLoader.getIcon("/debugger/value.png");
   private static final Icon myWatchedValueIcon = IconLoader.getIcon("/debugger/watch.png");
-  private static final Icon myArrayValueIcon = IconLoader.getIcon("/debugger/db_array.png");
-  private static final Icon myPrimitiveValueIcon = IconLoader.getIcon("/debugger/db_primitive.png");
   private static final Icon myStaticFieldIcon = Icons.FIELD_ICON;
 
   private static Icon myStaticIcon = IconLoader.getIcon("/nodes/static.png");
 
-  private static final Icon myErrorMessageIcon = IconLoader.getIcon("/debugger/db_error.png");
-  private static final Icon myInformationMessageIcon = IconLoader.getIcon("/compiler/information.png");
-  private static final SimpleTextAttributes DEFAULT_ATTR = new SimpleTextAttributes(Font.PLAIN, null);
-  private static final SimpleTextAttributes GRAY_ATTR = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
-  private static final SimpleTextAttributes HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myHighlightColor);
-  private static final SimpleTextAttributes EVALUATING_HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myEvaluatingHighlightColor);
-  private static final SimpleTextAttributes EXCEPTION_HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, myExceptionHighlightColor);
-
-  public DebuggerTreeRenderer() {
-  }
+  private static final Icon INFORMATION_MESSAGE_ICON = IconLoader.getIcon("/compiler/information.png");
+  private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
+  private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
+  private static final SimpleTextAttributes HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, new Color(128, 0, 0));
+  private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     DebuggerTreeNodeImpl node = (DebuggerTreeNodeImpl) value;
@@ -56,6 +43,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     setIcon(node.getIcon());
   }
 
+  @Nullable
   public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {
     Icon nodeIcon = null;
     if (descriptor instanceof ThreadGroupDescriptorImpl) {
@@ -75,26 +63,26 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         nodeIcon = myStaticFieldIcon;
       }
       else if (valueDescriptor.isArray()) {
-        nodeIcon = myArrayValueIcon;
+        nodeIcon = DebuggerIcons.ARRAY_VALUE_ICON;
       }
       else if (valueDescriptor.isPrimitive()) {
-        nodeIcon = myPrimitiveValueIcon;
+        nodeIcon = DebuggerIcons.PRIMITIVE_VALUE_ICON;
       }
       else {
         if (valueDescriptor instanceof WatchItemDescriptor) {
           nodeIcon = myWatchedValueIcon;           
         } else {
-          nodeIcon = myValueIcon;
+          nodeIcon = DebuggerIcons.VALUE_ICON;
         }
       }
     }
     else if (descriptor instanceof MessageDescriptor) {
       MessageDescriptor messageDescriptor = (MessageDescriptor)descriptor;
       if (messageDescriptor.getKind() == MessageDescriptor.ERROR) {
-        nodeIcon = myErrorMessageIcon;
+        nodeIcon = XDebuggerUIConstants.ERROR_MESSAGE_ICON;
       }
       else if (messageDescriptor.getKind() == MessageDescriptor.INFORMATION) {
-        nodeIcon = myInformationMessageIcon;
+        nodeIcon = INFORMATION_MESSAGE_ICON;
       }
       else if (messageDescriptor.getKind() == MessageDescriptor.SPECIAL) {
         nodeIcon = null;
@@ -131,8 +119,8 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       nodeName = descriptor.getName();
     }
 
-    if(text.equals(NodeDescriptorImpl.EVALUATING_MESSAGE)) {
-      descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, EVALUATING_HIGHLIGHT_ATTR);
+    if(text.equals(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE)) {
+      descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
       return descriptorText;
     }
 
@@ -147,10 +135,10 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
     if (strings[0] != null) {
       if (descriptor instanceof MessageDescriptor && ((MessageDescriptor)descriptor).getKind() == MessageDescriptor.SPECIAL) {
-        descriptorText.append(strings[0], GRAY_ATTR);
+        descriptorText.append(strings[0], SPECIAL_NODE_ATTRIBUTES);
       }
       else {
-        descriptorText.append(strings[0], DEFAULT_ATTR);
+        descriptorText.append(strings[0], DEFAULT_ATTRIBUTES);
       }
     }
     if (strings[1] != null) {
@@ -171,14 +159,14 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
         strings = breakString(strings[2], valueLabel);
         if (strings[0] != null) {
-          descriptorText.append(strings[0], DEFAULT_ATTR);
+          descriptorText.append(strings[0], DEFAULT_ATTRIBUTES);
         }
         if (appendValue && strings[1] != null) {
           if(valueLabel != null && StringUtil.startsWithChar(valueLabel, '{') && valueLabel.indexOf('}') > 0 && !StringUtil.endsWithChar(valueLabel, '}')) {
             int idx = valueLabel.indexOf('}');
             String objectId = valueLabel.substring(0, idx + 1);
             valueLabel = valueLabel.substring(idx + 1);
-            descriptorText.append(objectId, EVALUATING_HIGHLIGHT_ATTR);
+            descriptorText.append(objectId, OBJECT_ID_HIGHLIGHT_ATTRIBUTES);
           }
 
           valueLabel =  DebuggerUtilsEx.truncateString(valueLabel);
@@ -188,26 +176,26 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
             final String errorMessage = exception.getMessage();
 
             if(valueLabel.endsWith(errorMessage)) {
-              descriptorText.append(valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTR);
-              descriptorText.append(errorMessage, EXCEPTION_HIGHLIGHT_ATTR);
+              descriptorText.append(valueLabel.substring(0, valueLabel.length() - errorMessage.length()), DEFAULT_ATTRIBUTES);
+              descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? new SimpleTextAttributes(Font.PLAIN, myChangedValueHighlightColor) : DEFAULT_ATTR);
-              descriptorText.append(errorMessage, EXCEPTION_HIGHLIGHT_ATTR);
+              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHAGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
           }
           else {
-            if(valueLabel.equals(NodeDescriptorImpl.EVALUATING_MESSAGE)) {
-              descriptorText.append(NodeDescriptorImpl.EVALUATING_MESSAGE, EVALUATING_HIGHLIGHT_ATTR);
+            if(valueLabel.equals(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE)) {
+              descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? new SimpleTextAttributes(Font.PLAIN, myChangedValueHighlightColor) : DEFAULT_ATTR);
+              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHAGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
             }
           }
         }
       }
       else {
-        descriptorText.append(strings[2], DEFAULT_ATTR);
+        descriptorText.append(strings[2], DEFAULT_ATTRIBUTES);
       }
     }
 
@@ -216,11 +204,10 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private static String[] breakString(String source, String substr) {
     if (substr != null && substr.length() > 0) {
-      String prefix, suffix;
       int index = Math.max(source.indexOf(substr), 0);
-      prefix = (index > 0)? source.substring(0, index) : null;
+      String prefix = (index > 0) ? source.substring(0, index) : null;
       index += substr.length();
-      suffix = (index < source.length() - 1)? source.substring(index) : null;
+      String suffix = (index < source.length() - 1) ? source.substring(index) : null;
       return new String[]{prefix, substr, suffix};
     }
     return new String[]{source, null, null};

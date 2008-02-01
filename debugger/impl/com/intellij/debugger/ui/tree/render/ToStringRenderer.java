@@ -14,6 +14,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -72,7 +73,7 @@ public class ToStringRenderer extends NodeRendererImpl {
         labelListener.labelChanged();
       }
     });
-    return NodeDescriptor.EVALUATING_MESSAGE;
+    return XDebuggerUIConstants.COLLECTING_DATA_MESSAGE;
   }
 
   public boolean isUseClassFilters() {

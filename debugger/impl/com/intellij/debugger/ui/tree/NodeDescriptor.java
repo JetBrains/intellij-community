@@ -1,6 +1,5 @@
 package com.intellij.debugger.ui.tree;
 
-import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.util.Key;
 
 /*
@@ -9,7 +8,6 @@ import com.intellij.openapi.util.Key;
  */
 
 public interface NodeDescriptor {
-  String EVALUATING_MESSAGE = DebuggerBundle.message("progress.building.debugger.tree.node.children");
 
   String getName();
   String getLabel();
