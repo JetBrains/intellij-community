@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="ExtendedApi" />
     <orderEntry type="library" name="JUnit3" level="project" />
+    <orderEntry type="module" module-name="codeInsight-tests" />
     <orderEntryProperties />
   </component>
 </module>
