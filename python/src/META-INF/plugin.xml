@@ -22,5 +22,7 @@
     <annotator language="Python" implementationClass="ru.yole.pythonid.validation.PyAnnotatingVisitor"/>
     <configurationType implementation="ru.yole.pythonid.run.PythonConfigurationType"/>
     <programRunner implementation="ru.yole.pythonid.run.PythonRunner"/>
+    <backspaceHandlerDelegate implementation="ru.yole.pythonid.editor.PythonBackspaceHandler"/>
+    <quoteHandler fileType="Python" className="ru.yole.pythonid.editor.PythonQuoteHandler"/>
   </extensions>
 </idea-plugin>
