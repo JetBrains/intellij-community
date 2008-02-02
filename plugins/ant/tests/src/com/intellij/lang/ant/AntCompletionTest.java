@@ -140,7 +140,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
     checkResultByFile(testName + "-out.xml");
   }
 
-  @Bombed(month = Calendar.JANUARY, day = 31, user = "jeka")
+  @Bombed(month = Calendar.FEBRUARY, day = 10, user = "jeka")
   public void testEndTagCompletion() throws Exception {
     doTest();
   }
