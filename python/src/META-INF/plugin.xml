@@ -24,5 +24,6 @@
     <programRunner implementation="ru.yole.pythonid.run.PythonRunner"/>
     <backspaceHandlerDelegate implementation="ru.yole.pythonid.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="ru.yole.pythonid.editor.PythonQuoteHandler"/>
+    <sdkType implementation="ru.yole.pythonid.sdk.PythonSdkType"/>
   </extensions>
 </idea-plugin>
