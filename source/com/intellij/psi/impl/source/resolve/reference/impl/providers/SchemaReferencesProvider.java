@@ -217,6 +217,8 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     TypeOrElementOrAttributeReference(PsiElement element, TextRange range) {
       myElement = element;
       myRange   = range;
+      
+      assert myRange.getLength() >= 0;
 
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(myElement, XmlAttribute.class);
       final XmlTag tag = attribute.getParent();
