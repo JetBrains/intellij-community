@@ -79,7 +79,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements NamedJDOMExt
     final String jdkPath = System.getProperty(jdkPrefix + name);
     if (jdkPath == null) return null;
 
-    final SdkType[] sdkTypes = ApplicationManager.getApplication().getComponents(SdkType.class);
+    final SdkType[] sdkTypes = SdkType.getAllTypes();
     for (SdkType sdkType : sdkTypes) {
       if (Comparing.strEqual(sdkTypeName, sdkType.getName())){
         if (sdkType.isValidSdkHome(jdkPath)) {

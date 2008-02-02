@@ -129,7 +129,7 @@ public class ProjectJdkImpl implements JDOMExternalizable, Sdk, SdkModificator {
   }
 
   private static SdkType getSdkTypeByName(String sdkTypeName) {
-    final SdkType[] allSdkTypes = ApplicationManager.getApplication().getComponents(SdkType.class);
+    final SdkType[] allSdkTypes = SdkType.getAllTypes();
     for (final SdkType type : allSdkTypes) {
       if (type.getName().equals(sdkTypeName)) {
         return type;

@@ -191,4 +191,6 @@
 
   <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
 
+  <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
+
 </extensionPoints>

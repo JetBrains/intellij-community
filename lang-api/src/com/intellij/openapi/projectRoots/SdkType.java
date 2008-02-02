@@ -15,14 +15,22 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.IconLoader;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class SdkType {
+  public static ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
+
   private final String myName;
 
   /**
@@ -114,4 +122,10 @@ public abstract class SdkType {
     return getName();
   }
 
+  public static SdkType[] getAllTypes() {
+    List<SdkType> allTypes = new ArrayList<SdkType>();
+    Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
+    Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
+    return allTypes.toArray(new SdkType[allTypes.size()]);
+  }
 }
