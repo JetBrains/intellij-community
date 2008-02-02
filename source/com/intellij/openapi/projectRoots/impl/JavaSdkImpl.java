@@ -209,7 +209,7 @@ public class JavaSdkImpl extends JavaSdk {
     if(myCachedVersionStrings.containsKey(sdkHome)) {
       return myCachedVersionStrings.get(sdkHome);
     } else {
-      versionString = JdkVersionUtil.getJdkVersion(sdkHome);
+      versionString = getJdkVersion(sdkHome);
     }
     if (versionString != null && versionString.length() == 0) {
       versionString = null;
@@ -222,6 +222,10 @@ public class JavaSdkImpl extends JavaSdk {
     return versionString;
   }
 
+  @Nullable
+  public static String getJdkVersion(final String sdkHome) {
+    return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] {sdkHome + File.separator + "bin" + File.separator + "java",  "-version"}, "version");
+  }
 
   @NotNull
   public String getComponentName() {

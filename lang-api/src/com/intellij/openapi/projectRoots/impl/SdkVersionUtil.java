@@ -10,28 +10,30 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.concurrent.Future;
 
-public class JdkVersionUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JdkVersionUtil");
+public class SdkVersionUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.SdkVersionUtil");
 
-  private JdkVersionUtil() {
+  private SdkVersionUtil() {
   }
 
-  public static String getJdkVersion(String homePath){
+  @Nullable
+  public static String readVersionFromProcessOutput(String homePath, @NonNls String[] command, @NonNls String versionLineMarker) {
     if (homePath == null || !new File(homePath).exists()) {
       return null;
     }
     final String[] versionString = new String[1];
     try {
       //noinspection HardCodedStringLiteral
-      Process process = Runtime.getRuntime().exec(new String[] {homePath + File.separator + "bin" + File.separator + "java",  "-version"});
-      VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString);
+      Process process = Runtime.getRuntime().exec(command);
+      VersionParsingThread parsingThread = new VersionParsingThread(process.getErrorStream(), versionString, versionLineMarker);
       final Future<?> parsingThreadFuture = ApplicationManager.getApplication().executeOnPooledThread(parsingThread);
       ReadStreamThread readThread = new ReadStreamThread(process.getInputStream());
       ApplicationManager.getApplication().executeOnPooledThread(readThread);
@@ -85,11 +87,12 @@ public class JdkVersionUtil {
     private InputStream myStream;
     private boolean mySkipLF = false;
     private String[] myVersionString;
-    @NonNls private static final String VERSION = "version";
+    private String myVersionLineMarker;
 
-    protected VersionParsingThread(InputStream input, String[] versionString) {
+    protected VersionParsingThread(InputStream input, String[] versionString, String versionLineMarker) {
       myStream = input;
       myVersionString = versionString;
+      myVersionLineMarker = versionLineMarker;
     }
 
     public void run() {
@@ -98,7 +101,7 @@ public class JdkVersionUtil {
         while (true) {
           String line = readLine();
           if (line == null) return;
-          if (line.contains(VERSION)) {
+          if (line.contains(myVersionLineMarker)) {
             myVersionString[0] = line;
           }
         }
