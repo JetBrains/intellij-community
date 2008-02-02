@@ -193,4 +193,8 @@
 
   <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>
 
+  <extensionPoint name="lang.implementationTextSelectioner"
+                  beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="psi.includeHandler" interface="com.intellij.psi.PsiIncludeManager$PsiIncludeHandler" area="IDEA_PROJECT"/>
+
 </extensionPoints>
