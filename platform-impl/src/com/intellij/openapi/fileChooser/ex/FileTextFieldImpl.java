@@ -137,7 +137,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   private void processTextChanged() {
-    if (myAutopopup) {
+    if (myAutopopup && !isPathUpdating()) {
       suggestCompletion(false, false);
     }
 
