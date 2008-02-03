@@ -10,14 +10,13 @@ import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.PopupBorder;
 import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.ui.BlockBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -337,7 +336,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       if (myParentWindow == null) {
         myParentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
       }
-      
+
       initDialog(shouldShowCancel, shouldShowBackground, cancelText);
     }
 
@@ -528,9 +527,7 @@ public class ProgressWindow extends BlockingProgressIndicator {
       protected void init() {
         super.init();
         setUndecorated(true);
-        if (!SystemInfo.isMac) {
-          myPanel.setBorder(new BlockBorder());
-        }
+        myPanel.setBorder(PopupBorder.Factory.create(true));
       }
 
       protected boolean isProgressDialog() {

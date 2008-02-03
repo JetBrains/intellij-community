@@ -83,4 +83,8 @@ public class CaptionPanel extends JPanel {
     final Component c = findComponentAt(p);
     return c != null && c != myButtonComponent;
   }
+
+  public static Color getBorderColor(boolean isActive) {
+    return isActive ? Color.gray : Color.lightGray;
+  }
 }

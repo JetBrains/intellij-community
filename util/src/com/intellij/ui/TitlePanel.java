@@ -49,6 +49,10 @@ public class TitlePanel extends CaptionPanel {
     setActive(false);
   }
 
+  public void setFontBold(boolean bold) {
+    myLabel.setFont(myLabel.getFont().deriveFont(bold ? Font.BOLD : Font.PLAIN));
+  }
+
   public void setActive(final boolean active) {
     super.setActive(active);
     myLabel.setIcon(active ? myRegular : myInactive);
@@ -59,4 +63,25 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setText(titleText);
   }
 
+  public static void main(String[] args) {
+    final JFrame jFrame = new JFrame();
+
+    jFrame.getContentPane().setLayout(new BorderLayout());
+    jFrame.getContentPane().setBackground(Color.white);
+
+    final JPanel jPanel = new JPanel(new BorderLayout());
+    jPanel.setBackground(Color.white);
+    jPanel.setOpaque(true);
+
+    jPanel.setBorder(PopupBorder.Factory.create(true));
+
+    jFrame.getContentPane().add(jPanel);
+
+    jFrame.setBounds(100, 100, 200, 200);
+
+
+    jFrame.setVisible(true);
+  }
 }
+
+

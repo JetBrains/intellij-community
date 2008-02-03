@@ -14,16 +14,16 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FocusTrackback;
+import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.TitlePanel;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.labels.BoldLabel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.ElementFilter;
 import com.intellij.ui.popup.util.MnemonicsSearch;
 import com.intellij.ui.popup.util.SpeedSearch;
-import com.intellij.util.ui.BlockBorder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
 
   private JScrollPane myScrollPane;
   @NotNull
-  private JLabel myTitle;
+  private TitlePanel myTitle;
 
   protected JComponent myContent;
 
@@ -108,21 +108,17 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
     myScrollPane.setBorder(null);
     myContainer.add(myScrollPane, BorderLayout.CENTER);
 
-    if (!SystemInfo.isMac) {
-      myContainer.setBorder(new BlockBorder());
-    }
+    myContainer.setBorder(PopupBorder.Factory.create(true));
 
     final String title = aStep.getTitle();
     if (title == null) {
-      myTitle = new JLabel();
+      myTitle = new TitlePanel();
     }
     else {
-      myTitle = new BoldLabel(title);
-      myTitle.setHorizontalAlignment(SwingConstants.CENTER);
-      myTitle.setBorder(BorderFactory.createEmptyBorder(2, 4, 2, 4));
-      //myTitle.setBackground(TITLE_BACKGROUND);
+      myTitle = new TitlePanel();
+      myTitle.setText(title);
     }
-    myTitle.setOpaque(true);
+    myTitle.setActive(true);
     myContainer.add(myTitle, BorderLayout.NORTH);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {
@@ -559,7 +555,7 @@ public abstract class BasePopup implements ActionListener, ElementFilter, JBPopu
   }
 
   @NotNull
-  JLabel getTitle() {
+  TitlePanel getTitle() {
     return myTitle;
   }
 

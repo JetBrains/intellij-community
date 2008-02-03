@@ -5,6 +5,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.TitlePanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,7 +47,7 @@ public class SpeedSearchPane extends JDialog {
       if (myPopup.getSpeedSearch().isHoldingFilter()) {
         setVisible(true);
 
-        final JLabel title = myPopup.getTitle();
+        final TitlePanel title = myPopup.getTitle();
         final Point titleScreenPoint = title.getLocationOnScreen();
         setLocation(new Point(titleScreenPoint.x + title.getSize().width / 4, titleScreenPoint.y - title.getSize().height / 2));
         updateTextAndBounds();

@@ -4,7 +4,6 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.JBPopupImpl;
 
@@ -80,7 +79,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
 
       popupWindow.validate();
       popupWindow.repaint();
-      popupWindow.setCursor(Cursor.getDefaultCursor());
+      setWindowCursor(popupWindow, Cursor.DEFAULT_CURSOR);
       myPopup.storeDimensionSize(popupWindow.getSize());
     }
     myStartPoint = null;
@@ -88,7 +87,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
   }
 
   private boolean isToShowBorder() {
-    return !SystemInfo.isMac;
+    return false;
   }
 
   private void doResize(final Point point) {
@@ -159,18 +158,22 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
         if (myStartPoint == null) {
           myComponent.setBorder(BorderFactory.createMatteBorder(2, 2, 2, 2, Color.black.brighter()));
         }
-        popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
       }
+      setWindowCursor(popupWindow, cursor);
       e.consume();
     } else {
       clearBorder(popupWindow);
     }
   }
 
+  private void setWindowCursor(final Window popupWindow, final int cursor) {
+    popupWindow.setCursor(myPopup.isToDrawMacCorner()? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(cursor));
+  }
+
   private void clearBorder(final Window popupWindow) {
     if (isToShowBorder()){
       myComponent.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-      popupWindow.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+      setWindowCursor(popupWindow, Cursor.DEFAULT_CURSOR);
     }
   }
 
@@ -181,7 +184,7 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     if (popupWindow == null) return;
     if (myStartPoint != null) {
       if (isToShowBorder()) {
-        popupWindow.setCursor(Cursor.getPredefinedCursor(myDirection));
+        setWindowCursor(popupWindow, myDirection);
       }
       doResize(point);
       myStartPoint = point;
@@ -189,13 +192,13 @@ public class ResizeComponentListener extends MouseAdapter implements MouseMotion
     } else {
       if (isToShowBorder()) {
         final int cursor = getDirection(point, popupWindow.getBounds());
-        popupWindow.setCursor(Cursor.getPredefinedCursor(cursor));
+        setWindowCursor(popupWindow, cursor);
       }
     }
   }
 
-  private static int getDirection(Point startPoint, Rectangle bounds){
-    if (SystemInfo.isMac){
+  private int getDirection(Point startPoint, Rectangle bounds){
+    if (myPopup.isToDrawMacCorner()){
       if (bounds.x + bounds.width - startPoint.x < 16 && //inside icon
           bounds.y + bounds.height - startPoint.y < 16 &&
           bounds.y + bounds.height - startPoint.y > 0 &&
