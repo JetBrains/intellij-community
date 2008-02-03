@@ -187,7 +187,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
   private JBPopup getFocusedPopup() {
     for (JBPopup each : myAllPopups) {
-      if (each.isFocused()) return each;
+      if (each != null && each.isFocused()) return each;
     }
     return null;
   }
