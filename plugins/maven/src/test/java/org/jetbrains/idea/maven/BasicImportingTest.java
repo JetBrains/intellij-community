@@ -92,6 +92,84 @@ public class BasicImportingTest extends ImportingTestCase {
     assertExportedModuleLibDeps("project", "test:compile:1", "test:runtime:1");
   }
 
+  public void testIntermoduleDependencies() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+  }
+
+  public void testTransitiveDependencies() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>group</groupId>" +
+                          "    <artifactId>id</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleLibDeps("m2", "group:id:1");
+
+    // should be uncommented when embedder bug is fixed
+    assertModuleLibDeps("m1");
+    // assertModuleLibDeps("m1", "group:id:1");
+  }
+
   public void testProjectWithEnvironmentProperty() throws IOException {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 

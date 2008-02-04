@@ -202,10 +202,11 @@ public class MavenToIdeaModuleConfigurator {
   }
 
   private String findModuleFor(Artifact artifact) {
-    // we should find module by base version, since it might be X-SNAPSHOT
+    // we should find module by version range version, since it might be X-SNAPSHOT or SNAPSHOT
     // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
-    MavenId baseVersionId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), artifact.getBaseVersion());
-    return myMapping.getModuleName(baseVersionId);
+    String version = artifact.getVersionRange().toString();
+    MavenId versionId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), version);
+    return myMapping.getModuleName(versionId);
   }
 
   private String getUrl(String artifactPath, String classifier) {

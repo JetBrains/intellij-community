@@ -34,7 +34,7 @@ import java.util.*;
 public abstract class ImportingTestCase extends IdeaTestCase {
   protected File dir;
 
-  private VirtualFile projectRoot;
+  protected VirtualFile projectRoot;
   protected VirtualFile projectPom;
 
   private List<VirtualFile> poms = new ArrayList<VirtualFile>();
@@ -58,7 +58,9 @@ public abstract class ImportingTestCase extends IdeaTestCase {
 
   private void init() throws Exception {
     initDirs();
-    configMaven();
+
+    MavenWorkspaceSettingsComponent c = myProject.getComponent(MavenWorkspaceSettingsComponent.class);
+    myPrefs = c.getState().myImporterSettings;
   }
 
   protected void initDirs() throws IOException {
@@ -67,11 +69,6 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     File projectDir = new File(dir, "project");
     projectDir.mkdirs();
     projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
-  }
-
-  protected void configMaven() {
-    MavenWorkspaceSettingsComponent c = myProject.getComponent(MavenWorkspaceSettingsComponent.class);
-    myPrefs = c.getState().myImporterSettings;
   }
 
   @Override

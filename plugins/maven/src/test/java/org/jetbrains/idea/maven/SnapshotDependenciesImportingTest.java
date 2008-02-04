@@ -1,61 +1,47 @@
 package org.jetbrains.idea.maven;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import hidden.org.codehaus.plexus.util.FileUtils;
+import org.jetbrains.idea.maven.runner.MavenRunnerSettings;
+import org.jetbrains.idea.maven.runner.executor.MavenEmbeddedExecutor;
+import org.jetbrains.idea.maven.runner.executor.MavenRunnerParameters;
+
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Arrays;
 
 public class SnapshotDependenciesImportingTest extends ImportingTestCase {
-  private File repoDir;
+  private File remoteRepoDir;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    removeFromLocalRepository("test");
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    removeFromLocalRepository("test");
+    super.tearDown();
+  }
 
   @Override
   protected void initDirs() throws IOException {
     super.initDirs();
 
-    repoDir = new File(dir, "local");
-    repoDir.mkdirs();
+    remoteRepoDir = new File(dir, "remote");
+    remoteRepoDir.mkdirs();
   }
 
-  @Override
-  protected void configMaven() {
-    super.configMaven();
-    getMavenCoreState().setLocalRepository(repoDir.getPath());
+  public void testSnapshotVersionDependencyToModule() throws Exception {
+    performTestWithDependencyVersion("1-SNAPSHOT");
   }
 
-  public void testSnapshotDependencyToLibrary() throws Exception {
-    // this test indicates changes in maven embedder.
-    // if it fails, then it is possible that either repository layout was changed
-    // (that we assume in putArtifactInLocalRepository method),
-    // or the logic of SNAPSHOT artifact resolution was changed.
-
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<repositories>" +
-                     "  <repository>" +
-                     "    <id>internal</id>" +
-                     "    <url>file://" + getParentPath() + "</url>" +
-                     "  </repository>" +
-                     "</repositories>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>someGroup</groupId>" +
-                     "    <artifactId>someArtifact</artifactId>" +
-                     "    <version>1-SNAPSHOT</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    putArtifactInLocalRepository("someGroup", "someArtifact", "1-SNAPSHOT", "20000101120000", "1");
-    importProject();
-
-    assertModules("project");
-    assertModuleLibDeps("project", "someGroup:someArtifact:1-20000101120000-1");
+  public void testSnapshotRangeDependencyToModule() throws Exception {
+    performTestWithDependencyVersion("SNAPSHOT");
   }
 
-  public void testSnapshotDependencyToModule() throws Exception {
+  private void performTestWithDependencyVersion(String version) throws IOException {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<packaging>pom</packaging>" +
@@ -73,7 +59,7 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
                           "<repositories>" +
                           "  <repository>" +
                           "    <id>internal</id>" +
-                          "    <url>file://" + getParentPath() + "</url>" +
+                          "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
                           "  </repository>" +
                           "</repositories>" +
 
@@ -81,63 +67,47 @@ public class SnapshotDependenciesImportingTest extends ImportingTestCase {
                           "  <dependency>" +
                           "    <groupId>test</groupId>" +
                           "    <artifactId>m2</artifactId>" +
-                          "    <version>1-SNAPSHOT</version>" +
+                          "    <version>" + version + "</version>" +
                           "  </dependency>" +
                           "</dependencies>");
 
     createModulePom("m2", "<groupId>test</groupId>" +
                           "<artifactId>m2</artifactId>" +
-                          "<version>1-SNAPSHOT</version>");
+                          "<version>" + version + "</version>" +
 
-    putArtifactInLocalRepository("test", "m2", "1-SNAPSHOT", "20000101120000", "2");
+                          "<distributionManagement>" +
+                          "  <repository>" +
+                          "    <id>internal</id>" +
+                          "    <url>file://" + remoteRepoDir.getPath() + "</url>" +
+                          "  </repository>" +
+                          "</distributionManagement>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+    assertModuleModuleDeps("m1", "m2");
+
+    // in order to force maven to resolve dependency into remote one we have to
+    // clean up local repository.
+    deploy("m2");
+    removeFromLocalRepository("test");
+
     importProject();
 
     assertModules("project", "m1", "m2");
     assertModuleModuleDeps("m1", "m2");
   }
 
-  private void putArtifactInLocalRepository(String groupId, String artefactId, String version, String timestamp, String build) {
-    String rawXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><metadata>" +
-                 "  <groupId>%s</groupId>" +
-                 "  <artifactId>%s</artifactId>" +
-                 "  <version>%s</version>" +
-                 "  <versioning>" +
-                 "    <snapshot>" +
-                 "      <timestamp>%s</timestamp>" +
-                 "      <buildNumber>%s</buildNumber>" +
-                 "    </snapshot>" +
-                 "    <lastUpdated>0000000000000</lastUpdated>" +
-                 "  </versioning>" +
-                 "</metadata>";
+  private void deploy(String modulePath) {
+    VirtualFile pom = projectRoot.findFileByRelativePath(modulePath + "/pom.xml");
+    MavenRunnerParameters rp = new MavenRunnerParameters(pom.getPath(), Arrays.asList("deploy"), null);
+    MavenRunnerSettings rs = new MavenRunnerSettings();
+    MavenEmbeddedExecutor e = new MavenEmbeddedExecutor(rp, getMavenCoreState(), rs);
 
-    String xml = String.format(rawXml, groupId, artefactId, version, timestamp, build);
-
-    String currentDate = new SimpleDateFormat("yyyy-MM-dd HH\\:mm\\:ss +0300").format(new Date());
-    String prop = "internal.maven-metadata-internal.xml.lastUpdated=" + currentDate;
-
-    String dir = groupId + "/" + artefactId + "/" + version + "/";
-
-    String xmlName = dir + "/maven-metadata-internal.xml";
-    String propName = dir + "/resolver-status.properties";
-
-    writeFile(new File(repoDir, xmlName), xml);
-    writeFile(new File(repoDir, propName), prop);
+    e.execute();
   }
 
-  private void writeFile(File f, String string) {
-    try {
-      f.getParentFile().mkdirs();
-      f.createNewFile();
-      FileWriter w = new FileWriter(f);
-      try {
-        w.write(string);
-      }
-      finally {
-        w.close();
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  private void removeFromLocalRepository(String groupId) throws IOException {
+    String path = getRepositoryPath() + "/" + groupId;
+    FileUtils.deleteDirectory(path);
   }
 }
