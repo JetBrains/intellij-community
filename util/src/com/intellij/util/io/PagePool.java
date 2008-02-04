@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ public class PagePool {
   private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
 
   private final Object lock = new Object();
+  private final Semaphore finalizationQueueSemaphore = new Semaphore();
   private final Object finalizationLock = new Object();
 
   private final PoolPageKey keyInstance = new PoolPageKey(null, -1);
@@ -143,22 +145,7 @@ public class PagePool {
     }
 
     if (hasFlushes) {
-      while (true) {
-        synchronized (lock) {
-          if (myFinalizationQueue.isEmpty()) {
-            break;
-          }
-        }
-
-        synchronized (finalizationLock) {
-          try {
-            finalizationLock.wait(10);
-          }
-          catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      }
+      finalizationQueueSemaphore.waitFor();
     }
   }
 
@@ -200,6 +187,8 @@ public class PagePool {
     }
 
     if (wakeUpFinalizer) {
+      finalizationQueueSemaphore.up();
+
       synchronized (finalizationLock) {
         finalizationLock.notifyAll();
       }
@@ -225,15 +214,13 @@ public class PagePool {
         FinalizationRequest request = getNextFinalizationRequest();
 
         if (request != null) {
+          finalizationQueueSemaphore.down();
+
           if (request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId)) {
             synchronized (lock) {
               myFinalizationQueue.remove(lastFinalizedKey);
               request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
             }
-          }
-
-          synchronized (finalizationLock) {
-            finalizationLock.notifyAll();
           }
         }
         else {
