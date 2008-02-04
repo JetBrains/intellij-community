@@ -37,9 +37,11 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.editor.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrMemberOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -47,18 +49,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 /**
  * @author ven
  */
-public class CreateFieldFromUsageFix implements IntentionAction {
-  private GrMemberOwner myTargetClass;
+public class CreateLocalVariableFromUsageFix implements IntentionAction {
+  private GrVariableDeclarationOwner myOwner;
   private GrReferenceExpression myRefExpression;
 
-  public CreateFieldFromUsageFix(GrReferenceExpression refExpression, GrMemberOwner targetClass) {
+  public CreateLocalVariableFromUsageFix(GrReferenceExpression refExpression, GrVariableDeclarationOwner owner) {
     myRefExpression = refExpression;
-    myTargetClass = targetClass;
+    myOwner = owner;
   }
 
   @NotNull
   public String getText() {
-    return GroovyBundle.message("create.field.from.usage", myRefExpression.getReferenceName());
+    return GroovyBundle.message("create.variable.from.usage", myRefExpression.getReferenceName());
   }
 
   @NotNull
@@ -67,7 +69,7 @@ public class CreateFieldFromUsageFix implements IntentionAction {
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myTargetClass.isValid() && myRefExpression.isValid();
+    return myOwner.isValid() && myRefExpression.isValid();
   }
 
   protected static Editor positionCursor(Project project, PsiFile targetFile, PsiElement element) {
@@ -82,31 +84,34 @@ public class CreateFieldFromUsageFix implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
-    GrVariableDeclaration fieldDecl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
+    GrVariableDeclaration decl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
         myRefExpression.getReferenceName(), null, type);
-    fieldDecl = myTargetClass.addMemberDeclaration(fieldDecl, null);
-    GrTypeElement typeElement = fieldDecl.getTypeElementGroovy();
+    int offset = editor.getCaretModel().getOffset();
+    GrStatement anchor = findAnchor(file, offset);
+
+    decl = myOwner.addVariableDeclarationBefore(decl, anchor);
+    GrTypeElement typeElement = decl.getTypeElementGroovy();
     assert typeElement != null;
     TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
-    TemplateBuilder builder = new TemplateBuilder(fieldDecl);
+    TemplateBuilder builder = new TemplateBuilder(decl);
     builder.replaceElement(typeElement, expr);
-    fieldDecl = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(fieldDecl);
+    decl = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(decl);
     Template template = builder.buildTemplate();
 
-    Editor newEditor = positionCursor(project, myTargetClass.getContainingFile(), fieldDecl);
-    TextRange range = fieldDecl.getTextRange();
+    Editor newEditor = positionCursor(project, myOwner.getContainingFile(), decl);
+    TextRange range = decl.getTextRange();
     newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
 
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
   }
 
-  private PsiElement findAnchor(PsiFile file, int offset) {
+  private GrStatement findAnchor(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     while (element != null) {
       element = element.getParent();
-      if (element.getParent().equals(file)) return element;
+      if (element.getParent().equals(myOwner)) return element instanceof GrStatement ? (GrStatement) element : null;
     }
     return null;
   }

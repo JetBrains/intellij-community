@@ -58,6 +58,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -707,8 +708,13 @@ public class GroovyAnnotator implements Annotator {
     if (targetClass != null && isNeedsDynamic(refExpr, targetClass) && refExpr.resolve() == null) {
       addDynamicAnnotation(annotation, refExpr);
     }
-    if (targetClass != null && targetClass instanceof GrMemberOwner) {
+    if (targetClass != null && targetClass instanceof GrMemberOwner && !(targetClass instanceof GroovyScriptClass)) {
       annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
+    }
+
+    GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(refExpr, GrVariableDeclarationOwner.class);
+    if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase) owner).isScript()) {
+      annotation.registerFix(new CreateLocalVariableFromUsageFix(refExpr, owner));
     }
   }
 
