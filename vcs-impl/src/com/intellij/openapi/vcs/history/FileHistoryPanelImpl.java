@@ -908,6 +908,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else if (VcsDataConstants.VCS_FILE_REVISION.equals(dataId)) {
       return firstSelectedRevision;
     }
+    else if (VcsDataConstants.VCS_FILE_REVISIONS.equals(dataId)) {
+      return getSelectedRevisions();
+    }
     else if (VcsDataConstants.VCS_VIRTUAL_FILE.equals(dataId)) {
       if (firstSelectedRevision == null) return null;
       return createVirtualFileForRevision(firstSelectedRevision);
@@ -942,7 +945,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return myRevisionToVirtualFile.get(revision);
   }
 
-  private List getSelection() {
+  private List<TreeNodeOnVcsRevision> getSelection() {
+    //noinspection unchecked
     return myDualView.getSelection();
   }
 
@@ -951,6 +955,15 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     List selection = getSelection();
     if (selection.isEmpty()) return null;
     return ((TreeNodeOnVcsRevision)selection.get(0)).myRevision;
+  }
+
+  public VcsFileRevision[] getSelectedRevisions() {
+    List<TreeNodeOnVcsRevision> selection = getSelection();
+    VcsFileRevision[] result = new VcsFileRevision[selection.size()];
+    for(int i=0; i<selection.size(); i++) {
+      result [i] = selection.get(i).myRevision;
+    }
+    return result;
   }
 
   @Nullable

@@ -37,6 +37,7 @@ public interface VcsDataKeys {
   DataKey<File[]> IO_FILE_ARRAY = DataKey.create(VcsDataConstants.IO_FILE_ARRAY);
   DataKey<File> IO_FILE = DataKey.create(VcsDataConstants.IO_FILE);
   DataKey<VcsFileRevision> VCS_FILE_REVISION = DataKey.create(VcsDataConstants.VCS_FILE_REVISION);
+  DataKey<VcsFileRevision[]> VCS_FILE_REVISIONS = DataKey.create(VcsDataConstants.VCS_FILE_REVISIONS);
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create(VcsDataConstants.VCS_VIRTUAL_FILE);
   DataKey<FilePath> FILE_PATH = DataKey.create(VcsDataConstants.FILE_PATH);
   DataKey<FilePath[]> FILE_PATH_ARRAY = DataKey.create(VcsDataConstants.FILE_PATH_ARRAY);
