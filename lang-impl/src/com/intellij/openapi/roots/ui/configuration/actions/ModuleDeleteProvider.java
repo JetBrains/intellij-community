@@ -9,15 +9,18 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ModuleDeleteProvider  implements DeleteProvider  {
   public boolean canDeleteElement(DataContext dataContext) {
@@ -34,13 +37,27 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
         }
       }, ", "), modules.length), ProjectBundle.message("module.remove.confirmation.title"), Messages.getQuestionIcon());
     if (ret != 0) return;
-    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), new Runnable() {
+    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         final Runnable action = new Runnable() {
           public void run() {
-            for (Module module : modules) {
-              removeModule(module);
+            final ModuleManager moduleManager = ModuleManager.getInstance(project);
+            final Module[] currentModules = moduleManager.getModules();
+            final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
+            final Map<Module, ModifiableRootModel> otherModuleRootModels = new HashMap<Module, ModifiableRootModel>();
+            for (final Module module : modules) {
+              final ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
+              for (final Module otherModule : currentModules) {
+                if (otherModule == module || ArrayUtil.find(modules, otherModule) != -1) continue;
+                if (!otherModuleRootModels.containsKey(otherModule)) {
+                  otherModuleRootModels.put(otherModule, ModuleRootManager.getInstance(otherModule).getModifiableModel());
+                }
+              }
+              removeModule(module, modifiableModel, otherModuleRootModels.values(), modifiableModuleModel);
             }
+            final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.values().toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
+            ProjectRootManager.getInstance(project).multiCommit(modifiableModuleModel, modifiableRootModels);
           }
         };
         ApplicationManager.getApplication().runWriteAction(action);
@@ -48,25 +65,10 @@ public class ModuleDeleteProvider  implements DeleteProvider  {
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
-  public static void removeModule(final Module module) {
-    ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(module).getModifiableModel();
-    ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-    Module[] modules = moduleManager.getModules();
-    List<ModifiableRootModel> otherModuleRootModels = new ArrayList<ModifiableRootModel>();
-    for (final Module otherModule : modules) {
-      if (otherModule == module) continue;
-      otherModuleRootModels.add(ModuleRootManager.getInstance(otherModule).getModifiableModel());
-    }
-    ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
-    removeModule(module, modifiableModel, otherModuleRootModels, modifiableModuleModel);
-    final ModifiableRootModel[] modifiableRootModels = otherModuleRootModels.toArray(new ModifiableRootModel[otherModuleRootModels.size()]);
-    ProjectRootManager.getInstance(module.getProject()).multiCommit(modifiableModuleModel, modifiableRootModels);
-  }
-
   public static void removeModule(final Module moduleToRemove,
-                                     ModifiableRootModel modifiableRootModelToRemove,
-                                     List<ModifiableRootModel> otherModuleRootModels,
-                                     final ModifiableModuleModel moduleModel) {
+                                   ModifiableRootModel modifiableRootModelToRemove,
+                                   Collection<ModifiableRootModel> otherModuleRootModels,
+                                   final ModifiableModuleModel moduleModel) {
     // remove all dependencies on the module that is about to be removed
     for (final ModifiableRootModel modifiableRootModel : otherModuleRootModels) {
       final OrderEntry[] orderEntries = modifiableRootModel.getOrderEntries();
