@@ -4,8 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.patterns.MatchingContext;
 
 /**
- * Created by IntelliJ IDEA.
- * User: ik
+ * @author ik
  */
 public abstract class PsiReferenceProvider {
  public static final PsiReferenceProvider[] EMPTY_ARRAY = new PsiReferenceProvider[0];

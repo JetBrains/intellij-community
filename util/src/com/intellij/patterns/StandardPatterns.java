@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
+@SuppressWarnings("unchecked")
 public class StandardPatterns {
 
   public static StringPattern string() {
@@ -35,7 +36,7 @@ public class StandardPatterns {
       }
 
       public void append(@NonNls final StringBuilder builder, final String indent) {
-        builder.append("save(" + key + ")");
+        builder.append("save(").append(key).append(")");
       }
     });
   }
@@ -61,7 +62,7 @@ public class StandardPatterns {
       }
 
       public void append(@NonNls final StringBuilder builder, final String indent) {
-        builder.append("get(" + key + ")");
+        builder.append("get(").append(key).append(")");
       }
     });
   }

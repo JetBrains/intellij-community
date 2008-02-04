@@ -6,6 +6,8 @@ package com.intellij.patterns;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * @see StandardPatterns and its extenders
+ *
  * @author peter
  */
 public interface ElementPattern<T> {

@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ClassFilter;
+import com.intellij.psi.filters.ElementFilter;
+import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
@@ -46,6 +48,10 @@ import com.intellij.xml.impl.schema.ComplexTypeDescriptor;
 import com.intellij.xml.impl.schema.TypeDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.patterns.StringPattern;
+import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
+import static com.intellij.patterns.XmlPatterns.xmlTag;
+import static com.intellij.patterns.StandardPatterns.string;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1480,6 +1486,40 @@ public class XmlUtil {
   @Nullable
   public static String extractXmlEncodingFromProlog(String text) {
     return detect(CharsetToolkit.getUtf8Bytes(text));
+  }
+
+  public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
+                                                          @Nullable @NonNls String[] attributeNames,
+                                                         @Nullable ElementFilter elementFilter,
+                                                         @NotNull PsiReferenceProvider provider) {
+    registerXmlAttributeValueReferenceProvider(registrar, attributeNames, elementFilter, true, provider);
+  }
+
+  public static void registerXmlAttributeValueReferenceProvider(PsiReferenceRegistrar registrar,
+                                                          @Nullable @NonNls String[] attributeNames,
+                                                         @Nullable ElementFilter elementFilter,
+                                                         boolean caseSensitive,
+                                                         @NotNull PsiReferenceProvider provider) {
+    if (attributeNames == null) {
+      registrar.registerReferenceProvider(xmlAttributeValue().and(new FilterPattern(elementFilter)), provider);
+      return;
+    }
+
+    final StringPattern namePattern = caseSensitive ? string().oneOf(attributeNames) : string().oneOfIgnoreCase(attributeNames);
+    registrar.registerReferenceProvider(xmlAttributeValue().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider);
+  }
+
+  public static void registerXmlTagReferenceProvider(PsiReferenceRegistrar registrar, @NonNls String[] names, @Nullable ElementFilter elementFilter,
+                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
+    if (names == null) {
+      registrar.registerReferenceProvider(xmlTag().and(new FilterPattern(elementFilter)), provider, PsiReferenceRegistrar.DEFAULT_PRIORITY);
+      return;
+    }
+
+
+    final StringPattern namePattern = caseSensitive ? string().oneOf(names) : string().oneOfIgnoreCase(names);
+    registrar.registerReferenceProvider(xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider,
+                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

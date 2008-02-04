@@ -21,7 +21,6 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
-import com.intellij.psi.impl.source.jsp.jspJava.JspDirective;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -50,17 +49,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Time: 17:13:45
  * To change this template use Options | File Templates.
  */
-public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
+public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry, PsiReferenceRegistrar {
 
   private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
   private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new CopyOnWriteArrayList<Pair<Class<?>, ElementManipulator<?>>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
-
-  public final static double DEFAULT_PRIORITY = 0.0;
-  public final static double HIGHER_PRIORITY = 100.0;
-  public final static double LOWER_PRIORITY = -100.0;
-  public final static double LOWEST_PRIORITY = Double.NEGATIVE_INFINITY;
 
   private static final Comparator<Trinity<PsiReferenceProvider,MatchingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, MatchingContext, Double>>() {
     public int compare(final Trinity<PsiReferenceProvider, MatchingContext, Double> o1,
@@ -108,7 +102,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     PsiReferenceProvider propertiesReferenceProvider = new PropertiesReferenceProvider(false);
     myReferenceTypeToProviderMap.put(PROPERTIES_FILE_KEY_PROVIDER, propertiesReferenceProvider);
 
-    registerXmlAttributeValueReferenceProvider(
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this,
       new String[]{"code"},
       new ScopeFilter(
         new ParentElementFilter(
@@ -124,22 +118,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     );
 
     final JavaClassListReferenceProvider classListProvider = new JavaClassListReferenceProvider();
-    registerXmlAttributeValueReferenceProvider(null,
-    new AndFilter(
-      new NotFilter(
-        new ParentElementFilter(
-          new NamespaceFilter(XmlUtil.ANT_URI), 2)),
-      new NotFilter(
-      new ScopeFilter(new ParentElementFilter(
-        new AndFilter(
-          new OrFilter(
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("directive.page")),
-            new AndFilter(
-              new ClassFilter(JspDirective.class),
-              new TextFilter("page"))),
-          new NamespaceFilter(XmlUtil.JSP_URI)), 2)))), true, classListProvider, LOWER_PRIORITY);
+    registerReferenceProvider(xmlAttributeValue(), classListProvider, LOWER_PRIORITY);
 
     registerReferenceProvider(new TokenTypeFilter(XmlTokenType.XML_DATA_CHARACTERS) {
       public boolean isAcceptable(final Object element, final PsiElement context) {
@@ -154,12 +133,12 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
 
     final IdReferenceProvider idReferenceProvider = new IdReferenceProvider();
 
-    registerXmlAttributeValueReferenceProvider(
-      idReferenceProvider.getIdForAttributeNames(),
-      idReferenceProvider.getIdForFilter(),
-      true,
-      idReferenceProvider
-    );
+    final ReferenceProvidersRegistry referenceProvidersRegistry3 = ReferenceProvidersRegistry.this;
+    String[] attributeNames3 = idReferenceProvider.getIdForAttributeNames();
+    ElementFilter elementFilter3 = idReferenceProvider.getIdForFilter();
+    boolean caseSensitive2 = true;
+    PsiReferenceProvider provider4 = idReferenceProvider;
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames3, elementFilter3, caseSensitive2, provider4);
 
     final DtdReferencesProvider dtdReferencesProvider = new DtdReferencesProvider();
     //registerReferenceProvider(null, XmlEntityDecl.class,dtdReferencesProvider);
@@ -173,7 +152,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     URIReferenceProvider uriProvider = new URIReferenceProvider();
 
     registerTypeWithProvider(URI_PROVIDER,uriProvider);
-    registerXmlAttributeValueReferenceProvider(
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this,
       null,
       dtdReferencesProvider.getSystemReferenceFilter(),
       uriProvider
@@ -182,30 +161,25 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     //registerReferenceProvider(PsiPlainTextFile.class, new JavaClassListReferenceProvider());
 
     HtmlReferenceProvider provider = new HtmlReferenceProvider();
-    registerXmlAttributeValueReferenceProvider(
-      HtmlReferenceProvider.getAttributeValues(),
-      HtmlReferenceProvider.getFilter(),
-      false,
-      provider
-    );
+    final ReferenceProvidersRegistry referenceProvidersRegistry2 = ReferenceProvidersRegistry.this;
+    String[] attributeNames2 = HtmlReferenceProvider.getAttributeValues();
+    ElementFilter elementFilter2 = HtmlReferenceProvider.getFilter();
+    boolean caseSensitive1 = false;
+    PsiReferenceProvider provider3 = provider;
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames2, elementFilter2, caseSensitive1, provider3);
 
-    registerXmlAttributeValueReferenceProvider(
-      new String[] { "href" },
-      new ScopeFilter(
-        new ParentElementFilter(
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, new String[] { "href" }, new ScopeFilter(
+      new ParentElementFilter(
+        new AndFilter(
           new AndFilter(
-            new AndFilter(
-              new ClassFilter(XmlTag.class),
-              new TextFilter("include")
-            ),
-            new NamespaceFilter(XmlUtil.XINCLUDE_URI)
+            new ClassFilter(XmlTag.class),
+            new TextFilter("include")
           ),
-          2
-        )
-      ),
-      true,
-      uriProvider
-    );
+          new NamespaceFilter(XmlUtil.XINCLUDE_URI)
+        ),
+        2
+      )
+    ), true, uriProvider);
 
     final PsiReferenceProvider filePathReferenceProvider = new FilePathReferenceProvider();
     registerReferenceProvider(
@@ -230,7 +204,7 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     final SchemaReferencesProvider schemaReferencesProvider = new SchemaReferencesProvider();
     registerTypeWithProvider(SCHEMA_PROVIDER, schemaReferencesProvider);
 
-    registerXmlAttributeValueReferenceProvider(
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this,
       schemaReferencesProvider.getCandidateAttributeNamesForSchemaReferences(),
       new ScopeFilter(
         new ParentElementFilter(
@@ -252,33 +226,28 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
                         xmlTag().withNamespace(XmlUtil.SCHEMA_URIS).withLocalName(string().oneOf("import", "include","redefine"))),
       uriProvider);
 
-    registerXmlAttributeValueReferenceProvider(
-      null,
-      URIReferenceProvider.ELEMENT_FILTER,
-      uriProvider
-    );
+    String[] attributeNames6 = null;
+    ElementFilter elementFilter6 = URIReferenceProvider.ELEMENT_FILTER;
+    PsiReferenceProvider provider7 = uriProvider;
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames6, elementFilter6, true, provider7);
 
-    registerXmlAttributeValueReferenceProvider(
-      new String[] {"content"},
-      new ScopeFilter(
-        new ParentElementFilter(
-          new AndFilter(
-            new ClassFilter(XmlTag.class),
-            new TextFilter("meta")
-          ), 2
-        )
-      ),
-      new HtmlHttpEquivEncodingReferenceProvider()
+    String[] attributeNames5 = new String[] {"content"};
+    ElementFilter elementFilter5 = new ScopeFilter(
+      new ParentElementFilter(
+        new AndFilter(
+          new ClassFilter(XmlTag.class),
+          new TextFilter("meta")
+        ), 2
+      )
     );
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames5, elementFilter5, true, new HtmlHttpEquivEncodingReferenceProvider());
 
-    registerXmlAttributeValueReferenceProvider(
-      new String[] {"encoding"},
-      new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))),
-      new XmlEncodingReferenceProvider()
-    );
-    registerXmlAttributeValueReferenceProvider(new String[]{"contentType", "pageEncoding",},
-                                               new ScopeFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.JSP_URI), 2)),
-                                               new JspEncodingInAttributeReferenceProvider());
+    PsiReferenceProvider provider5 = new XmlEncodingReferenceProvider();
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, new String[] {"encoding"}, new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))), true, provider5);
+    String[] attributeNames = new String[]{"contentType", "pageEncoding",};
+    ElementFilter elementFilter = new ScopeFilter(new ParentElementFilter(new NamespaceFilter(XmlUtil.JSP_URI), 2));
+    PsiReferenceProvider provider1 = new JspEncodingInAttributeReferenceProvider();
+    XmlUtil.registerXmlAttributeValueReferenceProvider(this, attributeNames, elementFilter, true, provider1);
   }
 
   public void registerReferenceProvider(@Nullable ElementFilter elementFilter,
@@ -346,23 +315,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     providerBinding.unregisterProvider(provider);
   }
 
-  public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
-                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider, double priority) {
-    if (names == null) {
-      registerReferenceProvider(xmlTag().and(new FilterPattern(elementFilter)), provider, priority);
-      return;
-    }
-
-
-    final StringPattern namePattern = caseSensitive ? string().oneOf(names) : string().oneOfIgnoreCase(names);
-    registerReferenceProvider(xmlTag().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider, priority);
-  }
-
-  public void registerXmlTagReferenceProvider(@NonNls String[] names, @Nullable ElementFilter elementFilter,
-                                              boolean caseSensitive, @NotNull PsiReferenceProvider provider) {
-    registerXmlTagReferenceProvider(names, elementFilter,caseSensitive, provider, DEFAULT_PRIORITY);
-  }
-
 
   private void registerNamedReferenceProvider(final String[] names, final NamedObjectProviderBinding binding,
                                               final Class scopeClass,
@@ -375,33 +327,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry {
     }
 
     providerBinding.registerProvider(names, pattern, caseSensitive, provider, priority);
-  }
-
-  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
-                                                         @Nullable ElementFilter elementFilter,
-                                                         boolean caseSensitive,
-                                                         @NotNull PsiReferenceProvider provider) {
-    registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, caseSensitive, provider, DEFAULT_PRIORITY);
-  }
-
-  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
-                                                         @Nullable ElementFilter elementFilter,
-                                                         boolean caseSensitive,
-                                                         @NotNull PsiReferenceProvider provider,
-                                                         double priority) {
-    if (attributeNames == null) {
-      registerReferenceProvider(xmlAttributeValue().and(new FilterPattern(elementFilter)), provider, priority);
-      return;
-    }
-
-    final StringPattern namePattern = caseSensitive ? string().oneOf(attributeNames) : string().oneOfIgnoreCase(attributeNames);
-    registerReferenceProvider(xmlAttributeValue().withLocalName(namePattern).and(new FilterPattern(elementFilter)), provider, priority);
-  }
-
-  public void registerXmlAttributeValueReferenceProvider(@Nullable @NonNls String[] attributeNames,
-                                                         @Nullable ElementFilter elementFilter,
-                                                         @NotNull PsiReferenceProvider provider) {
-    registerXmlAttributeValueReferenceProvider(attributeNames, elementFilter, true, provider);
   }
 
   @Nullable
