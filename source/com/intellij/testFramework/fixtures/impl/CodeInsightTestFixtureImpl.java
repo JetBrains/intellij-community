@@ -59,10 +59,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -222,6 +219,20 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return duration.get().longValue();
   }
 
+  public long checkHighlighting(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) throws Throwable {
+    final Ref<Long> duration = new Ref<Long>();
+    new WriteCommandAction.Simple(myProjectFixture.getProject()) {
+      protected void run() throws Throwable {
+        collectAndCheckHighlightings(checkWarnings, checkInfos, checkWeakWarnings, duration);
+      }
+    }.execute().throwException();
+    return duration.get().longValue();
+  }
+
+  public long checkHighlighting() throws Throwable {
+    return checkHighlighting(true, true, true);
+  }
+
   public long testHighlighting(final String... filePaths) throws Throwable {
     return testHighlighting(true, true, true, filePaths);
   }
@@ -335,6 +346,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     EditorActionManager actionManager = EditorActionManager.getInstance();
     TypedAction action = actionManager.getTypedAction();
     action.actionPerformed(getEditor(), c, DataManager.getInstance().getDataContext());
+  }
+
+  public JavaPsiFacade getJavaFacade() {
+    return JavaPsiFacade.getInstance(getProject());
   }
 
   public PsiReference[] testFindUsages(@NonNls final String... fileNames) throws Throwable {
@@ -623,7 +638,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   public PsiFile configureByText(final FileType fileType, @NonNls final String text) throws Throwable {
-    final File tempFile = File.createTempFile("aaa", "." + fileType.getDefaultExtension(), new File(getTempDirPath()));
+    final String extension = fileType.getDefaultExtension();
+    final File tempFile = File.createTempFile("aaa", "." + extension, new File(getTempDirPath()));
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
+      fileTypeManager.associateExtension(fileType, extension);
+    }
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
     VfsUtil.saveText(vFile, text);
     configureInner(vFile, SelectionAndCaretMarkupLoader.fromFile(vFile, getProject()));

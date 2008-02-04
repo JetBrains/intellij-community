@@ -32,14 +32,14 @@ public abstract class CodeInsightFixtureTestCase extends UsefulTestCase{
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
-    tuneFixture();    
+    tuneFixture(moduleFixtureBuilder);    
 
     myFixture.setUp();
 
     myModule = moduleFixtureBuilder.getFixture().getModule();
   }
 
-  protected void tuneFixture() {}
+  protected void tuneFixture(final JavaModuleFixtureBuilder moduleBuilder) {}
 
   protected void tearDown() throws Exception {
     myFixture.tearDown();

@@ -107,6 +107,18 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @NonNls String... filePaths) throws Throwable;
 
   /**
+   * Check highlighting of file already loaded by configure* methods
+   * @param checkWarnings
+   * @param checkInfos
+   * @param checkWeakWarnings
+   * @return
+   * @throws Throwable
+   */
+  long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Throwable;
+
+  long checkHighlighting() throws Throwable;
+
+  /**
    * Runs highliting test for the given files.
    * The same as {@link #testHighlighting(boolean, boolean, boolean, String...)} with all options set.
    *
@@ -248,4 +260,6 @@ public interface CodeInsightTestFixture extends IdeaTestFixture {
   void testRename(String fileAfter, String newName) throws Throwable;
 
   void type(final char c);
+
+  JavaPsiFacade getJavaFacade();
 }
