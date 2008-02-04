@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.impl.cache.impl.CacheUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -499,26 +500,21 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
 
   public void indexFileContent(com.intellij.ide.startup.FileContent content) {
     final VirtualFile file = content.getVirtualFile();
-    try {
-      FileContent fc = null;
-      for (String indexId : myIndices.keySet()) {
-        if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
-          if (fc == null) {
-            fc = new FileContent(file, LoadTextUtil.getTextByBinaryPresentation(content.getBytes(), file, false));
-          }
-  
-          try {
-            updateSingleIndex(indexId, file, fc, null);
-          }
-          catch (StorageException e) {
-            requestRebuild(indexId);
-            LOG.error(e);
-          }
+    FileContent fc = null;
+    for (String indexId : myIndices.keySet()) {
+      if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
+        if (fc == null) {
+          fc = new FileContent(file, CacheUtil.getContentText(content));
+        }
+
+        try {
+          updateSingleIndex(indexId, file, fc, null);
+        }
+        catch (StorageException e) {
+          requestRebuild(indexId);
+          LOG.error(e);
         }
       }
-    }
-    catch (IOException e) {
-      LOG.error(e);
     }
   }
 
