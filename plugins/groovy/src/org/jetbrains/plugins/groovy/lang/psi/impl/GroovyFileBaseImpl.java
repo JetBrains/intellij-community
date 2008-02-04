@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -119,9 +120,11 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     }
   }
 
-  public GrStatement addStatementBefore(@NotNull GrStatement statement, @NotNull GrStatement anchor) throws IncorrectOperationException {
+  public GrStatement addStatementBefore(@NotNull GrStatement statement, @Nullable GrStatement anchor) throws IncorrectOperationException {
     final PsiElement result = addBefore(statement, anchor);
-    getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+    if (anchor != null) {
+      getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", anchor.getNode());
+    }
     return (GrStatement) result;
   }
 

@@ -109,6 +109,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
 
   private GrStatement findAnchor(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
+    if (element == null && offset > 0) element = file.findElementAt(offset - 1); 
     while (element != null) {
       element = element.getParent();
       if (element.getParent().equals(myOwner)) return element instanceof GrStatement ? (GrStatement) element : null;
