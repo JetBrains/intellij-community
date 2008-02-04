@@ -712,9 +712,11 @@ public class GroovyAnnotator implements Annotator {
       annotation.registerFix(new CreateFieldFromUsageFix(refExpr, (GrMemberOwner) targetClass));
     }
 
-    GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(refExpr, GrVariableDeclarationOwner.class);
-    if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase) owner).isScript()) {
-      annotation.registerFix(new CreateLocalVariableFromUsageFix(refExpr, owner));
+    if (!refExpr.isQualified()) {
+      GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(refExpr, GrVariableDeclarationOwner.class);
+      if (!(owner instanceof GroovyFileBase) || ((GroovyFileBase) owner).isScript()) {
+        annotation.registerFix(new CreateLocalVariableFromUsageFix(refExpr, owner));
+      }
     }
   }
 
