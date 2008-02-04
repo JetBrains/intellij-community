@@ -89,10 +89,14 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     int offset = myRefExpression.getTextRange().getStartOffset();
     GrStatement anchor = findAnchor(file, offset);
 
-    decl = myOwner.addVariableDeclarationBefore(decl, anchor);
+    TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
+    if (anchor.equals(myRefExpression)) {
+      decl = (GrVariableDeclaration) myRefExpression.replaceWithStatement(decl);
+    } else {
+      decl = myOwner.addVariableDeclarationBefore(decl, anchor);
+    }
     GrTypeElement typeElement = decl.getTypeElementGroovy();
     assert typeElement != null;
-    TypeConstraint[] constraints = GroovyExpectedTypesUtil.calculateTypeConstraints(myRefExpression);
     ChooseTypeExpression expr = new ChooseTypeExpression(constraints, PsiManager.getInstance(project));
     TemplateBuilder builder = new TemplateBuilder(decl);
     builder.replaceElement(typeElement, expr);
