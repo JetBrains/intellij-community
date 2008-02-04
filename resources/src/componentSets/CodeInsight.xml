@@ -19,11 +19,6 @@
 
   <project-components>
     <component>
-      <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
-      <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
-      <skipForDummyProject/>
-    </component>
-    <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
     </component>
     <component>

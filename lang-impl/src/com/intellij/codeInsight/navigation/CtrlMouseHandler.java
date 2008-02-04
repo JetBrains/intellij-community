@@ -36,9 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.search.searches.DefinitionsSearch;
-import com.intellij.psi.xml.XmlToken;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
@@ -340,7 +338,7 @@ public class CtrlMouseHandler implements ProjectComponent {
         }
       }.searchImplementations(editor, element, offset);
       if ( targetElements.length > 1) {
-        PsiElement elementAtPointer = findElementAtPointer(file, offset);
+        PsiElement elementAtPointer = file.findElementAt(offset);
         if (elementAtPointer != null) {
           return new InfoMultiple(elementAtPointer);
         }
@@ -356,7 +354,7 @@ public class CtrlMouseHandler implements ProjectComponent {
     }
 
     if (targetElement != null && targetElement.isPhysical() ) {
-      PsiElement elementAtPointer = findElementAtPointer(file, offset);
+      PsiElement elementAtPointer = file.findElementAt(offset);
       if ( elementAtPointer != null ) {
          return new InfoSingle(elementAtPointer, targetElement);
       }
@@ -382,18 +380,6 @@ public class CtrlMouseHandler implements ProjectComponent {
       resolvedElement = ref.resolve();
     }
     return resolvedElement;
-  }
-
-  @Nullable
-  private static PsiElement findElementAtPointer(final PsiFile file, final int offset) {
-    PsiElement elementAtPointer = file.findElementAt(offset);
-    if (elementAtPointer instanceof PsiIdentifier ||
-        elementAtPointer instanceof PsiKeyword ||
-        elementAtPointer instanceof PsiDocToken ||
-        elementAtPointer instanceof XmlToken) {
-      return elementAtPointer;
-    }
-    return null;
   }
 
   private void disposeHighlighter() {

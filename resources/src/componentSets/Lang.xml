@@ -242,6 +242,12 @@
       <implementation-class>com.intellij.codeInsight.documentation.DocumentationManager</implementation-class>
       <skipForDummyProject/>
     </component>
+
+    <component>
+      <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
+      <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
+      <skipForDummyProject/>
+    </component>
   </project-components>
 
   <module-components>
