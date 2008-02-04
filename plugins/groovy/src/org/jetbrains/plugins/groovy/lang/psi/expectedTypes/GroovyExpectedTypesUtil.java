@@ -15,16 +15,21 @@
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 /**
@@ -47,7 +52,7 @@ public class GroovyExpectedTypesUtil {
     }
 
     public void visitElement(GroovyPsiElement element) {
-      makeDefault(element);
+      makeDefault();
     }
 
     public void visitReturnStatement(GrReturnStatement returnStatement) {
@@ -60,7 +65,7 @@ public class GroovyExpectedTypesUtil {
           return;
         }
       }
-      makeDefault(returnStatement);
+      makeDefault();
     }
 
     public void visitVariable(GrVariable variable) {
@@ -71,22 +76,37 @@ public class GroovyExpectedTypesUtil {
           return;
         }
       }
-      makeDefault(variable);
+      makeDefault();
+    }
+
+    public void visitMethodCallExpression(GrMethodCallExpression methodCall) {
+      if (myExpression.equals(methodCall.getInvokedExpression())) {
+        myResult = new TypeConstraint[]{SubtypeConstraint.create("groovy.lang.Closure", methodCall)};
+      } else {
+        makeDefault();
+      }
+    }
+
+    public void visitArgumentList(GrArgumentList list) {
+      PsiElement parent = list.getParent();
+      if (parent instanceof GrCallExpression) {
+        //((GrCallExpression) parent).multiResolveMethod();
+      }
     }
 
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
       GrExpression rValue = expression.getRValue();
       if (myExpression.equals(rValue)) {
         PsiType lType = expression.getLValue().getType();
-        if (lType == null) makeDefault(expression);
+        if (lType == null) makeDefault();
         else {
           myResult = new TypeConstraint[]{SubtypeConstraint.create(lType)};
         }
       } else if (myExpression.equals(expression.getLValue())) {
-        if (rValue == null) makeDefault(expression);
+        if (rValue == null) makeDefault();
         else {
           PsiType rType = rValue.getType();
-          if (rType == null) makeDefault(expression);
+          if (rType == null) makeDefault();
           else {
             myResult = new TypeConstraint[]{SupertypeConstraint.create(rType)};
           }
@@ -94,9 +114,9 @@ public class GroovyExpectedTypesUtil {
       }
     }
 
-    private void makeDefault(GroovyPsiElement element) {
+    private void makeDefault() {
       myResult = new TypeConstraint[]{
-          SubtypeConstraint.create("java.lang.Object", element)
+          SubtypeConstraint.create("java.lang.Object", myExpression)
       };
     }
 
