@@ -19,6 +19,7 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class PagePool {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.PagePool");
+
   private final static int PROTECTED_PAGES = 150;
   private final static int PROBATIONAL_PAGES = 500;
 
@@ -211,27 +214,32 @@ public class PagePool {
     public void run() {
       //noinspection InfiniteLoopStatement
       while (true) {
-        FinalizationRequest request = getNextFinalizationRequest();
+        try {
+          FinalizationRequest request = getNextFinalizationRequest();
 
-        if (request != null) {
-          finalizationQueueSemaphore.down();
+          if (request != null) {
+            finalizationQueueSemaphore.down();
 
-          if (request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId)) {
-            synchronized (lock) {
-              myFinalizationQueue.remove(lastFinalizedKey);
-              request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
+            if (request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId)) {
+              synchronized (lock) {
+                myFinalizationQueue.remove(lastFinalizedKey);
+                request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
+              }
+            }
+          }
+          else {
+            synchronized (finalizationLock) {
+              try {
+                finalizationLock.wait();
+              }
+              catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
             }
           }
         }
-        else {
-          synchronized (finalizationLock) {
-            try {
-              finalizationLock.wait();
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-          }
+        catch (Throwable e) {
+          LOG.error(e);
         }
       }
     }
