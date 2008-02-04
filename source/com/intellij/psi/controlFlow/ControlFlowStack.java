@@ -10,8 +10,8 @@ import com.intellij.util.containers.IntArrayList;
 import java.util.ArrayList;
 
 public class ControlFlowStack {
-  IntArrayList myIpStack = new IntArrayList();
-  ArrayList<CallInstruction> myCallInstructionStack = new ArrayList<CallInstruction>();
+  private final IntArrayList myIpStack = new IntArrayList();
+  private final ArrayList<CallInstruction> myCallInstructionStack = new ArrayList<CallInstruction>();
 
   public void push(int ip, CallInstruction callInstruction) {
     myIpStack.add(ip);
@@ -27,8 +27,7 @@ public class ControlFlowStack {
     return i;
   }
   public int peekReturnOffset() {
-    final int i = myIpStack.get(myIpStack.size() - 1);
-    return i;
+    return myIpStack.get(myIpStack.size() - 1);
   }
   public int size() {
     return myIpStack.size();

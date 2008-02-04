@@ -57,12 +57,10 @@ public class DuplicatesFinder {
       } while(endOffset < 0 && j >= 0);
 
       IntArrayList exitPoints = new IntArrayList();
-      final ArrayList<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
-      ControlFlowUtil.findExitPointsAndStatements
+      final Collection<PsiStatement> exitStatements = ControlFlowUtil.findExitPointsAndStatements
         (controlFlow, startOffset,
          endOffset,
-         exitPoints, exitStatements,
-         ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+         exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
       myMultipleExitPoints = exitPoints.size() > 1;
 
       if (myMultipleExitPoints) {
@@ -74,7 +72,7 @@ public class DuplicatesFinder {
     }
   }
 
-  private void removeParametersUsedInExitsOnly(PsiElement codeFragment, ArrayList<PsiStatement> exitStatements, ControlFlow controlFlow, int startOffset, int endOffset) {
+  private void removeParametersUsedInExitsOnly(PsiElement codeFragment, Collection<PsiStatement> exitStatements, ControlFlow controlFlow, int startOffset, int endOffset) {
     LocalSearchScope scope = new LocalSearchScope(codeFragment);
     Variables:
     for (Iterator<? extends PsiVariable> iterator = myParameters.iterator(); iterator.hasNext();) {
@@ -91,7 +89,7 @@ public class DuplicatesFinder {
     }
   }
 
-  private static boolean isInExitStatements(PsiElement element, ArrayList<PsiStatement> exitStatements) {
+  private static boolean isInExitStatements(PsiElement element, Collection<PsiStatement> exitStatements) {
     for (PsiStatement exitStatement : exitStatements) {
       if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
     }

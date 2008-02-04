@@ -83,7 +83,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiVariable[] myInputVariables; // input variables
   private PsiVariable[] myOutputVariables; // output variables
   private PsiVariable myOutputVariable; // the only output variable
-  private List<PsiStatement> myExitStatements;
+  private Collection<PsiStatement> myExitStatements;
 
   private boolean myHasReturnStatement; // there is a return statement
   private boolean myHasReturnStatementOutput; // there is a return statement and its type is not void
@@ -167,13 +167,16 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private boolean areExitStatementsTheSame() {
     if (myExitStatements.isEmpty()) return false;
-    PsiStatement firstExitStatement = myExitStatements.get(0);
-    for (int i = 1; i < myExitStatements.size(); i++) {
-      PsiStatement statement = myExitStatements.get(i);
-      if (!PsiEquivalenceUtil.areElementsEquivalent(firstExitStatement, statement)) return false;
+    PsiStatement first = null;
+    for (PsiStatement statement : myExitStatements) {
+      if (first == null) {
+        first = statement;
+        continue;
+      }
+      if (!PsiEquivalenceUtil.areElementsEquivalent(first, statement)) return false;
     }
 
-    myFirstExitStatementCopy = (PsiStatement)firstExitStatement.copy();
+    myFirstExitStatementCopy = (PsiStatement)first.copy();
     return true;
   }
 
@@ -209,10 +212,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     calculateFlowStartAndEnd();
 
     IntArrayList exitPoints = new IntArrayList();
-    myExitStatements = new ArrayList<PsiStatement>();
 
-    ControlFlowUtil.findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, exitPoints, myExitStatements,
-                                                ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
+    myExitStatements = ControlFlowUtil.findExitPointsAndStatements(myControlFlow, myFlowStart, myFlowEnd, exitPoints, ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("exit points:");
@@ -282,7 +283,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       List<PsiVariable> inputVariableList = new ArrayList<PsiVariable>(Arrays.asList(inputVariables));
       removeParametersUsedInExitsOnly(codeFragment, myExitStatements, myControlFlow, myFlowStart, myFlowEnd, inputVariableList);
       myInputVariables = inputVariableList.toArray(new PsiVariable[inputVariableList.size()]);
-    } else {
+    }
+    else {
       myInputVariables = inputVariables;
     }
 
@@ -447,7 +449,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private static void removeParametersUsedInExitsOnly(PsiElement codeFragment,
-                                               List<PsiStatement> exitStatements,
+                                               Collection<PsiStatement> exitStatements,
                                                ControlFlow controlFlow,
                                                int startOffset,
                                                int endOffset,
@@ -468,7 +470,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
-  private static boolean isInExitStatements(PsiElement element, List<PsiStatement> exitStatements) {
+  private static boolean isInExitStatements(PsiElement element, Collection<PsiStatement> exitStatements) {
     for (PsiStatement exitStatement : exitStatements) {
       if (PsiTreeUtil.isAncestor(exitStatement, element, false)) return true;
     }

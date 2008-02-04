@@ -167,13 +167,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       BranchingInstruction instruction = (BranchingInstruction)myCurrentFlow.getInstructions().get(offset);
       instruction.offset += add;
       LOG.assertTrue(instruction.offset >= 0);
-//      if (instruction instanceof ReturnInstruction) {
-//        final ReturnInstruction returnInstruction = ((ReturnInstruction) instruction);
-//        returnInstruction.procBegin += add;
-//        returnInstruction.procEnd += add;
-//        LOG.assertTrue(returnInstruction.procBegin > 0);
-//        LOG.assertTrue(returnInstruction.procEnd > returnInstruction.procBegin);
-//      }
     }
     poolIntArray(offsets);
   }
@@ -784,7 +777,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (finallyBlock != null && finallyStartOffset != -1) {
       // go out of finally, go to 2nd return after finally block
       // second return is for return statement called completion
-      instruction = new GoToInstruction(2, ControlFlow.JUMP_ROLE_GOTO_END, true);
+      instruction = new GoToInstruction(1, ControlFlow.JUMP_ROLE_GOTO_END, true);
       myCurrentFlow.addInstruction(instruction);
       addElementOffsetLater(finallyBlock, false);
     }

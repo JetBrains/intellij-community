@@ -13,8 +13,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.IntArrayList;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegate {
   public boolean highlightUsages(final Editor editor, final PsiFile file) {
@@ -45,13 +44,11 @@ public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegat
     final Project project = target.getProject();
     ControlFlow flow = ControlFlowFactory.getInstance(project).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
 
-    List<PsiStatement> exitStatements = new ArrayList<PsiStatement>();
-    ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize(), new IntArrayList(),
-                                                exitStatements,
-                                                new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
+    Collection<PsiStatement> exitStatements = ControlFlowUtil.findExitPointsAndStatements(flow, 0, flow.getSize(), new IntArrayList(), 
+                                                                                          new Class[]{PsiReturnStatement.class, PsiBreakStatement.class,
                                                             PsiContinueStatement.class, PsiThrowStatement.class,
                                                             PsiExpressionStatement.class});
-    if (!exitStatements.contains(parent)) return true;
+    if (!exitStatements.contains(parent)) return false;
 
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
     HighlightManager highlightManager = HighlightManager.getInstance(project);
@@ -63,6 +60,6 @@ public class HighlightExitPointsHandler implements HighlightUsagesHandlerDelegat
     String message = clearHighlights ? "" : CodeInsightBundle.message("status.bar.exit.points.highlighted.message", exitStatements.size(),
                                                                       HighlightUsagesHandler.getShortcutText());
     WindowManager.getInstance().getStatusBar(project).setInfo(message);
-    return false;
+    return true;
   }
 }

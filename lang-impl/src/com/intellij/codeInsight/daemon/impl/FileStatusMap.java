@@ -47,9 +47,6 @@ public class FileStatusMap {
                 "document stamp:" + document.getModificationStamp()
                 );
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Dirty block optimization works");
-    }
     return dirtyScope.getTextRange();
   }
 
@@ -92,6 +89,7 @@ public class FileStatusMap {
   }
 
   public void markAllFilesDirty() {
+    LOG.debug("********************************* Mark all dirty");
     synchronized(myDocumentToStatusMap){
       myDocumentToStatusMap.clear();
     }
@@ -101,11 +99,15 @@ public class FileStatusMap {
   public void markFileUpToDate(@NotNull Document document, int passId) {
     synchronized(myDocumentToStatusMap){
       FileStatus status = myDocumentToStatusMap.get(document);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (status == null){
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
         status = new FileStatus(file);
         myDocumentToStatusMap.put(document, status);
       }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("********************************* Mark file uptodate "+file.getName());
+      }
+
       status.defensivelyMarked=false;
       switch (passId) {
         case Pass.UPDATE_ALL:
@@ -164,6 +166,9 @@ public class FileStatusMap {
   }
 
   public void markFileScopeDirtyDefensively(@NotNull PsiFile file) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("********************************* Mark dirty file defensively: "+file.getName());
+    }
     // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
     // e.g. in the case of quick typing/backspacing char
     synchronized(myDocumentToStatusMap){
@@ -176,6 +181,9 @@ public class FileStatusMap {
   }
 
   public void markFileScopeDirty(@NotNull Document document, @NotNull PsiElement scope) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("********************************* Mark dirty: "+scope);
+    }
     synchronized(myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) return; // all dirty already
