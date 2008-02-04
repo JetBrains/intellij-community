@@ -42,7 +42,7 @@ public class FindUsagesAction extends AnAction {
     Editor editor = e.getData(PlatformDataKeys.EDITOR);
     if (editor != null) {
       int offset = editor.getCaretModel().getOffset();
-      if (GotoDeclarationAction.chooseAmbiguousTarget(project, editor, offset, new PsiElementProcessor<PsiElement>() {
+      if (GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, new PsiElementProcessor<PsiElement>() {
         public boolean execute(final PsiElement element) {
           new PsiElement2UsageTargetAdapter(element).findUsages();
           return false;

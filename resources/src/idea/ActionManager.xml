@@ -185,15 +185,13 @@
       <add-to-group group-id="GoToTarget" anchor="first"/>
     </group>
 
-    <group id="GoToCodeGroup">
-      <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
-      <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+    <group id="GoToJavaCodeGroup">
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
-      <separator/>
 
-      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>
+      <add-to-group group-id="GoToCodeGroup" anchor="after" relative-to-action="GotoDeclaration"/>
+
     </group>
 
     <group id="GoToMenuEx">

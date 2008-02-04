@@ -44,22 +44,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     PsiElement element = findTargetElement(project, editor, offset);
     if (element == null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
-      chooseAmbiguousTarget(project, editor, offset);
+      chooseAmbiguousTarget(editor, offset);
       return;
     }
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
     PsiElement navElement = element.getNavigationElement();
 
-    //TODO: move this logic to ClsMethodImpl.getNavigationElement
-    if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
-        PsiClass aClass = method.getContainingClass();
-        PsiElement navClass = aClass.getNavigationElement();
-        if (aClass != navClass) navElement = navClass;
-      }
-    }
+    navElement = TargetElementUtilBase.getInstance().getGotoDeclarationTarget(element, navElement);
 
     if (navElement instanceof Navigatable) {
       if (((Navigatable)navElement).canNavigate()) {
@@ -75,8 +67,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static void chooseAmbiguousTarget(final Project project, final Editor editor, int offset) {
-    PsiElementProcessor<PsiElement> naviagteProcessor = new PsiElementProcessor<PsiElement>() {
+  private static void chooseAmbiguousTarget(final Editor editor, int offset) {
+    PsiElementProcessor<PsiElement> navigateProcessor = new PsiElementProcessor<PsiElement>() {
       public boolean execute(final PsiElement element) {
         Navigatable navigatable = EditSourceUtil.getDescriptor(element);
         if (navigatable != null && navigatable.canNavigate()) {
@@ -85,11 +77,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         return true;
       }
     };
-    chooseAmbiguousTarget(project, editor, offset,naviagteProcessor, CodeInsightBundle.message("declaration.navigation.title"));
+    chooseAmbiguousTarget(editor, offset,navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"));
   }
 
   // returns true if processor is run or is going to be run after showing popup
-  public static boolean chooseAmbiguousTarget(final Project project, final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
+  public static boolean chooseAmbiguousTarget(final Editor editor, int offset, PsiElementProcessor<PsiElement> processor,
                                               String titlePattern) {
     final PsiReference reference = TargetElementUtilBase.findReference(editor, offset);
     final Collection<PsiElement> candidates = suggestCandidates(reference);

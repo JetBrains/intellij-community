@@ -192,4 +192,16 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     return super.getTargetCandidates(reference);
   }
+
+  public PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement) {
+    if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)element;
+      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+        PsiClass aClass = method.getContainingClass();
+        PsiElement navClass = aClass.getNavigationElement();
+        if (aClass != navClass) return navClass;
+      }
+    }
+    return super.getGotoDeclarationTarget(element, navElement);
+  }
 }

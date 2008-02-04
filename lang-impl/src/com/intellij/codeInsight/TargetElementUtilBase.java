@@ -217,4 +217,8 @@ public class TargetElementUtilBase {
     }
     return Collections.emptyList();
   }
+
+  public PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement) {
+    return navElement;
+  }
 }

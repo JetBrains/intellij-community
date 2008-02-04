@@ -225,7 +225,7 @@ public class ShowUsagesAction extends AnAction {
   private static void chooseAmbiguousTarget(final Project project, final Editor editor) {
     if (editor != null) {
       int offset = editor.getCaretModel().getOffset();
-      if (GotoDeclarationAction.chooseAmbiguousTarget(project, editor, offset, new PsiElementProcessor<PsiElement>() {
+      if (GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, new PsiElementProcessor<PsiElement>() {
         public boolean execute(final PsiElement element) {
           showElementUsages(project, element, editor);
           return false;

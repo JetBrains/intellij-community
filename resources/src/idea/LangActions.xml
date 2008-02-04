@@ -115,6 +115,14 @@
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="Back"/>
     </group>
 
+    <group id="GoToCodeGroup">
+      <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
+      <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+      <separator/>
+
+      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>
+    </group>
+
     <!-- Code -->
     <group id="CodeMenu" popup="true">
       <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
