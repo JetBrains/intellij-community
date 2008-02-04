@@ -4,11 +4,15 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -19,20 +23,23 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     return this;
   }
 
-  /*
-  protected boolean isValidForFile(Project project, Editor editor, final PsiFile file) {
-    return file instanceof PsiJavaFile;
-  }
-  */
-
   protected boolean isValidForLookup() {
     return true;
+  }
+
+  public void update(final AnActionEvent event) {
+    if (Extensions.getExtensions(TypeDeclarationProvider.EP_NAME).length == 0) {
+      event.getPresentation().setVisible(false);
+    }
+    else {
+      super.update(event);
+    }
   }
 
   public void invoke(final Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    int offset = getOffset(editor);
+    int offset = editor.getCaretModel().getOffset();
     PsiElement symbolType = findSymbolType(editor, offset);
     if (symbolType == null) return;
     symbolType = symbolType.getNavigationElement();
@@ -44,36 +51,19 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
     return false;
   }
 
+  @Nullable
   public static PsiElement findSymbolType(Editor editor, int offset) {
     PsiElement targetElement = TargetElementUtilBase.getInstance().findTargetElement(editor,
       TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED |
       TargetElementUtilBase.ELEMENT_NAME_ACCEPTED |
       TargetElementUtilBase.LOOKUP_ITEM_ACCEPTED,
       offset);
-    PsiType type;
-    if (targetElement instanceof PsiVariable){
-      type = ((PsiVariable)targetElement).getType();
+    for(TypeDeclarationProvider provider: Extensions.getExtensions(TypeDeclarationProvider.EP_NAME)) {
+      PsiElement result = provider.getSymbolType(targetElement);
+      if (result != null) return result;
     }
-    else if (targetElement instanceof PsiMethod){
-      type = ((PsiMethod)targetElement).getReturnType();
-    }
-    else{
-      return null;
-    }
-    if (type == null) return null;
-    return PsiUtil.resolveClassInType(type);
+
+    return null;
   }
 
-  protected int getOffset(Editor editor) {
-    return editor.getCaretModel().getOffset();
-  }
-
-  /*
-  public void update(AnActionEvent event, Presentation presentation) {
-    super.update(event, presentation);
-    if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) {
-      presentation.setText("Go to " + getTemplatePresentation().getText());
-    }
-  }
-  */
 }
