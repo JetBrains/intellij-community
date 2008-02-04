@@ -13,16 +13,27 @@ import java.util.LinkedList;
  * @author peter
  */
 public class MutableMarker {
+  enum Mode { READY, DROPPED, COMMITTED, ERROR }
+
   private final PsiBuilder.Marker myStartMarker;
   private IElementType myResultType;
   private int myInitialPathLength;
   private LinkedList<IElementType> myPath;
-  private boolean myFinished;
+  private Mode myMode;
 
   public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder.Marker startMarker, final int initialPathLength) {
     myPath = path;
     myStartMarker = startMarker;
     myInitialPathLength = initialPathLength;
+    myMode = Mode.READY;
+  }
+
+  public boolean isCommitted() {
+    return myMode == Mode.COMMITTED;
+  }
+
+  public boolean isDropped() {
+    return myMode == Mode.DROPPED || myMode == Mode.ERROR;
   }
 
   public MutableMarker setResultType(final IElementType resultType) {
@@ -35,12 +46,12 @@ public class MutableMarker {
   }
 
   public void finish() {
-    assert !myFinished;
-    myFinished = true;
-
+    assert myMode == Mode.READY;
     if (myResultType == null) {
+      myMode = Mode.DROPPED;
       myStartMarker.drop();
     } else {
+      myMode = Mode.COMMITTED;
       myStartMarker.done(myResultType);
       restorePath();
       myPath.addLast(myResultType);
@@ -63,21 +74,21 @@ public class MutableMarker {
   }
 
   public void drop() {
-    assert !myFinished;
-    myFinished = true;
+    assert myMode == Mode.READY;
+    myMode = Mode.DROPPED;
     myStartMarker.drop();
   }
 
   public void rollback() {
-    assert !myFinished;
-    myFinished = true;
+    assert myMode == Mode.READY;
+    myMode = Mode.DROPPED;
     restorePath();
     myStartMarker.rollbackTo();
   }
 
   public void error(final String message) {
-    assert !myFinished;
-    myFinished = true;
+    assert myMode == Mode.READY;
+    myMode = Mode.ERROR;
     myStartMarker.error(message);
   }
 }
