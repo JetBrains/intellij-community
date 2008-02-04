@@ -961,8 +961,8 @@ public final class ProjectViewImpl extends ProjectView implements JDOMExternaliz
         return myIdeView;
       }
       if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
-        Object selectedNode = getSelectedNodeElement();
-        if (selectedNode instanceof Module) {
+        final List<Module> modules = getSelectedElements(Module.class);
+        if (!modules.isEmpty()) {
           return myDeleteModuleProvider;
         }
         final LibraryOrderEntry orderEntry = getSelectedLibrary();
