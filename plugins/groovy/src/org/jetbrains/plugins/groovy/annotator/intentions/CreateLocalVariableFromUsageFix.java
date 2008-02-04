@@ -86,7 +86,7 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     PsiClassType type = PsiManager.getInstance(project).getElementFactory().createTypeByFQClassName("Object", GlobalSearchScope.allScope(project));
     GrVariableDeclaration decl = GroovyPsiElementFactory.getInstance(project).createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY,
         myRefExpression.getReferenceName(), null, type);
-    int offset = editor.getCaretModel().getOffset();
+    int offset = myRefExpression.getTextRange().getStartOffset();
     GrStatement anchor = findAnchor(file, offset);
 
     decl = myOwner.addVariableDeclarationBefore(decl, anchor);
@@ -111,8 +111,8 @@ public class CreateLocalVariableFromUsageFix implements IntentionAction {
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset > 0) element = file.findElementAt(offset - 1); 
     while (element != null) {
+      if (myOwner.equals(element.getParent())) return element instanceof GrStatement ? (GrStatement) element : null;
       element = element.getParent();
-      if (element.getParent().equals(myOwner)) return element instanceof GrStatement ? (GrStatement) element : null;
     }
     return null;
   }
