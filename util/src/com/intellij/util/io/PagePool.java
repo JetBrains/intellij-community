@@ -239,7 +239,7 @@ public class PagePool {
           }
         }
         catch (Throwable e) {
-          LOG.error(e);
+          LOG.info(e);
         }
       }
     }
