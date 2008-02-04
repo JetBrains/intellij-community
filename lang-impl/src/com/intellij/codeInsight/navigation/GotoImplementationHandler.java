@@ -5,15 +5,15 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.MethodCellRenderer;
-import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -47,20 +47,17 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
       }
     }
     else {
-      boolean onlyMethods = true;
-      boolean onlyClasses = true;
-      for (PsiElement element : elements) {
-        if (!(element instanceof PsiMethod)) onlyMethods = false;
-        if (!(element instanceof PsiClass)) onlyClasses = false;
+      PsiElementListCellRenderer renderer = null;
+      GotoImplementationRendererProvider rendererProvider = null;
+      for(GotoImplementationRendererProvider provider: Extensions.getExtensions(GotoImplementationRendererProvider.EP_NAME)) {
+        renderer = provider.getRenderer(elements);
+        if (renderer != null) {
+          rendererProvider = provider;
+          break;
+        }
       }
-      PsiElementListCellRenderer renderer;
-      if (onlyMethods) {
-        renderer = new MethodCellRenderer(!PsiUtil.allMethodsHaveSameSignature(Arrays.asList(elements).toArray(PsiMethod.EMPTY_ARRAY)));
-      }
-      else if (onlyClasses) {
-        renderer = new PsiClassListCellRenderer();
-      }
-      else {
+
+      if (renderer == null) {
         renderer = new DefaultPsiElementListCellRenderer();
       }
 
@@ -87,8 +84,8 @@ public class GotoImplementationHandler implements CodeInsightActionHandler {
 
       final String name = ((PsiNamedElement)sourceElement).getName();
       final String title;
-      if (onlyMethods || onlyClasses) {
-        title = CodeInsightBundle.message("goto.implementation.chooser.title", name, elements.length);
+      if (rendererProvider != null) {
+        title = rendererProvider.getChooserTitle(name, elements);
       }
       else {
         title = CodeInsightBundle.message("goto.implementation.in.file.chooser.title", name, elements.length);

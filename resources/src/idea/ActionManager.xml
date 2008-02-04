@@ -186,11 +186,9 @@
     </group>
 
     <group id="GoToJavaCodeGroup">
-      <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
-      <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction"/>
 
-      <add-to-group group-id="GoToCodeGroup" anchor="after" relative-to-action="GotoDeclaration"/>
+      <add-to-group group-id="GoToCodeGroup" anchor="after" relative-to-action="GotoTypeDeclaration"/>
 
     </group>
 

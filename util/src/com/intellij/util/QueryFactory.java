@@ -48,6 +48,10 @@ public class QueryFactory<Result, Parameters> {
     return myExecutors;
   }
 
+  public boolean hasAnyExecutors() {
+    return getExecutors().size() > 0;
+  }
+
   /**
    * @return query to perform the search. Obtained results are automatically filtered wrt. equals() relation.
    * @param parameters of the search

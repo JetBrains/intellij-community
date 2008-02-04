@@ -118,6 +118,8 @@
     <group id="GoToCodeGroup">
       <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.PopupToolbarAction"/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction"/>
+      <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction"/>
+      <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction"/>
       <separator/>
 
       <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GoToErrorGroup"/>
