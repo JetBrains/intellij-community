@@ -31,7 +31,9 @@ public abstract class JspManager {
     return project.getComponent(JspManager.class);
   }
 
+  @NotNull
   public abstract Set<String> getNamespacesByTagName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
+  @NotNull
   public abstract Set<String> getNamespacesByFunctionName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
 
   /**

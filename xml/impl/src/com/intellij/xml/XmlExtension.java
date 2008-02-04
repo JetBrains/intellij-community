@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,9 +16,9 @@ import java.util.Set;
  */
 public abstract class XmlExtension {
 
-  private static ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
+  private static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<XmlExtension>("com.intellij.xml.xmlExtension");
 
-  private static XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
+  private static final XmlExtension DEFAULT_EXTENSION = new DefaultXmlExtension();
 
   public static XmlExtension getExtension(XmlFile file) {
     for (XmlExtension extension : Extensions.getExtensions(EP_NAME)) {
@@ -30,7 +31,9 @@ public abstract class XmlExtension {
 
   public abstract boolean isAvailable(XmlFile file);
 
-  public abstract Set<String> getAvailableTagNames(@NotNull final XmlFile context);
+  @NotNull
+  public abstract Set<String> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);
+  @NotNull
   public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
 
   public static interface Runner<P, T extends Throwable> {

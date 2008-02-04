@@ -10,8 +10,9 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.QueryResultSet;
+import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
-import com.intellij.xml.util.XmlUtil;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -32,29 +33,37 @@ public class XmlCompletionContributor extends CompletionContributor{
         final XmlTag parent = (XmlTag)element.getParent();
         final PsiReference reference = parent.getReference();
         final String namespace = parent.getNamespace();
-        if (reference != null && namespace.length() > 0) {
+        final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
+        final String prefix = context.getPrefix();
+        final int pos = prefix.indexOf(':');
+        final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
+
+        if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
           new XmlCompletionData().completeReference(reference, set, context, element);
           result.addAllElements(set);
-        }
-        if (namespace.length() == 0 || namespace.equals(XmlUtil.HTML_URI)) {
-          final String prefix = context.getPrefix();
-          final int pos = prefix.indexOf(':');
+        } else {
 
           if (pos >= 0) {
             context.setPrefix(prefix.substring(pos + 1));
           }
-          final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
+
           final XmlFile file = (XmlFile)context.file;
-          final Set<String> names = XmlExtension.getExtension(file).getAvailableTagNames(file);
+          final XmlExtension extension = XmlExtension.getExtension(file);
+          final Set<String> names = extension.getAvailableTagNames(file, parent);
           if (names.isEmpty()) {
             return;
           }
-          for (String tagName : names) {
-            final LookupItem item = new LookupItem<String>(tagName, tagName);
-            final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(tagName, namespacePrefix);
+          for (String name : names) {
+            final LookupItem item = new LookupItem<String>(name, name);
+            final XmlTagInsertHandler insertHandler = new ExtendedTagInsertHandler(name, namespacePrefix);
             item.setAttribute(LookupItem.INSERT_HANDLER_ATTR, insertHandler);
-            if (context.prefixMatches(tagName)) {
+            if (context.prefixMatches(name)) {
+              final Set<String> namespaces = extension.getNamespacesByTagName(name, file);
+              if (namespaces.size() > 0) {
+                item.setAttribute(LookupItem.TAIL_TEXT_ATTR, " (" + namespaces.iterator().next() + ")");
+                item.setAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR, "");
+              }
               result.addElement(item);
             }
           }

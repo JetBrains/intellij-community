@@ -198,7 +198,15 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
     return getTagNameVariants((XmlTag)element, variants);
   }
 
-  public static Object[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
+  public static String[] getTagNameVariants(final XmlTag element, final List<XmlElementDescriptor> variants) {
+    final ArrayList<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
+    namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
+    return getTagNameVariants(element, variants, namespaces);
+  }
+
+  public static String[] getTagNameVariants(final XmlTag element,
+                                            final List<XmlElementDescriptor> variants,
+                                            final Collection<String> namespaces) {
     XmlElementDescriptor elementDescriptor = null;
     String elementNamespace = null;
 
@@ -225,8 +233,6 @@ public class TagNameReference implements PsiReference, QuickFixProvider {
         curElement = curElement.getContext();
       }
     }
-    final List<String> namespaces = new ArrayList<String>(Arrays.asList(element.knownNamespaces()));
-    namespaces.add(XmlUtil.EMPTY_URI); // empty namespace
     final Iterator<String> nsIterator = namespaces.iterator();
 
     final Set<XmlNSDescriptor> visited = new HashSet<XmlNSDescriptor>();

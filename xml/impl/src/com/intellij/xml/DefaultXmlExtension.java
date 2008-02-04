@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,29 +28,23 @@ public class DefaultXmlExtension extends XmlExtension {
     return true;
   }
 
-  public Set<String> getAvailableTagNames(@NotNull final XmlFile context) {
+  @NotNull
+  public Set<String> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
-    final HashSet<String> set = new HashSet<String>();
-    final Set<String> namespaces = XmlSchemaProvider.getAvailableNamespaces(context);
+    final Set<String> namespaces = XmlSchemaProvider.getAvailableNamespaces(file);
     if (namespaces != null) {
-      for (String namespace : namespaces) {
-        final XmlFile xmlFile = XmlUtil.findNamespace(context, namespace);
-        if (xmlFile != null) {
-          final XmlDocument document = xmlFile.getDocument();
-          assert document != null;
-          final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-          assert nsDescriptor != null;
-          final XmlElementDescriptor[] elementDescriptors = nsDescriptor.getRootElementsDescriptors(document);
-          for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
-            final String name = elementDescriptor.getDefaultName();
-            set.add(name);
-          }
-        }
+      final String[] nameVariants = TagNameReference.getTagNameVariants(context, new ArrayList<XmlElementDescriptor>(), namespaces);
+      final HashSet<String> set = new HashSet<String>(nameVariants.length);
+      for (String nameVariant : nameVariants) {
+        final int pos = nameVariant.indexOf(':');
+        set.add(pos >= 0 ? nameVariant.substring(pos + 1) : nameVariant);
       }
+      return set;
     }
-    return set;
+    return Collections.emptySet();
   }
 
+  @NotNull
   public Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context) {
     final HashSet<String> set = new HashSet<String>();
     final Set<String> namespaces = XmlSchemaProvider.getAvailableNamespaces(context);
@@ -97,11 +94,18 @@ public class DefaultXmlExtension extends XmlExtension {
       }
     }
     
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
+    String prefix = nsPrefix;
+    if (prefix == null && provider != null) {
+      prefix = provider.getDefaultPrefix(namespace, file);
+    }
+    if (prefix == null) {
+      prefix = "x";
+    }
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-    final String prefix = nsPrefix == null ? "x" : nsPrefix;
-    @NonNls final String name = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
-    final XmlAttribute attribute = elementFactory.createXmlAttribute(name, namespace);
+    @NonNls final String qname = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
+    final XmlAttribute attribute = elementFactory.createXmlAttribute(qname, namespace);
     if (anchor == null) {
       rootTag.add(attribute);
     } else {
@@ -110,7 +114,6 @@ public class DefaultXmlExtension extends XmlExtension {
 
     String location = null;
     if (namespace.length() > 0) {
-      final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
       if (provider != null) {
         final Set<String> strings = provider.getLocations(namespace, file);
         if (strings != null && strings.size() > 0) {
@@ -139,7 +142,7 @@ public class DefaultXmlExtension extends XmlExtension {
     CodeStyleManager.getInstance(project).reformat(rootTag);
     
     if (namespace.length() == 0) {
-      final XmlAttribute xmlAttribute = rootTag.getAttribute(name);
+      final XmlAttribute xmlAttribute = rootTag.getAttribute(qname);
       if (xmlAttribute != null) {
         final XmlAttributeValue value = xmlAttribute.getValueElement();
         assert value != null;
