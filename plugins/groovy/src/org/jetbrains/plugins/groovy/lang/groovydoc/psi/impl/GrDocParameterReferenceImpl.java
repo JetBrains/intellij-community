@@ -16,9 +16,14 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveResult;
+import com.intellij.psi.PsiReference;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocParameterReference;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ilyas
@@ -31,5 +36,51 @@ public class GrDocParameterReferenceImpl extends GroovyDocPsiElementImpl impleme
 
   public String toString() {
     return "GrDocParameterReference";
+  }
+
+  public PsiReference getReference() {
+    return this;
+  }
+
+  @NotNull
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    return new ResolveResult[0];
+  }
+
+  public PsiElement getElement() {
+    return this;
+  }
+
+  public TextRange getRangeInElement() {
+    return new TextRange(0, getTextLength());
+  }
+
+  @Nullable
+  public PsiElement resolve() {
+    return null;
+  }
+
+  public String getCanonicalText() {
+    return null;
+  }
+
+  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    return null;
+  }
+
+  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+    return null;
+  }
+
+  public boolean isReferenceTo(PsiElement element) {
+    return false;
+  }
+
+  public Object[] getVariants() {
+    return new Object[0];
+  }
+
+  public boolean isSoft() {
+    return false;
   }
 }

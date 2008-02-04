@@ -66,6 +66,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.resolve.providers.PropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.lang.groovydoc.injection.GroovyDocInjector;
+import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.editor.selection.GroovyLiteralSelectioner;
 import org.jetbrains.plugins.grails.GrailsLoader;
 import org.jetbrains.plugins.grails.addins.js.GrailsJavaScriptInjector;
@@ -168,8 +170,13 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
           }
         });
 
-        ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
-        ReferenceProvidersRegistry.getInstance(project).registerReferenceProvider(GrReferenceExpression.class, new DynamicPropertiesReferenceProvider());
+        //Register Groovydoc reference provider
+        ReferenceProvidersRegistry registry = ReferenceProvidersRegistry.getInstance(project);
+
+        registry.registerReferenceProvider(GroovyDocPsiElement.class, new GroovyDocReferenceProvider());
+        registry.registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
+        registry.registerReferenceProvider(GrReferenceExpression.class, new DynamicPropertiesReferenceProvider());
+
 
         StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
           public void run() {

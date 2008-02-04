@@ -15,8 +15,10 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.psi.api;
 
+import com.intellij.psi.PsiPolyVariantReference;
+
 /**
  * @author ilyas
  */
-public interface GrDocParameterReference extends GroovyDocPsiElement {
+public interface GrDocParameterReference extends GroovyDocPsiElement, PsiPolyVariantReference {
 }
