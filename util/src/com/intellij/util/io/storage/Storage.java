@@ -47,9 +47,11 @@ public class Storage implements Disposable, Forceable {
     @NotNull
     public AppenderStream get(final Integer key) {
       final AppenderStream stream = super.get(key);
+      /*
       if (stream.size() > 10 * 1024) {
         stream.reset();
       }
+      */
       return stream;
     }
 
@@ -204,6 +206,10 @@ public class Storage implements Disposable, Forceable {
     return writeStream(createNewRecord());
   }
 
+  private int totalBytesAppended = 0;
+  private int maxDelta = 0;
+  private int maxNewSize = 0;
+
   private void appendBytes(int record, byte[] bytes) {
     int delta = bytes.length;
     if (delta == 0) return;
@@ -212,11 +218,19 @@ public class Storage implements Disposable, Forceable {
       int capacity = myRecordsTable.getCapacity(record);
       int oldSize = myRecordsTable.getSize(record);
       int newSize = oldSize + delta;
+      totalBytesAppended += delta;
+      maxDelta = Math.max(delta, maxDelta);
       if (newSize > capacity) {
-        byte[] newbytes = new byte[newSize];
-        System.arraycopy(doReadBytes(record), 0, newbytes, 0, oldSize);
-        System.arraycopy(bytes, 0, newbytes, oldSize, delta);
-        doWriteBytes(record, newbytes);
+        if (oldSize > 0) {
+          maxNewSize = Math.max(maxNewSize, newSize);
+          byte[] newbytes = new byte[newSize];
+          System.arraycopy(doReadBytes(record), 0, newbytes, 0, oldSize);
+          System.arraycopy(bytes, 0, newbytes, oldSize, delta);
+          doWriteBytes(record, newbytes);
+        }
+        else {
+          doWriteBytes(record, bytes);
+        }
       }
       else {
         long address = myRecordsTable.getAddress(record) + oldSize;
@@ -265,17 +279,16 @@ public class Storage implements Disposable, Forceable {
   }
 
   private static int calcCapacity(int requiredLength) {
-    if (requiredLength < 2048) {
-      int capacity = 1;
-      while (requiredLength != 0) {
-        capacity *= 2;
-        requiredLength /= 2;
-      }
-      return capacity;
+    return Math.max(64, nearestPowerOfTwo(requiredLength * 3 / 2));
+  }
+
+  private static int nearestPowerOfTwo(int n) {
+    int power = 1;
+    while (n != 0) {
+      power *= 2;
+      n /= 2;
     }
-    else {
-      return requiredLength * 3 / 2;
-    }
+    return power;
   }
   
   public StorageDataOutput writeStream(final int record) {

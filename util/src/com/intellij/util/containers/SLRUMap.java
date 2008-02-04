@@ -15,6 +15,10 @@ public class SLRUMap<K,V> {
   private final int myProtectedQueueSize;
   private final int myProbationalQueueSize;
 
+  private int probationalHits = 0;
+  private int protectedHits = 0;
+  private int misses = 0;
+
   public SLRUMap(final int protectedQueueSize, final int probationalQueueSize) {
     myProtectedQueueSize = protectedQueueSize;
     myProbationalQueueSize = probationalQueueSize;
@@ -45,16 +49,19 @@ public class SLRUMap<K,V> {
   public V get(K key) {
     V value = myProtectedQueue.remove(key);
     if (value != null) {
+      protectedHits++;
       myProtectedQueue.put(getStableKey(key), value);
       return value;
     }
 
     value = myProbationalQueue.remove(key);
     if (value != null) {
+      probationalHits++;
       myProtectedQueue.put(getStableKey(key), value);
       return value;
     }
 
+    misses++;
     return null;
   }
 

@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NonNls;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -35,11 +37,11 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
 
   private DataExternalizer<Integer> myValueExternalizer = new DataExternalizer<Integer>() {
     public void save(final DataOutput out, final Integer value) throws IOException {
-      out.writeInt(value.intValue());
+      out.writeByte(value.intValue());
     }
 
     public Integer read(final DataInput in) throws IOException {
-      return in.readInt();
+      return Integer.valueOf(in.readByte());
     }
   };
   
@@ -63,16 +65,34 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   
   private DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent>() {
     public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
+      final Map<IdIndexEntry, Integer> accumulator = new HashMap<IdIndexEntry, Integer>();
+      final IndexDataConsumer<IdIndexEntry, Integer> acummulatingConsumer = new IndexDataConsumer<IdIndexEntry, Integer>() {
+        public void consume(final IdIndexEntry key, final Integer value) {
+          Integer v = accumulator.get(key);
+          if (v == null) {
+            v = value;
+          }
+          else {
+            v = v.intValue() | value.intValue();
+          }
+          accumulator.put(key, v);
+        }
+      };
+
       final VirtualFile file = inputData.file;
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
       if (indexer != null) {
-        indexer.map(inputData, consumer);
+        indexer.map(inputData, acummulatingConsumer);
+      }
+
+      for (Map.Entry<IdIndexEntry, Integer> entry : accumulator.entrySet()) {
+        consumer.consume(entry.getKey(), entry.getValue());
       }
     }
   };
   
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   public String getName() {

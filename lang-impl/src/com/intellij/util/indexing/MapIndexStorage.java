@@ -2,6 +2,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
 import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
@@ -113,7 +114,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
         myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
           public void append(final DataOutput out) throws IOException {
             myValueExternalizer.save(out, value);
-            out.writeInt(-inputId);
+            RecordUtil.writeSINT(out, -inputId);
           }
         });
       }
@@ -185,17 +186,17 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
         final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
         if (ids != null) {
           if (ids.size() == 1) {
-            out.writeInt(-ids.next());
+            RecordUtil.writeSINT(out, -ids.next());
           }
           else {
-            out.writeInt(ids.size());
+            RecordUtil.writeSINT(out, ids.size());
             while (ids.hasNext()) {
-              out.writeInt(ids.next());
+              RecordUtil.writeSINT(out, ids.next());
             }
           }
         }
         else {
-          out.writeInt(0);
+          RecordUtil.writeSINT(out, 0);
         }
       }
     }
@@ -206,13 +207,13 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       
       while (stream.available() > 0) {
         final T value = myExternalizer.read(in);
-        final int idCount = in.readInt();
+        final int idCount = RecordUtil.readSINT(in);
         if (idCount < 0) {
           valueContainer.addValue(-idCount, value);
         }
         else if (idCount > 0){
           for (int i = 0; i < idCount; i++) {
-            valueContainer.addValue(in.readInt(), value);
+            valueContainer.addValue(RecordUtil.readSINT(in), value);
           }
         }
       }

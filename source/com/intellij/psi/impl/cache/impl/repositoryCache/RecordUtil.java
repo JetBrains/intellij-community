@@ -12,19 +12,19 @@ import com.intellij.psi.impl.cache.ModifierFlags;
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
-import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
-import com.intellij.util.io.RecordDataOutput;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -421,7 +421,7 @@ public class RecordUtil {
     return nameStore.valueOf(nameId);
   }
 
-  public static void writeNAME(RecordDataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {
+  public static void writeNAME(DataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {
     final int nameId = nameStore.enumerate(name);
     record.writeByte(nameId & 0xFF);
     writeINT(record, (nameId >> 8));
@@ -456,7 +456,7 @@ public class RecordUtil {
     }
   }
 
-  public static void writeTYPE(RecordDataOutput record,
+  public static void writeTYPE(DataOutput record,
                                PsiType type,
                                PsiTypeElement typeElement,
                                PersistentStringEnumerator nameStore)
@@ -529,7 +529,7 @@ public class RecordUtil {
     }
   }
 
-  public static void writeINT(RecordDataOutput record, int val) throws IOException {
+  public static void writeINT(DataOutput record, int val) throws IOException {
     /*
     if (0 <= val && val < 255)
       record.writeByte(val);
@@ -560,7 +560,7 @@ public class RecordUtil {
     return readINT(record) - 64;
   }
 
-  public static void writeSINT(RecordDataOutput record, int val) throws IOException {
+  public static void writeSINT(DataOutput record, int val) throws IOException {
     writeINT(record, val + 64);
   }
 
@@ -574,18 +574,18 @@ public class RecordUtil {
     return low + (readINT(record) << 8);
   }
 
-  public static void writeID(RecordDataOutput record, int prevId, int id) throws IOException {
+  public static void writeID(DataOutput record, int prevId, int id) throws IOException {
     writeSINT(record, id - prevId);
   }
 
-  public static void writeID(RecordDataOutput record, int id) throws IOException {
+  public static void writeID(DataOutput record, int id) throws IOException {
     record.writeByte(id & 0xFF);
     writeINT(record, id >>> 8);
   }
 
   private final static long timeBase = 33l * 365l * 24l * 3600l * 1000l;
 
-  public static void writeTIME(RecordDataOutput record, long timestamp) throws IOException {
+  public static void writeTIME(DataOutput record, long timestamp) throws IOException {
     long relStamp = timestamp - timeBase;
     if (relStamp < 0 || relStamp >= 0xFF00000000l) {
       record.writeByte(255);
