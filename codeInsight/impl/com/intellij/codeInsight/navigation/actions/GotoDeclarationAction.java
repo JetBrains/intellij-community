@@ -10,8 +10,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.GotoSymbolCellRenderer;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -19,17 +19,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
 
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoDeclarationAction");
-
   protected CodeInsightActionHandler getHandler() {
     return this;
   }
@@ -174,6 +172,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return false;
   }
 
+  @Nullable
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
     int flags = TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
                 | TargetElementUtil.NEW_AS_CONSTRUCTOR
@@ -189,43 +188,12 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       return null;
     }
     PsiElement elementAt = file.findElementAt(offset);
-    if (elementAt instanceof PsiKeyword) {
-      IElementType type = ((PsiKeyword)elementAt).getTokenType();
-      if (type == JavaTokenType.CONTINUE_KEYWORD) {
-        if (elementAt.getParent() instanceof PsiContinueStatement) {
-          return ((PsiContinueStatement)elementAt.getParent()).findContinuedStatement();
-        }
-      }
-      else if (type == JavaTokenType.BREAK_KEYWORD) {
-        if (elementAt.getParent() instanceof PsiBreakStatement) {
-          PsiStatement statement = ((PsiBreakStatement)elementAt.getParent()).findExitedStatement();
-          if (statement == null) return null;
-          if (statement.getParent() instanceof PsiLabeledStatement) {
-            statement = (PsiStatement)statement.getParent();
-          }
-          PsiElement nextSibling = statement.getNextSibling();
-          while (!(nextSibling instanceof PsiStatement) && nextSibling != null) nextSibling = nextSibling.getNextSibling();
-          //return nextSibling != null ? nextSibling : statement.getNextSibling();
-          if (nextSibling != null) return nextSibling;
-          nextSibling = statement.getNextSibling();
-          if (nextSibling != null) return nextSibling;
-          return statement.getLastChild();
-        }
-      }
-    }
-    else if (elementAt instanceof PsiIdentifier) {
-      PsiElement parent = elementAt.getParent();
-      PsiStatement statement = null;
-      if (parent instanceof PsiContinueStatement) {
-        statement = ((PsiContinueStatement)parent).findContinuedStatement();
-      }
-      else if (parent instanceof PsiBreakStatement) {
-        statement = ((PsiBreakStatement)parent).findExitedStatement();
-      }
-      if (statement == null) return null;
 
-      LOG.assertTrue(statement.getParent() instanceof PsiLabeledStatement);
-      return ((PsiLabeledStatement)statement.getParent()).getLabelIdentifier();
+    for(GotoDeclarationHandler handler: Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
+      PsiElement result = handler.getGotoDeclarationTarget(elementAt);
+      if (result != null) {
+        return result;
+      }
     }
 
     return null;
