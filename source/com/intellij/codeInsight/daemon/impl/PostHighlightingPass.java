@@ -324,7 +324,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
         String message = MessageFormat.format(JavaErrorMessages.message("private.field.is.not.used"), identifier.getText());
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, key, identifier, message);
-        QuickFixAction.registerQuickFixAction(highlightInfo, new CreateConstructorParameterFromFieldFix(field), key);
+        QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
         return highlightInfo;
       }
 
@@ -342,7 +342,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
           final HighlightInfo info = createUnusedSymbolInfo(identifier, message);
 
           QuickFixAction.registerQuickFixAction(info, new CreateGetterOrSetterFix(false, true, field), key);
-          QuickFixAction.registerQuickFixAction(info, new CreateConstructorParameterFromFieldFix(field), key);
+          QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
           SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(field, new Processor<String>() {
             public boolean process(final String annoName) {
               QuickFixAction.registerQuickFixAction(info, unusedSymbolInspection.createQuickFix(annoName, field));
@@ -486,7 +486,7 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     boolean isRedundant = myRefCountHolder.isRedundant(importStatement);
     if (!isRedundant && !(importStatement instanceof PsiImportStaticStatement)) {
       //check import from same package
-      String packageName = ((PsiJavaFile)importStatement.getContainingFile()).getPackageName();
+      String packageName = ((PsiClassOwner)importStatement.getContainingFile()).getPackageName();
       PsiJavaCodeReferenceElement reference = importStatement.getImportReference();
       PsiElement resolved = reference == null ? null : reference.resolve();
       if (resolved instanceof PsiPackage) {

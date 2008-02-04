@@ -246,7 +246,7 @@ public class HighlightControlFlowUtil {
     String description = JavaErrorMessages.message("variable.not.initialized", field.getName());
     TextRange range = HighlightNamesUtil.getFieldDeclarationTextRange(field);
     final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, range.getStartOffset(), range.getEndOffset(), description);
-    QuickFixAction.registerQuickFixAction(highlightInfo, new CreateConstructorParameterFromFieldFix(field));
+    QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), new CreateConstructorParameterFromFieldFix(field), null);
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && !containingClass.isInterface()) {
       IntentionAction fix = QUICK_FIX_FACTORY.createModifierListFix(field.getModifierList(), PsiModifier.FINAL, false, false);

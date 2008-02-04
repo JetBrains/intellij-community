@@ -15,7 +15,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class CreateConstructorParameterFromFieldFix implements IntentionAction {
-  private final SmartPsiElementPointer myField;
+  private final SmartPsiElementPointer<PsiField> myField;
 
   public CreateConstructorParameterFromFieldFix(@NotNull PsiField field) {
     myField = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
@@ -95,7 +95,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private PsiField getField() {
-    return (PsiField)myField.getElement();
+    return myField.getElement();
   }
 
   public boolean startInWriteAction() {
