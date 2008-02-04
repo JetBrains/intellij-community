@@ -33,7 +33,15 @@ public class MutableMarker {
   }
 
   public boolean isDropped() {
-    return myMode == Mode.DROPPED || myMode == Mode.ERROR;
+    return myMode == Mode.DROPPED;
+  }
+
+  public boolean isError() {
+    return myMode == Mode.ERROR;
+  }
+
+  public boolean isReady() {
+    return myMode == Mode.READY;
   }
 
   public MutableMarker setResultType(final IElementType resultType) {
@@ -46,7 +54,7 @@ public class MutableMarker {
   }
 
   public void finish() {
-    assert myMode == Mode.READY;
+    assert myMode == Mode.READY : myMode;
     if (myResultType == null) {
       myMode = Mode.DROPPED;
       myStartMarker.drop();
@@ -74,20 +82,20 @@ public class MutableMarker {
   }
 
   public void drop() {
-    assert myMode == Mode.READY;
+    assert myMode == Mode.READY : myMode;
     myMode = Mode.DROPPED;
     myStartMarker.drop();
   }
 
   public void rollback() {
-    assert myMode == Mode.READY;
+    assert myMode == Mode.READY : myMode;
     myMode = Mode.DROPPED;
     restorePath();
     myStartMarker.rollbackTo();
   }
 
   public void error(final String message) {
-    assert myMode == Mode.READY;
+    assert myMode == Mode.READY : myMode;
     myMode = Mode.ERROR;
     myStartMarker.error(message);
   }
