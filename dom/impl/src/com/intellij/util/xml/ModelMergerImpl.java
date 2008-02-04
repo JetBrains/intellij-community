@@ -198,10 +198,10 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   public <T> T mergeModels(final Class<T> aClass, final T... implementations) {
-    final Object o = myMergedMap.get(aClass).get(implementations);
+    /*final Object o = myMergedMap.get(aClass).get(implementations);
     if (o != null) {
       return (T)o;
-    }
+    }*/
     if (implementations.length == 1) return implementations[0];
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(aClass, Arrays.asList(implementations));
     return _mergeModels(aClass, handler, implementations);
@@ -217,7 +217,7 @@ public class ModelMergerImpl implements ModelMerger {
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
-    myMergedMap.get(aClass).put(implementations, t);
+    //myMergedMap.get(aClass).put(implementations, t);
     return t;
   }
 
