@@ -91,7 +91,13 @@ public class PatchProjectUtil {
       if (parent == null || parents.contains(parent)) continue;
       parents.add(parent);
       for (VirtualFile toExclude : parent.getChildren()) {
-        if (!included.contains(toExclude)) {
+        boolean toExcludeSibling = true;
+        for (VirtualFile includeRoot : included) {
+          if (VfsUtil.isAncestor(toExclude, includeRoot, false)) {
+            toExcludeSibling = false;
+          }
+        }
+        if (toExcludeSibling) {
           contentEntry.addExcludeFolder(toExclude);
         }
       }
