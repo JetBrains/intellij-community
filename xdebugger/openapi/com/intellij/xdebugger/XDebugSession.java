@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -35,6 +36,9 @@ public interface XDebugSession {
   boolean isSuspended();
 
   XSuspendContext getSuspendContext();
+
+  @Nullable
+  XSourcePosition getCurrentPosition();
 
   void stepOver(boolean ignoreBreakpoints);
   void stepInto();
@@ -61,4 +65,5 @@ public interface XDebugSession {
 
   void setBreakpointMuted(boolean muted);
   boolean areBreakpointsMuted();
+
 }

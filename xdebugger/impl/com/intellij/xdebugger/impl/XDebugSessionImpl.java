@@ -9,6 +9,7 @@ import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private final XDebuggerManagerImpl myDebuggerManager;
   private MyBreakpointListener myBreakpointListener;
   private XSuspendContext mySuspendContext;
+  private XSourcePosition myCurrentPosition;
   private boolean myPaused;
 
   public XDebugSessionImpl(XDebuggerManagerImpl debuggerManager) {
@@ -52,6 +54,11 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public XSuspendContext getSuspendContext() {
     return mySuspendContext;
+  }
+
+  @Nullable
+  public XSourcePosition getCurrentPosition() {
+    return myCurrentPosition;
   }
 
   public void init(final XDebugProcess process) {
@@ -160,6 +167,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private void doResume() {
     myDebuggerManager.updateExecutionPosition(this, null);
     mySuspendContext = null;
+    myCurrentPosition = null;
     myPaused = false;
   }
 
@@ -213,6 +221,7 @@ public class XDebugSessionImpl implements XDebugSession {
   public void positionReached(@NotNull final XSourcePosition position, @NotNull final XSuspendContext suspendContext) {
     enableBreakpoints();
     mySuspendContext = suspendContext;
+    myCurrentPosition = position;
     myPaused = true;
     myDebuggerManager.updateExecutionPosition(this, position);
   }

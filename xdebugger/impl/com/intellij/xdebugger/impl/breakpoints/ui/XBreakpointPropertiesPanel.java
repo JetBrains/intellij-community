@@ -61,14 +61,14 @@ public class XBreakpointPropertiesPanel<B extends XBreakpoint<?>> {
         }
       };
 
-      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, "breakpointLogExpression");
+      myLogExpressionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, "breakpointLogExpression", myBreakpoint.getSourcePosition());
       JComponent logExpressionComponent = myLogExpressionComboBox.getComponent();
       myLogExpressionPanel.add(logExpressionComponent, BorderLayout.CENTER);
       myLogExpressionComboBox.setEnabled(false);
       myLogExpressionCheckBox.addActionListener(listener);
       DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, logExpressionComponent);
 
-      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, "breakpointCondition");
+      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, "breakpointCondition", myBreakpoint.getSourcePosition());
       JComponent conditionComponent = myConditionComboBox.getComponent();
       myConditionExpressionPanel.add(conditionComponent, BorderLayout.CENTER);
       myConditionComboBox.setEnabled(false);

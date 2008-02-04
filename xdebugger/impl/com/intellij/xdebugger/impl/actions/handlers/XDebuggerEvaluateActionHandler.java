@@ -15,6 +15,6 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
     XSuspendContext suspendContext = session.getSuspendContext();
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
-    new XExpressionEvaluationDialog(session.getProject(), editorsProvider, suspendContext).show();
+    new XExpressionEvaluationDialog(session.getProject(), editorsProvider, suspendContext, session.getCurrentPosition()).show();
   }
 }

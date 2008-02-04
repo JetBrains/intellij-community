@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerHistoryManager;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,11 +19,14 @@ public abstract class XDebuggerEditorBase {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
   @Nullable private final String myHistoryId;
+  private XSourcePosition mySourcePosition;
 
-  protected XDebuggerEditorBase(final Project project, XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId) {
+  protected XDebuggerEditorBase(final Project project, XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
+                                final @Nullable XSourcePosition sourcePosition) {
     myProject = project;
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myHistoryId = historyId;
+    mySourcePosition = sourcePosition;
   }
 
   public abstract JComponent getComponent();
@@ -65,7 +69,7 @@ public abstract class XDebuggerEditorBase {
   }
 
   protected Document createDocument(final String text) {
-    return getEditorsProvider().createDocument(getProject(), text);
+    return getEditorsProvider().createDocument(getProject(), text, mySourcePosition);
   }
 
 }
