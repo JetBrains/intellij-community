@@ -1,4 +1,3 @@
-
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;

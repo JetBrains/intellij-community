@@ -45,14 +45,14 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
@@ -306,7 +306,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
         final Icon icon = NavBarModel.getIcon(object);
         final MyCompositeLabel label = new MyCompositeLabel(index,
                                                             hasChildren ? wrapIcon(icon, index, Color.gray) : icon,
-                                                            myModel.getPresentableText(object, getWindow()),
+                                                            NavBarModel.getPresentableText(object, getWindow()),
                                                             myModel.getTextAttributes(object, false));
 
         installActions(index, hasChildren, icon, label);
@@ -545,10 +545,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
       LOG.assertTrue(item != null);
       final BaseListPopupStep<Object> step = new BaseListPopupStep<Object>("", siblings, icons) {
         public boolean isSpeedSearchEnabled() { return true; }
-        @NotNull public String getTextFor(final Object value) { return myModel.getPresentableText(value, null);}
+        @NotNull public String getTextFor(final Object value) { return NavBarModel.getPresentableText(value, null);}
         public boolean isSelectable(Object value) { return true; }
         public PopupStep onChosen(final Object selectedValue, final boolean finalChoice) {
-          if (selectedValue instanceof PsiFile || selectedValue instanceof PsiClass) {
+          if (!myModel.hasChildren(selectedValue)) {
             final Navigatable navigatable = (Navigatable)selectedValue;
             if (navigatable.canNavigate()) {
               navigatable.navigate(true);
@@ -850,8 +850,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           final PsiDirectory directory = (PsiDirectory)scope;
           return VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false);
         }
-        else if (scope instanceof PsiPackage) {
-          final PsiDirectory[] psiDirectories = ((PsiPackage)scope).getDirectories();
+        else if (scope instanceof PsiDirectoryContainer) {
+          final PsiDirectory[] psiDirectories = ((PsiDirectoryContainer)scope).getDirectories();
           for (PsiDirectory directory : psiDirectories) {
             if (VfsUtil.isAncestor(directory.getVirtualFile(), virtualFile, false)) {
               return true;
@@ -973,9 +973,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
           return new PsiDirectory[]{file.getContainingDirectory()};
         }
       }
-      final PsiPackage psiPackage = getSelectedElement(PsiPackage.class);
-      if (psiPackage != null && psiPackage.isValid()) {
-        return psiPackage.getDirectories();
+      final PsiDirectoryContainer directoryContainer = getSelectedElement(PsiDirectoryContainer.class);
+      if (directoryContainer != null) {
+        return directoryContainer.getDirectories();
       }
       final Module module = getSelectedElement(Module.class);
       if (module != null && !module.isDisposed()) {
@@ -1080,7 +1080,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner {
   private class MySiblingsListCellRenderer extends ColoredListCellRenderer {
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       setFocusBorderAroundIcon(false);
-      String name = myModel.getPresentableText(value, getWindow());
+      String name = NavBarModel.getPresentableText(value, getWindow());
       LOG.assertTrue(name != null);
       Color color = list.getForeground();
       boolean isProblemFile = false;

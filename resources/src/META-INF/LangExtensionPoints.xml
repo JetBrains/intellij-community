@@ -200,4 +200,6 @@
   <extensionPoint name="gotoDeclarationHandler"
                   interface="com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler"/>
 
+  <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
+
 </extensionPoints>

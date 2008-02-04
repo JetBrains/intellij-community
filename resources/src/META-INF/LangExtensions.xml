@@ -136,4 +136,6 @@
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider" />
 
   <programRunner implementation="com.intellij.tools.ToolProgramRunner"/>
+
+  <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension"/>
 </extensions>

@@ -4,12 +4,11 @@
  */
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -23,7 +22,6 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.SimpleTextAttributes;
@@ -169,8 +167,8 @@ public class NavBarModel {
     psiElement = psiElement.getOriginalElement();
     PsiElement resultElement = psiElement;
     if (containingFile != null) {
-      if (!(psiElement instanceof PsiClass)) {
-        resultElement = containingFile;
+      for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+        resultElement = modelExtension.adjustElement(resultElement);
       }
       final PsiDirectory containingDirectory = containingFile.getContainingDirectory();
       if (containingDirectory != null) {
@@ -184,13 +182,11 @@ public class NavBarModel {
         traverseToRoot(parentDirectory, roots);
       }
     }
-    else if (psiElement instanceof PsiPackage) {
-      final PsiPackage psiPackage = (PsiPackage)psiElement;
-      final PsiPackage parentPackage = psiPackage.getParentPackage();
-      if (parentPackage != null) {
-        final String qualifiedName = parentPackage.getQualifiedName();
-        if (qualifiedName.length() > 0) {
-          traverseToRoot(parentPackage, roots);
+    else {
+      for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+        final PsiElement parent = modelExtension.getParent(psiElement);
+        if (parent != null) {
+          traverseToRoot(parent, roots);
         }
       }
     }
@@ -200,30 +196,8 @@ public class NavBarModel {
 
   protected boolean hasChildren(Object object) {
     if (!checkValid(object)) return false;
-    if (object instanceof Project) {
-      return ModuleManager.getInstance((Project)object).getModules().length > 0;
-    }
-    if (object instanceof Module) {
-      final Module module = (Module)object;
-      if (module.isDisposed()) return false;
-      final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      return moduleRootManager.getContentRoots().length > 0;
-    }
-    if (object instanceof PsiClass || object instanceof PsiFile) {
-      return false;
-    }
-    if (object instanceof PsiDirectory) {
-      final List<Object> result = new ArrayList<Object>();
-      final Object rootElement = size() > 1 ? getElement(1) : null;
-      if (rootElement instanceof Module && ((Module)rootElement).isDisposed()) return false;
-      getDirectoryChildren((PsiDirectory)object, rootElement, result);
-      return result.size() > 0;
-    }
-    if (object instanceof OrderEntry) {
-      final JdkOrderEntry entry = (JdkOrderEntry)object;
-      return entry.getFiles(OrderRootType.SOURCES).length > 0 || entry.getFiles(OrderRootType.CLASSES).length > 0;
-    }
-    return false;
+
+    return !calcElementChildren(object).isEmpty();
   }
 
   @SuppressWarnings({"SimplifiableIfStatement"})
@@ -240,56 +214,28 @@ public class NavBarModel {
     return true;
   }
 
-  protected String getPresentableText(Object object, Window window) {
+
+  @Nullable
+  protected static String getPresentableText(Object object, Window window) {
     if (!checkValid(object)) return IdeBundle.message("node.structureview.invalid");
-    if (object instanceof Project) {
-      return wrapPresentation(((Project)object).getName(), window);
-    }
-    else if (object instanceof Module) {
-      return wrapPresentation(((Module)object).getName(), window);
-    }
-    else if (object instanceof PsiClass) {
-      return wrapPresentation(ClassPresentationUtil.getNameForClass((PsiClass)object, false), window);
-    }
-    else if (object instanceof PsiFile) {
-      return wrapPresentation(((PsiFile)object).getName(), window);
-    }
-    else if (object instanceof PsiDirectory) {
-      return wrapPresentation(((PsiDirectory)object).getVirtualFile().getName(), window);
-    }
-    else if (object instanceof PsiPackage) {
-      final String name = ((PsiPackage)object).getName();
-      return wrapPresentation(name != null ? name : AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation"), window);
-    }
-    else if (object instanceof JdkOrderEntry) {
-      return wrapPresentation(((JdkOrderEntry)object).getJdkName(), window);
-    }
-    else if (object instanceof LibraryOrderEntry) {
-      final String libraryName = ((LibraryOrderEntry)object).getLibraryName();
-      return wrapPresentation(libraryName != null ? libraryName : AnalysisScopeBundle.message("package.dependencies.library.node.text"), window);
-    }
-    else if (object instanceof ModuleOrderEntry) {
-      final ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)object;
-      return wrapPresentation(moduleOrderEntry.getModuleName(), window);
+    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+      String text = modelExtension.getPresentableText(object);
+      if (text != null) {
+        boolean truncated = false;
+        if (window != null) {
+          final int windowWidth = window.getWidth();
+          while (window.getFontMetrics(window.getFont()).stringWidth(text) + 100 > windowWidth && text.length() > 10) {
+            text = text.substring(0, text.length() - 10);
+            truncated = true;
+          }
+        }
+        return text + (truncated ? "..." : "");
+      }
     }
     return null;
   }
 
-  private static String wrapPresentation(String result, Window window) {
-    if (result != null) {
-      boolean trancated = false;
-      if (window != null) {
-        final int windowWidth = window.getWidth();
-        while (window.getFontMetrics(window.getFont()).stringWidth(result) + 100 > windowWidth && result.length() > 10) {
-          result = result.substring(0, result.length() - 10);
-          trancated = true;
-        }
-      }
-      return result + (trancated ? "..." : "");
-    }
-    return result;
-  }
-
+  @Nullable
   protected static Icon getIcon(Object object) {
     if (!checkValid(object)) return null;
     if (object instanceof Project) return IconLoader.getIcon("/nodes/project.png");
@@ -338,7 +284,7 @@ public class NavBarModel {
     return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
-  private static void getDirectoryChildren(final PsiDirectory psiDirectory, final Object rootElement, final List<Object> result) {
+  public static void getDirectoryChildren(final PsiDirectory psiDirectory, final Object rootElement, final List<Object> result) {
     final ModuleFileIndex moduleFileIndex =
       rootElement instanceof Module ? ModuleRootManager.getInstance((Module)rootElement).getFileIndex() : null;
     final PsiElement[] children = psiDirectory.getChildren();
@@ -354,14 +300,8 @@ public class NavBarModel {
   }
 
   private static PsiElement normalize(PsiElement child) {
-    if (child instanceof PsiJavaFile) {
-      final PsiJavaFile psiJavaFile = (PsiJavaFile)child;
-      if (psiJavaFile.getViewProvider().getBaseLanguage() == StdLanguages.JAVA) {
-        final PsiClass[] psiClasses = psiJavaFile.getClasses();
-        if (psiClasses.length == 1) {
-          child = psiClasses[0];
-        }
-      }
+    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+      child = modelExtension.adjustElement(child);
     }
     return child;
   }
@@ -387,8 +327,8 @@ public class NavBarModel {
         }
       }
     }
-    else if (object instanceof PsiPackage) {
-      final PsiPackage psiPackage = (PsiPackage)object;
+    else if (object instanceof PsiDirectoryContainer) {
+      final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
       final PsiDirectory[] psiDirectories = rootElement instanceof Module
                                             ? psiPackage.getDirectories(GlobalSearchScope.moduleScope((Module)rootElement))
                                             : psiPackage.getDirectories();
