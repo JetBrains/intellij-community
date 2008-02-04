@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
@@ -11,14 +12,19 @@ import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
 public class TargetElementUtil extends TargetElementUtilBase {
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
 
   @Override
-  public int getAllAcepted() {
-    return super.getAllAcepted() | NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
+  public int getAllAccepted() {
+    return super.getAllAccepted() | NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
   @Nullable
@@ -27,20 +33,32 @@ public class TargetElementUtil extends TargetElementUtilBase {
     final PsiElement element = super.findTargetElement(editor, flags, offset);
     if (element instanceof PsiKeyword) {
       if (element.getParent() instanceof PsiThisExpression) {
-        if ((flags & TargetElementUtil.THIS_ACCEPTED) == 0) return null;
+        if ((flags & THIS_ACCEPTED) == 0) return null;
         PsiType type = ((PsiThisExpression)element.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
       }
 
       if (element.getParent() instanceof PsiSuperExpression) {
-        if ((flags & TargetElementUtil.SUPER_ACCEPTED) == 0) return null;
+        if ((flags & SUPER_ACCEPTED) == 0) return null;
         PsiType type = ((PsiSuperExpression)element.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
       }
     }
     return element;
+  }
+
+  protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    return super.isAcceptableReferencedElement(element, referenceOrReferencedElement) &&
+           !isEnumConstantReference(element, referenceOrReferencedElement);
+  }
+
+  private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    return element != null &&
+           element.getParent() instanceof PsiEnumConstant &&
+           referenceOrReferencedElement instanceof PsiMethod &&
+           ((PsiMethod)referenceOrReferencedElement).isConstructor();
   }
 
   @Nullable
@@ -141,5 +159,37 @@ public class TargetElementUtil extends TargetElementUtilBase {
       return TargetElementUtilBase.getInstance().findTargetElement(editor, flags, parent.getTextRange().getStartOffset() + 1);
     }
     return null;
+  }
+
+  public Collection<PsiElement> getTargetCandidates(final PsiReference reference) {
+    PsiElement parent = reference.getElement().getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression callExpr = (PsiMethodCallExpression) parent;
+      boolean allowStatics = false;
+      PsiExpression qualifier = callExpr.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) {
+        allowStatics = true;
+      } else if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        PsiElement referee = ((PsiJavaCodeReferenceElement) qualifier).advancedResolve(true).getElement();
+        if (referee instanceof PsiClass) allowStatics = true;
+      }
+      PsiResolveHelper helper = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper();
+      PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
+      ArrayList<PsiElement> methods = new ArrayList<PsiElement>();
+      for (PsiElement candidate1 : candidates) {
+        PsiMethod candidate = (PsiMethod)candidate1;
+        if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
+        List<PsiMethod> supers = Arrays.asList(candidate.findSuperMethods());
+        if (supers.isEmpty()) {
+          methods.add(candidate);
+        }
+        else {
+          methods.addAll(supers);
+        }
+      }
+      return methods;
+    }
+
+    return super.getTargetCandidates(reference);
   }
 }

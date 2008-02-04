@@ -73,7 +73,7 @@ public class ShowImplementationsAction extends AnAction {
 
     PsiElement element;
     if (editor != null) {
-      element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAcepted());
+      element = TargetElementUtilBase.findTargetElement(editor, TargetElementUtilBase.getInstance().getAllAccepted());
     }
     else {
       element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -85,7 +85,7 @@ public class ShowImplementationsAction extends AnAction {
       }
     }
     final PsiElement adjustedElement =
-      TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAcepted(), element, null);
+      TargetElementUtilBase.getInstance().adjustElement(editor, TargetElementUtilBase.getInstance().getAllAccepted(), element, null);
     if (adjustedElement != null) {
       element = adjustedElement;
     }

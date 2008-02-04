@@ -84,7 +84,7 @@ public class DocumentationManager implements ProjectComponent {
     }
   };
 
-  private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAcepted();
+  private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
   public static DocumentationManager getInstance(Project project) {
     return project.getComponent(DocumentationManager.class);

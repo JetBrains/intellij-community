@@ -9,15 +9,22 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
+import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public class TargetElementUtilBase {
   public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
@@ -28,7 +35,7 @@ public class TargetElementUtilBase {
     return ServiceManager.getService(TargetElementUtilBase.class);
   }
 
-  public int getAllAcepted() {
+  public int getAllAccepted() {
     return REFERENCED_ELEMENT_ACCEPTED | ELEMENT_NAME_ACCEPTED | LOOKUP_ITEM_ACCEPTED;
   }
 
@@ -101,25 +108,28 @@ public class TargetElementUtilBase {
     offset = adjustOffset(document, offset);
 
     PsiElement element = file.findElementAt(offset);
-    if ((flags & TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED) != 0) {
+    if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
       //  return getReferenceOrReferencedElement(file, editor, flags, offset);
       //}
-      if (referenceOrReferencedElement != null &&
-          referenceOrReferencedElement.isValid() &&
-          !isEnumConstantReference(element, referenceOrReferencedElement)) {
+      if (isAcceptableReferencedElement(element, referenceOrReferencedElement)) {
         return referenceOrReferencedElement;
       }
     }
 
     if (element == null) return null;
 
-    if ((flags & TargetElementUtilBase.ELEMENT_NAME_ACCEPTED) != 0) {
+    if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
       if (element instanceof PsiNamedElement) return element;
       return getNamedElement(element);
     }
     return null;
+  }
+
+  protected boolean isAcceptableReferencedElement(final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    return referenceOrReferencedElement != null &&
+        referenceOrReferencedElement.isValid();
   }
 
   @Nullable
@@ -145,14 +155,6 @@ public class TargetElementUtilBase {
     return null;
   }
 
-  private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
-    return element != null &&
-           element.getParent() instanceof PsiEnumConstant &&
-           referenceOrReferencedElement instanceof PsiMethod &&
-           ((PsiMethod)referenceOrReferencedElement).isConstructor();
-  }
-
-
   @Nullable
   private static PsiElement getLookupItem(Lookup activeLookup) {
     LookupItem item = activeLookup.getCurrentItem();
@@ -161,7 +163,7 @@ public class TargetElementUtilBase {
 
     if (o instanceof PsiElement) {
       PsiElement element = (PsiElement)o;
-      if (!(element instanceof PsiPackage)) {
+      if (!(element instanceof PsiDirectoryContainer)) {
         if (!isValidElement(element)) return null;
       }
       return element;
@@ -193,5 +195,26 @@ public class TargetElementUtilBase {
     else {
       return refElement;
     }
+  }
+
+  public Collection<PsiElement> getTargetCandidates(PsiReference reference) {
+    if (reference instanceof PsiPolyVariantReference) {
+      final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+      final ArrayList<PsiElement> navigatableResults = new ArrayList<PsiElement>(results.length);
+
+      for(ResolveResult r:results) {
+        PsiElement element = r.getElement();
+        if (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource()) {
+          navigatableResults.add(element);
+        }
+      }
+
+      return navigatableResults;
+    }
+    PsiElement resolved = reference.resolve();
+    if (resolved instanceof NavigationItem) {
+      return Collections.singleton(resolved);
+    }
+    return Collections.emptyList();
   }
 }
