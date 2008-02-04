@@ -98,16 +98,22 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     String tagName = builder.getTokenText();
     builder.advanceLexer();
 
-    // todo parse specific tags content with refholders
-
-    if (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName)) {
-      parseReferenceOrType(builder);
-    } else if ((LINK_TAG.equals(tagName) ||
-        LINKPLAIN_TAG.equals(tagName)) && isInInlinedTag) {
-      parseSeeOrLinkTag(builder);
-    } else if (SEE_TAG.equals(tagName) && !isInInlinedTag) {
-      parseSeeOrLinkTag(builder);
+    if (isInInlinedTag) {
+      if (LINK_TAG.equals(tagName) || LINKPLAIN_TAG.equals(tagName)) {
+        parseSeeOrLinkTagReference(builder);
+      } else if (VALUE_TAG.equals(tagName)) {
+        parseSeeOrLinkTagReference(builder);
+      }
+    } else {
+      if (THROWS_TAG.equals(tagName) || EXCEPTION_TAG.equals(tagName)) {
+        parseReferenceOrType(builder);
+      } else if (SEE_TAG.equals(tagName)) {
+        parseSeeOrLinkTagReference(builder);
+      } else if (PARAM_TAG.equals(tagName)) {
+        parseParamTagReference(builder);
+      }
     }
+
 
     while (!timeToEnd(builder)) {
       if (isInInlinedTag) {
@@ -142,7 +148,26 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     return true;
   }
 
-  private boolean parseSeeOrLinkTag(PsiBuilder builder) {
+  private boolean parseParamTagReference(PsiBuilder builder) {
+    PsiBuilder.Marker marker = builder.mark();
+    if (mGDOC_TAG_VALUE_TOKEN == builder.getTokenType()) {
+      builder.advanceLexer();
+      marker.done(GDOC_PARAM_REF);
+      return true;
+    } else if (ParserUtils.lookAhead(builder, mGDOC_TAG_VALUE_LT, mGDOC_TAG_VALUE_TOKEN)) {
+      builder.advanceLexer();
+      builder.advanceLexer();
+      if (mGDOC_TAG_VALUE_GT == builder.getTokenType()) {
+        builder.advanceLexer();
+      }
+      marker.done(GDOC_PARAM_REF);
+      return true;
+    }
+    marker.drop();
+    return false;
+  }
+
+  private boolean parseSeeOrLinkTagReference(PsiBuilder builder) {
     IElementType type = builder.getTokenType();
     if (!REFERENCE_BEGIN.contains(type)) return false;
     PsiBuilder.Marker marker = builder.mark();
@@ -173,6 +198,11 @@ public class GroovyDocParsing implements GroovyDocElementTypes {
     PsiBuilder.Marker params = builder.mark();
     while (mGDOC_TAG_VALUE_TOKEN == builder.getTokenType() && !timeToEnd(builder)) {
       ParserUtils.eatElement(builder, GDOC_REFERENCE_ELEMENT);
+      while (builder.getTokenType() != mGDOC_TAG_VALUE_RPAREN &&
+          mGDOC_TAG_VALUE_COMMA != builder.getTokenType() &&
+          !timeToEnd(builder)) {
+        builder.advanceLexer();
+      }
       while (mGDOC_TAG_VALUE_COMMA == builder.getTokenType()) {
         builder.advanceLexer();
       }

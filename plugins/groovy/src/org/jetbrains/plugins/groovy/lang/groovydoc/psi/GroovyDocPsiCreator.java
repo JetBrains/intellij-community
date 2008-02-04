@@ -36,6 +36,7 @@ public class GroovyDocPsiCreator implements GroovyDocElementTypes{
     if (type == GDOC_REFERENCE_ELEMENT) return new GrDocReferenceElementImpl(node);
     if (type == GDOC_METHOD_REF) return new GrDocMethodReferenceImpl(node);
     if (type == GDOC_FIELD_REF) return new GrDocFieldReferenceImpl(node);
+    if (type == GDOC_PARAM_REF) return new GrDocParameterReferenceImpl(node);
     if (type == GDOC_METHOD_PARAMS) return new GrDocMethodParamsImpl(node);
 
     return new ASTWrapperPsiElement(node);

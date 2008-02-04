@@ -24,10 +24,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 /**
  * @author ilyas
  */
-public interface GroovyDocElementTypes extends GroovyDocTokenTypes{
+public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
 
   /**
-   * GroovyDoc comment 
+   * GroovyDoc comment
    */
   GroovyElementType GROOVY_DOC_COMMENT = new GroovyElementType("GroovyDocComment");
 
@@ -38,6 +38,7 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes{
   GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementType("GroovyDocInlinedTag");
 
   GroovyDocElementType GDOC_REFERENCE_ELEMENT = new GroovyDocElementType("GroovyDocReferenceElement");
+  GroovyDocElementType GDOC_PARAM_REF = new GroovyDocElementType("GroovyDocParameterReference");
   GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementType("GroovyDocMethodReference");
   GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementType("GroovyDocFieldReference");
   GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementType("GroovyDocMethodParameterList");
