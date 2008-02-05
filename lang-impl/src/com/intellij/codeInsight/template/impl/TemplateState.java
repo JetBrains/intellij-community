@@ -396,6 +396,8 @@ public class TemplateState implements Disposable {
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
       if (ApplicationManager.getApplication().isUnitTestMode() && lookupItems.length > 1) {
+        final String s = lookupItems[0].getLookupString();
+        EditorModificationUtil.insertStringAtCaret(myEditor, s);
         itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ');
       } else {
         lookupItems[0].setPriority(Integer.MAX_VALUE);
