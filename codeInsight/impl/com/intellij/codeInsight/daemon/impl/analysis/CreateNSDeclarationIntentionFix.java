@@ -25,9 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -165,9 +163,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (!namespaces.isEmpty()) {
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
       final String title = getTitle();
-      final JspFile jspFile = PsiUtil.getJspFile(myTag);
       final PsiElement element = myElement == null ? myTag : myElement;
-      final ImportNSAction action = new ImportNSAction(namespaces, jspFile, myElement != null ? null : myTag, editor, title);
+      final ImportNSAction action = new ImportNSAction(namespaces, myFile, myElement != null ? null : myTag, editor, title);
       HintManager.getInstance().showQuestionHint(editor, message, element.getTextOffset(), element.getTextRange().getEndOffset(), action);
       return true;
     }
