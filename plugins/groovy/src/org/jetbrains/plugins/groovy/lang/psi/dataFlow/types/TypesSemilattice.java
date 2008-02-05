@@ -77,18 +77,4 @@ public class TypesSemilattice implements Semilattice<Map<String, PsiType>> {
     }
     return true;
   }
-
-  private boolean equal(PsiType t1, PsiType t2) {
-    if (t1 instanceof PsiIntersectionType && t2 instanceof PsiIntersectionType) {
-      final PsiType[] first = ((PsiIntersectionType) t1).getConjuncts();
-      final PsiType[] second = ((PsiIntersectionType) t2).getConjuncts();
-      if (first.length != second.length) return false;
-      for (int i = 0; i < first.length; i++) {
-        if (!equal(first[i], second[i])) return false;
-      }
-      return true;
-    }
-
-    return t1.equals(t2);
-  }
 }
