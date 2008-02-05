@@ -190,7 +190,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.setPreferredSize(new Dimension(400, 400));
 
 
-    panel.add(new JLabel("<html><center><small><font color=gray>Drop files to the tree to quickly locate them there</font></small></center></html>", JLabel.CENTER), BorderLayout.SOUTH);
+    panel.add(new JLabel("<html><center><small><font color=gray>Drag and drop a file into the space above to quickly locate it in the tree.</font></small></center></html>", JLabel.CENTER), BorderLayout.SOUTH);
 
     return panel;
   }
