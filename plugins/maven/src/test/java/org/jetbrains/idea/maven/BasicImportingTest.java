@@ -8,7 +8,7 @@ import org.jetbrains.idea.maven.navigator.PomTreeStructure;
 import java.io.IOException;
 
 public class BasicImportingTest extends ImportingTestCase {
-  public void testProjectWithDependency() throws IOException {
+  public void testLibraryDependency() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -50,6 +50,105 @@ public class BasicImportingTest extends ImportingTestCase {
     assertModuleLibDeps("project", "B:B:2", "A:A:1");
   }
 
+  public void testIntermoduleDependencies() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+    assertModules("project", "m1", "m2");
+
+    assertModuleModuleDeps("m1", "m2");
+  }
+
+  public void testOptionalLibraryDependencyIsNotExportable() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib1</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>group</groupId>" +
+                  "    <artifactId>lib2</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <optional>true</optional>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertExportedModuleDeps("project", "group:lib1:1");
+  }
+
+  public void testOptionalModuleDependencyIsNotExportable() throws IOException {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "  <module>m3</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "  </dependency>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m3</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <optional>true</optional>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    createModulePom("m3", "<groupId>test</groupId>" +
+                          "<artifactId>m3</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+
+    assertExportedModuleDeps("m1", "m2");
+  }
+
   public void testOnlyCompileAndRuntimeDependenciesAreExported() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -89,40 +188,7 @@ public class BasicImportingTest extends ImportingTestCase {
                   "  </dependency>" +
                   "</dependencies>");
 
-    assertExportedModuleLibDeps("project", "test:compile:1", "test:runtime:1");
-  }
-
-  public void testIntermoduleDependencies() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1</version>");
-
-    importProject();
-    assertModules("project", "m1", "m2");
-
-    assertModuleModuleDeps("m1", "m2");
+    assertExportedModuleDeps("project", "test:compile:1", "test:runtime:1");
   }
 
   public void testTransitiveDependencies() throws IOException {

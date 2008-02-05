@@ -77,13 +77,14 @@ public class MavenToIdeaModuleConfigurator {
 
       if (isIgnored(id)) continue;
 
+      boolean isExportable = ProjectUtil.isExportableDependency(artifact);
+
       String moduleName = findModuleFor(artifact);
       if (moduleName != null) {
-        myModel.createModuleDependency(moduleName);
+        myModel.createModuleDependency(moduleName, isExportable);
       }
       else {
         String artifactPath = artifact.getFile().getPath();
-        boolean isExportable = ProjectUtil.isExportableDependency(artifact);
         myModel.createModuleLibrary(myMapping.getLibraryName(id),
                                     getUrl(artifactPath, null),
                                     getUrl(artifactPath, Constants.SOURCES_CLASSIFIER),

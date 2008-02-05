@@ -239,10 +239,16 @@ public abstract class ImportingTestCase extends IdeaTestCase {
     assertModuleDeps(moduleName, LibraryOrderEntry.class, expectedDeps);
   }
 
-  protected void assertExportedModuleLibDeps(String moduleName, String... expectedDeps) {
+  protected void assertExportedModuleDeps(String moduleName, String... expectedDeps) {
     final List<String> actual = new ArrayList<String>();
 
     getRootManager(moduleName).processOrder(new RootPolicy<Object>() {
+      @Override
+      public Object visitModuleOrderEntry(ModuleOrderEntry e, Object value) {
+        if (e.isExported()) actual.add(e.getModuleName());
+        return null;
+      }
+
       @Override
       public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
         if (e.isExported()) actual.add(e.getLibraryName());

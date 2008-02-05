@@ -119,7 +119,7 @@ public class RootModelAdapter {
     }
   }
 
-  void createModuleDependency(String moduleName) {
+  public void createModuleDependency(String moduleName, boolean isExportable) {
     Module m = findModuleByName(moduleName);
 
     ModuleOrderEntry e;
@@ -130,7 +130,7 @@ public class RootModelAdapter {
       e = myRootModel.addInvalidModuleEntry(moduleName);
     }
 
-    e.setExported(true);
+    e.setExported(isExportable);
   }
 
   @Nullable
@@ -139,29 +139,28 @@ public class RootModelAdapter {
     return mm.findModuleByName(moduleName);
   }
 
-  void createModuleLibrary(String libraryName,
-                           String urlClasses,
-                           String urlSources,
-                           String urlJavadoc,
-                           boolean exportable) {
+  public void createModuleLibrary(String libraryName,
+                                  String urlClasses,
+                                  String urlSources,
+                                  String urlJavadoc,
+                                  boolean isExportable) {
     final Library library = getLibraryModel().createLibrary(libraryName);
     final Library.ModifiableModel libraryModel = library.getModifiableModel();
     setUrl(libraryModel, urlClasses, OrderRootType.CLASSES);
     setUrl(libraryModel, urlSources, OrderRootType.SOURCES);
     setUrl(libraryModel, urlJavadoc, JavadocOrderRootType.getInstance());
 
-    if (exportable) setExported(myRootModel, library);
+    LibraryOrderEntry e = findLibraryEntry(myRootModel, library);
+    e.setExported(isExportable);
+
     libraryModel.commit();
   }
 
-  private void setExported(ModuleRootModel m, final Library library) {
-    m.processOrder(new RootPolicy<Object>() {
+  private LibraryOrderEntry findLibraryEntry(ModuleRootModel m, final Library library) {
+    return m.processOrder(new RootPolicy<LibraryOrderEntry>() {
       @Override
-      public Object visitLibraryOrderEntry(LibraryOrderEntry e, Object value) {
-        if (!library.equals(e.getLibrary())) return null;
-
-        e.setExported(true);
-        return null;
+      public LibraryOrderEntry visitLibraryOrderEntry(LibraryOrderEntry e, LibraryOrderEntry result) {
+        return library.equals(e.getLibrary()) ? e : null;
       }
     }, null);
   }
