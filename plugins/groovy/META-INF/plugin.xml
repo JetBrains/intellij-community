@@ -214,6 +214,9 @@
     <component>
       <implementation-class>org.jetbrains.plugins.grails.GrailsLoader</implementation-class>
     </component>
+    <component>
+      <implementation-class>org.jetbrains.plugins.groovy.lang.completion.InsertHandlerRegistry</implementation-class>
+    </component>
   </application-components>
 
 </idea-plugin>

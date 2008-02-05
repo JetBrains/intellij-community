@@ -48,6 +48,7 @@ import org.jetbrains.plugins.groovy.lang.completion.filters.types.BuiltInTypeFil
 import org.jetbrains.plugins.groovy.lang.completion.filters.types.ParameterTypeFilter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.SuggestedVariableNamesGetter;
 import org.jetbrains.plugins.groovy.lang.completion.getters.ClassesGetter;
+import org.jetbrains.plugins.groovy.lang.completion.handlers.ContextSpecificInsertHandler;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 
 import java.util.Set;
@@ -182,7 +183,8 @@ public class GroovyCompletionData extends CompletionData {
       }
     };
 
-    ourReferenceVariant.setInsertHandler(new GroovyInsertHandler());
+    ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
+    ourReferenceVariant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
 
     DefaultCharFilter.registerFilter(GroovyFileType.GROOVY_FILE_TYPE.getLanguage(), new CharFilter() {
       public int accept(char c, String prefix) {
@@ -210,7 +212,7 @@ public class GroovyCompletionData extends CompletionData {
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
-    variant.setInsertHandler(new GroovyInsertHandler());
+    variant.setInsertHandler(new GroovyInsertHandlerAdapter());
     addCompletions(variant, keywords);
     registerVariant(variant);
   }
