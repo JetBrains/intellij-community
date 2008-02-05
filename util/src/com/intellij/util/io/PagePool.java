@@ -191,7 +191,7 @@ public class PagePool {
     }
 
     if (wakeUpFinalizer) {
-      finalizationQueueSemaphore.up();
+      finalizationQueueSemaphore.down();
 
       synchronized (finalizationLock) {
         finalizationLock.notifyAll();
@@ -232,7 +232,7 @@ public class PagePool {
                 myFinalizationQueue.remove(lastFinalizedKey);
               }
               request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
-              finalizationQueueSemaphore.down();
+              finalizationQueueSemaphore.up();
             }
           }
           else {
