@@ -19,7 +19,6 @@ package com.intellij.xml;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -61,21 +61,6 @@ public abstract class XmlSchemaProvider {
   }
 
   @Nullable
-  public static Set<String> getAvailableNamespaces(final @NotNull XmlFile file) {
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
-    if (module == null) {
-      return null;
-    }
-    for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
-      final Set<String> namespaces = provider.getAvailableNamespaces(file, module);
-      if (namespaces != null) {
-        return namespaces;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   public static XmlSchemaProvider getAvailableProvider(final @NotNull XmlFile file) {
     for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
       if (provider.isAvailable(file)) {
@@ -96,12 +81,11 @@ public abstract class XmlSchemaProvider {
   /**
    * Provides specific namespaces for given xml file.
    * @param file an xml or jsp file.
-   * @param module current module.
    * @return available namespace uris, or <code>null</code> if the provider did not recognize the file.
    */
-  @Nullable
-  public Set<String> getAvailableNamespaces(final @NotNull XmlFile file, final @NotNull Module module) {
-    return null;
+  @NotNull
+  public Set<String> getAvailableNamespaces(final @NotNull XmlFile file) {
+    return Collections.emptySet();
   }
 
   @Nullable

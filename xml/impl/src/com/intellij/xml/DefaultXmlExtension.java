@@ -31,10 +31,10 @@ public class DefaultXmlExtension extends XmlExtension {
   @NotNull
   public Set<String> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context) {
 
-    final Set<String> namespaces = XmlSchemaProvider.getAvailableNamespaces(file);
-    if (namespaces != null) {
-      final String[] nameVariants = TagNameReference.getTagNameVariants(context, new ArrayList<XmlElementDescriptor>(), namespaces);
-      final HashSet<String> set = new HashSet<String>(nameVariants.length);
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
+    if (provider != null) {
+      final Set<String> strings = provider.getAvailableNamespaces(file);
+      final String[] nameVariants = TagNameReference.getTagNameVariants(context, new ArrayList<XmlElementDescriptor>(), strings);      final HashSet<String> set = new HashSet<String>(nameVariants.length);
       for (String nameVariant : nameVariants) {
         final int pos = nameVariant.indexOf(':');
         set.add(pos >= 0 ? nameVariant.substring(pos + 1) : nameVariant);
@@ -46,23 +46,25 @@ public class DefaultXmlExtension extends XmlExtension {
 
   @NotNull
   public Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context) {
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(context);
+    if (provider == null) {
+      return Collections.emptySet();
+    }
     final HashSet<String> set = new HashSet<String>();
-    final Set<String> namespaces = XmlSchemaProvider.getAvailableNamespaces(context);
-    if (namespaces != null) {
-      for (String namespace : namespaces) {
-        final XmlFile xmlFile = XmlUtil.findNamespace(context, namespace);
-        if (xmlFile != null) {
-          final XmlDocument document = xmlFile.getDocument();
-          assert document != null;
-          final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
-          assert nsDescriptor != null;
-          final XmlElementDescriptor[] elementDescriptors = nsDescriptor.getRootElementsDescriptors(document);
-          for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
-            final String name = elementDescriptor.getDefaultName();
-            if (name.equals(tagName)) {
-              set.add(namespace);
-              break;
-            }
+    final Set<String> namespaces = provider.getAvailableNamespaces(context);
+    for (String namespace : namespaces) {
+      final XmlFile xmlFile = XmlUtil.findNamespace(context, namespace);
+      if (xmlFile != null) {
+        final XmlDocument document = xmlFile.getDocument();
+        assert document != null;
+        final XmlNSDescriptor nsDescriptor = (XmlNSDescriptor)document.getMetaData();
+        assert nsDescriptor != null;
+        final XmlElementDescriptor[] elementDescriptors = nsDescriptor.getRootElementsDescriptors(document);
+        for (XmlElementDescriptor elementDescriptor : elementDescriptors) {
+          final String name = elementDescriptor.getDefaultName();
+          if (name.equals(tagName)) {
+            set.add(namespace);
+            break;
           }
         }
       }
