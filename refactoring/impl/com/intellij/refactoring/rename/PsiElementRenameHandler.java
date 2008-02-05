@@ -10,8 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
@@ -58,37 +56,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
     FeatureUsageTracker.getInstance().triggerFeatureUsed("refactoring.rename");
 
-    if (element instanceof PsiDirectory) {
-      PsiDirectory psiDirectory = (PsiDirectory)element;
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
-      final String qualifiedName = aPackage != null ? aPackage.getQualifiedName() : "";
-      if (aPackage == null || qualifiedName.length() == 0/*default package*/) {
-        rename(element, project, nameSuggestionContext, editor);
-      }
-      else {
-        PsiDirectory[] directories = aPackage.getDirectories();
-        final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
-        if (virtualFiles.length == 0 && directories.length == 1) {
-          rename(aPackage, project, nameSuggestionContext, editor);
-        }
-        else { // the directory corresponds to a package that has multiple associated directories
-          StringBuffer message = new StringBuffer();
-          RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
-          RenameUtil.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
-          message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed", qualifiedName));
-          int ret =
-            Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
-          if (ret != 0) {
-            return;
-          }
-          // if confirmed
-          rename(aPackage, project, nameSuggestionContext, editor);
-        }
-      }
-    }
-    else {
-      rename(element, project, nameSuggestionContext, editor);
-    }
+    rename(element, project, nameSuggestionContext, editor);
   }
 
   static boolean canRename(PsiElement element, Project project) {
@@ -121,7 +89,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
 
-  private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
+  public static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
     if (element instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)element;
       if (psiMethod.isConstructor()) {
@@ -163,7 +131,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  protected static PsiElement getElement(final DataContext dataContext) {
+  public static PsiElement getElement(final DataContext dataContext) {
     PsiElement[] elementArray = BaseRefactoringAction.getPsiElementArray(dataContext);
 
     if (elementArray.length != 1) {
