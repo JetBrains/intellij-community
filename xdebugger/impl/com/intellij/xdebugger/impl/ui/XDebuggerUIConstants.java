@@ -14,8 +14,9 @@ public class XDebuggerUIConstants {
   public static final String COLLECTING_DATA_MESSAGE = XDebuggerBundle.message("xdebugger.building.tree.node.message");
   public static final Icon ERROR_MESSAGE_ICON = IconLoader.getIcon("/debugger/db_error.png");
   public static final SimpleTextAttributes COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
-  public static final SimpleTextAttributes CHAGED_VALUE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.blue);
+  public static final SimpleTextAttributes CHANGED_VALUE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.blue);
   public static final SimpleTextAttributes EXCEPTION_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.red);
+  public static final SimpleTextAttributes VALUE_NAME_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, new Color(128, 0, 0));
 
   private XDebuggerUIConstants() {
   }

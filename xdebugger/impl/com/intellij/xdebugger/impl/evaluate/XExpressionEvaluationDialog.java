@@ -24,6 +24,7 @@ public class XExpressionEvaluationDialog extends EvaluationDialogBase {
     super(project, XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"), suspendContext);
     getInputPanel().add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);
     myExpressionComboBox = new XDebuggerExpressionComboBox(project, editorsProvider, "evaluateExpression", sourcePosition);
+    myExpressionComboBox.getComboBox().setMinimumAndPreferredWidth(200);
     getInputPanel().add(myExpressionComboBox.getComponent(), BorderLayout.CENTER);
     myExpressionComboBox.selectAll();
   }

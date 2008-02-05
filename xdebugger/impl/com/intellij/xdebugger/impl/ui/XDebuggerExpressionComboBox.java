@@ -38,6 +38,10 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     fillComboBox();
   }
 
+  public ComboBox getComboBox() {
+    return myComboBox;
+  }
+
   public JComponent getComponent() {
     return myComboBox;
   }

@@ -28,7 +28,7 @@ public class XValueNodeImpl extends XDebuggerTreeNode<XValue> implements XValueN
       public void run() {
         setIcon(icon);
         myText.clear();
-        myText.append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        myText.append(name, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
         myText.append(" = ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         myText.append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setLeaf(!hasChildren);

@@ -30,7 +30,6 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private static final Icon INFORMATION_MESSAGE_ICON = IconLoader.getIcon("/compiler/information.png");
   private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
   private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
-  private static final SimpleTextAttributes HIGHLIGHT_ATTR = new SimpleTextAttributes(Font.PLAIN, new Color(128, 0, 0));
   private static final SimpleTextAttributes OBJECT_ID_HIGHLIGHT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
 
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -142,7 +141,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     if (strings[1] != null) {
-      descriptorText.append(strings[1], HIGHLIGHT_ATTR);
+      descriptorText.append(strings[1], XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
     }
     if (strings[2] != null) {
       if (descriptor instanceof ValueDescriptorImpl) {
@@ -180,7 +179,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHAGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
               descriptorText.append(errorMessage, XDebuggerUIConstants.EXCEPTION_ATTRIBUTES);
             }
           }
@@ -189,7 +188,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
               descriptorText.append(XDebuggerUIConstants.COLLECTING_DATA_MESSAGE, XDebuggerUIConstants.COLLECTING_DATA_HIGHLIGHT_ATTRIBUTES);
             }
             else {
-              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHAGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
+              descriptorText.append(valueLabel, valueDescriptor.isDirty() ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : DEFAULT_ATTRIBUTES);
             }
           }
         }
