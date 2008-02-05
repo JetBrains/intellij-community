@@ -41,12 +41,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.grails.annotator.DomainClassAnnotator;
 import org.jetbrains.plugins.grails.perspectives.DomainClassUtils;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.annotator.gutter.OverrideGutter;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
-import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicPropertyBase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyImportsTracker;
@@ -58,7 +55,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
@@ -77,12 +73,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.overrideImplement.quickFix.ImplementMethodsQuickFix;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import java.util.*;
 
@@ -232,10 +230,9 @@ public class GroovyAnnotator implements Annotator {
     } else {
       final GroovyResolveResult[] results = invocation.multiResolveConstructor();
       final GrArgumentList argList = invocation.getArgumentList();
-      PsiElement toHighlight = argList != null ? argList : invocation;
       if (results.length > 0) {
         String message = GroovyBundle.message("ambiguous.constructor.call");
-        holder.createWarningAnnotation(toHighlight, message);
+        holder.createWarningAnnotation(argList, message);
       } else {
         final PsiClass clazz = invocation.getDelegatedClass();
         if (clazz != null) {
@@ -243,7 +240,7 @@ public class GroovyAnnotator implements Annotator {
           PsiType[] argumentTypes = PsiUtil.getArgumentTypes(invocation.getThisOrSuperKeyword(), true);
           if (argumentTypes != null && argumentTypes.length > 0) {
             String message = GroovyBundle.message("cannot.find.default.constructor", clazz.getName());
-            holder.createWarningAnnotation(toHighlight, message);
+            holder.createWarningAnnotation(argList, message);
           }
         }
       }
