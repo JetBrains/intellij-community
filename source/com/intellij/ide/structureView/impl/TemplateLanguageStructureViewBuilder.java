@@ -109,24 +109,8 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     if (view.isDisposed()) return;
 
     StructureViewState state = view.getState();
-    Object[] expandedElements = state.getExpandedElements();
-    List<PsiAnchor> expanded = new ArrayList<PsiAnchor>(expandedElements == null ? 0 : expandedElements.length);
-    if (expandedElements != null) {
-      for (Object element : expandedElements) {
-        if (element instanceof PsiElement) {
-          expanded.add(new PsiAnchor((PsiElement)element));
-        }
-      }
-    }
-    Object[] selectedElements = state.getSelectedElements();
-    List<PsiAnchor> selected = new ArrayList<PsiAnchor>(selectedElements == null ? 0 : selectedElements.length);
-    if (selectedElements != null) {
-      for (Object element : selectedElements) {
-        if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
-          selected.add(new PsiAnchor((PsiElement)element));
-        }
-      }
-    }
+    List<PsiAnchor> expanded = collectAnchors(state.getExpandedElements());
+    List<PsiAnchor> selected = collectAnchors(state.getSelectedElements());
     updateTemplateDataFileView();
 
     if (view.isDisposed()) return;
@@ -143,6 +127,18 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
         view.addSelectionPathTo(element);
       }
     }
+  }
+
+  private static List<PsiAnchor> collectAnchors(final Object[] expandedElements) {
+    List<PsiAnchor> expanded = new ArrayList<PsiAnchor>(expandedElements == null ? 0 : expandedElements.length);
+    if (expandedElements != null) {
+      for (Object element : expandedElements) {
+        if (element instanceof PsiElement && ((PsiElement) element).isValid()) {
+          expanded.add(new PsiAnchor((PsiElement)element));
+        }
+      }
+    }
+    return expanded;
   }
 
   private void removeBaseLanguageListener() {
