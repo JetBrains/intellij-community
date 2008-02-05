@@ -4,8 +4,8 @@ import org.apache.maven.project.InvalidProjectModelException;
 import org.apache.maven.project.validation.ModelValidationResult;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

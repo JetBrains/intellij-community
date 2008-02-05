@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -304,7 +305,14 @@ public abstract class ImportingTestCase extends IdeaTestCase {
 
   private ContentEntry getContentRoot(String moduleName) {
     ContentEntry[] ee = getContentRoots(moduleName);
-    assertEquals(1, ee.length);
+    List<String> roots = new ArrayList<String>();
+    for (ContentEntry e : ee) {
+      roots.add(e.getUrl());
+    }
+
+    String message = "Several content roots found: [" + StringUtil.join(roots, ", ") + "]";
+    assertEquals(message, 1, ee.length);
+    
     return ee[0];
   }
 

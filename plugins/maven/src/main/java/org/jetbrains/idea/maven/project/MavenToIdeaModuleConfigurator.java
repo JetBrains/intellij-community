@@ -5,17 +5,10 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Build;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginExecution;
-import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
 import org.jetbrains.idea.maven.core.util.ProjectUtil;
@@ -23,7 +16,6 @@ import org.jetbrains.idea.maven.core.util.Strings;
 
 import java.text.MessageFormat;
 import java.util.Collection;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class MavenToIdeaModuleConfigurator {
@@ -76,103 +68,7 @@ public class MavenToIdeaModuleConfigurator {
   }
 
   private void configFolders() {
-    configSourceFolders();
-    configFoldersUnderTargetDir();
-    configBuildHelperPluginSources();
-    configAntRunPluginSources();
-    configOutputFolders();
-  }
-
-  private void configSourceFolders() {
-    for (Object o : myMavenProject.getCompileSourceRoots()) {
-      myModel.addSourceDir((String)o, false);
-    }
-    for (Object o : myMavenProject.getTestCompileSourceRoots()) {
-      myModel.addSourceDir((String)o, true);
-    }
-
-    for (Object o : myMavenProject.getResources()) {
-      myModel.addSourceDir(((Resource)o).getDirectory(), false);
-    }
-    for (Object o : myMavenProject.getTestResources()) {
-      myModel.addSourceDir(((Resource)o).getDirectory(), true);
-    }
-  }
-
-  private void configFoldersUnderTargetDir() {
-    String path = myMavenProject.getBuild().getDirectory();
-    VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
-    if (dir == null) return;
-
-    for (VirtualFile f : dir.getChildren()) {
-      if (!f.isDirectory()) continue;
-      if (FileUtil.pathsEqual(f.getName(), "generated-sources")) {
-        addAllSubDirsAsSources(f);
-      }
-      else {
-       myModel.excludeRoot(f.getPath());
-      }
-    }
-  }
-
-  private void addAllSubDirsAsSources(VirtualFile dir) {
-    for (VirtualFile f : dir.getChildren()) {
-      if (!f.isDirectory()) continue;
-      myModel.addSourceDir(f.getPath(), false);
-    }
-  }
-
-  private void configBuildHelperPluginSources() {
-    Plugin plugin = ProjectUtil.findPlugin(myMavenProject, myProfiles, "org.codehaus.mojo", "build-helper-maven-plugin");
-    if (plugin == null) return;
-
-    for (PluginExecution e : (List<PluginExecution>)plugin.getExecutions()) {
-      for (String goal : (List<String>)e.getGoals()) {
-        Xpp3Dom config = (Xpp3Dom)e.getConfiguration();
-        if (config == null) continue;
-
-        if (goal.equals("add-source")) addBuildHelperPluginSource(config, false);
-        if (goal.equals("add-test-source")) addBuildHelperPluginSource(config, true);
-      }
-    }
-  }
-
-  private void addBuildHelperPluginSource(Xpp3Dom config, boolean isTestSources) {
-    Xpp3Dom sources = config.getChild("sources");
-    if (sources == null) return;
-
-    for (Xpp3Dom source : sources.getChildren("source")) {
-      myModel.addSourceDir(source.getValue(), isTestSources);
-    }
-  }
-
-  private void configAntRunPluginSources() {
-    Plugin plugin = ProjectUtil.findPlugin(myMavenProject, myProfiles, "org.apache.maven.plugins", "maven-antrun-plugin");
-    if (plugin == null) return;
-
-    for (PluginExecution e : (List<PluginExecution>)plugin.getExecutions()) {
-      Xpp3Dom config = (Xpp3Dom)e.getConfiguration();
-      if (config == null) continue;
-
-      Xpp3Dom src = config.getChild("sourceRoot");
-      Xpp3Dom test = config.getChild("testSourceRoot");
-
-      if (src != null) myModel.addSourceDir(src.getValue(), false);
-      if (test != null) myModel.addSourceDir(test.getValue(), true);
-    }
-  }
-
-  private void configOutputFolders() {
-    Build build = myMavenProject.getBuild();
-
-    if (myPrefs.isUseMavenOutput()) {
-      myModel.useModuleOutput(build.getOutputDirectory(), build.getTestOutputDirectory());
-    }
-    else {
-      myModel.useProjectOutput();
-      myModel.excludeRoot(build.getOutputDirectory());
-      myModel.excludeRoot(build.getTestOutputDirectory());
-    }
+    new FoldersConfigurator(myMavenProject, myPrefs, myModel).config();
   }
 
   private void configDependencies() {

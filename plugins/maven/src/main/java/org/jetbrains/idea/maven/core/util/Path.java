@@ -20,4 +20,14 @@ public class Path {
   public Url toUrl() {
     return new Url(VfsUtil.pathToUrl(path));
   }
+
+  @Override
+  public int hashCode() {
+    return path.hashCode();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    return (o instanceof Path) && path.equals(((Path)o).path);
+  }
 }

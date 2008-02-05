@@ -107,7 +107,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
   }
 
-  public void testBuildHelperPluginTestSource() throws Exception {
+  public void testBuildHelperPluginSourcesWithRelativePath() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -121,6 +121,110 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "        <execution>" +
                   "          <id>someId</id>" +
                   "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>relativePath</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+
+    assertSources("project", "src/main/java", "src/main/resources", "relativePath");
+  }
+  
+  public void testBuildHelperPluginSourcesWithVariables() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>someId</id>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>${project.build.directory}/src</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+
+    assertSources("project", "src/main/java", "src/main/resources", "target/src");
+  }
+
+  public void testBuildHelperPluginSourcesWithInvalidDependency() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>invalid</groupId>" +
+                  "    <artifactId>dependency</artifactId>" +
+                  "    <version>123</version>" +
+                  "  </dependency>" +
+                  "</dependencies>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>someId</id>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>add-source</goal>" +
+                  "          </goals>" +
+                  "          <configuration>" +
+                  "            <sources>" +
+                  "              <source>src</source>" +
+                  "            </sources>" +
+                  "          </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+    assertModules("project");
+
+    assertSources("project", "src/main/java", "src/main/resources", "src");
+  }
+
+  public void testBuildHelperPluginTestSource() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.codehaus.mojo</groupId>" +
+                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>someId</id>" +
+                  "          <phase>generate-test-sources</phase>" +
                   "          <goals>" +
                   "            <goal>add-test-source</goal>" +
                   "          </goals>" +
@@ -140,80 +244,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertTestSources("project", "src/test/java", "src/test/resources", "src1", "src2");
   }
 
-  public void testBuildHelperPluginWithoutSources() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.mojo</groupId>" +
-                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>add-source</id>" +
-                  "          <phase>generate-sources</phase>" +
-                  "          <goals>" +
-                  "            <goal>add-source</goal>" +
-                  "          </goals>" +
-                  "          <configuration></configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-    assertModules("project");
-  }
-
   public void testBuildHelperPluginWithoutConfiguration() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.mojo</groupId>" +
-                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>add-source</id>" +
-                  "          <phase>generate-sources</phase>" +
-                  "          <goals>" +
-                  "            <goal>add-source</goal>" +
-                  "          </goals>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-    assertModules("project");
-  }
-
-  public void testBuildHelperPluginWithoutGoals() throws Exception {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.codehaus.mojo</groupId>" +
-                  "      <artifactId>build-helper-maven-plugin</artifactId>" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <id>add-source</id>" +
-                  "          <phase>generate-sources</phase>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-    assertModules("project");
-  }
-
-  public void testBuildHelperPluginWithoutExecution() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -238,9 +269,13 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "  <plugins>" +
                   "    <plugin>" +
                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-antrun-plugin</artifactId>\n" +
+                  "      <artifactId>maven-antrun-plugin</artifactId>" +
                   "      <executions>" +
                   "        <execution>" +
+                  "          <phase>generate-sources</phase>" +
+                  "          <goals>" +
+                  "            <goal>run</goal>" +
+                  "          </goals>" +
                   "          <configuration>" +
                   "            <sourceRoot>${basedir}/src</sourceRoot>" +
                   "            <testSourceRoot>${basedir}/test</testSourceRoot>" +
@@ -256,47 +291,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertTestSources("project", "src/test/java", "src/test/resources", "test");
   }
 
-  public void testAndRunPluginWithoutSources() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-antrun-plugin</artifactId>\n" +
-                  "      <executions>" +
-                  "        <execution>" +
-                  "          <configuration></configuration>" +
-                  "        </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-    assertModules("project");
-  }
-
   public void testAndRunPluginWithoutConfiguration() throws IOException {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-antrun-plugin</artifactId>\n" +
-                  "      <executions>" +
-                  "        <execution></execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
-    assertModules("project");
-  }
-
-  public void testAndRunPluginWithoutExecution() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -446,7 +441,7 @@ public class ContentRootsImportingTest extends ImportingTestCase {
     assertExcludes("project", "target/foo", "target/bar");
   }
 
-  public void testExcludingAllDirectoriesUnderTargetDirButGeneratedOnes() throws Exception {
+  public void testDoesNotExcludeGeneratedSourcesUnderTargetDir() throws Exception {
     createProjectSubDir("target/foo");
     createProjectSubDir("target/generated-sources/bar");
 
@@ -459,5 +454,24 @@ public class ContentRootsImportingTest extends ImportingTestCase {
                   "src/main/java",
                   "src/main/resources",
                   "target/generated-sources/bar");
+  }
+  
+  public void testDoesNotExcludeSourcesUnderTargetDir() throws IOException {
+    createProjectSubDir("target/src");
+    createProjectSubDir("target/test");
+    createProjectSubDir("target/xxx");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <sourceDirectory>target/src</sourceDirectory>" +
+                  "  <testSourceDirectory>target/test</testSourceDirectory>" +
+                  "</build>");
+
+    assertModules("project");
+
+    assertExcludes("project", "target/xxx");
   }
 }
