@@ -21,7 +21,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NotNull;
@@ -107,14 +106,6 @@ public class PsiElementRenameHandler implements RenameHandler {
       elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
       if (elementToRename == null) return;
       //if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
-    }
-
-    if (editor != null) {
-      if (elementToRename instanceof PsiVariable && VariableInplaceRenamer.mayRenameInplace((PsiVariable)elementToRename, editor,
-                                                                                            nameSuggestionContext)) {
-        new VariableInplaceRenamer((PsiVariable)elementToRename, editor).performInplaceRename();
-        return;
-      }
     }
 
     final RenameDialog dialog = new RenameDialog(project, elementToRename, nameSuggestionContext, editor);
