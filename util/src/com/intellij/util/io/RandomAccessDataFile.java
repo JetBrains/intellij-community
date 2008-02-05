@@ -28,7 +28,8 @@ public class RandomAccessDataFile implements Forceable {
   private final static PagePool ourPool = new PagePool();
   private static int ourFilesCount = 0;
   private final int myCount = ourFilesCount++;
-  private boolean myIsDirty = false;
+  
+  private volatile boolean myIsDirty = false;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
@@ -166,12 +167,12 @@ public class RandomAccessDataFile implements Forceable {
     return mySize;
   }
 
-  public synchronized void dispose() {
+  public void dispose() {
     ourPool.flushPages(this);
     ourCache.closeChannel(myFile);
   }
 
-  public synchronized void force() {
+  public void force() {
     if (isDirty()) {
       ourPool.flushPages(this);
       myIsDirty = false;
