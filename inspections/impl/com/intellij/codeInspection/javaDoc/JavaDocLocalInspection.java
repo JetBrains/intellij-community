@@ -396,6 +396,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         problems.add(createMissingTagDescriptor(elementToHighlight, tagToCheck, manager));
       }
     }
+    ArrayList<ProblemDescriptor> tagProblems = getTagValuesProblems(psiClass, tags, manager);
+    if (tagProblems != null) {
+      problems.addAll(tagProblems);
+    }
     checkForPeriodInDoc(docComment, problems, manager);
     checkInlineTags(manager, problems, docComment.getDescriptionElements(),
                     JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager());
@@ -453,6 +457,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
+    ArrayList<ProblemDescriptor> tagProblems = getTagValuesProblems(psiField, docComment.getTags(), manager);
+    if (tagProblems != null) {
+      problems.addAll(tagProblems);
+    }
     checkInlineTags(manager, problems, docComment.getDescriptionElements(),
                     JavaPsiFacade.getInstance(docComment.getProject()).getJavadocManager());
     checkForPeriodInDoc(docComment, problems, manager);
