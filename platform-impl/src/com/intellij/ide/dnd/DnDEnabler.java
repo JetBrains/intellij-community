@@ -145,6 +145,10 @@ public class DnDEnabler implements Activatable, Disposable {
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean isPressedToSelection(MouseEvent e) {
     if (MouseEvent.MOUSE_PRESSED != e.getID()) return false;
+    return isToSelection(e);
+  }
+
+  private boolean isToSelection(final MouseEvent e) {
     if (!isPureButton1Event(e)) return false;
     return e.getClickCount() == 1 && myDnDSource.isOverSelection(e.getPoint());
   }
@@ -199,6 +203,10 @@ public class DnDEnabler implements Activatable, Disposable {
 
                   if (popupToSelection) {
                     if (each != null && each.getClass().getName().indexOf("BasicTreeUI$DragFixHandler") >= 0) continue;
+                  }
+
+                  if (isToSelection(e) && e.getID() == MouseEvent.MOUSE_RELEASED) {
+                    myDnDSource.dropSelectionButUnderPoint(e.getPoint());
                   }
 
                   dispatchMouseEvent((MouseListener)each, e);

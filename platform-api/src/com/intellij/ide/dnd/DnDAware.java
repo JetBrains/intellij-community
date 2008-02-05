@@ -19,16 +19,16 @@ package com.intellij.ide.dnd;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.awt.*;
-
-import com.intellij.openapi.Disposable;
+import java.awt.event.MouseEvent;
 
 public interface DnDAware {
 
   void processMouseEvent(final MouseEvent e);
 
   boolean isOverSelection(final Point point);
+  
+  void dropSelectionButUnderPoint(Point point);
 
   @NotNull
   JComponent getComponent();

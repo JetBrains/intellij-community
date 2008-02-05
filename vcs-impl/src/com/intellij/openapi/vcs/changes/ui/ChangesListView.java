@@ -532,4 +532,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
   public boolean isOverSelection(final Point point) {
     return TreeUtils.isOverSelection(this, point);
   }
+
+  public void dropSelectionButUnderPoint(final Point point) {
+    TreeUtils.dropSelectionButUnderPoint(this, point);
+  }
 }

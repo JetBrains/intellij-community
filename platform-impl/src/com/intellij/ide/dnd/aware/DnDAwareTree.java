@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDEnabler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.TreeUtils;
 import com.intellij.util.ui.Tree;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,10 @@ public class DnDAwareTree extends Tree implements DnDAware {
     final TreePath path = getPathForLocation(point.x, point.y);
     if (path == null) return false;
     return isPathSelected(path);
+  }
+
+  public void dropSelectionButUnderPoint(final Point point) {
+    TreeUtils.dropSelectionButUnderPoint(this, point);
   }
 
   @NotNull
