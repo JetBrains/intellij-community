@@ -3,7 +3,7 @@ package com.intellij.refactoring.rename.naming;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.codeStyle.NameUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +24,8 @@ public class NameSuggester {
   public NameSuggester(String oldClassName, String newClassName) {
     myOldClassNameAsGiven = oldClassName;
     myNewClassNameAsGiven = newClassName;
-    myOldClassName = PsiNameHelper.splitNameIntoWords(oldClassName);
-    myNewClassName = PsiNameHelper.splitNameIntoWords(newClassName);
+    myOldClassName = NameUtil.splitNameIntoWords(oldClassName);
+    myNewClassName = NameUtil.splitNameIntoWords(newClassName);
 
     myChanges = new ArrayList<OriginalToNewChange>();
     int oldIndex = myOldClassName.length - 1;
@@ -72,7 +72,7 @@ public class NameSuggester {
   }
 
   public String suggestName(final String propertyName) {
-    final String[] propertyWords = PsiNameHelper.splitNameIntoWords(propertyName);
+    final String[] propertyWords = NameUtil.splitNameIntoWords(propertyName);
     TIntIntHashMap matches = calculateMatches(propertyWords);
     if (matches.isEmpty()) return propertyName;
     TreeMap<Pair<Integer,Integer>, String> replacements = calculateReplacements(propertyWords, matches);

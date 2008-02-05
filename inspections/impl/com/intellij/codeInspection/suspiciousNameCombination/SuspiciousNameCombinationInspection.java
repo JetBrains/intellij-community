@@ -15,6 +15,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.AddDeleteListPanel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -167,7 +168,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
       if (name == null) {
         return null;
       }
-      String[] words = PsiNameHelper.splitNameIntoWords(name);
+      String[] words = NameUtil.splitNameIntoWords(name);
       String result = null;
       for(String word: words) {
         String group = myWordToGroupMap.get(word.toLowerCase());

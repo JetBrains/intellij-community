@@ -19,9 +19,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 
 public class NameUtil {
   private static final Function<String,String> LOWERCASE_MAPPING = new Function<String, String>() {
@@ -194,5 +197,80 @@ public class NameUtil {
     }
 
     return buffer.toString();
+  }
+
+  /**
+   * Splits an identifier into words, separated with underscores or upper-case characters
+   * (camel-case).
+   *
+   * @param name the identifier to split.
+   * @return the array of strings into which the identifier has been split.
+   */
+  public static String[] splitNameIntoWords(@NotNull String name) {
+    final String[] underlineDelimited = name.split("_");
+    List<String> result = new ArrayList<String>();
+    for (String word : underlineDelimited) {
+      addAllWords(word, result);
+    }
+    return result.toArray(new String[result.size()]);
+  }
+
+  private enum WordState { NO_WORD, PREV_UC, WORD }
+
+  private static void addAllWords(String word, List<String> result) {
+    CharacterIterator it = new StringCharacterIterator(word);
+    StringBuffer b = new StringBuffer();
+    WordState state = WordState.NO_WORD;
+    char curPrevUC = '\0';
+    for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      switch (state) {
+        case NO_WORD:
+          if (!Character.isUpperCase(c)) {
+            b.append(c);
+            state = WordState.WORD;
+          }
+          else {
+            state = WordState.PREV_UC;
+            curPrevUC = c;
+          }
+          break;
+        case PREV_UC:
+          if (!Character.isUpperCase(c)) {
+            b = startNewWord(result, b, curPrevUC);
+            b.append(c);
+            state = WordState.WORD;
+          }
+          else {
+            b.append(curPrevUC);
+            state = WordState.PREV_UC;
+            curPrevUC = c;
+          }
+          break;
+        case WORD:
+          if (Character.isUpperCase(c)) {
+            startNewWord(result, b, c);
+            b.setLength(0);
+            state = WordState.PREV_UC;
+            curPrevUC = c;
+          }
+          else {
+            b.append(c);
+          }
+          break;
+      }
+    }
+    if (state == WordState.PREV_UC) {
+      b.append(curPrevUC);
+    }
+    result.add(b.toString());
+  }
+
+  private static StringBuffer startNewWord(List<String> result, StringBuffer b, char c) {
+    if (b.length() > 0) {
+      result.add(b.toString());
+    }
+    b = new StringBuffer();
+    b.append(c);
+    return b;
   }
 }

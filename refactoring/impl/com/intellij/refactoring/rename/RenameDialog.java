@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
@@ -209,7 +210,7 @@ public class RenameDialog extends RefactoringDialog {
       if (name.startsWith(prefix)) {
         name = name.substring(prefix.length());
       }
-      final String[] words = PsiNameHelper.splitNameIntoWords(name);
+      final String[] words = NameUtil.splitNameIntoWords(name);
       if (kind == VariableKind.STATIC_FINAL_FIELD) {
         StringBuilder buffer = new StringBuilder();
         for (int i = 0; i < words.length; i++) {
