@@ -45,6 +45,7 @@ JVM_ARGS="$JVM_ARGS $REQUIRED_JVM_ARGS"
 
 CLASSPATH=../lib/bootstrap.jar
 CLASSPATH=$CLASSPATH:../lib/openapi.jar
+CLASSPATH=$CLASSPATH:../lib/util.jar
 CLASSPATH=$CLASSPATH:../lib/idea.jar
 CLASSPATH=$CLASSPATH:../lib/resources_en.jar
 CLASSPATH=$CLASSPATH:../lib/jdom.jar
