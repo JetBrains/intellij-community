@@ -5,12 +5,31 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 
 public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
+    final PsiDirectory parentDirectory = psiElement.getParentDirectory();
+    if (parentDirectory != null) {
+      final RefElementImpl refElement = (RefElementImpl)refManager.getReference(parentDirectory);
+      if (refElement != null) {
+        refElement.add(this);
+        return;
+      }
+    }
+    final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    if (module != null) {
+      final RefModuleImpl refModule = (RefModuleImpl)refManager.getRefModule(module);
+      if (refModule != null) {
+        refModule.add(this);
+        return;
+      }
+    }
+    ((RefProjectImpl)refManager.getRefProject()).add(this);
   }
 
   public void accept(final RefVisitor visitor) {
