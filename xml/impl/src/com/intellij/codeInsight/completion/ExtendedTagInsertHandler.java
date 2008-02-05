@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlFile;
@@ -13,8 +14,11 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlSchemaProvider;
+import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -47,7 +51,10 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final PsiElement psiElement = file.findElementAt(startOffset);
     assert psiElement != null;
     final XmlTag tag = (XmlTag)psiElement.getParent();
-    if (tag.getDescriptor() != null && namespaces.contains(tag.getNamespace())) {
+    final String tagPrefix = tag.getNamespacePrefix();
+    final XmlElementDescriptor tagDescriptor = tag.getDescriptor();
+    final String tagNamespace = tag.getNamespace();
+    if (tagDescriptor != null && !(tagDescriptor instanceof AnyXmlElementDescriptor) && !StringUtil.isEmpty(tagNamespace)) {
       ExtendedTagInsertHandler.super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);
       return;
     }
@@ -60,7 +67,7 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     final int caretOffset = editor.getCaretModel().getOffset();
     final RangeMarker caretMarker = document.createRangeMarker(caretOffset, caretOffset);
 
-    String nsPrefix = myNamespacePrefix;
+    @Nullable String nsPrefix = myNamespacePrefix;
     if (myNamespacePrefix == null && namespaces.size() > 0) {
       final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(file);
       if (provider != null) {
@@ -110,8 +117,13 @@ class ExtendedTagInsertHandler extends XmlTagInsertHandler {
       };
 
     try {
-      if (namespaces.contains(tag.getNamespace())) {
-        runAfter.run("");
+      final String[] strings = tag.knownNamespaces();
+      if (Arrays.asList(strings).contains(tagNamespace) && (namespaces.size() == 0 || namespaces.contains(tagNamespace))) {
+        if (nsPrefix != null && !nsPrefix.equals(tagPrefix)) {
+          runAfter.run(nsPrefix);
+        } else {
+          ExtendedTagInsertHandler.super.handleInsert(context, startOffset, data, item, signatureSelected, completionChar);          
+        }
       } else {
         extension.insertNamespaceDeclaration(file, editor, namespaces, nsPrefix, runAfter);
       }
