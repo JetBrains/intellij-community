@@ -63,6 +63,12 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setText(titleText);
   }
 
+
+  public Dimension getPreferredSize() {
+    final String text = myLabel.getText();
+    return text != null && text.trim().length() > 0 ? super.getPreferredSize() : new Dimension(0, 0);
+  }
+
   public static void main(String[] args) {
     final JFrame jFrame = new JFrame();
 

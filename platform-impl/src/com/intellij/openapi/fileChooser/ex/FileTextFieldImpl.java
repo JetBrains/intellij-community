@@ -299,7 +299,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         public void run() {
           processChosenFromCompletion(true);
         }
-      }).setCancelKeyEnabled(false).setAlpha(0.75f).setFocusOwners(new Component[]{myPathTextField}).createPopup();
+      }).setCancelKeyEnabled(false).setAlpha(0.25f).setFocusOwners(new Component[]{myPathTextField}).createPopup();
 
 
     if (result.myPreselected != null) {
