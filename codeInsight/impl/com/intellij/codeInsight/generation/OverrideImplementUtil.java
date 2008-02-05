@@ -92,7 +92,9 @@ public class OverrideImplementUtil {
       String name = method.isConstructor() ? aClass.getName() : method.getName();
       substitutor = GenerateMembersUtil.correctSubstitutor(method, substitutor);
 
-      MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, method.getParameterList(), method.getTypeParameterList(),
+      PsiTypeParameterList typeParameterList = PsiUtil.isRawSubstitutor(method, substitutor) ? null : method.getTypeParameterList();
+
+      MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, method.getParameterList(), typeParameterList,
                                                                             substitutor);
       if (MethodSignatureUtil.findMethodBySignature(aClass, signature, false) != null) continue;
 

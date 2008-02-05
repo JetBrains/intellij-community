@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -39,7 +40,7 @@ public abstract class MethodSignatureBase implements MethodSignature {
     myTypeParameters = typeParameters;
   }
 
-  protected MethodSignatureBase(PsiSubstitutor substitutor, PsiParameterList parameterList, PsiTypeParameterList typeParameterList) {
+  protected MethodSignatureBase(PsiSubstitutor substitutor, PsiParameterList parameterList, @Nullable PsiTypeParameterList typeParameterList) {
     LOG.assertTrue(substitutor != null);
     mySubstitutor = substitutor;
     if (parameterList != null) {

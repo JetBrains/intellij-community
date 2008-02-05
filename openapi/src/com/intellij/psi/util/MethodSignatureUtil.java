@@ -43,21 +43,17 @@ public class MethodSignatureUtil {
   private MethodSignatureUtil() {
   }
 
-  public static MethodSignature createMethodSignature(@NonNls String name,
-                                                      PsiParameterList parameterTypes,
-                                                      PsiTypeParameterList typeParameterList,
-                                                      PsiSubstitutor substitutor) {
-    LOG.assertTrue(name != null);
-    LOG.assertTrue(substitutor != null);
+  public static MethodSignature createMethodSignature(@NonNls @NotNull  String name,
+                                                      @Nullable PsiParameterList parameterTypes,
+                                                      @Nullable PsiTypeParameterList typeParameterList,
+                                                      @NotNull PsiSubstitutor substitutor) {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
   }
 
-  public static MethodSignature createMethodSignature(@NonNls String name,
-                                                      PsiType[] parameterTypes,
-                                                      PsiTypeParameter[] typeParameterList,
-                                                      PsiSubstitutor substitutor) {
-    LOG.assertTrue(name != null);
-    LOG.assertTrue(substitutor != null);
+  public static MethodSignature createMethodSignature(@NonNls @NotNull String name,
+                                                      @NotNull PsiType[] parameterTypes,
+                                                      @NotNull PsiTypeParameter[] typeParameterList,
+                                                      @NotNull PsiSubstitutor substitutor) {
     return new MethodSignatureHandMade(name, parameterTypes, typeParameterList, substitutor);
   }
 
