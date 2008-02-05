@@ -9,6 +9,7 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,6 +55,7 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
     XDebuggerTree tree = myTreePanel.getTree();
     tree.setRoot(new XValueNodeImpl(tree, null, result));
     myResultPanel.invalidate();
+    getInputEditor().selectAll();
   }
 
   protected JComponent createCenterPanel() {
@@ -65,4 +67,10 @@ public abstract class EvaluationDialogBase extends DialogWrapper {
   }
 
   protected abstract XValue doEvaluate();
+
+  public JComponent getPreferredFocusedComponent() {
+    return getInputEditor().getPreferredFocusedComponent();
+  }
+
+  protected abstract XDebuggerEditorBase getInputEditor();
 }

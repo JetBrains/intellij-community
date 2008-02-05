@@ -7,6 +7,7 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
+import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +30,8 @@ public class XExpressionEvaluationDialog extends EvaluationDialogBase {
     myExpressionComboBox.selectAll();
   }
 
-  public JComponent getPreferredFocusedComponent() {
-    return myExpressionComboBox.getPreferredFocusedComponent();
+  protected XDebuggerEditorBase getInputEditor() {
+    return myExpressionComboBox;
   }
 
   protected XValue doEvaluate() {
