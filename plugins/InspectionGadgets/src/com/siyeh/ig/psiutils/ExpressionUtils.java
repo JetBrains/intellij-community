@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Bas Leijdekkers
+ * Copyright 2005-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,9 @@ public class ExpressionUtils {
         if(value instanceof Double && ((Double) value).doubleValue() == 0.0) {
             return true;
         }
+        if(value instanceof Float && ((Float) value).floatValue() == 0.0f) {
+            return true;
+        }
         if(value instanceof Integer && ((Integer) value).intValue() == 0){
             return true;
         }
@@ -94,6 +97,9 @@ public class ExpressionUtils {
         }
         //noinspection FloatingPointEquality
         if(value instanceof Double && ((Double) value).doubleValue() == 1.0) {
+            return true;
+        }
+        if(value instanceof Float && ((Float) value).floatValue() == 1.0f) {
             return true;
         }
         if(value instanceof Integer && ((Integer) value).intValue() == 1){
