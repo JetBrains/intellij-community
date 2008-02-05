@@ -44,6 +44,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.TreeToolTipHandler;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
@@ -161,6 +162,7 @@ public class ScopeTreeViewPanel extends JPanel implements JDOMExternalizable, Di
     TreeToolTipHandler.install(myTree);
     TreeUtil.installActions(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
+    new TreeSpeedSearch(myTree);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
       @NotNull
       protected PsiElement[] getSelectedElements() {
