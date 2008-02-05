@@ -41,11 +41,11 @@ public class Page {
   private final RandomAccessDataFile owner;
   private final PoolPageKey myKey;
 
-  private ByteBuffer buf;
-  private boolean read = false;
-  private boolean dirty = false;
-  private long myFinalizationId;
-  private BitSet myWriteMask;
+  private volatile ByteBuffer buf;
+  private volatile boolean read = false;
+  private volatile boolean dirty = false;
+  private volatile int myFinalizationId;
+  private volatile BitSet myWriteMask;
 
   public Page(RandomAccessDataFile owner, long offset) {
     this.owner = owner;
@@ -122,32 +122,34 @@ public class Page {
 
   }
 
-  public synchronized void flush() {
-    if (dirty) {
-      int start = 0;
-      int end = PAGE_SIZE;
-      if (myWriteMask != null) {
-        Range range = calcContinousRange(myWriteMask);
-        if (range == null) {
-//          System.out.println("Discountinous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
-          ensureRead();
+  public void flush() {
+    synchronized (owner) {
+      if (dirty) {
+        int start = 0;
+        int end = PAGE_SIZE;
+        if (myWriteMask != null) {
+          Range range = calcContinousRange(myWriteMask);
+          if (range == null) {
+  //          System.out.println("Discountinous write of: " + myWriteMask.cardinality() + " bytes. Performing ensure read before flush.");
+            ensureRead();
+          }
+          else {
+            start = range.start;
+            end = range.end;
+          }
+          myWriteMask = null;
         }
-        else {
-          start = range.start;
-          end = range.end;
+
+        if (end - start > 0) {
+          owner.flushPage(this, start, end);
         }
-        myWriteMask = null;
-      }
 
-      if (end - start > 0) {
-        owner.flushPage(this, start, end);
+        dirty = false;
       }
-
-      dirty = false;
     }
   }
 
-  public synchronized ByteBuffer getBuf() {
+  public ByteBuffer getBuf() {
     if (buf == null) {
       synchronized (ourBufferPool) {
         buf = ourBufferPool.alloc();
@@ -156,7 +158,7 @@ public class Page {
     return buf;
   }
 
-  public synchronized void recycle() {
+  public void recycle() {
     if (buf != null) {
       synchronized (ourBufferPool) {
         ourBufferPool.recycle(buf);
@@ -173,38 +175,42 @@ public class Page {
     return offset;
   }
 
-  public synchronized int put(long index, byte[] bytes, int off, int length) {
-    myFinalizationId = 0;
-    ensureReadOrWriteMaskExists();
+  public int put(long index, byte[] bytes, int off, int length) {
+    synchronized (owner) {
+      myFinalizationId = 0;
+      ensureReadOrWriteMaskExists();
 
-    final int start = (int)(index - offset);
-    final ByteBuffer b = getBuf();
-    b.position(start);
+      final int start = (int)(index - offset);
+      final ByteBuffer b = getBuf();
+      b.position(start);
 
-    int count = Math.min(length, PAGE_SIZE - start);
-    b.put(bytes, off, count);
+      int count = Math.min(length, PAGE_SIZE - start);
+      b.put(bytes, off, count);
 
-    if (myWriteMask != null) {
-      myWriteMask.set(start, start + count);
+      if (myWriteMask != null) {
+        myWriteMask.set(start, start + count);
+      }
+      return count;
     }
-    return count;
   }
 
-  public synchronized int get(long index, byte[] bytes, int off, int length) {
-    myFinalizationId = 0;
-    ensureRead();
+  public int get(long index, byte[] bytes, int off, int length) {
+    synchronized (owner) {
+      myFinalizationId = 0;
+      ensureRead();
 
-    final int start = (int)(index - offset);
-    final ByteBuffer b = getBuf();
-    b.position(start);
+      final int start = (int)(index - offset);
+      final ByteBuffer b = getBuf();
+      b.position(start);
 
-    int count = Math.min(length, PAGE_SIZE - start);
-    b.get(bytes, off, count);
+      int count = Math.min(length, PAGE_SIZE - start);
+      b.get(bytes, off, count);
 
-    return count;
+      return count;
+    }
   }
 
-  public synchronized boolean isDirty() {
+  public boolean isDirty() {
     return dirty;
   }
 
@@ -212,7 +218,7 @@ public class Page {
     return owner;
   }
 
-  public synchronized void setFinalizationId(final long curFinalizationId) {
+  public void setFinalizationId(final int curFinalizationId) {
     myFinalizationId = curFinalizationId;
   }
 
@@ -220,20 +226,29 @@ public class Page {
     return myKey;
   }
 
-  public synchronized boolean flushIfFinalizationIdIsEqualTo(final long finalizationId) {
-    if (myFinalizationId == finalizationId) {
-      flush();
-      return true;
-    }
+  public boolean flushIfFinalizationIdIsEqualTo(final long finalizationId) {
+    synchronized (owner) {
+      if (myFinalizationId == finalizationId) {
+        flush();
+        return true;
+      }
 
-    return false;
+      return false;
+    }
   }
 
-  public synchronized boolean recycleIfFinalizationIdIsEqualTo(final long finalizationId) {
-    if (myFinalizationId == finalizationId) {
-      recycle();
-      return true;
+  public boolean recycleIfFinalizationIdIsEqualTo(final long finalizationId) {
+    synchronized (owner) {
+      if (myFinalizationId == finalizationId) {
+        recycle();
+        return true;
+      }
+      return false;
     }
-    return false;
+  }
+
+  @Override
+  public String toString() {
+    return "Page[" + owner + ", dirty: " + isDirty() + ", offset=" + offset + "]";
   }
 }

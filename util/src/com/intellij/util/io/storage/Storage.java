@@ -47,11 +47,9 @@ public class Storage implements Disposable, Forceable {
     @NotNull
     public AppenderStream get(final Integer key) {
       final AppenderStream stream = super.get(key);
-      /*
       if (stream.size() > 10 * 1024) {
         stream.reset();
       }
-      */
       return stream;
     }
 
@@ -333,6 +331,7 @@ public class Storage implements Disposable, Forceable {
 
   public void dispose() {
     synchronized (lock) {
+      force();
       myRecordsTable.dispose();
       myDataTable.dispose();
     }

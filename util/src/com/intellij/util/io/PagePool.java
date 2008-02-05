@@ -44,7 +44,7 @@ public class PagePool {
     }
   };
 
-  private long finalizationId = 0;
+  private int finalizationId = 0;
 
   private final Map<PoolPageKey, Page> myProbationalQueue = new LinkedHashMap<PoolPageKey, Page>() {
     @Override
@@ -178,11 +178,12 @@ public class PagePool {
           myFinalizerThread.start();
         }
 
-        final long curFinalizationId = ++finalizationId;
+        final int curFinalizationId = ++finalizationId;
         page.setFinalizationId(curFinalizationId);
 
         wakeUpFinalizer = true;
-        myFinalizationQueue.put(keyForPage(page), new FinalizationRequest(page, curFinalizationId));
+        final FinalizationRequest request = new FinalizationRequest(page, curFinalizationId);
+        myFinalizationQueue.put(keyForPage(page), request);
       }
       else {
         page.recycle();
@@ -206,6 +207,11 @@ public class PagePool {
       this.page = page;
       this.finalizationId = finalizationId;
     }
+
+    @Override
+    public String toString() {
+      return "FinalizationRequest[page = " + page + ", finalizationId = " + finalizationId + "]";
+    }
   }
 
   private Thread myFinalizerThread;
@@ -218,12 +224,12 @@ public class PagePool {
           FinalizationRequest request = getNextFinalizationRequest();
 
           if (request != null) {
-            if (request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId)) {
-              synchronized (lock) {
-                myFinalizationQueue.remove(lastFinalizedKey);
-                request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
-              }
+            request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId);
+
+            synchronized (lock) {
+              myFinalizationQueue.remove(lastFinalizedKey);
             }
+            request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
             finalizationQueueSemaphore.down();
           }
           else {

@@ -100,9 +100,11 @@ public class OpenChannelsCache { // TODO: Will it make sense to have a backgroun
   private static class ChannelDescriptor {
     private int lockCount = 0;
     private final RandomAccessFile myChannel;
+    private File myFile;
 
     @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
     public ChannelDescriptor(File file, String accessMode) throws FileNotFoundException {
+      myFile = file;
       myChannel = new RandomAccessFile(file, accessMode);
     }
 
