@@ -260,13 +260,13 @@ public class FileSystemSynchronizer {
         content = new FileContent(file);
         if (file.isValid()) {
           try {
-            if (content.getPhysicalLength() < SIZE_THRESHOLD) {
+            if (content.getLength() < SIZE_THRESHOLD) {
               while (totalSize > SIZE_THRESHOLD) {
                 if (indicator != null) indicator.checkCanceled();
                 wait(300);
               }
 
-              totalSize += content.getPhysicalBytes().length;
+              totalSize += content.getBytes().length;
             }
           }
           catch (IOException e) {
@@ -294,8 +294,8 @@ public class FileSystemSynchronizer {
       synchronized (this) {
         try {
           final VirtualFile file = result.getVirtualFile();
-          if (file == null || !file.isValid() || result.getPhysicalLength() >= SIZE_THRESHOLD) return result;
-          totalSize -= result.getPhysicalBytes().length;
+          if (file == null || !file.isValid() || result.getLength() >= SIZE_THRESHOLD) return result;
+          totalSize -= result.getBytes().length;
         }
         catch (IOException e) {
           LOG.error(e);

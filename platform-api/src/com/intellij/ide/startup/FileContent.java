@@ -18,7 +18,6 @@ package com.intellij.ide.startup;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.IOException;
@@ -30,9 +29,8 @@ public class FileContent extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContent");
   private static final byte[] EMPTY_CONTENT = new byte[0];
 
-  private VirtualFile myVirtualFile;
+  private final VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
-  private boolean myGetBytesCalled = false;
   private long myLength = -1;
 
   public FileContent(VirtualFile virtualFile) {
@@ -40,21 +38,8 @@ public class FileContent extends UserDataHolderBase {
   }
 
   public byte[] getBytes() throws IOException {
-    myGetBytesCalled = true;
     if (myCachedBytes == null) {
       myCachedBytes = myVirtualFile.contentsToByteArray();
-    }
-
-    return myCachedBytes;
-  }
-
-  public byte[] getPhysicalBytes() throws IOException {
-    if (myGetBytesCalled) {
-      LOG.error("getPhysicalBytes() called after getBytes() for " + myVirtualFile);
-    }
-
-    if (myCachedBytes == null) {
-      myCachedBytes = LocalFileSystem.getInstance().physicalContentsToByteArray(myVirtualFile);
     }
 
     return myCachedBytes;
@@ -68,9 +53,9 @@ public class FileContent extends UserDataHolderBase {
     return myVirtualFile;
   }
 
-  public long getPhysicalLength() throws IOException {
+  public long getLength() {
     if (myLength == -1) {
-      myLength = LocalFileSystem.getInstance().physicalLength(myVirtualFile);
+      myLength = myVirtualFile.getLength();
     }
 
     return myLength;

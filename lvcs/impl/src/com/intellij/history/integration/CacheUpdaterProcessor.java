@@ -70,7 +70,7 @@ public class CacheUpdaterProcessor {
 
       @Override
       public long getLength() throws IOException {
-        return c.getPhysicalLength();
+        return c.getLength();
       }
     };
   }
