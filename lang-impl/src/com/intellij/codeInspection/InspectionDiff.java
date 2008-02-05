@@ -105,7 +105,9 @@ public class InspectionDiff {
       List oldProblems = oldDoc.getRootElement().getChildren("problem");
       for (final Object o : oldProblems) {
         Element oldProblem = (Element)o;
-        removeIfEquals(oldProblem);
+        if (!removeIfEquals(oldProblem)) {
+          addProblem(oldProblem);
+        }
       }
     }
 
@@ -123,15 +125,16 @@ public class InspectionDiff {
     return delta;
   }
 
-  private static void removeIfEquals(Element problem) {
+  private static boolean removeIfEquals(Element problem) {
     String fileName = problem.getChildText(FILE_ELEMENT);
     ArrayList<Element> problemList = ourFileToProblem.get(fileName);
     if (problemList != null) {
       Element[] problems = problemList.toArray(new Element[problemList.size()]);
       for (Element toCheck : problems) {
-        if (equals(problem, toCheck)) problemList.remove(toCheck);
+        if (equals(problem, toCheck)) return problemList.remove(toCheck);
       }
     }
+    return false;
   }
 
   private static void addProblem(Element problem) {
