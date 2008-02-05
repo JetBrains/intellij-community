@@ -10,24 +10,25 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlSchemaProvider;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
 */
 public class ImportNSAction implements QuestionAction {
-  private final Map<String, String> myNamespaces;
+  private final Set<String> myNamespaces;
   private final XmlFile myFile;
   @Nullable private final XmlTag myTag;
   private final Editor myEditor;
   private final String myTitle;
 
-  public ImportNSAction(final Map<String, String> namespaces, XmlFile file, @Nullable XmlTag tag, Editor editor, final String title) {
+  public ImportNSAction(final Set<String> namespaces, XmlFile file, @Nullable XmlTag tag, Editor editor, final String title) {
 
     myNamespaces = namespaces;
     myFile = file;
@@ -37,7 +38,7 @@ public class ImportNSAction implements QuestionAction {
   }
 
   public boolean execute() {
-    final Object[] objects = myNamespaces.keySet().toArray();
+    final Object[] objects = myNamespaces.toArray();
     Arrays.sort(objects);
     final JList list = new JList(objects);
     list.setCellRenderer(new FQNameCellRenderer());
@@ -51,7 +52,8 @@ public class ImportNSAction implements QuestionAction {
             new WriteCommandAction.Simple(project, myFile) {
 
               protected void run() throws Throwable {
-                final String prefix = myNamespaces.get(namespace);
+                final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(myFile);
+                final String prefix = provider == null ? null : provider.getDefaultPrefix(namespace, myFile);
                 XmlExtension.getExtension(myFile).insertNamespaceDeclaration(myFile,
                                                                              myEditor,
                                                                              Collections.singleton(namespace),

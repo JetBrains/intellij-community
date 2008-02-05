@@ -45,4 +45,8 @@ public abstract class XmlExtension {
                                                     @NotNull final Set<String> possibleNamespaces,
                                                     @Nullable final String nsPrefix,
                                                     @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException;
+
+  public String getNamespaceAlias() {
+    return XmlBundle.message("namespace.alias");
+  }
 }

@@ -10,17 +10,12 @@ import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.util.FQNameCellRenderer;
-import com.intellij.j2ee.openapi.ex.ExternalResourceManagerEx;
-import com.intellij.jsp.impl.TldDescriptor;
-import com.intellij.lang.StdLanguages;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -30,17 +25,15 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
-import com.intellij.psi.impl.source.jsp.JspManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
@@ -59,13 +52,12 @@ import java.util.*;
 * To change this template use File | Settings | File Templates.
 */
 public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFix {
-  private final boolean myInJsp;
   @NotNull private final XmlTag myTag;
   private final String myNamespacePrefix;
   @Nullable private final PsiElement myElement;
+  private XmlFile myFile;
 
-  public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag,
-                                         @NotNull final String namespacePrefix) {
+  public CreateNSDeclarationIntentionFix(@NotNull final XmlTag tag, @NotNull final String namespacePrefix) {
     this(tag, namespacePrefix, null);
   }
 
@@ -75,16 +67,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     myTag = tag;
     myNamespacePrefix = namespacePrefix;
     myElement = element;
-    myInJsp = isJspFile(tag.getContainingFile());
+    myFile = (XmlFile)tag.getContainingFile();
   }
 
   @NotNull
   public String getText() {
-    return XmlErrorMessages.message(
-      myInJsp ?
-      "create.taglib.declaration.quickfix":
-      "create.namespace.declaration.quickfix"
-    );
+    final String alias = StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias());
+    return XmlErrorMessages.message("create.namespace.declaration.quickfix", alias);
   }
 
   @NotNull
@@ -110,10 +99,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return true;
   }
 
-  private static boolean isJspFile(PsiFile file) {
-    return file.getFileType() == StdFileTypes.JSP;
-  }
-
   private static String[] guessNamespace(final PsiFile file, String name) {
     final Set<String> possibleUris = new LinkedHashSet<String>();
     final ExternalUriProcessor processor = new ExternalUriProcessor() {
@@ -131,16 +116,11 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (!CodeInsightUtil.prepareFileForWrite(file)) return;
 
     String[] namespaces;
-    if (!myInJsp) {
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider((XmlFile)file);
+    if (provider == null) {
       namespaces = guessNamespace(file, myElement == null ? myTag.getLocalName() : myElement.getText());
-      if (file.getLanguage() == StdLanguages.JSPX) {
-        final Map<String, String> map = guessJspNamespaces();
-        final Set<String> strings = map.keySet();
-        namespaces = ArrayUtil.mergeArrays(namespaces, strings.toArray(new String[strings.size()]), String.class);        
-      }
     } else {
-      final Map<String, String> map = guessJspNamespaces();
-      final Set<String> strings = map.keySet();
+      final Set<String> strings = provider.getAvailableNamespaces((XmlFile)file);
       namespaces = strings.toArray(new String[strings.size()]);
     }
     Arrays.sort(namespaces);
@@ -162,10 +142,13 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
             }
           });
         }
-      },
-      XmlErrorMessages.message(myInJsp ? "select.taglib.title":"select.namespace.title"),
+      }, getTitle(),
       this,
       editor);
+  }
+
+  private String getTitle() {
+    return XmlErrorMessages.message("select.namespace.title", StringUtil.capitalize(XmlExtension.getExtension(myFile).getNamespaceAlias()));
   }
 
   public boolean startInWriteAction() {
@@ -173,10 +156,15 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public boolean showHint(final Editor editor) {
-    final Map<String, String> namespaces = guessJspNamespaces();
+    final XmlFile xmlFile = (XmlFile)myTag.getContainingFile();
+    final XmlSchemaProvider provider = XmlSchemaProvider.getAvailableProvider(xmlFile);
+    if (provider == null) {
+      return false;
+    }
+    final Set<String> namespaces = provider.getAvailableNamespaces(xmlFile);
     if (!namespaces.isEmpty()) {
-      final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.keySet().iterator().next());
-      final String title = XmlErrorMessages.message(myInJsp ? "select.taglib.title" : "select.namespace.title");
+      final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
+      final String title = getTitle();
       final JspFile jspFile = PsiUtil.getJspFile(myTag);
       final PsiElement element = myElement == null ? myTag : myElement;
       final ImportNSAction action = new ImportNSAction(namespaces, jspFile, myElement != null ? null : myTag, editor, title);
@@ -184,66 +172,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
       return true;
     }
     return false;
-  }
-
-  @NotNull
-  public Map<String,String> guessJspNamespaces() {
-
-    if (!myTag.isValid()) {
-      return Collections.emptyMap();
-    }
-    final JspFile jspFile = PsiUtil.getJspFile(myTag);
-    if (jspFile == null) {
-      return Collections.emptyMap();
-    }
-    final String text = myTag.getName().trim();
-    final int pos = text.indexOf(':');
-    final Map<String, String> namespaces = new LinkedHashMap<String,String>();
-    final Project project = myTag.getProject();
-    final JspManager jspManager = JspManager.getInstance(project);
-    if (myElement != null) {
-      final Set<String> map = jspManager.getNamespacesByFunctionName(myElement.getText(), jspFile, false);
-      for (String uri : map) {
-        final String prefix = StringUtil.isEmpty(myNamespacePrefix) ? jspManager.getPrefixForNamespace(uri, jspFile) : myNamespacePrefix;
-        namespaces.put(uri, prefix);
-      }
-    } else if (pos == -1) {  // tag name
-      final Set<String> map = jspManager.getNamespacesByTagName(text, jspFile, false);
-      for (String uri : map) {
-        final String prefix = StringUtil.isEmpty(myNamespacePrefix) ? jspManager.getPrefixForNamespace(uri, jspFile) : myNamespacePrefix;
-        namespaces.put(uri, prefix);
-      }
-    } else if (pos == text.length() - 1) { // ns prefix
-      final Module module = ModuleUtil.findModuleForPsiElement(myTag);
-      if (module == null) {
-        return Collections.emptyMap();
-      }
-      final String prefix = text.substring(0, text.length() - 1);
-      final Collection<XmlFile> files = jspManager.getPossibleTldFiles(module);
-      for (XmlFile psiFile : files) {
-        final XmlDocument document = psiFile.getDocument();
-        if (document != null) {
-          final TldDescriptor descriptor = (TldDescriptor)document.getMetaData();
-          if (descriptor != null) {
-            final String defaultPrefix = descriptor.getDefaultPrefix();
-            if (defaultPrefix != null && defaultPrefix.equals(prefix)) {
-              final String uri = descriptor.getUri();
-              if (!StringUtil.isEmpty(uri)) {
-                namespaces.put(uri, prefix);
-              }
-            }
-          }
-        }
-      }
-
-    } else {  // qualified tag name
-      final String tagName = text.substring(pos+1);
-      final Set<String> map = jspManager.getNamespacesByTagName(tagName, jspFile, false);
-      for (String uri : map) {
-        namespaces.put(uri, jspManager.getPrefixForNamespace(uri, jspFile));
-      }
-    }
-    return namespaces;
   }
 
   private static boolean checkIfGivenXmlHasTheseWords(final String name, final XmlFile tldFileByUri) {
@@ -388,7 +316,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final String searchFor = metaHandler.searchFor();
 
     if (pi != null) pi.setText(XmlErrorMessages.message("looking.in.schemas"));
-    final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
+    final ExternalResourceManager instanceEx = ExternalResourceManager.getInstance();
     final String[] availableUrls = instanceEx.getResourceUrls(null, true);
     int i = 0;
 
