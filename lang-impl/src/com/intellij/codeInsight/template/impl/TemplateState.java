@@ -395,9 +395,8 @@ public class TemplateState implements Disposable {
     final LookupItem[] lookupItems = expressionNode.calculateLookupItems(context);
     final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
     if (lookupItems != null && lookupItems.length > 0) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final String s = lookupItems[0].getLookupString();
-        EditorModificationUtil.insertStringAtCaret(myEditor, s);
+      if (ApplicationManager.getApplication().isUnitTestMode() && lookupItems.length > 1) {
+        itemSelected(lookupItems[0], psiFile, currentSegmentNumber, ' ');
       } else {
         lookupItems[0].setPriority(Integer.MAX_VALUE);
         runLookup(currentSegmentNumber, end, lookupItems, psiFile);
@@ -446,44 +445,47 @@ public class TemplateState implements Disposable {
 
               final LookupItem item = event.getItem();
 
-              if (item != null) {
-                PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-                Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
-                if (bracketCount != null) {
-                  StringBuilder tail = new StringBuilder();
-                  for (int i = 0; i < bracketCount.intValue(); i++) {
-                    tail.append("[]");
-                  }
-                  EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
-                  PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
-                }
-
-                updateTypeBindings(item.getObject(), psiFile, currentSegmentNumber);
-
-                char c = event.getCompletionChar();
-                if (c == '.') {
-                  EditorModificationUtil.insertStringAtCaret(myEditor, ".");
-                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                  return;
-                }
-
-                if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
-                  AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
-                  return;
-                }
-
-                if (!isFinished()) {
-                  calcResults(true);
-                }
-              }
-
-              nextTab();
+              TemplateState.this.itemSelected(item, psiFile, currentSegmentNumber, event.getCompletionChar());
             }
           }
         );
       }
     });
+  }
+
+  private void itemSelected(final LookupItem item, final PsiFile psiFile, final int currentSegmentNumber, final char completionChar) {
+    if (item != null) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      Integer bracketCount = (Integer)item.getAttribute(LookupItem.BRACKETS_COUNT_ATTR);
+      if (bracketCount != null) {
+        StringBuilder tail = new StringBuilder();
+        for (int i = 0; i < bracketCount.intValue(); i++) {
+          tail.append("[]");
+        }
+        EditorModificationUtil.insertStringAtCaret(myEditor, tail.toString());
+        PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
+      }
+
+      updateTypeBindings(item.getObject(), psiFile, currentSegmentNumber);
+
+      if (completionChar == '.') {
+        EditorModificationUtil.insertStringAtCaret(myEditor, ".");
+        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+        return;
+      }
+
+      if (item.getAttribute(Expression.AUTO_POPUP_NEXT_LOOKUP) != null) {
+        AutoPopupController.getInstance(myProject).autoPopupMemberLookup(myEditor);
+        return;
+      }
+
+      if (!isFinished()) {
+        calcResults(true);
+      }
+    }
+
+    nextTab();
   }
 
 
