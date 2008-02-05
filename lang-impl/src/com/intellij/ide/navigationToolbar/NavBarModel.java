@@ -372,17 +372,17 @@ public class NavBarModel {
       if (object instanceof Module) {
         return Pair.create(5, ((Module)object).getName());
       }
-      if (object instanceof PsiFile) {
-        return Pair.create(2, ((PsiFile)object).getName());
-      }
-      if (object instanceof PsiClass) {
-        return Pair.create(3, ((PsiClass)object).getName());
-      }
-      if (object instanceof PsiPackage) {
-        return Pair.create(4, ((PsiPackage)object).getName());
+      if (object instanceof PsiDirectoryContainer) {
+        return Pair.create(4, ((PsiDirectoryContainer)object).getName());
       }
       else if (object instanceof PsiDirectory) {
         return Pair.create(4, ((PsiDirectory)object).getName());
+      }
+      if (object instanceof PsiFile) {
+        return Pair.create(2, ((PsiFile)object).getName());
+      }
+      if (object instanceof PsiNamedElement) {
+        return Pair.create(3, ((PsiNamedElement)object).getName());
       }
       return null;
     }

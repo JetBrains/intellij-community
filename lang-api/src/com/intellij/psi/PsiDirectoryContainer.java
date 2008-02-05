@@ -1,12 +1,12 @@
 package com.intellij.psi;
 
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
-public interface PsiDirectoryContainer {
+public interface PsiDirectoryContainer extends PsiNamedElement {
   /**
    * Returns the array of all directories (under all source roots in the project)
    * corresponding to the package.
