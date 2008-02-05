@@ -32,7 +32,9 @@ public class ControlFlowUtil {
     for (int i = 0; i < result.length; i++) visited[i] = false;
 
     int N = flow.length;
-    N = doVisitForPostorder(flow[0], N, result, visited);
+    for (int i = 0; i < flow.length; i++) { //graph might not be connected
+      if (!visited[i]) N = doVisitForPostorder(flow[i], N, result, visited);
+    }
 
     LOG.assertTrue(N == 0);
     return result;
