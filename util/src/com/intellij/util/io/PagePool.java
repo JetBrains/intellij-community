@@ -20,7 +20,6 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,9 +56,10 @@ public class PagePool {
     }
   };
   private final TreeMap<PoolPageKey, FinalizationRequest> myFinalizationQueue = new TreeMap<PoolPageKey, FinalizationRequest>();
+  private volatile int finalizationQueueLength = 0;
 
   private final Object lock = new Object();
-  private final Semaphore finalizationQueueSemaphore = new Semaphore();
+  private final Object finalizationQueueSemaphore = new Object();
   private final Object finalizationLock = new Object();
 
   private final PoolPageKey keyInstance = new PoolPageKey(null, -1);
@@ -148,7 +148,16 @@ public class PagePool {
     }
 
     if (hasFlushes) {
-      finalizationQueueSemaphore.waitFor();
+      while (finalizationQueueLength != 0) {
+        synchronized (finalizationQueueSemaphore) {
+          try {
+            finalizationQueueSemaphore.wait();
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
+        }
+      }
     }
   }
 
@@ -183,7 +192,9 @@ public class PagePool {
 
         wakeUpFinalizer = true;
         final FinalizationRequest request = new FinalizationRequest(page, curFinalizationId);
+
         myFinalizationQueue.put(keyForPage(page), request);
+        finalizationQueueLength = myFinalizationQueue.size();
       }
       else {
         page.recycle();
@@ -191,8 +202,6 @@ public class PagePool {
     }
 
     if (wakeUpFinalizer) {
-      finalizationQueueSemaphore.down();
-
       synchronized (finalizationLock) {
         finalizationLock.notifyAll();
       }
@@ -230,9 +239,13 @@ public class PagePool {
             finally {
               synchronized (lock) {
                 myFinalizationQueue.remove(lastFinalizedKey);
+                finalizationQueueLength = myFinalizationQueue.size();
               }
               request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
-              finalizationQueueSemaphore.up();
+
+              synchronized (finalizationQueueSemaphore) {
+                finalizationQueueSemaphore.notifyAll();
+              }
             }
           }
           else {
