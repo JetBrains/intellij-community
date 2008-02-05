@@ -50,12 +50,12 @@ public class GroovyOverrideImplementUtil {
     PsiElement parent = file.findElementAt(offset);
     if (parent == null) return;
 
-    while (!(parent instanceof PsiClass)) {
+    while (!(parent instanceof GrTypeDefinition)) {
       parent = parent.getParent();
       if (parent == null) return;
     }
 
-    final PsiClass aClass = (PsiClass) parent;
+    final GrTypeDefinition aClass = (GrTypeDefinition) parent;
 
     if (isImplement && aClass.isInterface()) return;
 
@@ -98,7 +98,7 @@ public class GroovyOverrideImplementUtil {
             final GrTypeDefinitionBody classBody = ((GrTypeDefinition) aClass).getBody();
             final PsiMethod[] methods = aClass.getMethods();
 
-            ASTNode anchor = null;
+            PsiElement anchor = null;
 
             final int caretPosition = editor.getCaretModel().getOffset();
             final PsiElement thisCaretPsiElement = file.findElementAt(caretPosition);
@@ -107,24 +107,24 @@ public class GroovyOverrideImplementUtil {
 
             if (thisCaretPsiElement != null && thisCaretPsiElement.getParent() instanceof GrTypeDefinitionBody) {
               if (GroovyTokenTypes.mLCURLY.equals(thisCaretPsiElement.getNode().getElementType())) {
-                anchor = thisCaretPsiElement.getNextSibling().getNode();
+                anchor = thisCaretPsiElement.getNextSibling();
               } else if (GroovyTokenTypes.mRCURLY.equals(thisCaretPsiElement.getNode().getElementType())) {
-                anchor = thisCaretPsiElement.getPrevSibling().getNode();
+                anchor = thisCaretPsiElement.getPrevSibling();
               } else {
-                anchor = thisCaretPsiElement.getNode();
+                anchor = thisCaretPsiElement;
               }
 
             } else if (previousTopLevelElement != null && previousTopLevelElement instanceof GrMethod) {
               final PsiElement nextElement = previousTopLevelElement.getNextSibling();
               if (nextElement != null) {
-                anchor = nextElement.getNode();
+                anchor = nextElement;
               }
             } else if (methods.length != 0) {
               final PsiMethod lastMethod = methods[methods.length - 1];
               if (lastMethod != null) {
                 final PsiElement nextSibling = lastMethod.getNextSibling();
                 if (nextSibling != null) {
-                  anchor = nextSibling.getNode();
+                  anchor = nextSibling;
                 }
               }
 
@@ -134,20 +134,11 @@ public class GroovyOverrideImplementUtil {
               final PsiElement nextElement = firstChild.getNextSibling();
               assert nextElement != null;
 
-              anchor = nextElement.getNode();
+              anchor = nextElement;
             }
 
-            final ASTNode lineTerminator = GroovyPsiElementFactory.getInstance(project).createLineTerminator(1).getNode();
+            aClass.addMemberDeclaration(result, anchor);
 
-            assert lineTerminator != null;
-            final ASTNode resultNode = result.getNode();
-            assert resultNode != null;
-
-            classBody.getNode().addChild(lineTerminator, anchor);
-            classBody.getNode().addChild(resultNode, anchor);
-
-            final TextRange range = result.getTextRange();
-            CodeStyleManager.getInstance(project).reformatRange(result.getContainingFile(), range.getStartOffset(), range.getEndOffset());
             PsiUtil.shortenReferences(result);
           } catch (IncorrectOperationException e) {
             LOG.error(e);
