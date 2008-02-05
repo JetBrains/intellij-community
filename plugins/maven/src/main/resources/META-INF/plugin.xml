@@ -25,7 +25,7 @@
     <stepsBeforeRunProvider implementation="org.jetbrains.idea.maven.events.MavenStepsBeforeRunProvider"/>
     <keymapExtension implementation="org.jetbrains.idea.maven.events.MavenKeymapExtension"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <configuratonType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
+    <configurationType implementation="org.jetbrains.idea.maven.runner.execution.MavenRunConfigurationType"/>
   </extensions>
 
   <application-components>
