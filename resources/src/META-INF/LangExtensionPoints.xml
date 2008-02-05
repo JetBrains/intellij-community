@@ -206,4 +206,6 @@
 
   <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
+  <extensionPoint name="renameCollisionDetector" interface="com.intellij.refactoring.rename.RenameCollisionDetector"/>
+
 </extensionPoints>

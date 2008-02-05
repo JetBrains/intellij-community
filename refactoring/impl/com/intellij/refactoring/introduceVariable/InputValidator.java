@@ -6,7 +6,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiVariable;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.occurences.ExpressionOccurenceManager;
 import com.intellij.util.containers.HashSet;
@@ -33,7 +33,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
     if(scope == null) return true;
     final ArrayList<String> conflicts = new ArrayList<String>();
     final HashSet<PsiVariable> reportedVariables = new HashSet<PsiVariable>();
-    RenameUtil.CollidingVariableVisitor visitor = new RenameUtil.CollidingVariableVisitor() {
+    JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor visitor = new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable instanceof PsiField) return;
         if (!reportedVariables.contains(collidingVariable)) {
@@ -43,7 +43,7 @@ public class InputValidator implements IntroduceVariableBase.Validator {
         }
       }
     };
-    RenameUtil.visitLocalsCollisions(anchor, name, scope, anchor, visitor);
+    JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(anchor, name, scope, anchor, visitor);
     if (replaceAllOccurrences) {
       final PsiExpression[] occurences = myOccurenceManager.getOccurences();
       for (PsiExpression occurence : occurences) {

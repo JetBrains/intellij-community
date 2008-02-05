@@ -5,8 +5,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -17,10 +17,10 @@ import com.intellij.psi.meta.PsiWritableMetaData;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -30,13 +30,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.Queue;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 public class RenameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameUtil");
@@ -50,7 +47,6 @@ public class RenameUtil {
     final List<UsageInfo> result = new ArrayList<UsageInfo>();
 
     PsiManager manager = element.getManager();
-    PsiSearchHelper helper = manager.getSearchHelper();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
@@ -62,35 +58,17 @@ public class RenameUtil {
     }
     else {
       Collection<PsiReference> refs = ReferencesSearch.search(element).findAll();
-      final ClassCollisionsDetector classCollisionsDetector;
-      if (element instanceof PsiClass) {
-        classCollisionsDetector = new ClassCollisionsDetector((PsiClass)element);
-      }
-      else {
-        classCollisionsDetector = null;
-      }
       for (PsiReference ref : refs) {
         PsiElement referenceElement = ref.getElement();
         result.add(new MoveRenameUsageInfo(referenceElement, ref, ref.getRangeInElement().getStartOffset(),
                                            ref.getRangeInElement().getEndOffset(), element,
                                            false));
-
-
-        if (element instanceof PsiClass) {
-          classCollisionsDetector.addClassCollisions(referenceElement, newName, result);
-        }
-      }
-
-      if (element instanceof PsiVariable) {
-        addLocalsCollisions(element, newName, result, allRenames);
-        if (element instanceof PsiField) {
-          addFieldHidesOuterCollisions((PsiField)element, newName, result);
-        }
       }
     }
 
-    findUnresolvableLocalsCollisions(element, newName, result);
-    findUnresolvableMemberCollisions(element, newName, result);
+    for(RenameCollisionDetector collisionDetector: Extensions.getExtensions(RenameCollisionDetector.EP_NAME)) {
+      collisionDetector.findCollisions(element, newName, allRenames, result);
+    }
 
 
     if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
@@ -151,283 +129,6 @@ public class RenameUtil {
         message.append(virtualFile.getPresentableUrl()).append("\n");
       }
       message.append(RefactoringBundle.message("these.package.prefixes.will.be.changed"));
-    }
-  }
-
-  private static class ClassCollisionsDetector {
-    final HashSet<PsiFile> myProcessedFiles = new HashSet<PsiFile>();
-    final PsiClass myRenamedClass;
-    private String myRenamedClassQualifiedName;
-
-    public ClassCollisionsDetector(PsiClass renamedClass) {
-      myRenamedClass = renamedClass;
-      myRenamedClassQualifiedName = myRenamedClass.getQualifiedName();
-    }
-
-    public void addClassCollisions(PsiElement referenceElement, String newName, List<UsageInfo> results) {
-      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(referenceElement.getProject()).getResolveHelper();
-      final PsiClass aClass = resolveHelper.resolveReferencedClass(newName, referenceElement);
-      if (aClass == null) return;
-      final PsiFile containingFile = referenceElement.getContainingFile();
-      final String text = referenceElement.getText();
-      if (Comparing.equal(myRenamedClassQualifiedName, removeSpaces(text))) return;
-      if (myProcessedFiles.contains(containingFile)) return;
-      final Collection<PsiReference> references = ReferencesSearch.search(aClass, new LocalSearchScope(containingFile)).findAll();
-      for (PsiReference reference : references) {
-        final PsiElement collisionReferenceElement = reference.getElement();
-        if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
-          final PsiElement parent = collisionReferenceElement.getParent();
-          if (parent instanceof PsiImportStatement) {
-            results.add(new CollidingClassImportUsageInfo((PsiImportStatement)parent, myRenamedClass));
-          }
-          else {
-            if (aClass.getQualifiedName() != null) {
-              results.add(new ClassHidesImportedClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
-                                                               myRenamedClass, aClass));
-            }
-            else {
-              results.add(new ClassHidesUnqualifiableClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
-                                                                    myRenamedClass, aClass));
-            }
-          }
-        }
-      }
-      myProcessedFiles.add(containingFile);
-    }
-  }
-
-  @NonNls private static final Pattern WHITE_SPACE_PATTERN = Pattern.compile("\\s");
-
-  private static String removeSpaces(String s) {
-    return WHITE_SPACE_PATTERN.matcher(s).replaceAll("");
-  }
-
-  private static void findUnresolvableMemberCollisions(final PsiElement element, final String newName, List<UsageInfo> result) {
-    PsiManager manager = element.getManager();
-    final PsiSearchHelper helper = manager.getSearchHelper();
-
-    if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) return;
-      if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
-
-      MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
-      MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
-                                                                               oldSignature.getTypeParameters(),
-                                                                               oldSignature.getSubstitutor());
-      for (PsiClass inheritor : inheritors) {
-        PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
-        final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
-        for (PsiMethod conflictingMethod : methodsByName) {
-          if (newSignature.equals(conflictingMethod.getSignature(superSubstitutor))) {
-            result.add(new SubmemberHidesMemberUsageInfo(conflictingMethod, method));
-            break;
-          }
-        }
-      }
-    }
-    else if (element instanceof PsiField) {
-      final PsiField field = (PsiField)element;
-      if (field.getContainingClass() == null) return;
-      if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
-      final PsiClass containingClass = field.getContainingClass();
-      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
-      for (PsiClass inheritor : inheritors) {
-        PsiField conflictingField = inheritor.findFieldByName(newName, false);
-        if (conflictingField != null) {
-          result.add(new SubmemberHidesMemberUsageInfo(conflictingField, field));
-        }
-      }
-    }
-    else if (element instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)element;
-      if (aClass.getParent() instanceof PsiClass) {
-        PsiClass parent = (PsiClass)aClass.getParent();
-        Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, parent.getUseScope(), true).findAll();
-        for (PsiClass inheritor : inheritors) {
-          PsiClass[] inners = inheritor.getInnerClasses();
-          for (PsiClass inner : inners) {
-            if (newName.equals(inner.getName())) {
-              result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
-            }
-          }
-        }
-      }
-    }
-  }
-
-  public static class ConflictingLocalVariablesVisitor extends JavaRecursiveElementVisitor {
-    protected final String myName;
-    protected RenameUtil.CollidingVariableVisitor myCollidingNameVisitor;
-
-    public ConflictingLocalVariablesVisitor(String newName, RenameUtil.CollidingVariableVisitor collidingNameVisitor) {
-      myName = newName;
-      myCollidingNameVisitor = collidingNameVisitor;
-    }
-
-    @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitElement(expression);
-    }
-
-    @Override public void visitClass(PsiClass aClass) {
-    }
-
-    @Override public void visitVariable(PsiVariable variable) {
-      if (myName.equals(variable.getName())) {
-        myCollidingNameVisitor.visitCollidingElement(variable);
-      }
-    }
-  }
-
-  private static void findUnresolvableLocalsCollisions(final PsiElement element, final String newName,
-                                                      final List<UsageInfo> result) {
-    if (!(element instanceof PsiLocalVariable || element instanceof PsiParameter)) {
-      return;
-    }
-
-
-    PsiElement scope;
-    PsiElement anchor = null;
-    if (element instanceof PsiLocalVariable) {
-      scope = RefactoringUtil.getVariableScope((PsiLocalVariable)element);
-      if (!(element instanceof ImplicitVariable)) {
-        anchor = element.getParent();
-      }
-    }
-    else {
-      // element is a PsiParameter
-      scope = ((PsiParameter)element).getDeclarationScope();
-    }
-    LOG.assertTrue(scope != null);
-
-    final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
-      public void visitCollidingElement(PsiVariable collidingVariable) {
-        if (collidingVariable.equals(element) || collidingVariable instanceof PsiField) return;
-        LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
-        result.add(collision);
-      }
-    };
-
-    visitLocalsCollisions(element, newName, scope, anchor, collidingNameVisitor);
-
-
-    /*PsiElement place = scope.getLastChild();
-    PsiResolveHelper helper = place.getManager().getResolveHelper();
-    PsiVariable refVar = helper.resolveReferencedVariable(newName, place, null);
-
-    if (refVar != null) {
-      LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, refVar);
-      result.add(collision);
-    }*/
-  }
-
-  public static void visitLocalsCollisions(PsiElement element, final String newName,
-                                           PsiElement scope,
-                                           PsiElement place,
-                                           final CollidingVariableVisitor collidingNameVisitor) {
-    if (scope == null) return;
-    visitDownstreamCollisions(scope, place, newName, collidingNameVisitor);
-    visitUpstreamLocalCollisions(element, scope, newName, collidingNameVisitor);
-  }
-
-  private static void visitDownstreamCollisions(PsiElement scope, PsiElement place, final String newName,
-                                                final CollidingVariableVisitor collidingNameVisitor
-                                               ) {
-    ConflictingLocalVariablesVisitor collector =
-      new ConflictingLocalVariablesVisitor(newName, collidingNameVisitor);
-    if (place == null) {
-      scope.accept(collector);
-    }
-    else {
-      LOG.assertTrue(place.getParent() == scope);
-      for (PsiElement sibling = place; sibling != null; sibling = sibling.getNextSibling()) {
-        sibling.accept(collector);
-      }
-
-    }
-  }
-
-  public interface CollidingVariableVisitor {
-    void visitCollidingElement(PsiVariable collidingVariable);
-  }
-
-  private static void visitUpstreamLocalCollisions(PsiElement element, PsiElement scope,
-                                                  String newName,
-                                                  final CollidingVariableVisitor collidingNameVisitor) {
-    final PsiVariable collidingVariable =
-      JavaPsiFacade.getInstance(scope.getProject()).getResolveHelper().resolveReferencedVariable(newName, scope);
-    if (collidingVariable instanceof PsiLocalVariable || collidingVariable instanceof PsiParameter) {
-      final PsiElement commonParent = PsiTreeUtil.findCommonParent(element, collidingVariable);
-      if (commonParent != null) {
-        PsiElement current = element;
-        while (current != null && current != commonParent) {
-          if (current instanceof PsiMethod || current instanceof PsiClass) {
-            return;
-          }
-          current = current.getParent();
-        }
-      }
-    }
-
-    if (collidingVariable != null) {
-      collidingNameVisitor.visitCollidingElement(collidingVariable);
-    }
-  }
-
-
-  private static void addLocalsCollisions(final PsiElement element,
-                                          final String newName,
-                                          final List<UsageInfo> results,
-                                          final Map<? extends PsiElement, String> allRenames) {
-    if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
-
-    PsiClass toplevel = PsiUtil.getTopLevelClass(element);
-    if (toplevel == null) return;
-
-    PsiElement scopeElement;
-    if (element instanceof PsiLocalVariable) {
-      scopeElement = RefactoringUtil.getVariableScope((PsiLocalVariable)element);
-    }
-    else { // Parameter
-      scopeElement = ((PsiParameter) element).getDeclarationScope();
-    }
-
-    LOG.assertTrue(scopeElement != null);
-    scopeElement.accept(new JavaRecursiveElementVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
-        super.visitReferenceExpression(expression);
-        if (!expression.isQualified()) {
-          final PsiElement resolved = expression.resolve();
-          if (resolved instanceof PsiField) {
-            final PsiField field = (PsiField)resolved;
-            String fieldNewName = allRenames.containsKey(field) ? allRenames.get(field) : field.getName();
-            if (newName.equals(fieldNewName)) {
-              results.add(new LocalHidesFieldUsageInfo(expression, element));
-            }
-          }
-        }
-      }
-    });
-  }
-
-  private static void addFieldHidesOuterCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
-    final PsiClass fieldClass = field.getContainingClass();
-    for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
-      final PsiField conflict = aClass.findFieldByName(newName, false);
-      if (conflict == null) continue;
-      ReferencesSearch.search(conflict).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          PsiElement refElement = reference.getElement();
-          if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
-          if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
-            FieldHidesOuterFieldUsageInfo info = new FieldHidesOuterFieldUsageInfo(refElement, field);
-            result.add(info);
-          }
-          return true;
-        }
-      });
     }
   }
 

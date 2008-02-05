@@ -30,6 +30,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
+import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
@@ -253,7 +254,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         if (isOriginal) {   //Name changes take place only in primary method
           final PsiParameter parameter = parameters[oldParameterIndex];
           if (!newName.equals(parameter.getName())) {
-            RenameUtil.visitLocalsCollisions(parameter, newName, method.getBody(), null, new RenameUtil.CollidingVariableVisitor() {
+            JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(parameter, newName, method.getBody(), null, new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
               public void visitCollidingElement(final PsiVariable collidingVariable) {
                 if (!(collidingVariable instanceof PsiField) && !deletedOrRenamedParameters.contains(collidingVariable)) {
                   result.add(new RenamedParameterCollidesWithLocalUsageInfo(parameter, collidingVariable, method));
@@ -264,7 +265,7 @@ public class ChangeSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
       else {
-        RenameUtil.visitLocalsCollisions(method, newName, method.getBody(), null, new RenameUtil.CollidingVariableVisitor() {
+        JavaUnresolvableLocalCollisionDetector.visitLocalsCollisions(method, newName, method.getBody(), null, new JavaUnresolvableLocalCollisionDetector.CollidingVariableVisitor() {
           public void visitCollidingElement(PsiVariable collidingVariable) {
             if (!(collidingVariable instanceof PsiField) && !deletedOrRenamedParameters.contains(collidingVariable)) {
               result.add(new NewParameterCollidesWithLocalUsageInfo(collidingVariable, collidingVariable, method));
