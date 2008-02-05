@@ -224,13 +224,16 @@ public class PagePool {
           FinalizationRequest request = getNextFinalizationRequest();
 
           if (request != null) {
-            request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId);
-
-            synchronized (lock) {
-              myFinalizationQueue.remove(lastFinalizedKey);
+            try {
+              request.page.flushIfFinalizationIdIsEqualTo(request.finalizationId);
             }
-            request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
-            finalizationQueueSemaphore.down();
+            finally {
+              synchronized (lock) {
+                myFinalizationQueue.remove(lastFinalizedKey);
+              }
+              request.page.recycleIfFinalizationIdIsEqualTo(request.finalizationId);
+              finalizationQueueSemaphore.down();
+            }
           }
           else {
             synchronized (finalizationLock) {
