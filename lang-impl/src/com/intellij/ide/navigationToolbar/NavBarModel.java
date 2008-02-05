@@ -299,7 +299,9 @@ public class NavBarModel {
     }
   }
 
+  @Nullable
   private static PsiElement normalize(PsiElement child) {
+    if (child == null) return null;
     for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
       child = modelExtension.adjustElement(child);
     }
