@@ -804,6 +804,7 @@ public class FSRecords implements Disposable, Forceable {
   public void dispose() {
     synchronized (lock) {
       try {
+        DbConnection.force();
         DbConnection.closeFiles();
       }
       catch (IOException e) {
