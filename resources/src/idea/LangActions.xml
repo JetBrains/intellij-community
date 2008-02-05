@@ -283,6 +283,38 @@
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
     </group>
 
+    <group id="NavbarPopupMenu">
+      <reference ref="NewGroup"/>
+      <reference ref="AssociateWithFileType"/>
+      <separator/>
+      <reference ref="CutCopyPasteGroup"/>
+      <reference ref="EditSource"/>
+      <reference ref="ChangesView.ApplyPatch"/>
+      <separator/>
+      <reference ref="FindUsages"/>
+      <reference ref="FindInPath"/>
+      <reference ref="ReplaceInPath"/>
+      <reference ref="AnalyzeMenu"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
+      <separator/>
+      <reference ref="AddToFavorites"/>
+      <reference ref="MoveToChangeList"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuModifyGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuRunGroup"/>
+      <separator/>
+      <reference ref="VersionControlsGroup"/>
+      <reference ref="SynchronizeCurrentFile"/>
+      <reference ref="CompareTwoFiles"/>
+      <reference ref="CompareFileWithEditor"/>
+      <separator/>
+      <reference ref="ExternalToolsGroup"/>
+      <separator/>
+      <reference ref="ProjectViewPopupMenuSettingsGroup"/>
+    </group>
+
     <group id="FavoritesViewPopupMenu">
       <reference ref="NewGroup"/>
       <reference ref="AssociateWithFileType"/>

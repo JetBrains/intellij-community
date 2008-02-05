@@ -126,6 +126,7 @@ public interface IdeActions {
   @NonNls String GROUP_VERSION_CONTROLS = "VersionControlsGroup";
 
   @NonNls String GROUP_PROJECT_VIEW_POPUP = "ProjectViewPopupMenu";
+  @NonNls String GROUP_NAVBAR_POPUP = "NavbarPopupMenu";
   @NonNls String GROUP_COMMANDER_POPUP = "CommanderPopupMenu";
   @NonNls String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
   @NonNls String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";
