@@ -332,8 +332,6 @@ public class Storage implements Disposable, Forceable {
   }
 
   public void dispose() {
-    force();
-
     synchronized (lock) {
       myRecordsTable.dispose();
       myDataTable.dispose();
