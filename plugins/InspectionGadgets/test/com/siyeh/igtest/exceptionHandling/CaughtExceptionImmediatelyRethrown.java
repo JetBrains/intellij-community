@@ -3,6 +3,7 @@ package com.siyeh.igtest.exceptionHandling;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Method;
 
 public class CaughtExceptionImmediatelyRethrown {
 
@@ -28,4 +29,29 @@ public class CaughtExceptionImmediatelyRethrown {
         int i = 10;
     }
 
+	void notImmediately(boolean notsure) throws InterruptedException {
+		try {
+			Thread.sleep(10000L);
+		} catch (InterruptedException ex) {
+			if (notsure) throw ex;
+		}
+	}
+
+	protected static Method getActionMethod(Class<?> actionClass, String methodName)
+			throws NoSuchMethodException {
+		Method method;
+		try {
+			method = actionClass.getMethod(methodName);
+		} catch (NoSuchMethodException e) {
+			// hmm -- OK, try doXxx instead
+			try {
+				final String altMethodName = "do" + methodName.substring(0, 1).toUpperCase() + methodName.substring(1);
+				method = actionClass.getMethod(altMethodName);
+			} catch (NoSuchMethodException e1) {
+				// throw the original one
+				throw e;
+			}
+		}
+		return method;
+	}
 }

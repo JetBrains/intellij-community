@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Bas Leijdekkers
+ * Copyright 2007-2008 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,7 +164,12 @@ public class CaughtExceptionImmediatelyRethrownInspection
             if (previousStatement != null) {
                 return;
             }
-            final PsiReferenceExpression referenceExpression =
+	        final PsiElement parent = statement.getParent();
+	        if (parent instanceof PsiStatement) {
+		        // e.g. if (notsure) throw e;
+		        return;
+	        }
+	        final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression)expression;
             final PsiElement target = referenceExpression.resolve();
             if (!(target instanceof PsiParameter)) {
@@ -177,6 +182,16 @@ public class CaughtExceptionImmediatelyRethrownInspection
             }
             final PsiCatchSection catchSection =
                     (PsiCatchSection)declarationScope;
+	        final PsiCodeBlock block =
+			        PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
+	        if (block == null) {
+		        return;
+	        }
+	        final PsiElement blockParent = block.getParent();
+	        if (blockParent != catchSection) {
+		        // e.g. if (notsure) { throw e; }
+		        return;
+	        }
             if (isSuperClassExceptionCaughtLater(parameter, catchSection)) {
                 return;
             }
