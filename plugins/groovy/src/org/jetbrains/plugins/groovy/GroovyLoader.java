@@ -147,8 +147,8 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
         registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
 
-        PsiManager manager = PsiManager.getInstance(project);
-        manager.registerLanguageInjector(new GroovyDocInjector());
+        //PsiManager manager = PsiManager.getInstance(project);
+        //manager.registerLanguageInjector(new GroovyDocInjector());
 
         WolfTheProblemSolver.getInstance(project).registerFileHighlightFilter(new Condition<VirtualFile>() {
           public boolean value(VirtualFile virtualFile) {
