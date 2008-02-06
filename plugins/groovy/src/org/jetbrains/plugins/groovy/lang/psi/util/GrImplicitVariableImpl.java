@@ -51,11 +51,6 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     visitor.visitImplicitVariable(this);
   }
 
-  public ItemPresentation getPresentation() {
-    return this;
-  }
-
-
   public String toString() {
     return "Specific implicit variable";
   }
@@ -64,35 +59,8 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     throw new IncorrectOperationException();
   }
 
-  public String getPresentableText() {
-    return null;
-  }
 
-  @Nullable
-  public String getLocationString() {
-    return null;
-  }
-
-  public boolean isPhysical() {
-    return true;
-  }
-
-  @NotNull
-  public SearchScope getUseScope() {
-    return myScope.getProject().getAllScope();
-  }
-
-  @Nullable
-  public Icon getIcon(boolean open) {
-    return GroovyIcons.PROPERTY;
-  }
-
-  @Nullable
-  public TextAttributesKey getTextAttributesKey() {
-    return null;
-  }
-
-  protected class GrLightIdentifier extends LightIdentifier {
+  protected static class GrLightIdentifier extends LightIdentifier {
     private String myTextInternal;
 
     public GrLightIdentifier(PsiManager manager, String name) {
@@ -114,57 +82,4 @@ public class GrImplicitVariableImpl extends LightVariableBase implements GrImpli
     }
   }
 
-  public void navigate(boolean requestFocus) {
-    final Project myProject = myNameIdentifier.getProject();
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DynamicToolWindowWrapper.DYNAMIC_TOOLWINDOW_ID);
-
-    window.activate(new Runnable() {
-      public void run() {
-        final TreeTable treeTable = DynamicToolWindowWrapper.getTreeTable(window, myProject);
-        final ListTreeTableModelOnColumns model = DynamicToolWindowWrapper.getTreeTableModel(window, myProject);
-
-        Object root = model.getRoot();
-
-        if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
-
-        DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
-        if (!(myScope instanceof GrReferenceExpression)) return;
-
-        final GrReferenceExpression refExpression = (GrReferenceExpression) myScope;
-        final PsiType type = refExpression.getQualifierExpression().getType();
-
-        if (type == null) return;
-
-        final DefaultMutableTreeNode classNode = TreeUtil.findNodeWithObject(treeRoot, new DPClassNode(new DPContainingClassElement(type.getCanonicalText())));
-        if (classNode == null) return;
-        
-        final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPPropertyNode(new DPPropertyElement(myNameIdentifier.getText())));
-        final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
-
-        treeTable.getTree().expandPath(path);
-        treeTable.getTree().setSelectionPath(path);
-        treeTable.getTree().fireTreeExpanded(path);
-
-        treeTable.requestFocus();
-        treeTable.revalidate();
-        treeTable.repaint();
-      }
-    }, true);
-  }
-
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
-  public boolean canNavigate() {
-    return true;
-  }
-
-  public boolean isWritable() {
-    return true;
-  }
-
-//  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-//    return super.setName(name);    //To change body of overridden methods use File | Settings | File Templates.
-//  }
 }

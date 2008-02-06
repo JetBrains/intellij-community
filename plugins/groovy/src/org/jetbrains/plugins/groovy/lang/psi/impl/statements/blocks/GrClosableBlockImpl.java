@@ -157,7 +157,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
         type = TypesUtil.createJavaLangObject(this);
       }
 
-      myOwner = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(null, OWNER_NAME, null, type, false).getVariables()[0];
+      myOwner = GroovyPsiElementFactory.getInstance(getProject()).createVariableDeclaration(null, OWNER_NAME, null, type).getVariables()[0];
     }
 
     return myOwner;

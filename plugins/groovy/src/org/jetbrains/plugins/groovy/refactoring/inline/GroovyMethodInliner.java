@@ -141,7 +141,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
             while (qualifier instanceof GrParenthesizedExpression) {
               qualifier = ((GrParenthesizedExpression) qualifier).getOperand();
             }
-            qualifierDeclaration = factory.createVariableDeclaration(new String[0], qualName, qualifier, null, false);
+            qualifierDeclaration = factory.createVariableDeclaration(new String[0], qualName, qualifier, null);
             innerQualifier = ((GrReferenceExpression) factory.createExpressionFromText(qualName));
           } else {
             innerQualifier = ((GrReferenceExpression) qualifier);
@@ -206,7 +206,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Process method return statements
       if (hasReturnStatements && PsiType.VOID != methodType && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText("java.lang.Object") ? null : methodType;
-        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], resultName, null, type, false);
+        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(new String[0], resultName, null, type);
         GrStatement statement = owner.addStatementBefore(resultDecl, anchor);
         PsiUtil.shortenReferences(statement);
 

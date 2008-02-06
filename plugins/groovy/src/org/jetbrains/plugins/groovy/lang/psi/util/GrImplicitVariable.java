@@ -8,5 +8,5 @@ import com.intellij.psi.ImplicitVariable;
  * User: Dmitry.Krasilschikov
  * Date: 04.02.2008
  */
-public interface GrImplicitVariable extends ItemPresentation, NavigationItem, ImplicitVariable {
+public interface GrImplicitVariable extends ImplicitVariable {
 }

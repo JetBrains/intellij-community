@@ -77,7 +77,7 @@ public class ExtractMethodUtil {
     if (helper.isReturnStatement()){
       return  factory.createStatementFromText("return " + callExpression.getText());
     } else if (name != null && mustAddVariableDeclaration(statements, name)) {
-      return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type, false);
+      return factory.createVariableDeclaration(new String[0], name, callExpression, type.equalsToText("java.lang.Object") ? null : type);
     } else {
       return factory.createExpressionFromText(name + "= " + callExpression.getText());
     }
@@ -223,7 +223,7 @@ public class ExtractMethodUtil {
     if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
         !mustAddVariableDeclaration(helper.getStatements(), outputName) &&
         !containVariableDeclaration(helper.getStatements(), outputName)) {
-      GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type, false);
+      GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type);
       buffer.append(decl.getText()).append("\n");
     }
     // Add missed parameter declarations

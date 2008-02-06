@@ -81,7 +81,7 @@ public abstract class GroovyPsiElementFactory {
 
   public abstract GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
 
-  public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type, boolean isIncomplete);
+  public abstract GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type);
 
   public abstract PsiElement createReferenceNameFromText(String idText);
 

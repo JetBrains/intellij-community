@@ -81,7 +81,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
     return (GrExpression) ((GroovyFileBase) file).getTopStatements()[0];
   }
 
-  public GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type, boolean isIncomplete) {
+  public GrVariableDeclaration createVariableDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
     StringBuffer text = writeModifiers(modifiers);
 
     if (type != null) {
@@ -108,16 +108,14 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory impleme
         expr = initializer;
       }
       text.append(" = ").append(expr.getText());
-    } else if (isIncomplete) {
-      text.append(" = ;");
-    }
+    } 
 
     PsiFile file = createGroovyFile(text.toString());
     return ((GrVariableDeclaration) ((GroovyFileBase) file).getTopStatements()[0]);
   }
 
   public GrVariableDeclaration createFieldDeclaration(String[] modifiers, String identifier, GrExpression initializer, PsiType type) {
-    final String varDeclaration = createVariableDeclaration(modifiers, identifier, initializer, type, false).getText();
+    final String varDeclaration = createVariableDeclaration(modifiers, identifier, initializer, type).getText();
 
     final GroovyFileBase file = (GroovyFileBase) createGroovyFile("class A { " + varDeclaration + "}");
     final GrTypeDefinitionBody body = file.getTypeDefinitions()[0].getBody();
