@@ -46,5 +46,14 @@ public class RunContextAction extends BaseRunConfigurationAction {
 
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText() + actionText, true);
+
+    RunnerAndConfigurationSettingsImpl configuration = context.findExisting();
+    if (configuration == null) {
+      configuration = context.getConfiguration();
+    }
+
+    final boolean b = configuration != null && getRunner(myExecutor.getId(), configuration) != null;
+    presentation.setEnabled(b);
+    presentation.setVisible(b);
   }
 }

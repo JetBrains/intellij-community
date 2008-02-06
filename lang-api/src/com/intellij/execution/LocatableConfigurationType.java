@@ -17,9 +17,11 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import org.jetbrains.annotations.Nullable;
 
 
 public interface LocatableConfigurationType extends ConfigurationType{
+  @Nullable
   RunnerAndConfigurationSettings createConfigurationByLocation(Location location);
   boolean isConfigurationByLocation(RunConfiguration configuration, Location location);
 }
