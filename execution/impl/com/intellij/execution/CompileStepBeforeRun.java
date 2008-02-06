@@ -2,6 +2,7 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -32,7 +33,7 @@ public class CompileStepBeforeRun implements StepsBeforeRunProvider {
   }
 
   public boolean hasTask(final RunConfiguration configuration) {
-    if (configuration instanceof ModuleRunProfile) {
+    if (configuration instanceof ModuleRunProfile && !(configuration instanceof RemoteConfiguration)) {
       final ModuleRunProfile moduleRunConfiguration = (ModuleRunProfile)configuration;
       final Module[] modules = moduleRunConfiguration.getModules();
       if (modules != null && modules.length > 0 && getConfig().isCompileBeforeRunning(configuration)) {
