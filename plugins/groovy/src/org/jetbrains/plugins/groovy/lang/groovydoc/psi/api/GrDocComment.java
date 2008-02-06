@@ -20,5 +20,5 @@ import com.intellij.psi.PsiComment;
 /**
  * @author ilyas
  */
-public interface GroovyDocComment extends PsiComment{
+public interface GrDocComment extends PsiComment, GroovyDocPsiElement{
 }

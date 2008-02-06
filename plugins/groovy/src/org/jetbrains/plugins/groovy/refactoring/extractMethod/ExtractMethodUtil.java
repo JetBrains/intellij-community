@@ -211,28 +211,12 @@ public class ExtractMethodUtil {
         }
       }
     }
-/*
-    ArrayList<GrVariableDeclaration> missedDeclarations = new ArrayList<GrVariableDeclaration>();
-    for (ParameterInfo info : infos) {
-      if (!info.passAsParameter()) {
-        missedDeclarations.add(factory.createVariableDeclaration(new String[0], info.getName(), null, info.getType(), true));
-      }
-    }
-*/
-
     if (type != PsiType.VOID && outputName != null && !outputIsParameter &&
         !mustAddVariableDeclaration(helper.getStatements(), outputName) &&
         !containVariableDeclaration(helper.getStatements(), outputName)) {
       GrVariableDeclaration decl = factory.createVariableDeclaration(new String[0], outputName, null, type);
       buffer.append(decl.getText()).append("\n");
     }
-    // Add missed parameter declarations
-/*
-    for (GrVariableDeclaration declaration : missedDeclarations) {
-      buffer.append(declaration.getText()).append(" ;\n");
-    }
-*/
-
     if (!ExtractMethodUtil.isSingleExpression(helper.getStatements())) {
       for (PsiElement element : helper.getInnerElements()) {
         buffer.append(element.getText());

@@ -16,10 +16,13 @@
 package org.jetbrains.plugins.groovy.highlighter;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.tree.IChameleonElement;
+import com.intellij.psi.tree.IChameleonElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -35,11 +38,6 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
   private static final Map<IElementType, TextAttributesKey> ATTRIBUTES = new HashMap<IElementType, TextAttributesKey>();
 
 
-  static final TokenSet tLINE_COMMENTS = TokenSet.create(
-      GroovyTokenTypes.mSL_COMMENT,
-      GroovyTokenTypes.mSH_COMMENT
-  );
-
   static final TokenSet tBLOCK_COMMENTS = TokenSet.create(
       GroovyTokenTypes.mML_COMMENT,
       GroovyTokenTypes.GROOVY_DOC_COMMENT
@@ -53,6 +51,11 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
       GroovyTokenTypes.mNUM_FLOAT,
       GroovyTokenTypes.mNUM_LONG
 
+  );
+
+  static final TokenSet tLINE_COMMENTS = TokenSet.create(
+      GroovyTokenTypes.mSL_COMMENT,
+      GroovyTokenTypes.mSH_COMMENT
   );
 
   static final TokenSet tBAD_CHARACTERS = TokenSet.create(
@@ -200,6 +203,10 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
       GroovyTokenTypes.kNULL
   );
 
+  static final TokenSet tGDOC_COMMENT_TAGS = TokenSet.create(
+      GroovyTokenTypes.mGDOC_TAG_NAME
+  );
+
   static {
     fillMap(ATTRIBUTES, tLINE_COMMENTS, DefaultHighlighter.LINE_COMMENT);
     fillMap(ATTRIBUTES, tBLOCK_COMMENTS, DefaultHighlighter.BLOCK_COMMENT);
@@ -212,6 +219,7 @@ public class GroovySyntaxHighlighter extends SyntaxHighlighterBase implements Gr
     fillMap(ATTRIBUTES, tREGEXP, DefaultHighlighter.REGEXP);
     fillMap(ATTRIBUTES, tWRONG_REGEX, DefaultHighlighter.REGEXP);
     fillMap(ATTRIBUTES, tBRACES, DefaultHighlighter.BRACES);
+    fillMap(ATTRIBUTES, tGDOC_COMMENT_TAGS, HighlighterColors.JAVA_DOC_TAG);
   }
 
   @NotNull

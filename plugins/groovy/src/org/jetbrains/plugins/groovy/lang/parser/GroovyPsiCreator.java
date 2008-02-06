@@ -21,6 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.grails.lang.gsp.parsing.GspGroovyElementTypes;
 import org.jetbrains.plugins.grails.lang.gsp.psi.groovy.impl.*;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.GroovyDocPsiCreator;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrLabelImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrListOrMapImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.GrThrowsClauseImpl;
@@ -91,11 +94,18 @@ public abstract class GroovyPsiCreator implements GroovyElementTypes, GspGroovyE
   public static PsiElement createElement(ASTNode node) {
     IElementType elem = node.getElementType();
 
+    if (elem instanceof GroovyDocElementType) {
+      return GroovyDocPsiCreator.createElement(node);
+    }
+
+    // Groovydoc comment
+    if (elem.equals(GROOVY_DOC_COMMENT)) return new GrDocCommentImpl();
+
     //Identifiers & literal
     if (elem.equals(LITERAL)) return new GrLiteralImpl(node);
     if (elem.equals(LABEL)) return new GrLabelImpl(node);
 
-    //Lists, mapetc...
+    //Lists, maps etc...
     if (elem.equals(LIST_OR_MAP)) return new GrListOrMapImpl(node);
 
     if (elem.equals(MODIFIERS)) return new GrModifierListImpl(node);

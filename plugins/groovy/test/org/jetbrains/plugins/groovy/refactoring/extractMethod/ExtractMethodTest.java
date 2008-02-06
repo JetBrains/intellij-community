@@ -63,7 +63,7 @@ public class ExtractMethodTest extends ActionTestCase {
     fileText = TestUtils.removeBeginMarker(fileText, myOffset);
     int endOffset = fileText.indexOf(TestUtils.END_MARKER);
     fileText = TestUtils.removeEndMarker(fileText, myOffset);
-    myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     fileEditorManager = FileEditorManager.getInstance(myProject);
     myEditor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myFile.getVirtualFile(), 0), false);
 
@@ -87,7 +87,7 @@ public class ExtractMethodTest extends ActionTestCase {
   public String transform(String testName, String[] data) throws Exception {
     setSettings();
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     String result = processFile(psiFile);
     System.out.println("------------------------ " + testName + " ------------------------");
     System.out.println(result);

@@ -38,7 +38,7 @@ public class GroovyDocSyntaxHighlighter extends SyntaxHighlighterBase implements
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType type) {
     if (mGDOC_TAG_NAME == type){
-      return pack(HighlighterColors.JAVA_DOC_TAG);
+      return pack(HighlighterColors.JAVA_DOC_TAG, HighlighterColors.JAVA_DOC_COMMENT );
     }
     return pack(HighlighterColors.JAVA_DOC_COMMENT);
   }

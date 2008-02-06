@@ -37,7 +37,8 @@ public abstract class TokenSets implements GroovyTokenTypes {
 
 
   public static TokenSet WHITE_SPACE_TOKEN_SET = TokenSet.create(
-      mWS
+      mWS,
+      mGDOC_WHITESPACE
   );
 
   public static TokenSet SUSPICIOUS_EXPRESSION_STATEMENT_START_TOKEN_SET = TokenSet.create(

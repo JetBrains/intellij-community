@@ -78,7 +78,7 @@ public abstract class CompletionTestBase extends ActionTestCase {
   }
 
   protected PsiFile createFile(String fileText) throws IncorrectOperationException {
-    return TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    return TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
   }
 
   protected abstract LookupItem[] getAcceptableItems(CompletionData data) throws IncorrectOperationException;

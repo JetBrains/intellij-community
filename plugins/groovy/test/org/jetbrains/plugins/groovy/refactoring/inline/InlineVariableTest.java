@@ -62,7 +62,7 @@ public class InlineVariableTest extends CommonRefactoringTestCase {
     fileText = TestUtils.removeBeginMarker(fileText, startOffset);
     int endOffset = fileText.indexOf(END_MARKER);
     fileText = TestUtils.removeEndMarker(fileText, endOffset);
-    PsiFile file = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    PsiFile file = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
     Assert.assertNotNull(file);
 

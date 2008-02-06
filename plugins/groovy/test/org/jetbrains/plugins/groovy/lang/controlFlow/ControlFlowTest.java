@@ -2,7 +2,6 @@ package org.jetbrains.plugins.groovy.lang.controlFlow;
 
 import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
@@ -42,7 +41,7 @@ public class ControlFlowTest extends SimpleGroovyFileSetTestCase {
     text = withoutText(text, ourSelectionEndMarker);
     assert (selStart >= 0) && (selStart >= 0) || ((selStart < 0) && (selStart < 0));
 
-    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, text);
+    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalGroovyFile(myProject, text);
     final PsiElement start = file.findElementAt(selStart);
     final PsiElement end = file.findElementAt(selEnd - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);

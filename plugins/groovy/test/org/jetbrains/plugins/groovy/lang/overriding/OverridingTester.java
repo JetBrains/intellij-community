@@ -19,7 +19,7 @@ public abstract class OverridingTester extends SimpleGroovyFileSetTestCase {
 
   public String transform(String testName, String[] data) throws Exception {
     String fileText = data[0];
-    GroovyFileBase psiFile = (GroovyFileBase) TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    GroovyFileBase psiFile = (GroovyFileBase) TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
     StringBuffer buffer = new StringBuffer();
 

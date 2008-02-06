@@ -17,11 +17,17 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IChameleonElementType;
+import com.intellij.psi.PsiElement;
 import com.intellij.lang.Language;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiParser;
+import com.intellij.peer.PeerFactory;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocLexer;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,15 +38,23 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
   /**
    * GroovyDoc comment
    */
-  IChameleonElementType GROOVY_DOC_COMMENT = new IChameleonElementType("GroovyDocComment") {
+  IChameleonElementType GROOVY_DOC_COMMENT = new IChameleonElementType("GrDocComment") {
     @NotNull
     public Language getLanguage() {
-      return GroovyDocLanguage.LANGUAGE; 
+      return GroovyFileType.GROOVY_FILE_TYPE.getLanguage();
+    }
+
+    public ASTNode parseContents(ASTNode chameleon) {
+      final PeerFactory factory = PeerFactory.getInstance();
+      final PsiElement parentElement = chameleon.getTreeParent().getPsi();
+      final Project project = parentElement.getManager().getProject();
+
+      final PsiBuilder builder = factory.createBuilder(chameleon, new GroovyDocLexer(), getLanguage(), chameleon.getText(), project);
+      final PsiParser parser = new GroovyDocParser();
+
+      return parser.parse(this, builder).getFirstChildNode();
     }
   };
-
-  // Filetype for Parser definition
-  IFileElementType GROOVY_DOC_DUMMY_FILE = new IFileElementType(GroovyDocLanguage.LANGUAGE);
 
   GroovyDocElementType GDOC_TAG = new GroovyDocElementType("GroovyDocTag");
   GroovyDocElementType GDOC_INLINED_TAG = new GroovyDocElementType("GroovyDocInlinedTag");
@@ -50,6 +64,4 @@ public interface GroovyDocElementTypes extends GroovyDocTokenTypes {
   GroovyDocElementType GDOC_METHOD_REF = new GroovyDocElementType("GroovyDocMethodReference");
   GroovyDocElementType GDOC_FIELD_REF = new GroovyDocElementType("GroovyDocFieldReference");
   GroovyDocElementType GDOC_METHOD_PARAMS = new GroovyDocElementType("GroovyDocMethodParameterList");
-
-
 }

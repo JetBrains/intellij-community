@@ -32,7 +32,7 @@ public class ReachingDefsTest extends SimpleGroovyFileSetTestCase {
     text = withoutText(text, ourSelectionEndMarker);
     assert (selStart >= 0) && (selStart >= 0) || ((selStart < 0) && (selStart < 0));
 
-    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalFile(myProject, text);
+    final GroovyFile file = (GroovyFile) TestUtils.createPseudoPhysicalGroovyFile(myProject, text);
     final PsiElement start = file.findElementAt(selStart);
     final PsiElement end = file.findElementAt(selEnd - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);

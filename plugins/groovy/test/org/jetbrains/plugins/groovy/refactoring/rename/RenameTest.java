@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.psi.*;
-import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -20,14 +19,8 @@ import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.lang.psi.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.refactoring.CommonRefactoringTestCase;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.inline.GroovyInlineHandler;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NonNls;
 
@@ -49,7 +42,7 @@ public class RenameTest extends CommonRefactoringTestCase {
     String result;
     int caretOffset = fileText.indexOf(CARET_MARKER);
     fileText = TestUtils.removeCaretMarker(fileText, caretOffset);
-    PsiFile file = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    PsiFile file = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
     Assert.assertNotNull(file);
 

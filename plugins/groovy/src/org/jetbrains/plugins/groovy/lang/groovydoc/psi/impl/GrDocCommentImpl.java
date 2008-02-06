@@ -18,18 +18,18 @@ package org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes;
-import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 
 /**
  * @author ilyas
  */
-public class GroovyDocCommentImpl extends CompositePsiElement implements GroovyDocElementTypes, GroovyDocComment {
-  public GroovyDocCommentImpl() {
+public class GrDocCommentImpl extends CompositePsiElement implements GroovyDocElementTypes, GrDocComment {
+  public GrDocCommentImpl() {
     super(GROOVY_DOC_COMMENT);
   }
 
   public String toString() {
-    return "GroovyDocComment";
+    return "GrDocComment";
   }
 
   public IElementType getTokenType() {

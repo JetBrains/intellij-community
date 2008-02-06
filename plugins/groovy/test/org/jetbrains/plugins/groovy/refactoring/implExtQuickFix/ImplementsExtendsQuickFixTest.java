@@ -2,9 +2,6 @@ package org.jetbrains.plugins.groovy.refactoring.implExtQuickFix;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.plugins.groovy.annotator.intentions.ChangeExtendsImplementsQuickFix;
@@ -27,7 +24,7 @@ public class ImplementsExtendsQuickFixTest extends SimpleGroovyFileSetTestCase {
 
     public String transform(String testName, String[] data) throws Exception {
         String fileText = data[0];
-        final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+        final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
         assert psiFile instanceof GroovyFileBase;
         final GrTypeDefinition[] typeDefinitions = ((GroovyFileBase) psiFile).getTypeDefinitions();
         final GrTypeDefinition typeDefinition = typeDefinitions[typeDefinitions.length - 1];

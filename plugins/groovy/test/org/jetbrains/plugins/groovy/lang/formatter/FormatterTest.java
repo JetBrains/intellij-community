@@ -55,7 +55,7 @@ public class FormatterTest extends SimpleGroovyFileSetTestCase {
 
   public String transform(String testName, String[] data) throws Exception {
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {

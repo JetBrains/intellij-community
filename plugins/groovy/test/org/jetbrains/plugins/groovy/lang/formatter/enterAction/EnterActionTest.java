@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import junit.framework.Assert;
@@ -32,7 +31,6 @@ import junit.framework.Test;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.plugins.groovy.testcases.action.ActionTestCase;
 import org.jetbrains.plugins.groovy.util.TestUtils;
-import org.jetbrains.plugins.groovy.GroovyLoader;
 
 import java.io.IOException;
 
@@ -67,7 +65,7 @@ public class EnterActionTest extends ActionTestCase {
     String fileText = file.getText();
     int offset = fileText.indexOf(CARET_MARKER);
     fileText = TestUtils.removeCaretMarker(fileText, offset);
-    myFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    myFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     fileEditorManager = FileEditorManager.getInstance(myProject);
     VirtualFile virtualFile = myFile.getVirtualFile();
     assert virtualFile != null;
@@ -99,7 +97,7 @@ public class EnterActionTest extends ActionTestCase {
   public String transform(String testName, String[] data) throws Exception {
     setSettings();
     String fileText = data[0];
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
     String result = processFile(psiFile);
     System.out.println("------------------------ " + testName + " ------------------------");
     System.out.println(result);

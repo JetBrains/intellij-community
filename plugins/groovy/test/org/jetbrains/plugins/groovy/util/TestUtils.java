@@ -14,7 +14,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.junit.Assert;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +50,7 @@ public abstract class TestUtils {
     return getTestDataPath() + "/mockGroovyLib";
   }
 
-  public static PsiFile createPseudoPhysicalFile(final Project project, final String text) throws IncorrectOperationException {
+  public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {
     return createPseudoPhysicalFile(project, TEMP_FILE, text);
   }
 

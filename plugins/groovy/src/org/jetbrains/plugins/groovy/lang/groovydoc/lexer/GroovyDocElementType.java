@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.groovydoc.lexer;
 
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.groovydoc.lang.GroovyDocLanguage;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 /**
  * @author ilyas
@@ -26,7 +26,7 @@ public class GroovyDocElementType extends IElementType {
   private String debugName = null;
 
   public GroovyDocElementType(String debugName) {
-    super(debugName, GroovyDocLanguage.LANGUAGE);
+    super(debugName, GroovyFileType.GROOVY_FILE_TYPE.getLanguage());
     this.debugName = debugName;
   }
 

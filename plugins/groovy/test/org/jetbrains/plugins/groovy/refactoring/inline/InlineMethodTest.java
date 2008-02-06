@@ -27,10 +27,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.refactoring.inline.GenericInlineHandler;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import junit.framework.Assert;
 import junit.framework.Test;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -68,7 +64,7 @@ public class InlineMethodTest extends CommonRefactoringTestCase {
     fileText = TestUtils.removeBeginMarker(fileText, startOffset);
     int endOffset = fileText.indexOf(END_MARKER);
     fileText = TestUtils.removeEndMarker(fileText, endOffset);
-    PsiFile file = TestUtils.createPseudoPhysicalFile(myProject, fileText);
+    PsiFile file = TestUtils.createPseudoPhysicalGroovyFile(myProject, fileText);
 
     Assert.assertNotNull(file);
 
