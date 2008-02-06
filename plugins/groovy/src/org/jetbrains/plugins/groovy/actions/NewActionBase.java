@@ -52,14 +52,13 @@ public abstract class NewActionBase extends CreateElementActionBase {
   protected abstract String getDialogTitle();
 
   public void update(final AnActionEvent e) {
-    final Presentation presentation = e.getPresentation();
-
     super.update(e);
 
-    if (!presentation.isEnabled() || !isUnderSourceRoots(e) || !isGroovyConfigured(e)) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-    }
+    final Presentation presentation = e.getPresentation();
+
+    boolean isEnabled = presentation.isEnabled() && isUnderSourceRoots(e) && isGroovyConfigured(e);
+    presentation.setEnabled(isEnabled);
+    presentation.setVisible(isEnabled);
   }
 
   public static boolean isGroovyConfigured(AnActionEvent e) {
