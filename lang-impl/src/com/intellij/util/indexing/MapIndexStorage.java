@@ -2,9 +2,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.psi.impl.cache.impl.repositoryCache.RecordUtil;
 import com.intellij.util.containers.ObjectCache;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentEnumerator;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +114,7 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
         myMap.appendData(key, new PersistentHashMap.ValueDataAppender() {
           public void append(final DataOutput out) throws IOException {
             myValueExternalizer.save(out, value);
-            RecordUtil.writeSINT(out, -inputId);
+            DataInputOutputUtil.writeSINT(out, -inputId);
           }
         });
       }
@@ -186,17 +186,17 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
         final ValueContainer.IntIterator ids = container.getInputIdsIterator(value);
         if (ids != null) {
           if (ids.size() == 1) {
-            RecordUtil.writeSINT(out, -ids.next());
+            DataInputOutputUtil.writeSINT(out, -ids.next());
           }
           else {
-            RecordUtil.writeSINT(out, ids.size());
+            DataInputOutputUtil.writeSINT(out, ids.size());
             while (ids.hasNext()) {
-              RecordUtil.writeSINT(out, ids.next());
+              DataInputOutputUtil.writeSINT(out, ids.next());
             }
           }
         }
         else {
-          RecordUtil.writeSINT(out, 0);
+          DataInputOutputUtil.writeSINT(out, 0);
         }
       }
     }
@@ -207,13 +207,13 @@ final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>{
       
       while (stream.available() > 0) {
         final T value = myExternalizer.read(in);
-        final int idCount = RecordUtil.readSINT(in);
+        final int idCount = DataInputOutputUtil.readSINT(in);
         if (idCount < 0) {
           valueContainer.addValue(-idCount, value);
         }
         else if (idCount > 0){
           for (int i = 0; i < idCount; i++) {
-            valueContainer.addValue(RecordUtil.readSINT(in), value);
+            valueContainer.addValue(DataInputOutputUtil.readSINT(in), value);
           }
         }
       }

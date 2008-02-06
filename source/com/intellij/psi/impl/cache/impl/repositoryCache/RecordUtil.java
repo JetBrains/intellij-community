@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.tree.StdTokenSets;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
@@ -386,12 +387,8 @@ public class RecordUtil {
     record.readByte();
     record.readBoolean();
     if (flags == 0x00) {
-      skipUTF(record);
+      DataInputOutputUtil.skipUTF(record);
     }
-  }
-
-  public static void skipUTF(DataInput record) throws IOException {
-    record.skipBytes(record.readUnsignedShort());
   }
 
   public static String createTypeText(TypeInfo typeInfo) {
@@ -415,23 +412,6 @@ public class RecordUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.cache.impl.repositoryCache");
 
-  public static String readNAME(DataInput record, PersistentStringEnumerator nameStore) throws IOException {
-    final int low = record.readUnsignedByte();
-    final int nameId = (readINT(record) << 8) | low;
-    return nameStore.valueOf(nameId);
-  }
-
-  public static void writeNAME(DataOutput record, final String name, PersistentStringEnumerator nameStore) throws IOException {
-    final int nameId = nameStore.enumerate(name);
-    record.writeByte(nameId & 0xFF);
-    writeINT(record, (nameId >> 8));
-  }
-
-  public static void skipNAME(DataInput record) throws IOException {
-    record.readUnsignedByte();
-    readINT(record);
-  }
-
   public static void readTYPE(DataInput record, TypeInfo view, PersistentStringEnumerator nameStore) throws IOException {
     final int b = 0xFF & record.readByte();
     final int tag = b & 0x3;
@@ -448,7 +428,7 @@ public class RecordUtil {
     view.arrayCount = (flags & 1) != 0 ? record.readByte() : 0;
     view.isEllipsis = (flags & 2) != 0;
     if (tag == 0x00) {
-      view.text = readNAME(record, nameStore);
+      view.text = DataInputOutputUtil.readNAME(record, nameStore);
       //view.text = readSTR(record);
     }
     else {
@@ -491,7 +471,7 @@ public class RecordUtil {
       if (arrayCount != 0) {
         record.writeByte(arrayCount);
       }
-      writeNAME(record, text, nameStore);
+      DataInputOutputUtil.writeNAME(record, text, nameStore);
       //writeSTR(record, text);
     }
   }
@@ -505,114 +485,28 @@ public class RecordUtil {
       record.readByte();
     }
     if (tag == 0x00) {
-      skipNAME(record);
+      DataInputOutputUtil.skipNAME(record);
       //skipSTR(record);
     }
   }
 
-  public static void skipINT(DataInput record) throws IOException {
-    readINT(record);
-  }
-
-  public static int readINT(DataInput record) throws IOException {
-    final int val = record.readUnsignedByte();
-    if (val < 192) {
-      return val;
-    }
-
-    for (int res = val - 192, sh = 6; ; sh += 7) {
-      int next = record.readUnsignedByte();
-      res |= (next & 0x7F) << sh;
-      if ((next & 0x80) == 0) {
-        return res;
-      }
-    }
-  }
-
-  public static void writeINT(DataOutput record, int val) throws IOException {
-    /*
-    if (0 <= val && val < 255)
-      record.writeByte(val);
-    else {
-      record.writeByte(255);
-      record.writeInt(val);
-    }
-    */
-    if (0 <= val && val < 192) {
-      record.writeByte(val);
-    }
-    else {
-      record.writeByte(192 + (val & 0x3F));
-      val >>>= 6;
-      while (val >= 128) {
-        record.writeByte((val & 0x7F) | 0x80);
-        val >>>= 7;
-      }
-      record.writeByte(val);
-    }
-  }
-
-  public static void skipSINT(DataInput record) throws IOException {
-    readSINT(record);
-  }
-
-  public static int readSINT(DataInput record) throws IOException {
-    return readINT(record) - 64;
-  }
-
-  public static void writeSINT(DataOutput record, int val) throws IOException {
-    writeINT(record, val + 64);
-  }
-
 
   public static int readID(DataInput record, int prevId) throws IOException {
-    return prevId + readSINT(record);
+    return prevId + DataInputOutputUtil.readSINT(record);
   }
 
   public static int readID(DataInput record) throws IOException {
     int low = record.readUnsignedByte();
-    return low + (readINT(record) << 8);
+    return low + (DataInputOutputUtil.readINT(record) << 8);
   }
 
   public static void writeID(DataOutput record, int prevId, int id) throws IOException {
-    writeSINT(record, id - prevId);
+    DataInputOutputUtil.writeSINT(record, id - prevId);
   }
 
   public static void writeID(DataOutput record, int id) throws IOException {
     record.writeByte(id & 0xFF);
-    writeINT(record, id >>> 8);
-  }
-
-  private final static long timeBase = 33l * 365l * 24l * 3600l * 1000l;
-
-  public static void writeTIME(DataOutput record, long timestamp) throws IOException {
-    long relStamp = timestamp - timeBase;
-    if (relStamp < 0 || relStamp >= 0xFF00000000l) {
-      record.writeByte(255);
-      record.writeLong(timestamp);
-    }
-    else {
-      record.writeByte((int)(relStamp >> 32));
-      record.writeByte((int)(relStamp >> 24));
-      record.writeByte((int)(relStamp >> 16));
-      record.writeByte((int)(relStamp >> 8));
-      record.writeByte((int)(relStamp >> 0));
-    }
-  }
-
-  public static long readTIME(DataInput record) throws IOException {
-    final int first = record.readUnsignedByte();
-    if (first == 255) {
-      return record.readLong();
-    }
-    else {
-      final int second = record.readUnsignedByte();
-
-      final int third = record.readUnsignedByte() << 16;
-      final int fourth = record.readUnsignedByte() << 8;
-      final int fifth = record.readUnsignedByte();
-      return ((((long)((first << 8) | second)) << 24) | (third | fourth | fifth)) + timeBase;
-    }
+    DataInputOutputUtil.writeINT(record, id >>> 8);
   }
 
   public static PersistentStringEnumerator getNameStoreFile(String name, boolean toDelete, File cacheFolder)
