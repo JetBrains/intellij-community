@@ -104,6 +104,7 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
         if (classNode == null) return;
 
         final DefaultMutableTreeNode desiredNode = TreeUtil.findNodeWithObject(classNode, new DPPropertyNode(new DPPropertyElement(myNameIdentifier.getText())));
+        if (desiredNode == null) return;
         final TreePath path = TreeUtil.getPathFromRoot(desiredNode);
 
         treeTable.getTree().expandPath(path);
