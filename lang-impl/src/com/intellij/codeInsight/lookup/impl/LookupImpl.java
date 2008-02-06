@@ -120,7 +120,9 @@ public class LookupImpl extends LightweightHint implements Lookup, Disposable {
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     getComponent().add(scrollPane, BorderLayout.CENTER);
     scrollPane.setBorder(null);
-    getComponent().add(myBottomLabel, BorderLayout.SOUTH);
+    if (StringUtil.isNotEmpty(bottomText)) {
+      getComponent().add(myBottomLabel, BorderLayout.SOUTH);
+    }
     getComponent().setBorder(new BegPopupMenuBorder());
 
     myEditorCaretListener = new CaretListener() {
