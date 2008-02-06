@@ -247,6 +247,7 @@ public class PagePool {
                 finalizationQueueSemaphore.notifyAll();
               }
             }
+            Thread.yield();
           }
           else {
             synchronized (finalizationLock) {
