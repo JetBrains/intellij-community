@@ -43,7 +43,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
   
   public Self nameIdentifierOf(final ElementPattern<? extends PsiMember> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("nameIdentifierOf") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         if (!(t instanceof PsiIdentifier)) return false;
 
@@ -58,7 +58,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("methodCallParameter") {
       public boolean accepts(@NotNull final T literal, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {

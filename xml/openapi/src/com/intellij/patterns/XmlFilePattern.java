@@ -18,7 +18,7 @@ public class XmlFilePattern<Self extends XmlFilePattern<Self>> extends PsiFilePa
   }
 
   public Self withRootTag(final ElementPattern rootTag) {
-    return with(new PatternCondition<XmlFile>() {
+    return with(new PatternCondition<XmlFile>("withRootTag") {
       public boolean accepts(@NotNull final XmlFile xmlFile,
                                 final MatchingContext matchingContext,
                                 @NotNull final TraverseContext traverseContext) {

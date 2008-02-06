@@ -18,7 +18,7 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
   }
 
   public Self withParentDirectoryName(final StringPattern namePattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withParentDirectoryName") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         PsiDirectory directory = t.getContainingDirectory();
         return directory != null && namePattern.getCondition().accepts(directory.getName(), matchingContext, traverseContext);

@@ -12,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 public class CaseInsensitiveValuePatternCondition extends PatternCondition<String> {
   private final String[] myValues;
 
-  public CaseInsensitiveValuePatternCondition(final String... values) {
+  public CaseInsensitiveValuePatternCondition(String methodName, final String... values) {
+    super(methodName);
     myValues = values;
   }
 

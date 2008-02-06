@@ -4,10 +4,6 @@
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiBinaryExpression;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PatternCondition;
-import com.intellij.patterns.MatchingContext;
-import com.intellij.patterns.TraverseContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +15,7 @@ public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryEx
   }
 
   public PsiBinaryExpressionPattern left(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<PsiBinaryExpression>() {
+    return with(new PatternCondition<PsiBinaryExpression>("left") {
       public boolean accepts(@NotNull final PsiBinaryExpression psiBinaryExpression, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(psiBinaryExpression.getLOperand(), matchingContext, traverseContext);
       }
@@ -27,7 +23,7 @@ public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryEx
   }
 
   public PsiBinaryExpressionPattern right(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<PsiBinaryExpression>() {
+    return with(new PatternCondition<PsiBinaryExpression>("right") {
       public boolean accepts(@NotNull final PsiBinaryExpression psiBinaryExpression, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(psiBinaryExpression.getROperand(), matchingContext, traverseContext);
       }
@@ -35,7 +31,7 @@ public class PsiBinaryExpressionPattern extends PsiExpressionPattern<PsiBinaryEx
   }
 
   public PsiBinaryExpressionPattern operation(final ElementPattern pattern) {
-    return with(new PatternCondition<PsiBinaryExpression>() {
+    return with(new PatternCondition<PsiBinaryExpression>("operation") {
       public boolean accepts(@NotNull final PsiBinaryExpression psiBinaryExpression, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(psiBinaryExpression.getOperationSign(), matchingContext, traverseContext);
       }

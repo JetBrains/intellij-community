@@ -29,7 +29,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public StringPattern startsWith(@NonNls @NotNull final String s) {
-    return with(new PatternCondition<String>() {
+    return with(new PatternCondition<String>("startsWith") {
       public boolean accepts(@NotNull final String str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return str.startsWith(s);
       }
@@ -38,7 +38,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public StringPattern endsWith(@NonNls @NotNull final String s) {
-    return with(new PatternCondition<String>() {
+    return with(new PatternCondition<String>("endsWith") {
       public boolean accepts(@NotNull final String str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return str.endsWith(s);
       }
@@ -46,7 +46,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   }
   @NotNull
   public StringPattern contains(@NonNls @NotNull final String s) {
-    return with(new PatternCondition<String>() {
+    return with(new PatternCondition<String>("contains") {
       public boolean accepts(@NotNull final String str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return str.contains(s);
       }
@@ -56,7 +56,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public StringPattern contains(@NonNls @NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<String>() {
+    return with(new PatternCondition<String>("contains") {
       public boolean accepts(@NotNull final String str, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (int i = 0; i < str.length(); i++) {
           if (pattern.accepts(str.charAt(i))) return true;
@@ -67,7 +67,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
   }
 
   public StringPattern longerThan(final int minLength) {
-    return with(new PatternCondition<String>() {
+    return with(new PatternCondition<String>("longerThan") {
       public boolean accepts(@NotNull final String s,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return s.length() > minLength;
@@ -82,7 +82,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
 
   @NotNull
   public StringPattern oneOfIgnoreCase(@NonNls final String... values) {
-    return with(new CaseInsensitiveValuePatternCondition(values));
+    return with(new CaseInsensitiveValuePatternCondition("oneOfIgnoreCase", values));
   }
 
   @NotNull

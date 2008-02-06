@@ -6,6 +6,7 @@ package com.intellij.patterns;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
@@ -13,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PropertyPatternCondition<T,P> extends PatternCondition<T>{
   private final ElementPattern<? extends P> myPropertyPattern;
 
-  public PropertyPatternCondition(final ElementPattern<? extends P> propertyPattern) {
+  public PropertyPatternCondition(@NonNls String methodName, final ElementPattern<? extends P> propertyPattern) {
+    super(methodName);
     myPropertyPattern = propertyPattern;
   }
 

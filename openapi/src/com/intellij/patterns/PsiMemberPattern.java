@@ -24,7 +24,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   }
 
   public Self withModifiers(final String... modifiers) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withModifiers") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return ContainerUtil.and(modifiers, new Condition<String>() {
           public boolean value(final String s) {
@@ -36,7 +36,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   }
 
   public Self withoutModifiers(final String... modifiers) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withoutModifiers") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return ContainerUtil.and(modifiers, new Condition<String>() {
           public boolean value(final String s) {
@@ -48,7 +48,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   }
 
   public Self withAnnotation(@NonNls final String qualifiedName) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withAnnotation") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final PsiModifierList modifierList = t.getModifierList();
         return modifierList != null && modifierList.findAnnotation(qualifiedName) != null;
@@ -61,7 +61,7 @@ public class PsiMemberPattern<T extends PsiMember, Self extends PsiMemberPattern
   }
 
   public Self inClass(final ElementPattern pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("inClass") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(t.getContainingClass(), matchingContext, traverseContext);
       }

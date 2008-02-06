@@ -24,7 +24,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> all(final ElementPattern<? extends T> pattern) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("all") {
       public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final T t : collection) {
           if (!pattern.getCondition().accepts(t, matchingContext, traverseContext)) return false;
@@ -35,7 +35,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> atLeastOne(final ElementPattern<? extends T> pattern) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("atLeastOne") {
       public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final T t : collection) {
           if (pattern.getCondition().accepts(t, matchingContext, traverseContext)) return true;
@@ -46,7 +46,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> filter(final ElementPattern<? extends T> elementPattern, final ElementPattern<Collection<T>> continuationPattern) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("filter") {
       public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         List<T> filtered = new ArrayList<T>();
         for (final T t : collection) {
@@ -60,7 +60,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> first(final ElementPattern<? extends T> elementPattern) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("first") {
       public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return !collection.isEmpty() &&
                elementPattern.getCondition().accepts(collection.iterator().next(), matchingContext, traverseContext);
@@ -77,7 +77,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> atLeast(final int size) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("atLeast") {
       public boolean accepts(@NotNull final Collection<T> ts,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return ts.size() >= size;
@@ -86,7 +86,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> size(final int size) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("size") {
       public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return size == collection.size();
       }
@@ -94,7 +94,7 @@ public class CollectionPattern<T> extends ObjectPattern<Collection<T>, Collectio
   }
 
   public CollectionPattern<T> last(final ElementPattern elementPattern) {
-    return with(new PatternCondition<Collection<T>>() {
+    return with(new PatternCondition<Collection<T>>("last") {
       public boolean accepts(@NotNull final Collection<T> collection, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         if (collection.isEmpty()) {
           return false;

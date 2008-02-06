@@ -31,7 +31,7 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
   }
 
   public XmlAttributeValuePattern withLocalName(ElementPattern<String> namePattern) {
-    return with(new PsiNamePatternCondition<XmlAttributeValue>(namePattern) {
+    return with(new PsiNamePatternCondition<XmlAttributeValue>("withLocalName", namePattern) {
       public String getPropertyValue(@NotNull final Object o) {
         if (o instanceof XmlAttributeValue) {
           final XmlAttributeValue value = (XmlAttributeValue)o;

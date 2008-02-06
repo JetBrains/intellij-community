@@ -30,7 +30,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
    * @return
    */
   public PsiMethodPattern withParameters(@NonNls final String... types) {
-    return with(new PatternCondition<PsiMethod>() {
+    return with(new PatternCondition<PsiMethod>("withParameters") {
       public boolean accepts(@NotNull final PsiMethod psiMethod,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final PsiParameterList parameterList = psiMethod.getParameterList();
@@ -61,7 +61,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
   }
 
   public PsiMethodPattern definedInClass(final ElementPattern pattern) {
-    return with(new PatternCondition<PsiMethod>() {
+    return with(new PatternCondition<PsiMethod>("definedInClass") {
       public boolean accepts(@NotNull final PsiMethod psiMethod,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         if (pattern.accepts(psiMethod.getContainingClass())) {
@@ -83,7 +83,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
   }
 
   public PsiMethodPattern constructor(final boolean isConstructor) {
-    return with(new PatternCondition<PsiMethod>() {
+    return with(new PatternCondition<PsiMethod>("constructor") {
       public boolean accepts(@NotNull final PsiMethod method,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return method.isConstructor() == isConstructor;
@@ -93,7 +93,7 @@ public class PsiMethodPattern extends PsiMemberPattern<PsiMethod,PsiMethodPatter
 
 
   public PsiMethodPattern withThrowsList(final ElementPattern<?> pattern) {
-    return with(new PatternCondition<PsiMethod>() {
+    return with(new PatternCondition<PsiMethod>("withThrowsList") {
       public boolean accepts(@NotNull final PsiMethod method,
                              final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.accepts(method.getThrowsList());

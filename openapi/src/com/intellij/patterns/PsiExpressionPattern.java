@@ -18,7 +18,7 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
   }
 
   public Self ofType(@NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("ofType") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(t.getType(), matchingContext, traverseContext);
       }
@@ -26,7 +26,7 @@ public class PsiExpressionPattern<T extends PsiExpression, Self extends PsiExpre
   }
 
   public Self methodCall(final ElementPattern methodPattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("methodCall") {
       public boolean accepts(@NotNull final T element, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         if (element instanceof PsiMethodCallExpression) {
           final JavaResolveResult[] results = ((PsiMethodCallExpression)element).getMethodExpression().multiResolve(true);

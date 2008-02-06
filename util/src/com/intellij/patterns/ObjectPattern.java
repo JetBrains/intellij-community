@@ -52,7 +52,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self and(final ElementPattern pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("and") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(t, matchingContext, traverseContext);
       }
@@ -60,7 +60,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self equalTo(@NotNull final T o) {
-    return with(new ValuePatternCondition<T>(Collections.singleton(o)) {
+    return with(new ValuePatternCondition<T>("equalTo", Collections.singleton(o)) {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return t.equals(o);
       }
@@ -74,7 +74,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
 
   @NotNull
   public Self oneOf(final Collection<T> set) {
-    return with(new ValuePatternCondition<T>(set));
+    return with(new ValuePatternCondition<T>("oneOf", set));
   }
 
   public Self isNull() {
@@ -95,7 +95,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self save(final Key<? super T> key) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("save") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         matchingContext.put((Key)key, t);
         return true;
@@ -104,7 +104,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self save(final String key) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("save") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         matchingContext.put(key, t);
         return true;
@@ -129,7 +129,7 @@ public abstract class ObjectPattern<T, Self extends ObjectPattern<T, Self>> impl
   }
 
   public Self without(final PatternCondition<? super T> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("without") {
       public boolean accepts(@NotNull final T o, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return !pattern.accepts(o, matchingContext, traverseContext);
       }

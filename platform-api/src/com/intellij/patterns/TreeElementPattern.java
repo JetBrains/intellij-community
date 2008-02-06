@@ -50,7 +50,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
   }
 
   public Self withChildren(@NotNull final ElementPattern<Collection<ParentType>> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withChildren") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(Arrays.asList(getChildren(t)), matchingContext, traverseContext);
       }
@@ -58,7 +58,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
   }
 
   public Self isFirstAcceptedChild(@NotNull final ElementPattern<? super ParentType> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("isFirstAcceptedChild") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final ParentType parent = getParent(t);
         if (parent != null) {
@@ -79,7 +79,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
     return withSuperParent(level, StandardPatterns.instanceOf(aClass));
   }
   public Self withSuperParent(final int level, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withSuperParent") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         ParentType parent = t;
         for (int i = 0; i < level; i++) {
@@ -100,7 +100,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
   }
 
   public Self inside(final boolean strict, @NotNull final ElementPattern<? extends ParentType> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("inside") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         ParentType element = strict ? getParent(t) : t;
         while (element != null) {

@@ -63,7 +63,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   public Self equalTo(@NotNull final T o) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("equalTo") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return t.getManager().areElementsEquivalent(t, o);
       }
@@ -72,7 +72,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   public Self withElementType(final ElementPattern<IElementType> pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withElementType") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final ASTNode node = t.getNode();
         return node != null && pattern.accepts(node.getElementType());
@@ -94,11 +94,11 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   public Self withName(@NotNull final ElementPattern<String> name) {
-    return with(new PsiNamePatternCondition<T>(name));
+    return with(new PsiNamePatternCondition<T>("withName", name));
   }
 
   public Self afterLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("afterLeafSkipping") {
       public boolean accepts(@NotNull T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         PsiElement element = t;
         while (true) {
@@ -121,7 +121,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   }
 
   private PatternCondition<T> _withText(final ElementPattern pattern) {
-    return new PatternCondition<T>() {
+    return new PatternCondition<T>("_withText") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(t.getText(), matchingContext, traverseContext);
       }

@@ -17,7 +17,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
   }
 
   public PsiTypePattern arrayOf(final ElementPattern pattern) {
-    return with(new PatternCondition<PsiType>() {
+    return with(new PatternCondition<PsiType>("arrayOf") {
       public boolean accepts(@NotNull final PsiType psiType, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return psiType instanceof PsiArrayType &&
                pattern.getCondition().accepts(((PsiArrayType)psiType).getComponentType(), matchingContext, traverseContext);
@@ -26,7 +26,7 @@ public class PsiTypePattern extends ObjectPattern<PsiType,PsiTypePattern> {
   }
 
   public PsiTypePattern classType(final ElementPattern pattern) {
-    return with(new PatternCondition<PsiType>() {
+    return with(new PatternCondition<PsiType>("classType") {
       public boolean accepts(@NotNull final PsiType psiType, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return psiType instanceof PsiClassType &&
                pattern.getCondition().accepts(((PsiClassType)psiType).resolve(), matchingContext, traverseContext);

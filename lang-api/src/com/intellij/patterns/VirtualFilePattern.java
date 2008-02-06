@@ -20,7 +20,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
   }
 
   public VirtualFilePattern ofType(final FileType type) {
-    return with(new PatternCondition<VirtualFile>() {
+    return with(new PatternCondition<VirtualFile>("ofType") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return type.equals(virtualFile.getFileType());
       }
@@ -28,7 +28,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
   }
 
   public VirtualFilePattern withName(final ElementPattern namePattern) {
-    return with(new PatternCondition<VirtualFile>() {
+    return with(new PatternCondition<VirtualFile>("withName") {
       public boolean accepts(@NotNull final VirtualFile virtualFile,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return namePattern.getCondition().accepts(virtualFile.getName(), matchingContext, traverseContext);
@@ -37,7 +37,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
   }
 
   public VirtualFilePattern xmlWithRootTag(final ElementPattern tagNamePattern) {
-    return with(new PatternCondition<VirtualFile>() {
+    return with(new PatternCondition<VirtualFile>("xmlWithRootTag") {
       public boolean accepts(@NotNull final VirtualFile virtualFile, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         try {
           NanoXmlUtil.RootTagNameBuilder rootTagNameBuilder = new NanoXmlUtil.RootTagNameBuilder();

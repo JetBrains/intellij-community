@@ -7,6 +7,7 @@ package com.intellij.patterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author peter
@@ -14,8 +15,8 @@ import org.jetbrains.annotations.NotNull;
 public class PsiNamePatternCondition<T extends PsiElement> extends PropertyPatternCondition<T, String> {
   private final ElementPattern<String> myNamePattern;
 
-  public PsiNamePatternCondition(final ElementPattern<String> namePattern) {
-    super(namePattern);
+  public PsiNamePatternCondition(@NonNls String methodName, final ElementPattern<String> namePattern) {
+    super(methodName, namePattern);
     myNamePattern = namePattern;
   }
 

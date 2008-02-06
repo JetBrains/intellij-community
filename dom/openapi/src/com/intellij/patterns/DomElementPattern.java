@@ -47,7 +47,7 @@ public class DomElementPattern<T extends DomElement,Self extends DomElementPatte
   }
 
   public Self withChild(@NonNls @NotNull final String localName, final ElementPattern pattern) {
-    return with(new PatternCondition<T>() {
+    return with(new PatternCondition<T>("withChild") {
       public boolean accepts(@NotNull final T t, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         for (final AbstractDomChildrenDescription description : t.getGenericInfo().getChildrenDescriptions()) {
           if (!(description instanceof DomChildrenDescription) || localName.equals(((DomChildrenDescription)description).getXmlElementName())) {

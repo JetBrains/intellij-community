@@ -36,7 +36,7 @@ public class DomPatterns {
   }
 
   public static XmlElementPattern.Capture withDom(final ElementPattern pattern) {
-    return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>() {
+    return new XmlElementPattern.Capture().with(new PatternCondition<XmlElement>("withDom") {
       public boolean accepts(@NotNull final XmlElement xmlElement, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         final DomManager manager = DomManager.getDomManager(xmlElement.getProject());
         if (xmlElement instanceof XmlAttribute) {

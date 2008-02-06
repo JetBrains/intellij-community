@@ -32,7 +32,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
   }
 
   public GenericDomValuePattern<T> withStringValue(final ElementPattern pattern) {
-    return with(new PatternCondition<GenericDomValue<T>>() {
+    return with(new PatternCondition<GenericDomValue<T>>("withStringValue") {
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(genericDomValue.getStringValue(), matchingContext, traverseContext);
       }
@@ -45,7 +45,7 @@ public class GenericDomValuePattern<T> extends DomElementPattern<GenericDomValue
   }
 
   public GenericDomValuePattern<T> withValue(final ElementPattern pattern) {
-    return with(new PatternCondition<GenericDomValue<T>>() {
+    return with(new PatternCondition<GenericDomValue<T>>("withValue") {
       public boolean accepts(@NotNull final GenericDomValue<T> genericDomValue, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return pattern.getCondition().accepts(genericDomValue.getValue(), matchingContext, traverseContext);
       }

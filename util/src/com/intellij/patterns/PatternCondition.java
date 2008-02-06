@@ -21,13 +21,10 @@ public abstract class PatternCondition<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.patterns.PatternCondition");
   @NonNls private static final String INIT = "<init>";
   @NonNls private static final String PARAMETER_FIELD_PREFIX = "val$";
-  private String myMethodName;
+  private final String myMethodName;
 
-  public PatternCondition() {
-    final StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-    int i = 2;
-    while (trace[i].getMethodName().equals(INIT)) i++;
-    myMethodName = trace[i].getMethodName();
+  public PatternCondition(@NonNls String methodName) {
+    myMethodName = methodName;
   }
 
   private void appendFieldValue(final StringBuilder builder, final Field field, String indent) {

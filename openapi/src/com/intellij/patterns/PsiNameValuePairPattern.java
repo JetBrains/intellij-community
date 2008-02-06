@@ -17,7 +17,7 @@ public class PsiNameValuePairPattern extends PsiElementPattern<PsiNameValuePair,
   }
 
   public PsiNameValuePairPattern withName(@NotNull @NonNls final String requiredName) {
-    return with(new PatternCondition<PsiNameValuePair>() {
+    return with(new PatternCondition<PsiNameValuePair>("withName") {
       public boolean accepts(@NotNull final PsiNameValuePair psiNameValuePair, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         String actualName = psiNameValuePair.getName();
         return requiredName.equals(actualName) || actualName == null && "value".equals(requiredName);

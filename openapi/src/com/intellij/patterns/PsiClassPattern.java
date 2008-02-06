@@ -16,7 +16,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   }
 
   public PsiClassPattern inheritorOf(final boolean strict, final PsiClassPattern pattern) {
-    return with(new PatternCondition<PsiClass>() {
+    return with(new PatternCondition<PsiClass>("inheritorOf") {
       public boolean accepts(@NotNull PsiClass psiClass, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return isInheritor(strict ? psiClass.getSuperClass() : psiClass, pattern, matchingContext, traverseContext);
       }
@@ -43,7 +43,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   }
 
   public PsiClassPattern isInterface() {
-    return with(new PatternCondition<PsiClass>() {
+    return with(new PatternCondition<PsiClass>("isInterface") {
       public boolean accepts(@NotNull final PsiClass psiClass, final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return psiClass.isInterface();
       }
@@ -51,7 +51,7 @@ public class PsiClassPattern extends PsiMemberPattern<PsiClass, PsiClassPattern>
   }
 
   public PsiClassPattern withQualifiedName(@NonNls @NotNull final String qname) {
-    return with(new PatternCondition<PsiClass>() {
+    return with(new PatternCondition<PsiClass>("withQualifiedName") {
       public boolean accepts(@NotNull final PsiClass psiClass,
                                 final MatchingContext matchingContext, @NotNull final TraverseContext traverseContext) {
         return qname.equals(psiClass.getQualifiedName());

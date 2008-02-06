@@ -5,6 +5,7 @@
 package com.intellij.patterns;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 
@@ -14,7 +15,8 @@ import java.util.Collection;
 public class ValuePatternCondition<T> extends PatternCondition<T>{
   private final Collection<T> myValues;
 
-  protected ValuePatternCondition(final Collection<T> values) {
+  protected ValuePatternCondition(@NonNls String methodName, final Collection<T> values) {
+    super(methodName);
     myValues = values;
   }
 
