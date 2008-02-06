@@ -1,10 +1,10 @@
-package com.intellij.refactoring.rename.naming;
+package com.intellij.uiDesigner.binding;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+
+import java.util.Arrays;
 
 /**
  * @author ven
@@ -22,12 +22,7 @@ public class FormsRenamer extends AutomaticRenamer {
   public FormsRenamer(PsiClass aClass, String newClassName) {
     if (aClass.getQualifiedName() != null) {
       PsiFile[] forms = JavaPsiFacade.getInstance(aClass.getProject()).findFormsBoundToClass(aClass.getQualifiedName());
-      for (final PsiFile form : forms) {
-        if (form.getName() != null) {
-          myElements.add(form);
-        }
-      }
-
+      myElements.addAll(Arrays.asList(forms));
       suggestAllNames(aClass.getName(), newClassName);
     }
   }

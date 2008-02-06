@@ -51,8 +51,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean myShouldRenameVariables;
   private boolean myShouldRenameInheritors;
 
-  private boolean myShouldRenameForms;
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
+  private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<AutomaticRenamerFactory>();
   private final List<AutomaticRenamer> myRenamers = new ArrayList<AutomaticRenamer>();
 
   public RenameProcessor(Project project,
@@ -84,8 +84,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     myShouldRenameInheritors = shouldRenameInheritors;
   }
 
-  public void setShouldRenameForms(final boolean shouldRenameForms) {
-    myShouldRenameForms = shouldRenameForms;
+  public void addRenamerFactory(AutomaticRenamerFactory factory) {
+    myRenamerFactories.add(factory);
   }
 
   public void doRun() {
@@ -394,8 +394,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      if (element instanceof PsiClass && myShouldRenameForms) {
-        myRenamers.add(new FormsRenamer((PsiClass)element, newName));
+      for(AutomaticRenamerFactory factory: myRenamerFactories) {
+        myRenamers.add(factory.createRenamer(element, newName));
       }
 
       if (element instanceof PsiMethod) {

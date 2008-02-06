@@ -90,6 +90,8 @@
     <referencesSearch implementation="com.intellij.uiDesigner.binding.FormReferencesSearcher"/>
 
     <saveFileAsTemplateHandler implementation="com.intellij.ide.actions.SaveFormAsTemplateHandler"/>
+
+    <automaticRenamerFactory implementation="com.intellij.uiDesigner.binding.FormsRenamerFactory"/>
   </extensions>
 
   <project-components>

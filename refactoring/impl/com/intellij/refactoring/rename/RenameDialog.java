@@ -7,18 +7,20 @@ import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -37,10 +39,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
@@ -52,7 +51,6 @@ public class RenameDialog extends RefactoringDialog {
   private JCheckBox myCbSearchTextOccurences;
   private JCheckBox myCbRenameVariables;
   private JCheckBox myCbRenameInheritors;
-  private JCheckBox myCbRenameBoundForms;
   private final JLabel myNewNamePrefix = new JLabel("");
   private final String myHelpID;
   private final PsiElement myPsiElement;
@@ -60,6 +58,7 @@ public class RenameDialog extends RefactoringDialog {
   private final Editor myEditor;
   private static final String REFACTORING_NAME = RefactoringBundle.message("rename.title");
   private NameSuggestionsField.DataChanged myNameChangedListener;
+  private Map<AutomaticRenamerFactory, JCheckBox> myAutomaticRenamers = new HashMap<AutomaticRenamerFactory, JCheckBox>();
 
   public RenameDialog(@NotNull Project project, @NotNull PsiElement psiElement, @Nullable PsiElement nameSuggestionContext,
                       Editor editor) {
@@ -293,11 +292,6 @@ public class RenameDialog extends RefactoringDialog {
     return myCbRenameInheritors != null && myCbRenameInheritors.isSelected();
   }
 
-  private boolean shouldRenameForms() {
-    return myCbRenameBoundForms != null && myCbRenameBoundForms.isSelected();
-  }
-
-
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -372,21 +366,21 @@ public class RenameDialog extends RefactoringDialog {
       myCbRenameInheritors.setText(RefactoringBundle.message("rename.inheritors"));
       myCbRenameInheritors.setSelected(isToRenameInheritors());
       panel.add(myCbRenameInheritors, gbConstraints);
+    }
 
-      String qName = ((PsiClass)myPsiElement).getQualifiedName();
-      if (qName != null) {
-        PsiFile[] forms = JavaPsiFacade.getInstance(myProject).findFormsBoundToClass(qName);
-        if (forms.length > 0) {
-          gbConstraints.insets = new Insets(4, 8, 4, 8);
-          gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-          gbConstraints.gridx = 0;
-          gbConstraints.weightx = 1;
-          gbConstraints.fill = GridBagConstraints.BOTH;
-          myCbRenameBoundForms = new NonFocusableCheckBox();
-          myCbRenameBoundForms.setText(RefactoringBundle.message("rename.bound.forms"));
-          myCbRenameBoundForms.setSelected(true);
-          panel.add(myCbRenameBoundForms, gbConstraints);
-        }
+    for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      if (factory.isApplicable(myPsiElement)) {
+        gbConstraints.insets = new Insets(4, 8, 4, 8);
+        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        gbConstraints.gridx = 0;
+        gbConstraints.weightx = 1;
+        gbConstraints.fill = GridBagConstraints.BOTH;
+
+        JCheckBox checkBox = new NonFocusableCheckBox();
+        checkBox.setText(factory.getOptionName());
+        checkBox.setSelected(factory.isEnabled());
+        panel.add(checkBox, gbConstraints);
+        myAutomaticRenamers.put(factory, checkBox);
       }
     }
 
@@ -420,7 +414,12 @@ public class RenameDialog extends RefactoringDialog {
                                                           isSearchInNonJavaFiles());
     processor.setShouldRenameInheritors(shouldRenameInheritors());
     processor.setShouldRenameVariables(shouldRenameVariables());
-    processor.setShouldRenameForms(shouldRenameForms());
+
+    for(Map.Entry<AutomaticRenamerFactory, JCheckBox> e: myAutomaticRenamers.entrySet()) {
+      if (e.getValue().isSelected()) {
+        processor.addRenamerFactory(e.getKey());
+      }
+    }
 
     invokeRefactoring(processor);
   }
