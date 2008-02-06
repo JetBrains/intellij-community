@@ -502,7 +502,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     final VirtualFile file = content.getVirtualFile();
     FileContent fc = null;
     for (String indexId : myIndices.keySet()) {
-      if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
+      if (getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
         if (fc == null) {
           fc = new FileContent(file, CacheUtil.getContentText(content));
         }
@@ -734,7 +734,7 @@ public class FileBasedIndex implements ApplicationComponent, PersistentStateComp
     public boolean processFile(final VirtualFile file) {
       if (!file.isDirectory()) {
         for (String indexId : myIndexIds) {
-          if (!IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId)) && getInputFilter(indexId).acceptInput(file)) {
+          if (getInputFilter(indexId).acceptInput(file) && !IndexingStamp.isFileIndexed(file, indexId, getIndexCreationStamp(indexId))) {
             myFiles.add(file);
             break;
           }
