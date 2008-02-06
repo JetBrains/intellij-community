@@ -56,13 +56,13 @@ public abstract class NewActionBase extends CreateElementActionBase {
 
     super.update(e);
 
-    if (!presentation.isEnabled() || !isUnderSourceRoots(e)) {
+    if (!presentation.isEnabled() || !isUnderSourceRoots(e) || !isGroovyConfigured(e)) {
       presentation.setEnabled(false);
       presentation.setVisible(false);
     }
   }
 
-  public  static boolean isGroovyConfigured(AnActionEvent e) {
+  public static boolean isGroovyConfigured(AnActionEvent e) {
     Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
     if (project != null) {
       PsiPackage groovyPackage = PsiManager.getInstance(project).findPackage("groovy.lang");
