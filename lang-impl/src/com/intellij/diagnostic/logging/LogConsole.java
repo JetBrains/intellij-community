@@ -154,11 +154,11 @@ public abstract class LogConsole extends AdditionalTabComponent implements Chang
 
   public void activate() {
     if (myReaderThread == null) return;
-    if (isActive()) {
+    if (isActive() && !myReaderThread.myRunning) {
       myFilter.setSelectedItem(getPreferences().CUSTOM_FILTER);
       myReaderThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(myReaderThread);     
-    } else {
+    } else if (!isActive() && myReaderThread.myRunning) {
       myReaderThread.stopRunning();
     }
   }

@@ -79,6 +79,8 @@ public class GridCell implements Disposable {
                          ViewContext.CELL_POPUP_PLACE);
     myTabs.addListener(new TabsListener() {
       public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
+        updateSelection(myTabs.isShowing());
+
         if (!myTabs.isShowing()) return;
 
         if (newSelection != null) {

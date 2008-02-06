@@ -618,6 +618,8 @@ public class NewDebuggerContentUI
   }
 
   public void moveToTab(final Content content) {
+    saveUiState();
+
     setStateIsBeingRestored(true, this);
     try {
       myManager.removeContent(content, false);
@@ -633,6 +635,8 @@ public class NewDebuggerContentUI
   }
 
   public void moveToGrid(final Content content) {
+    saveUiState();
+
     setStateIsBeingRestored(true, this);
 
     try {

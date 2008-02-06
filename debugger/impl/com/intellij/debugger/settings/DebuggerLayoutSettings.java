@@ -159,7 +159,11 @@ public class DebuggerLayoutSettings implements PersistentStateComponent<Element>
       state = new View(kind.toString(), getOrCreateTab(1), getDefaultGridPlace(kind), false);
     }
     else {
-      state = new View(kind.toString(), getOrCreateTab(Integer.MAX_VALUE), getDefaultGridPlace(kind), false);
+      int currentIndex = Integer.MAX_VALUE;
+      while(findTab(currentIndex) != null || currentIndex == 0) {
+        currentIndex--;
+      }
+      state = new View(kind.toString(), getOrCreateTab(currentIndex), getDefaultGridPlace(kind), false);
     }
 
     myContentStates.put(state.getID(), state);
