@@ -26,7 +26,7 @@ class XmlLanguageBreadcrumbsInfoProvider extends BreadcrumbsInfoProvider {
   }
 
   public Language[] getLanguages() {
-    return new Language[]{StdLanguages.XML, StdLanguages.XHTML, StdLanguages.HTML, StdLanguages.JSP, StdLanguages.JSPX};
+    return new Language[]{/*StdLanguages.XML,*/ StdLanguages.XHTML, StdLanguages.HTML, StdLanguages.JSP, StdLanguages.JSPX};
   }
 
   @NotNull

@@ -205,7 +205,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   @Nullable
-  private static BreadcrumbsInfoProvider findInfoProvider(@Nullable final PsiFile file,
+  static BreadcrumbsInfoProvider findInfoProvider(@Nullable final PsiFile file,
                                                           @NotNull BreadcrumbsLoaderComponentImpl loaderComponent) {
     BreadcrumbsInfoProvider provider = null;
     if (file != null) {

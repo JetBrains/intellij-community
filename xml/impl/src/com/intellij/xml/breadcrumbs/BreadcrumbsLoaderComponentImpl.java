@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,9 +102,12 @@ public class BreadcrumbsLoaderComponentImpl extends BreadcrumbsLoaderComponent {
       }
     }
 
-    private static boolean isSuitable(final Project project, final VirtualFile file) {
+    private boolean isSuitable(final Project project, final VirtualFile file) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      return psiFile != null && ((psiFile instanceof XmlFile) || psiFile.getUserData(BREADCRUMBS_SUITABLE_FILE) != null);
+      
+      return psiFile != null &&
+             (BreadcrumbsXmlWrapper.findInfoProvider(psiFile, myLoaderComponent) != null ||
+              file.getUserData(BREADCRUMBS_SUITABLE_FILE) != null);
     }
 
     public void fileClosed(final FileEditorManager source, final VirtualFile file) {
