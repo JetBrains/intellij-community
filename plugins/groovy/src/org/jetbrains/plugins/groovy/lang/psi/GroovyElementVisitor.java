@@ -332,6 +332,10 @@ public abstract class GroovyElementVisitor {
     visitElement(forClause);
   }
 
+  public void visitTraditionalForClause(GrTraditionalForClause forClause) {
+    visitForClause(forClause);
+  }
+
   public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
     visitStatement(tryCatchStatement);
   }

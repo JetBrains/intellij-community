@@ -51,7 +51,7 @@ public class ChooseTypeExpression implements Expression {
       if (constraint instanceof TypeEquals) {
         LookupItemUtil.addLookupItem(result, constraint.getType(), "");
       } else if (constraint instanceof SubtypeConstraint) {
-        LookupItemUtil.addLookupItem(result, ((SubtypeConstraint) constraint).getDefaultType(), "");
+        LookupItemUtil.addLookupItem(result, constraint.getDefaultType(), "");
       } else if (constraint instanceof SupertypeConstraint) {
         processSupertypes(constraint.getType(), result);
       }
@@ -73,7 +73,7 @@ public class ChooseTypeExpression implements Expression {
   }
 
   private PsiType chooseType(TypeConstraint[] constraints) {
-    if (constraints.length > 0) return constraints[0].getType();
+    if (constraints.length > 0) return constraints[0].getDefaultType();
     return myManager.getElementFactory().createTypeByFQClassName("java.lang.Object", GlobalSearchScope.allScope(myManager.getProject()));
   }
 

@@ -24,6 +24,8 @@ public abstract class TypeConstraint {
 
   public abstract boolean satisfied(PsiType type);
 
+  public abstract PsiType getDefaultType();
+
   protected TypeConstraint(PsiType type) {
     myType = type;
   }

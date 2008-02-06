@@ -31,6 +31,10 @@ public  class TypeEquals extends TypeConstraint {
     return type.equals(myType);
   }
 
+  public PsiType getDefaultType() {
+    return getType();
+  }
+
   public static TypeEquals create (PsiType type) {
     return new TypeEquals(type);
   }

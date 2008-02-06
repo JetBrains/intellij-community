@@ -38,7 +38,7 @@ public class GrTraditionalForClauseImpl extends GroovyPsiElementImpl implements 
   }
 
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitForClause(this);
+    visitor.visitTraditionalForClause(this);
   }
 
   public String toString() {
