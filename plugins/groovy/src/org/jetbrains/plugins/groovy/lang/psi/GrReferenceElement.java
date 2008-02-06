@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 /**
  * @author ven
  */
-public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantReference {
+public interface GrReferenceElement extends GroovyPsiElement, PsiPolyVariantReference, PsiQualifiedReference {
   String getReferenceName();
   PsiElement getReferenceNameElement();
 

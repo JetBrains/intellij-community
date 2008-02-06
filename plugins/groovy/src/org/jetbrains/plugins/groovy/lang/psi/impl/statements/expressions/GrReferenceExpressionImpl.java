@@ -78,6 +78,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl implements
     return new PsiMultiReference(otherReferences.length == 0 ? thisReference : ArrayUtil.mergeArrays(thisReference, otherReferences, PsiReference.class), this);
   }
 
+  @Nullable
+  public PsiElement getQualifier() {
+    return getQualifierExpression();
+  }
+
   public String getReferenceName() {
     PsiElement nameElement = getReferenceNameElement();
     if (nameElement != null) {
