@@ -25,18 +25,17 @@ import java.io.*;
 import java.nio.ByteBuffer;
 
 public class RandomAccessDataFile implements Forceable {
+  private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
   private final static PagePool ourPool = new PagePool();
   private static int ourFilesCount = 0;
+
   private final int myCount = ourFilesCount++;
-  
-  private volatile boolean myIsDirty = false;
+  private final File myFile;
 
   private final byte[] myTypedIOBuffer = new byte[8];
 
-  private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
-
-  private long mySize;
-  private final File myFile;
+  private volatile long mySize;
+  private volatile boolean myIsDirty = false;
 
   public RandomAccessDataFile(final File file) throws IOException {
     myFile = file;
@@ -47,7 +46,7 @@ public class RandomAccessDataFile implements Forceable {
     mySize = file.length();
   }
 
-  public synchronized void put(long addr, byte[] bytes, int off, int len) {
+  public void put(long addr, byte[] bytes, int off, int len) {
     myIsDirty = true;
     mySize = Math.max(mySize, addr + len);
 
@@ -60,7 +59,7 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public synchronized void get(long addr, byte[] bytes, int off, int len) {
+  public void get(long addr, byte[] bytes, int off, int len) {
     while (len > 0) {
       final Page page = ourPool.alloc(this, addr);
       int read = page.get(addr, bytes, off, len);
@@ -78,7 +77,7 @@ public class RandomAccessDataFile implements Forceable {
     return ourCache.getChannel(myFile);
   }
 
-  public synchronized void putInt(long addr, int value) {
+  public void putInt(long addr, int value) {
     byte[] buffer = myTypedIOBuffer;
     buffer[0] = (byte)((value >>> 24) & 0xFF);
     buffer[1] = (byte)((value >>> 16) & 0xFF);
@@ -88,7 +87,7 @@ public class RandomAccessDataFile implements Forceable {
     put(addr, buffer, 0, 4);
   }
 
-  public synchronized int getInt(long addr) {
+  public int getInt(long addr) {
     byte[] buffer = myTypedIOBuffer;
     get(addr, buffer, 0, 4);
 
@@ -99,7 +98,7 @@ public class RandomAccessDataFile implements Forceable {
     return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + ch4);
   }
 
-  public synchronized void putLong(long addr, long value) {
+  public void putLong(long addr, long value) {
     byte[] buffer = myTypedIOBuffer;
     buffer[0] = (byte)((value >>> 56) & 0xFF);
     buffer[1] = (byte)((value >>> 48) & 0xFF);
@@ -113,17 +112,17 @@ public class RandomAccessDataFile implements Forceable {
     put(addr, buffer, 0, 8);
   }
 
-  public synchronized void putByte(final long addr, final byte b) {
+  public void putByte(final long addr, final byte b) {
     myTypedIOBuffer[0] = b;
     put(addr, myTypedIOBuffer, 0, 1);
   }
 
-  public synchronized byte getByte(long addr) {
+  public byte getByte(long addr) {
     get(addr, myTypedIOBuffer, 0, 1);
     return myTypedIOBuffer[0];
   }
 
-  public synchronized String getUTF(long addr) {
+  public String getUTF(long addr) {
     try {
       int len = getInt(addr);
       byte[] bytes = new byte[ len ];
@@ -136,7 +135,7 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public synchronized void putUTF(long addr, String value) {
+  public void putUTF(long addr, String value) {
     try {
       final byte[] bytes = value.getBytes("UTF-8");
       putInt(addr, bytes.length);
@@ -147,7 +146,7 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public synchronized long getLong(long addr) {
+  public long getLong(long addr) {
     byte[] buffer = myTypedIOBuffer;
     get(addr, buffer, 0, 8);
 
@@ -163,7 +162,7 @@ public class RandomAccessDataFile implements Forceable {
     return ((ch1 << 56) + (ch2 << 48) + (ch3 << 40) + (ch4 << 32) + (ch5 << 24) + (ch6 << 16) + (ch7 << 8) + ch8);
   }
 
-  public synchronized long length() {
+  public long length() {
     return mySize;
   }
 
@@ -179,7 +178,7 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public synchronized boolean isDirty() {
+  public boolean isDirty() {
     return myIsDirty;
   }
 
@@ -189,7 +188,7 @@ public class RandomAccessDataFile implements Forceable {
   public static int totalWrites = 0;
   public static long totalWriteBytes = 0;
 
-  public synchronized void loadPage(final Page page) {
+  public void loadPage(final Page page) {
     try {
       final RandomAccessFile file = getFile();
       try {
@@ -213,7 +212,7 @@ public class RandomAccessDataFile implements Forceable {
     }
   }
 
-  public synchronized void flushPage(final Page page, int start, int end) {
+  public void flushPage(final Page page, int start, int end) {
     try {
       flush(page.getBuf(), page.getOffset() + start, start, end - start);
     }
