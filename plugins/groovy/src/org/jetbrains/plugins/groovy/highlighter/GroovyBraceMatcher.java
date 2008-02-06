@@ -18,10 +18,11 @@ package org.jetbrains.plugins.groovy.highlighter;
 import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
 /**
  * Brace matcher for Groovy language
@@ -34,6 +35,8 @@ public class GroovyBraceMatcher implements PairedBraceMatcher {
       new BracePair('(', GroovyTokenTypes.mLPAREN, ')', GroovyTokenTypes.mRPAREN, false),
       new BracePair('[', GroovyTokenTypes.mLBRACK, ']', GroovyTokenTypes.mRBRACK, false),
       new BracePair('{', GroovyTokenTypes.mLCURLY, '}', GroovyTokenTypes.mRCURLY, true),
+
+      new BracePair('{', GroovyDocTokenTypes.mGDOC_INLINE_TAG_START, '}', GroovyDocTokenTypes.mGDOC_INLINE_TAG_END, true),
 
       new BracePair('"', GroovyTokenTypes.mGSTRING_SINGLE_BEGIN, '"', GroovyTokenTypes.mGSTRING_SINGLE_END, false),
       new BracePair('/', GroovyTokenTypes.mREGEX_BEGIN, '/', GroovyTokenTypes.mREGEX_END, false)
