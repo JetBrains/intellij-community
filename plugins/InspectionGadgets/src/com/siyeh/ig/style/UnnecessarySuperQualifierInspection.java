@@ -85,28 +85,60 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection {
             final PsiReferenceExpression referenceExpression =
                     (PsiReferenceExpression) parent;
             final PsiElement grandParent = referenceExpression.getParent();
-            if (!(grandParent instanceof PsiMethodCallExpression)) {
-                return;
-            }
-            final PsiMethodCallExpression methodCallExpression =
-                    (PsiMethodCallExpression) grandParent;
-            final PsiMethod superMethod = methodCallExpression.resolveMethod();
-            if (superMethod == null) {
-                return;
-            }
-            final PsiClass parentClass =
-                    PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-            if (parentClass == null) {
-                return;
-            }
-            final PsiMethod[] methods =
-                    parentClass.findMethodsBySignature(superMethod, false);
-            for (PsiMethod method : methods) {
-                if (superMethod.equals(method)) {
+            if (grandParent instanceof PsiMethodCallExpression) {
+                final PsiMethodCallExpression methodCallExpression =
+                        (PsiMethodCallExpression)grandParent;
+                if (!hasUnnecessarySuperQualifier(methodCallExpression)) {
+                    return;
+                }
+            } else {
+                if (!hasUnnecessarySuperQualifier(referenceExpression)) {
                     return;
                 }
             }
             registerError(expression);
+        }
+
+        private static boolean hasUnnecessarySuperQualifier(
+                PsiReferenceExpression referenceExpression) {
+            final PsiClass parentClass =
+                    PsiTreeUtil.getParentOfType(referenceExpression,
+                            PsiClass.class);
+            if (parentClass == null) {
+                return false;
+            }
+            final PsiElement target = referenceExpression.resolve();
+            if (target == null) {
+                return false;
+            }
+            if (!(target instanceof PsiField)) {
+                return false;
+            }
+            final PsiField superField = (PsiField)target;
+            final String name = superField.getName();
+            if (name == null) {
+                return false;
+            }
+            final PsiField field = parentClass.findFieldByName(name, false);
+            return field == null;
+        }
+
+        private static boolean hasUnnecessarySuperQualifier(
+                PsiMethodCallExpression methodCallExpression) {
+            final PsiMethod superMethod =
+                    methodCallExpression.resolveMethod();
+            if (superMethod == null) {
+                return false;
+            }
+            final PsiClass parentClass =
+                    PsiTreeUtil.getParentOfType(methodCallExpression,
+                            PsiClass.class);
+            if (parentClass == null) {
+                return false;
+            }
+            final PsiMethod[] methods =
+                    parentClass.findMethodsBySignature(superMethod, false);
+            return methods.length <= 0;
         }
     }
 }
