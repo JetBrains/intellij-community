@@ -113,9 +113,9 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
 
     final EditorTextField editorTextField = (EditorTextField) myTypeComboBox.getEditor().getEditorComponent();
-    myTypeComboBox.addKeyListener(new KeyListener() {
+    myTypeComboBox.addKeyListener(new KeyAdapter() {
       public void keyTyped(KeyEvent e) {
-//        System.out.println("");
+        System.out.println("");
       }
 
       public void keyPressed(KeyEvent e) {
@@ -125,7 +125,7 @@ public class DynamicPropertyDialog extends DialogWrapper {
       }
 
       public void keyReleased(KeyEvent e) {
-//        System.out.println("");
+        System.out.println("");
       }
     });
 

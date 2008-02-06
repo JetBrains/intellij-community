@@ -341,7 +341,7 @@ public class DynamicPropertiesManagerImpl extends DynamicPropertiesManager {
     myListeners.remove(listener);
   }
 
-  public DynamicPropertyVirtual replaceDynamicPropertyType(DynamicPropertyVirtual oldProperty, DynamicPropertyVirtual newProperty) {
+  public DynamicPropertyVirtual replaceDynamicProperty(DynamicPropertyVirtual oldProperty, DynamicPropertyVirtual newProperty) {
     //TODO: simplify
     removeDynamicProperty(oldProperty);
     addDynamicProperty(newProperty);
