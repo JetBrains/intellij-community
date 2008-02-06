@@ -237,11 +237,11 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
     }
   }
 
-  public boolean isToRenameInheritors(final PsiElement psiElement) {
+  public boolean isToRenameInheritors() {
     return RENAME_INHERITORS;
   }
 
-  public boolean isToRenameVariables(PsiElement element) {
+  public boolean isToRenameVariables() {
     return RENAME_VARIABLES;
   }
 

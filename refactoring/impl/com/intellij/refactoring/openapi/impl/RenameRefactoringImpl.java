@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringImpl;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.naming.AutomaticVariableRenamerFactory;
+import com.intellij.refactoring.rename.naming.AutomaticInheritorRenamerFactory;
 
 import java.util.Set;
 import java.util.Collection;
@@ -17,6 +19,8 @@ import java.util.Collection;
  * @author dsl
  */
 public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> implements RenameRefactoring {
+  private static final AutomaticVariableRenamerFactory ourVariableRenamerFactory = new AutomaticVariableRenamerFactory();
+  private static final AutomaticInheritorRenamerFactory ourInheritorRenamerFactory = new AutomaticInheritorRenamerFactory();
 
   public RenameRefactoringImpl(Project project,
                                PsiElement element,
@@ -39,11 +43,21 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
   }
 
   public void setShouldRenameVariables(boolean value) {
-    myProcessor.setShouldRenameVariables(value);
+    if (value) {
+      myProcessor.addRenamerFactory(ourVariableRenamerFactory);
+    }
+    else {
+      myProcessor.removeRenamerFactory(ourVariableRenamerFactory);
+    }
   }
 
   public void setShouldRenameInheritors(boolean value) {
-    myProcessor.setShouldRenameInheritors(value);
+    if (value) {
+      myProcessor.addRenamerFactory(ourInheritorRenamerFactory);
+    }
+    else {
+      myProcessor.removeRenamerFactory(ourInheritorRenamerFactory);
+    }
   }
 
   public void setSearchInComments(boolean value) {

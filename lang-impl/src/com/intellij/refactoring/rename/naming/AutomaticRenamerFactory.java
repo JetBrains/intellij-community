@@ -2,6 +2,9 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.usageView.UsageInfo;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -16,5 +19,5 @@ public interface AutomaticRenamerFactory {
   boolean isEnabled();
   void setEnabled(boolean enabled);
 
-  AutomaticRenamer createRenamer(final PsiElement element, final String newName);
+  AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages);
 }

@@ -49,8 +49,6 @@ public class RenameDialog extends RefactoringDialog {
   private NameSuggestionsField myNameSuggestionsField;
   private JCheckBox myCbSearchInComments;
   private JCheckBox myCbSearchTextOccurences;
-  private JCheckBox myCbRenameVariables;
-  private JCheckBox myCbRenameInheritors;
   private final JLabel myNewNamePrefix = new JLabel("");
   private final String myHelpID;
   private final PsiElement myPsiElement;
@@ -264,13 +262,6 @@ public class RenameDialog extends RefactoringDialog {
   public boolean isSearchInComments() {
     return myCbSearchInComments.isSelected();
   }
-  private boolean isToRenameInheritors() {
-    return JavaRefactoringSettings.getInstance().isToRenameInheritors(myPsiElement);
-  }
-
-  private boolean isToRenameVariables() {
-    return JavaRefactoringSettings.getInstance().isToRenameVariables(myPsiElement);
-  }
 
   public boolean isSearchInNonJavaFiles() {
     return myCbSearchTextOccurences.isSelected();
@@ -282,14 +273,6 @@ public class RenameDialog extends RefactoringDialog {
 
   protected JComponent createCenterPanel() {
     return null;
-  }
-
-  private boolean shouldRenameVariables() {
-    return myCbRenameVariables != null && myCbRenameVariables.isSelected();
-  }
-
-  private boolean shouldRenameInheritors() {
-    return myCbRenameInheritors != null && myCbRenameInheritors.isSelected();
   }
 
   protected JComponent createNorthPanel() {
@@ -346,33 +329,11 @@ public class RenameDialog extends RefactoringDialog {
       myCbSearchTextOccurences.setVisible(false);
     }
 
-    if (myPsiElement instanceof PsiClass) {
-      gbConstraints.insets = new Insets(4, 8, 4, 8);
-      gbConstraints.gridwidth = 1;
-      gbConstraints.gridx = 0;
-      gbConstraints.weightx = 1;
-      gbConstraints.fill = GridBagConstraints.BOTH;
-      myCbRenameVariables = new NonFocusableCheckBox();
-      myCbRenameVariables.setText(RefactoringBundle.message("rename.variables"));
-      myCbRenameVariables.setSelected(isToRenameVariables());
-      panel.add(myCbRenameVariables, gbConstraints);
-
-      gbConstraints.insets = new Insets(4, 4, 4, 8);
-      gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-      gbConstraints.gridx = 1;
-      gbConstraints.weightx = 1;
-      gbConstraints.fill = GridBagConstraints.BOTH;
-      myCbRenameInheritors = new NonFocusableCheckBox();
-      myCbRenameInheritors.setText(RefactoringBundle.message("rename.inheritors"));
-      myCbRenameInheritors.setSelected(isToRenameInheritors());
-      panel.add(myCbRenameInheritors, gbConstraints);
-    }
-
     for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (factory.isApplicable(myPsiElement)) {
         gbConstraints.insets = new Insets(4, 8, 4, 8);
-        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-        gbConstraints.gridx = 0;
+        gbConstraints.gridwidth = (myAutomaticRenamers.size() % 2 == 0) ? 1 : GridBagConstraints.REMAINDER;
+        gbConstraints.gridx = myAutomaticRenamers.size() % 2;
         gbConstraints.weightx = 1;
         gbConstraints.fill = GridBagConstraints.BOTH;
 
@@ -403,19 +364,12 @@ public class RenameDialog extends RefactoringDialog {
     if (mySuggestedNameInfo != null) {
       mySuggestedNameInfo.nameChoosen(getNewName());
     }
-    if (myCbRenameInheritors != null) {
-      settings.setRenameInheritors(myCbRenameInheritors.isSelected());
-    }
-    if (myCbRenameVariables != null) {
-      settings.setRenameVariables(myCbRenameVariables.isSelected());
-    }
 
     final RenameProcessor processor = new RenameProcessor(getProject(), myPsiElement, getNewName(), isSearchInComments(),
                                                           isSearchInNonJavaFiles());
-    processor.setShouldRenameInheritors(shouldRenameInheritors());
-    processor.setShouldRenameVariables(shouldRenameVariables());
 
     for(Map.Entry<AutomaticRenamerFactory, JCheckBox> e: myAutomaticRenamers.entrySet()) {
+      e.getKey().setEnabled(e.getValue().isSelected());
       if (e.getValue().isSelected()) {
         processor.addRenamerFactory(e.getKey());
       }

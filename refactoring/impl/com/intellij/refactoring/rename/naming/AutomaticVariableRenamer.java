@@ -8,7 +8,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.HashSet;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -17,7 +17,7 @@ import java.util.Set;
 public class AutomaticVariableRenamer extends AutomaticRenamer {
   private final Set<PsiNamedElement> myToUnpluralize = new HashSet<PsiNamedElement>();
 
-  public AutomaticVariableRenamer(PsiClass aClass, String newClassName, List<UsageInfo> usages) {
+  public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<UsageInfo> usages) {
     for (final UsageInfo info : usages) {
       final PsiElement element = info.getElement();
       if (!(element instanceof PsiJavaCodeReferenceElement)) continue;

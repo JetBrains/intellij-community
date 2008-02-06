@@ -48,8 +48,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   private boolean mySearchInComments;
   private boolean mySearchTextOccurrences;
   private String myCommandName;
-  private boolean myShouldRenameVariables;
-  private boolean myShouldRenameInheritors;
 
   private NonCodeUsageInfo[] myNonCodeUsages = new NonCodeUsageInfo[0];
   private final List<AutomaticRenamerFactory> myRenamerFactories = new ArrayList<AutomaticRenamerFactory>();
@@ -76,16 +74,14 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return Collections.unmodifiableSet(myAllRenames.keySet());
   }
 
-  public void setShouldRenameVariables(boolean shouldRenameVariables) {
-    myShouldRenameVariables = shouldRenameVariables;
-  }
-
-  public void setShouldRenameInheritors(boolean shouldRenameInheritors) {
-    myShouldRenameInheritors = shouldRenameInheritors;
-  }
-
   public void addRenamerFactory(AutomaticRenamerFactory factory) {
-    myRenamerFactories.add(factory);
+    if (!myRenamerFactories.contains(factory)) {
+      myRenamerFactories.add(factory);
+    }
+  }
+
+  public void removeRenamerFactory(AutomaticRenamerFactory factory) {
+    myRenamerFactories.remove(factory);
   }
 
   public void doRun() {
@@ -385,17 +381,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       final String newName = myAllRenames.get(element);
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurrences, myAllRenames);
       result.addAll(Arrays.asList(usages));
-      if (element instanceof PsiClass && myShouldRenameVariables) {
-        myRenamers.add(new AutomaticVariableRenamer((PsiClass)element, newName, Arrays.asList(usages)));
-      }
-      if (element instanceof PsiClass && myShouldRenameInheritors) {
-        if (((PsiClass)element).getName() != null) {
-          myRenamers.add(new InheritorRenamer((PsiClass)element, newName));
-        }
-      }
 
       for(AutomaticRenamerFactory factory: myRenamerFactories) {
-        myRenamers.add(factory.createRenamer(element, newName));
+        myRenamers.add(factory.createRenamer(element, newName, Arrays.asList(usages)));
       }
 
       if (element instanceof PsiMethod) {

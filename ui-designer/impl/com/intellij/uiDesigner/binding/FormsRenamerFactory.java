@@ -7,6 +7,9 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.usageView.UsageInfo;
+
+import java.util.Collection;
 
 public class FormsRenamerFactory implements AutomaticRenamerFactory {
   public boolean isApplicable(final PsiElement element) {
@@ -27,7 +30,7 @@ public class FormsRenamerFactory implements AutomaticRenamerFactory {
   public void setEnabled(final boolean enabled) {
   }
 
-  public AutomaticRenamer createRenamer(final PsiElement element, final String newName) {
+  public AutomaticRenamer createRenamer(final PsiElement element, final String newName, final Collection<UsageInfo> usages) {
     return new FormsRenamer((PsiClass) element, newName);
   }
 }
