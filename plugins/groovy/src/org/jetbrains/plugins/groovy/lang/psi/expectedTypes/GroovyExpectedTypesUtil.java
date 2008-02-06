@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -29,8 +28,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -89,9 +93,33 @@ public class GroovyExpectedTypesUtil {
 
     public void visitArgumentList(GrArgumentList list) {
       PsiElement parent = list.getParent();
+      List<TypeConstraint> constraints = new ArrayList<TypeConstraint>();
       if (parent instanceof GrCallExpression) {
-        //((GrCallExpression) parent).multiResolveMethod();
+        GroovyResolveResult[] variants = ((GrCallExpression) parent).getMethodVariants();
+        int idx = getIndex(list);
+        for (GroovyResolveResult variant : variants) {
+          PsiElement element = variant.getElement();
+          if (element instanceof GrParametersOwner) {
+            GrParameter[] parameters = ((GrParametersOwner) element).getParameters();
+            if (parameters.length <= idx) continue;
+            PsiType parameterType = variant.getSubstitutor().substitute(parameters[idx].getType());
+            constraints.add(SubtypeConstraint.create(parameterType));
+          }
+        }
       }
+
+      if (constraints.isEmpty()) makeDefault();
+      else {
+        myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
+      }
+    }
+
+    private int getIndex(GrArgumentList list) {
+      GrExpression[] arguments = list.getExpressionArguments();
+      for (int i = 0; i < arguments.length; i++) {
+        if (myExpression.equals(arguments[i])) return i;
+      }
+      return -1;
     }
 
     public void visitAssignmentExpression(GrAssignmentExpression expression) {
