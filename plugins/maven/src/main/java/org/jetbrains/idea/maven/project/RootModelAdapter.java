@@ -36,6 +36,8 @@ public class RootModelAdapter {
     }
 
     myRootModel.inheritSdk();
+    myRootModel.getModule().setSavePathsRelative(true);
+
     getCompilerExtension().setExcludeOutput(true);
 
     for (OrderEntry entry : myRootModel.getOrderEntries()) {
