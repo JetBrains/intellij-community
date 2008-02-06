@@ -37,13 +37,15 @@ import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexDataConsumer;
+import com.intellij.util.indexing.IdDataConsumer;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,41 +109,51 @@ public class IdTableBuilding {
 
   public static class PlainTextIndexer extends FileTypeIdIndexer {
   
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
+    public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
+      final IdDataConsumer consumer = new IdDataConsumer();
       final CharSequence chars = inputData.content;
       scanWords(new ScanWordProcessor(){
         public void run(final CharSequence chars11, final int start, final int end, char[] charsArray) {
           if (charsArray != null) {
-            addOccurrence(consumer, charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+            consumer.addOccurrence(charsArray, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
           } else {
-            addOccurrence(consumer, chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
+            consumer.addOccurrence(chars11, start, end, (int)UsageSearchContext.IN_PLAIN_TEXT);
           }
         }
       }, chars, 0, chars.length());
+      return consumer.getResult();
     }
   }
 
   public static class PlainTextTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> {
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<TodoIndexEntry, Integer> consumer) {
+    public Map<TodoIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
       final CharSequence chars = inputData.content;
 
 
       final IndexPattern[] indexPatterns = IdCacheUtil.getIndexPatterns();
-      final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
-      for (IndexPattern indexPattern : indexPatterns) {
-        Pattern pattern = indexPattern.getPattern();
-        if (pattern != null) {
-          Matcher matcher = pattern.matcher(chars);
-          while (matcher.find()) {
-            if (matcher.start() != matcher.end()) {
-              occurrenceConsumer.incTodoOccurrence(indexPattern);
+      if (indexPatterns.length > 0) {
+        final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
+        for (IndexPattern indexPattern : indexPatterns) {
+          Pattern pattern = indexPattern.getPattern();
+          if (pattern != null) {
+            Matcher matcher = pattern.matcher(chars);
+            while (matcher.find()) {
+              if (matcher.start() != matcher.end()) {
+                occurrenceConsumer.incTodoOccurrence(indexPattern);
+              }
             }
           }
         }
+        Map<TodoIndexEntry, Integer> map = new HashMap<TodoIndexEntry, Integer>();
+        for (IndexPattern indexPattern : indexPatterns) {
+          final int count = occurrenceConsumer.getOccurrenceCount(indexPattern);
+          if (count > 0) {
+            map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
+          }
+        }
+        return map;
       }
-      for (IndexPattern indexPattern : indexPatterns) {
-        consumer.consume(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), occurrenceConsumer.getOccurrenceCount(indexPattern));
-      }
+      return Collections.emptyMap();
     }
 
   }
@@ -260,17 +272,17 @@ public class IdTableBuilding {
       myScanner = scanner;
     }
     
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
+    public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
       final CharSequence chars = inputData.content;
       final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
-
+      final IdDataConsumer consumer = new IdDataConsumer();
       myScanner.processWords(chars, new Processor<WordOccurrence>() {
         public boolean process(final WordOccurrence t) {
           if(charsArray != null && t.getBaseText() == chars) {
-            addOccurrence(consumer, charsArray, t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+            consumer.addOccurrence(charsArray, t.getStart(),t.getEnd(),convertToMask(t.getKind()));
           } 
           else {
-            addOccurrence(consumer, t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
+            consumer.addOccurrence(t.getBaseText(), t.getStart(),t.getEnd(),convertToMask(t.getKind()));
           }
           return true;
         }
@@ -284,6 +296,7 @@ public class IdTableBuilding {
           return 0;
         }
       });
+      return consumer.getResult();
     }
   }
   
@@ -296,7 +309,7 @@ public class IdTableBuilding {
       myFile = file;
     }
 
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<TodoIndexEntry, Integer> consumer) {
+    public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
       final CharSequence chars = inputData.content;
       if (IdCacheUtil.getIndexPatternCount() > 0) {
         final TodoOccurrenceConsumer occurrenceConsumer = new TodoOccurrenceConsumer();
@@ -310,10 +323,16 @@ public class IdTableBuilding {
           }
           iterator.advance();
         }
+        final Map<TodoIndexEntry,Integer> map = new HashMap<TodoIndexEntry, Integer>();
         for (IndexPattern pattern : IdCacheUtil.getIndexPatterns()) {
-          consumer.consume(new TodoIndexEntry(pattern.getPatternString(), pattern.isCaseSensitive()), occurrenceConsumer.getOccurrenceCount(pattern));
+          final int count = occurrenceConsumer.getOccurrenceCount(pattern);
+          if (count > 0) {
+            map.put(new TodoIndexEntry(pattern.getPatternString(), pattern.isCaseSensitive()), count);
+          }
         }
+        return map;
       }
+      return Collections.emptyMap();
     }
   }
 

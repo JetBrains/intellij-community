@@ -10,7 +10,6 @@ import com.intellij.psi.impl.cache.impl.idCache.IdTableBuilding;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.IndexDataConsumer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NonNls;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -64,30 +63,13 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   };
   
   private DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<IdIndexEntry, Integer, FileBasedIndex.FileContent>() {
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<IdIndexEntry, Integer> consumer) {
-      final Map<IdIndexEntry, Integer> accumulator = new HashMap<IdIndexEntry, Integer>();
-      final IndexDataConsumer<IdIndexEntry, Integer> acummulatingConsumer = new IndexDataConsumer<IdIndexEntry, Integer>() {
-        public void consume(final IdIndexEntry key, final Integer value) {
-          Integer v = accumulator.get(key);
-          if (v == null) {
-            v = value;
-          }
-          else {
-            v = v.intValue() | value.intValue();
-          }
-          accumulator.put(key, v);
-        }
-      };
-
+    public Map<IdIndexEntry, Integer> map(final FileBasedIndex.FileContent inputData) {
       final VirtualFile file = inputData.file;
       final FileTypeIdIndexer indexer = IdTableBuilding.getFileTypeIndexer(file.getFileType());
       if (indexer != null) {
-        indexer.map(inputData, acummulatingConsumer);
+        return indexer.map(inputData);
       }
-
-      for (Map.Entry<IdIndexEntry, Integer> entry : accumulator.entrySet()) {
-        consumer.consume(entry.getKey(), entry.getValue());
-      }
+      return Collections.emptyMap();
     }
   };
   

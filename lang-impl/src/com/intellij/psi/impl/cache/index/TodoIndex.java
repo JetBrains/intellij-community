@@ -16,7 +16,6 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.IndexDataConsumer;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.PersistentEnumerator;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +25,8 @@ import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -77,19 +78,13 @@ public class TodoIndex implements FileBasedIndexExtension<TodoIndexEntry, Intege
   };
 
   private DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent>() {
-    public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<TodoIndexEntry, Integer> consumer) {
-      IndexDataConsumer<TodoIndexEntry, Integer> filteringConsumer = new IndexDataConsumer<TodoIndexEntry, Integer>() {
-        public void consume(final TodoIndexEntry key, final Integer value) {
-          if (value.intValue() != 0) {
-            consumer.consume(key, value);
-          }
-        }
-      };
+    public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
       final VirtualFile file = inputData.file;
       final DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> indexer = IdTableBuilding.getTodoIndexer(file.getFileType(), file);
       if (indexer != null) {
-        indexer.map(inputData, filteringConsumer);
+        return indexer.map(inputData);
       }
+      return Collections.emptyMap();
     }
   };
   

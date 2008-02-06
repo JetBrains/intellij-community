@@ -6,14 +6,16 @@ import com.intellij.psi.impl.cache.impl.idCache.TodoOccurrenceConsumer;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexDataConsumer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Jan 20, 2008
  */
 public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileBasedIndex.FileContent> {
-  public void map(final FileBasedIndex.FileContent inputData, final IndexDataConsumer<TodoIndexEntry, Integer> consumer) {
+  public Map<TodoIndexEntry,Integer> map(final FileBasedIndex.FileContent inputData) {
     
     final TodoOccurrenceConsumer todoOccurrenceConsumer = new TodoOccurrenceConsumer();
     final Lexer filterLexer = createLexer(todoOccurrenceConsumer);
@@ -22,10 +24,14 @@ public abstract class LexerBasedTodoIndexer implements DataIndexer<TodoIndexEntr
     while (filterLexer.getTokenType() != null) {
       filterLexer.advance();
     }
-
+    final Map<TodoIndexEntry,Integer> map = new HashMap<TodoIndexEntry, Integer>();
     for (IndexPattern indexPattern : IdCacheUtil.getIndexPatterns()) {
-      consumer.consume(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), todoOccurrenceConsumer.getOccurrenceCount(indexPattern));
+      final int count = todoOccurrenceConsumer.getOccurrenceCount(indexPattern);
+      if (count > 0) {
+        map.put(new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), count);
+      }
     }
+    return map;
   }
 
   protected abstract Lexer createLexer(TodoOccurrenceConsumer consumer);
