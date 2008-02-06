@@ -19,7 +19,6 @@ import java.util.List;
 */
 public abstract class PatternCondition<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.patterns.PatternCondition");
-  @NonNls private static final String INIT = "<init>";
   @NonNls private static final String PARAMETER_FIELD_PREFIX = "val$";
   private final String myMethodName;
 
