@@ -440,6 +440,8 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
   private void handleTemplate(final int templateStartOffset, final boolean signatureSelected, final char completionChar){
     Template template = (Template)myLookupItem.getObject();
 
+    myDocument.replaceString(templateStartOffset, templateStartOffset + myLookupItem.getLookupString().length(), "");
+
     final RangeMarker offsetRangeMarker = myContext.editor.getDocument().createRangeMarker(templateStartOffset, templateStartOffset);
 
     TemplateManager.getInstance(myProject).startTemplate(
