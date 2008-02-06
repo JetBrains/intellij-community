@@ -61,7 +61,7 @@ public abstract class NewActionBase extends CreateElementActionBase {
     presentation.setVisible(isEnabled);
   }
 
-  public static boolean isGroovyConfigured(AnActionEvent e) {
+  private static boolean isGroovyConfigured(AnActionEvent e) {
     Project project = (Project) e.getDataContext().getData(DataConstants.PROJECT);
     if (project != null) {
       PsiPackage groovyPackage = PsiManager.getInstance(project).findPackage("groovy.lang");
