@@ -44,7 +44,7 @@ public class Semaphore {
     }
   }
 
-  public synchronized void waitFor(final long timeout) {
+  public synchronized boolean waitFor(final long timeout) {
     try {
       final long startTime = System.currentTimeMillis();
       long waitTime = timeout;
@@ -58,6 +58,7 @@ public class Semaphore {
           break;
         }
       }
+      return mySemaphore == 0;
     }
     catch (InterruptedException e) {
       LOG.debug(e);
