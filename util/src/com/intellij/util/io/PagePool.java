@@ -251,7 +251,7 @@ public class PagePool {
           else {
             synchronized (finalizationLock) {
               try {
-                finalizationLock.wait();
+                finalizationLock.wait(10);
               }
               catch (InterruptedException e) {
                 throw new RuntimeException(e);
