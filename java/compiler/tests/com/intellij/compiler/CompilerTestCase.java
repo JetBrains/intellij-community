@@ -14,13 +14,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.util.concurrency.Semaphore;
+import junit.framework.AssertionFailedError;
 import org.apache.log4j.Level;
 import org.jdom.Document;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -28,12 +29,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Jeka
  */
 public abstract class CompilerTestCase extends ModuleTestCase {
+  private static final int COMPILING_TIMEOUT = 2 * 60 * 1000;
   protected static final String SOURCE = "source";
   protected static final String CLASSES = "classes";
   protected static final String DATA_FILE_NAME = "data.xml";
   private final String myDataRootPath;
-  private final Object LOCK = new Object();
-  private int mySemaphore;
+  private Semaphore mySemaphore;
 
   protected VirtualFile mySourceDir;
   protected VirtualFile myClassesDir;
@@ -50,29 +51,14 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     myDataRootPath = PathManagerEx.getTestDataPath() + "/compiler/" + groupName;
   }
 
-  public void up() {
-    synchronized (LOCK) {
-      mySemaphore++;
-      LOCK.notifyAll();
-    }
-  }
-
-  public void down() {
-    synchronized (LOCK) {
-      mySemaphore--;
-      LOCK.notifyAll();
-    }
-  }
-
-  public void waitFor() throws Exception {
-    synchronized (LOCK) {
-      if (mySemaphore > 0) {
-        LOCK.wait();
-      }
+  private void waitFor() {
+    if (!mySemaphore.waitFor(COMPILING_TIMEOUT)) {
+      throw new AssertionFailedError("Compilation isn't finished in " + COMPILING_TIMEOUT  + "ms");
     }
   }
 
   protected void setUp() throws Exception {
+    mySemaphore = new Semaphore();
     final Exception[] ex = new Exception[]{null};
     SwingUtilities.invokeAndWait(new Runnable() {
       public void run() {
@@ -115,7 +101,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         //long start = System.currentTimeMillis();
         try {
           setup(name);
-          up();
+          mySemaphore.down();
           doCompile(new CompileStatusNotification() {
             public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
               try {
@@ -130,7 +116,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
                 }
               }
               finally {
-                down();
+                mySemaphore.up();
               }
             }
           }, 1);
@@ -169,8 +155,8 @@ public abstract class CompilerTestCase extends ModuleTestCase {
           if (ex[0] != null) {
             throw ex[0];
           }
-          up();
-          
+          mySemaphore.down();
+
           final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
           upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
           
@@ -214,7 +200,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
                 }
               }
               finally {
-                down();
+                mySemaphore.up();
               }
             }
           }, 2);
@@ -490,7 +476,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
     }
   }
 
-  protected void runBareRunnable(Runnable runnable) throws Throwable, InvocationTargetException {
+  protected void runBareRunnable(Runnable runnable) throws Throwable {
     runnable.run();
   }
 
