@@ -186,20 +186,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   private PsiElement getAnchorToInsertImportAfter() {
     GrImportStatement[] importStatements = getImportStatements();
-    PsiElement anchorAfter = null;
     if (importStatements.length > 0) {
-      anchorAfter = importStatements[importStatements.length - 1];
+      return importStatements[importStatements.length - 1];
     } else if (getPackageDefinition() != null) {
-      anchorAfter = getPackageDefinition();
-    } else {
-      final PsiElement first = getFirstChild();
-      PsiElement child = first;
-      while (child instanceof PsiWhiteSpace) {
-        child = child.getNextSibling();
-      }
-      if (child != first) anchorAfter = child;
+      return getPackageDefinition();
     }
-    return anchorAfter;
+
+    return null;
   }
 
 
