@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,16 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author ven
  */
-public interface PsiFileSystemItem extends PsiNamedElement, NavigationItem {
-  /**
-   * Checks if it is possible to rename the element to the specified name,
-   * and throws an exception if the rename is not possible. Does not actually modify anything.
-   *
-   * @param name the new name to check the renaming possibility for.
-   * @throws IncorrectOperationException if the rename is not supported or not possible for some reason.
-   */
-  void checkSetName(String name) throws IncorrectOperationException;
-
+public interface PsiFileSystemItem extends PsiCheckedRenameElement, NavigationItem {
   boolean isDirectory();
 
   @Nullable

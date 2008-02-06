@@ -192,7 +192,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         }
       }
       else {
-        final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass, myNewName);
+        final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass.getQualifiedName(), myNewName);
         final PsiClass conflictingClass =
           JavaPsiFacade.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
         if (conflictingClass != null) {

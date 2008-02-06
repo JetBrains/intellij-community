@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java package.
  */
-public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifierListOwner, PsiDirectoryContainer {
+public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, PsiModifierListOwner, PsiDirectoryContainer {
   /**
    * Returns the full-qualified name of the package.
    *
@@ -85,15 +84,6 @@ public interface PsiPackage extends PsiNamedElement, NavigationItem, PsiModifier
    * @since 5.1
    */
   @Nullable PsiModifierList getAnnotationList();
-
-  /**
-   * Checks if it is possible to rename the package to the specified name,
-   * and throws an exception if the rename is not possible. Does not actually modify anything.
-   *
-   * @param name the new name to check the renaming possibility for. 
-   * @throws IncorrectOperationException if the rename is not supported or not possible for some reason.
-   */
-  void checkSetName(@NotNull String name) throws IncorrectOperationException;
 
   /**
    * This method must be invoked on the package after all directoris corresponding

@@ -31,7 +31,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import static com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler.InitializationPlace.*;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.occurences.OccurenceManager;
@@ -473,7 +473,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       final PsiExpression rExpression = expr.getRExpression();
       LOG.assertTrue(rExpression != null);
       rExpression.replace(initializerExpr);
-      final PsiReferenceExpression fieldReference = RenameUtil.createFieldReference(field, context);
+      final PsiReferenceExpression fieldReference = RenameJavaVariableProcessor.createFieldReference(field, context);
       expr.getLExpression().replace(fieldReference);
 
       return statement;

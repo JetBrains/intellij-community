@@ -58,7 +58,7 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler {
       else { // the directory corresponds to a package that has multiple associated directories
         StringBuffer message = new StringBuffer();
         RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
-        RenameUtil.buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
+        buildMultipleDirectoriesInPackageMessage(message, aPackage, directories);
         message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed", qualifiedName));
         int ret =
           Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
@@ -68,6 +68,21 @@ public class DirectoryAsPackageRenameHandler implements RenameHandler {
         // if confirmed
         PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
       }
+    }
+  }
+
+  public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
+                                                              PsiPackage aPackage,
+                                                              PsiDirectory[] directories) {
+    message.append(RefactoringBundle.message("multiple.directories.correspond.to.package"));
+    message.append(aPackage.getQualifiedName());
+    message.append(" :\n\n");
+    for (int i = 0; i < directories.length; i++) {
+      PsiDirectory directory = directories[i];
+      if (i > 0) {
+        message.append("\n");
+      }
+      message.append(directory.getVirtualFile().getPresentableUrl());
     }
   }
 }

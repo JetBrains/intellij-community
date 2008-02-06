@@ -25,7 +25,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
-import com.intellij.refactoring.rename.RenameUtil;
+import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -1014,7 +1014,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           PsiExpressionStatement statement = (PsiExpressionStatement)myFactory.createStatementFromText(field.getName() + " = 0;", body);
           statement = (PsiExpressionStatement)body.add(statement);
           final PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
-          assignment.getLExpression().replace(RenameUtil.createFieldReference(field, assignment));
+          assignment.getLExpression().replace(RenameJavaVariableProcessor.createFieldReference(field, assignment));
           assignment.getRExpression().replace(initializer);
           addMarkedElements(refsVector, statement);
           if (field.hasModifierProperty(PsiModifier.STATIC)) {
