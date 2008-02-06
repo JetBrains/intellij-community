@@ -26,6 +26,7 @@
 
   <extensions xmlns="com.intellij">
     <errorHandler implementation="org.jetbrains.plugins.groovy.error.ErrorReportSubmitter"/>
+    <fileTypeFactory implementation="org.jetbrains.plugins.groovy.GroovyFileTypeLoader"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.refactoring.GroovyApplicationSettings"/>
     <fileEditorProvider
@@ -196,7 +197,7 @@
       </implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.grails.fileType.GspFileTypeLoader</implementation-class>
+      <implementation-class>org.jetbrains.plugins.grails.fileType.GspLoader</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.error.ErrorReportConfigurable</implementation-class>

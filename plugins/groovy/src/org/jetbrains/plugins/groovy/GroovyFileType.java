@@ -36,6 +36,7 @@ public class GroovyFileType extends LanguageFileType {
 
   public static final GroovyFileType GROOVY_FILE_TYPE = new GroovyFileType();
   public static final Icon GROOVY_LOGO = GroovyIcons.FILE_TYPE;
+  public static final String DEFAULT_EXTENSION = "groovy";
 
   private GroovyFileType() {
     super(new GroovyLanguage());
@@ -55,7 +56,7 @@ public class GroovyFileType extends LanguageFileType {
   @NotNull
   @NonNls
   public String getDefaultExtension() {
-    return "groovy";
+    return DEFAULT_EXTENSION;
   }
 
   public Icon getIcon() {

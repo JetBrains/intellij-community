@@ -111,14 +111,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
   }
 
   private static void loadGroovy() {
-    ApplicationManager.getApplication().runWriteAction(
-        new Runnable() {
-          public void run() {
-            FileTypeManager.getInstance().registerFileType(GroovyFileType.GROOVY_FILE_TYPE, GROOVY_EXTENSIONS.toArray(new String[GROOVY_EXTENSIONS.size()]));
-          }
-        }
-    );
-
     //Register factory for special Groovy elements
     Factory.addElementFactory(new GspElementFactory());
 
