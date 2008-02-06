@@ -137,6 +137,4 @@ public class GrDynamicImplicitVariableImpl extends GrImplicitVariableImpl implem
   public SearchScope getUseScope() {
     return myScope.getProject().getAllScope();
   }
-
-
 }
