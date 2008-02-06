@@ -98,10 +98,10 @@ public class IdIndex implements FileBasedIndexExtension<IdIndexEntry, Integer> {
   }
   
   private static boolean isIndexable(FileType fileType) {
-    return IdTableBuilding.isIdIndexerRegistered(fileType) || 
-           CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null ||  
-           fileType instanceof LanguageFileType || 
-           fileType instanceof CustomFileType;
+    return fileType instanceof LanguageFileType ||
+           fileType instanceof CustomFileType ||
+           IdTableBuilding.isIdIndexerRegistered(fileType) ||
+           CacheBuilderRegistry.getInstance().getCacheBuilder(fileType) != null;
   }
-  
+
 }
