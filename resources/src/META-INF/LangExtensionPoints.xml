@@ -209,5 +209,6 @@
   <extensionPoint name="renameCollisionDetector" interface="com.intellij.refactoring.rename.RenameCollisionDetector"/>
   <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor"/>
   <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory"/>
+  <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>
 
 </extensionPoints>

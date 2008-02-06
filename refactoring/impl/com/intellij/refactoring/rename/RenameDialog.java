@@ -1,9 +1,7 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupItem;
-import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -11,12 +9,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -28,8 +22,6 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +32,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.List;
 
 public class RenameDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameDialog");
@@ -113,146 +106,41 @@ public class RenameDialog extends RefactoringDialog {
     };
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
-    if (myPsiElement instanceof PsiVariable) {
-      myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-          completeVariable(myNameSuggestionsField.getEditor());
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        completeVariable(myNameSuggestionsField.getEditor());
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.CTRL_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+  }
+
+  private String[] getSuggestedNames() {
+    List<String> result = new ArrayList<String>();
+    for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+      SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
+      if (info != null) mySuggestedNameInfo = info;
     }
+    return result.toArray(new String[result.size()]);
   }
 
   private void completeVariable(Editor editor) {
     String prefix = myNameSuggestionsField.getEnteredName();
-    PsiVariable var = (PsiVariable)myPsiElement;
-    VariableKind kind = JavaCodeStyleManager.getInstance(myProject).getVariableKind(var);
-    Set<LookupItem> set = new LinkedHashSet<LookupItem>();
-    CompletionUtil.completeVariableNameForRefactoring(myProject, set, prefix, var.getType(), kind);
-
-    if (prefix.length() == 0) {
-      String[] suggestedNames = getSuggestedNames();
-      for (String suggestedName : suggestedNames) {
-        LookupItemUtil.addLookupItem(set, suggestedName, "");
-      }
+    Collection<LookupItem> items = null;
+    for(NameSuggestionProvider provider: Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+      items = provider.completeName(myPsiElement, myNameSuggestionContext, prefix);
+      if (items != null) break;
     }
 
-    LookupItem[] lookupItems = set.toArray(new LookupItem[set.size()]);
-    editor.getCaretModel().moveToOffset(prefix.length());
-    editor.getSelectionModel().removeSelection();
-    LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
-      public int accept(char c, final String prefix) {
-        if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
-        return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
-      }
-    });
-  }
-
-  private String[] getSuggestedNames() {
-    String initialName = UsageViewUtil.getShortName(myPsiElement);
-    mySuggestedNameInfo = suggestNamesForElement(myPsiElement);
-
-    String parameterName = null;
-    if (myNameSuggestionContext != null) {
-      final PsiElement nameSuggestionContextParent = myNameSuggestionContext.getParent();
-      if (nameSuggestionContextParent != null && nameSuggestionContextParent.getParent() instanceof PsiExpressionList) {
-        final PsiExpressionList expressionList = (PsiExpressionList)nameSuggestionContextParent.getParent();
-        final PsiElement parent = expressionList.getParent();
-        if (parent instanceof PsiCallExpression) {
-          final PsiMethod method = ((PsiCallExpression)parent).resolveMethod();
-          if (method != null) {
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            final PsiExpression[] expressions = expressionList.getExpressions();
-            for (int i = 0; i < expressions.length; i++) {
-              PsiExpression expression = expressions[i];
-              if (expression == nameSuggestionContextParent) {
-                if (i < parameters.length) {
-                  parameterName = parameters[i].getName();
-                }
-                break;
-              }
-            }
-          }
+    if (items != null) {
+      LookupItem[] lookupItems = items.toArray(new LookupItem[items.size()]);
+      editor.getCaretModel().moveToOffset(prefix.length());
+      editor.getSelectionModel().removeSelection();
+      LookupManager.getInstance(myProject).showLookup(editor, lookupItems, prefix, null, new CharFilter() {
+        public int accept(char c, final String prefix) {
+          if (Character.isJavaIdentifierPart(c)) return CharFilter.ADD_TO_PREFIX;
+          return CharFilter.SELECT_ITEM_AND_FINISH_LOOKUP;
         }
-      }
+      });
     }
-    final String[] strings = mySuggestedNameInfo != null ? mySuggestedNameInfo.names : ArrayUtil.EMPTY_STRING_ARRAY;
-    ArrayList<String> list = new ArrayList<String>(Arrays.asList(strings));
-    final String properlyCased = suggestProperlyCasedName(myPsiElement);
-    if (!list.contains(initialName)) {
-      list.add(0, initialName);
-    }
-    else {
-      int i = list.indexOf(initialName);
-      list.remove(i);
-      list.add(0, initialName);
-    }
-    if (properlyCased != null && !properlyCased.equals(initialName)) {
-      list.add(1, properlyCased);
-    }
-    if (parameterName != null && !list.contains(parameterName)) {
-      list.add(parameterName);
-    }
-    ContainerUtil.removeDuplicates(list);
-    return list.toArray(new String[list.size()]);
-  }
-
-  private String suggestProperlyCasedName(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiNamedElement)) return null;
-    String name = ((PsiNamedElement)psiElement).getName();
-    if (name == null) return null;
-    if (psiElement instanceof PsiVariable) {
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-      final VariableKind kind = codeStyleManager.getVariableKind((PsiVariable)psiElement);
-      final String prefix = codeStyleManager.getPrefixByVariableKind(kind);
-      if (name.startsWith(prefix)) {
-        name = name.substring(prefix.length());
-      }
-      final String[] words = NameUtil.splitNameIntoWords(name);
-      if (kind == VariableKind.STATIC_FINAL_FIELD) {
-        StringBuilder buffer = new StringBuilder();
-        for (int i = 0; i < words.length; i++) {
-          String word = words[i];
-          if (i > 0) buffer.append('_');
-          buffer.append(word.toUpperCase());
-        }
-        return buffer.toString();
-      }
-      else {
-        StringBuilder buffer = new StringBuilder(prefix);
-        for (int i = 0; i < words.length; i++) {
-          String word = words[i];
-          final boolean prefixRequiresCapitalization = prefix.length() > 0 && !StringUtil.endsWithChar(prefix, '_');
-          if (i > 0 || prefixRequiresCapitalization) {
-            buffer.append(StringUtil.capitalize(word));
-          }
-          else {
-            buffer.append(StringUtil.decapitalize(word));
-          }
-        }
-        return buffer.toString();
-      }
-
-    }
-    return name;
-  }
-
-  private SuggestedNameInfo suggestNamesForElement(final PsiElement element) {
-    PsiVariable var = null;
-    if (element instanceof PsiVariable) {
-      var = (PsiVariable)element;
-    }
-    else if (element instanceof PsiIdentifier) {
-      PsiIdentifier identifier = (PsiIdentifier)element;
-      if (identifier.getParent() instanceof PsiVariable) {
-        var = (PsiVariable)identifier.getParent();
-      }
-    }
-
-    if (var == null) return null;
-
-    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(myProject);
-    VariableKind variableKind = codeStyleManager.getVariableKind(var);
-    return codeStyleManager.suggestVariableName(variableKind, null, var.getInitializer(), var.getType());
   }
 
   public String getNewName() {
@@ -382,5 +270,4 @@ public class RenameDialog extends RefactoringDialog {
     final String newName = getNewName();
     return RefactoringUtil.isValidName(myProject, myPsiElement, newName);
   }
-
 }
