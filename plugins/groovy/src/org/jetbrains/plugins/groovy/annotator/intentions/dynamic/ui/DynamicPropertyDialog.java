@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesManager;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.real.DynamicProperty;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.properties.virtual.DynamicPropertyVirtual;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
@@ -39,7 +40,6 @@ public class DynamicPropertyDialog extends DialogWrapper {
   private JComboBox myTypeComboBox;
   private JLabel myClassLabel;
   private JLabel myTypeLabel;
-  //  private JComboBox myTypeComboBox;
   private final DynamicPropertiesManager myDynamicPropertiesManager;
   private final Project myProject;
   private final DynamicProperty myDynamicProperty;
@@ -59,17 +59,9 @@ public class DynamicPropertyDialog extends DialogWrapper {
     setUpTypeComboBox();
     setUpContainingClassComboBox();
 
-//    myPanel.addHierarchyListener(new HierarchyListener() {
-//      public void hierarchyChanged(HierarchyEvent e) {
-//        myTypeComboBox.setCursor(Cursor.getDefaultCursor());
-//      }
-//    });
-
     myTypeLabel.setLabelFor(myTypeComboBox);
     myClassLabel.setLabelFor(myClassComboBox);
-    
   }
-
 
 
   private void setUpContainingClassComboBox() {
@@ -120,7 +112,24 @@ public class DynamicPropertyDialog extends DialogWrapper {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_T, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
 
-    ((EditorTextField) myTypeComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
+    final EditorTextField editorTextField = (EditorTextField) myTypeComboBox.getEditor().getEditorComponent();
+    myTypeComboBox.addKeyListener(new KeyListener() {
+      public void keyTyped(KeyEvent e) {
+//        System.out.println("");
+      }
+
+      public void keyPressed(KeyEvent e) {
+        if (KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, KeyEvent.CTRL_MASK).getKeyCode() == e.getKeyCode()) {
+          trimDocumentText();
+        }
+      }
+
+      public void keyReleased(KeyEvent e) {
+//        System.out.println("");
+      }
+    });
+
+    editorTextField.addDocumentListener(new DocumentListener() {
       public void beforeDocumentChange(DocumentEvent event) {
       }
 
@@ -131,6 +140,15 @@ public class DynamicPropertyDialog extends DialogWrapper {
 
     final PsiClassType objectType = TypesUtil.createJavaLangObject(myReferenceExpression);
     myTypeComboBox.getEditor().setItem(createDocument(objectType.getPresentableText()));
+  }
+
+  private void trimDocumentText() {
+    final Document typeEditorDocument = getTypeEditorDocument();
+
+    if (typeEditorDocument == null) return;
+
+    final String text = typeEditorDocument.getText();
+    typeEditorDocument.setText(text.trim());
   }
 
   class DataChangedListener implements EventListener {
@@ -146,33 +164,31 @@ public class DynamicPropertyDialog extends DialogWrapper {
       setOKActionEnabled(false);
 
     } else {
-//      PsiType type = typeElement.getType();
-//      if (type instanceof PsiClassType) {
-//        setOKActionEnabled(((PsiClassType) type).resolve() != null);
-//
-//      } else if (type instanceof PsiPrimitiveType) {
-//        setOKActionEnabled(true);
-//      }
       setOKActionEnabled(true);
     }
   }
 
   @Nullable
   public GrTypeElement getEnteredTypeName() {
+    final Document typeEditorDocument = getTypeEditorDocument();
+
+    if (typeEditorDocument == null) return null;
+
+    final String text = typeEditorDocument.getText();
+    if (!text.matches(DynamicToolWindowWrapper.QUALIFIED_IDENTIFIER_REGEXP)) return null;
+    try {
+      return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(text);
+    } catch (IncorrectOperationException e) {
+      return null;
+    }
+
+  }
+
+  public Document getTypeEditorDocument() {
     final Object item = myTypeComboBox.getEditor().getItem();
 
-    if (item instanceof Document) {
-      final Document document = (Document) item;
-      String documentText = document.getText();
+    return item instanceof Document ? (Document) item : null;
 
-      if (!documentText.matches("[a-zA-Z(.)]+")) return null;
-      try {
-        return GroovyPsiElementFactory.getInstance(myProject).createTypeElement(documentText);
-      } catch (IncorrectOperationException e) {
-        return null;
-      }
-    }
-    return null;
   }
 
   public ContainingClassItem getEnteredContaningClass() {
