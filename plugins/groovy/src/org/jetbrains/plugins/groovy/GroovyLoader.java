@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.CompositeCompletionData;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.debugger.DebuggerManager;
@@ -48,7 +49,9 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
+import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
+import org.jetbrains.plugins.grails.lang.gsp.completion.GspCompletionData;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
@@ -62,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
+import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -123,7 +127,9 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
     //register editor actions
     GroovyEditorActionsManager.registerGroovyEditorActions();
 
-    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, new GroovyCompletionData());
+    //Register Keyword completion
+    CompositeCompletionData compositeCompletionData = new CompositeCompletionData(new GroovyCompletionData(), new GroovyDocCompletionData());
+    CompletionUtil.registerCompletionData(GroovyFileType.GROOVY_FILE_TYPE, compositeCompletionData);
 
     SelectWordUtil.registerSelectioner(new GroovyLiteralSelectioner());
 
@@ -141,9 +147,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(project);
         GroovyUnusedImportsPassFactory unusedImportsPassFactory = project.getComponent(GroovyUnusedImportsPassFactory.class);
         registrar.registerTextEditorHighlightingPass(unusedImportsPassFactory, new int[]{Pass.UPDATE_ALL}, null, true, -1);
-
-        //PsiManager manager = PsiManager.getInstance(project);
-        //manager.registerLanguageInjector(new GroovyDocInjector());
 
         WolfTheProblemSolver.getInstance(project).registerFileHighlightFilter(new Condition<VirtualFile>() {
           public boolean value(VirtualFile virtualFile) {

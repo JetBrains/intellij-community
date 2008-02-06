@@ -212,7 +212,8 @@ public class GroovyCompletionData extends CompletionData {
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
-    variant.setInsertHandler(new GroovyInsertHandlerAdapter());
+    ContextSpecificInsertHandler[] handlers = InsertHandlerRegistry.getInstance().getSpecificInsertHandlers();
+    variant.setInsertHandler(new GroovyInsertHandlerAdapter(handlers));
     addCompletions(variant, keywords);
     registerVariant(variant);
   }
