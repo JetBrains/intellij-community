@@ -60,7 +60,6 @@ public class GroovyDocCompletionData extends CompletionData {
     CompletionVariant variant = new CompletionVariant(new AndFilter(new NotFilter(afterDotFilter), filter));
     variant.includeScopeClass(LeafPsiElement.class);
     variant.addCompletionFilterOnElement(TrueFilter.INSTANCE);
-    variant.setInsertHandler(new GroovyInsertHandlerAdapter());
     addCompletions(variant, keywords);
     registerVariant(variant);
   }

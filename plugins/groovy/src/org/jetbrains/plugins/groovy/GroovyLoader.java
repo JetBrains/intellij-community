@@ -49,9 +49,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.grails.GrailsLoader;
-import org.jetbrains.plugins.grails.fileType.GspFileType;
 import org.jetbrains.plugins.grails.lang.gsp.psi.GspElementFactory;
-import org.jetbrains.plugins.grails.lang.gsp.completion.GspCompletionData;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertiesReferenceProvider;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory;
@@ -63,9 +61,9 @@ import org.jetbrains.plugins.groovy.findUsages.*;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionData;
 import org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler;
 import org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEditorActionsManager;
+import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GroovyDocPsiElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.references.GroovyDocReferenceProvider;
-import org.jetbrains.plugins.groovy.lang.groovydoc.completion.GroovyDocCompletionData;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -174,7 +172,6 @@ public class GroovyLoader implements ApplicationComponent, IconProvider {
         registry.registerReferenceProvider(GroovyDocPsiElement.class, new GroovyDocReferenceProvider());
         registry.registerReferenceProvider(GrLiteral.class, new PropertiesReferenceProvider());
         registry.registerReferenceProvider(GrReferenceExpression.class, new DynamicPropertiesReferenceProvider());
-
 
         StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
           public void run() {
