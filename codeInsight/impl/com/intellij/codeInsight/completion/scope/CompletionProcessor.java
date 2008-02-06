@@ -101,8 +101,8 @@ public class CompletionProcessor extends BaseScopeProcessor
     final PsiElement elementParent = myElement.getParent();
     if(element instanceof PsiPackage){
       if(!mySettings.LIST_PACKAGES_IN_CODE && myScope instanceof PsiClass){
-        if(!(elementParent instanceof PsiJavaCodeReferenceElement
-             && ((PsiJavaCodeReferenceElement)elementParent).isQualified())) {
+        if(!(elementParent instanceof PsiQualifiedReference
+             && ((PsiQualifiedReference)elementParent).getQualifier() != null)) {
           return true;
         }
       }
