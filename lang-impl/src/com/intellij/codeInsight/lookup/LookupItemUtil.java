@@ -173,7 +173,7 @@ public class LookupItemUtil{
       s = (String)object;
     }
     else if (object instanceof Template) {
-      s = "";
+      s = ((Template) object).getKey();
     }
     else if (object instanceof PresentableLookupValue) {
       s = ((PresentableLookupValue)object).getPresentation();
