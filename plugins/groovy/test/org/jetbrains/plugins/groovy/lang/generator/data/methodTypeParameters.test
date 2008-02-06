@@ -1,0 +1,10 @@
+class Foo {
+  def <T extends String> f() {}
+}
+-----
+public class Foo extends groovy.lang.GroovyObjectSupport {
+  public <T extends java.lang.String> java.lang.Object f() {
+    return null;
+  }
+}
+---

@@ -309,17 +309,8 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     text.append(typeDefinitionName);
 
-    if (typeDefinition != null && typeDefinition.hasTypeParameters()) {
-      text.append("<");
-      int i = 0;
-      PsiTypeParameter[] parameters = typeDefinition.getTypeParameters();
-      for (PsiTypeParameter parameter : parameters) {
-        text.append(parameter.getName());
-        if (i++ < parameters.length - 1) {
-          text.append(", ");
-        }
-      }
-      text.append(">");
+    if (typeDefinition != null) {
+      appendTypeParameters(text, typeDefinition);
     }
 
     text.append(" ");
@@ -430,6 +421,27 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     }
 
     text.append("}");
+  }
+
+  private void appendTypeParameters(StringBuffer text, PsiTypeParameterListOwner typeParameterListOwner) {
+    if (typeParameterListOwner.hasTypeParameters()) {
+      text.append("<");
+      PsiTypeParameter[] parameters = typeParameterListOwner.getTypeParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        if (i > 0) text.append(", ");
+        PsiTypeParameter parameter = parameters[i];
+        text.append(parameter.getName());
+        PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
+        if (extendsListTypes.length > 0) {
+          text.append( " extends ");
+          for (int j = 0; j < extendsListTypes.length; j++) {
+            if (j > 0) text.append(" & ");
+            text.append(computeTypeText(extendsListTypes[j]));
+          }
+        }
+      }
+      text.append(">");
+    }
   }
 
   private void writeEnumConstants(StringBuffer text, GrEnumTypeDefinition enumDefinition) {
@@ -632,6 +644,10 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     text.append("\n");
     text.append("  ");
     writeMethodModifiers(text, modifierList, JAVA_MODIFIERS);
+    if (method.hasTypeParameters()) {
+      appendTypeParameters(text, method);
+      text.append(" ");
+    }
 
     //append return type
     PsiType retType;
