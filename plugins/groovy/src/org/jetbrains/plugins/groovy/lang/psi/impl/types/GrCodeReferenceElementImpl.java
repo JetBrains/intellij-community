@@ -145,15 +145,21 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
   }
 
   public Object[] getVariants() {
-    if (getParent() instanceof GrNewExpression) {
+    if (isClassReferenceForNew()) {
       return getVariantsForNewExpression();
     }
 
     return getVariantsImpl(getKind());
   }
 
+  private boolean isClassReferenceForNew() {
+    PsiElement parent = getParent();
+    while (parent instanceof GrCodeReferenceElement) parent = parent.getParent();
+    return parent instanceof GrNewExpression;
+  }
+
   private Object[] getVariantsForNewExpression() {
-    final Object[] classVariants = getVariantsImpl(ReferenceKind.CLASS);
+    final Object[] classVariants = getVariantsImpl(ReferenceKind.CLASS_OR_PACKAGE);
     List<Object> result = new ArrayList<Object>();
     for (Object variant : classVariants) {
       if (variant instanceof PsiClass) {
@@ -225,12 +231,17 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl implement
         }
       }
 
+      case CLASS_OR_PACKAGE:
       case CLASS: {
         GrCodeReferenceElement qualifier = getQualifier();
         if (qualifier != null) {
           PsiElement qualifierResolved = qualifier.resolve();
           if (qualifierResolved instanceof PsiPackage) {
-            return ((PsiPackage) qualifierResolved).getClasses();
+            PsiPackage aPackage = (PsiPackage) qualifierResolved;
+            PsiClass[] classes = aPackage.getClasses();
+            if (kind == CLASS) return classes;
+            PsiPackage[] subpackages = aPackage.getSubPackages();
+            return ArrayUtil.mergeArrays(classes, subpackages, Object.class);
           } else if (qualifierResolved instanceof PsiClass) {
             return ((PsiClass) qualifierResolved).getInnerClasses();
           }
