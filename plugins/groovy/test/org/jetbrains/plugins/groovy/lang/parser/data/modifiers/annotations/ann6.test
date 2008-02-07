@@ -1,4 +1,4 @@
-@Retention({@EEE})
+@Retention([@EEE])
 @interface III {
 }
 -----
@@ -12,14 +12,14 @@ Groovy script
         Annotation arguments
           PsiElement(()('(')
           Annotation array initializer
-            PsiElement([)('{')
+            PsiElement([)('[')
             Annotation
               PsiElement(@)('@')
               Reference element
                 PsiElement(identifier)('EEE')
               Annotation arguments
                 <empty list>
-            PsiElement(])('}')
+            PsiElement(])(']')
           PsiElement())(')')
     PsiElement(new line)('\n')
     PsiElement(@)('@')

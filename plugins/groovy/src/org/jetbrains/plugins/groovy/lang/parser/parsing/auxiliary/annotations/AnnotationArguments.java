@@ -66,11 +66,11 @@ public class AnnotationArguments implements GroovyElementTypes {
   public static boolean parseAnnotationMemberValueInitializer(PsiBuilder builder) {
     if (builder.getTokenType() == mAT) {
       return Annotation.parse(builder);
-    } else if(builder.getTokenType() == mLCURLY) {
+    } else if(builder.getTokenType() == mLBRACK) {
       PsiBuilder.Marker marker = builder.mark();
-      ParserUtils.getToken(builder, mLCURLY);
+      ParserUtils.getToken(builder, mLBRACK);
       while (Annotation.parse(builder));
-      ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
+      ParserUtils.getToken(builder, mRBRACK, GroovyBundle.message("rbrack.expected"));
       marker.done(ANNOTATION_ARRRAY_INITIALIZER);
       return true;
     }
