@@ -13,7 +13,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -31,6 +30,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -92,8 +92,9 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
   }
 
+  @Nullable
   private String getHelpID() {
-    return HelpID.getRenameHelpID(myPrimaryElement);
+    return RenamePsiElementProcessor.forElement(myPrimaryElement).getHelpID(myPrimaryElement); 
   }
 
   public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {

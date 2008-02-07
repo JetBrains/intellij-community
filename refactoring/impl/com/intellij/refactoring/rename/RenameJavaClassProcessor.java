@@ -9,11 +9,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -136,5 +138,11 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
         conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
       }
     }
+  }
+
+  @Nullable
+  @NonNls
+  public String getHelpID(final PsiElement element) {
+    return HelpID.RENAME_CLASS;
   }
 }

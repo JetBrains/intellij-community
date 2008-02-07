@@ -7,20 +7,23 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Collection;
 
 public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
@@ -246,5 +249,20 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
         conflicts
       );
     }
+  }
+
+  @Nullable
+  @NonNls
+  public String getHelpID(final PsiElement element) {
+    if (element instanceof PsiField){
+      return HelpID.RENAME_FIELD;
+    }
+    else if (element instanceof PsiLocalVariable){
+      return HelpID.RENAME_VARIABLE;
+    }
+    else if (element instanceof PsiParameter){
+      return HelpID.RENAME_PARAMETER;
+    }
+    return null;
   }
 }

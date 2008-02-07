@@ -150,8 +150,8 @@ public class RenameUtil {
 
   public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
                               RefactoringElementListener listener) {
+    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     try {
-      RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
       processor.renameElement(element, newName, usages, listener);
     }
     catch (final IncorrectOperationException e) {
@@ -163,8 +163,7 @@ public class RenameUtil {
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            // TODO[yole]: convert HelpID.getRenameHelpID() to ElementDescriptionProvider
-            CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), null, project);
+            CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("rename.title"), e.getMessage(), processor.getHelpID(element), project);
           }
         });
     }

@@ -6,7 +6,10 @@
  */
 package com.intellij.xml.refactoring;
 
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,9 +20,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -65,7 +67,6 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     myTitleLabel.setText(XmlBundle.message("rename.current.tag", getFullName(tag)));
 
     validateButtons();
-    myHelpID = HelpID.getRenameHelpID(myTag);
   }
 
   protected void dispose() {

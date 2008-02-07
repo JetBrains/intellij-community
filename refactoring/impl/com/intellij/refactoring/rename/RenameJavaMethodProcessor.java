@@ -7,11 +7,13 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -80,5 +82,10 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
       refactoredMethod,
       prototype,
       conflicts);
+  }
+
+  @NonNls
+  public String getHelpID(final PsiElement element) {
+    return HelpID.RENAME_METHOD;
   }
 }

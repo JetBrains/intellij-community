@@ -11,7 +11,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
@@ -75,7 +74,7 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     validateButtons();
-    myHelpID = HelpID.getRenameHelpID(psiElement);
+    myHelpID = RenamePsiElementProcessor.forElement(psiElement).getHelpID(psiElement);
   }
 
   protected void dispose() {

@@ -5,14 +5,14 @@ import com.intellij.psi.*;
 
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class HelpID {
-  private static final String RENAME_PACKAGE   = "refactoring.renamePackage";
-  private static final String RENAME_CLASS     = "refactoring.renameClass";
-  private static final String RENAME_METHOD    = "refactoring.renameMethod";
-  private static final String RENAME_FIELD     = "refactoring.renameField";
-  private static final String RENAME_VARIABLE  = "refactoring.renameVariable";
-  private static final String RENAME_PARAMETER = "refactoring.renameParameter";
-  private static final String RENAME_DIRECTORY = "refactoring.renameDirectory";
-  private static final String RENAME_FILE      = "refactoring.renameFile";
+  public static final String RENAME_PACKAGE   = "refactoring.renamePackage";
+  public static final String RENAME_CLASS     = "refactoring.renameClass";
+  public static final String RENAME_METHOD    = "refactoring.renameMethod";
+  public static final String RENAME_FIELD     = "refactoring.renameField";
+  public static final String RENAME_VARIABLE  = "refactoring.renameVariable";
+  public static final String RENAME_PARAMETER = "refactoring.renameParameter";
+  public static final String RENAME_DIRECTORY = "refactoring.renameDirectory";
+  public static final String RENAME_FILE      = "refactoring.renameFile";
 
   private static final String MOVE_PACKAGE = "refactoring.movePackage";
   private static final String MOVE_CLASS   = "refactoring.moveClass";
@@ -62,35 +62,6 @@ public class HelpID {
   public static final String CHANGE_CLASS_SIGNATURE     = "refactoring.changeClassSignature";
   public static final String MOVE_INSTANCE_METHOD       = "refactoring.moveInstMethod";
   public static final String INVERT_BOOLEAN             = "refactoring.invertBoolean";
-
-  public static String getRenameHelpID(PsiElement element) {
-    String helpID = null;
-    if (element instanceof PsiPackage){
-      helpID = HelpID.RENAME_PACKAGE;
-    }
-    else if (element instanceof PsiClass){
-      helpID = HelpID.RENAME_CLASS;
-    }
-    else if (element instanceof PsiMethod){
-      helpID = HelpID.RENAME_METHOD;
-    }
-    else if (element instanceof PsiField){
-      helpID = HelpID.RENAME_FIELD;
-    }
-    else if (element instanceof PsiLocalVariable){
-      helpID = HelpID.RENAME_VARIABLE;
-    }
-    else if (element instanceof PsiParameter){
-      helpID = HelpID.RENAME_PARAMETER;
-    }
-    else if (element instanceof PsiDirectory){
-      helpID = HelpID.RENAME_DIRECTORY;
-    }
-    else if (element instanceof PsiFile) {
-      helpID = HelpID.RENAME_FILE;
-    }
-    return helpID;
-  }
 
   public static String getMoveHelpID(PsiElement element) {
     if (element instanceof PsiPackage){

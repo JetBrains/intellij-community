@@ -4,6 +4,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -11,6 +12,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
 import java.util.Map;
@@ -59,14 +61,23 @@ public abstract class RenamePsiElementProcessor {
     return DEFAULT;
   }
 
+  @Nullable
+  public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener elementListener) {
+    return null;
+  }
+
+  @Nullable
+  @NonNls
+  public String getHelpID(final PsiElement element) {
+    if (element instanceof PsiFile) {
+      return "refactoring.renameFile";
+    }
+    return null;
+  }
+
   private static RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
     public boolean canProcessElement(final PsiElement element) {
       return true;
     }
   };
-
-  @Nullable
-  public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener elementListener) {
-    return null;
-  }
 }

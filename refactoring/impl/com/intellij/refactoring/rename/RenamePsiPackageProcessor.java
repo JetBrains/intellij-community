@@ -3,9 +3,11 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -70,5 +72,11 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
         listener.elementRenamed(aPackage);
       }
     };
+  }
+
+  @Nullable
+  @NonNls
+  public String getHelpID(final PsiElement element) {
+    return HelpID.RENAME_PACKAGE;
   }
 }
