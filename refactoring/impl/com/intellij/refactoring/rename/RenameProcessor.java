@@ -18,7 +18,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
-import com.intellij.refactoring.rename.naming.ConstructorParameterOnFieldRenameRenamer;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -244,18 +243,21 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       PsiElement element = elements.get(i);
       final String newName = myAllRenames.get(element);
       final UsageInfo[] usages = RenameUtil.findUsages(element, newName, mySearchInComments, mySearchTextOccurrences, myAllRenames);
-      result.addAll(Arrays.asList(usages));
+      final List<UsageInfo> usagesList = Arrays.asList(usages);
+      result.addAll(usagesList);
 
       for(AutomaticRenamerFactory factory: myRenamerFactories) {
-        myRenamers.add(factory.createRenamer(element, newName, Arrays.asList(usages)));
+        myRenamers.add(factory.createRenamer(element, newName, usagesList));
       }
 
       if (element instanceof PsiMethod) {
         addOverriders((PsiMethod)element, newName, elements);
       }
 
-      if (element instanceof PsiField) {
-        myRenamers.add(new ConstructorParameterOnFieldRenameRenamer((PsiField)element, newName));
+      for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+        if (factory.getOptionName() == null && factory.isApplicable(element)) {
+          myRenamers.add(factory.createRenamer(element, newName, usagesList));
+        }
       }
     }
     UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);

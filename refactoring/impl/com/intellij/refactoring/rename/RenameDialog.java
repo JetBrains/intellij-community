@@ -218,7 +218,7 @@ public class RenameDialog extends RefactoringDialog {
     }
 
     for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
-      if (factory.isApplicable(myPsiElement)) {
+      if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
         gbConstraints.insets = new Insets(4, 8, 4, 8);
         gbConstraints.gridwidth = (myAutomaticRenamers.size() % 2 == 0) ? 1 : GridBagConstraints.REMAINDER;
         gbConstraints.gridx = myAutomaticRenamers.size() % 2;

@@ -6,6 +6,8 @@ import com.intellij.usageView.UsageInfo;
 
 import java.util.Collection;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author yole
  */
@@ -14,6 +16,7 @@ public interface AutomaticRenamerFactory {
 
   boolean isApplicable(PsiElement element);
 
+  @Nullable
   String getOptionName();
 
   boolean isEnabled();
