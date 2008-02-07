@@ -33,7 +33,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, ErrorTreeView {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.ide.errorTreeView.NewErrorTreeViewPanel");
   private String myProgressText = "";
   private final boolean myCreateExitAction;
   private ErrorViewStructure myErrorViewStructure;

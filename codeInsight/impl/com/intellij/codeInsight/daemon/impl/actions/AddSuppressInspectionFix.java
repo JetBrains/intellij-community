@@ -79,7 +79,7 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
-    if (SuppressManager.getInstance().canHave15Suppressions(element) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
+    if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       assert modifierList != null;
       PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
@@ -137,6 +137,10 @@ public class AddSuppressInspectionFix extends SuppressIntentionAction {
       }
     }
     DaemonCodeAnalyzer.getInstance(project).restart();
+  }
+
+  protected boolean use15Suppressions(final PsiDocCommentOwner container) {
+    return SuppressManager.getInstance().canHave15Suppressions(container) && !SuppressManager.getInstance().alreadyHas14Suppressions(container);
   }
 
   public boolean startInWriteAction() {

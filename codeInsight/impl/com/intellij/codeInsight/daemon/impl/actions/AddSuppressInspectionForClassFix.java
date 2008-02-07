@@ -19,6 +19,10 @@ public class AddSuppressInspectionForClassFix extends AddSuppressInspectionFix {
     super(key);
   }
 
+  public AddSuppressInspectionForClassFix(final String id) {
+   super(id);
+  }
+
   @Nullable protected PsiDocCommentOwner getContainer(final PsiElement element) {
     PsiDocCommentOwner container = super.getContainer(element);
     if (container == null || container instanceof PsiClass){

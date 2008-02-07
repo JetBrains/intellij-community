@@ -2,7 +2,6 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -27,6 +26,10 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
 
   public AddSuppressInspectionAllForClassFix() {
     super(ID);
+  }
+
+  public AddSuppressInspectionAllForClassFix(final String id) {
+   super(id);
   }
 
   @Nullable
@@ -56,7 +59,7 @@ public class AddSuppressInspectionAllForClassFix extends AddSuppressInspectionFi
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project)
       .ensureFilesWritable(container.getContainingFile().getVirtualFile());
     if (status.hasReadonlyFiles()) return;
-    if (SuppressManager.getInstance().canHave15Suppressions(element) && !SuppressManager.getInstance().alreadyHas14Suppressions(container)) {
+    if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {
         final PsiAnnotation annotation = modifierList.findAnnotation(SuppressManagerImpl.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
