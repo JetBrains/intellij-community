@@ -9,8 +9,6 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 
-import javax.swing.*;
-
 public class IncrementalFindAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     public void execute(final Editor editor, DataContext dataContext) {
@@ -18,12 +16,7 @@ public class IncrementalFindAction extends EditorAction {
       if (!editor.isOneLineMode()) {
         final EditorSearchComponent header = new EditorSearchComponent(editor, project);
         editor.setHeaderComponent(header);
-        
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            header.requestFocus();
-          }
-        });
+        header.requestFocus();
       }
     }
 
