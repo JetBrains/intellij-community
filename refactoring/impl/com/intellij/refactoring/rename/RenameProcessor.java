@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
@@ -19,7 +18,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.NonCodeUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -93,66 +95,12 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     return HelpID.getRenameHelpID(myPrimaryElement);
   }
 
-  private void addExistingNameConflicts(final Collection<String> conflicts) {
-    if (myPrimaryElement instanceof PsiCompiledElement) return;
-    if (myPrimaryElement instanceof PsiMethod) {
-      PsiMethod refactoredMethod = (PsiMethod)myPrimaryElement;
-      if (myNewName.equals(refactoredMethod.getName())) return;
-      final PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
-      try {
-        prototype.setName(myNewName);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return;
-      }
-
-      ConflictsUtil.checkMethodConflicts(
-        refactoredMethod.getContainingClass(),
-        refactoredMethod,
-        prototype,
-        conflicts);
-    }
-    else if (myPrimaryElement instanceof PsiField) {
-      PsiField refactoredField = (PsiField)myPrimaryElement;
-      if (myNewName.equals(refactoredField.getName())) return;
-      ConflictsUtil.checkFieldConflicts(
-        refactoredField.getContainingClass(),
-        myNewName,
-        conflicts
-      );
-    }
-    else if (myPrimaryElement instanceof PsiClass) {
-      final PsiClass aClass = (PsiClass)myPrimaryElement;
-      if (myNewName.equals(aClass.getName())) return;
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass != null) { // innerClass
-        PsiClass[] innerClasses = containingClass.getInnerClasses();
-        for (PsiClass innerClass : innerClasses) {
-          if (myNewName.equals(innerClass.getName())) {
-            conflicts.add(RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", myNewName, containingClass.getQualifiedName()));
-            break;
-          }
-        }
-      }
-      else {
-        final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass.getQualifiedName(), myNewName);
-        final PsiClass conflictingClass =
-          JavaPsiFacade.getInstance(myProject).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(myProject));
-        if (conflictingClass != null) {
-          conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
-        }
-      }
-    }
-  }
-
-
   public boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
     Set<String> conflicts = new HashSet<String>();
 
     conflicts.addAll(RenameUtil.getConflictDescriptions(usagesIn));
-    addExistingNameConflicts(conflicts);
+    RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts);
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
       conflictsDialog.show();

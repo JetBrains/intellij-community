@@ -1,11 +1,15 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -13,12 +17,15 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 
 /**
  * @author yole
  */
 public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaClassProcessor");
+
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiClass;
   }
@@ -102,6 +109,32 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
     for (PsiMethod constructor : constructors) {
       allRenames.put(constructor, newName);
+    }
+  }
+
+
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
+    if (element instanceof PsiCompiledElement) return;
+    final PsiClass aClass = (PsiClass)element;
+    if (newName.equals(aClass.getName())) return;
+    final PsiClass containingClass = aClass.getContainingClass();
+    if (containingClass != null) { // innerClass
+      PsiClass[] innerClasses = containingClass.getInnerClasses();
+      for (PsiClass innerClass : innerClasses) {
+        if (newName.equals(innerClass.getName())) {
+          conflicts.add(RefactoringBundle.message("inner.class.0.is.already.defined.in.class.1", newName, containingClass.getQualifiedName()));
+          break;
+        }
+      }
+    }
+    else {
+      final String qualifiedNameAfterRename = RenameUtil.getQualifiedNameAfterRename(aClass.getQualifiedName(), newName);
+      Project project = element.getProject();
+      final PsiClass conflictingClass =
+        JavaPsiFacade.getInstance(project).findClass(qualifiedNameAfterRename, GlobalSearchScope.allScope(project));
+      if (conflictingClass != null) {
+        conflicts.add(RefactoringBundle.message("class.0.already.exists", qualifiedNameAfterRename));
+      }
     }
   }
 }

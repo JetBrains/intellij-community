@@ -1,20 +1,24 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import org.jetbrains.annotations.NotNull;
-
 public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
+
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiMethod;
   }
@@ -56,5 +60,25 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   public Collection<PsiReference> findReferences(final PsiElement element) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
     return MethodReferencesSearch.search((PsiMethod)element, projectScope, true).findAll();
+  }
+
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
+    if (element instanceof PsiCompiledElement) return;
+    PsiMethod refactoredMethod = (PsiMethod)element;
+    if (newName.equals(refactoredMethod.getName())) return;
+    final PsiMethod prototype = (PsiMethod)refactoredMethod.copy();
+    try {
+      prototype.setName(newName);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+      return;
+    }
+
+    ConflictsUtil.checkMethodConflicts(
+      refactoredMethod.getContainingClass(),
+      refactoredMethod,
+      prototype,
+      conflicts);
   }
 }

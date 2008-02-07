@@ -12,6 +12,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
@@ -19,6 +20,7 @@ import com.intellij.util.containers.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collection;
 
 public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
@@ -230,6 +232,19 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       if (method != null) {
         allRenames.put(method, newName);
       }
+    }
+  }
+
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
+    if (element instanceof PsiCompiledElement) return;
+    if (element instanceof PsiField) {
+      PsiField refactoredField = (PsiField)element;
+      if (newName.equals(refactoredField.getName())) return;
+      ConflictsUtil.checkFieldConflicts(
+        refactoredField.getContainingClass(),
+        newName,
+        conflicts
+      );
     }
   }
 }

@@ -46,6 +46,9 @@ public abstract class RenamePsiElementProcessor {
   public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
   }
 
+  public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
+  }
+
   @NotNull
   public static RenamePsiElementProcessor forElement(PsiElement element) {
     for(RenamePsiElementProcessor processor: Extensions.getExtensions(EP_NAME)) {
