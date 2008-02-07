@@ -6,22 +6,26 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
@@ -115,6 +119,80 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<UsageInfo> result) {
+    final PsiClass aClass = (PsiClass)element;
+    final ClassCollisionsDetector classCollisionsDetector = new ClassCollisionsDetector(aClass);
+    Collection<UsageInfo> initialResults = new ArrayList<UsageInfo>(result);
+    for(UsageInfo usageInfo: initialResults) {
+      if (usageInfo instanceof MoveRenameUsageInfo) {
+        classCollisionsDetector.addClassCollisions(usageInfo.getElement(), newName, result);
+      }
+    }
+    findSubmemberHidesMemberCollisions(aClass, newName, result);
+  }
+
+  public static void findSubmemberHidesMemberCollisions(final PsiClass aClass, final String newName, final List<UsageInfo> result) {
+    if (aClass.getParent() instanceof PsiClass) {
+      PsiClass parent = (PsiClass)aClass.getParent();
+      Collection<PsiClass> inheritors = ClassInheritorsSearch.search(parent, parent.getUseScope(), true).findAll();
+      for (PsiClass inheritor : inheritors) {
+        PsiClass[] inners = inheritor.getInnerClasses();
+        for (PsiClass inner : inners) {
+          if (newName.equals(inner.getName())) {
+            result.add(new SubmemberHidesMemberUsageInfo(inner, aClass));
+          }
+        }
+      }
+    }
+  }
+
+  private static class ClassCollisionsDetector {
+    final HashSet<PsiFile> myProcessedFiles = new HashSet<PsiFile>();
+    final PsiClass myRenamedClass;
+    private String myRenamedClassQualifiedName;
+
+    public ClassCollisionsDetector(PsiClass renamedClass) {
+      myRenamedClass = renamedClass;
+      myRenamedClassQualifiedName = myRenamedClass.getQualifiedName();
+    }
+
+    public void addClassCollisions(PsiElement referenceElement, String newName, List<UsageInfo> results) {
+      final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(referenceElement.getProject()).getResolveHelper();
+      final PsiClass aClass = resolveHelper.resolveReferencedClass(newName, referenceElement);
+      if (aClass == null) return;
+      final PsiFile containingFile = referenceElement.getContainingFile();
+      final String text = referenceElement.getText();
+      if (Comparing.equal(myRenamedClassQualifiedName, removeSpaces(text))) return;
+      if (myProcessedFiles.contains(containingFile)) return;
+      final Collection<PsiReference> references = ReferencesSearch.search(aClass, new LocalSearchScope(containingFile)).findAll();
+      for (PsiReference reference : references) {
+        final PsiElement collisionReferenceElement = reference.getElement();
+        if (collisionReferenceElement instanceof PsiJavaCodeReferenceElement) {
+          final PsiElement parent = collisionReferenceElement.getParent();
+          if (parent instanceof PsiImportStatement) {
+            results.add(new CollidingClassImportUsageInfo((PsiImportStatement)parent, myRenamedClass));
+          }
+          else {
+            if (aClass.getQualifiedName() != null) {
+              results.add(new ClassHidesImportedClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
+                                                               myRenamedClass, aClass));
+            }
+            else {
+              results.add(new ClassHidesUnqualifiableClassUsageInfo((PsiJavaCodeReferenceElement)collisionReferenceElement,
+                                                                    myRenamedClass, aClass));
+            }
+          }
+        }
+      }
+      myProcessedFiles.add(containingFile);
+    }
+  }
+
+  @NonNls private static final Pattern WHITE_SPACE_PATTERN = Pattern.compile("\\s");
+
+  private static String removeSpaces(String s) {
+    return WHITE_SPACE_PATTERN.matcher(s).replaceAll("");
+  }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
     if (element instanceof PsiCompiledElement) return;

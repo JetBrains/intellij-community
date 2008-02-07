@@ -2,21 +2,24 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.MoveRenameUsageInfo;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringMessageUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaVariableProcessor");
+
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiVariable;
   }
@@ -239,6 +244,19 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
+                             final List<UsageInfo> result) {
+    if (element instanceof PsiField) {
+      PsiField field = (PsiField) element;
+      findFieldHidesOuterFieldCollisions(field, newName, result);
+      findSubmemberHidesFieldCollisions(field, newName, result);
+    }
+    else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+      JavaUnresolvableLocalCollisionDetector.findCollisions(element, newName, result);
+      findLocalHidesFieldCollisions(element, newName, allRenames, result);
+    }
+  }
+
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField) {
@@ -279,5 +297,69 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled;
     }
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled;
+  }
+
+  private static void findFieldHidesOuterFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
+    final PsiClass fieldClass = field.getContainingClass();
+    for (PsiClass aClass = fieldClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
+      final PsiField conflict = aClass.findFieldByName(newName, false);
+      if (conflict == null) continue;
+      ReferencesSearch.search(conflict).forEach(new Processor<PsiReference>() {
+        public boolean process(final PsiReference reference) {
+          PsiElement refElement = reference.getElement();
+          if (refElement instanceof PsiReferenceExpression && ((PsiReferenceExpression)refElement).isQualified()) return true;
+          if (PsiTreeUtil.isAncestor(fieldClass, refElement, false)) {
+            FieldHidesOuterFieldUsageInfo info = new FieldHidesOuterFieldUsageInfo(refElement, field);
+            result.add(info);
+          }
+          return true;
+        }
+      });
+    }
+  }
+
+  public static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<UsageInfo> result) {
+    if (field.getContainingClass() == null) return;
+    if (field.hasModifierProperty(PsiModifier.PRIVATE)) return;
+    final PsiClass containingClass = field.getContainingClass();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
+    for (PsiClass inheritor : inheritors) {
+      PsiField conflictingField = inheritor.findFieldByName(newName, false);
+      if (conflictingField != null) {
+        result.add(new SubmemberHidesMemberUsageInfo(conflictingField, field));
+      }
+    }
+  }
+
+  private static void findLocalHidesFieldCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<UsageInfo> result) {
+    if (!(element instanceof PsiLocalVariable) && !(element instanceof PsiParameter)) return;
+
+    PsiClass toplevel = PsiUtil.getTopLevelClass(element);
+    if (toplevel == null) return;
+
+    PsiElement scopeElement;
+    if (element instanceof PsiLocalVariable) {
+      scopeElement = RefactoringUtil.getVariableScope((PsiLocalVariable)element);
+    }
+    else { // Parameter
+      scopeElement = ((PsiParameter) element).getDeclarationScope();
+    }
+
+    LOG.assertTrue(scopeElement != null);
+    scopeElement.accept(new JavaRecursiveElementVisitor() {
+      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+        super.visitReferenceExpression(expression);
+        if (!expression.isQualified()) {
+          final PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiField) {
+            final PsiField field = (PsiField)resolved;
+            String fieldNewName = allRenames.containsKey(field) ? allRenames.get(field) : field.getName();
+            if (newName.equals(fieldNewName)) {
+              result.add(new LocalHidesFieldUsageInfo(expression, element));
+            }
+          }
+        }
+      }
+    });
   }
 }

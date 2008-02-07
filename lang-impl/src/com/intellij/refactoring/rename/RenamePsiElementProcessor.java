@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 
 /**
  * @author yole
@@ -108,6 +109,10 @@ public abstract class RenamePsiElementProcessor {
     return element;
   }
 
+  public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
+                             final List<UsageInfo> result) {
+  }
+  
   public static RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
     public boolean canProcessElement(final PsiElement element) {
       return true;

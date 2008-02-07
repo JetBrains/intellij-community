@@ -7,12 +7,14 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 
 import java.util.List;
-import java.util.Map;
 
-public class JavaUnresolvableLocalCollisionDetector implements RenameCollisionDetector {
+public class JavaUnresolvableLocalCollisionDetector {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector");
 
-  public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames, final List<UsageInfo> result) {
+  private JavaUnresolvableLocalCollisionDetector() {
+  }
+
+  public static void findCollisions(final PsiElement element, final String newName, final List<UsageInfo> result) {
     if (!(element instanceof PsiLocalVariable || element instanceof PsiParameter)) {
       return;
     }

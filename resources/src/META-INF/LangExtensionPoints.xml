@@ -209,7 +209,6 @@
   <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension"/>
 
   <extensionPoint name="renameHandler" interface="com.intellij.refactoring.rename.RenameHandler"/>
-  <extensionPoint name="renameCollisionDetector" interface="com.intellij.refactoring.rename.RenameCollisionDetector"/>
   <extensionPoint name="renamePsiElementProcessor" interface="com.intellij.refactoring.rename.RenamePsiElementProcessor"/>
   <extensionPoint name="automaticRenamerFactory" interface="com.intellij.refactoring.rename.naming.AutomaticRenamerFactory"/>
   <extensionPoint name="nameSuggestionProvider" interface="com.intellij.refactoring.rename.NameSuggestionProvider"/>

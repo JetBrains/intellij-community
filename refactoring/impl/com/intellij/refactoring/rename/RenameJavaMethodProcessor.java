@@ -2,9 +2,13 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -22,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
 
 public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
@@ -67,6 +72,11 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   public Collection<PsiReference> findReferences(final PsiElement element) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
     return MethodReferencesSearch.search((PsiMethod)element, projectScope, true).findAll();
+  }
+
+  public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
+                             final List<UsageInfo> result) {
+    findSubmemberHidesMemberCollisions((PsiMethod) element, newName, result);
   }
 
   public void findExistingNameConflicts(final PsiElement element, final String newName, final Collection<String> conflicts) {
@@ -130,5 +140,27 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
       return element;
     }
     return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
+  }
+
+  private static void findSubmemberHidesMemberCollisions(final PsiMethod method, final String newName, final List<UsageInfo> result) {
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return;
+    if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, containingClass.getUseScope(), true).findAll();
+
+    MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
+    MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),
+                                                                             oldSignature.getTypeParameters(),
+                                                                             oldSignature.getSubstitutor());
+    for (PsiClass inheritor : inheritors) {
+      PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(containingClass, inheritor, PsiSubstitutor.EMPTY);
+      final PsiMethod[] methodsByName = inheritor.findMethodsByName(newName, false);
+      for (PsiMethod conflictingMethod : methodsByName) {
+        if (newSignature.equals(conflictingMethod.getSignature(superSubstitutor))) {
+          result.add(new SubmemberHidesMemberUsageInfo(conflictingMethod, method));
+          break;
+        }
+      }
+    }
   }
 }

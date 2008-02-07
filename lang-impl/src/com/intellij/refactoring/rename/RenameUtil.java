@@ -53,10 +53,7 @@ public class RenameUtil {
                                          false));
     }
 
-    for(RenameCollisionDetector collisionDetector: Extensions.getExtensions(RenameCollisionDetector.EP_NAME)) {
-      collisionDetector.findCollisions(element, newName, allRenames, result);
-    }
-
+    processor.findCollisions(element, newName, allRenames, result);
 
     if (searchInStringsAndComments && !(element instanceof PsiDirectory)) {
       String stringToSearch = ElementDescriptionUtil.getElementDescription(element, false
