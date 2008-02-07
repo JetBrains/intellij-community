@@ -311,17 +311,6 @@ abstract class CodeCompletionHandlerBase implements CodeInsightActionHandler {
 
   protected abstract CompletionData getCompletionData(CompletionContext context, PsiElement element);
 
-  private void complete(final CompletionContext context,
-                        final PsiElement lastElement,
-                        final CompletionData completionData,
-                        final Set<LookupItem> lookupSet) {
-    if (lastElement == null) return;
-    final PsiReference ref = lastElement.getContainingFile().findReferenceAt(context.offset);
-    if (ref != null) {
-      completionData.completeReference(ref, lookupSet, context, lastElement);
-    }
-  }
-
   protected abstract LookupData getLookupData(final CompletionContext _context);
 
   protected Pair<CompletionContext, PsiElement> insertDummyIdentifier(final CompletionContext context) {

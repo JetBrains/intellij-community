@@ -188,29 +188,31 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix){
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix,
+                                      final PrefixMatcher matcher){
     for (final CompletionVariantItem ce : myCompletionsList) {
-      addReferenceCompletions(reference, position, set, prefix, ce);
+      addReferenceCompletions(reference, position, set, prefix, ce, matcher);
     }
   }
 
-  public void addKeywords(PsiElementFactory factory, Set<LookupItem> set, CompletionContext context, PsiElement position){
+  public void addKeywords(PsiElementFactory factory, Set<LookupItem> set, CompletionContext context, PsiElement position,
+                          final PrefixMatcher matcher){
     for (final CompletionVariantItem ce : myCompletionsList) {
       final Object comp = ce.myCompletion;
       if (comp instanceof String) {
-        myPeer.addKeyword(factory, set, ce.myTailType, comp, context);
+        myPeer.addKeyword(factory, set, ce.myTailType, comp, context, matcher);
       }
       else if (comp instanceof ContextGetter) {
         final Object[] elements = ((ContextGetter)comp).get(position, context);
         for (Object element : elements) {
-          myPeer.addLookupItem(set, ce.myTailType, element, context, context.file);
+          myPeer.addLookupItem(set, ce.myTailType, element, matcher, context.file);
         }
       }
       // TODO: KeywordChooser -> ContextGetter
       else if (comp instanceof KeywordChooser) {
         final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
         for (String keyword : keywords) {
-          myPeer.addKeyword(factory, set, ce.myTailType, keyword, context);
+          myPeer.addKeyword(factory, set, ce.myTailType, keyword, context, matcher);
         }
       }
     }
@@ -235,8 +237,8 @@ public class CompletionVariant {
   }
 
   protected void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set,
-                                         CompletionContext context, CompletionVariantItem item){
-    myPeer.addReferenceCompletions(reference, position, set, context, item.myCompletion, item.myTailType);
+                                         CompletionContext context, CompletionVariantItem item, final PrefixMatcher matcher){
+    myPeer.addReferenceCompletions(reference, position, set, context, item.myCompletion, item.myTailType, matcher);
   }
 
 

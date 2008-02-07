@@ -32,14 +32,14 @@ public class LegacyCompletionContributor extends CompletionContributor{
       public void addCompletions(@NotNull final CompletionParameters parameters, final MatchingContext matchingContext, @NotNull final CompletionResultSet<LookupElement> result) {
         CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
         final PsiFile file = parameters.getOriginalFile();
-        final int offset = context.startOffset;
-        final PsiElement lastElement = file.findElementAt(offset - 1);
+        final int startOffset = context.startOffset;
+        final PsiElement lastElement = file.findElementAt(startOffset - 1);
         PsiElement insertedElement = parameters.getPosition();
-        CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.startOffset);
-        result.setPrefixMatcher(completionData == null ? CompletionData.findPrefixStatic(insertedElement, offset) : completionData.findPrefix(insertedElement, offset));
+        CompletionData completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
+        result.setPrefixMatcher(completionData == null ? CompletionData.findPrefixStatic(insertedElement, startOffset) : completionData.findPrefix(insertedElement, startOffset));
         if (completionData == null) {
           // some completion data may depend on prefix
-          completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, context.startOffset);
+          completionData = CompletionUtil.getCompletionDataByElement(lastElement, file, startOffset);
         }
 
         if (completionData == null) return;
@@ -47,12 +47,12 @@ public class LegacyCompletionContributor extends CompletionContributor{
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, context, insertedElement);
+          completionData.completeReference(ref, lookupSet, context, insertedElement, result.getPrefixMatcher());
         }
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement);
+          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement, result.getPrefixMatcher());
         }
         result.addAllElements(lookupSet);
       }

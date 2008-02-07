@@ -74,19 +74,20 @@ public class CompletionData {
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, @NotNull PsiElement position){
+  public void completeReference(PsiReference reference, Set<LookupItem> set, CompletionContext context, @NotNull PsiElement position,
+                                final PrefixMatcher matcher){
     final CompletionVariant[] variants = findVariants(position, context.file);
     boolean hasApplicableVariants = false;
 
     for (CompletionVariant variant : variants) {
       if (variant.hasReferenceFilter()) {
-        variant.addReferenceCompletions(reference, position, set, context);
+        variant.addReferenceCompletions(reference, position, set, context, matcher);
         hasApplicableVariants = true;
       }
     }
 
     if(!hasApplicableVariants){
-      ourGenericVariant.addReferenceCompletions(reference, position, set, context);
+      ourGenericVariant.addReferenceCompletions(reference, position, set, context, matcher);
     }
   }
 
@@ -94,9 +95,10 @@ public class CompletionData {
     set.addAll(Arrays.asList(findVariants(position, context.file)));
   }
 
-  public static void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position){
+  public static void completeKeywordsBySet(Set<LookupItem> set, Set<CompletionVariant> variants, CompletionContext context, PsiElement position,
+                                           final PrefixMatcher matcher){
     for (final CompletionVariant variant : variants) {
-      variant.addKeywords(JavaPsiFacade.getInstance(context.file.getProject()).getElementFactory(), set, context, position);
+      variant.addKeywords(JavaPsiFacade.getInstance(context.file.getProject()).getElementFactory(), set, context, position, matcher);
     }
   }
 
@@ -132,8 +134,9 @@ public class CompletionData {
   }
 
   protected static final CompletionVariant ourGenericVariant = new CompletionVariant() {
-    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix) {
-      addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE));
+    public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix,
+                                        final PrefixMatcher matcher) {
+      addReferenceCompletions(reference, position, set, prefix, new CompletionVariantItem(TrueFilter.INSTANCE, TailType.NONE), matcher);
     }
   };
 

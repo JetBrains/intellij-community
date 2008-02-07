@@ -56,7 +56,7 @@ public class CompletionService {
       final MatchingContext matchingContext = new MatchingContext();
       if (place.myPlace.accepts(parameters.getPosition(), matchingContext)) {
         final CompletionContext context = parameters.getPosition().getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
-        final PrefixMatcher matcher = new CamelHumpMatcher(context.getPrefix());
+        final PrefixMatcher matcher = new CamelHumpMatcher(CompletionData.findPrefixStatic(parameters.getPosition(), context.startOffset));
 
         list.add(new PrioritizedQueryExecutor<LookupElement, CompletionParameters>() {
           public void execute(final CompletionParameters queryParameters, final QueryResultSet<LookupElement> resultSet) {
