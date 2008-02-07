@@ -18,10 +18,7 @@ class XmlTokenSelectioner extends ExtendWordSelectionHandlerBase {
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
     XmlToken token = (XmlToken)e;
 
-    if (token.getTokenType() != XmlTokenType.XML_DATA_CHARACTERS &&
-        token.getTokenType() != XmlTokenType.XML_START_TAG_START &&
-        token.getTokenType() != XmlTokenType.XML_END_TAG_START
-      ) {
+    if (shouldSelectToken(token)) {
       List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
       SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
       return ranges;
@@ -31,5 +28,13 @@ class XmlTokenSelectioner extends ExtendWordSelectionHandlerBase {
       SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, result);
       return result;
     }
+  }
+
+  static boolean shouldSelectToken(final XmlToken token) {
+    return token.getTokenType() != XmlTokenType.XML_DATA_CHARACTERS &&
+          token.getTokenType() != XmlTokenType.XML_START_TAG_START &&
+          token.getTokenType() != XmlTokenType.XML_END_TAG_START &&
+          token.getTokenType() != XmlTokenType.XML_EMPTY_ELEMENT_END &&
+          token.getTokenType() != XmlTokenType.XML_TAG_END;
   }
 }

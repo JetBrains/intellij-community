@@ -8,8 +8,8 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.codeInsight.editorActions.wordSelection.AbstractWordSelectioner;
+import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
@@ -27,6 +27,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HtmlSelectioner extends AbstractWordSelectioner {
@@ -55,24 +56,33 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
+    List<TextRange> result;
 
-    if (ourStyleSelectioner!=null) {
+    if (!(e instanceof XmlToken) ||
+        XmlTokenSelectioner.shouldSelectToken((XmlToken)e) ||
+        ((XmlToken)e).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+      result = super.select(e, editorText, cursorOffset, editor);
+    }
+    else {
+      result = new ArrayList<TextRange>();
+    }
+
+    if (ourStyleSelectioner != null) {
       List<TextRange> o = ourStyleSelectioner.select(e, editorText, cursorOffset, editor);
-      if (o!=null) result.addAll(o);
+      if (o != null) result.addAll(o);
     }
 
     final PsiElement parent = e.getParent();
     if (parent instanceof XmlComment) {
       result.addAll(expandToWholeLine(editorText, parent.getTextRange(), true));
     }
-    
+
     PsiFile psiFile = e.getContainingFile();
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFile(psiFile.getVirtualFile());
 
     addAttributeSelection(result, e);
     final FileViewProvider fileViewProvider = psiFile.getViewProvider();
-    for(Language lang:fileViewProvider.getPrimaryLanguages()) {
+    for (Language lang : fileViewProvider.getPrimaryLanguages()) {
       final PsiFile langFile = fileViewProvider.getPsi(lang);
       if (langFile != psiFile) addAttributeSelection(result, fileViewProvider.findElementAt(cursorOffset, lang));
     }
@@ -85,7 +95,11 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return result;
   }
 
-  private static void addTagSelection(CharSequence editorText, int cursorOffset, FileType fileType, EditorHighlighter highlighter, List<TextRange> result) {
+  private static void addTagSelection(CharSequence editorText,
+                                      int cursorOffset,
+                                      FileType fileType,
+                                      EditorHighlighter highlighter,
+                                      List<TextRange> result) {
     int start = cursorOffset;
 
     while (true) {
@@ -94,7 +108,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       if (i.atEnd()) return;
 
       while (true) {
-        if (i.getTokenType() ==  XmlTokenType.XML_START_TAG_START) break;
+        if (i.getTokenType() == XmlTokenType.XML_START_TAG_START) break;
         i.retreat();
         if (i.atEnd()) return;
       }
@@ -117,7 +131,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
           result.add(new TextRange(start, j.getEnd()));
         }
         if (!i.atEnd()) {
-          result.add(new TextRange(i.getStart(),tagEnd));
+          result.add(new TextRange(i.getStart(), tagEnd));
         }
       }
 
@@ -127,7 +141,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
 
   private static void addAttributeSelection(List<TextRange> result, PsiElement e) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
-    
+
     if (attribute != null) {
       result.add(attribute.getTextRange());
       final XmlAttributeValue value = attribute.getValueElement();
@@ -135,7 +149,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       if (value != null) {
         final TextRange range = value.getTextRange();
         result.add(range);
-        if (value.getFirstChild() != null && value.getFirstChild().getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+        if (value.getFirstChild() != null &&
+            value.getFirstChild().getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
           result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
         }
       }
