@@ -99,7 +99,7 @@ public abstract class ProjectOpenProcessorBase extends ProjectOpenProcessor {
                                     ProjectFileType.DOT_DEFAULT_EXTENSION;
       final Project projectToUpdate = ProjectManagerEx.getInstanceEx().newProject(newProjectPath, true, false);
 
-      if (!getBuilder().validate(projectToClose, projectToUpdate)) {
+      if (projectToUpdate == null || !getBuilder().validate(projectToClose, projectToUpdate)) {
         return null;
       }
 

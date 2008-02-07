@@ -140,24 +140,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public void initComponent() {
   }
 
+  @Nullable
   public Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
-    ProjectImpl project = null;
+    ProjectImpl project;
     try {
       project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(), null);
       if (useDefaultProjectSettings) {
-        try {
-          project.getStateStore().loadProjectFromTemplate((ProjectImpl)getDefaultProject());
-        }
-        catch (Exception e) {
-          reportError(e);
-        }
+        project.getStateStore().loadProjectFromTemplate((ProjectImpl)getDefaultProject());
       }
       project.init();
     }
-    catch (IOException e) {
-      reportError(e);
+    catch (final Exception e) {
+      LOG.info(e);
+      Messages.showErrorDialog(e.getMessage(), ProjectBundle.message("project.load.default.error"));
+      return null;
     }
 
     return project;

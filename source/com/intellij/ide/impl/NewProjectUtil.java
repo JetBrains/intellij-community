@@ -61,6 +61,8 @@ public class NewProjectUtil {
       final Project newProject =
         projectBuilder == null || !projectBuilder.isUpdate() ? projectManager.newProject(projectFilePath, true, false) : projectToClose;
 
+      if (newProject == null) return;
+
       final Sdk jdk = dialog.getNewProjectJdk();
       if (jdk != null) {
         final String versionString = jdk.getVersionString();

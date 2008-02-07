@@ -31,7 +31,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
 
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
-
+    if (project == null) return null;
     StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
       public void run() {
         ToolWindowManager.getInstance(project).invokeLater(new Runnable() {

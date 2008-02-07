@@ -24,6 +24,7 @@ public class PlatformProjectStarter implements ApplicationComponent {
         if (projectFromCommandLine == null) {
           final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
           Project project = projectManager.newProject(PathManager.getConfigPath() + "/dummy.ipr", true, false);
+          if (project == null) return;
           projectManager.openProject(project);
         }
       }

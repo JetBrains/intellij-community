@@ -18,6 +18,7 @@ public abstract class ProjectManagerEx extends ProjectManager {
     return (ProjectManagerEx)ApplicationManager.getApplication().getComponent(ProjectManager.class);
   }
 
+  @Nullable
   public abstract Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy);
 
   @Nullable
