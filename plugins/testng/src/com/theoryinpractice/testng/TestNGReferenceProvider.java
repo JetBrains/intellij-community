@@ -23,7 +23,7 @@ import com.intellij.psi.impl.source.resolve.reference.PsiReferenceProviderBase;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.patterns.MatchingContext;
+import com.intellij.util.ProcessingContext;
 import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +39,7 @@ public class TestNGReferenceProvider implements ProjectComponent
         .registerReferenceProvider(new TestAnnotationFilter("dependsOnMethods"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
         {
           @NotNull
-          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
             return new MethodReference[] {new MethodReference((PsiLiteralExpression) element)};
           }
         });
@@ -47,14 +47,14 @@ public class TestNGReferenceProvider implements ProjectComponent
         .registerReferenceProvider(new TestAnnotationFilter("dataProvider"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
         {
           @NotNull
-          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
             return new DataProviderReference[] {new DataProviderReference((PsiLiteralExpression) element)};
           }
         });
     registry.registerReferenceProvider(new TestAnnotationFilter("groups"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
     {
       @NotNull
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+      public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         return new GroupReference[] {new GroupReference(project, (PsiLiteralExpression) element)};
       }
     });
@@ -62,7 +62,7 @@ public class TestNGReferenceProvider implements ProjectComponent
         .registerReferenceProvider(new TestAnnotationFilter("dependsOnGroups"), PsiLiteralExpression.class, new PsiReferenceProviderBase()
         {
           @NotNull
-          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final MatchingContext matchingContext) {
+          public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
             return new GroupReference[] {new GroupReference(project, (PsiLiteralExpression) element)};
           }
         });
