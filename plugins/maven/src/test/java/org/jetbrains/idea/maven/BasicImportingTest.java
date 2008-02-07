@@ -236,6 +236,33 @@ public class BasicImportingTest extends ImportingTestCase {
     // assertModuleLibDeps("m1", "group:id:1");
   }
 
+  public void testTransitiveLibraryDependencyVersionResolution() throws IOException {
+    // this test hanles the case when the particular dependency list cause embedder set
+    // the versionRange for the xml-apis:xml-apis:1.0.b2 artifact to null.
+    // see http://jira.codehaus.org/browse/MNG-3386
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>dom4j</groupId>" +
+                  "    <artifactId>dom4j</artifactId>" +
+                  "    <version>1.6.1</version>" +
+                  "    <scope>runtime</scope>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "     <groupId>org.apache.ws.commons.util</groupId>" +
+                  "     <artifactId>ws-commons-util</artifactId>" +
+                  "     <version>1.0.2</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertModuleLibDep("project", "xml-apis:xml-apis:1.0.b2");
+  }
+
   public void testProjectWithEnvironmentProperty() throws IOException {
     String javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"));
 

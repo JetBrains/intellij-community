@@ -221,7 +221,7 @@ public abstract class ImportingTestCase extends IdeaTestCase {
         lib = (LibraryOrderEntry)e;
       }
     }
-    assertNotNull(lib);
+    assertNotNull("library dependency not found: " + depName, lib);
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, path);
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePath);
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPath);

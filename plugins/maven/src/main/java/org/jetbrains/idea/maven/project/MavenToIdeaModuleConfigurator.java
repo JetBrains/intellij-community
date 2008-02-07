@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.core.util.MavenId;
@@ -101,7 +102,9 @@ public class MavenToIdeaModuleConfigurator {
   private String findModuleFor(Artifact artifact) {
     // we should find module by version range version, since it might be X-SNAPSHOT or SNAPSHOT
     // which is resolved in X-timestamp-build. But mapping contains base artefact versions.
-    String version = artifact.getVersionRange().toString();
+
+    VersionRange range = artifact.getVersionRange();
+    String version = range == null ? artifact.getVersion() : range.toString();
     MavenId versionId = new MavenId(artifact.getGroupId(), artifact.getArtifactId(), version);
     return myMapping.getModuleName(versionId);
   }
