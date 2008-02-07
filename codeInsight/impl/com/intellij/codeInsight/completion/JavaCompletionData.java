@@ -469,8 +469,8 @@ public class JavaCompletionData extends CompletionData{
             )));
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, position);
       variant.includeScopeClass(PsiVariable.class);
-      variant.addCompletion(PsiKeyword.SUPER, TailType.DOT);
-      variant.addCompletion(PsiKeyword.THIS, TailType.DOT);
+      variant.addCompletion(PsiKeyword.SUPER, TailType.NONE);
+      variant.addCompletion(PsiKeyword.THIS, TailType.NONE);
       registerVariant(variant);
     }
     {
