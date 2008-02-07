@@ -1,0 +1,8 @@
+import java.lang.annotation.*
+
+@Retention(RetentionPolicy.RUNTIME) @interface III {
+
+}
+-----
+public @interface III {}
+---

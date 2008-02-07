@@ -192,6 +192,7 @@ public class GroovyAnnotator implements Annotator {
 
   private void checkImplementedMethodsOfClass(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
     if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    if (typeDefinition.isEnum() || typeDefinition.isAnnotationType()) return;
 
     final Collection<CandidateInfo> methodsToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(typeDefinition, true);
 

@@ -284,6 +284,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     boolean isClassDef = typeDefinition instanceof GrClassDefinition;
     boolean isInterface = typeDefinition instanceof GrInterfaceDefinition;
     boolean isEnum = typeDefinition instanceof GrEnumTypeDefinition;
+    boolean isAtInterface = typeDefinition instanceof GrAnnotationTypeDefinition;
 
 
     if (typeDefinition != null) {
@@ -303,6 +304,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
 
     if (isInterface) text.append("interface");
     else if (isEnum) text.append("enum");
+    else if (isAtInterface) text.append("@interface");
     else text.append("class");
 
     text.append(" ");
@@ -318,7 +320,7 @@ public class GroovyToJavaGenerator implements SourceGeneratingCompiler, Compilat
     if (isScript) {
       text.append("extends ");
       text.append("groovy.lang.Script ");
-    } else if (!isEnum) {
+    } else if (!isEnum && !isAtInterface) {
       final PsiClassType[] extendsClassesTypes = typeDefinition.getExtendsListTypes();
 
       if (extendsClassesTypes.length > 0) {
