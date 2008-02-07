@@ -8,10 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -21,12 +19,10 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -196,10 +192,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         myRenamers.add(factory.createRenamer(element, newName, usagesList));
       }
 
-      if (element instanceof PsiMethod) {
-        addOverriders((PsiMethod)element, newName, elements);
-      }
-
       for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
         if (factory.getOptionName() == null && factory.isApplicable(element)) {
           myRenamers.add(factory.createRenamer(element, newName, usagesList));
@@ -306,21 +298,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       }
     }
     return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
-  }
-
-  private void addOverriders(final PsiMethod method, final String newName, final List<PsiElement> methods) {
-    OverridingMethodsSearch.search(method, true).forEach(new Processor<PsiMethod>() {
-      public boolean process(PsiMethod overrider) {
-        final String overriderName = overrider.getName();
-        final String baseName = method.getName();
-        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
-        if (newOverriderName != null) {
-          myAllRenames.put(overrider, newOverriderName);
-          methods.add(overrider);
-        }
-        return true;
-      }
-    });
   }
 
   protected void prepareTestRun() {

@@ -7,16 +7,20 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
 
 public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMethodProcessor");
@@ -82,6 +86,21 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
       refactoredMethod,
       prototype,
       conflicts);
+  }
+
+  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+    final PsiMethod method = (PsiMethod) element;
+    OverridingMethodsSearch.search(method, true).forEach(new Processor<PsiMethod>() {
+      public boolean process(PsiMethod overrider) {
+        final String overriderName = overrider.getName();
+        final String baseName = method.getName();
+        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
+        if (newOverriderName != null) {
+          allRenames.put(overrider, newOverriderName);
+        }
+        return true;
+      }
+    });
   }
 
   @NonNls
