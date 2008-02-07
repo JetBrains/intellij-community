@@ -239,7 +239,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
       @NonNls final String template = description.getDescriptionTemplate();
       int line = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
       final String text = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getPsiElement().getText() : "";
-      @NonNls String problemText = template.replaceAll("#ref", text.replaceAll("\\$", "\\\\\\$"));
+      @NonNls String problemText = template.replaceAll("#ref", text.replace("$", "\\\\$"));
       problemText = problemText.replaceAll(" #loc ", " ");
 
       Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
