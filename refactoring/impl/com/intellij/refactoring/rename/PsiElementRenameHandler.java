@@ -1,7 +1,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.ant.PsiAntElement;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -89,26 +88,11 @@ public class PsiElementRenameHandler implements RenameHandler {
 
 
   public static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
-    if (element instanceof PsiMethod) {
-      PsiMethod psiMethod = (PsiMethod)element;
-      if (psiMethod.isConstructor()) {
-        PsiClass containingClass = psiMethod.getContainingClass();
-        if (containingClass == null) return;
-        element = containingClass;
-        if (!canRename(element, project)) {
-          return;
-        }
-      }
-    }
+    RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+    element = processor.substituteElementToRename(element);
+    if (element == null) return;
 
-    PsiElement elementToRename = element;
-    if (elementToRename instanceof PsiMethod) {
-      elementToRename = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)elementToRename, RefactoringBundle.message("to.rename"));
-      if (elementToRename == null) return;
-      //if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementToRename)) return;
-    }
-
-    final RenameDialog dialog = new RenameDialog(project, elementToRename, nameSuggestionContext, editor);
+    final RenameDialog dialog = new RenameDialog(project, element, nameSuggestionContext, editor);
     dialog.show();
   }
 

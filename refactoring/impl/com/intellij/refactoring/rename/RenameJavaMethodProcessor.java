@@ -1,15 +1,13 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -17,8 +15,10 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.ide.util.SuperMethodWarningUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
@@ -115,5 +115,20 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
 
   public void setToSearchInComments(final PsiElement element, final boolean enabled) {
     JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = enabled;
+  }
+
+  @Nullable
+  public PsiElement substituteElementToRename(PsiElement element) {
+    PsiMethod psiMethod = (PsiMethod)element;
+    if (psiMethod.isConstructor()) {
+      PsiClass containingClass = psiMethod.getContainingClass();
+      if (containingClass == null) return null;
+      element = containingClass;
+      if (!PsiElementRenameHandler.canRename(element, element.getProject())) {
+        return null;
+      }
+      return element;
+    }
+    return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
   }
 }

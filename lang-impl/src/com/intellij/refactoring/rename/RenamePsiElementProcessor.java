@@ -103,6 +103,11 @@ public abstract class RenamePsiElementProcessor {
     }
   }
 
+  @Nullable
+  public PsiElement substituteElementToRename(final PsiElement element) {
+    return element;
+  }
+
   private static RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
     public boolean canProcessElement(final PsiElement element) {
       return true;
