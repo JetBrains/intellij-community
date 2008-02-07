@@ -185,8 +185,8 @@ public class RenameUtil {
     }
   }
 
-  public static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages, RefactoringElementListener listener)
-    throws IncorrectOperationException {
+  public static void doRenameGenericNamedElement(PsiElement namedElement, String newName, UsageInfo[] usages,
+                                                 RefactoringElementListener listener) throws IncorrectOperationException {
     PsiWritableMetaData writableMetaData = null;
     if (namedElement instanceof PsiMetaOwner) {
       final PsiMetaData metaData = ((PsiMetaOwner)namedElement).getMetaData();

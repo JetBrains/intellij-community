@@ -3,17 +3,16 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.Pair;
 
 import java.util.Collection;
 
-public class RenameJavaMethodProcessor implements RenamePsiElementProcessor {
+public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiMethod;
   }
@@ -54,13 +53,5 @@ public class RenameJavaMethodProcessor implements RenamePsiElementProcessor {
   public Collection<PsiReference> findReferences(final PsiElement element) {
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(element.getProject());
     return MethodReferencesSearch.search((PsiMethod)element, projectScope, true).findAll();
-  }
-
-  public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
-    return null;
-  }
-
-  public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
-    return null;
   }
 }

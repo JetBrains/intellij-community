@@ -13,12 +13,12 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author yole
  */
-public class RenameJavaClassProcessor implements RenamePsiElementProcessor {
+public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiClass;
   }
@@ -73,10 +73,6 @@ public class RenameJavaClassProcessor implements RenamePsiElementProcessor {
     }
   }
 
-  public Collection<PsiReference> findReferences(final PsiElement element) {
-    return null;
-  }
-
   @Nullable
   public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
     if (element instanceof PsiClass) {
@@ -99,6 +95,13 @@ public class RenameJavaClassProcessor implements RenamePsiElementProcessor {
     }
     else {
       return newName;
+    }
+  }
+
+  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+    final PsiMethod[] constructors = ((PsiClass) element).getConstructors();
+    for (PsiMethod constructor : constructors) {
+      allRenames.put(constructor, newName);
     }
   }
 }

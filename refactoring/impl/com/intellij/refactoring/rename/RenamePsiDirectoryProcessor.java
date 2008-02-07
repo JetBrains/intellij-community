@@ -5,14 +5,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.Pair;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author yole
  */
-public class RenamePsiDirectoryProcessor implements RenamePsiElementProcessor {
+public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiDirectory;
   }
@@ -37,19 +36,19 @@ public class RenamePsiDirectoryProcessor implements RenamePsiElementProcessor {
     listener.elementRenamed(aDirectory);
   }
 
-  public Collection<PsiReference> findReferences(final PsiElement element) {
-    return null;
-  }
-
-  public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
-    return null;
-  }
-
   public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
     PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (psiPackage != null) {
       return RenamePsiPackageProcessor.getPackageQualifiedNameAfterRename(psiPackage, newName, nonJava);
     }
     return newName;
+  }
+
+  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory) element);
+    if (aPackage != null && aPackage.getName() != null) {
+      allRenames.put(aPackage, newName);
+      RenamePsiPackageProcessor.preparePackageRenaming(aPackage, newName, allRenames);
+    }
   }
 }

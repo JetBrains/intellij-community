@@ -1,7 +1,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
@@ -16,9 +15,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.Queue;
 
-import java.util.Collection;
-
-public class RenameXmlAttributeProcessor implements RenamePsiElementProcessor {
+public class RenameXmlAttributeProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameXmlAttributeProcessor");
 
   public boolean canProcessElement(final PsiElement element) {
@@ -35,18 +32,6 @@ public class RenameXmlAttributeProcessor implements RenamePsiElementProcessor {
     else if (element instanceof XmlAttributeValue) {
       doRenameXmlAttributeValue((XmlAttributeValue)element, newName, usages, listener);
     }
-  }
-
-  public Collection<PsiReference> findReferences(final PsiElement element) {
-    return null;
-  }
-
-  public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
-    return null;
-  }
-
-  public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
-    return null;
   }
 
   private static void doRenameXmlAttribute(XmlAttribute attribute,

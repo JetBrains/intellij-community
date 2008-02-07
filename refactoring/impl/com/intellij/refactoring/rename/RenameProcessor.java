@@ -1,29 +1,24 @@
 package com.intellij.refactoring.rename;
 
-import com.intellij.lang.properties.PropertiesUtil;
-import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.refactoring.rename.naming.*;
+import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
+import com.intellij.refactoring.rename.naming.ConstructorParameterOnFieldRenameRenamer;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
@@ -91,52 +86,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   public void prepareRenaming() {
-    if (myPrimaryElement instanceof PsiClass) {
-      prepareClassRenaming((PsiClass)myPrimaryElement, myNewName);
-    }
-    else if (myPrimaryElement instanceof PsiField) {
-      prepareFieldRenaming((PsiField)myPrimaryElement, myNewName);
-    }
-    else if (myPrimaryElement instanceof PsiPackage) {
-      preparePackageRenaming((PsiPackage)myPrimaryElement, myNewName);
-    }
-    else if (myPrimaryElement instanceof PsiDirectory) {
-      prepareDirectoryRenaming((PsiDirectory)myPrimaryElement, myNewName);
-    }
-    else if (myPrimaryElement instanceof Property) {
-      preparePropertyRenaming((Property)myPrimaryElement, myNewName);
-    }
-  }
-
-  private void prepareClassRenaming(final PsiClass aClass, final String newName) {
-    final PsiMethod[] constructors = aClass.getConstructors();
-    for (PsiMethod constructor : constructors) {
-      myAllRenames.put(constructor, newName);
-    }
-  }
-
-  private void prepareDirectoryRenaming(final PsiDirectory directory, final String newName) {
-    final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-    if (aPackage != null && aPackage.getName() != null) {
-      myAllRenames.put(aPackage, newName);
-      preparePackageRenaming(aPackage, newName);
-    }
-  }
-
-  private void preparePropertyRenaming(final Property property, final String newName) {
-    ResourceBundle resourceBundle = property.getContainingFile().getResourceBundle();
-    List<Property> properties = PropertiesUtil.findAllProperties(myProject, resourceBundle, property.getUnescapedKey());
-    myAllRenames.clear();
-    for (Property otherProperty : properties) {
-      myAllRenames.put(otherProperty, newName);
-    }
-  }
-
-  private void preparePackageRenaming(PsiPackage psiPackage, String newName) {
-    final PsiDirectory[] directories = psiPackage.getDirectories();
-    for (PsiDirectory directory : directories) {
-      if (!JavaDirectoryService.getInstance().isSourceRoot(directory)) {
-        myAllRenames.put(directory, newName);
+    for(RenamePsiElementProcessor processor: Extensions.getExtensions(RenamePsiElementProcessor.EP_NAME)) {
+      if (processor.canProcessElement(myPrimaryElement)) {
+        processor.prepareRenaming(myPrimaryElement, myNewName, myAllRenames);
+        break;
       }
     }
   }
@@ -275,95 +228,6 @@ public class RenameProcessor extends BaseRefactoringProcessor {
                                               UsageViewUtil.getType(myPrimaryElement), UsageViewUtil.getDescriptiveName(myPrimaryElement),
                                               newName);
   }
-
-  private void prepareFieldRenaming(PsiField field, String newName) {
-    // search for getters/setters
-    PsiClass aClass = field.getContainingClass();
-
-    final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(myProject);
-
-    final String propertyName =
-        manager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-    String newPropertyName = manager.variableNameToPropertyName(newName, VariableKind.FIELD);
-
-    boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, propertyName, isStatic, false);
-    PsiMethod setter = PropertyUtil.findPropertySetter(aClass, propertyName, isStatic, false);
-
-    boolean shouldRenameSetterParameter = false;
-
-    if (setter != null) {
-      String parameterName = manager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-      PsiParameter setterParameter = setter.getParameterList().getParameters()[0];
-      shouldRenameSetterParameter = parameterName.equals(setterParameter.getName());
-    }
-
-    String newGetterName = "";
-
-    if (getter != null) {
-      String getterId = getter.getName();
-      newGetterName = PropertyUtil.suggestGetterName(newPropertyName, field.getType(), getterId);
-      if (newGetterName.equals(getterId)) {
-        getter = null;
-        newGetterName = null;
-      }
-    }
-
-    String newSetterName = "";
-    if (setter != null) {
-      newSetterName = PropertyUtil.suggestSetterName(newPropertyName);
-      final String newSetterParameterName = manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER);
-      if (newSetterName.equals(setter.getName())) {
-        setter = null;
-        newSetterName = null;
-        shouldRenameSetterParameter = false;
-      } else if (newSetterParameterName.equals(setter.getParameterList().getParameters()[0].getName())) {
-        shouldRenameSetterParameter = false;
-      }
-    }
-
-    if (getter != null || setter != null) {
-      if (askToRenameAccesors(getter, setter, newName)) {
-        getter = null;
-        setter = null;
-        shouldRenameSetterParameter = false;
-      }
-    }
-
-    if (getter != null) {
-      addOverriddenAndImplemented(aClass, getter, newGetterName);
-    }
-
-    if (setter != null) {
-      addOverriddenAndImplemented(aClass, setter, newSetterName);
-    }
-
-    if (shouldRenameSetterParameter) {
-      PsiParameter parameter = setter.getParameterList().getParameters()[0];
-      myAllRenames.put(parameter, manager.propertyNameToVariableName(newPropertyName, VariableKind.PARAMETER));
-    }
-  }
-
-  private boolean askToRenameAccesors(PsiMethod getter, PsiMethod setter, String newName) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
-    String text = RefactoringMessageUtil.getGetterSetterMessage(newName, RefactoringBundle.message("rename.title"), getter, setter);
-    return Messages.showYesNoDialog(myProject, text, RefactoringBundle.message("rename.title"), Messages.getQuestionIcon()) != 0;
-  }
-
-  private void addOverriddenAndImplemented(PsiClass aClass, PsiMethod methodPrototype, String newName) {
-    final HashSet<PsiClass> superClasses = new HashSet<PsiClass>();
-    RefactoringHierarchyUtil.getSuperClasses(aClass, superClasses, true);
-    superClasses.add(aClass);
-
-    for (PsiClass superClass : superClasses) {
-      PsiMethod method = superClass.findMethodBySignature(methodPrototype, false);
-
-      if (method != null) {
-        myAllRenames.put(method, newName);
-      }
-    }
-  }
-
 
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new RenameViewDescriptor(myAllRenames);

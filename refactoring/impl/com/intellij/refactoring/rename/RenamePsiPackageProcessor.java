@@ -1,19 +1,19 @@
 package com.intellij.refactoring.rename;
 
+import com.intellij.psi.JavaDirectoryService;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.util.Pair;
 
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author yole
  */
-public class RenamePsiPackageProcessor implements RenamePsiElementProcessor {
+public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(final PsiElement element) {
     return element instanceof PsiPackage;
   }
@@ -24,14 +24,6 @@ public class RenamePsiPackageProcessor implements RenamePsiElementProcessor {
     final PsiPackage psiPackage = (PsiPackage)element;
     psiPackage.handleQualifiedNameChange(RenameUtil.getQualifiedNameAfterRename(psiPackage.getQualifiedName(), newName));
     RenameUtil.doRenameGenericNamedElement(element, newName, usages, listener);
-  }
-
-  public Collection<PsiReference> findReferences(final PsiElement element) {
-    return null;
-  }
-
-  public Pair<String, String> getTextOccurrenceSearchStrings(final PsiElement element, final String newName) {
-    return null;
   }
 
   public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
@@ -46,6 +38,19 @@ public class RenamePsiPackageProcessor implements RenamePsiElementProcessor {
     }
     else {
       return newName;
+    }
+  }
+
+  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+    preparePackageRenaming((PsiPackage)element, newName, allRenames);
+  }
+
+  public static void preparePackageRenaming(PsiPackage psiPackage, final String newName, Map<PsiElement, String> allRenames) {
+    final PsiDirectory[] directories = psiPackage.getDirectories();
+    for (PsiDirectory directory : directories) {
+      if (!JavaDirectoryService.getInstance().isSourceRoot(directory)) {
+        allRenames.put(directory, newName);
+      }
     }
   }
 }
