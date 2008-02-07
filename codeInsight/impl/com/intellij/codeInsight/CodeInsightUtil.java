@@ -2,13 +2,10 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageDialect;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -31,7 +28,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.FilteredQuery;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
-import com.intellij.util.ReflectionCache;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,33 +45,7 @@ public class CodeInsightUtil {
   }
 
   public static <T extends PsiElement> T findElementInRange(PsiFile file, int startOffset, int endOffset, Class<T> klass) {
-    return findElementInRange(file, startOffset, endOffset, klass, StdLanguages.JAVA);
-  }
-
-  private static <T extends PsiElement> T findElementInRange(final PsiFile file,
-                                                             int startOffset,
-                                                             int endOffset,
-                                                             final Class<T> klass,
-                                                             final Language language) {
-    PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
-    PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
-    if (element1 instanceof PsiWhiteSpace) {
-      startOffset = element1.getTextRange().getEndOffset();
-      element1 = file.getViewProvider().findElementAt(startOffset, language);
-    }
-    if (element2 instanceof PsiWhiteSpace) {
-      endOffset = element2.getTextRange().getStartOffset();
-      element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
-    }
-    if (element2 == null || element1 == null) return null;
-    final PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
-    final T element =
-      ReflectionCache.isAssignable(klass, commonParent.getClass())
-      ? (T)commonParent : PsiTreeUtil.getParentOfType(commonParent, klass);
-    if (element == null || element.getTextRange().getStartOffset() != startOffset || element.getTextRange().getEndOffset() != endOffset) {
-      return null;
-    }
-    return element;
+    return CodeInsightUtilBase.findElementInRange(file, startOffset, endOffset, klass, StdLanguages.JAVA);
   }
 
   @NotNull
@@ -261,25 +231,6 @@ public class CodeInsightUtil {
     }
 
     return true;
-  }
-
-  public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(final T element) {
-    final PsiFile psiFile = element.getContainingFile();
-    final Document document = psiFile.getViewProvider().getDocument();
-    if (document == null) return element;
-    Language language = element.getLanguage();
-    LanguageDialect languageDialect = psiFile.getLanguageDialect();
-    if (languageDialect != null) {
-      language = languageDialect;
-    }
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiFile.getProject());
-    final RangeMarker rangeMarker = document.createRangeMarker(element.getTextRange());
-    documentManager.doPostponedOperationsAndUnblockDocument(document);
-    documentManager.commitDocument(document);
-
-    return findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
-                              (Class<? extends T>)element.getClass(),
-                              language);
   }
 
   private static final Key<Boolean> ANT_FILE_SIGN = new Key<Boolean>("FORCED ANT FILE");

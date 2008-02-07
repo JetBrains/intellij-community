@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -219,7 +219,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix {
       builder.replaceElement(fieldReference, FIELD_VARIABLE, new FieldExpression(field, targetClass, expectedTypes), true);
       builder.setEndVariableAfter(body.getLBrace());
 
-      accessor = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(accessor);
+      accessor = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(accessor);
       targetClass = accessor.getContainingClass();
       LOG.assertTrue(targetClass != null);
       Template template = builder.buildTemplate();

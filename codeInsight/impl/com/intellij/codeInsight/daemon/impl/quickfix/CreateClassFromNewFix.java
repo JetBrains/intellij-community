@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilder;
@@ -64,7 +64,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
               setupSuperCall(aClass, constructor, templateBuilder);
 
               getReferenceElement(newExpression).bindToElement(aClass);
-              aClass = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(aClass);
+              aClass = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(aClass);
               Template template = templateBuilder.buildTemplate();
 
               Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);

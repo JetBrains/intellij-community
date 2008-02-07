@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.util.*;
@@ -192,7 +193,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
 
   protected void performPsiSpoilingRefactoring() {
     if (myNonCodeUsages != null) {
-      RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+      RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     }
     if (myMoveCallback != null) {
       if (myMoveCallback instanceof MoveClassesOrPackagesCallback) {

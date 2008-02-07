@@ -2,6 +2,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -54,7 +55,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     else {
       LOG.error("Unknown variable type: "+myVariable);
     }
-    PsiVariable var = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(myVariable);
+    PsiVariable var = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myVariable);
     TextRange range = var.getInitializer().getTextRange();
     int offset = range.getStartOffset();
     editor.getCaretModel().moveToOffset(offset);

@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,7 +168,7 @@ public class PasteReferenceProvider implements PasteProvider {
     if (elementAtCaret != null && elementAtCaret.isValid()) {
       shortenReference(elementAtCaret, targetElement);
     }
-    CodeInsightUtil.forcePsiPostprocessAndRestoreElement(file);
+    CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(file);
     CodeStyleManager.getInstance(project).adjustLineIndent(file, offset);
 
     int caretOffset = rangeMarker.getEndOffset();

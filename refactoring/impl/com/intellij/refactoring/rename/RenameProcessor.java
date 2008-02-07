@@ -286,7 +286,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performPsiSpoilingRefactoring() {
-    RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
   }
 
   protected String getCommandName() {

@@ -1,8 +1,8 @@
 package com.intellij.refactoring.util;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.Language;
@@ -263,59 +263,6 @@ public class RefactoringUtil {
     }
     else {
       return ((ImplicitVariable)localVar).getDeclarationScope();
-    }
-  }
-
-  public static void renameNonCodeUsages(@NotNull Project project, @NotNull NonCodeUsageInfo[] usages) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-    HashMap<Document, ArrayList<UsageOffset>> docsToOffsetsMap = new HashMap<Document, ArrayList<UsageOffset>>();
-    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    for (NonCodeUsageInfo usage : usages) {
-      PsiElement element = usage.getElement();
-
-      if (element == null) continue;
-      element = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(element);
-      if (element == null) continue;
-      final PsiFile containingFile = element.getContainingFile();
-      final Document document = psiDocumentManager.getDocument(containingFile);
-      int fileOffset = element.getTextRange().getStartOffset() + usage.startOffset;
-
-      ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
-      if (list == null) {
-        list = new ArrayList<UsageOffset>();
-        docsToOffsetsMap.put(document, list);
-      }
-      list.add(new UsageOffset(fileOffset, fileOffset + usage.endOffset - usage.startOffset, usage.newText));
-    }
-
-    for (Document document : docsToOffsetsMap.keySet()) {
-
-      ArrayList<UsageOffset> list = docsToOffsetsMap.get(document);
-      UsageOffset[] offsets = list.toArray(new UsageOffset[list.size()]);
-      Arrays.sort(offsets);
-
-      for (int i = offsets.length - 1; i >= 0; i--) {
-        UsageOffset usageOffset = offsets[i];
-        document.replaceString(usageOffset.startOffset, usageOffset.endOffset, usageOffset.newText);
-      }
-      PsiDocumentManager.getInstance(project).commitDocument(document);
-    }
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-  }
-
-  private static class UsageOffset implements Comparable<UsageOffset> {
-    final int startOffset;
-    final int endOffset;
-    final String newText;
-
-    public UsageOffset(int startOffset, int endOffset, String newText) {
-      this.startOffset = startOffset;
-      this.endOffset = endOffset;
-      this.newText = newText;
-    }
-
-    public int compareTo(final UsageOffset o) {
-      return startOffset - o.startOffset;
     }
   }
 

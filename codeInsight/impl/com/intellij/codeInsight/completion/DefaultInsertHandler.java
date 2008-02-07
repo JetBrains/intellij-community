@@ -681,7 +681,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
             final String oldText = parent.getParent().getText();
             final String oldText1 = parent.getText();
             PsiJavaCodeReferenceElement newRef = (PsiJavaCodeReferenceElement)ref.bindToElement(pointerElement);
-            newRef = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newRef);
+            newRef = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newRef);
             LOG.assertTrue(newRef != null, oldText + "$$$" + oldText1);
             final TextRange textRange = newRef.getTextRange();
             endOffset = textRange.getEndOffset();
@@ -689,7 +689,7 @@ public class DefaultInsertHandler implements InsertHandler,Cloneable {
           }
           else {
             PsiImportStaticStatement statement = ((PsiImportStaticReferenceElement)ref).bindToTargetClass((PsiClass) pointerElement);
-            statement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(statement);
+            statement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(statement);
             final TextRange textRange = statement.getTextRange();
             endOffset = textRange.getEndOffset();
             newStartOffset = textRange.getStartOffset();

@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
@@ -288,7 +289,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
   protected void performPsiSpoilingRefactoring() {
     if (myNonCodeUsages != null) {
-      RefactoringUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+      RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     }
   }
 

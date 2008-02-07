@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -29,7 +29,7 @@ public class JavaWithIfElseExpressionSurrounder extends JavaWithIfExpressionSurr
 
     PsiCodeBlock block = ((PsiBlockStatement)ifStatement.getThenBranch()).getCodeBlock();
 
-    PsiStatement afterStatement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(block.getStatements()[0]);
+    PsiStatement afterStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(block.getStatements()[0]);
     
     TextRange range = afterStatement.getTextRange();
     editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());

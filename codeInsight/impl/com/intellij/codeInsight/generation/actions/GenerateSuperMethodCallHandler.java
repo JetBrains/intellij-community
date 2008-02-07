@@ -4,7 +4,7 @@
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
@@ -34,7 +34,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
       else {
         toGo = body.addAfter(superCall, body.getLBrace());
       }
-      toGo = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(toGo);
+      toGo = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(toGo);
       editor.getCaretModel().moveToOffset(toGo.getTextOffset());
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }

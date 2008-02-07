@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +37,7 @@ class DeclarationMover extends LineMover {
 
       try {
         PsiElement inserted = myEnumToInsertSemicolonAfter.getParent().addAfter(semicolon.getPsi(), myEnumToInsertSemicolonAfter);
-        inserted = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(inserted);
+        inserted = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(inserted);
         final LogicalPosition position = editor.offsetToLogicalPosition(inserted.getTextRange().getEndOffset());
 
         toMove2 = new LineRange(position.line+1, position.line+1);

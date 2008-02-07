@@ -1,8 +1,8 @@
 package com.intellij.psi.filters.getters;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
@@ -75,7 +75,7 @@ public class AllClassesGetter implements ContextGetter{
           try {
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
-              final PsiElement psiElement = CodeInsightUtil.forcePsiPostprocessAndRestoreElement(newUnderlying);
+              final PsiElement psiElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(newUnderlying);
               if (psiElement != null) {
                 endOffset = psiElement.getTextRange().getEndOffset();
               }
