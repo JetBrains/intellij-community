@@ -143,22 +143,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   public Project newProject(String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = canonicalize(filePath);
 
-    ProjectImpl project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(), null);
-
-    if (useDefaultProjectSettings) {
-      try {
-        project.getStateStore().loadProjectFromTemplate((ProjectImpl)getDefaultProject());
+    ProjectImpl project = null;
+    try {
+      project = createProject(filePath, false, isDummy, ApplicationManager.getApplication().isUnitTestMode(), null);
+      if (useDefaultProjectSettings) {
+        try {
+          project.getStateStore().loadProjectFromTemplate((ProjectImpl)getDefaultProject());
+        }
+        catch (Exception e) {
+          reportError(e);
+        }
       }
-      catch (Exception e) {
-        LOG.error(e);
-      }
+      project.init();
     }
-    project.init();
+    catch (IOException e) {
+      reportError(e);
+    }
+
     return project;
   }
 
   private ProjectImpl createProject(String filePath, boolean isDefault, boolean isDummy, boolean isOptimiseTestLoadSpeed,
-                                    @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) {
+                                    @Nullable Pair<Class, Object>[] additionalPicoContainerComponents) throws IOException {
     final ProjectImpl project;
     if (isDummy) {
       throw new UnsupportedOperationException("Dummy project is deprecated and shall not be used anymore.");
@@ -175,10 +181,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       project.getStateStore().load();
     }
     catch (IOException e) {
-      reportError(e);
+      Disposer.dispose(project);
+      throw e;
     }
     catch (final StateStorage.StateStorageException e) {
-      reportError(e);
+      Disposer.dispose(project);
+      throw e;
     }
 
     project.loadProjectComponents();
@@ -218,7 +226,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     filePath = canonicalize(filePath);
     ProjectImpl project = createProject(filePath, false, false, false, additionalPicoContainerComponents);
     try {
-      project.getStateStore().loadProject();
+      project.init();
     }
     catch (ProcessCanceledException e) {
       Disposer.dispose(project);
@@ -244,11 +252,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   @NotNull
   public synchronized Project getDefaultProject() {
     if (myDefaultProject == null) {
-      myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null);
-
-      myDefaultProjectRootElement = null;
-
       try {
+        myDefaultProject = createProject(null, true, false, ApplicationManager.getApplication().isUnitTestMode(), null);
+        myDefaultProjectRootElement = null;
         myDefaultProject.getStateStore().load();
         myDefaultProject.init();
       }
@@ -335,7 +341,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
       final JDOMException[] jdom = new JDOMException[]{null};
       final InvalidDataException[] invalidData = new InvalidDataException[]{null};
       final StateStorage.StateStorageException[] stateStorage = new StateStorage.StateStorageException[]{null};
-
+      final boolean[] exThrown = new boolean[1];
       boolean ok = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -355,18 +361,22 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           }
           catch (IOException e) {
             io[0] = e;
+            exThrown[0] = true;
             return;
           }
           catch (JDOMException e) {
             jdom[0] = e;
+            exThrown[0] = true;
             return;
           }
           catch (InvalidDataException e) {
             invalidData[0] = e;
+            exThrown[0] = true;
             return;
           }
           catch (StateStorage.StateStorageException e) {
             stateStorage[0] = e;
+            exThrown[0] = true;
             return;
           }
 

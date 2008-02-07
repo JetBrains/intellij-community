@@ -293,7 +293,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   public void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorage.StateStorageException {
-    load();
+    //load();
     myProject.init();
   }
 
