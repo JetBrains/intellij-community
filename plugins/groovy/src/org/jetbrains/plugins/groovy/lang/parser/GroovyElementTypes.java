@@ -163,6 +163,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType THROW_CLAUSE = new GroovyElementType("throw clause");
 
   //annotation
+  GroovyElementType ANNOTATION_ARRRAY_INITIALIZER = new GroovyElementType("annotation array initializer");
   GroovyElementType ANNOTATION_ARGUMENTS = new GroovyElementType("annotation arguments");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIR = new GroovyElementType("annotation member value pair");
   GroovyElementType ANNOTATION_MEMBER_VALUE_PAIRS = new GroovyElementType("annotation member value pairs");

@@ -268,6 +268,10 @@ public abstract class GroovyElementVisitor {
     visitElement(annotationArgumentList);
   }
 
+  public void visitAnnotationArrayInitializer(GrAnnotationArrayInitializer arrayInitializer) {
+    visitElement(arrayInitializer);
+  }
+
   public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
     visitElement(nameValuePair);
   }
