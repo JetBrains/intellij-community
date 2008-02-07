@@ -11,7 +11,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -83,11 +82,11 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   protected boolean isToSearchForTextOccurencesForRename() {
-    return JavaRefactoringSettings.getInstance().isToSearchForTextOccurencesForRename(myPsiElement);
+    return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchForTextOccurrences(myPsiElement);
   }
 
   protected boolean isToSearchInCommentsForRename() {
-    return JavaRefactoringSettings.getInstance().isToSearchInCommentsForRename(myPsiElement);
+    return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchInComments(myPsiElement);
   }
 
   private String getFullName() {
@@ -242,11 +241,10 @@ public class RenameDialog extends RefactoringDialog {
   protected void doAction() {
     LOG.assertTrue(myPsiElement.isValid());
 
-    final JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
-
-    settings.setToSearchInCommentsForRename(myPsiElement, isSearchInComments());
+    final RenamePsiElementProcessor elementProcessor = RenamePsiElementProcessor.forElement(myPsiElement);
+    elementProcessor.setToSearchInComments(myPsiElement, isSearchInComments());
     if (myCbSearchTextOccurences.isEnabled()) {
-      settings.setToSearchInNonJavaFilesForRename(myPsiElement, isSearchInNonJavaFiles());
+      elementProcessor.setToSearchForTextOccurrences(myPsiElement, isSearchInNonJavaFiles());
     }
     if (mySuggestedNameInfo != null) {
       mySuggestedNameInfo.nameChoosen(getNewName());

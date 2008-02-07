@@ -9,6 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -106,5 +107,13 @@ public class RenameJavaMethodProcessor extends RenamePsiElementProcessor {
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_METHOD;
+  }
+
+  public boolean isToSearchInComments(final PsiElement psiElement) {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD;
+  }
+
+  public void setToSearchInComments(final PsiElement element, final boolean enabled) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_METHOD = enabled;
   }
 }

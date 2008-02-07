@@ -8,6 +8,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -264,5 +265,19 @@ public class RenameJavaVariableProcessor extends RenamePsiElementProcessor {
       return HelpID.RENAME_PARAMETER;
     }
     return null;
+  }
+
+  public boolean isToSearchInComments(final PsiElement element) {
+    if (element instanceof PsiField){
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD;
+    }
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE;
+  }
+
+  public void setToSearchInComments(final PsiElement element, final boolean enabled) {
+    if (element instanceof PsiField){
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled;
+    }
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled;
   }
 }

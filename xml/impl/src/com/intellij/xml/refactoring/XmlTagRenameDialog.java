@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -76,10 +75,6 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   protected boolean hasHelpAction() {
     return false;
-  }
-
-  protected boolean isToSearchInCommentsForRename() {
-    return JavaRefactoringSettings.getInstance().isToSearchInCommentsForRename(myTag);
   }
 
   private static String getFullName(@NotNull final XmlTag tag) {

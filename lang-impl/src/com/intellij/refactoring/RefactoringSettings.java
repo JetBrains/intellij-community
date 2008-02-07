@@ -26,6 +26,9 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
   public boolean SAFE_DELETE_SEARCH_IN_COMMENTS = true;
   public boolean SAFE_DELETE_SEARCH_IN_NON_JAVA = true;
 
+  public boolean RENAME_SEARCH_IN_COMMENTS_FOR_FILE = true;
+  public boolean RENAME_SEARCH_FOR_TEXT_FOR_FILE = true;
+
   public RefactoringSettings getState() {
     return this;
   }

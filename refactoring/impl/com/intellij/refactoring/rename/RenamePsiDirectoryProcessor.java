@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -59,5 +60,31 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_DIRECTORY;
+  }
+
+  public boolean isToSearchInComments(PsiElement element) {
+    element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    if (element == null) return false;
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
+  }
+
+  public void setToSearchInComments(PsiElement element, final boolean enabled) {
+    element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    if (element != null) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE = enabled;
+    }
+  }
+
+  public boolean isToSearchForTextOccurrences(PsiElement element) {
+    element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    if (element == null) return false;
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
+  }
+
+  public void setToSearchForTextOccurrences(PsiElement element, final boolean enabled) {
+    element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
+    if (element != null) {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE = enabled;
+    }
   }
 }

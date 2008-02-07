@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
@@ -144,5 +145,21 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_CLASS;
+  }
+
+  public boolean isToSearchInComments(final PsiElement psiElement) {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_CLASS;
+  }
+
+  public void setToSearchInComments(final PsiElement element, final boolean enabled) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_CLASS = enabled;
+  }
+
+  public boolean isToSearchForTextOccurrences(final PsiElement element) {
+    return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS;
+  }
+
+  public void setToSearchForTextOccurrences(final PsiElement element, final boolean enabled) {
+    JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_CLASS = enabled;
   }
 }
