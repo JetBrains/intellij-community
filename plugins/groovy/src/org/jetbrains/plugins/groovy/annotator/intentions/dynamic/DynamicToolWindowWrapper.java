@@ -451,8 +451,10 @@ public class DynamicToolWindowWrapper {
       super(name);
     }
 
-    public boolean isCellEditable(DefaultMutableTreeNode defaultMutableTreeNode) {
-      return true;
+    public boolean isCellEditable(DefaultMutableTreeNode node) {
+      final Object value = node.getUserObject();
+
+      return !(value instanceof DPClassNode);
     }
 
     public DPPropertyTypeElement valueOf(DefaultMutableTreeNode treeNode) {
