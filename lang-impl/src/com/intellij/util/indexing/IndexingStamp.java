@@ -1,6 +1,5 @@
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -49,24 +48,20 @@ public class IndexingStamp {
   }
 
   public static void update(final VirtualFile file, final String indexName, final long indexCreationStamp) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
+    try {
+      if (file instanceof NewVirtualFile && file.isValid()) {
+        final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
         try {
-          if (file instanceof NewVirtualFile && file.isValid()) {
-            final DataOutputStream stream = getAttribute(indexName).writeAttribute(file);
-            try {
-              stream.writeLong(indexCreationStamp);
-            }
-            finally {
-              stream.close();
-            }
-          }
+          stream.writeLong(indexCreationStamp);
         }
-        catch (IOException e) {
-          LOG.info(e);
+        finally {
+          stream.close();
         }
       }
-    });
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
   }
 
   @NotNull
