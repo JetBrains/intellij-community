@@ -132,6 +132,8 @@
   <syntaxHighlighter factoryClass="com.intellij.openapi.fileTypes.LanguageFileTypeHighlighterProvider"/>
   <structureViewBuilder factoryClass="com.intellij.ide.highlighter.LanguageFileTypeStructureViewBuilderProvider"/>
 
+  <lang.elementManipulator forClass="com.intellij.psi.PsiPlainTextFile" implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PlainFileManipulator"/>
+
   <applicationService serviceInterface="com.intellij.ide.macro.MacroManager" serviceImplementation="com.intellij.ide.macro.MacroManager"/>
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.impl.FileIncludeContextHectorProvider" />
 

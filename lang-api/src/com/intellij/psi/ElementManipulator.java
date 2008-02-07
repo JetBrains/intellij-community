@@ -25,7 +25,7 @@ import com.intellij.util.IncorrectOperationException;
  * Date: 03.04.2003
  * Time: 11:22:05
  *
- * @see com.intellij.psi.ElementManipulatorsRegistry
+ * @see com.intellij.psi.ElementManipulators
  */
 public interface ElementManipulator<T extends PsiElement> {
 

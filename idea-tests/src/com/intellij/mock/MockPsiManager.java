@@ -18,7 +18,6 @@ import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.RepositoryTreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
@@ -259,10 +258,6 @@ public class MockPsiManager extends PsiManagerEx {
 
   public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
 
-  }
-
-  public ElementManipulatorsRegistry getElementManipulatorsRegistry() {
-    return ReferenceProvidersRegistry.getInstance(myProject);
   }
 
   public void postponeAutoFormattingInside(Runnable runnable) {

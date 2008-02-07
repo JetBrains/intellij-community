@@ -124,7 +124,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
   @Nullable
   ElementManipulator<T> getManipulator() {
-    return PsiManager.getInstance(myElement.getProject()).getElementManipulatorsRegistry().getManipulator(myElement);
+    return ElementManipulators.getManipulator(myElement);
   }
 
   public boolean isSoft() {

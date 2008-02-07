@@ -189,6 +189,8 @@
   <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT"/>
   <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
+  <extensionPoint name="lang.elementManipulator" interface="com.intellij.openapi.fileTypes.ClassExtensionPoint"/>
+
   <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension"/>
 
   <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType"/>

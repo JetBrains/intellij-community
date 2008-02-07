@@ -2,10 +2,7 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -146,7 +143,7 @@ class AnchorReference implements PsiReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
+    return ElementManipulators.getManipulator(myElement).handleContentChange(
       myElement,
       getRangeInElement(),
       newElementName

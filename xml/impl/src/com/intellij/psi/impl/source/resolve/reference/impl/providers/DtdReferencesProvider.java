@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.meta.PsiMetaData;
@@ -109,7 +108,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      myNameElement = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myNameElement).handleContentChange(
+      myNameElement = ElementManipulators.getManipulator(myNameElement).handleContentChange(
         myNameElement,
         new TextRange(0,myNameElement.getTextLength()),
         newElementName
@@ -205,9 +204,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       final PsiElement elementAt = myElement.findElementAt(myRange.getStartOffset());
-      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(
-        elementAt
-      ).handleContentChange(elementAt, getRangeInElement(), newElementName);
+      return ElementManipulators.getManipulator(elementAt).handleContentChange(elementAt, getRangeInElement(), newElementName);
     }
 
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {

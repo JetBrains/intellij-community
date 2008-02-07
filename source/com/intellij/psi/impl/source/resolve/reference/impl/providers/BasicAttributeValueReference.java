@@ -5,7 +5,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.ElementManipulators;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public abstract class BasicAttributeValueReference implements PsiReference {
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
+    return ElementManipulators.getManipulator(myElement).handleContentChange(
       myElement,
       getRangeInElement(),
       newElementName

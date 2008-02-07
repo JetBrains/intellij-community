@@ -72,21 +72,21 @@ public abstract class KeyedExtensionCollector<T, KeyT> {
       final String stringKey = keyToString(key);
       List<T> cache = myCache.get(stringKey);
       if (cache == null) {
-        cache = buildExtensions(stringKey);
+        cache = buildExtensions(stringKey, key);
         myCache.put(stringKey, cache);
       }
       return cache;
     }
   }
 
-  private List<T> buildExtensions(final String key) {
-    final List<T> explicit = myExplicitExtensions.get(key);
+  protected List<T> buildExtensions(final String stringKey, final KeyT key) {
+    final List<T> explicit = myExplicitExtensions.get(stringKey);
     List<T> result = explicit != null ? new ArrayList<T>(explicit) : new ArrayList<T>();
     final ExtensionPoint<KeyedLazyInstance<T>> point = getPoint();
     if (point != null) {
       final KeyedLazyInstance<T>[] beans = point.getExtensions();
       for (KeyedLazyInstance<T> bean : beans) {
-        if (key.equals(bean.getKey())) {
+        if (stringKey.equals(bean.getKey())) {
           result.add(bean.getInstance());
         }
       }

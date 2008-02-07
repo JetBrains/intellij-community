@@ -4,13 +4,9 @@
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ElementManipulator;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,7 +35,7 @@ public abstract class CachingReference implements PsiReference, EmptyResolveMess
 
   @Nullable
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(T currentElement){
-    return ReferenceProvidersRegistry.getInstance(currentElement.getProject()).getManipulator(currentElement);
+    return ElementManipulators.getManipulator(currentElement);
   }
 
   private static class MyResolver implements ResolveCache.Resolver {

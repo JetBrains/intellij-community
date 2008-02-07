@@ -14,12 +14,8 @@ import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.ElementManipulator;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.JspManager;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -152,8 +148,7 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     final TextRange textRangeInElement = getRangeInElement();
     final PsiElement elementToChange = myElement.findElementAt(textRangeInElement.getStartOffset());
     assert elementToChange != null;
-    final ElementManipulator<PsiElement> manipulator =
-      ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(elementToChange);
+    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(elementToChange);
     assert manipulator != null;
     final int offsetFromStart = myElement.getTextRange().getStartOffset() + textRangeInElement.getStartOffset() - elementToChange.getTextOffset();
 

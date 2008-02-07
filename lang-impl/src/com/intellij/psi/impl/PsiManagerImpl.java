@@ -38,7 +38,6 @@ import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.CachedValuesManager;
@@ -281,10 +280,6 @@ public class PsiManagerImpl extends PsiManagerEx implements ProjectComponent {
   public void unregisterLanguageInjector(@NotNull LanguageInjector injector) {
     myLanguageInjectors.remove(injector);
     InjectedLanguageManagerImpl.getInstanceImpl(myProject).psiManagerInjectorsChanged();
-  }
-
-  public ElementManipulatorsRegistry getElementManipulatorsRegistry() {
-    return ReferenceProvidersRegistry.getInstance(myProject);
   }
 
   public void postponeAutoFormattingInside(Runnable runnable) {

@@ -17,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -143,7 +142,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-      return ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement).handleContentChange(
+      return ElementManipulators.getManipulator(myElement).handleContentChange(
         myElement,
         getRangeInElement(),
         newElementName.substring(newElementName.indexOf(':') + 1)
@@ -414,7 +413,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       final String canonicalText = getCanonicalText();
       final String newElementName = canonicalText.substring(0,canonicalText.indexOf(':') + 1) + _newElementName;
 
-      final PsiElement element = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement)
+      final PsiElement element = ElementManipulators.getManipulator(myElement)
         .handleContentChange(myElement, getRangeInElement(), newElementName);
       myRange = new TextRange(myRange.getStartOffset(),myRange.getEndOffset() - (canonicalText.length() - newElementName.length()));
       return element;

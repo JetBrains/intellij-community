@@ -165,7 +165,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
       myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
       return element;
     }
-    throw new IncorrectOperationException("Manipulator for this element is not defined");
+    throw new IncorrectOperationException("Manipulator for this element is not defined: " + getElement());
   }
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {

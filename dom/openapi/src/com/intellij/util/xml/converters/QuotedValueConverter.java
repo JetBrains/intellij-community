@@ -84,7 +84,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     final String unquotedValue = unquote(originalValue, getQuoteSigns());
     int startOffset = originalValue == unquotedValue? 0 : XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
     int endOffset = originalValue == unquotedValue || quotationIsNotClosed(originalValue)? 0 : startOffset;
-    final ElementManipulator<PsiElement> manipulator = context.getPsiManager().getElementManipulatorsRegistry().getManipulator(element);
+    final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     assert manipulator != null : "manipulator not found";
     final TextRange range = manipulator.getRangeInElement(element);
     return new PsiReference[]{createPsiReference(element, range.getStartOffset()+startOffset, range.getEndOffset() - endOffset, true, context, genericDomValue, startOffset != endOffset)};

@@ -10,7 +10,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.lang.properties.PropertiesReferenceProvider;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.patterns.*;
 import static com.intellij.patterns.StandardPatterns.string;
@@ -21,9 +20,7 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.filters.position.NamespaceFilter;
 import com.intellij.psi.filters.position.ParentElementFilter;
 import com.intellij.psi.filters.position.TokenTypeFilter;
-import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
-import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -40,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -49,11 +45,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Time: 17:13:45
  * To change this template use Options | File Templates.
  */
-public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry, PsiReferenceRegistrar {
-
+public class ReferenceProvidersRegistry implements PsiReferenceRegistrar {
+            
   private final ConcurrentMap<Class,SimpleProviderBinding> myBindingsMap = new ConcurrentWeakHashMap<Class, SimpleProviderBinding>();
   private final ConcurrentMap<Class,NamedObjectProviderBinding> myNamedBindingsMap = new ConcurrentWeakHashMap<Class, NamedObjectProviderBinding>();
-  private final List<Pair<Class<?>, ElementManipulator<?>>> myManipulators = new CopyOnWriteArrayList<Pair<Class<?>, ElementManipulator<?>>>();
   private final Map<ReferenceProviderType,PsiReferenceProvider> myReferenceTypeToProviderMap = new ConcurrentHashMap<ReferenceProviderType, PsiReferenceProvider>(5);
 
   private static final Comparator<Trinity<PsiReferenceProvider,MatchingContext,Double>> PRIORITY_COMPARATOR = new Comparator<Trinity<PsiReferenceProvider, MatchingContext, Double>>() {
@@ -84,17 +79,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry, 
   }
 
   private ReferenceProvidersRegistry() {
-    // Manipulators mapping
-    registerManipulator(XmlAttributeValue.class, new XmlAttributeValueManipulator());
-    registerManipulator(XmlAttribute.class, new XmlAttributeManipulator());
-    registerManipulator(PsiPlainTextFile.class, new PlainFileManipulator());
-    registerManipulator(XmlToken.class, new XmlTokenManipulator());
-    registerManipulator(XmlComment.class, new XmlCommentManipulator());
-
-    registerManipulator(PsiLiteralExpression.class, new StringLiteralManipulator());
-    registerManipulator(XmlTag.class, new XmlTagManipulator());
-    registerManipulator(PsiDocTag.class, new PsiDocTagValueManipulator());
-
     // Binding declarations
 
     myReferenceTypeToProviderMap.put(CLASS_REFERENCE_PROVIDER, new JavaClassReferenceProvider());
@@ -398,34 +382,6 @@ public class ReferenceProvidersRegistry implements ElementManipulatorsRegistry, 
       }
     }
     return result;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Nullable
-  public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
-    return (ElementManipulator<T>)getManipulator(element.getClass());
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Nullable
-  public <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull final Class<T> elementClass) {
-    for (final Pair<Class<?>,ElementManipulator<?>> pair : myManipulators) {
-      if (ReflectionCache.isAssignable(pair.getFirst(), elementClass)) {
-        return (ElementManipulator<T>)pair.getSecond();
-      }
-    }
-
-    return null;
-  }
-
-  public int getOffsetInElement(final PsiElement element) {
-    final ElementManipulator<PsiElement> manipulator = getManipulator(element);
-    assert manipulator != null: element.getClass().getName();
-    return manipulator.getRangeInElement(element).getStartOffset();
-  }
-
-  public <T extends PsiElement> void registerManipulator(@NotNull Class<T> elementClass, @NotNull ElementManipulator<T> manipulator) {
-    myManipulators.add(new Pair<Class<?>, ElementManipulator<?>>(elementClass, manipulator));
   }
 
 }

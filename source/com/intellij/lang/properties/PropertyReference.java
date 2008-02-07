@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +100,7 @@ public class PropertyReference implements PsiPolyVariantReference, QuickFixProvi
       return myElement.replace(newExpression);
     }
     else {
-      ElementManipulator<PsiElement> manipulator = ReferenceProvidersRegistry.getInstance(myElement.getProject()).getManipulator(myElement);
+      ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(myElement);
       assert manipulator != null;
       return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
     }

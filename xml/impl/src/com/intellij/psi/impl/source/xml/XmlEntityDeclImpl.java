@@ -8,15 +8,12 @@ import com.intellij.lexer._OldXmlLexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.parsing.xml.OldXmlParsing;
 import com.intellij.psi.impl.source.parsing.xml.XmlParsingContext;
 import com.intellij.psi.impl.source.parsing.xml.XmlPsiLexer;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -81,7 +78,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     final PsiElement nameElement = getNameElement();
 
     if (nameElement != null) {
-      return ReferenceProvidersRegistry.getInstance(getProject()).getManipulator(nameElement).handleContentChange(
+      return ElementManipulators.getManipulator(nameElement).handleContentChange(
         nameElement,
         new TextRange(0,nameElement.getTextLength()),
         name

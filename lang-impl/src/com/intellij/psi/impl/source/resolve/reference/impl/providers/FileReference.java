@@ -267,7 +267,7 @@ public class FileReference
       }
       return myFileReferenceSet.getElement();
     }
-    throw new IncorrectOperationException("Manipulator for this element is not defined");
+    throw new IncorrectOperationException("Manipulator for this element is not defined: " + getElement());
   }
 
   /* Happens when it's been moved to another folder */

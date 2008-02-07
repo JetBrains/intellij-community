@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.psi.*;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
@@ -39,7 +38,7 @@ public abstract class GenericReference extends CachingReference {
   public PsiElement handleElementRename(String string) throws IncorrectOperationException {
     final PsiElement element = getElement();
     if (element != null) {
-      ElementManipulator<PsiElement> man = ReferenceProvidersRegistry.getInstance(element.getProject()).getManipulator(element);
+      ElementManipulator<PsiElement> man = ElementManipulators.getManipulator(element);
       if (man != null) {
         return man.handleContentChange(element, getRangeInElement(), string);
       }

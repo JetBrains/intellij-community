@@ -45,8 +45,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   public PsiReference[] createReferences(final GenericDomValue<PsiType> genericDomValue, final PsiElement element, ConvertContext context) {
     final String str = genericDomValue.getStringValue();
     if (str != null) {
-      final ElementManipulator<PsiElement> manipulator =
-        PsiManager.getInstance(element.getProject()).getElementManipulatorsRegistry().getManipulator(element);
+      final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
       assert manipulator != null;
       String trimmed = str.trim();
       int offset = manipulator.getRangeInElement(element).getStartOffset() + str.indexOf(trimmed);
