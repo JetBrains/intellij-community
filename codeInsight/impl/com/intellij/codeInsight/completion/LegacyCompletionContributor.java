@@ -47,12 +47,12 @@ public class LegacyCompletionContributor extends CompletionContributor{
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, context, insertedElement, result.getPrefixMatcher());
+          completionData.completeReference(ref, lookupSet, context, insertedElement, result.getPrefixMatcher(), context.file, context.offset);
         }
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement, result.getPrefixMatcher());
+          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement, result.getPrefixMatcher(), context.file);
         }
         result.addAllElements(lookupSet);
       }

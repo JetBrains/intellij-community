@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.completion.CompletionContext;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.DefaultInsertHandler;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.simple.SimpleInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementFactoryImpl;
@@ -195,7 +196,7 @@ public class AllClassesGetter implements ContextGetter{
     }
 
     for (final String name : names) {
-      if (!completionContext.prefixMatches(name)) continue;
+      if (!new CamelHumpMatcher(completionContext.getPrefix()).prefixMatches(name)) continue;
 
       for (PsiClass psiClass : cache.getClassesByName(name, scope)) {
         if (lookingForAnnotations && !psiClass.isAnnotationType()) continue;

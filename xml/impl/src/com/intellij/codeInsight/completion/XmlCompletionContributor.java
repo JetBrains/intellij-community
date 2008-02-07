@@ -33,13 +33,13 @@ public class XmlCompletionContributor extends CompletionContributor{
         final PsiReference reference = parent.getReference();
         final String namespace = parent.getNamespace();
         final XmlElementDescriptor parentDescriptor = parent.getDescriptor();
-        final String prefix = context.getPrefix();
+        final String prefix = result.getPrefixMatcher().getPrefix();
         final int pos = prefix.indexOf(':');
         final String namespacePrefix = pos > 0 ? prefix.substring(0, pos) : null;
 
         if (reference != null && namespace.length() > 0 && parentDescriptor != null && !(parentDescriptor instanceof AnyXmlElementDescriptor)) {
           final Set<LookupItem> set = new HashSet<LookupItem>();
-          new XmlCompletionData().completeReference(reference, set, context, element, result.getPrefixMatcher());
+          new XmlCompletionData().completeReference(reference, set, context, element, result.getPrefixMatcher(), context.file, context.offset);
           result.addAllElements(set);
         } else {
 

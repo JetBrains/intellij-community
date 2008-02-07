@@ -124,10 +124,10 @@ public class JavaCompletionContributor extends CompletionContributor{
 
         final PsiReference ref = identifierCopy.getContainingFile().findReferenceAt(identifierCopy.getTextRange().getStartOffset());
         if (ref != null) {
-          SMART_DATA.completeReference(ref, set, context, identifierCopy, result.getPrefixMatcher());
+          SMART_DATA.completeReference(ref, set, context, identifierCopy, result.getPrefixMatcher(), context.file, context.offset);
         }
         SMART_DATA.addKeywordVariants(keywordVariants, context, identifierCopy);
-        CompletionData.completeKeywordsBySet(set, keywordVariants, context, identifierCopy, result.getPrefixMatcher());
+        CompletionData.completeKeywordsBySet(set, keywordVariants, context, identifierCopy, result.getPrefixMatcher(), context.file);
         CompletionUtil.highlightMembersOfContainer(set);
         result.addAllElements(set);
       }
@@ -144,12 +144,12 @@ public class JavaCompletionContributor extends CompletionContributor{
         final Set<LookupItem> lookupSet = new LinkedHashSet<LookupItem>();
         final PsiReference ref = insertedElement.getContainingFile().findReferenceAt(context.offset);
         if (ref != null) {
-          completionData.completeReference(ref, lookupSet, context, insertedElement, result.getPrefixMatcher());
+          completionData.completeReference(ref, lookupSet, context, insertedElement, result.getPrefixMatcher(), context.file, context.offset);
         }
         if (lookupSet.isEmpty() || !CodeInsightUtil.isAntFile(file)) {
           final Set<CompletionVariant> keywordVariants = new HashSet<CompletionVariant>();
           completionData.addKeywordVariants(keywordVariants, context, insertedElement);
-          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement, result.getPrefixMatcher());
+          CompletionData.completeKeywordsBySet(lookupSet, keywordVariants, context, insertedElement, result.getPrefixMatcher(), context.file);
         }
         result.addAllElements(lookupSet);
       }

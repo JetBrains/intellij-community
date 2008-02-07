@@ -12,16 +12,12 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import org.apache.oro.text.regex.Pattern;
-import org.apache.oro.text.regex.Perl5Matcher;
 import org.jetbrains.annotations.Nullable;
 
 @Deprecated
 public class CompletionContext implements Cloneable {
   public static final Key<CompletionContext> COMPLETION_CONTEXT_KEY = Key.create("CompletionContext");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionContext");
-  private Pattern myPattern;
-  private Perl5Matcher myMatcher;
 
   protected Object clone() {
     try {
@@ -170,15 +166,6 @@ public class CompletionContext implements Cloneable {
     lparenthOffset = -1;
   }
 
-  public boolean prefixMatches(final String name) {
-    if (myPattern == null) {
-      myPattern = CompletionUtil.createCamelHumpsMatcher(myPrefix);
-      myMatcher = new Perl5Matcher();
-    }
-
-    return myMatcher.matches(name, myPattern);
-  }
-
   public String getPrefix() {
     return myPrefix;
   }
@@ -188,9 +175,6 @@ public class CompletionContext implements Cloneable {
   }
 
   public void setPrefix(final String prefix) {
-    myPattern = null;
-    myMatcher = null;
-
     myPrefix = prefix;
   }
 }

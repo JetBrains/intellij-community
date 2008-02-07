@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
 */
-class CamelHumpMatcher implements PrefixMatcher {
+public class CamelHumpMatcher implements PrefixMatcher {
   private Pattern myPattern;
   private Perl5Matcher myMatcher;
   private final String myPrefix;

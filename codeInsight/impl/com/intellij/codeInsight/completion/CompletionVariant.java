@@ -3,10 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.ContextGetter;
 import com.intellij.psi.filters.ElementExtractorFilter;
 import com.intellij.psi.filters.ElementFilter;
@@ -188,31 +185,33 @@ public class CompletionVariant {
     return isScopeAcceptable(scope) && myPosition.isAcceptable(position, scope);
   }
 
-  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionContext prefix,
-                                      final PrefixMatcher matcher){
+  public void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, final PrefixMatcher matcher, final PsiFile file){
     for (final CompletionVariantItem ce : myCompletionsList) {
-      addReferenceCompletions(reference, position, set, prefix, ce, matcher);
+      addReferenceCompletions(reference, position, set, ce, matcher, file);
     }
   }
 
-  public void addKeywords(PsiElementFactory factory, Set<LookupItem> set, CompletionContext context, PsiElement position,
-                          final PrefixMatcher matcher){
+  public void addKeywords(Set<LookupItem> set, PsiElement position, final PrefixMatcher matcher, final PsiFile file){
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
     for (final CompletionVariantItem ce : myCompletionsList) {
       final Object comp = ce.myCompletion;
       if (comp instanceof String) {
-        myPeer.addKeyword(factory, set, ce.myTailType, comp, context, matcher);
+        myPeer.addKeyword(factory, set, ce.myTailType, comp, matcher, file);
       }
-      else if (comp instanceof ContextGetter) {
-        final Object[] elements = ((ContextGetter)comp).get(position, context);
-        for (Object element : elements) {
-          myPeer.addLookupItem(set, ce.myTailType, element, matcher, context.file);
+      else {
+        final CompletionContext context = position.getUserData(CompletionContext.COMPLETION_CONTEXT_KEY);
+        if (comp instanceof ContextGetter) {
+          final Object[] elements = ((ContextGetter)comp).get(position, context);
+          for (Object element : elements) {
+            myPeer.addLookupItem(set, ce.myTailType, element, matcher, file);
+          }
         }
-      }
-      // TODO: KeywordChooser -> ContextGetter
-      else if (comp instanceof KeywordChooser) {
-        final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
-        for (String keyword : keywords) {
-          myPeer.addKeyword(factory, set, ce.myTailType, keyword, context, matcher);
+        // TODO: KeywordChooser -> ContextGetter
+        else if (comp instanceof KeywordChooser) {
+          final String[] keywords = ((KeywordChooser)comp).getKeywords(context, position);
+          for (String keyword : keywords) {
+            myPeer.addKeyword(factory, set, ce.myTailType, keyword, matcher, file);
+          }
         }
       }
     }
@@ -236,9 +235,9 @@ public class CompletionVariant {
     return false;
   }
 
-  protected void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set,
-                                         CompletionContext context, CompletionVariantItem item, final PrefixMatcher matcher){
-    myPeer.addReferenceCompletions(reference, position, set, context, item.myCompletion, item.myTailType, matcher);
+  protected void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupItem> set, CompletionVariantItem item, final PrefixMatcher matcher,
+                                         final PsiFile file){
+    myPeer.addReferenceCompletions(reference, position, set, item.myCompletion, item.myTailType, matcher, file);
   }
 
 
